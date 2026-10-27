@@ -1,8 +1,8 @@
 # Publish a marketplace
 
 A marketplace is a GitHub repository of palette files. Anyone can add it with
-one command, and their copies update when you push. There is nothing to build:
-ttheme reads the files as you pushed them.
+one command, and what you push reaches them as an update they take. There is
+nothing to build: ttheme reads the files as you pushed them.
 
 ## Publish from ttheme
 

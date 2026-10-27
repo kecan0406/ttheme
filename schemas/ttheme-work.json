@@ -108,7 +108,10 @@
             }
           }
         },
-        "required": ["id"]
+        "required": ["id"],
+        "dependencies": {
+          "sites": ["danbooru"]
+        }
       }
     }
   },

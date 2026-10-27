@@ -42,7 +42,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'use',
     args: ['<palette>'],
-    about: 'Use a palette in this tab — a unique prefix works: ttheme use ho',
+    about: 'Use a palette in this tab — its name alone, or a unique start of it: ttheme use ho',
     section: 'tab',
     shell: true,
   },
@@ -88,7 +88,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'auto',
     args: [],
     about:
-      'Show every palette in the mode the system is in — following it as it changes, where a wired Ghostty, iTerm2, kitty or WezTerm reports it',
+      'Show every palette in the mode the system is in — following it as it changes, where a wired Ghostty, iTerm2, kitty, WezTerm or Contour reports it',
     section: 'startup',
     shell: true,
   },
@@ -117,14 +117,14 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'add',
     args: ['<palette...>'],
-    about: `Install palettes — from your marketplaces, from a share link (ttheme add ${SHARE_URL}${CODE}…), whose tuned palettes join your local marketplace, or from a palette file, which joins it under its file's name: ttheme add ~/Downloads/kisara.toml`,
+    about: `Install palettes — from your marketplaces, from a share link (ttheme add ${SHARE_URL}${CODE}…), whose palettes of no marketplace — a tuned copy, a builder draft — join your local marketplace, or from a palette file, which joins it under its file's name: ttheme add ~/Downloads/kisara.toml`,
     section: 'palettes',
     flags: {
       in: {
         type: 'string',
         value: '<marketplace>',
         about:
-          'The local marketplace a palette file, or a tuned palette from a link, goes into — when you have more than one',
+          "The local marketplace a palette file, or a link's palette of no marketplace, goes into — when you have more than one",
       },
     },
   },
@@ -197,7 +197,12 @@ export const VERB_SPECS: VerbSpec[] = [
       'Check a palette against the contrast checks — where one fails, suggest colors that pass; with none named, asks to check the one this tab shows',
     section: 'own',
     more: true,
-    flags: { fix: { type: 'boolean', about: 'Write the suggested colors into your palette' } },
+    flags: {
+      fix: {
+        type: 'boolean',
+        about: 'Write the suggested colors into your palette, or as your tuning of one that is not yours',
+      },
+    },
   },
   {
     name: 'palette',
@@ -236,7 +241,8 @@ export const VERB_SPECS: VerbSpec[] = [
       work: {
         type: 'string',
         value: '<work>',
-        about: 'make: the work the characters are from, by its id — the name of its file in commons/works/',
+        about:
+          "make: the work the characters are from, by its id — one the commons holds, or a new one your marketplace's works/ records",
       },
       'work-name': { type: 'string', value: '<name>', about: "make: a new work's name, as lists show it" },
       'work-native': { type: 'string', value: '<title>', about: "make: a new work's title in its own language" },
@@ -260,7 +266,7 @@ export const VERB_SPECS: VerbSpec[] = [
       '  slots         three colors in the order the character reads, the first the seed — background, foreground,',
       '                cursor, selection or ansi0–ansi15 — each ["<part>", "#rrggbb"] as measured',
       "  booru         the character's danbooru tag — a character the commons knows by it is the one the palette",
-      '                is of; otherwise it is recorded with the new character (optional)',
+      '                is of; otherwise --work records it with the new character (optional)',
       "  native_names  the new character's names in its own language; left out, ttheme's name data fills them in (optional)",
       '  source        where the colors were measured (optional)',
       '',
@@ -497,7 +503,7 @@ export function helpText(all: boolean, shell = false, color = false): string {
 
   return [
     ...bannerOf(color),
-    'ttheme alone opens Preview and Browse as tabs — Browse installs and removes palettes; tab and shift+tab move between them',
+    'ttheme alone opens Preview and Browse as tabs — Browse installs and removes palettes; shift+tab moves between them',
     '',
     'Getting help:',
     ...columns(GETTING_HELP),

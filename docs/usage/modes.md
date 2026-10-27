@@ -24,6 +24,7 @@ same setting as its **Mode** row, and `init` asks for it the first time.
 | Ghostty | from the system, or its own `window-theme`, in any tab at its prompt |
 | iTerm2 | from the system, through ttheme's profiles, which carry both modes |
 | kitty, WezTerm | from the system, through ttheme's watcher and module |
+| Contour | from the system, in any tab at its prompt |
 
 It is offered only where one of these is wired. Once one of them hears a
 change, every terminal you wired switches with it, Warp and Terminal.app

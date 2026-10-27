@@ -145,6 +145,10 @@
       },
       "required": ["background", "foreground", "cursor", "selection_background", "ansi"],
       "not": {
+        "properties": {
+          "light": {},
+          "dark": {}
+        },
         "required": ["light", "dark"]
       }
     },

@@ -24,10 +24,9 @@ It asks, in this order:
 1. **Which terminals to wire.** The one you are in comes preselected.
 2. **Which mode to show the palettes in**: `auto`, `light` or `dark`. Every
    palette comes in both. `auto` follows your system's appearance and is offered
-   where Ghostty, iTerm2, kitty or WezTerm is wired.
-3. **Which palettes to install**, listed by work. `space` marks a palette or
-   a whole work, and `enter` moves on. You can add or drop single palettes
-   later.
+   where Ghostty, iTerm2, kitty, WezTerm or Contour is wired.
+3. **Which works to install.** `space` marks a work with all of its palettes,
+   and `enter` moves on. You can add or drop single palettes later.
 4. **Whether to use them.** With one palette picked, whether every tab uses
    it. With several, whether to pick the default in `ttheme` afterwards.
 5. **Whether to add the palette skill to your coding agents**, when it finds

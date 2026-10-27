@@ -80,12 +80,13 @@ every pin below it, or the pin above that covers it.
 
 ## The pins file
 
-Every pin is one line in `~/.config/ttheme/pins`, and the file is yours to edit:
+Every pin is one line in `~/.config/ttheme/pins`, and the file is yours to edit.
+It names each palette in full, as `ttheme pin` writes it:
 
 ```text title="~/.config/ttheme/pins"
-~/work/**        konata
-~/work/site      kita
-ssh:tusa         konata
+~/work/**        ttheme/konata
+~/work/site      ttheme/kita
+ssh:tusa         ttheme/konata
 ```
 
 `path/**` covers everything below the path. Open tabs pick up a change to the

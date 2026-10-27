@@ -154,6 +154,11 @@ function readCharacter(file: string, index: number, raw: unknown, foreign: boole
   }
 
   const also = Array.isArray(c.also) ? c.also.map((work, i) => slug(file, `${at}.also[${i}]`, work)) : undefined
+
+  if (c.sites !== undefined && danbooru === undefined) {
+    fail(file, `${at}.sites renames ${at}.danbooru per site, so it needs ${at}.danbooru`)
+  }
+
   const sites = readSites(file, `${at}.sites`, c.sites, foreign)
 
   return {

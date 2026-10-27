@@ -10,9 +10,9 @@ A palette is someone's take on a character, or on a whole work — a series, a
 game, a franchise — in colors. Which work and character it is of comes from
 the commons: one list of works and their characters that every marketplace's
 palettes name and no marketplace owns. So a character is the same character
-whichever marketplace a palette of it comes from, and Preview and `init`'s list
-show every palette under its work, the palettes of one character side by side,
-the built-in one first.
+whichever marketplace a palette of it comes from, and Preview and Browse show
+every palette under its work, the palettes of one character side by side, the
+built-in one first.
 
 A palette of no work or character is an original. Originals come after the
 works, one shelf per marketplace.
@@ -33,13 +33,13 @@ ttheme use alice@pastel/rei   # this one, when you have two
 ```
 
 When a name could mean more than one, ttheme lists their full names, so you can
-type the one you mean. Its messages show a palette by its name alone wherever
-that is enough, and `tab` completes full names once you type `/` or `@`, or
-where two palettes share a name.
+type the one you mean. The messages in your tab show a palette by its name
+alone wherever that is enough, and `tab` completes full names once you type
+`/` or `@`, or where two palettes share a name.
 
 ## Browse
 
-`ttheme`, then `tab`, opens Browse. Each marketplace you added is a card — the
+`ttheme`, then `shift+tab`, opens Browse. Each marketplace you added is a card — the
 built-in one is `ttheme` — and the panel beside it lists that marketplace's
 palettes by work, its originals after them.
 

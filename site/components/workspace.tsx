@@ -10,7 +10,7 @@ import { BUILTIN_URL, INIT, palettePath, REPO, repoUrl, searchText } from '@/lib
 import { gatePassed } from '@/lib/gate'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import { type GateRule, type Marketplace, paint, shortName, type Theme } from '@/lib/themes'
+import { type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 import { byWork, leadOf, leadsOf } from '@/lib/works'
@@ -65,9 +65,9 @@ const POPOVER =
 function commandOf(step: Step, theme: Theme, where: Where): string {
   if (step === 'init') return INIT
 
-  if (step === 'use') return `ttheme use ${shortName(theme.id)}`
+  if (step === 'use') return `ttheme use ${theme.id}`
 
-  return where ? `ttheme marketplace add ${where.add} && ttheme add ${theme.id}` : `ttheme add ${theme.name}`
+  return where ? `ttheme marketplace add ${where.add} && ttheme add ${theme.id}` : `ttheme add ${theme.id}`
 }
 
 function signs(theme: Theme): string[] {

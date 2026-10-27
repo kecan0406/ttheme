@@ -97,7 +97,9 @@ export function editOf(draft: Draft, source: string | null, own: boolean, id: st
   const meta = metaOf(draft)
   const copy = !own && source !== null
 
-  const kept: Meta = copy ? { ...meta, from: source, ...(meta.waive ? { reason: `kept from ${source}` } : {}) } : meta
+  const kept: Meta = copy
+    ? { ...meta, from: meta.from ?? source, ...(meta.waive ? { reason: `kept from ${source}` } : {}) }
+    : meta
 
   return started({
     id,

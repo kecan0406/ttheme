@@ -84,17 +84,11 @@ function mine(name: string, home: string): string | undefined {
 }
 
 function nameIn(view: Manifest, name: string, home: string, installed: readonly string[]): string {
-  try {
-    return find(view.palettes, name, installed).name
-  } catch (error) {
-    const own = mine(name, home)
+  const own = mine(name, home)
 
-    if (own === undefined) {
-      throw error
-    }
-
-    return own
-  }
+  return own !== undefined && !view.palettes.some((e) => e.name === own)
+    ? own
+    : find(view.palettes, name, installed).name
 }
 
 function sayProposed(id: string, proposals: readonly Proposal[]): void {
@@ -643,7 +637,7 @@ export function runCheck(name: string, fix = false): number {
   const theirs = !path || !existsSync(path)
 
   if (!fix) {
-    console.log(`\n\`ttheme check --fix ${entry.name}\` writes them${theirs ? ' as your tone of it' : ''}`)
+    console.log(`\n\`ttheme check --fix ${entry.name}\` writes them${theirs ? ' as your tuning of it' : ''}`)
 
     return 1
   }

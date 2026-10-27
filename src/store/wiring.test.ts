@@ -82,7 +82,7 @@ test('configFile seeds the template with every default spelled out on a commente
     [
       '# ttheme settings — uncomment a line to change it; exported variables win over this file',
       '',
-      '# the mode every palette shows in: auto, which follows the appearance of the system where a wired Ghostty, iTerm2, kitty or WezTerm reports it, or light or dark, which each palette carries both of — changing it repaints every open tab (default dark)',
+      '# the mode every palette shows in: auto, which follows the appearance of the system where a wired Ghostty, iTerm2, kitty, WezTerm or Contour reports it, or light or dark, which each palette carries both of — changing it repaints every open tab (default dark)',
       '# : ${TTHEME_MODE:=dark}',
       '',
       '# new tabs: off keeps the configured terminal theme, seq rotates through the palettes (default off)',

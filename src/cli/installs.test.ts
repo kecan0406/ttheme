@@ -13,6 +13,7 @@ import { writeBundled } from '../store/available.ts'
 import { readInstalled, writeInstalled } from '../store/installed.ts'
 import { writeTone } from '../store/tone.ts'
 import * as terminal from '../tui/terminal.ts'
+import { runEdit } from './craft.ts'
 import { runAdd, runDefault } from './installs.ts'
 import { checkMarketplace, runMarketplace, withMarketplaces } from './marketplaces.ts'
 import { runShare } from './share.ts'
@@ -276,6 +277,29 @@ test('two tuned palettes of one name each travel under a name of their own, and 
       ['geto-tuned-2', 'kec@mine/geto', '#88ff00'],
     ],
   )
+})
+
+test('edit asks which palette a name two share means, and says why your own file of that name does not read', async () => {
+  const home = installedHome(['ttheme/gojo'])
+  writeInstalled(home, { ...readInstalled(home), author: 'kec' })
+  await inHome(home, () => runMarketplace('init', 'mine'))
+  const own = join(home, 'ttheme', 'marketplace', 'mine', 'palettes', 'geto.toml')
+  writeFileSync(own, paletteToml({ ...draftOf(manifest.palettes[1] as PaletteEntry), name: 'kec@mine/geto' }))
+  const asking = spyOn(terminal, 'interactive').mockReturnValue(true)
+
+  try {
+    await assert.rejects(
+      inHome(home, () => runEdit('geto')),
+      /geto is ttheme\/geto, kec@mine\/geto — name the one you mean/,
+    )
+    writeFileSync(own, 'signature = 3\n')
+    await assert.rejects(
+      inHome(home, () => runEdit('geto')),
+      /geto\.toml cannot be read/,
+    )
+  } finally {
+    asking.mockRestore()
+  }
 })
 
 test('installed.json keeps an auto-update setting only where it differs from the default', () => {

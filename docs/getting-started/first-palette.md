@@ -42,6 +42,7 @@ When you already know the name, skip Preview:
 
 ```sh
 ttheme use miku          # this tab
+ttheme use ho            # a unique start of a name is enough
 ttheme use ttheme/miku   # the full name, when two marketplaces have a miku
 ttheme default miku      # the default for new tabs
 ```
@@ -52,7 +53,7 @@ name alone is enough while only one of yours has it
 
 ## Get more palettes
 
-`tab` in `ttheme` moves to Browse, which lists every palette of every
+`shift+tab` in `ttheme` moves to Browse, which lists every palette of every
 marketplace you added. `space` marks palettes to install, or unmarks one to
 remove it, and `enter` reviews and applies the change.
 [Add and update palettes](../usage/palettes.md) covers Browse and marketplaces.

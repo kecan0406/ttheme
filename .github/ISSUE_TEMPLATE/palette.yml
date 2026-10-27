@@ -1,11 +1,11 @@
 name: Palette request
-description: Ask for a character palette in the official marketplace
+description: Ask for a built-in palette of a character
 labels: [palette]
 body:
   - type: input
     id: character
     attributes:
-      label: Character and series
+      label: Character and work
       description: For example Homura, Puella Magi Madoka Magica.
     validations:
       required: true

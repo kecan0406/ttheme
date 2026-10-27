@@ -1,6 +1,6 @@
 ---
 name: ttheme-palette
-description: Make a ttheme terminal palette for an anime, game or other character from its official art — research the character, measure colors from an official picture, and let the installed ttheme CLI harmonize, check and install it. Use when the user asks for a ttheme palette or terminal theme of a character, or of a whole series' cast.
+description: Make a ttheme terminal palette for an anime, game or other character from its official art — research the character, measure colors from an official picture, and let the installed ttheme CLI harmonize, check and install it. Use when the user asks for a ttheme palette or terminal theme of a character, or of a whole work's cast.
 ---
 
 # Character palettes with ttheme
@@ -9,7 +9,7 @@ A palette is made from colors measured on the character's own design, never from
 
 ## 0. Check the CLI
 
-Run the CLI the install put there, `node ~/.config/ttheme/ttheme.js` (with `$XDG_CONFIG_HOME` in place of `~/.config` where that is set) — this file writes it as `ttheme`. Never the `ttheme` your shell may already know: that is a function of the user's interactive shell, and outside it its help prints nothing and its commands fail. Run `ttheme help palette`; if the file is missing or the help names no `palette` action, ttheme is not installed or is older than 1.2.55: tell the user to run `npx @kecan0406/ttheme@latest init` and stop. That help is the reference for the flags, the anchors format and the exit codes; the fields of each JSON result are named in the steps below. Always pass `--json` and read the result from stdout; stderr is for people.
+Run the CLI the install put there, `node ~/.config/ttheme/ttheme.js` (with `$XDG_CONFIG_HOME` in place of `~/.config` where that is set) — this file writes it as `ttheme`. Never the `ttheme` your shell may already know: that is a function of the user's interactive shell, and outside it its help prints nothing and its commands fail. Run `ttheme help palette`; if the file is missing or the help names no `--work` flag, ttheme is not installed or is older than 1.2.67: tell the user to run `npx @kecan0406/ttheme@latest init` and stop. That help is the reference for the flags, the anchors format and the exit codes; the fields of each JSON result are named in the steps below. Always pass `--json` and read the result from stdout; stderr is for people.
 
 Exit codes: 0 done, 1 failed, 2 nothing changed, 3 your input is invalid (the JSON says which field and what it accepts — fix it and run again), 4 a network request failed (retry once, then tell the user).
 

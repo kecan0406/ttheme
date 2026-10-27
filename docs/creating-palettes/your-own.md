@@ -59,7 +59,8 @@ each palette is `palettes/<palette>.toml`, named
 `<you>@<marketplace>/<palette>`.
 
 A palette made `--from` another keeps the work or character that one is of, so
-lists shelve it beside it, and names the palette it came from. One made from
+lists shelve it beside it, and names the palette it first came from — a copy
+of a copy names the original. One made from
 blank is an original until its file names a `subject`
 ([a palette file](publish.md#a-palette-file)).
 

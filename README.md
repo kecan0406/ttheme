@@ -31,7 +31,7 @@
 - **Colors from the character.** Every palette keeps the three colors that
   identify its character and borrows its ANSI ramp from an established scheme,
   harmonized so every built-in palette reads alike.
-- **Every palette passes the contrast checks.** Body text at 7:1 against the
+- **Every built-in palette passes the contrast checks.** Body text at 7:1 against the
   background (WCAG AAA), every meaningful ANSI color at 4.5:1 (WCAG AA), and each
   accent stays in its role — red reads as an error, green as success — and apart
   from its neighbors at text size, red and green too for a deuteranope. The build
@@ -55,7 +55,7 @@ until you confirm. Then:
 
 ```sh
 exec zsh               # the ttheme command in this tab
-ttheme                 # preview and browse as tabs — tab switches
+ttheme                 # preview and browse as tabs — shift+tab switches
 ```
 
 ttheme adds one guarded line to each config it wires, sets colors only, and
@@ -107,7 +107,8 @@ code, and only the built-in marketplace is held to the contrast checks.
 ```sh
 ttheme new dusk     # the palette editor, on a blank palette
 ttheme edit miku    # any palette; one that is not yours keeps your changes as your tuning
-ttheme share dusk   # a link that carries the palette, or a marketplace on GitHub
+ttheme share dusk   # a link that carries the palette
+ttheme share        # asks: a link, or a marketplace on GitHub
 ```
 
 The editor grows twenty colors that pass the contrast checks from a few seeds, then tunes
@@ -125,7 +126,7 @@ through each.
 | Command | |
 |---|---|
 | `ttheme` | Preview and Browse as tabs of one screen — the tab repaints as the cursor moves, `enter` applies |
-| `ttheme use <palette>` | Use a palette in this tab — `rei`, or `ttheme/rei` when two have that name |
+| `ttheme use <palette>` | Use a palette in this tab — `rei` or a unique start of it, or `ttheme/rei` when two have that name |
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` / `pins` | A palette for a directory, its repository or an ssh host — `cd` or `ssh` in repaints, leaving restores |
 | `ttheme auto` / `light` / `dark` | The mode every palette shows in |

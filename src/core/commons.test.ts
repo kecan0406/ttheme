@@ -65,6 +65,11 @@ test('a work refuses a lead outside it, a character listed twice, a bad id and t
   )
 
   assert.throws(() => readWork('w.toml', 'name = "E"\n[[character]]\nid = "Rei"', 'evangelion'), /lowercase/)
+  assert.throws(
+    () =>
+      readWork('w.toml', 'name = "E"\n[[character]]\nid = "rei"\nsites = { zerochan = "Ayanami.Rei" }', 'evangelion'),
+    /character\[0\]\.sites renames character\[0\]\.danbooru per site, so it needs character\[0\]\.danbooru/,
+  )
   assert.throws(() => readWork('w.toml', 'name = "E"', 'ttheme'), /built-in marketplace/)
   assert.throws(() => readWork('w.toml', 'native = "E"', 'evangelion'), /name must be a non-empty string/)
 })

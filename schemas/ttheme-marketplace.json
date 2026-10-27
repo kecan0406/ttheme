@@ -93,9 +93,15 @@
     }
   },
   "then": {
+    "properties": {
+      "fallback": {}
+    },
     "required": ["fallback"]
   },
   "else": {
+    "properties": {
+      "owner": {}
+    },
     "required": ["owner"]
   }
 }

@@ -19,7 +19,10 @@ ttheme help > /dev/null || { print -u2 "ttheme help broke"; exit 1 }
 ttheme -h > /dev/null || { print -u2 "ttheme -h broke"; exit 1 }
 REPLY=; __tt_resolve homura && [[ $REPLY == ttheme/homura ]] || { print -u2 "a palette typed by its name alone did not resolve to the one there is: $REPLY"; exit 1 }
 REPLY=; __tt_resolve ttheme/homura && [[ $REPLY == ttheme/homura ]] || { print -u2 "a palette typed in full did not resolve: $REPLY"; exit 1 }
-__tt_resolve ho 2>/dev/null && { print -u2 "the start of a palette's name resolved to it: $REPLY"; exit 1 }
+REPLY=; __tt_resolve ho && [[ $REPLY == ttheme/homura ]] || { print -u2 "the start of one palette's name did not resolve to it: $REPLY"; exit 1 }
+REPLY=; __tt_resolve ttheme/hom && [[ $REPLY == ttheme/homura ]] || { print -u2 "the start of a full name did not resolve to it: $REPLY"; exit 1 }
+out=$(__tt_resolve k 2>&1) && { print -u2 "the start of many palettes' names resolved to one of them"; exit 1 }
+[[ $out == "ttheme: multiple palettes start with 'k': "*ttheme/kita* ]] || { print -u2 "a start many names share did not name them: $out"; exit 1 }
 (
   TTHEME_PALETTE[kec@bemani/homura]=$TTHEME_PALETTE[ttheme/kita] TTHEME_SHORT[homura]="ttheme/homura kec@bemani/homura"
   out=$(__tt_resolve homura 2>&1) && { print -u2 "a name two palettes share resolved to one of them"; exit 1 }

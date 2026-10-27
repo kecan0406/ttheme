@@ -77,10 +77,11 @@ A palette says what it is of in `subject`: a work in the commons
 (`subject = "evangelion/rei"`). Every list shelves it under that work, beside
 the built-in palettes and every other marketplace's of the same work, so your
 rei sits next to `ttheme/rei`. A palette with no subject is an original, listed
-under its marketplace after the works. `from` names the palette it was copied
-from (`ttheme/rei`, `alice@pastel/dusk`), which `ttheme new --from` and
-`ttheme share` write and Browse and the site show, and `ansi_source` what its
-ANSI colors came from, `original` when the file leaves it out.
+under its marketplace after the works. `from` names the palette it was first
+copied from (`ttheme/rei`, `alice@pastel/dusk`), which a copy of a copy keeps,
+`ttheme new --from` and `ttheme share` write, and Browse and the site show.
+`ansi_source` says what its ANSI colors came from, `original` when the file
+leaves it out.
 
 When the commons does not hold your palette's work or character yet, propose
 it in `works/<work>.toml`, in the commons' own format (below). An install takes
@@ -128,9 +129,10 @@ sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakur
   of the same franchise joins its work's file rather than starting another.
 - The `[[character]]` tables come in cast order — the order the work's own
   materials list its cast, the leads first — which `TTHEME_SORT=cast` lists a
-  work's palettes in. A palette may be of the work itself
-  (`subject = "undertale"`): a place, an object or an idea from it rather than
-  one character.
+  work's palettes in. A place, an object or an idea from the work is one of
+  its `[[character]]` tables too (`undertale/determination`,
+  `evangelion/magi`), so it keeps its native name and its place in the cast; a
+  palette of the work as a whole names the work alone (`subject = "undertale"`).
 - `lead` names who stands for the work where one palette stands for all of it:
   the character it is known by, whatever their colors, or the work itself.
 - `danbooru` is who the character is: its danbooru tag (`kaname_madoka`,
@@ -315,7 +317,7 @@ waive it by name and say why:
 
 ```toml
 [contrast]
-waive = ["foreground"]     # foreground | accents | ansi0-dark | light-ansi | ansi8-visible | selection | ansi-role | bright-follows | distinct
+waive = ["foreground"]     # foreground | accents | ansi0-dark | light-ansi | ansi8-visible | selection | ansi-role | bright-follows | distinct | ansi0-on-accents | ansi7-on-ansi8 | cvd-red-green
 reason = "why this palette is the exception"
 ```
 
