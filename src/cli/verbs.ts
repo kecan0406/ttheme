@@ -267,7 +267,7 @@ export const VERB_SPECS: VerbSpec[] = [
       '                cursor, selection or ansi0–ansi15 — each ["<part>", "#rrggbb"] as measured',
       "  booru         the character's danbooru tag — a character the commons knows by it is the one the palette",
       '                is of; otherwise --work records it with the new character (optional)',
-      "  native_names  the new character's names in its own language; left out, ttheme's name data fills them in (optional)",
+      "  native_names  the new character's names in its own language (optional)",
       '  source        where the colors were measured (optional)',
       '',
       'With --json each action prints one object on stdout, its status done, unchanged or error;',
@@ -393,14 +393,6 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'latest',
     args: [],
     about: 'Ask npm for the newest ttheme — a command or a shell prompt starts this in the background once a day',
-    section: 'setup',
-    hidden: true,
-  },
-  {
-    name: 'names',
-    args: [],
-    about:
-      "Download aninames' character names when its release changed and index them — any command starts this in the background once a day",
     section: 'setup',
     hidden: true,
   },

@@ -296,7 +296,7 @@ plain=${out//$'\e[K'/}
   done
   pick= pk=1
   (
-    typeset -A tstrip=() TTHEME_ALIASES=()
+    typeset -A tstrip=()
     TTHEME_PALETTE[$long]=$TTHEME_PALETTE[ttheme/kita] TTHEME_SWATCH[$long]=$TTHEME_SWATCH[ttheme/kita]
     rval=($long ttheme/kita) rtype=(thm thm) rtop=(bocchi-the-rock bocchi-the-rock) cur=1 color=1 cdot= lw=40 flt=
     for i in 1 2; do
@@ -307,7 +307,7 @@ plain=${out//$'\e[K'/}
     [[ $text == *kita* && $text != *ttheme* ]] || { print -u2 "a built-in palette's row did not show its name alone: $text"; exit 1 }
   ) || exit 1
   (
-    typeset -A tmembers=() exp=() tstrip=() pvseek=() TTHEME_ALIASES=()
+    typeset -A tmembers=() exp=() tstrip=() pvseek=()
     typeset -a tops=() rtop=() rows=()
     TTHEME_PALETTE[kec@bemani/rei]=$TTHEME_PALETTE[ttheme/kita] TTHEME_PALETTE[kec@bemani/rasis]=$TTHEME_PALETTE[ttheme/miku]
     TTHEME_PALETTE[kec@bemani/dusk]=$TTHEME_PALETTE[ttheme/rei] TTHEME_PALETTE[alice@pastel/mint]=$TTHEME_PALETTE[ttheme/mio]

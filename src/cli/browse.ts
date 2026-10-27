@@ -1,5 +1,5 @@
 import { isHex } from '../core/color.ts'
-import { aboutOf, followSubject, type Sort, type Work } from '../core/commons.ts'
+import { followSubject, type Sort } from '../core/commons.ts'
 import { inMode, listed, type PaletteEntry } from '../core/manifest.ts'
 import { counted } from '../core/text.ts'
 import { BUILTIN, marketplaceId, publisherOf } from '../core/theme.ts'
@@ -7,7 +7,6 @@ import { available, idOf, readKept, readMarketplaces, shown, updatesOf } from '.
 import { type Installed, readInstalled, worn, writeInstalled } from '../store/installed.ts'
 import { readMarketplaceDir, warning } from '../store/local.ts'
 import { readIndex } from '../store/marketplace-index.ts'
-import { knowAliases } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
 import { autoUpdates, isLocal, isRemote, localIdentity, marketplacesOf, repoOf, shownSource } from '../store/sources.ts'
 import { readTone, tunedNames } from '../store/tone.ts'
@@ -53,10 +52,6 @@ function inWear(home: string, entries: readonly PaletteEntry[], renames: Renames
 
 function sortOf(value: string | undefined): Sort {
   return value === 'cast' ? 'cast' : 'abc'
-}
-
-function tagsOf(entries: readonly PaletteEntry[], works: readonly Work[]): string[] {
-  return [...new Set(entries.flatMap((e) => aboutOf(works, e.subject)?.character?.danbooru ?? []))]
 }
 
 function marketplaceState(
@@ -309,7 +304,6 @@ export async function runBrowse(): Promise<number> {
     renames,
   )
 
-  knowAliases(tagsOf([...marketplaces.flatMap((m) => m.entries), ...kept], view.works))
   const fetched = new Map<string, Fetched>()
   const lookups = new AbortController()
   const tty = process.stdout.isTTY === true

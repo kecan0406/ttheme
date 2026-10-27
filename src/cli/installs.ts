@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { aboutOf, type Sort, worldOrder } from '../core/commons.ts'
+import { type Sort, worldOrder } from '../core/commons.ts'
 import { CODE, codeOf, SHARE_URL } from '../core/draft.ts'
 import type { Manifest, PaletteEntry } from '../core/manifest.ts'
 import { BUILTIN, nameProblem } from '../core/theme.ts'
@@ -15,7 +15,6 @@ import {
   writeKept,
 } from '../store/available.ts'
 import { readInstalled, startupPalette } from '../store/installed.ts'
-import { knowAliases } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
 import { installedPath, isLocal, marketplaceSources, type Refreshed, shownSource } from '../store/sources.ts'
 import { wirings } from '../terminals/index.ts'
@@ -356,7 +355,6 @@ export async function pickPalettes(
 ): Promise<string[] | undefined> {
   const sort: Sort = process.env.TTHEME_SORT === 'cast' ? 'cast' : 'abc'
   const entries = worldOrder(manifest.palettes, manifest.works, sort)
-  knowAliases(entries.flatMap((e) => aboutOf(manifest.works, e.subject)?.character?.danbooru ?? []))
   const tty = process.stdout.isTTY === true
   const live = liveOf(process.env, tty, configHome())
   const saved = live ? await live.saved() : new Map<string, string>()

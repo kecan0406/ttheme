@@ -68,6 +68,30 @@ export function graphemes(text: string): Intl.Segments {
   return segmenter.segment(text)
 }
 
+const KATAKANA = /[ァ-ヶ]/g
+
+const SPACE = /[\s\p{P}\p{S}]+/gu
+
+function searchKey(text: string): string {
+  return text
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(KATAKANA, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60))
+    .replace(SPACE, '')
+}
+
+export function containsText(fields: readonly string[], query: string): boolean {
+  const key = searchKey(query)
+
+  if (key === '') {
+    const raw = query.toLowerCase()
+
+    return fields.some((field) => field.toLowerCase().includes(raw))
+  }
+
+  return fields.some((field) => searchKey(field).includes(key))
+}
+
 export function counted(n: number): string {
   return `${n} palette${n === 1 ? '' : 's'}`
 }

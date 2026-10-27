@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { aboutOf, type Work } from '../core/commons.ts'
+import type { Work } from '../core/commons.ts'
 import { inMode, listed, type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
 import { owned, publisherOf } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
@@ -11,7 +11,6 @@ import { available, nameOf, nearest, readAvailable, untuned, writeKept } from '.
 import { editUserFile, writeAtomic } from '../store/edits.ts'
 import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, worn, writeInstalled } from '../store/installed.ts'
-import { paletteAliases } from '../store/names.ts'
 import { marketplacesOf } from '../store/sources.ts'
 import { readTone, tuned, tunedNames } from '../store/tone.ts'
 import { modeFor, modeSetting } from '../store/wiring.ts'
@@ -19,7 +18,7 @@ import { readText, themeFiles, tilde } from '../terminals/common.ts'
 import { wirings } from '../terminals/index.ts'
 import { settingsFor } from '../terminals/terminal.ts'
 import type { Ctx, Moment, Now, Out, Pointed } from '../terminals/types.ts'
-import { aliasesZsh, palettesZsh } from './emit-shell.ts'
+import { palettesZsh } from './emit-shell.ts'
 
 export function resolve(manifest: Manifest, names: string[]): PaletteEntry[] {
   const known = new Map(manifest.palettes.map((p) => [p.name, p]))
@@ -136,53 +135,8 @@ export function sync(
   }
 
   out.written.push(writeTable(ctx, view.works, host, out.repainted))
-  writeAliases(configHome, entries, view.works, home)
 
   return out.written
-}
-
-export function refreshAliases(configHome: string, home = homedir()): void {
-  if (!existsSync(join(configHome, 'ttheme', 'palettes.zsh'))) return
-  const names = new Set(readInstalled(configHome).palettes)
-  const { palettes, works } = readAvailable(configHome)
-  writeAliases(
-    configHome,
-    palettes.filter((entry) => names.has(entry.name)),
-    works,
-    home,
-  )
-}
-
-function writeAliases(configHome: string, entries: PaletteEntry[], works: readonly Work[], home: string): void {
-  const file = join(configHome, 'ttheme', 'aliases.zsh')
-  const content = aliasesZsh(aliasesFor(entries, works, home))
-
-  if (readText(file) !== content) {
-    writeAtomic(file, content)
-  }
-}
-
-function aliasesFor(entries: PaletteEntry[], works: readonly Work[], home: string) {
-  const characters = entries.flatMap((entry) => {
-    const character = aboutOf(works, entry.subject)?.character
-
-    return character?.danbooru ? [{ name: entry.name, tag: character.danbooru, own: character.native ?? [] }] : []
-  })
-
-  const known = paletteAliases(
-    characters.map((c) => c.tag),
-    home,
-  )
-
-  const out: Record<string, string[]> = {}
-
-  for (const { name, tag, own } of characters) {
-    const names = (known.get(tag) ?? []).filter((alias) => !own.includes(alias))
-
-    if (names.length > 0) out[name] = names
-  }
-
-  return out
 }
 
 function writeTable(ctx: Ctx, works: readonly Work[], host: Host, repainted: boolean): string {

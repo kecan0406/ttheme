@@ -1,9 +1,8 @@
 import type { Readable, Writable } from 'node:stream'
 import { aboutOf, leadOf, type Work, wordsOf, workOf, worksFor } from '../core/commons.ts'
 import { type PaletteEntry, swatch } from '../core/manifest.ts'
-import { cells } from '../core/text.ts'
+import { cells, containsText } from '../core/text.ts'
 import { BUILTIN, isBuiltin, publisherOf, slugOf } from '../core/theme.ts'
-import { aliasesFor, containsText } from '../store/names.ts'
 import { Field } from './field.ts'
 import { capped } from './keycaps.ts'
 import { type Inbound, lineStep } from './keys.ts'
@@ -123,7 +122,7 @@ function passed(row: Row | undefined): boolean {
 export function matchesPalette(entry: PaletteEntry, works: readonly Work[], search: string): boolean {
   const about = aboutOf(works, entry.subject)
 
-  return containsText([entry.name, ...wordsOf(about), ...aliasesFor(about?.character?.danbooru)], search)
+  return containsText([entry.name, ...wordsOf(about)], search)
 }
 
 function leadIn(members: readonly PaletteEntry[], work: Work | undefined): PaletteEntry | undefined {

@@ -25,7 +25,7 @@ hub.preview.text	txt:4e5296c1c0	=	=	=	=	=	=	=	=	=	=	=
 hub.preview.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.browse.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 hub.browse.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-hub.browse.text	txt:14a0b38a2d	=	=	=	=	=	=	=	=	=	=	=
+hub.browse.text	txt:13a4cf2da1	=	=	=	=	=	=	=	=	=	=	=
 hub.browse.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 hub.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
@@ -262,7 +262,7 @@ ssh.out.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 ssh.out.issue	-	=	=	=	=	=	=	=	=	=	=	=
 browse.hover.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 browse.hover.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-browse.hover.text	txt:14a0b38a2d	=	=	=	=	=	=	=	=	=	=	=
+browse.hover.text	txt:13a4cf2da1	=	=	=	=	=	=	=	=	=	=	=
 browse.hover.issue	-	=	=	=	=	=	=	=	=	=	=	=
 browse.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 browse.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none

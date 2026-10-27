@@ -76,10 +76,10 @@ export function hairOf(hair: readonly Tagged[]): (Tagged & { chromatic: boolean 
   return top === undefined ? undefined : { ...top, chromatic: chromatic(top) }
 }
 
-export function readRelated(doc: unknown): { posts: number; tags: Tagged[] } | undefined {
+export function readRelated(doc: unknown): { posts: number; tags: Tagged[]; searched?: string } | undefined {
   if (typeof doc !== 'object' || doc === null) return undefined
 
-  const { post_count: posts, related_tags: related } = doc as Record<string, unknown>
+  const { post_count: posts, related_tags: related, query } = doc as Record<string, unknown>
 
   if (typeof posts !== 'number' || !Array.isArray(related)) return undefined
 
@@ -92,5 +92,7 @@ export function readRelated(doc: unknown): { posts: number; tags: Tagged[] } | u
     return typeof name === 'string' && typeof frequency === 'number' ? [{ name, frequency }] : []
   })
 
-  return { posts, tags }
+  const searched = typeof query === 'string' ? query.split(' ').find((part) => part !== 'solo') : undefined
+
+  return { posts, tags, ...(searched ? { searched } : {}) }
 }

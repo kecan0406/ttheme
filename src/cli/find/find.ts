@@ -65,7 +65,6 @@ import { kinKeys, near, type Size, sameKeys, sameSet } from '../../pictures/work
 import { booruTags, find, readAvailable } from '../../store/available.ts'
 import { writeAtomic } from '../../store/edits.ts'
 import { readInstalled } from '../../store/installed.ts'
-import { nameHits, primeNames } from '../../store/names.ts'
 import { configHome } from '../../store/paths.ts'
 import { blurOf, coloringFor, settingDefault, withSetting } from '../../store/wiring.ts'
 import { CLEAR, viewsInWindow, viewVar } from '../../terminals/terminal.ts'
@@ -386,7 +385,7 @@ const TOP_RIGHT = POSITIONS.indexOf('top-right') + 1
 const SMALLEST = 20
 const LOOKAHEAD = 2
 const KNOWN = 3
-const SPOKEN = /[\p{Script=Hangul}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u
+const WRITTEN = /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u
 const SUGGESTED = 8
 const CHIPS = 9
 
@@ -565,7 +564,6 @@ class Finder {
   private readonly entry: PaletteEntry
   private readonly about: About | undefined
   private readonly characters: ReadonlyMap<string, About>
-  private readonly tagged: ReadonlySet<string>
   private readonly blurring: number
   private readonly start: Start | undefined
   private readonly paint: Paint
@@ -578,13 +576,6 @@ class Finder {
     this.entry = entry
     this.about = aboutOf(manifest.works, entry.subject)
     this.characters = charactersOf(manifest.works)
-    this.tagged = new Set(
-      manifest.palettes.flatMap((p) => {
-        const tag = tagOf(manifest.works, p)
-
-        return tag ? [tag] : []
-      }),
-    )
     this.tone = backdropTone(entry, entry.signatureSlots)
     this.blurring = blurOf(home)
     const untuned: Tuning = { size: 'fill', at: TOP_RIGHT, opacity: this.tone.opacity }
@@ -809,7 +800,6 @@ class Finder {
       })
 
       const clock = setInterval(this.onClock, 250)
-      setTimeout(primeNames, 0)
 
       try {
         const probe = new CellProbe()
@@ -1871,7 +1861,7 @@ class Finder {
 
     if (key === 'enter') {
       const picked = view.pick === undefined ? undefined : shown[view.pick]
-      const chosen = picked ? (picked.whole ? picked.value : text.replace(/\S*$/, picked.value)) : text
+      const chosen = picked ? text.replace(/\S*$/, picked.value) : text
       view.editing = undefined
       view.suggest = undefined
       view.pick = undefined
@@ -1914,33 +1904,15 @@ class Finder {
     view.pick = undefined
     const text = view.editing ?? ''
     const token = /\S*$/.exec(text)?.[0] ?? ''
-    const typed = completable(token)
 
-    const named = nameHits(text, KNOWN, this.tagged).map((hit) => ({
-      value: hit.tag,
-      count: 0,
-      alias: hit.name,
-      whole: true,
-    }))
-
-    if (!typed && named.length === 0) {
+    if (!completable(token)) {
       view.suggest = undefined
 
       return
     }
 
-    const ours = typed ? this.ownTags(token) : []
-
-    const known = [...new Map([...ours.slice(0, KNOWN), ...named].map((item) => [item.value, item] as const)).values()]
+    const known = this.ownTags(token).slice(0, KNOWN)
     view.suggest = known.length > 0 ? known : undefined
-
-    if (named.length > 0 && SPOKEN.test(text)) {
-      view.pick = known.findIndex((item) => 'whole' in item)
-    }
-
-    if (!typed) {
-      return
-    }
 
     const asked = new AbortController()
     this.suggesting = asked
@@ -1951,11 +1923,15 @@ class Finder {
         if (this.suggesting === asked && view.editing !== undefined) {
           const counts = new Map(found.map((item) => [item.value, item.count]))
           const names = new Set(known.map((item) => item.value))
-          view.suggest = [
+
+          const listed = [
             ...known.map((item) => ({ ...item, count: counts.get(item.value) ?? 0 })),
             ...found.filter((item) => !names.has(item.value)),
           ].slice(0, SUGGESTED)
-          view.pick = view.pick !== undefined && view.pick < known.length ? view.pick : undefined
+
+          const held = view.pick !== undefined && view.pick < known.length ? view.pick : undefined
+          view.suggest = listed
+          view.pick = held ?? (WRITTEN.test(text) && listed.length > 0 ? 0 : undefined)
           this.paint.draw()
         }
       } catch {}

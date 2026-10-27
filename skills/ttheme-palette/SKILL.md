@@ -87,7 +87,7 @@ The anchors file's `slots` names three of the palette's colors per character, in
 }
 ```
 
-One file holds the whole cast. `ttheme help palette` lists every field (`native_names`, the character's names in its original language, is filled from ttheme's name data when you leave it out, and recorded only for a character the commons does not hold yet).
+One file holds the whole cast. `ttheme help palette` lists every field (`native_names`, the character's names in its original language, is recorded only for a character the commons does not hold yet, so give it for every such character).
 
 ## 7. Make
 

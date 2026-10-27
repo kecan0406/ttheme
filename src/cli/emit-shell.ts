@@ -1,6 +1,6 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { SITES } from '../core/booru.ts'
-import { aboutOf, type Work, workOf, worksFor, worldOrder } from '../core/commons.ts'
+import { aboutOf, spoken, type Work, workOf, worksFor, worldOrder } from '../core/commons.ts'
 import { listed, type PaletteEntry, swatch } from '../core/manifest.ts'
 import { marksOf } from '../core/mark.ts'
 import type { Mode, Setting } from '../core/mode.ts'
@@ -15,11 +15,6 @@ import { painter } from '../tui/style.ts'
 import { bannerHead, helpText, VERB_SPECS } from './verbs.ts'
 
 const UNQUOTABLE = /["$`\\]/
-const CONTROL = /[\p{Cc}\p{Bidi_Control}]/u
-
-function spoken(tag: string): string {
-  return tag.replace(/_\([^)]*\)$/, '').replaceAll('_', ' ')
-}
 
 export interface ZshContext {
   startup?: string
@@ -256,24 +251,6 @@ export function palettesZsh(palettes: PaletteEntry[], works: readonly Work[], co
     "# where each palette's 16 ANSI colors came from",
     'typeset -gA TTHEME_SRC=(',
     ...palettes.map((p) => entry(p, p.ansiSource)),
-    ')',
-    '',
-  ].join('\n')
-}
-
-export function aliasesZsh(aliases: Readonly<Record<string, readonly string[]>>): string {
-  const rows = Object.entries(aliases).flatMap(([name, all]) => {
-    const names = all.filter((each) => !UNQUOTABLE.test(each) && !CONTROL.test(each) && !each.includes('|'))
-
-    return names.length > 0 && !UNQUOTABLE.test(name) ? [[name, names.join('|')] as const] : []
-  })
-
-  const pad = Math.max(0, ...rows.map(([name]) => name.length))
-
-  return [
-    "# the character's other names in every language, |-separated, from the aninames index in the cache: preview reads this when it opens and searches them too",
-    'typeset -gA TTHEME_ALIASES=(',
-    ...rows.map(([name, names]) => `  ${name.padEnd(pad)} "${names}"`),
     ')',
     '',
   ].join('\n')

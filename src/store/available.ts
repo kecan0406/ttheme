@@ -21,10 +21,10 @@ import {
   toTheme,
 } from '../core/manifest.ts'
 import { marketplaceLayout, type Report, readMarketplaceFiles, readWorkFiles, workLayout } from '../core/own.ts'
+import { containsText } from '../core/text.ts'
 import { BUILTIN, type Identity, isBuiltin, MARKETPLACE_FILE, marketplaceId, slugOf } from '../core/theme.ts'
 import { writeAtomic } from './edits.ts'
 import { readLocal, warning } from './local.ts'
-import { aliasesFor, containsText } from './names.ts'
 import {
   cachePath,
   isLocal,
@@ -392,10 +392,7 @@ export function search(palettes: PaletteEntry[], works: readonly Work[], query: 
   return palettes.filter((p) => {
     const about = aboutOf(works, p.subject)
 
-    return containsText(
-      [p.name, shelfOf(p, works), p.ansiSource, ...wordsOf(about), ...aliasesFor(about?.character?.danbooru)],
-      query,
-    )
+    return containsText([p.name, shelfOf(p, works), p.ansiSource, ...wordsOf(about)], query)
   })
 }
 

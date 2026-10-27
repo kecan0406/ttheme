@@ -458,12 +458,24 @@ export function siteTags(about: About | undefined, site: string): string[] {
   return character.sites?.[site] ?? (character.danbooru ? [character.danbooru] : [])
 }
 
+export function spoken(tag: string): string {
+  return tag.replace(/_\([^)]*\)$/, '').replaceAll('_', ' ')
+}
+
 export function wordsOf(about: About | undefined): string[] {
   if (!about) {
     return []
   }
 
-  return [about.work.name, about.work.native ?? '', about.character?.id ?? '', ...(about.character?.native ?? [])]
+  const tag = about.character?.danbooru
+
+  return [
+    about.work.name,
+    about.work.native ?? '',
+    about.character?.id ?? '',
+    ...(about.character?.native ?? []),
+    tag ? spoken(tag) : '',
+  ]
 }
 
 export function castIndex(about: About | undefined): number {

@@ -40,7 +40,6 @@ import { artDir, artKey, fetchArt } from '../pictures/art.ts'
 import { reach, readMarketplaces } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { marketplaceFiles, palettesDir, readMarketplaceDir, warning, worksDir } from '../store/local.ts'
-import { namesOf } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
 import { readSchemes, schemesDir, syncSchemes } from '../store/schemes.ts'
 import { normalize } from '../tui/find/attach.ts'
@@ -301,7 +300,7 @@ async function consensus(tag: string | undefined, flags: PaletteFlags): Promise<
 
   if (!related) throw new Error('safebooru answered something ttheme cannot read')
 
-  const current = namesOf(tag)?.tag
+  const current = related.searched
   const found = worn(related.tags)
   const verdict = verdictOf(related.posts, found)
   const hair = hairOf(found.hair)
@@ -422,30 +421,9 @@ async function targetOf(into: string | undefined, dry: boolean): Promise<Target 
   }
 }
 
-function nativeNamesOf(anchors: Anchors, booru: string | undefined): string[] | undefined {
-  if (anchors.nativeNames) return anchors.nativeNames
-
-  const known = booru ? namesOf(booru) : undefined
-
-  const seen = new Set<string>()
-
-  const names = (known?.japanese ?? []).filter((name) => {
-    const key = name.replace(/[\s\u3000・]/g, '')
-
-    const kept =
-      !/[(（|]|(ちゃん|くん|さん|さま|様|たん)$/.test(name) && textProblem(name) === undefined && !seen.has(key)
-
-    seen.add(key)
-
-    return kept
-  })
-
-  return names.length > 0 ? names.slice(0, NATIVE_MOST) : undefined
-}
-
-function taggedIn(works: readonly Work[], tags: readonly (string | undefined)[]): string | undefined {
+function taggedIn(works: readonly Work[], tag: string): string | undefined {
   for (const work of works) {
-    const character = work.characters.find((c) => c.danbooru !== undefined && tags.includes(c.danbooru))
+    const character = work.characters.find((c) => c.danbooru === tag)
 
     if (character) return `${work.id}/${character.id}`
   }
@@ -580,12 +558,8 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
       continue
     }
 
-    const current = anchors.booru ? namesOf(anchors.booru)?.tag : undefined
-    const booru = current ?? anchors.booru
-
-    if (current && current !== anchors.booru) notes.push(`${anchors.name}: danbooru calls ${anchors.booru} ${current}`)
-
-    const tagged = booru ? taggedIn(known, [booru, anchors.booru]) : undefined
+    const booru = anchors.booru
+    const tagged = booru ? taggedIn(known, booru) : undefined
     const subject = tagged ?? (flags.work ? `${flags.work}/${anchors.name}` : undefined)
 
     if (tagged && flags.work && workIdOf(tagged) !== flags.work) {
@@ -598,7 +572,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
     }
 
     const about = aboutOf(known, subject)
-    const nativeNames = !subject ? undefined : about?.known ? about.character?.native : nativeNamesOf(anchors, booru)
+    const nativeNames = !subject ? undefined : about?.known ? about.character?.native : anchors.nativeNames
 
     if (subject && !about?.known) {
       const id = workIdOf(subject)

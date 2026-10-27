@@ -138,8 +138,7 @@ sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakur
 - `danbooru` is who the character is: its danbooru tag (`kaname_madoka`,
   `lucy_(cyberpunk)`), checked on danbooru first — a character tag with posts.
   No two characters in the commons share one, so a character is never added
-  twice under two works. `find` searches it for pictures, and the character's
-  names in every language reach the search through it. A work's own subject
+  twice under two works. `find` searches it for pictures. A work's own subject
   has none.
 - `native` lists the character's names in its original language (or the
   Japanese release's), which search matches alongside the palette's name: the
@@ -651,14 +650,14 @@ refused for something the person can change (`The builder needs a window of at
 least 96×28`, `Pick at least one palette`, `No picture on the clipboard`).
 
 Text someone else wrote — a marketplace's files and the names of its files and
-folders, the marketplace index, a booru's answer, the names release, an error
-message built from any of them — has every control and direction character
+folders, the marketplace index, a booru's answer, an error message built from
+any of them — has every control and direction character
 dropped or spelled out before a screen or a message shows it, so no escape
 sequence reaches the terminal and no direction mark reorders what it touches:
 through `src/core/text.ts` in
 Browse, the editor's notices, the readers and the CLI's errors (`inert` for one
 line, `inertLines` for a message that keeps its line breaks, and `quoted` or
 `escaped` for a value an error echoes), through `Line.put` and `linked` in
-find, and through `aliasesZsh` and the picture's conf lines for preview; a
+find, and through the picture's conf lines for preview; a
 reader refuses such a character where a value has no use for one
 (`textProblem`).

@@ -93,10 +93,6 @@ export const CONFIG_SETTINGS = {
     doc: '# the colors new background pictures are drawn in: original keeps its own, tone tints a picture in one color of its palette — preview switches each picture later (default original)',
     default: 'original',
   },
-  TTHEME_NAMES: {
-    doc: "# character names in every language for searching palettes and find's search box, from aninames' weekly release: on downloads them (about 7 MB) and checks once a day in the background; off leaves them as they are (default on)",
-    default: 'on',
-  },
   TTHEME_AUTO_UPDATE: {
     doc: '# checks in the background: on refreshes the marketplaces you set to update on their own once a day and says when a newer ttheme is out; off leaves both to ttheme update (default on)',
     default: 'on',

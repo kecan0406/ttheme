@@ -5,7 +5,7 @@ __tt_pv_seek() {
   for t in ${(k)TTHEME_PALETTE}; do
     key="" s=${TTHEME_SUBJECT[$t]}
     w=${s%%/*}
-    for part in "$t" "${t##*/}" "${t%%/*}" "${TTHEME_WORK_NAME[$w]}" "${TTHEME_WORK_NATIVE[$w]}" "${${(M)s:#*/*}#*/}" "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
+    for part in "$t" "${t##*/}" "${t%%/*}" "${TTHEME_WORK_NAME[$w]}" "${TTHEME_WORK_NATIVE[$w]}" "${${(M)s:#*/*}#*/}" "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}"; do
       [[ -n $part ]] || continue
       __tt_pv_norm "$part"
       key+="|$REPLY"
@@ -317,7 +317,7 @@ __tt_pv_row() {
     (( color )) && hl+=" "$TTHEME_SGR[warn]$TTHEME_MARKS[on]$TTHEME_SGR[/warn] || hl+=" "$TTHEME_MARKS[on]
   fi
   extra=""
-  for part in "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
+  for part in "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}"; do
     __tt_pv_alias "${t##*/}" "$part"
     [[ -n $REPLY ]] && { extra=$REPLY; break }
   done
@@ -2785,7 +2785,7 @@ __tt_preview() {
   local -i scene=0
   local -a bgorder=()
   local -A bgfrom=() bgurl=() bgby=() bgsent=() bgcost=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
-  local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgcred=() bgpage=() bgprof=() bgprep=() TTHEME_ALIASES=()
+  local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgcred=() bgpage=() bgprof=() bgprep=()
   local conf=0 cf=1
   local -i gmenu=0 gm=1
   local -a gitems=(TTHEME_GROUP:work TTHEME_GROUP:marketplace TTHEME_SORT:abc TTHEME_SORT:cast)
@@ -2811,7 +2811,6 @@ __tt_preview() {
     TTHEME_BG_COLORS:original "New pictures keep their own colors"
     TTHEME_BG_COLORS:tone "New pictures are tinted in the palette's color"
   )
-  [[ -r $TTHEME_HOME/aliases.zsh ]] && source $TTHEME_HOME/aliases.zsh
   [[ $mode == pin ]] && __tt_pin_scopes "$pdir"
   __tt_pv_canpick
   __tt_pv_size

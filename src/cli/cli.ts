@@ -14,7 +14,6 @@ import { runInfo } from './info.ts'
 import { runInit } from './init.ts'
 import { runAdd, runDefault, runOff, runOn, runSync, runUpdate } from './installs.ts'
 import { runMarketplace } from './marketplaces.ts'
-import { startNamesUpdate, updateNames } from './names-update.ts'
 import { type PaletteFlags, runPalette } from './palette.ts'
 import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
@@ -84,7 +83,6 @@ const RUNS = new Map<string, Verb['run']>([
   ['image', ([name, action, key]) => runImage(name as string, action as string, key)],
   ['sync', () => runSync()],
   ['redraw', () => runRedraw()],
-  ['names', () => updateNames()],
   ['latest', () => checkLatest()],
   ['tone', ([name, action, width]) => runTone(name as string, action as string, width)],
   [
@@ -252,13 +250,9 @@ export async function runCli(argv: readonly string[]): Promise<number> {
 
     const code = await call.verb.run(call.args, call.flags)
 
-    if (!call.verb.hidden && call.verb.name !== 'uninstall') {
-      startNamesUpdate()
-
-      if (call.verb.name !== 'update' && call.verb.name !== 'init') {
-        startReleaseCheck()
-        tellRelease()
-      }
+    if (!call.verb.hidden && !['init', 'uninstall', 'update'].includes(call.verb.name)) {
+      startReleaseCheck()
+      tellRelease()
     }
 
     return code ?? 0

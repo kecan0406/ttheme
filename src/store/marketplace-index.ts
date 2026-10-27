@@ -1,11 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { PaletteEntry } from '../core/manifest.ts'
-import { inert } from '../core/text.ts'
+import { containsText, inert } from '../core/text.ts'
 import { nameProblem, subjectProblem, textProblem } from '../core/theme.ts'
 import { reach } from './available.ts'
 import { writeAtomic } from './edits.ts'
-import { containsText } from './names.ts'
 import { cacheRoot } from './paths.ts'
 import { isRemote, parseSource } from './sources.ts'
 

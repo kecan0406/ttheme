@@ -38,7 +38,7 @@ const works: Work[] = [
     native: '魔法少女まどか☆マギカ',
     lead: 'madoka-magica/homura',
     characters: [
-      { id: 'madoka', native: ['鹿目まどか'] },
+      { id: 'madoka', native: ['鹿目まどか'], danbooru: 'kaname_madoka' },
       { id: 'homura', native: ['暁美ほむら'] },
     ],
   },
@@ -114,6 +114,7 @@ test('matchesPalette filters by name, publisher, work, native title and the char
   assert.ok(matchesPalette(madoka, works, 'MAGICA'))
   assert.ok(matchesPalette(madoka, works, '魔法少女'))
   assert.ok(matchesPalette(madoka, works, '鹿目'))
+  assert.ok(matchesPalette(madoka, works, 'kaname'))
   assert.ok(!matchesPalette(madoka, works, 'rin'))
   assert.ok(!matchesPalette(madoka, works, 'ほむら'))
   const dusk = shop.at(-1)
