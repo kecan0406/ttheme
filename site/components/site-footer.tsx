@@ -1,5 +1,4 @@
 import { type SimpleIcon, siGithub, siNpm } from 'simple-icons'
-import { Badge } from '@/components/ui/badge'
 import type { Facts } from '@/lib/facts'
 import { marketplacePath, NPM_URL, REPO_URL } from '@/lib/gallery'
 import { BrandIcon, NewTab } from '@/lib/icons'
@@ -70,7 +69,7 @@ function Signs() {
   )
 }
 
-function Brand({ facts }: { facts: Facts }) {
+function Brand() {
   return (
     <div class="grid content-start justify-items-start gap-2.5 max-[640px]:col-span-2">
       <a
@@ -83,23 +82,15 @@ function Brand({ facts }: { facts: Facts }) {
         <Wordmark />
       </a>
       <p class="text-xs font-medium tracking-wide text-muted-foreground">use your favorite character</p>
-      <Badge variant="count">
-        {facts.palettes} palettes · {facts.works} works
-      </Badge>
     </div>
   )
 }
 
-function Tagline({ facts }: { facts: Facts }) {
+function Tagline() {
   return (
     <div class="grid content-start justify-items-start gap-2.5 max-[640px]:col-span-2">
       <p class="max-w-[18ch] font-display text-display-sm font-extrabold">use your favorite character</p>
-      <span class="flex items-center gap-2.5">
-        <Badge variant="count">
-          {facts.palettes} palettes · {facts.works} works
-        </Badge>
-        <Signs />
-      </span>
+      <Signs />
     </div>
   )
 }
@@ -178,7 +169,7 @@ export function SiteFooter({
     >
       <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-6">
         <div class="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 max-[640px]:grid-cols-2 max-[640px]:gap-6">
-          {landing ? <Tagline facts={facts} /> : <Brand facts={facts} />}
+          {landing ? <Tagline /> : <Brand />}
           <Columns current={current} />
         </div>
         {landing ? <Mega /> : null}

@@ -59,7 +59,3 @@ export function leadsOf(themes: readonly Theme[]): Theme[] {
 
   return first ? [first, ...leads.filter((theme) => theme !== first)] : leads
 }
-
-export function worksIn(themes: readonly Theme[]): number {
-  return byWork(themes).filter((shelf) => shelf.work !== null).length
-}

@@ -1,9 +1,9 @@
 import { FACET_HEIGHT, FACET_LAMP, FACET_WIDTH, facetCorners, facetMesh, facetPoints, shade } from '@/lib/facets'
-import { INIT } from '@/lib/gallery'
+import { BUILTIN_ABOUT, INIT } from '@/lib/gallery'
 import { type Raster, raster } from '@/lib/raster'
 import { BUILTIN, isBuiltin, type Marketplace, shortName, type Theme } from '@/lib/themes'
 import { INK, wordmarkSvg } from '@/lib/wordmark'
-import { leadsOf, worksIn } from '@/lib/works'
+import { leadsOf } from '@/lib/works'
 import { GLYPH, glyphSvg, marksOf } from '../../src/core/mark.ts'
 import { liftOk, mixOk } from '../../src/core/oklab.ts'
 
@@ -31,7 +31,7 @@ export type Card =
   | { kind: 'palette' | 'share'; theme: Theme }
   | { kind: 'marketplace'; marketplace: Marketplace | null; palettes: Theme[] }
   | { kind: 'bundle'; palettes: Theme[] }
-  | { kind: 'site'; theme: Theme; palettes: number; works: number }
+  | { kind: 'site'; theme: Theme }
 
 type Part = [text: string, fill: string, options?: { bold?: boolean; background?: string }]
 
@@ -407,12 +407,7 @@ function marketplace(kit: Raster, card: Extract<Card, { kind: 'marketplace' }>, 
   const { marketplace: market, palettes } = card
   const theme = leadsOf(palettes)[0] as Theme
   const k = tones(theme)
-  const works = worksIn(palettes)
-
-  const about = market
-    ? market.about
-    : `${palettes.length} palettes from ${works} works, each measured from the character's official art`
-
+  const about = market ? market.about : BUILTIN_ABOUT
   const command = market ? `ttheme marketplace add ${market.add}` : INIT
   const window = windowOf(kit, theme, k, 'ttheme marketplace', frame)
   const { size, rows } = rowsOf(kit, market?.id ?? BUILTIN, window.left, 110, 56)
@@ -426,8 +421,6 @@ function marketplace(kit: Raster, card: Extract<Card, { kind: 'marketplace' }>, 
       .map((row, at) => text(row, { x: MARGIN, y: top + at * 38, size: 28, fill: k.muted, family: kit.family.ui })),
   ]
 
-  const facts = `${palettes.length} palettes · ${works} works`
-  out.push(text(facts, { x: MARGIN, y: frame.height - MARGIN, size: 28, fill: k.soft, family: kit.family.ui }))
   out.push(window.drawn)
   out.push(listing(kit, command, listed(palettes, 7), k, theme.ansi[3] as string, window.body))
 
@@ -484,8 +477,6 @@ function site(kit: Raster, card: Extract<Card, { kind: 'site' }>, frame: Frame):
 
   const last = first + (HEADLINE.length - 1) * size * 0.94
   out.push(text(TAGLINE, { x: MARGIN, y: last + 52, size: 30, fill: k.soft, family: kit.family.ui }))
-  const facts = `${card.palettes} palettes · ${card.works} works`
-  out.push(text(facts, { x: MARGIN, y: frame.height - MARGIN, size: 28, fill: k.muted, family: kit.family.ui }))
   out.push(window.drawn)
   out.push(shell(kit, theme, k, theme.name, window.body.x, window.body.y, window.body.width))
 

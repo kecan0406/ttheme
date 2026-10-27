@@ -13,8 +13,6 @@ import {
 } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { BUILTIN, type Marketplace, type Theme } from '@/lib/themes'
-import { plural } from '@/lib/utils'
-import { byWork } from '@/lib/works'
 import { CommandRow } from './command-row'
 import { MarketplaceBoard } from './marketplace-board'
 import { MarketplaceFrame } from './marketplace-frame'
@@ -60,21 +58,11 @@ export function MarketplacePage({
   facts: Facts
 }) {
   const shelves = listingsOf(themes, marketplaces, facts)
-  const palettes = shelves.reduce((sum, shelf) => sum + shelf.palettes.length, 0)
-
-  const works = new Set(
-    byWork(shelves.flatMap((shelf) => shelf.palettes)).flatMap((shelf) => (shelf.work ? [shelf.work.id] : [])),
-  ).size
 
   return (
     <MarketplaceFrame facts={facts} current="/marketplace">
       <MarketplaceBoard shelves={shelves}>
-        <div class="grid gap-1.5">
-          <h1 class="font-display text-display-lg font-black">marketplace</h1>
-          <p class="text-sm font-medium text-muted-foreground" safe>
-            {[plural(shelves.length, 'marketplace'), plural(palettes, 'palette'), plural(works, 'work')].join(' · ')}
-          </p>
-        </div>
+        <h1 class="font-display text-display-lg font-black">marketplace</h1>
       </MarketplaceBoard>
       <section
         aria-labelledby="publish"

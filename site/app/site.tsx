@@ -30,14 +30,12 @@ import {
   sharedMeta,
   siteMeta,
 } from '@/lib/titles'
-import { leadsOf, worksIn } from '@/lib/works'
+import { leadsOf } from '@/lib/works'
 import repo from '@/repo.json' with { type: 'json' }
 import pkg from '../../package.json' with { type: 'json' }
 import { type Page, page } from './document'
 
 const facts: Facts = {
-  palettes: themes.length,
-  works: worksIn(themes),
   version: pkg.version,
   repo: repo as Repo | null,
 }
@@ -48,7 +46,7 @@ const CREDITS = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60480
 
 const STORE = 'One ttheme marketplace: its repository, its palettes and how they do on the contrast checks'
 
-const SITE_CARD: Card = { kind: 'site', theme: fallback, palettes: facts.palettes, works: facts.works }
+const SITE_CARD: Card = { kind: 'site', theme: fallback }
 
 const CARD = { image: '/card.png', imageAlt: cardAlt(SITE_CARD) }
 
@@ -128,7 +126,7 @@ function workspace(marketplace: Marketplace | null, palettes: Theme[], theme: Th
         ld: [crumbs([...trail, { name: theme.name, path: palettePath(theme) }])],
       }
     : {
-        ...marketplaceMeta(marketplace, palettes.length, worksIn(palettes)),
+        ...marketplaceMeta(marketplace),
         path: marketplacePath(id),
         image: `${marketplacePath(id)}/card.png`,
         imageAlt: cardAlt(marketplaceCard(marketplace, palettes)),
@@ -210,7 +208,7 @@ export const site = new Elysia({ name: 'site' })
   .get('/', () =>
     page(
       {
-        ...siteMeta(facts.palettes),
+        ...siteMeta(),
         path: '/',
         ...CARD,
         ld: [siteGraph(facts)],
@@ -222,7 +220,7 @@ export const site = new Elysia({ name: 'site' })
   .get('/marketplace', () =>
     page(
       {
-        ...marketplacesMeta(facts.palettes),
+        ...marketplacesMeta(),
         path: '/marketplace',
         ...CARD,
         ld: [

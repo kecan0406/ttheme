@@ -1,6 +1,5 @@
 import type { PropsWithChildren } from '@kitajs/html'
 import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide'
-import { Badge } from '@/components/ui/badge'
 import { Button, LinkButton } from '@/components/ui/button'
 import type { Facts } from '@/lib/facts'
 import { INIT, marketplacePath } from '@/lib/gallery'
@@ -21,35 +20,33 @@ const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
 const LEAD = 'use'
 
-function features(palettes: number, works: number) {
-  return [
-    {
-      emoji: '🎨',
-      title: 'a palette per character',
-      text: `${palettes} palettes across ${works} works, each measured from the character's official art, with three signature colors you will recognise.`,
-    },
-    {
-      emoji: '🖥️',
-      title: 'every terminal you use',
-      text: 'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Rio, Contour, Windows Terminal, Warp, Konsole and Terminal.app, all wired by one init.',
-    },
-    {
-      emoji: '🖼️',
-      title: 'a picture behind the text',
-      text: "Tint a picture into the palette's background and set how strongly it shows behind the text.",
-    },
-    {
-      emoji: '🛠️',
-      title: 'make your own',
-      text: 'ttheme new opens a palette editor in your terminal, and ttheme share turns the result into a link anyone can open.',
-    },
-    {
-      emoji: '🍀',
-      title: 'free and open',
-      text: 'MIT licensed, and anyone can publish a marketplace of their own palettes from a GitHub repository.',
-    },
-  ]
-}
+const FEATURES = [
+  {
+    emoji: '🎨',
+    title: 'a palette per character',
+    text: "Each measured from the character's official art, with three signature colors you will recognise.",
+  },
+  {
+    emoji: '🖥️',
+    title: 'every terminal you use',
+    text: 'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Rio, Contour, Windows Terminal, Warp, Konsole and Terminal.app, all wired by one init.',
+  },
+  {
+    emoji: '🖼️',
+    title: 'a picture behind the text',
+    text: "Tint a picture into the palette's background and set how strongly it shows behind the text.",
+  },
+  {
+    emoji: '🛠️',
+    title: 'make your own',
+    text: 'ttheme new opens a palette editor in your terminal, and ttheme share turns the result into a link anyone can open.',
+  },
+  {
+    emoji: '🍀',
+    title: 'free and open',
+    text: 'MIT licensed, and anyone can publish a marketplace of their own palettes from a GitHub repository.',
+  },
+]
 
 const STEPS = [
   {
@@ -120,9 +117,6 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
           class="grid grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] items-center gap-12 pt-14 pb-10 max-[960px]:grid-cols-[minmax(0,1fr)] max-[960px]:pt-8"
         >
           <div class="@container grid justify-items-start gap-6">
-            <Badge variant="sticker">
-              {facts.palettes} palettes · {facts.works} works <span aria-hidden="true">✦</span>
-            </Badge>
             <h1 class="font-display text-display-xl font-black" style={`--lead-prefix:${headlineEm(`${LEAD} `)}`}>
               {LEAD}{' '}
               <sparkle-burst class="relative inline-block">
@@ -208,7 +202,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
           </h2>
           <div class="grid grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
             <PerTab leads={leads} />
-            {features(facts.palettes, facts.works).map((feature) => (
+            {FEATURES.map((feature) => (
               <article class="grid content-start gap-2 rounded-3xl border bg-muted p-6 max-[960px]:last:col-span-2 max-[640px]:last:col-span-1">
                 <span class="text-3xl" role="img" aria-hidden="true" safe>
                   {feature.emoji}

@@ -4,8 +4,6 @@ export interface Repo {
 }
 
 export interface Facts {
-  palettes: number
-  works: number
   version: string
   repo: Repo | null
 }

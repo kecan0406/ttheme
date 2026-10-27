@@ -1,5 +1,4 @@
 import { type Marketplace, shortName, type Theme } from '@/lib/themes'
-import { plural } from '@/lib/utils'
 
 export interface Meta {
   title: string
@@ -9,10 +8,10 @@ export interface Meta {
 const TERMINALS =
   'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Rio, Contour, Windows Terminal, Warp, Konsole and Terminal.app'
 
-export function siteMeta(palettes: number): Meta {
+export function siteMeta(): Meta {
   return {
     title: 'ttheme — character color themes for your terminal',
-    description: `${palettes} character color palettes for your terminal. Works in ${TERMINALS}.`,
+    description: `Character color palettes for your terminal. Works in ${TERMINALS}.`,
   }
 }
 
@@ -38,23 +37,24 @@ export function docMeta(title: string, group: string, description: string): Meta
   }
 }
 
-export function marketplacesMeta(palettes: number): Meta {
+export function marketplacesMeta(): Meta {
   return {
     title: 'marketplace — built-in and community terminal themes · ttheme',
-    description: `The ${palettes} palettes built into ttheme and the marketplaces anyone publishes from a GitHub repository.`,
+    description: 'The palettes built into ttheme and the marketplaces anyone publishes from a GitHub repository.',
   }
 }
 
-export function marketplaceMeta(marketplace: Marketplace | null, palettes: number, works: number): Meta {
+export function marketplaceMeta(marketplace: Marketplace | null): Meta {
   if (!marketplace)
     return {
-      title: `built-in marketplace — ${palettes} character terminal themes · ttheme`,
-      description: `${palettes} terminal color schemes that come with ttheme: one per character from ${plural(works, 'work')}, each measured from the character's official art.`,
+      title: 'built-in marketplace — character terminal themes · ttheme',
+      description:
+        "The terminal color schemes that come with ttheme: one per character, each measured from the character's official art.",
     }
 
   return {
-    title: `${marketplace.id} — ${palettes} terminal themes · ttheme`,
-    description: `${marketplace.about} — ${plural(palettes, 'color scheme')}${works > 0 ? ` from ${plural(works, 'work')}` : ''}. Add it with ttheme marketplace add ${marketplace.add}.`,
+    title: `${marketplace.id} — terminal themes · ttheme`,
+    description: `${marketplace.about} — color schemes for your terminal. Add it with ttheme marketplace add ${marketplace.add}.`,
   }
 }
 

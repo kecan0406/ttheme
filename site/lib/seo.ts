@@ -20,7 +20,7 @@ export function sitemapXml(paths: string[]): string {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`
 }
 
-export function siteGraph({ palettes, version }: Facts) {
+export function siteGraph({ version }: Facts) {
   return {
     '@context': 'https://schema.org',
     '@graph': [
@@ -30,7 +30,7 @@ export function siteGraph({ palettes, version }: Facts) {
         '@id': `${ORIGIN}/#code`,
         name: 'ttheme',
         url: `${ORIGIN}/`,
-        description: siteMeta(palettes).description,
+        description: siteMeta().description,
         codeRepository: REPO_URL,
         programmingLanguage: ['TypeScript', 'Zsh'],
         runtimePlatform: 'Node.js, zsh',
