@@ -87,6 +87,11 @@ npx skills add kecan0406/ttheme   # the same skill, for Claude Code, Codex, Clin
 In Claude Code, `/plugin install ttheme-palette --marketplace kecan0406/ttheme`
 adds it as a plugin.
 
+`ttheme help palette` names the skill format each ttheme works with, and a
+skill older than that asks you to update it before it starts: run `init` again,
+`npx skills add kecan0406/ttheme`, or update the plugin, whichever way you
+added it.
+
 ## On the web
 
 [ttheme.dev/builder](https://ttheme.dev/builder) is the same builder in the

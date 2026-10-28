@@ -1,6 +1,7 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { CODE, SHARE_URL } from '../core/draft.ts'
 import { WIRED } from '../core/wired.ts'
+import { SKILL_FORMAT } from '../store/agent-skills.ts'
 import { logoOf } from '../tui/parts.ts'
 import { type Paint, painter } from '../tui/style.ts'
 import { EXIT_CODES } from './answer.ts'
@@ -272,6 +273,9 @@ export const VERB_SPECS: VerbSpec[] = [
       '',
       'With --json each action prints one object on stdout, its status done, unchanged or error;',
       'an error lists each field it refuses in problems, as { path, problem }.',
+      '',
+      `The ttheme-palette agent skill this ttheme works with is skill format ${SKILL_FORMAT};`,
+      'a copy of a lower format asks you to update it before it starts.',
     ],
   },
   {

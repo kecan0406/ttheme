@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import { heldElsewhere, placedSkills, placeSkill, SKILL, skillPath } from './agent-skills.ts'
+import { ROOT } from '../root.ts'
+import { heldElsewhere, placedSkills, placeSkill, SKILL, SKILL_FORMAT, skillPath } from './agent-skills.ts'
 
 function setup() {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-skill-'))
@@ -57,4 +58,10 @@ test('a skill another installer put there, or a Claude Code plugin, is not ours 
   writeFileSync(join(homes.claude, 'plugins', 'installed_plugins.json'), `{"plugins": {"${SKILL}@ttheme": []}}`)
   assert.equal(heldElsewhere('claude', homes, ['claude']), true)
   rmSync(dir, { recursive: true, force: true })
+})
+
+test('the shipped skill stops at a skill format above the one SKILL_FORMAT names', () => {
+  const text = readFileSync(join(ROOT, 'skills', SKILL, 'SKILL.md'), 'utf8')
+
+  assert.match(text, new RegExp(`skill format above ${SKILL_FORMAT}\\b`))
 })
