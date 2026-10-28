@@ -7,7 +7,7 @@ metadata:
 
 # Finding your way around the screens
 
-This is a map, not the reference. The facts are kept where they already are — `src/tui/AGENTS.md` (the Node runtime, the mouse, Browse, the palette editor), HACKING.md's "Working on the TUIs" (the roles and marks, the key tables, the mouse), `.claude/rules/text.md` (the text rules) and `.claude/rules/tui.md`, which loads only once a file under `src/tui/` is read with the Read tool — and this file says which of them to open for the change in hand. Where a name here and the code disagree, the code is right and this file is fixed.
+This is a map, not the reference. The facts are kept where they already are — `src/tui/AGENTS.md` (the Node runtime, the mouse, Browse, the palette editor), HACKING.md's "Working on the TUIs" (the roles and marks, the key tables, the mouse), `.claude/rules/text.md` (the text rules) and `.claude/rules/tui.md`, which loads once a file its `paths` name is read with the Read tool — and this file says which of them to open for the change in hand. Where a name here and the code disagree, the code is right and this file is fixed.
 
 Look at a screen before reading the code that draws it: `mise run look <scenario> <cols>x<rows> [keys…]` writes a PNG and a text grid (`mise run look` alone lists the scenarios).
 
