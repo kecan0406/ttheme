@@ -402,7 +402,15 @@ async function askSkills(agents: AgentHomes, ours: readonly SkillTarget[]): Prom
   )
 }
 
-async function askMode(configHome: string, terminals: readonly Wired[]): Promise<Setting> {
+export function startingMode(offered: readonly Setting[], was: Setting, again: boolean): Setting | undefined {
+  if (again && offered.includes(was)) {
+    return was
+  }
+
+  return offered.includes('auto') ? 'auto' : offered.includes(was) ? was : undefined
+}
+
+async function askMode(configHome: string, terminals: readonly Wired[], again: boolean): Promise<Setting> {
   const offered = settingsFor(terminals)
   const was = modeSetting(configHome)
 
@@ -419,7 +427,7 @@ async function askMode(configHome: string, terminals: readonly Wired[]): Promise
     await p.select<Setting>({
       message: `Show the palettes in ${modes} mode?\nEvery palette comes in both — ${picks.join(', ')} or ${cap('alt+c')} in \`ttheme\` switches it later`,
       options: offered.map((value) => ({ value, label: value, hint: hints[value] })),
-      initialValue: offered.includes('auto') ? 'auto' : offered.includes(was) ? was : modeFor(configHome),
+      initialValue: startingMode(offered, was, again) ?? modeFor(configHome),
     }),
   )
 }
@@ -685,7 +693,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   }
 
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)
-  const mode = await askMode(configHome, terminals)
+  const mode = await askMode(configHome, terminals, existing !== undefined)
   const worn: Mode = mode === 'auto' ? (readAppearance() ?? systemAppearance(host) ?? 'dark') : mode
   const made = existing ? againManifest(existing, paths) : manifestOf(readPackaged(ROOT))
   const manifest = { ...made, palettes: made.palettes.map((entry) => inMode(entry, worn)) }

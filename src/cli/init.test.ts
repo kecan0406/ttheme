@@ -16,6 +16,7 @@ import {
   planAgain,
   planInit,
   planUpgrade,
+  startingMode,
 } from './init.ts'
 import { sync } from './sync.ts'
 import { applyUninstall, planUninstall } from './uninstall.ts'
@@ -234,6 +235,13 @@ test('init writes the mode it was given, and every palette is worn in it from th
   assert.equal(worn(), 'light')
   applyInit(planUpgrade(installedState(paths.configHome) as Installed, paths))
   assert.equal(worn(), 'light')
+})
+
+test('setting it up again starts the mode question on the mode it had, a first init on auto where a terminal follows the system', () => {
+  assert.equal(startingMode(['auto', 'light', 'dark'], 'dark', true), 'dark')
+  assert.equal(startingMode(['auto', 'light', 'dark'], 'dark', false), 'auto')
+  assert.equal(startingMode(['light', 'dark'], 'light', false), 'light')
+  assert.equal(startingMode(['light', 'dark'], 'auto', true), undefined)
 })
 
 test('Ghostty opens new tabs through the launcher only while they rotate, and never over a command of the user', () => {

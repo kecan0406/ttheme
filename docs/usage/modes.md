@@ -13,8 +13,9 @@ ttheme auto    # the system's appearance, followed as it changes
 
 A switch changes every open tab, whether you set its palette or not, in every
 terminal you wired, and moves each palette's pictures to the new mode. `alt+c`
-in `ttheme` has the same setting as its **Mode** row, and `init` asks for it the
-first time.
+in `ttheme` has the same setting as its **Mode** row. `init` asks for it the
+first time, starting on `auto` where a wired terminal can follow the system,
+and again when you set ttheme up again, starting on the mode you have.
 
 ## How auto works
 
