@@ -3,9 +3,10 @@
 This file is for changing ttheme's code: the shell layer, the terminal wiring
 and the screens. Read [CONTRIBUTING.md](CONTRIBUTING.md) first — it says what
 the project takes, how to set up a checkout and what to run before a pull
-request. [CLAUDE.md](CLAUDE.md) is the full reference: the tasks in `mise.toml`,
-how the source is layered and the conventions the code keeps. How every screen
-and message is worded is in [`.claude/rules/text.md`](.claude/rules/text.md).
+request. [AGENTS.md](AGENTS.md) holds the rules the code keeps and says where
+the rest lives: the tasks are in `mise.toml`, and a folder's `AGENTS.md` has
+that folder's conventions. How every screen and message is worded is in
+[`.claude/rules/text.md`](.claude/rules/text.md).
 
 ## Shell code on GNU and BSD
 

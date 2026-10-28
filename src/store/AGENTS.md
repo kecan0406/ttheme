@@ -1,0 +1,14 @@
+# src/store
+
+What ttheme keeps on disk, and what it fetches into it.
+
+- `installed.json` is read field by field through `OPTIONAL` (`installed.ts`), a table whose type covers every optional key of `Installed`. Each change spreads the state it read (`{ ...state, … }`), and `init`'s `planAgain` sets only what it asks again, so a field added later survives a rerun without being named. `sync.test.ts` and `init.test.ts` hold both to `Required<Installed>`.
+- Read palettes through `available` and `readAvailable` (`available.ts`), never the bare bundle. An installed palette is pinned: `untuned` lays its `kept.json` copy over a marketplace entry of the same name, colors and pictures from the copy and `subject` from the marketplace, so a refreshed marketplace never changes what a tab wears.
+- The mode a palette is worn in is projected once (`inMode`, `src/core/manifest.ts`): `shown`, `available` and `sync` go through it, so every emitter, `palettes.zsh`, preview, Browse, the pickers and the editor see one set. `kept.json` keeps palettes as their marketplaces give them.
+- A tuning is a per-slot override in `tone.json`, written only by `runTone` (`src/cli/craft.ts`). `available` lays the worn mode's tone over every entry, and `sync` writes `kept.json` from the untuned entries, so a tone can always go back to what the marketplace gave.
+- A marketplace repository is fetched as its codeload archive with the ETag (`archiveUrl`), a folder is read in place, and both go through one reader, so every gate value, signature color and backdrop is derived by it, never stored.
+- A cache in a shape this ttheme does not read is skipped, so `init`'s upgrade never depends on one. `init` writes `~/.config/ttheme/builtin.json` and `commons.json` (`writeBundled`), and nothing else does.
+- A file another ttheme wrote (a fetched marketplace's, a share code's) is read with `foreign: true` (`Place`, `src/core/theme.ts`), which drops a `[[picture]]` site or a `position` it does not know. The built-in marketplace, the commons and local marketplaces refuse them as typos.
+- A user's config is edited only through `editUserFile` (`edits.ts`): a copy to `<file>.ttheme.bak` before the first edit, never overwritten, then a temp file renamed over the symlink's target, so a dotfiles link survives. The block it writes holds the `MANAGED` comment and one line that loads a file ttheme owns, guarded so the config still loads once that file is gone.
+- A path under the home folder is written from `~` (`fromHome`), kitty's from `$HOME`, which its watcher expands where it does not expand `~`. The shells' lines name the layer `${XDG_CONFIG_HOME:-$HOME/.config}` (`LAYER`), never the `HOME` that `init` ran under.
+- After `init`, `sync` rewrites only the files ttheme owns, and `default`, `on` and `off` never edit a user's config again. A key the user sets stays theirs (`userSets`, `wiring.ts`).

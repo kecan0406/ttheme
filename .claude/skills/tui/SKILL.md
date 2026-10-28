@@ -7,7 +7,7 @@ metadata:
 
 # Finding your way around the screens
 
-This is a map, not the reference. The facts are kept where they already are — CLAUDE.md (the Node runtime, the mouse, Browse, the palette editor), HACKING.md's "Working on the TUIs" (the roles and marks, the key tables, the mouse), `.claude/rules/text.md` (the text rules) and `.claude/rules/tui.md`, which loads only once a file under `src/tui/` is read with the Read tool — and this file says which of them to open for the change in hand. Where a name here and the code disagree, the code is right and this file is fixed.
+This is a map, not the reference. The facts are kept where they already are — `src/tui/AGENTS.md` (the Node runtime, the mouse, Browse, the palette editor), HACKING.md's "Working on the TUIs" (the roles and marks, the key tables, the mouse), `.claude/rules/text.md` (the text rules) and `.claude/rules/tui.md`, which loads only once a file under `src/tui/` is read with the Read tool — and this file says which of them to open for the change in hand. Where a name here and the code disagree, the code is right and this file is fixed.
 
 Look at a screen before reading the code that draws it: `mise run look <scenario> <cols>x<rows> [keys…]` writes a PNG and a text grid (`mise run look` alone lists the scenarios).
 
@@ -55,7 +55,7 @@ Preview draws in zsh what the Node screens draw in TypeScript, so several things
 
 - The hub's tab bar: `hubBar` (`src/tui/hub.ts`) over Browse and `__tt_pv_bar` over Preview. Draw the `hub-few` and `hub-browse` scenarios with `mise run look` and compare their row 0.
 - The release line at the right end of the key bar: `releaseOf` (`src/tui/bar.ts`) and preview's `__tt_pv_standing` and `__tt_pv_foot`. Only the wording is shared, `STANDING_LINES` (`src/tui/notice.ts`) carried as `TTHEME_STANDING`.
-- The world view: preview's list (`__tt_pv_rows`, from `TTHEME_ORDER` or `TTHEME_ABC`, `TTHEME_WORKS`, `TTHEME_ALSO`, `TTHEME_WORK_NAME` and `TTHEME_WORK_NATIVE`) and `PaletteList`'s `world` layout (`pickerRows`, `seatsOf`, `byWorkName`) shelve the same palettes the same way — the works by name, a palette under every work its character's `also` names, then `── Originals` by publisher, `ttheme` first — and preview's filter matches what `matchesPalette` matches. `mise run look preview-open` draws preview's; init's picker has no scenario, so compare it by hand. CLAUDE.md's names bullet holds the rules.
+- The world view: preview's list (`__tt_pv_rows`, from `TTHEME_ORDER` or `TTHEME_ABC`, `TTHEME_WORKS`, `TTHEME_ALSO`, `TTHEME_WORK_NAME` and `TTHEME_WORK_NATIVE`) and `PaletteList`'s `world` layout (`pickerRows`, `seatsOf`, `byWorkName`) shelve the same palettes the same way — the works by name, a palette under every work its character's `also` names, then `── Originals` by publisher, `ttheme` first — and preview's filter matches what `matchesPalette` matches. `mise run look preview-open` draws preview's; init's picker has no scenario, so compare it by hand. `worldOrder` (`src/core/commons.ts`) holds the order.
 
 What `sync` carries into `palettes.zsh` for preview (`HUB_TABS`, `STANDING_LINES`, `TTHEME_MARK_INKS`, its help, `PREVIEW_KEYS` from `src/tui/preview-keys.ts`) comes from `src/cli/emit-shell.ts`, so a change to one of those sources reaches preview only after a `sync`.
 
@@ -87,26 +87,26 @@ Before "fixing" one of these, read where it was decided.
 
 | Looks wrong | Why it stays | Decided in |
 |---|---|---|
-| Preview is zsh while every other screen is Node | A Node screen's first frame was measured past what the move was allowed | CLAUDE.md, the Node screens bullet |
-| No comments in first-party code | A project rule | CLAUDE.md, Conventions |
-| `for…of` with `push` where an iterator helper reads shorter | Iterator helpers measured several times slower than the array methods | CLAUDE.md, Gotchas |
+| Preview is zsh while every other screen is Node | A Node screen's first frame was measured past what the move was allowed | `src/tui/AGENTS.md` |
+| No comments in first-party code | A project rule | `AGENTS.md`, Rules |
+| `for…of` with `push` where an iterator helper reads shorter | Iterator helpers measured several times slower than the array methods | `AGENTS.md`, Traps |
 | A cut line ends in `closing(head)`, not `RESET` | A full reset would end a painted row's background | `.claude/rules/tui.md` |
-| A Node screen leaves the modes a program around it set | They are `assume`d: set, never put back, since preview keeps them | CLAUDE.md, the Node screens bullet |
-| …yet the mouse mode is claimed, never assumed | It goes off with the screen that took it, and preview turns its own back on | CLAUDE.md, the mouse bullet |
+| A Node screen leaves the modes a program around it set | They are `assume`d: set, never put back, since preview keeps them | `src/tui/AGENTS.md` |
+| …yet the mouse mode is claimed, never assumed | It goes off with the screen that took it, and preview turns its own back on | `MOUSE` in `src/tui/terminal.ts` |
 | No `/` to search; `j` and `k` do not move in preview or Browse (`ctrl+j` and `ctrl+k` do, through `lineStep` in `keys.ts`) | Typing filters at once, so letters are never commands there | HACKING.md, Keys a screen takes |
 | `↑` `↓` wrap and the wheel does not | Lists wrap on keys; the wheel moves a row | HACKING.md, Keys a screen takes and The mouse |
 | A click acts on the release | A screen that closes on a click must read the release, or it lands in the shell | HACKING.md, The mouse |
-| A wheel event within `WHEEL_GAP` of the last one the same way is dropped | Ghostty sends three per notch | CLAUDE.md, the mouse bullet |
-| init's picker ignores the mouse | It draws below the prompt with no row of its own, and the wheel must keep scrolling the terminal | CLAUDE.md, the mouse bullet |
+| A wheel event within `WHEEL_GAP` of the last one the same way is dropped | Ghostty sends three per notch | `WHEEL_GAP` in `src/tui/keys.ts` |
+| init's picker ignores the mouse | It draws below the prompt with no row of its own, and the wheel must keep scrolling the terminal | `src/tui/AGENTS.md` |
 | The accent is slot 6, not the palette's cursor | It follows whatever the tab wears and stays right in the scrollback | HACKING.md, Drawing the screens |
-| The palette editor never sets the terminal's colors | Only its mock window shows the draft; its own rows keep the terminal's | CLAUDE.md, the palette editor bullets |
+| The palette editor never sets the terminal's colors | Only its mock window shows the draft; its own rows keep the terminal's | `src/tui/AGENTS.md` |
 | Keys read `⌃⌥⇧↩` on a Mac and names in the tests | `capsFor` decides once per run, and every harness that compares screens sets `TTHEME_KEYS=text` | `.claude/rules/tui.md` |
-| `Screen` rewrites whole rows, not cells | A frame's cost was measured in its `view()`, not the write | CLAUDE.md, the Node screens bullet |
-| `...(x ? { k: x } : {})` for an optional key | How ttheme writes one; the lint rule against it is off | CLAUDE.md, `mise run slop` |
+| `Screen` rewrites whole rows, not cells | A frame's cost was measured in its `view()`, not the write | `src/tui/AGENTS.md` |
+| `...(x ? { k: x } : {})` for an optional key | How ttheme writes one; the lint rule against it is off | `AGENTS.md`, Rules |
 
 ## Checking a change
 
-A round of changes with the user runs none of these unless it asks to see the screen, and the whole `mise run ci` runs once, right before the change reaches `main` (CLAUDE.md). When one is run, run the check that answers the change in hand, once — not every one below:
+A round of changes with the user runs none of these unless it asks to see the screen, and the whole `mise run ci` runs once, right before the change reaches `main` (`AGENTS.md`). When one is run, run the check that answers the change in hand, once — not every one below:
 
 - `mise run look <scenario | browse | hub | edit:<palette> | kit:<part>> <cols>x<rows> [keys…] --against HEAD` draws the screen before and after the change and prints the rows that differ; `--emit txt,styles --rows a-b` for a change to color, since `tests/screens/` hold the `NO_COLOR` tier only.
 - `mise run tui [names]` compares every screen in `tests/screens/`; `--update` accepts what they draw now.

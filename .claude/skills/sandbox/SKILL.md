@@ -1,6 +1,6 @@
 ---
 name: sandbox
-description: Drive ttheme for real inside the throwaway sandbox (`mise run sandbox`) and read back what happened — text screens and key-driven flows through tmux, real Ghostty windows (painted colors, config reloads, screenshots) through a separate Ghostty instance, and real iTerm2 windows (profiles, backgrounds, kitty graphics, tabs, permission prompts) through an iTerm2 instance on its own settings suite. Use when the user asks to run, try, launch, screenshot or see ttheme working, a change to shell/, the terminal adapters, src/cli/init.ts, src/cli/installs.ts, src/cli/sync.ts or the emitted dist/ included, and before claiming a terminal-side fix works; neither a round of changes with the user nor the ci run before `main` runs it unasked (CLAUDE.md), so until then a report says real terminals are unchecked. It is the only sanctioned way to exercise ttheme end to end — never use the real ~/.config or ~/.zshrc for that.
+description: Drive ttheme for real inside the throwaway sandbox (`mise run sandbox`) and read back what happened — text screens and key-driven flows through tmux, real Ghostty windows (painted colors, config reloads, screenshots) through a separate Ghostty instance, and real iTerm2 windows (profiles, backgrounds, kitty graphics, tabs, permission prompts) through an iTerm2 instance on its own settings suite. Use when the user asks to run, try, launch, screenshot or see ttheme working, a change to shell/, the terminal adapters, src/cli/init.ts, src/cli/installs.ts, src/cli/sync.ts or the emitted dist/ included, and before claiming a terminal-side fix works; neither a round of changes with the user nor the ci run before `main` runs it unasked (`AGENTS.md`), so until then a report says real terminals are unchecked. It is the only sanctioned way to exercise ttheme end to end — never use the real ~/.config or ~/.zshrc for that.
 metadata:
   internal: true
 ---
@@ -17,7 +17,7 @@ metadata:
 
 A change to a screen is checked in this order, each step only as wide as the change:
 
-1. What the screen draws, colors included, with no window: `mise run look <scenario or screen> <size> [keys]` (about 1.5 s) writes a PNG and a text grid — see CLAUDE.md.
+1. What the screen draws, colors included, with no window: `mise run look <scenario or screen> <size> [keys]` (about 1.5 s) writes a PNG and a text grid — the `look` task in `mise.toml` lists its options.
 2. Keys and text in shell mode (below), for what a capture cannot reach: a flow across commands, a prompt's answer, files a flow writes.
 3. The golden screens it moves, by name or glob: `mise run tui theme-edit 'browse-*'` (about 3 s for two, against about 28 s for all), then `mise run tui --update <same names>` and `git diff tests/screens`.
 4. The parity journeys whose looks hold its text: `mise run parity --journey preview-tune --show 'preview-tune.*'` prints them, `--update` with the same `--journey` records them (about 6 s for one journey in nine terminals, against about 100 s for all), and `git diff tests/parity/facts.tsv` shows what moved. The whole walk runs once, in `mise run ci`, at the end.
