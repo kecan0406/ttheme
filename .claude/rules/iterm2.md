@@ -3,6 +3,7 @@ paths:
   - "shell/adapters/iterm2.zsh"
   - "src/terminals/iterm2*.ts"
   - "src/terminals/emit/iterm2*.ts"
+  - ".agents/skills/sandbox/scripts/iterm*.zsh"
   - ".claude/skills/sandbox/scripts/iterm*.zsh"
 ---
 

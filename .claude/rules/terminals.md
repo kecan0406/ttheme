@@ -9,6 +9,7 @@ paths:
   - "tests/{compat,sandbox,tui}*"
   - "tests/compat/**"
   - "tests/parity/**"
+  - ".agents/skills/sandbox/**"
   - ".claude/skills/sandbox/**"
 ---
 

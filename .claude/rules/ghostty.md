@@ -4,6 +4,7 @@ paths:
   - "src/terminals/ghostty*.ts"
   - "src/terminals/emit/ghostty*.ts"
   - "shell/adapters/_wired.zsh"
+  - ".agents/skills/sandbox/scripts/ghostty.zsh"
   - ".claude/skills/sandbox/scripts/ghostty.zsh"
 ---
 

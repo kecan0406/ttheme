@@ -1,6 +1,6 @@
 # src/tui
 
-The runtime under every Node screen (Browse, init's picker, the palette editor, find) and the parts they share. Preview is the one full-window screen not on it: it stays in zsh (`shell/preview.zsh`). `HACKING.md` ("Working on the TUIs") and `.claude/rules/tui.md` are the reference for roles, marks, keys and the mouse, and the `tui` skill maps a screen to its files.
+The runtime under every Node screen (Browse, init's picker, the palette editor, find) and the parts they share. Preview is the one full-window screen not on it: it stays in zsh (`shell/preview.zsh`). `HACKING.md` ("Working on the TUIs") and `.claude/rules/tui.md` are the reference for roles, marks, keys and the mouse, and the `tui` skill (`.agents/skills/tui/SKILL.md`) maps a screen to its files.
 
 - A screen is a model whose `view` returns its rows. The runtime (`terminal`, `keys`, `screen`, `zones`, `field`, `motion`, `ansi`, `style`, `pending`) imports no part, and the shared parts (`parts`, `bar`, `help`, `hub`, `notice`, `qr`) import no screen. A new file here is a screen until `.oxlintrc.json`'s lists name it.
 - `Terminal` owns the terminal while a screen is up, and puts back in reverse every mode a screen set on every way out: its `finally`, a signal, an error thrown anywhere, process exit. Modes a program around it already set (preview around find or Browse) are `assume`d: set, never put back.

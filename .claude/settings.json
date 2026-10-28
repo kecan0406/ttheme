@@ -6,13 +6,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in *.ts|*.tsx|*.js|*.jsx) ./node_modules/.bin/oxlint --fix \"$f\" >/dev/null; ./node_modules/.bin/biome check --write \"$f\";; *.json|*.jsonc|*.css) ./node_modules/.bin/biome check --write \"$f\";; esac; } 2>/dev/null || true",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; bin=$(git -C \"${f%/*}\" rev-parse --show-toplevel)/node_modules/.bin || exit 0; case \"$f\" in *.ts|*.tsx|*.js|*.jsx) \"$bin/oxlint\" --fix \"$f\" >/dev/null; \"$bin/biome\" check --write \"$f\";; *.json|*.jsonc|*.css) \"$bin/biome\" check --write \"$f\";; esac; } 2>/dev/null || true",
             "timeout": 30,
             "statusMessage": "oxlint and biome fixing..."
           },
           {
             "type": "command",
-            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"${f##*/}\" in AGENTS.md|CLAUDE.md|SKILL.md) command -v bun >/dev/null || exit 0; bun tests/agents.ts >&2 || exit 2;; esac; }",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */AGENTS.md|*/CLAUDE.md|*/CLAUDE.local.md|*/SKILL.md|*/.claude/rules/*.md) ;; *) exit 0;; esac; root=$(git -C \"${f%/*}\" rev-parse --show-toplevel 2>/dev/null) || exit 0; [ -f \"$root/tests/agents.ts\" ] && command -v bun >/dev/null || exit 0; bun \"$root/tests/agents.ts\" >&2 || exit 2; }",
             "timeout": 30,
             "statusMessage": "checking the instruction file budgets..."
           }

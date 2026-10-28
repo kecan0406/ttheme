@@ -468,7 +468,7 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   if (builtin && other === undefined) {
     fail(
       file,
-      `a built-in palette carries its other mode in [colors.${otherOf(modeOf(own))}] — bun .claude/skills/palette/scripts/light.ts --write writes it`,
+      `a built-in palette carries its other mode in [colors.${otherOf(modeOf(own))}] — bun .agents/skills/palette/scripts/light.ts --write writes it`,
     )
   }
 

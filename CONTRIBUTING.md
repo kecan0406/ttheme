@@ -209,7 +209,7 @@ One palette per pull request. At most three open at a time.
 - `[colors]` is the palette in the mode it was made in, and `[colors.light]`
   (`[colors.dark]` for a light palette) the same palette in the other one, which
   people who use the other mode see. Write it with
-  `bun .claude/skills/palette/scripts/light.ts --write <file>`, which mirrors
+  `bun .agents/skills/palette/scripts/light.ts --write <file>`, which mirrors
   `[colors]` into the other mode; `mise run build` refuses a built-in palette
   without it.
 - Every palette passes the contrast gate in both modes (`GATE_RULES` in
@@ -235,7 +235,7 @@ waive = ["foreground"]     # foreground | accents | ansi0-dark | light-ansi | an
 reason = "why this palette is the exception"
 ```
 
-`.claude/skills/palette/SKILL.md` documents how the existing palettes were
+`.agents/skills/palette/SKILL.md` documents how the existing palettes were
 measured and harmonized, if you want to build one the same way.
 
 ## Setting up
@@ -283,3 +283,12 @@ If a tool wrote a substantial part, say so at the end of the commit message with
 the tool's own `Co-Authored-By:` trailer. It only helps the review; nothing is
 refused for having it or for leaving it out. The repository's own agent rules
 are in `AGENTS.md`.
+
+Claude Code reads `AGENTS.md` only while no `CLAUDE.md`, `.claude/CLAUDE.md` or
+`CLAUDE.local.md` sits in your checkout or in a folder above it (your own
+`~/.claude/CLAUDE.md` does not count); if you keep one, set **Project
+instructions** to `claude-md-and-agents-md` in `/config`, or it reads none of
+the `AGENTS.md` files. Gemini CLI reads `AGENTS.md` once its `context.fileName`
+setting names it. The repository's skills are in `.agents/skills`, where Codex and
+Gemini CLI find them, and Claude Code reads them through the `.claude/skills`
+link.
