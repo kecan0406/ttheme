@@ -20,6 +20,26 @@ interface Shown {
   ansi: string[]
 }
 
+interface Word {
+  x0: number
+  x1: number
+  text: string
+  style: string
+  blank: boolean
+  seen: boolean
+}
+
+interface Mark {
+  kind: 'changed' | 'restyled' | 'removed'
+  x0: number
+  x1: number
+  y: number
+}
+
+const HINT = /Search…[^│]*/
+
+const MARK = '#ff2bd6'
+
 const BLOCKS = new Map<string, [number, number, number, number]>([
   ['▀', [0, 0, 1, 0.5]],
   ['▄', [0, 0.5, 1, 0.5]],
@@ -188,6 +208,171 @@ function runsOf(row: Cell[]): { at: string; style: string }[] {
   return runs
 }
 
+const before = values.against ? await gridOf(values.against, shown) : undefined
+
+function hint(text: string): string {
+  return text.replace(HINT, 'Search… ‹hint›')
+}
+
+function changeOf(y: number) {
+  const was = before?.[y] ?? []
+  const now = grid[y] ?? []
+  const a = hint(textOf(was.slice(left, right + 1)).trimEnd())
+  const b = hint(textOf(now.slice(left, right + 1)).trimEnd())
+  const ra = runsOf(was).map((r) => ({ ...r, style: hint(r.style) }))
+  const rb = runsOf(now).map((r) => ({ ...r, style: hint(r.style) }))
+  const gone = ra.filter((r) => !rb.some((o) => o.style === r.style))
+  const came = rb.filter((r) => !ra.some((o) => o.style === r.style))
+
+  return a === b && gone.length === 0 && came.length === 0 ? undefined : { a, b, gone, came }
+}
+
+function hintCols(row: Cell[]): Set<number> {
+  const cols: number[] = []
+  let text = ''
+
+  for (let x = 0; x < row.length; x++) {
+    const c = row[x] as Cell
+
+    if (c.width === 0) {
+      continue
+    }
+
+    const char = c.char || ' '
+    text += char
+
+    for (let i = 0; i < char.length; i++) {
+      cols.push(x)
+    }
+  }
+
+  const match = HINT.exec(text)
+
+  if (!match) {
+    return new Set()
+  }
+
+  const from = cols[match.index] ?? 0
+  const to = cols[match.index + match[0].length - 1] ?? from
+
+  return new Set(Array.from({ length: to - from + 1 }, (_, i) => from + i))
+}
+
+function wordsOf(row: Cell[], skip: Set<number>): Word[] {
+  const words: Word[] = []
+
+  for (let x = left; x <= right && x < row.length; x++) {
+    const c = row[x] as Cell
+    const last = words.at(-1)
+
+    if (c.width === 0) {
+      if (last) {
+        last.x1 = x
+      }
+
+      continue
+    }
+
+    const char = c.char || ' '
+    const blank = !char.trim()
+    const style = `${c.ink} ${c.ground} ${c.attrs}`
+
+    if (last && last.x1 === x - 1 && last.blank === blank && last.style === style) {
+      last.x1 = x
+      last.text += char
+    } else {
+      words.push({ x0: x, x1: x, text: char, style, blank, seen: !blank || c.ground !== '-' || c.attrs.includes('r') })
+    }
+  }
+
+  return words.filter((w) => !skip.has(w.x0) && !skip.has(w.x1))
+}
+
+function marksIn(mine: Word[], theirs: Word[], y: number): Mark[] {
+  const same = (a: Word, b: Word) => a.text === b.text && a.style === b.style
+  const twin = (a: Word, b: Word) => a.text === b.text && a.x0 === b.x0
+  const longest = Array.from({ length: mine.length + 1 }, () => new Array<number>(theirs.length + 1).fill(0))
+
+  for (let i = mine.length - 1; i >= 0; i--) {
+    const here = longest[i] as number[]
+
+    for (let j = theirs.length - 1; j >= 0; j--) {
+      here[j] = same(mine[i] as Word, theirs[j] as Word)
+        ? (longest[i + 1]?.[j + 1] ?? 0) + 1
+        : Math.max(longest[i + 1]?.[j] ?? 0, here[j + 1] ?? 0)
+    }
+  }
+
+  const lone: Word[] = []
+  const moved: Word[] = []
+  const dropped: { word: Word; at: number }[] = []
+  let i = 0
+  let j = 0
+
+  while (i < mine.length || j < theirs.length) {
+    const a = mine[i]
+    const b = theirs[j]
+
+    if (a && b && same(a, b)) {
+      if (a.x0 !== b.x0) {
+        moved.push(a)
+      }
+
+      i++
+      j++
+    } else if (b && (!a || (longest[i]?.[j + 1] ?? 0) > (longest[i + 1]?.[j] ?? 0))) {
+      dropped.push({ word: b, at: a ? a.x0 : (mine.at(-1)?.x1 ?? left - 1) + 1 })
+      j++
+    } else if (a) {
+      lone.push(a)
+      i++
+    }
+  }
+
+  const marks: Mark[] = []
+
+  for (const a of lone) {
+    if (a.seen) {
+      marks.push({ kind: dropped.some((d) => twin(a, d.word)) ? 'restyled' : 'changed', x0: a.x0, x1: a.x1, y })
+    }
+  }
+
+  for (const { word, at } of dropped) {
+    const covered = lone.some((a) => twin(a, word) || (a.seen && a.x0 <= at && at <= a.x1 + 1))
+
+    if (word.seen && !covered && !marks.some((m) => m.kind === 'removed' && m.x0 === at)) {
+      marks.push({ kind: 'removed', x0: at, x1: at, y })
+    }
+  }
+
+  if (marks.length > 0) {
+    return marks
+  }
+
+  return moved.flatMap((a): Mark[] => (a.seen ? [{ kind: 'changed', x0: a.x0, x1: a.x1, y }] : []))
+}
+
+function marksOf(): Mark[] {
+  const marks: Mark[] = []
+
+  if (!before) {
+    return marks
+  }
+
+  for (let y = top; y <= bottom; y++) {
+    if (!changeOf(y)) {
+      continue
+    }
+
+    const was = before[y] ?? []
+    const now = grid[y] ?? []
+    const skip = new Set([...hintCols(was), ...hintCols(now)])
+    marks.push(...marksIn(wordsOf(now, skip), wordsOf(was, skip), y))
+  }
+
+  return marks
+}
+
 const written: string[] = []
 
 if (emit.has('txt')) {
@@ -263,6 +448,33 @@ if (emit.has('png')) {
     }
   }
 
+  const marks = marksOf()
+  const stroke = cropped ? 4 : 2
+
+  for (const mark of marks) {
+    const x = (mark.x0 - left) * cw
+    const y = (mark.y - top) * ch
+    const w = (mark.x1 - mark.x0 + 1) * cw
+
+    if (mark.kind === 'removed') {
+      const at = Math.min(width - stroke, Math.max(0, x - stroke / 2))
+      svg.push(`<rect x="${at}" y="${y}" width="${stroke}" height="${ch}" fill="${MARK}"/>`)
+    } else if (mark.kind === 'restyled') {
+      for (let dot = x; dot < x + w; dot += stroke * 2) {
+        svg.push(`<rect x="${dot}" y="${y + ch - stroke}" width="${stroke}" height="${stroke}" fill="${MARK}"/>`)
+      }
+    } else {
+      svg.push(`<rect x="${x}" y="${y + ch - stroke}" width="${w}" height="${stroke}" fill="${MARK}"/>`)
+    }
+  }
+
+  for (const y of new Set(marks.map((m) => (m.y - top) * ch))) {
+    svg.push(
+      `<rect x="0" y="${y}" width="${stroke * 2}" height="${ch}" fill="${MARK}"/>`,
+      `<rect x="${width - stroke * 2}" y="${y}" width="${stroke * 2}" height="${ch}" fill="${MARK}"/>`,
+    )
+  }
+
   svg.push('</svg>')
   writeFileSync(`${out}.svg`, svg.join('\n'))
 
@@ -278,26 +490,18 @@ if (emit.has('png')) {
 
 console.log(written.join('\n'))
 
-if (values.against) {
-  const before = await gridOf(values.against, shown)
-  const hint = (text: string) => text.replace(/Search…[^│]*/, 'Search… ‹hint›')
+if (before) {
   const lines: string[] = []
   let moved = 0
 
   for (let y = top; y <= bottom; y++) {
-    const was = before[y] ?? []
-    const now = grid[y] ?? []
-    const a = hint(textOf(was.slice(left, right + 1)).trimEnd())
-    const b = hint(textOf(now.slice(left, right + 1)).trimEnd())
-    const ra = runsOf(was).map((r) => ({ ...r, style: hint(r.style) }))
-    const rb = runsOf(now).map((r) => ({ ...r, style: hint(r.style) }))
-    const gone = ra.filter((r) => !rb.some((o) => o.style === r.style))
-    const came = rb.filter((r) => !ra.some((o) => o.style === r.style))
+    const change = changeOf(y)
 
-    if (a === b && gone.length === 0 && came.length === 0) {
+    if (!change) {
       continue
     }
 
+    const { a, b, gone, came } = change
     moved++
     const row = String(y).padStart(2)
     lines.push(

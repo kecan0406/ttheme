@@ -67,7 +67,7 @@ Some choices look wrong and are not: preview in zsh, no comments, `for…of` wit
 
 A round of changes with the user runs none of these unless it asks to see the screen, and the whole `mise run ci` runs once, right before the change reaches `main` (`AGENTS.md`). When one is run, run the check that answers the change in hand, once — not every one below:
 
-- `mise run look <scenario | browse | hub | edit:<palette> | kit:<part>> <cols>x<rows> [keys…] --against HEAD` draws the screen before and after the change and prints the rows that differ; `--emit txt,styles --rows a-b` for a change to color, since `tests/screens/` hold the `NO_COLOR` tier only.
+- `mise run look <scenario | browse | hub | edit:<palette> | kit:<part>> <cols>x<rows> [keys…] --against HEAD` draws the screen before and after the change, prints the rows that differ and marks them in the PNG — a line under each word that changed, dotted where only its colors did, a bar where words were taken out, a tick at both edges of the row; `--emit txt,styles --rows a-b` for a change to color, since `tests/screens/` hold the `NO_COLOR` tier only.
 - `mise run tui [names]` compares every screen in `tests/screens/`; `--update` accepts what they draw now.
 - The tests beside the file (`mise run test src/tui/browse`) and `mise run check`.
 - A change to preview: `mise run shell:check` (zsh syntax, `tests/latency.zsh check`, the fork ratchet).
