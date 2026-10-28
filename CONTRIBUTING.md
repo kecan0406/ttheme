@@ -8,9 +8,9 @@ drawn and keyed. How every screen and message is worded is in
 
 A ttheme palette is someone's reading of a character or a work, in twenty
 colors. The built-in palettes are the `ttheme` marketplace, which ships inside
-the package: `builtin/ttheme-marketplace.toml` and
-`builtin/palettes/<palette>.toml`. What they are of lives apart from them, in
-the commons: `commons/works/<work>.toml`, one file per work with its characters,
+the package: `builtin/ttheme-marketplace.toml` and `builtin/sets/<work>.toml`,
+one set of palettes per work. What they are of lives apart from them, in the
+commons: `commons/works/<work>.toml`, one file per work with its characters,
 which every marketplace's palettes name and no marketplace owns. A merged
 palette ships with the next release, and `ttheme update` makes it available to
 everyone.
@@ -111,7 +111,7 @@ sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakur
   can (any number on konachan and yande.re, two on danbooru, one on zerochan),
   and `[]` for a site that has none, which `find` then skips. A site it leaves
   out is searched for the danbooru tag. It is a search term; posts go in a
-  palette's `[[picture]]`, by number.
+  palette's `[[palette.picture]]`, by number.
 - An id that has to move — a work renamed, a character's id corrected — moves
   in `commons/renames.toml`, which maps the old subject to the new
   (`"old-work" = "new-work"` moves a work and its characters,
@@ -145,7 +145,7 @@ entirely, and this project stays out of distributing it.
 A palette may name posts by number, with how to frame them:
 
 ```toml
-[[picture]]
+[[palette.picture]]
 site = "yande"          # danbooru, konachan, yande or zerochan
 id = 825034             # the post's number on that site — never a URL
 size = 60               # optional: "fill" (the default) or a percentage, 20-999
@@ -159,40 +159,47 @@ system can, and draws it in their own coloring setting there, as `find` would.
 `ttheme new`, `ttheme edit` and `ttheme share` fill this in from the pictures
 you have up.
 
-## The file
+## The set
 
-One file — copy any of `builtin/palettes/*.toml`:
+A set holds one or more palettes, and a built-in one holds one work's:
+`builtin/sets/madoka-magica.toml` holds every palette of Madoka Magica, and
+`builtin/sets/original.toml` the one of no work. A palette is a `[[palette]]`
+table in it — copy any of them:
 
 ```toml
-"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "madoka"                            # its name: ttheme/madoka
 subject = "madoka-magica/madoka"           # the work and character in the commons
 signature = ["cursor", "ansi1", "ansi3"]   # the three colors the site draws as its identity
 ansi_source = "Elegant + Magica"           # what the harmonizer was fed
 
-[colors]
+[palette.colors]
 background = "#201516"
 foreground = "#fbdbdd"
 cursor = "#ffc1c6"
 selection_background = "#553444"
 ansi = [ ... 16 colors ... ]
 
-[colors.light]                             # the same palette in its other mode
+[palette.colors.light]                     # the same palette in its other mode
 background = "#fff8f7"
 ...
 ```
 
-The file's name is the palette's: `builtin/palettes/madoka.toml` is
-`ttheme/madoka`. The folder holds files only — the shelf a palette sits on is
-its subject's work, whose title, cast and lead live once, in
-`commons/works/<work>.toml`, never in a palette file.
+The tables after a `[[palette]]` that start with `palette.` belong to it, up to
+the next one. The folder holds sets only — the shelf a palette sits on is its
+subject's work, whose title, cast and lead live once, in
+`commons/works/<work>.toml`, never in a set.
 
 ## Rules
 
 One palette per pull request. At most three open at a time.
 
-- `builtin/palettes/<name>.toml`, where `<name>` is lowercase letters, digits
-  and single hyphens, at most 40 characters, and no other built-in palette has
-  it.
+- A `[[palette]]` table in its subject's work's set, `builtin/sets/<work>.toml`
+  (`original.toml` for a palette of no work), which `mise run build` holds it
+  to. Its `slug` is lowercase letters, digits and single hyphens, at most 40
+  characters, and no other built-in palette has it.
 - `subject` names a work or a character the commons holds: a new one comes
   with its record in `commons/works/` in the same pull request, and
   `mise run build` refuses a subject the commons lacks. The one built-in
@@ -206,12 +213,12 @@ One palette per pull request. At most three open at a time.
   stay accurate; a built-in palette cannot leave it out. Take base schemes from
   [mbadolato/iTerm2-Color-Schemes](https://github.com/mbadolato/iTerm2-Color-Schemes),
   or from a source whose license permits it — say which in the PR.
-- `[colors]` is the palette in the mode it was made in, and `[colors.light]`
-  (`[colors.dark]` for a light palette) the same palette in the other one, which
-  people who use the other mode see. Write it with
-  `bun .agents/skills/palette/scripts/light.ts --write <file>`, which mirrors
-  `[colors]` into the other mode; `mise run build` refuses a built-in palette
-  without it.
+- `[palette.colors]` is the palette in the mode it was made in, and
+  `[palette.colors.light]` (`[palette.colors.dark]` for a light palette) the
+  same palette in the other one, which people who use the other mode see. Write
+  it with `bun .agents/skills/palette/scripts/light.ts --write <set>`, which
+  mirrors each palette's `[palette.colors]` in the set into the other mode;
+  `mise run build` refuses a built-in palette without it.
 - Every palette passes the contrast gate in both modes (`GATE_RULES` in
   `src/core/contrast.ts`; why each threshold:
   [docs/reference/contrast-gate.md](docs/reference/contrast-gate.md)): body text
@@ -223,14 +230,14 @@ One palette per pull request. At most three open at a time.
   size; and red and green apart for a deuteranope. ANSI slots named in
   `signature`, and their normal or bright twins, are exempt from the band and
   the comparisons. `mise run build` fails on a violation. A waiver needs
-  `[contrast] waive = [...]` **plus** a `reason`; a file that waives with no
-  reason is refused when it is read.
+  `[palette.contrast] waive = [...]` **plus** a `reason`; a palette that waives
+  with no reason is refused when it is read.
 
 Every built-in palette passes the gate unwaived, in both modes. If a palette
 genuinely has to break a rule, waive it by name and say why:
 
 ```toml
-[contrast]
+[palette.contrast]
 waive = ["foreground"]     # foreground | accents | ansi0-dark | light-ansi | ansi8-visible | selection | ansi-role | bright-follows | distinct | ansi0-on-accents | ansi7-on-ansi8 | cvd-red-green
 reason = "why this palette is the exception"
 ```

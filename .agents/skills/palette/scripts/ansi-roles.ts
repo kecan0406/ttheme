@@ -1,11 +1,10 @@
 import { writeFileSync } from 'node:fs'
-import { basename } from 'node:path'
 import { parseArgs } from 'node:util'
 import { deltaE, oklch } from '../../../../src/core/color.ts'
 import { check } from '../../../../src/core/contrast.ts'
 import { fixRoles } from '../../../../src/core/fix.ts'
 import { type Theme, workIdOf } from '../../../../src/core/theme.ts'
-import { writeMirrors } from './light.ts'
+import { type Palette, setPalettes, writeMirrors } from './light.ts'
 
 interface ThemeDoc {
   subject?: string
@@ -51,17 +50,16 @@ const { values, positionals } = parseArgs({
   allowPositionals: true,
 })
 if (positionals.length === 0) {
-  console.error('usage: bun ansi-roles.ts [--write] [--report <file.json>] builtin/palettes/<palette>.toml [...]')
+  console.error('usage: bun ansi-roles.ts [--write] [--report <file.json>] builtin/sets/<work>.toml [...]')
   process.exit(1)
 }
 
 const report: unknown[] = []
-const written = new Map<string, string>()
+const written: Palette[] = []
 let failed = 0
-for (const file of positionals) {
-  const text = await Bun.file(file).text()
-  const doc = Bun.TOML.parse(text) as unknown as ThemeDoc
-  const name = basename(file, '.toml')
+for (const palette of setPalettes(positionals)) {
+  const doc = Bun.TOML.parse(palette.text) as unknown as ThemeDoc
+  const name = palette.slug
   const { ansi, moves } = fix(name, doc)
   const left = check(gated(name, doc, ansi))
   failed += left.length
@@ -97,10 +95,10 @@ for (const file of positionals) {
     after: ansi,
     changes: net,
   })
-  if (net.length > 0) written.set(file, rewrite(text, ansi))
+  if (net.length > 0) written.push({ ...palette, text: rewrite(palette.text, ansi) })
 }
 
-if (values.write && written.size > 0) await writeMirrors([...written.keys()], written)
+if (values.write && written.length > 0) writeMirrors(written)
 
 if (values.report) writeFileSync(values.report, JSON.stringify(report))
 console.log(failed === 0 ? '\nrole rules clean' : `\n${failed} violation(s) left`)

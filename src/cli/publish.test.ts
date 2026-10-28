@@ -55,21 +55,25 @@ test('a description written on the line after its quotes, starting with a bracke
 })
 
 test('a proposal takes a character once, and leaves a work that already lists it as it was', () => {
-  const work: Work = { id: 'k-on', name: 'K-On!', native: 'けいおん！', characters: [{ id: 'yui' }] }
-  const azusa = { id: 'azusa', native: ['中野梓'], danbooru: 'nakano_azusa' }
-  const grown = withCharacter(work, azusa)
-  assert.deepEqual(grown, { ...work, characters: [{ id: 'yui' }, azusa] })
-  assert.equal(withCharacter(grown, { id: 'azusa' }), grown)
+  const work: Work = { id: 'lantern-row', name: 'Lantern Row!', native: '등불 거리', characters: [{ id: 'wren' }] }
+  const pip = { id: 'pip', native: ['ピップ'], danbooru: 'pip_(lantern_row)' }
+  const grown = withCharacter(work, pip)
+  assert.deepEqual(grown, { ...work, characters: [{ id: 'wren' }, pip] })
+  assert.equal(withCharacter(grown, { id: 'pip' }), grown)
   assert.equal(withCharacter(work, undefined), work)
 })
 
 test('a marketplace proposes what the commons lacks of the works its palettes are of, into the proposals it holds', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-proposals-'))
-  const commons: Work[] = [{ id: 'k-on', name: 'K-On!', native: 'けいおん！', characters: [{ id: 'yui' }] }]
-  const azusa = { id: 'azusa', danbooru: 'nakano_azusa' }
+
+  const commons: Work[] = [
+    { id: 'lantern-row', name: 'Lantern Row!', native: '등불 거리', characters: [{ id: 'wren' }] },
+  ]
+
+  const pip = { id: 'pip', danbooru: 'pip_(lantern_row)' }
 
   const known: Work[] = [
-    { id: 'k-on', name: 'K-On!', native: 'けいおん！', characters: [{ id: 'yui' }, azusa] },
+    { id: 'lantern-row', name: 'Lantern Row!', native: '등불 거리', characters: [{ id: 'wren' }, pip] },
     { id: 'neon', name: 'Neon', characters: [{ id: 'volt' }, { id: 'arcade' }] },
   ]
 
@@ -79,9 +83,9 @@ test('a marketplace proposes what the commons lacks of the works its palettes ar
 
   assert.deepEqual(
     proposalsFor(known, commons, dir, [
-      'k-on/yui',
-      'k-on/azusa',
-      'k-on/mio',
+      'lantern-row/wren',
+      'lantern-row/pip',
+      'lantern-row/juno',
       'neon/volt',
       'neon/arcade',
       'nowhere/x',
@@ -90,8 +94,8 @@ test('a marketplace proposes what the commons lacks of the works its palettes ar
     ]),
     [
       {
-        work: { id: 'k-on', name: 'K-On!', native: 'けいおん！', characters: [azusa, { id: 'mio' }] },
-        path: join(dir, 'works', 'k-on.toml'),
+        work: { id: 'lantern-row', name: 'Lantern Row!', native: '등불 거리', characters: [pip, { id: 'juno' }] },
+        path: join(dir, 'works', 'lantern-row.toml'),
       },
       {
         work: { id: 'neon', name: 'Neon', characters: [{ id: 'volt' }, { id: 'arcade' }] },
@@ -104,10 +108,10 @@ test('a marketplace proposes what the commons lacks of the works its palettes ar
     ],
   )
 
-  assert.deepEqual(proposalsFor(known, commons, dir, ['neon/volt', 'k-on/yui']), [])
+  assert.deepEqual(proposalsFor(known, commons, dir, ['neon/volt', 'lantern-row/wren']), [])
 })
 
-test('a palette file git never committed, or changed since it was, is one share must warn it deletes, a committed one is not', async () => {
+test('a set file git never committed, or changed since it was, is one share must warn it deletes from, a committed one is not', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-publish-'))
 
   const git = (...args: string[]) =>
@@ -117,10 +121,10 @@ test('a palette file git never committed, or changed since it was, is one share 
     })
 
   try {
-    const shared = join(dir, 'palettes', 'kita.toml')
-    const tuned = join(dir, 'palettes', 'rei.toml')
-    const fresh = join(dir, 'palettes', 'miku.toml')
-    mkdirSync(join(dir, 'palettes'))
+    const shared = join(dir, 'sets', 'tidewater.toml')
+    const tuned = join(dir, 'sets', 'starfall.toml')
+    const fresh = join(dir, 'sets', 'glass-arcade.toml')
+    mkdirSync(join(dir, 'sets'))
     writeFileSync(shared, 'a')
     writeFileSync(tuned, 'c')
     assert.deepEqual(await unsaved(dir, [shared]), { fresh: [shared], changed: [] })

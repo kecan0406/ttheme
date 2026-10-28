@@ -7,6 +7,7 @@ import { shelfOf, type Work } from '../core/commons.ts'
 import { paletteToml } from '../core/draft.ts'
 import { type PaletteEntry, parseBuiltin } from '../core/manifest.ts'
 import { grow, SEEDS } from '../core/seeds.ts'
+import { setText } from '../core/sets.ts'
 import {
   archiveId,
   archiveInfo,
@@ -25,9 +26,9 @@ import {
 
 function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
-    name: 'ttheme/gojo',
-    subject: 'jujutsu-kaisen/gojo',
-    ansiSource: 'Horizon + Jujutsu',
+    name: 'ttheme/tamsin',
+    subject: 'tidewater/tamsin',
+    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -41,14 +42,14 @@ function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
   }
 }
 
-const JJK: Work = {
-  id: 'jujutsu-kaisen',
-  name: 'Jujutsu Kaisen',
-  native: '呪術廻戦',
-  characters: [{ id: 'gojo', native: ['五条悟'], danbooru: 'gojou_satoru' }, { id: 'geto' }],
+const TIDEWATER: Work = {
+  id: 'tidewater',
+  name: 'Tidewater',
+  native: '潮汐',
+  characters: [{ id: 'tamsin', native: ['白砂環'], danbooru: 'tamsin_(tidewater)' }, { id: 'bram' }],
 }
 
-const VOCALOID: Work = { id: 'vocaloid', name: 'Vocaloid', characters: [{ id: 'miku', danbooru: 'hatsune_miku' }] }
+const STARFALL: Work = { id: 'starfall', name: 'Starfall', characters: [{ id: 'orla', danbooru: 'orla_(starfall)' }] }
 
 function builtinJson(palettes: PaletteEntry[]): string {
   return JSON.stringify({ version: '0.1.0', gate: [], palettes })
@@ -58,12 +59,12 @@ test('parseBuiltin rejects a document without its version, gate or palettes, and
   assert.throws(() => parseBuiltin('{"version":"0.1.0","gate":[]}'), /no version, gate or palettes/)
   assert.throws(() => parseBuiltin('<html>'), /not valid JSON/)
   assert.throws(() => parseBuiltin(builtinJson([entry({ ansi: ['#808080'] })])), /16 ANSI colors/)
-  assert.equal(parseBuiltin(builtinJson([entry()])).palettes[0]?.name, 'ttheme/gojo')
+  assert.equal(parseBuiltin(builtinJson([entry()])).palettes[0]?.name, 'ttheme/tamsin')
 })
 
 test('parseBuiltin refuses an entry whose name, subject or text would reach a path or a config line', () => {
   assert.throws(() => parseBuiltin(builtinJson([entry({ name: '../../x' })])), /lowercase letters/)
-  assert.throws(() => parseBuiltin(builtinJson([entry({ name: 'gojo' })])), /lowercase letters/)
+  assert.throws(() => parseBuiltin(builtinJson([entry({ name: 'tamsin' })])), /lowercase letters/)
   assert.throws(() => parseBuiltin(builtinJson([entry({ subject: '../x' })])), /names the subject/)
   assert.throws(() => parseBuiltin(builtinJson([entry({ ansiSource: 'x\ncommand = rm' })])), /control character/)
   assert.throws(() => parseBuiltin(builtinJson([entry({ background: 'red' })])), /#rrggbb/)
@@ -85,15 +86,15 @@ test('readMarketplaces can take the bundled palettes and works, so an upgrade ne
   writeFileSync(join(at, 'ttheme', 'builtin.json'), JSON.stringify({ palettes: 'another shape' }))
   writeFileSync(join(at, 'ttheme', 'commons.json'), JSON.stringify({ works: [], renames: {} }))
   assert.throws(() => readMarketplaces(at, false), /no version, gate or palettes/)
-  const bundled = { builtin: parseBuiltin(builtinJson([entry()])), commons: { works: [JJK], renames: {} } }
+  const bundled = { builtin: parseBuiltin(builtinJson([entry()])), commons: { works: [TIDEWATER], renames: {} } }
   const read = readMarketplaces(at, false, bundled)
   assert.deepEqual(
     read.palettes.map((p) => p.name),
-    ['ttheme/gojo'],
+    ['ttheme/tamsin'],
   )
   assert.deepEqual(
     read.works.map((w) => w.id),
-    ['jujutsu-kaisen'],
+    ['tidewater'],
   )
 })
 
@@ -117,7 +118,7 @@ test('an installed palette from a marketplace keeps its colors until its update 
   const view = new Map(untuned(at, manifest, false).palettes.map((e) => [e.name, e]))
   assert.equal(view.get('ann@pastel/dusk')?.background, '#11191c')
   assert.equal(view.get('ann@pastel/dusk')?.subject, 'pastel/dawn')
-  assert.equal(view.get('ttheme/gojo')?.background, '#000000')
+  assert.equal(view.get('ttheme/tamsin')?.background, '#000000')
   assert.equal(view.get('ann@pastel/dawn')?.background, '#000000')
   assert.deepEqual(
     updatesOf(at, manifest).map((e) => e.name),
@@ -162,53 +163,53 @@ test('gateFailures measures the colors, never a gate stored before the rules it 
 })
 
 test('search matches the palette, its work, its character’s names and the ANSI source', () => {
-  const works = [JJK, VOCALOID]
-  const palettes = [entry(), entry({ name: 'ttheme/miku', subject: 'vocaloid/miku', ansiSource: 'vauxe Miku' })]
+  const works = [TIDEWATER, STARFALL]
+  const palettes = [entry(), entry({ name: 'ttheme/orla', subject: 'starfall/orla', ansiSource: 'Idle Toes' })]
   const found = (query: string) => search(palettes, works, query).map((p) => p.name)
-  assert.deepEqual(found('jujutsu'), ['ttheme/gojo'])
-  assert.deepEqual(found('呪術'), ['ttheme/gojo'])
-  assert.deepEqual(found('五条'), ['ttheme/gojo'])
-  assert.deepEqual(found('vocaloid'), ['ttheme/miku'])
-  assert.deepEqual(found('vauxemiku'), ['ttheme/miku'])
+  assert.deepEqual(found('tidewater'), ['ttheme/tamsin'])
+  assert.deepEqual(found('潮'), ['ttheme/tamsin'])
+  assert.deepEqual(found('白砂'), ['ttheme/tamsin'])
+  assert.deepEqual(found('starfall'), ['ttheme/orla'])
+  assert.deepEqual(found('idletoes'), ['ttheme/orla'])
 })
 
 test('booruTags finds the characters whose danbooru tag holds what was typed, this palette and its work first', () => {
   const works: Work[] = [
     {
-      id: 'steins-gate',
-      name: 'Steins;Gate',
+      id: 'moon-tide',
+      name: 'Moon;Tide',
       characters: [
-        { id: 'suzuha', danbooru: 'amane_suzuha' },
-        { id: 'ruka', danbooru: 'urushibara_ruka' },
+        { id: 'quill', danbooru: 'quill_(moon_tide)' },
+        { id: 'juno', danbooru: 'juno_(moon_tide)' },
         { id: 'none' },
       ],
     },
-    { id: 'hololive', name: 'Hololive', characters: [{ id: 'lulu', danbooru: 'suzuhara_lulu' }] },
+    { id: 'lantern-row', name: 'Lantern Row!', characters: [{ id: 'pip', danbooru: 'pip_quill' }] },
   ]
 
   const at = (slug: string, work: string) => entry({ name: `ttheme/${slug}`, subject: `${work}/${slug}` })
-  const suzuha = at('suzuha', 'steins-gate')
-  const ruka = at('ruka', 'steins-gate')
-  const lulu = at('lulu', 'hololive')
-  const none = at('none', 'steins-gate')
+  const quill = at('quill', 'moon-tide')
+  const juno = at('juno', 'moon-tide')
+  const pip = at('pip', 'lantern-row')
+  const none = at('none', 'moon-tide')
   assert.deepEqual(
-    booruTags([lulu, ruka, none, suzuha], works, suzuha, 'SUZU').map((p) => p.name),
-    ['ttheme/suzuha', 'ttheme/lulu'],
+    booruTags([pip, juno, none, quill], works, quill, 'QUIL').map((p) => p.name),
+    ['ttheme/quill', 'ttheme/pip'],
   )
   assert.deepEqual(
-    booruTags([lulu, ruka, suzuha], works, ruka, 'u').map((p) => p.name),
-    ['ttheme/ruka', 'ttheme/suzuha', 'ttheme/lulu'],
+    booruTags([pip, juno, quill], works, juno, 'u').map((p) => p.name),
+    ['ttheme/juno', 'ttheme/quill', 'ttheme/pip'],
   )
 })
 
 test('a palette typed without its marketplace is the one palette of that name, the installed one when there are several', () => {
-  const palettes = [entry({ name: 'ttheme/rei' }), entry({ name: 'kec@dust/rei' }), entry({ name: 'ttheme/miku' })]
-  assert.equal(find(palettes, 'kec@dust/rei').name, 'kec@dust/rei')
-  assert.equal(find(palettes, 'miku').name, 'ttheme/miku')
-  assert.equal(find(palettes, 'rei', ['kec@dust/rei']).name, 'kec@dust/rei')
-  assert.throws(() => find(palettes, 'rei'), /rei is ttheme\/rei, kec@dust\/rei — name the one you mean/)
-  assert.throws(() => find(palettes, 'rei', ['ttheme/rei', 'kec@dust/rei']), /name the one you mean/)
-  assert.throws(() => find(palettes, 'asuka'), /no palette named asuka/)
+  const palettes = [entry({ name: 'ttheme/wren' }), entry({ name: 'kai@dust/wren' }), entry({ name: 'ttheme/pip' })]
+  assert.equal(find(palettes, 'kai@dust/wren').name, 'kai@dust/wren')
+  assert.equal(find(palettes, 'pip').name, 'ttheme/pip')
+  assert.equal(find(palettes, 'wren', ['kai@dust/wren']).name, 'kai@dust/wren')
+  assert.throws(() => find(palettes, 'wren'), /wren is ttheme\/wren, kai@dust\/wren — name the one you mean/)
+  assert.throws(() => find(palettes, 'wren', ['ttheme/wren', 'kai@dust/wren']), /name the one you mean/)
+  assert.throws(() => find(palettes, 'orla'), /no palette named orla/)
 })
 
 test('readMarketplaces lays the built-in palettes, each added marketplace and the works together, and available adds local marketplaces, their works and kept palettes', () => {
@@ -231,9 +232,9 @@ test('readMarketplaces lays the built-in palettes, each added marketplace and th
     builtin: {
       version: '0.1.0',
       gate: [],
-      palettes: [entry(), entry({ name: 'ttheme/geto', subject: 'jujutsu-kaisen/geto' })],
+      palettes: [entry(), entry({ name: 'ttheme/bram', subject: 'tidewater/bram' })],
     },
-    commons: { works: [JJK], renames: { 'jjk/gojo': 'jujutsu-kaisen/gojo' } },
+    commons: { works: [TIDEWATER], renames: { 'ebb/tamsin': 'tidewater/tamsin' } },
   })
 
   writeFileSync(
@@ -241,45 +242,48 @@ test('readMarketplaces lays the built-in palettes, each added marketplace and th
     JSON.stringify({
       files: {
         'ttheme-marketplace.toml': 'name = "pastel"\n\n[owner]\nname = "someone"\n',
-        'palettes/old.toml': own('ann@pastel/old', 'pastel/old'),
-        'palettes/fan.toml': own('ann@pastel/fan', 'jjk/gojo'),
-        'palettes/night/deep.toml': own('ann@pastel/deep'),
-        'palettes/broken.toml': 'not toml at all',
+        'sets/pastel.toml': setText([{ slug: 'old', text: own('ann@pastel/old', 'pastel/old') }]),
+        'sets/ebb.toml': setText([{ slug: 'fan', text: own('ann@pastel/fan', 'ebb/tamsin') }]),
+        'sets/night/deep.toml': setText([{ slug: 'deep', text: own('ann@pastel/deep') }]),
+        'sets/broken.toml': 'not toml at all',
         'works/pastel.toml': 'name = "Pastel"\n[[character]]\nid = "old"\n',
-        'works/jujutsu-kaisen.toml': 'name = "JJK"\n[[character]]\nid = "yuji"\n',
+        'works/tidewater.toml': 'name = "Tide"\n[[character]]\nid = "quill"\n',
       },
     }),
   )
 
-  mkdirSync(join(local, 'palettes'))
+  mkdirSync(join(local, 'sets'))
   mkdirSync(join(local, 'works'))
-  writeFileSync(join(local, 'ttheme-marketplace.toml'), 'name = "dust"\n\n[owner]\nname = "kec"\n')
-  writeFileSync(join(local, 'palettes', 'rei.toml'), own('kec@dust/rei', 'evangelion/rei'))
-  writeFileSync(join(local, 'works', 'evangelion.toml'), 'name = "Evangelion"\n[[character]]\nid = "rei"\n')
+  writeFileSync(join(local, 'ttheme-marketplace.toml'), 'name = "dust"\n\n[owner]\nname = "kai"\n')
+  writeFileSync(
+    join(local, 'sets', 'starfall.toml'),
+    setText([{ slug: 'wren', text: own('kai@dust/wren', 'starfall/wren') }]),
+  )
+  writeFileSync(join(local, 'works', 'starfall.toml'), 'name = "Starfall"\n[[character]]\nid = "wren"\n')
   writeKept(at, [entry({ name: 'bob@x/gone', subject: undefined })])
   const manifest = readMarketplaces(at)
   assert.deepEqual(
     manifest.palettes.map((p) => [p.name, shelfOf(p, manifest.works)]),
     [
-      ['ttheme/gojo', 'ttheme / Jujutsu Kaisen'],
-      ['ttheme/geto', 'ttheme / Jujutsu Kaisen'],
-      ['ann@pastel/fan', 'ann@pastel / Jujutsu Kaisen'],
+      ['ttheme/tamsin', 'ttheme / Tidewater'],
+      ['ttheme/bram', 'ttheme / Tidewater'],
+      ['ann@pastel/fan', 'ann@pastel / Tidewater'],
       ['ann@pastel/old', 'ann@pastel / Pastel'],
     ],
   )
-  assert.equal(manifest.works.find((w) => w.id === 'jujutsu-kaisen')?.name, 'Jujutsu Kaisen')
+  assert.equal(manifest.works.find((w) => w.id === 'tidewater')?.name, 'Tidewater')
   assert.deepEqual(
-    manifest.works.find((w) => w.id === 'jujutsu-kaisen')?.characters.map((c) => c.id),
-    ['gojo', 'geto', 'yuji'],
+    manifest.works.find((w) => w.id === 'tidewater')?.characters.map((c) => c.id),
+    ['tamsin', 'bram', 'quill'],
   )
   const all = available(at, manifest)
   assert.deepEqual(
     all.palettes.map((p) => p.name),
-    ['ttheme/gojo', 'ttheme/geto', 'ann@pastel/fan', 'ann@pastel/old', 'kec@dust/rei', 'bob@x/gone'],
+    ['ttheme/tamsin', 'ttheme/bram', 'ann@pastel/fan', 'ann@pastel/old', 'kai@dust/wren', 'bob@x/gone'],
   )
   assert.equal(
-    shelfOf(all.palettes.find((p) => p.name === 'kec@dust/rei') ?? { name: '' }, all.works),
-    'kec@dust / Evangelion',
+    shelfOf(all.palettes.find((p) => p.name === 'kai@dust/wren') ?? { name: '' }, all.works),
+    'kai@dust / Starfall',
   )
   assert.equal(shelfOf(all.palettes.find((p) => p.name === 'bob@x/gone') ?? { name: '' }, all.works), 'bob@x')
 })
@@ -288,13 +292,13 @@ test('without the built-in marketplace among the sources its palettes are gone b
   const at = home(['ann/ttheme-pastel'])
   writeBundled(at, {
     builtin: { version: '0.1.0', gate: [], palettes: [entry()] },
-    commons: { works: [JJK], renames: {} },
+    commons: { works: [TIDEWATER], renames: {} },
   })
   const manifest = readMarketplaces(at, false)
   assert.deepEqual(manifest.palettes, [])
   assert.deepEqual(
     manifest.works.map((w) => w.id),
-    ['jujutsu-kaisen'],
+    ['tidewater'],
   )
 })
 

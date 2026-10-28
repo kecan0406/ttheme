@@ -1,0 +1,393 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "joker"
+subject = "persona-5/joker"
+signature = ["cursor", "foreground", "ansi9"]
+ansi_source = "Red Alert + Phantom"
+
+[palette.colors]
+background = "#201513"
+foreground = "#e5e1e5"
+cursor = "#ee6557"
+selection_background = "#5c3232"
+ansi = [
+  "#2e211f",
+  "#f16d5e",
+  "#d5c43c",
+  "#e5b36c",
+  "#ad80e7",
+  "#ff8cba",
+  "#86b880",
+  "#e6d0cc",
+
+  "#857370",
+  "#f3a09a",
+  "#f2e054",
+  "#ffd79d",
+  "#bd9de8",
+  "#ffc0dd",
+  "#a4d39f",
+  "#ffe9e6",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#201f22"
+cursor = "#c52e26"
+selection_background = "#ffcbc9"
+ansi = [
+  "#fff0ee",
+  "#bd2920",
+  "#395922",
+  "#835c1d",
+  "#803dd0",
+  "#b12e6e",
+  "#115c3b",
+  "#362927",
+
+  "#857370",
+  "#8c3b37",
+  "#2e491b",
+  "#714e0d",
+  "#683fa0",
+  "#7f4062",
+  "#024d34",
+  "#2d1b18",
+]
+
+[[palette]]
+slug = "skull"
+subject = "persona-5/skull"
+signature = ["cursor", "ansi1", "foreground"]
+ansi_source = "Desert"
+
+[palette.colors]
+background = "#1b170c"
+foreground = "#eee2c2"
+cursor = "#f5cf00"
+selection_background = "#4c3b15"
+ansi = [
+  "#272418",
+  "#f16c61",
+  "#a6ce4e",
+  "#cbbd66",
+  "#8b90d9",
+  "#e29eb8",
+  "#5cbaad",
+  "#dbd4c2",
+
+  "#7c7767",
+  "#f3a37c",
+  "#c2eb56",
+  "#f0e02f",
+  "#82a8e6",
+  "#ffc0ce",
+  "#00dfca",
+  "#f8edd1",
+]
+
+[palette.colors.light]
+background = "#fff9ee"
+foreground = "#251f0b"
+cursor = "#9e8500"
+selection_background = "#efd4a1"
+ansi = [
+  "#fbf3e0",
+  "#bd2825",
+  "#315a13",
+  "#7f5e10",
+  "#5259bc",
+  "#954b6b",
+  "#005b52",
+  "#302c20",
+
+  "#7c7767",
+  "#884018",
+  "#284a0f",
+  "#6e5000",
+  "#2c558e",
+  "#7f4253",
+  "#004b43",
+  "#241f0e",
+]
+
+[[palette]]
+slug = "panther"
+subject = "persona-5/panther"
+signature = ["cursor", "ansi3", "ansi4"]
+ansi_source = "Warm Neon + Phantom"
+
+[palette.colors]
+background = "#201514"
+foreground = "#fcdbd8"
+cursor = "#ee6460"
+selection_background = "#5c3233"
+ansi = [
+  "#2d2120",
+  "#f26c67",
+  "#a2d460",
+  "#bcc326",
+  "#7490f3",
+  "#ff8bc2",
+  "#71b1f7",
+  "#e6d0ce",
+
+  "#857371",
+  "#f3a09e",
+  "#e2e391",
+  "#f1dd9f",
+  "#aea4e8",
+  "#ffc1cf",
+  "#a8cbf2",
+  "#ffe9e7",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1a"
+cursor = "#c42f33"
+selection_background = "#ffcaca"
+ansi = [
+  "#fff0ef",
+  "#be262c",
+  "#2e5a0b",
+  "#636800",
+  "#2457df",
+  "#b22b78",
+  "#00538c",
+  "#362928",
+
+  "#857371",
+  "#8c3b3c",
+  "#2d4a19",
+  "#625423",
+  "#55489f",
+  "#7e4253",
+  "#1f4566",
+  "#2d1b1a",
+]
+
+[[palette]]
+slug = "fox"
+subject = "persona-5/fox"
+signature = ["cursor", "foreground", "ansi1"]
+ansi_source = "Nord"
+
+[palette.colors]
+background = "#12181d"
+foreground = "#e0e3e8"
+cursor = "#05a9ee"
+selection_background = "#353e4f"
+ansi = [
+  "#1e242a",
+  "#dc7981",
+  "#92cdaf",
+  "#b4c184",
+  "#6e9abf",
+  "#b6a9e0",
+  "#79b4cc",
+  "#cfd5dc",
+
+  "#71787e",
+  "#f39cbd",
+  "#ade9ca",
+  "#d5e3a2",
+  "#84b0d5",
+  "#d7cbff",
+  "#8fd1e0",
+  "#e3effb",
+]
+
+[palette.colors.light]
+background = "#f6faff"
+foreground = "#1c2024"
+cursor = "#0077a9"
+selection_background = "#ced7ed"
+ansi = [
+  "#eef4fb",
+  "#a83f4c",
+  "#205a42",
+  "#7a5f27",
+  "#3a678a",
+  "#68599e",
+  "#10576c",
+  "#272d32",
+
+  "#71787e",
+  "#8f335d",
+  "#0d4c35",
+  "#6b5118",
+  "#2a597a",
+  "#584c89",
+  "#004954",
+  "#162129",
+]
+
+[[palette]]
+slug = "queen"
+subject = "persona-5/queen"
+signature = ["cursor", "foreground", "ansi4"]
+ansi_source = "Argonaut + Phantom"
+
+[palette.colors]
+background = "#201513"
+foreground = "#e6e2dc"
+cursor = "#ee6558"
+selection_background = "#313d5b"
+ansi = [
+  "#2d211f",
+  "#f16d5e",
+  "#d7c42f",
+  "#ffa859",
+  "#4798f3",
+  "#fb87e8",
+  "#57b8ee",
+  "#e6d0cd",
+
+  "#857370",
+  "#f3a09b",
+  "#f7e130",
+  "#ffd5ae",
+  "#9cabe8",
+  "#ffbeee",
+  "#85cef3",
+  "#ffe9e6",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#20201c"
+cursor = "#c52e28"
+selection_background = "#cbd7fc"
+ansi = [
+  "#fff0ee",
+  "#bd2920",
+  "#395922",
+  "#965200",
+  "#0065b4",
+  "#af19a4",
+  "#005678",
+  "#362927",
+
+  "#857370",
+  "#8c3b39",
+  "#2f4a1b",
+  "#724d25",
+  "#38509e",
+  "#803c74",
+  "#004860",
+  "#2d1b19",
+]
+
+[[palette]]
+slug = "oracle"
+subject = "persona-5/oracle"
+signature = ["cursor", "ansi2", "ansi4"]
+ansi_source = "Monokai Remastered"
+
+[palette.colors]
+background = "#1f160e"
+foreground = "#f9dec8"
+cursor = "#fd971f"
+selection_background = "#384037"
+ansi = [
+  "#2c2219",
+  "#f16d52",
+  "#9ad24a",
+  "#ffa851",
+  "#a980f3",
+  "#ff8cab",
+  "#68bc82",
+  "#e3d1c4",
+
+  "#837469",
+  "#f3a191",
+  "#e6e535",
+  "#ffd87d",
+  "#a2a5e8",
+  "#ffc0ce",
+  "#83d99c",
+  "#ffeadb",
+]
+
+[palette.colors.light]
+background = "#fff8f5"
+foreground = "#2b1d0f"
+cursor = "#b06400"
+selection_background = "#d1dacd"
+ansi = [
+  "#fff1e8",
+  "#b6341b",
+  "#385900",
+  "#945300",
+  "#7b38e1",
+  "#b1325f",
+  "#005d30",
+  "#352a21",
+
+  "#837469",
+  "#8c3c2e",
+  "#454500",
+  "#6e5000",
+  "#474ba2",
+  "#7f4253",
+  "#004d27",
+  "#2b1d0f",
+]
+
+[[palette]]
+slug = "velvet"
+subject = "persona-5/velvet"
+signature = ["cursor", "ansi4", "ansi5"]
+ansi_source = "Tomorrow Night Blue"
+
+[palette.colors]
+background = "#1b170c"
+foreground = "#ece2c6"
+cursor = "#f5cf00"
+selection_background = "#383b5b"
+ansi = [
+  "#272418",
+  "#d87e5f",
+  "#bdc779",
+  "#cebb6f",
+  "#7499c2",
+  "#cea0e1",
+  "#72ba89",
+  "#dbd4c2",
+
+  "#7c7767",
+  "#f3a187",
+  "#d9e392",
+  "#f1dc8d",
+  "#79b2ce",
+  "#fcbfec",
+  "#8cd7a2",
+  "#f8edd1",
+]
+
+[palette.colors.light]
+background = "#fff9ee"
+foreground = "#241f0e"
+cursor = "#9e8500"
+selection_background = "#d2d4fc"
+ansi = [
+  "#fbf3e0",
+  "#9b4d32",
+  "#3a5824",
+  "#7c5f1e",
+  "#40668c",
+  "#844c9f",
+  "#0d5c34",
+  "#302c20",
+
+  "#7c7767",
+  "#8b3d23",
+  "#2d4a18",
+  "#6c5011",
+  "#1a5b74",
+  "#7d3e73",
+  "#004d28",
+  "#241f0e",
+]

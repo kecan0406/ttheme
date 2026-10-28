@@ -44,10 +44,10 @@ function image(width: number, height: number, paint: (x: number, y: number) => n
 
 test('the same file is known by its md5 or by the pixiv page it came from, page number included', () => {
   assert.deepEqual(
-    sameKeys(post({ md5: 'ab', source: 'https://i.pximg.net/img-original/img/2024/08/10/121347947_p1.jpg' })),
-    ['md5:ab', 'pixiv:121347947_p1'],
+    sameKeys(post({ md5: 'ab', source: 'https://i.pximg.net/img-original/img/2024/08/10/100000789_p1.jpg' })),
+    ['md5:ab', 'pixiv:100000789_p1'],
   )
-  assert.deepEqual(sameKeys(post({ source: 'https://www.pixiv.net/artworks/121347947' })), [])
+  assert.deepEqual(sameKeys(post({ source: 'https://www.pixiv.net/artworks/100000789' })), [])
 })
 
 test('a post names itself, its file, and every file or post its source points at', () => {
@@ -61,9 +61,9 @@ test('a post names itself, its file, and every file or post its source points at
     'post:yande:225908',
     'family:konachan:4',
   ])
-  assert.deepEqual(kinKeys(site('yande'), post({ id: 3, source: 'https://www.zerochan.net/3248583' })), [
+  assert.deepEqual(kinKeys(site('yande'), post({ id: 3, source: 'https://www.zerochan.net/3200001' })), [
     'post:yande:3',
-    'post:zerochan:3248583',
+    'post:zerochan:3200001',
   ])
   assert.deepEqual(kinKeys(site('yande'), post({ id: 3, source: 'https://s1.zerochan.net/600/05/11/3800555.jpg' })), [
     'post:yande:3',
@@ -71,9 +71,9 @@ test('a post names itself, its file, and every file or post its source points at
 })
 
 test('a set is one uploader posting pictures of one size in a row', () => {
-  const a = post({ owner: 'gnarf', width: 1500, height: 844 })
-  assert.equal(sameSet(a, post({ owner: 'gnarf', width: 1500, height: 844 })), true)
-  assert.equal(sameSet(a, post({ owner: 'gnarf', width: 1500, height: 1061 })), false)
+  const a = post({ owner: 'paperboat', width: 1500, height: 844 })
+  assert.equal(sameSet(a, post({ owner: 'paperboat', width: 1500, height: 844 })), true)
+  assert.equal(sameSet(a, post({ owner: 'paperboat', width: 1500, height: 1061 })), false)
   assert.equal(sameSet(a, post({ owner: 'other', width: 1500, height: 844 })), false)
   assert.equal(sameSet(post({}), post({})), false, 'no credit, no set')
 })

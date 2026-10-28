@@ -1,0 +1,281 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "rikka"
+subject = "chuunibyou/rikka"
+signature = ["cursor", "ansi12", "ansi1"]
+ansi_source = "Challenger Deep + Delusion"
+
+[palette.colors]
+background = "#1b170c"
+foreground = "#eee1c5"
+cursor = "#f8cd41"
+selection_background = "#3d3a5b"
+ansi = [
+  "#282318",
+  "#f26b6a",
+  "#9dcf6b",
+  "#e0b72a",
+  "#00a4b5",
+  "#e39bc7",
+  "#62bd7e",
+  "#ddd4c2",
+
+  "#7d7667",
+  "#f3a282",
+  "#c0eb6b",
+  "#f6db8c",
+  "#68b5d5",
+  "#ffbfe6",
+  "#9ed598",
+  "#faedd0",
+]
+
+[palette.colors.light]
+background = "#fff8f0"
+foreground = "#251f0d"
+cursor = "#a38200"
+selection_background = "#d8d3fb"
+ansi = [
+  "#fdf3e0",
+  "#be2631",
+  "#315a00",
+  "#805d00",
+  "#006e7a",
+  "#97467e",
+  "#015d2f",
+  "#302c20",
+
+  "#7d7667",
+  "#8b3e1c",
+  "#274b0d",
+  "#6c5010",
+  "#005c76",
+  "#7f3e6b",
+  "#004d29",
+  "#251f0d",
+]
+
+[[palette]]
+slug = "yuuta"
+subject = "chuunibyou/yuuta"
+signature = ["cursor", "ansi11", "ansi6"]
+ansi_source = "Srcery + Delusion"
+
+[palette.colors]
+background = "#211512"
+foreground = "#fddbd4"
+cursor = "#ef684a"
+selection_background = "#55362d"
+ansi = [
+  "#2e211e",
+  "#f16d59",
+  "#dac137",
+  "#ffa854",
+  "#ae82dd",
+  "#ff8dab",
+  "#2fbcc1",
+  "#e6d0cb",
+
+  "#85736f",
+  "#f3a193",
+  "#f6e136",
+  "#ffd888",
+  "#bd9de8",
+  "#ffc1ce",
+  "#00e3c5",
+  "#ffe9e5",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b17"
+cursor = "#be3c20"
+selection_background = "#fccdc0"
+ansi = [
+  "#fff0ed",
+  "#bc2a1a",
+  "#395823",
+  "#955300",
+  "#8143c1",
+  "#b1335e",
+  "#005a5c",
+  "#372926",
+
+  "#85736f",
+  "#8c3c30",
+  "#2e491b",
+  "#6d5000",
+  "#683fa0",
+  "#7e4252",
+  "#004b40",
+  "#2d1b17",
+]
+
+[[palette]]
+slug = "shinka"
+subject = "chuunibyou/shinka"
+signature = ["cursor", "ansi11", "ansi12"]
+ansi_source = "Everforest Dark Hard + Delusion"
+
+[palette.colors]
+background = "#1f1519"
+foreground = "#f7dbe6"
+cursor = "#d898b7"
+selection_background = "#4d3743"
+ansi = [
+  "#2b2125",
+  "#f26887",
+  "#d0c572",
+  "#efaf7b",
+  "#7199c1",
+  "#df9ebd",
+  "#66b9ad",
+  "#e2d0d6",
+
+  "#827379",
+  "#f39fab",
+  "#eee285",
+  "#ffd794",
+  "#5fb4e7",
+  "#ffbfe1",
+  "#56dbc9",
+  "#ffe8f0",
+]
+
+[palette.colors.light]
+background = "#fff8f8"
+foreground = "#2a1b22"
+cursor = "#a75d84"
+selection_background = "#efcfde"
+ansi = [
+  "#fff0f4",
+  "#ba2653",
+  "#3a5825",
+  "#8c5728",
+  "#3e668c",
+  "#934b72",
+  "#005b52",
+  "#34292e",
+
+  "#827379",
+  "#8d3849",
+  "#2e491b",
+  "#704f00",
+  "#005b80",
+  "#7f3f66",
+  "#004b43",
+  "#2a1b22",
+]
+
+[[palette]]
+slug = "dekomori"
+subject = "chuunibyou/dekomori"
+signature = ["cursor", "ansi12", "ansi5"]
+ansi_source = "Cobalt2 + Delusion"
+
+[palette.colors]
+background = "#1a180d"
+foreground = "#ece2c6"
+cursor = "#f0cc09"
+selection_background = "#264058"
+ansi = [
+  "#272418",
+  "#f06d40",
+  "#aacf39",
+  "#d6bb00",
+  "#6c90db",
+  "#ff909f",
+  "#5ebd81",
+  "#dbd4c2",
+
+  "#7c7767",
+  "#f2a285",
+  "#c5eb53",
+  "#ffdb37",
+  "#a5a5e8",
+  "#ffc3be",
+  "#72daad",
+  "#f8edd1",
+]
+
+[palette.colors.light]
+background = "#fff9ee"
+foreground = "#241f0e"
+cursor = "#9b8300"
+selection_background = "#bfdaf8"
+ansi = [
+  "#fbf3e0",
+  "#ae3e13",
+  "#335a16",
+  "#805d00",
+  "#3c62a9",
+  "#af3850",
+  "#005d32",
+  "#302c20",
+
+  "#7c7767",
+  "#8a3e20",
+  "#294a11",
+  "#6e5000",
+  "#4a4ba1",
+  "#7d4541",
+  "#004c35",
+  "#241f0e",
+]
+
+[[palette]]
+slug = "kumin"
+subject = "chuunibyou/kumin"
+signature = ["cursor", "ansi4", "ansi1"]
+ansi_source = "Rose Pine + Delusion"
+
+[palette.colors]
+background = "#1a161e"
+foreground = "#eadef1"
+cursor = "#c4a7e7"
+selection_background = "#3e3b50"
+ansi = [
+  "#26222a",
+  "#e96e91",
+  "#d2c66b",
+  "#f1af7d",
+  "#5ca0ab",
+  "#c1a5e4",
+  "#7fb2d0",
+  "#dad2dd",
+
+  "#7b757f",
+  "#f39bcf",
+  "#ece28d",
+  "#fad8bf",
+  "#79b4cf",
+  "#e1c7ff",
+  "#a5cbec",
+  "#f5eafc",
+]
+
+[palette.colors.light]
+background = "#fff7ff"
+foreground = "#231d2a"
+cursor = "#8c67bb"
+selection_background = "#dad4ee"
+ansi = [
+  "#faf1fc",
+  "#b1335e",
+  "#395822",
+  "#8f5524",
+  "#226c77",
+  "#7552a3",
+  "#1d5670",
+  "#2f2a33",
+
+  "#7b757f",
+  "#8f2e71",
+  "#2e491a",
+  "#6d4e35",
+  "#175c74",
+  "#64478a",
+  "#1d4661",
+  "#231d2a",
+]

@@ -5,8 +5,8 @@
  ╰──────────────────────────── │▶● marketplace │
                                ├─ Sort ────────┤
    ▾ ttheme                    │ ● A-Z         │
-     ▾ Lucky☆Star  らき☆すた   │ ○ Cast order  │
-▌      ■ konata                ╰───────────────╯
+     ▾ Lumen☆Song  たい☆なみ   │ ○ Cast order  │
+▌      ■ korund                ╰───────────────╯
    ▸ fix@shop                                 2
 
 

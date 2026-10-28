@@ -16,6 +16,7 @@ import {
 import { listed, type PaletteEntry } from '../core/manifest.ts'
 import { gateLines } from '../core/own.ts'
 import { marketplaceNameProblem, marketplaceToml, readmeOf } from '../core/scaffold.ts'
+import { SETS_DIR, unknownKeys } from '../core/sets.ts'
 import { ago, counted, escaped, inertLines, quoted } from '../core/text.ts'
 import {
   BUILTIN,
@@ -24,7 +25,6 @@ import {
   marketplaceId,
   publisherOf,
   slugOf,
-  unknownKeys,
   workIdOf,
 } from '../core/theme.ts'
 import { ROOT } from '../root.ts'
@@ -34,9 +34,10 @@ import { type Installed, readInstalled, writeInstalled } from '../store/installe
 import {
   type LocalMarketplace,
   localMarketplaces,
-  marketplaceFiles,
-  palettesDir,
+  ownIn,
   readMarketplaceDir,
+  setFiles,
+  setsDir,
   warning,
   workFiles,
 } from '../store/local.ts'
@@ -338,7 +339,7 @@ export function lastUpdate(home: string, source: string, tries = readTries(), no
 }
 
 function scaffold(dir: string, identity: Identity): void {
-  mkdirSync(palettesDir(dir), { recursive: true })
+  mkdirSync(setsDir(dir), { recursive: true })
   writeAtomic(join(dir, MARKETPLACE_FILE), marketplaceToml(identity))
   writeAtomic(join(dir, 'README.md'), readmeOf(identity))
 }
@@ -461,7 +462,7 @@ function unknownIn(dir: string, files: readonly { path: string }[], keysOf: (fil
 }
 
 function folded(dir: string): string[] {
-  const at = palettesDir(dir)
+  const at = setsDir(dir)
 
   if (!existsSync(at)) {
     return []
@@ -470,19 +471,26 @@ function folded(dir: string): string[] {
   return readdirSync(at, { recursive: true, encoding: 'utf8' })
     .filter((path) => path.includes('/') && path.endsWith('.toml'))
     .sort()
-    .map((path) => `palettes/${escaped(path)}: ttheme reads palettes/ alone, not the folders in it — move it up`)
+    .map((path) => `${SETS_DIR}/${escaped(path)}: ttheme reads ${SETS_DIR}/ alone, not the folders in it — move it up`)
 }
 
-function againstCommons(entries: readonly PaletteEntry[], works: readonly Work[], commons: Commons): Findings {
+function againstCommons(
+  dir: string,
+  entries: readonly PaletteEntry[],
+  works: readonly Work[],
+  commons: Commons,
+): Findings {
   const known = mergeWorks(commons.works, works)
   const findings: Findings = { errors: [], warnings: [] }
+  const sets = new Map([...ownIn(dir)].map(([slug, own]) => [slug, `${escaped(relative(dir, own.path))}: ${slug}`]))
 
   for (const entry of entries) {
     if (entry.subject === undefined) {
       continue
     }
 
-    const file = `palettes/${slugOf(entry.name)}.toml`
+    const slug = slugOf(entry.name)
+    const file = sets.get(slug) ?? slug
     const subject = followSubject(commons.renames, entry.subject)
 
     if (subject !== entry.subject) {
@@ -587,13 +595,13 @@ export function checkMarketplace(arg: string | undefined, commons = commonsFor(c
   )
 
   errors.push(...folded(dir))
-  warnings.push(...unknownIn(dir, marketplaceFiles(dir), unknownKeys), ...unknownIn(dir, workFiles(dir), workKeys))
+  warnings.push(...unknownIn(dir, setFiles(dir), unknownKeys), ...unknownIn(dir, workFiles(dir), workKeys))
 
   const renames = renameProblems(info.renames, new Set(entries.map((e) => slugOf(e.name))))
   errors.push(...renames.errors.map((e) => `${MARKETPLACE_FILE}: ${e}`))
   warnings.push(...renames.warnings.map((w) => `${MARKETPLACE_FILE}: ${w}`))
 
-  const findings = againstCommons(entries, works, commons)
+  const findings = againstCommons(dir, entries, works, commons)
   errors.push(...findings.errors)
   warnings.push(...findings.warnings)
 

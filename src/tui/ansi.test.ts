@@ -9,8 +9,8 @@ test('fit closes only what the cut text opened, so a painted row keeps its backg
 })
 
 test('a word too long for its line breaks after a slash or before a #, and mid-word only when it has neither', () => {
-  assert.deepEqual(wrapText('github.com/kecan0406/ttheme-showcase', 34), ['github.com/kecan0406/', 'ttheme-showcase'])
-  assert.deepEqual(wrapText('github.com/kecan0406/ttheme-neon#v1', 34), ['github.com/kecan0406/ttheme-neon', '#v1'])
+  assert.deepEqual(wrapText('github.com/kumquat09/ttheme-showcase', 34), ['github.com/kumquat09/', 'ttheme-showcase'])
+  assert.deepEqual(wrapText('github.com/kumquat09/ttheme-neon#v1', 34), ['github.com/kumquat09/ttheme-neon', '#v1'])
   assert.deepEqual(wrapText('Update failed: cannot reach it', 12), ['Update', 'failed:', 'cannot reach', 'it'])
   assert.deepEqual(wrapText('abcdefghij', 4), ['abcd', 'efgh', 'ij'])
 })

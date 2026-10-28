@@ -10,6 +10,6 @@ Each palette in the result carries:
 - `lookalikes`: signature colors that read as one at text size.
 - `gate`: contrast checks it still fails, normally none.
 
-`shift` is a color's hue move in degrees, `changed` says the file would differ from what is there, `written` that it was written, and `notes` carries what ttheme noticed on the way (a base scheme list it could not fetch, a tag danbooru renamed, a character the commons holds under another work than `--work`).
+`shift` is a color's hue move in degrees, `changed` says the palette's block in its set would differ from what is there, `written` that it was written, and `notes` carries what ttheme noticed on the way (a base scheme list it could not fetch, a tag danbooru renamed, a character the commons holds under another work than `--work`).
 
 `works` lists what `make` adds to the marketplace's `works/`: each `work`, the `characters` it records there and the `file`, with `changed` and `written` as for a palette.

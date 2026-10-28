@@ -31,7 +31,7 @@ test('a chase covers 40% of what is left, always at least one step, and starts c
 })
 
 test('a list that glides shows the window it left until stepped, and one that does not shows the cursor at once', () => {
-  const names = Array.from({ length: 40 }, (_, i) => `kec@shop/palette${String(i).padStart(2, '0')}`)
+  const names = Array.from({ length: 40 }, (_, i) => `kai@shop/palette${String(i).padStart(2, '0')}`)
 
   const make = () =>
     new PaletteList({

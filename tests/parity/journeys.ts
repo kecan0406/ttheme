@@ -229,13 +229,13 @@ export const JOURNEYS: Journey[] = [
     about: 'while ttheme is off, a pinned directory and a pinned host leave the tab in the terminal’s own colors',
     async run(p) {
       p.pin('work', 'ttheme/kita')
-      p.pinHost('tusa', 'ttheme/kita')
+      p.pinHost('teal', 'ttheme/kita')
       const a = await p.open()
       await p.type(a, 'ttheme off')
       await p.type(a, 'cd ~/work')
       await p.look('dir', { want: 'own' })
       await p.type(a, 'cd ~')
-      await p.launch(a, 'ssh tusa', 'remote>')
+      await p.launch(a, 'ssh teal', 'remote>')
       await p.look('host', { want: 'own', busy: true })
       await p.keys(a, 'q')
       await p.back(a)
@@ -619,9 +619,9 @@ export const JOURNEYS: Journey[] = [
     about:
       'ssh to a pinned host repaints the tab while it runs, follows it to the front, and its prompt puts the palette back',
     async run(p) {
-      p.pinHost('tusa', 'ttheme/kita')
+      p.pinHost('teal', 'ttheme/kita')
       const a = await p.open()
-      await p.launch(a, 'ssh tusa', 'remote>')
+      await p.launch(a, 'ssh teal', 'remote>')
       await p.look('in', { want: 'ttheme/kita', busy: true })
       await p.open()
       await p.focus(a)

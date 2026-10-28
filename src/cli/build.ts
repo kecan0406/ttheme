@@ -10,18 +10,8 @@ import {
   WORKS_DIR,
 } from '../core/commons.ts'
 import { checkAll } from '../core/contrast.ts'
-import {
-  BUILTIN,
-  fail,
-  inOther,
-  MARKETPLACE_FILE,
-  readTheme,
-  rotation,
-  slugProblem,
-  str,
-  type Theme,
-  toml,
-} from '../core/theme.ts'
+import { readSet, SETS_DIR, setNameOf } from '../core/sets.ts'
+import { BUILTIN, fail, inOther, MARKETPLACE_FILE, rotation, str, type Theme, themeOf, toml } from '../core/theme.ts'
 import { WIRED } from '../core/wired.ts'
 import { ROOT } from '../root.ts'
 import type { Emitter } from '../terminals/emit/types.ts'
@@ -86,24 +76,34 @@ export function loadBuiltin(dir: string, commons: Commons): Builtin {
 
   const fallback = `${BUILTIN}/${str(MARKETPLACE_FILE, 'fallback', doc.fallback)}`
 
-  const themes = tomlFiles(join(dir, 'palettes'), 'palettes').map((file) => {
-    const slug = basename(file, '.toml')
-    const problem = slugProblem(slug)
+  const seen = new Map<string, string>()
 
-    if (problem) {
-      fail(`palettes/${file}`, `the file name ${slug} ${problem} — it is the palette's name`)
-    }
+  const themes = tomlFiles(join(dir, SETS_DIR), SETS_DIR).flatMap((file) => {
+    const at = `${SETS_DIR}/${file}`
 
-    const theme = readTheme(`palettes/${file}`, readFileSync(join(dir, 'palettes', file), 'utf8'), {
-      name: `${BUILTIN}/${slug}`,
-      builtin: true,
+    return readSet(at, readFileSync(join(dir, SETS_DIR, file), 'utf8')).map(({ slug, doc }) => {
+      const first = seen.get(slug)
+
+      if (first !== undefined) {
+        fail(at, `holds ${slug}, which ${first} holds too — a slug is used once in a marketplace`)
+      }
+
+      seen.set(slug, at)
+      const theme = themeOf(`${at}: ${slug}`, doc, { name: `${BUILTIN}/${slug}`, builtin: true })
+
+      if (theme.subject !== undefined && !aboutOf(commons.works, theme.subject)?.known) {
+        fail(`${at}: ${slug}`, `subject "${theme.subject}" is not in the commons — add it to commons/works first`)
+      }
+
+      if (basename(file, '.toml') !== setNameOf(theme.subject)) {
+        fail(
+          `${at}: ${slug}`,
+          `a built-in palette sits in ${SETS_DIR}/${setNameOf(theme.subject)}.toml, its work's set`,
+        )
+      }
+
+      return theme
     })
-
-    if (theme.subject !== undefined && !aboutOf(commons.works, theme.subject)?.known) {
-      fail(`palettes/${file}`, `subject "${theme.subject}" is not in the commons — add it to commons/works first`)
-    }
-
-    return theme
   })
 
   if (!themes.some((t) => t.name === fallback)) {
@@ -133,7 +133,7 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
     }
 
     throw new Error(
-      `${violations.length} contrast violation(s). Fix the palette, or waive the rule in its [contrast] section with a reason.`,
+      `${violations.length} contrast violation(s). Fix the palette, or waive the rule in its [palette.contrast] table with a reason.`,
     )
   }
 

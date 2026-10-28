@@ -27,7 +27,6 @@ import { StartEntries } from '@/components/builder-start'
 import { PaneBody } from '@/components/mock-window'
 import { TitleDots } from '@/components/workspace-shell'
 import {
-  BLANK_NAME,
   type BuilderData,
   blankEdit,
   changedIn,
@@ -51,7 +50,6 @@ import {
   type Start,
   type Stored,
   storedOf,
-  subjectTrouble,
   TAB_KEY,
   type View,
   withSlot,
@@ -1088,7 +1086,7 @@ class PaletteBuilder extends HTMLElement {
         return
       }
 
-      const draft = textDraft(file ?? `${BLANK_NAME}.toml`, text)
+      const draft = textDraft(file ?? 'the text', text)
       this.#startFrom({ name: draft.name, draft }, true)
     } catch (failure) {
       say(`${file ?? (codeOf(text) ? 'the link' : 'the text')} does not open — ${(failure as Error).message}`)
@@ -1185,7 +1183,7 @@ class PaletteBuilder extends HTMLElement {
       [
         { path: `${repo}/ttheme-marketplace.toml`, text: marketplaceToml(identity, description.trim() || undefined) },
         { path: `${repo}/README.md`, text: readmeOf(identity) },
-        { path: `${repo}/palettes/${file.file}`, text: file.text },
+        { path: `${repo}/sets/${file.file}`, text: file.text },
       ],
       new Date(),
     )
@@ -1493,8 +1491,7 @@ class PaletteBuilder extends HTMLElement {
       const { [meta]: _, ...rest } = this.#state.meta
       this.#edit = { ...this.#state, meta: value ? { ...rest, [meta]: value } : rest, at: Date.now() }
 
-      if (meta === 'subject')
-        input.setAttribute('aria-invalid', String(subjectTrouble(value || undefined) !== undefined))
+      if (meta === 'subject') this.#renderAbout()
       this.#renderExport()
       this.#renderShared()
       this.#save()

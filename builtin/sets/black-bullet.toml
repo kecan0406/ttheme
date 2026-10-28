@@ -1,0 +1,337 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "rentaro"
+subject = "black-bullet/rentaro"
+signature = ["cursor", "selection", "foreground"]
+ansi_source = "Tomorrow Night + Varanium"
+
+[palette.colors]
+background = "#14181e"
+foreground = "#dfe3e7"
+cursor = "#4e6692"
+selection_background = "#3c4568"
+ansi = [
+  "#21242b",
+  "#db7699",
+  "#86d0ab",
+  "#f2af7b",
+  "#8793c6",
+  "#b7a9e0",
+  "#75b5c7",
+  "#d2d4de",
+
+  "#74777f",
+  "#f39eba",
+  "#a1ecc6",
+  "#fad8bf",
+  "#89aed8",
+  "#d8caff",
+  "#90d0e4",
+  "#e9eefe",
+]
+
+[palette.colors.light]
+background = "#f9f9ff"
+foreground = "#1b2023"
+cursor = "#3d5580"
+selection_background = "#a1aad2"
+ansi = [
+  "#f2f3fd",
+  "#a34167",
+  "#045c3f",
+  "#8f5522",
+  "#4e60a1",
+  "#69589e",
+  "#055868",
+  "#292c33",
+
+  "#74777f",
+  "#8e3559",
+  "#004c33",
+  "#6d4e35",
+  "#31577d",
+  "#5a4b8a",
+  "#004958",
+  "#1a202b",
+]
+
+[[palette]]
+slug = "enju"
+subject = "black-bullet/enju"
+signature = ["cursor", "ansi11", "ansi3"]
+ansi_source = "Dogxi Misty + Varanium"
+
+[palette.colors]
+background = "#201512"
+foreground = "#fddbd3"
+cursor = "#db8068"
+selection_background = "#1a4252"
+ansi = [
+  "#2e211d",
+  "#f16d5b",
+  "#d6c32e",
+  "#ffa76f",
+  "#8293d0",
+  "#ff8fa7",
+  "#75bb75",
+  "#e6d0ca",
+
+  "#85736f",
+  "#f3a195",
+  "#f5df2f",
+  "#ffd87f",
+  "#98a9e6",
+  "#ffc2cc",
+  "#97d59e",
+  "#ffe9e4",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b16"
+cursor = "#ad5139"
+selection_background = "#b6ddf1"
+ansi = [
+  "#fff1ed",
+  "#bd291c",
+  "#395922",
+  "#a04b00",
+  "#475fab",
+  "#b03659",
+  "#165c22",
+  "#372926",
+
+  "#85736f",
+  "#8c3c32",
+  "#2f4a1b",
+  "#6b5100",
+  "#35509f",
+  "#7e434f",
+  "#054c26",
+  "#2d1b16",
+]
+
+[[palette]]
+slug = "kisara"
+subject = "black-bullet/kisara"
+signature = ["cursor", "selection", "ansi4"]
+ansi_source = "London Soho Night + Varanium"
+
+[palette.colors]
+background = "#1c151c"
+foreground = "#f1ddec"
+cursor = "#a478a4"
+selection_background = "#753135"
+ansi = [
+  "#292128",
+  "#d57e80",
+  "#d4c55b",
+  "#f7ac73",
+  "#639db7",
+  "#f88dd7",
+  "#73b6c3",
+  "#ded1da",
+
+  "#7f747c",
+  "#f39eb2",
+  "#eee283",
+  "#fad6bc",
+  "#84b1db",
+  "#ffbee6",
+  "#91d0e5",
+  "#fce8f8",
+]
+
+[palette.colors.light]
+background = "#fff7fa"
+foreground = "#271c27"
+cursor = "#7f5680"
+selection_background = "#ed9295"
+ansi = [
+  "#fef0f9",
+  "#a3454a",
+  "#395922",
+  "#945318",
+  "#2d6a82",
+  "#ac2a91",
+  "#005964",
+  "#322a31",
+
+  "#7f747c",
+  "#8e3751",
+  "#2e491b",
+  "#6e4e34",
+  "#28587e",
+  "#803d6c",
+  "#004959",
+  "#271c27",
+]
+
+[[palette]]
+slug = "tina"
+subject = "black-bullet/tina"
+signature = ["cursor", "ansi6", "selection"]
+ansi_source = "Galizur + Varanium"
+
+[palette.colors]
+background = "#1b170c"
+foreground = "#eee2c5"
+cursor = "#ead082"
+selection_background = "#2c4a5e"
+ansi = [
+  "#282318",
+  "#f16d40",
+  "#afcd33",
+  "#dcb831",
+  "#6b9bbd",
+  "#fe8fab",
+  "#71b7bd",
+  "#dcd4c2",
+
+  "#7d7667",
+  "#f3a288",
+  "#c9ea4f",
+  "#ffdb42",
+  "#00b9e0",
+  "#ffc1cf",
+  "#20dfc9",
+  "#f9edd0",
+]
+
+[palette.colors.light]
+background = "#fff8f0"
+foreground = "#251f0d"
+cursor = "#9a853f"
+selection_background = "#91afc6"
+ansi = [
+  "#fcf3e0",
+  "#af3d13",
+  "#335918",
+  "#805d00",
+  "#366888",
+  "#af355d",
+  "#00595f",
+  "#302c20",
+
+  "#7d7667",
+  "#8b3e23",
+  "#2a4a12",
+  "#6f5000",
+  "#005d72",
+  "#7e4253",
+  "#004b43",
+  "#251f0d",
+]
+
+[[palette]]
+slug = "kohina"
+subject = "black-bullet/kohina"
+signature = ["cursor", "selection", "ansi9"]
+ansi_source = "Spacegray Bright + Varanium"
+
+[palette.colors]
+background = "#12181d"
+foreground = "#d9e4f0"
+cursor = "#74a2c6"
+selection_background = "#891a2d"
+ansi = [
+  "#1e242a",
+  "#f26a76",
+  "#89cfad",
+  "#b4c181",
+  "#7698c3",
+  "#b8a9df",
+  "#71b7bd",
+  "#cfd5dc",
+
+  "#72787e",
+  "#f3a0a0",
+  "#a4ebc7",
+  "#d5e3a1",
+  "#7bb2cf",
+  "#dacaff",
+  "#8cd2da",
+  "#e4effb",
+]
+
+[palette.colors.light]
+background = "#f6f9ff"
+foreground = "#162129"
+cursor = "#447395"
+selection_background = "#ff8890"
+ansi = [
+  "#eff4fb",
+  "#bc2740",
+  "#0e5b41",
+  "#7a5f24",
+  "#43658e",
+  "#6a589c",
+  "#00595f",
+  "#272d32",
+
+  "#72787e",
+  "#8c3a3e",
+  "#004c34",
+  "#6b5117",
+  "#1d5b75",
+  "#5c4a89",
+  "#004a50",
+  "#162129",
+]
+
+[[palette]]
+slug = "kagetane"
+subject = "black-bullet/kagetane"
+signature = ["cursor", "foreground", "selection"]
+ansi_source = "Patina Dark + Varanium"
+
+[palette.colors]
+background = "#201515"
+foreground = "#e2e2ec"
+cursor = "#a24a4e"
+selection_background = "#4f4258"
+ansi = [
+  "#2d2120",
+  "#d57e82",
+  "#cac470",
+  "#efae6f",
+  "#8594c8",
+  "#c5a5d9",
+  "#88b782",
+  "#e5cfcf",
+
+  "#857372",
+  "#f3a09f",
+  "#e7e089",
+  "#ffd5b0",
+  "#9ba9df",
+  "#f9c0ef",
+  "#a2d49d",
+  "#ffe9e8",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#1d1f26"
+cursor = "#8d3a3e"
+selection_background = "#b6a5bf"
+ansi = [
+  "#fff0f0",
+  "#a2454c",
+  "#3a5824",
+  "#8b5821",
+  "#4c609f",
+  "#795395",
+  "#175b3d",
+  "#362929",
+
+  "#857372",
+  "#8c3a3d",
+  "#2e4a1a",
+  "#724d27",
+  "#3c5195",
+  "#7b3f76",
+  "#004d32",
+  "#2d1b1b",
+]

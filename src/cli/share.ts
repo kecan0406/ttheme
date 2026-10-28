@@ -1,5 +1,5 @@
 import { randomInt } from 'node:crypto'
-import { existsSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import * as p from '@clack/prompts'
 import { Cancelled } from '../core/cancelled.ts'
@@ -12,7 +12,7 @@ import { MARKETPLACE_FILE, publisherOf, slugOf, slugProblem } from '../core/them
 import { available, find, readBundled, readMarketplaces, untuned } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { readInstalled } from '../store/installed.ts'
-import { type LocalMarketplace, localMarketplaces, marketplaceFiles, palettesDir } from '../store/local.ts'
+import { dropOwnIn, type LocalMarketplace, localMarketplaces, ownIn, writeOwnIn } from '../store/local.ts'
 import { configHome } from '../store/paths.ts'
 import { REPO_NAME, readMarketplaceInfo, shownSource } from '../store/sources.ts'
 import { readTone, tonedModes } from '../store/tone.ts'
@@ -266,7 +266,6 @@ interface Copy {
   entry: PaletteEntry
   slug: string
   draft: Draft
-  path: string
   kind: 'add' | 'update' | 'replace'
 }
 
@@ -318,7 +317,7 @@ async function copiesFor(
   dropped: readonly PaletteEntry[],
   tone: Tone | undefined,
 ): Promise<Copy[]> {
-  const files = new Set(marketplaceFiles(marketplace.dir).map((f) => f.slug))
+  const files = new Set(ownIn(marketplace.dir).keys())
   const keptBy = new Map(kept.map((e) => [slugOf(e.name), e]))
   const leaving = new Set(dropped.map((e) => slugOf(e.name)))
   const copies: Copy[] = []
@@ -356,7 +355,7 @@ async function copiesFor(
     const full = `${marketplace.id}/${slug}`
     const copy: Draft = { ...draftFor(home, entry), name: full, from: fromOf(entry) }
     readOwnText(full, paletteToml(copy))
-    copies.push({ entry, slug, draft: copy, path: join(palettesDir(marketplace.dir), `${slug}.toml`), kind })
+    copies.push({ entry, slug, draft: copy, kind })
   }
 
   return copies
@@ -476,16 +475,24 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
   const was = readMarketplaceInfo(before, tomlPath).description
   const description = await askDescription(was)
 
-  const files = new Map(marketplaceFiles(marketplace.dir).map((f) => [f.slug, f.path]))
-  const drops = dropped.flatMap((e) => files.get(slugOf(e.name)) ?? [])
-  const slugAt = new Map([...files].map(([slug, path]) => [path, slug]))
-  const risk = await unsaved(marketplace.dir, drops)
-  const slugs = (paths: string[]) => paths.map((path) => slugAt.get(path) ?? path).join(', ')
+  const files = ownIn(marketplace.dir)
+
+  const drops = dropped.flatMap((e) => {
+    const own = files.get(slugOf(e.name))
+
+    return own ? [{ slug: slugOf(e.name), path: own.path }] : []
+  })
+
+  const risk = await unsaved(marketplace.dir, [...new Set(drops.map((d) => d.path))])
+  const slugsIn = (paths: string[]) => drops.flatMap((d) => (paths.includes(d.path) ? [d.slug] : [])).join(', ')
+  const one = risk.changed.length === 1
 
   const lost = [
-    ...(risk.fresh.length > 0 ? [`git has no copy of ${slugs(risk.fresh)}`] : []),
+    ...(risk.fresh.length > 0 ? [`git has no copy of ${slugsIn(risk.fresh)}`] : []),
     ...(risk.changed.length > 0
-      ? [`${slugs(risk.changed)} changed since ${risk.changed.length === 1 ? 'it was' : 'they were'} last committed`]
+      ? [
+          `the ${one ? 'set file' : 'set files'} holding ${slugsIn(risk.changed)} changed since ${one ? 'it was' : 'they were'} last committed`,
+        ]
       : []),
   ]
 
@@ -531,12 +538,12 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
     }
   }
 
-  for (const path of drops) {
-    rmSync(path)
+  for (const { slug } of drops) {
+    dropOwnIn(marketplace.dir, slug)
   }
 
   for (const copy of copies) {
-    writeAtomic(copy.path, paletteToml(copy.draft))
+    writeOwnIn(marketplace.dir, copy.slug, paletteToml(copy.draft))
   }
 
   for (const proposal of proposals) {

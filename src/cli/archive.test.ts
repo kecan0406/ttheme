@@ -12,7 +12,7 @@ import { WIRINGS } from '../terminals/index.ts'
 import { sync } from './sync.ts'
 
 const colors: Colors = {
-  name: 'ttheme/gojo',
+  name: 'ttheme/orla',
   background: '#11191c',
   foreground: '#e3e2e7',
   cursor: '#7cc1d6',
@@ -20,9 +20,9 @@ const colors: Colors = {
 }
 
 const entry: PaletteEntry = {
-  name: 'ttheme/gojo',
-  subject: 'jujutsu-kaisen/gojo',
-  ansiSource: 'Horizon + Jujutsu',
+  name: 'ttheme/orla',
+  subject: 'tidewater/orla',
+  ansiSource: 'Horizon',
   background: '#11191c',
   foreground: '#e3e2e7',
   cursor: '#7cc1d6',
@@ -77,7 +77,7 @@ function installOf(id: Wired): Map<string, string> {
 
   const state = {
     terminals: [id],
-    palettes: ['ttheme/gojo'],
+    palettes: ['ttheme/orla'],
     ...(id === 'windows-terminal' ? { wtHome: join(home, 'wt'), wtProfile: 'the profile' } : {}),
   }
 
@@ -90,7 +90,7 @@ function installOf(id: Wired): Map<string, string> {
 function installPicture(home: string): void {
   installBackdrop(
     home,
-    { ...colors, name: 'ttheme/gojo' },
+    { ...colors, name: 'ttheme/orla' },
     toneFor(colors, 'cursor'),
     { width: 4, height: 4, data: new Uint8Array(64).fill(90) },
     { site: 'yande', id: 9, ext: 'png', bytes: new Uint8Array([9]) },
@@ -154,7 +154,7 @@ function iterm2Agrees(archive: Output[], install: Map<string, string>): void {
     }
   ).Profiles
 
-  const profile = profiles.find((p) => p.Name === 'ttheme · ttheme/gojo')
+  const profile = profiles.find((p) => p.Name === 'ttheme · ttheme/orla')
 
   assert.ok(profile, 'the install wrote no profile for the palette')
   assert.ok(shipped.size > 0, 'the archive shipped no colors')
@@ -176,7 +176,7 @@ function windowsTerminalAgrees(archive: Output[], install: Map<string, string>):
 }
 
 function konsoleAgrees(archive: Output[], install: Map<string, string>): void {
-  const scheme = install.get('ttheme-ttheme--gojo.colorscheme') as string
+  const scheme = install.get('ttheme-ttheme--orla.colorscheme') as string
 
   assert.equal(
     without(scheme, /^(Wallpaper|FillStyle|Anchor|WallpaperOpacity)=/),
@@ -188,14 +188,14 @@ function konsoleAgrees(archive: Output[], install: Map<string, string>): void {
 
 const DECLARED: Partial<Record<Wired, Record<string, string>>> = {
   iterm2: {
-    'ttheme-ttheme--gojo.itermcolors': 'the install writes a dynamic profile per palette, not a color scheme plist',
+    'ttheme-ttheme--orla.itermcolors': 'the install writes a dynamic profile per palette, not a color scheme plist',
   },
   'windows-terminal': {
-    'ttheme-ttheme--gojo.json': 'the install keeps the scheme in its fragment',
+    'ttheme-ttheme--orla.json': 'the install keeps the scheme in its fragment',
     'ttheme.json': "the install's fragment names the profile to update; the archive's registers the schemes alone",
   },
   konsole: {
-    'ttheme-ttheme--gojo.colorscheme': "the install's scheme carries the palette's picture; the archive's has none",
+    'ttheme-ttheme--orla.colorscheme': "the install's scheme carries the palette's picture; the archive's has none",
   },
 }
 

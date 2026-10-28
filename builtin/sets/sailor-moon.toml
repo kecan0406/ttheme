@@ -1,0 +1,281 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "moon"
+subject = "sailor-moon/moon"
+signature = ["cursor", "ansi3", "ansi12"]
+ansi_source = "Starlight"
+
+[palette.colors]
+background = "#1f1518"
+foreground = "#f9dbe2"
+cursor = "#f48fb1"
+selection_background = "#3e3a5a"
+ansi = [
+  "#2c2124",
+  "#f26888",
+  "#c2cc42",
+  "#d8ba00",
+  "#589be5",
+  "#e996d4",
+  "#00c0ae",
+  "#e3d0d4",
+
+  "#837377",
+  "#f39fa7",
+  "#f6e030",
+  "#f8d9aa",
+  "#4cb6e8",
+  "#ffbfe4",
+  "#88d5db",
+  "#ffe8ed",
+]
+
+[palette.colors.light]
+background = "#fff8f8"
+foreground = "#2c1b20"
+cursor = "#c24d7a"
+selection_background = "#d9d2fa"
+ansi = [
+  "#fff0f2",
+  "#ba2654",
+  "#36591d",
+  "#736300",
+  "#0d66ac",
+  "#9e3d8d",
+  "#005b51",
+  "#35292c",
+
+  "#837377",
+  "#8d3945",
+  "#2f4a1b",
+  "#6b501f",
+  "#005b7c",
+  "#7f3e69",
+  "#004a4e",
+  "#2c1b20",
+]
+
+[[palette]]
+slug = "mercury"
+subject = "sailor-moon/mercury"
+signature = ["cursor", "ansi12", "ansi2"]
+ansi_source = "Glacier + Senshi"
+
+[palette.colors]
+background = "#12181d"
+foreground = "#d8e4f0"
+cursor = "#3c9cd7"
+selection_background = "#293f59"
+ansi = [
+  "#1e242a",
+  "#f2649a",
+  "#68d69b",
+  "#f4ae54",
+  "#449dd6",
+  "#f08bfa",
+  "#8eaed9",
+  "#cfd5dc",
+
+  "#72787e",
+  "#f3a0ba",
+  "#4ef5d7",
+  "#f6d67b",
+  "#5bb4e6",
+  "#ffbcfa",
+  "#a7caf3",
+  "#e4effb",
+]
+
+[palette.colors.light]
+background = "#f6f9ff"
+foreground = "#162129"
+cursor = "#0071a5"
+selection_background = "#c2d9f9"
+ansi = [
+  "#eff4fb",
+  "#b72767",
+  "#005c39",
+  "#8c5800",
+  "#00699a",
+  "#a619bd",
+  "#315278",
+  "#272d32",
+
+  "#72787e",
+  "#8c3758",
+  "#004b40",
+  "#6e4f00",
+  "#005b7f",
+  "#813783",
+  "#1d4468",
+  "#162129",
+]
+
+[[palette]]
+slug = "mars"
+subject = "sailor-moon/mars"
+signature = ["cursor", "ansi9", "foreground"]
+ansi_source = "Red Planet + Senshi"
+
+[palette.colors]
+background = "#201514"
+foreground = "#eee2b9"
+cursor = "#ee6463"
+selection_background = "#463757"
+ansi = [
+  "#2d2120",
+  "#e47669",
+  "#cdc376",
+  "#f4ac6f",
+  "#a18dc2",
+  "#dd9fc1",
+  "#89b0dc",
+  "#e5cfce",
+
+  "#857372",
+  "#f3a194",
+  "#e9df8f",
+  "#ffd192",
+  "#a2a5d6",
+  "#ffc1ce",
+  "#a8ccf3",
+  "#ffe9e7",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#251f05"
+cursor = "#c42f36"
+selection_background = "#e4cff7"
+ansi = [
+  "#fff0ef",
+  "#b2382e",
+  "#3c5728",
+  "#8f551e",
+  "#6f569b",
+  "#914c76",
+  "#29537a",
+  "#362928",
+
+  "#857372",
+  "#8c3c31",
+  "#2e491b",
+  "#754d00",
+  "#4a4f8d",
+  "#7e4252",
+  "#1e4565",
+  "#2d1b1a",
+]
+
+[[palette]]
+slug = "jupiter"
+subject = "sailor-moon/jupiter"
+signature = ["cursor", "ansi1", "ansi11"]
+ansi_source = "Everforest Dark Hard + Senshi"
+
+[palette.colors]
+background = "#131913"
+foreground = "#d9e6d5"
+cursor = "#36a455"
+selection_background = "#4d3743"
+ansi = [
+  "#1f251e",
+  "#de787a",
+  "#a7cb91",
+  "#c8bc73",
+  "#56a1a1",
+  "#e997ac",
+  "#7eb889",
+  "#cfd7cc",
+
+  "#727970",
+  "#f3a185",
+  "#b3ee6e",
+  "#ffd794",
+  "#3dbcc5",
+  "#ffc0ce",
+  "#78daa1",
+  "#e4f2e1",
+]
+
+[palette.colors.light]
+background = "#f4fcf0"
+foreground = "#172218"
+cursor = "#007934"
+selection_background = "#efcfde"
+ansi = [
+  "#eff6ea",
+  "#ab3d44",
+  "#39582a",
+  "#6d6425",
+  "#1a6e6e",
+  "#9e4661",
+  "#015d43",
+  "#272e27",
+
+  "#727970",
+  "#8b3d20",
+  "#244b06",
+  "#704f00",
+  "#005e64",
+  "#7f4253",
+  "#004d2d",
+  "#172218",
+]
+
+[[palette]]
+slug = "venus"
+subject = "sailor-moon/venus"
+signature = ["cursor", "ansi3", "ansi12"]
+ansi_source = "Earthsong"
+
+[palette.colors]
+background = "#1e160d"
+foreground = "#f5dfc6"
+cursor = "#e29800"
+selection_background = "#4d3a1e"
+ansi = [
+  "#2a2218",
+  "#f16e41",
+  "#c7c726",
+  "#f5ae2e",
+  "#3b9fcd",
+  "#ff8aa9",
+  "#34beae",
+  "#e1d2c2",
+
+  "#817567",
+  "#f3a288",
+  "#e8e230",
+  "#feda63",
+  "#33badd",
+  "#ffbfcd",
+  "#00dec9",
+  "#ffebd4",
+]
+
+[palette.colors.light]
+background = "#fff8f4"
+foreground = "#291e0e"
+cursor = "#a26c00"
+selection_background = "#f1d3ac"
+ansi = [
+  "#fff1e4",
+  "#ae3e14",
+  "#37591f",
+  "#865b00",
+  "#006b90",
+  "#b3305e",
+  "#005b52",
+  "#332b20",
+
+  "#817567",
+  "#8b3e23",
+  "#2d4919",
+  "#675300",
+  "#005d71",
+  "#804252",
+  "#004b43",
+  "#291e0e",
+]

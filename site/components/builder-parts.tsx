@@ -784,7 +784,7 @@ export function MarkTile({ about }: { about: AboutView }) {
 export function FileNote({ about }: { about: AboutView }) {
   return (
     <>
-      saved as{' '}
+      saved in{' '}
       <code class="rounded-sm bg-muted px-1 font-mono text-soft-foreground" translate="no" safe>
         {about.file}
       </code>

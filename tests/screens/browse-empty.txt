@@ -5,8 +5,8 @@
                                                  ╭─ ttheme ───────────────────────────────────────╮
     + Add marketplace   owner/repo or a folder   │ Updates with ttheme                            │
     ⌕ Search marketplace   find one on GitHub    │                                                │
-                                                 │    ▸ Bocchi the Rock! (0/3) ぼっち・ざ・ろっ…  │
- ▌  ● ttheme                                     │    ▸ Lucky☆Star (0/3) らき☆すた                │
+                                                 │    ▸ Briarwood Rocks! (0/3) すたあ・ふ・ばら…  │
+ ▌  ● ttheme                                     │    ▸ Lumen☆Song (0/3) たい☆なみ                │
  ▌    Built in                                   │                                                │
  ▌    6 available                                │                                                │
                                                  │                                                │

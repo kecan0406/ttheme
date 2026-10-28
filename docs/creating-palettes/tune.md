@@ -16,7 +16,7 @@ palette, press `tab`, then `enter` on **Edit palette**.
 
 The editor works as it does for [your own palette](your-own.md): pick a color,
 tune it, and `s` saves. Tuning has no seeds or signature marks, and it never
-changes the palette file itself.
+changes the palette in its marketplace.
 
 ## What tuning does
 
@@ -37,7 +37,7 @@ ttheme check miku         # every contrast check's numbers for a palette
 ttheme check --fix miku   # colors that pass, saved as its tuning
 ```
 
-On a palette of your own, `--fix` writes the colors into its file instead.
+On a palette of your own, `--fix` writes the colors into its set instead.
 
 ## Go back
 

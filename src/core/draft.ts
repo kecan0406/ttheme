@@ -4,7 +4,7 @@ import { RULES } from './contrast.ts'
 import type { PaletteEntry } from './manifest.ts'
 import { modeOf, otherOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
-import { PALETTE_SCHEMA_URL, POSITIONS, readTheme, type SharedPicture, slugOf, type Theme } from './theme.ts'
+import { POSITIONS, readTheme, type SharedPicture, slugOf, type Theme } from './theme.ts'
 
 export const CODE = 'tt5:'
 export const SHARE_URL = 'https://ttheme.dev/builder/'
@@ -73,7 +73,6 @@ export function colorsToml(c: Colors, table: string): string[] {
 
 export function paletteToml(d: Draft): string {
   const lines = [
-    `"$schema" = ${q(PALETTE_SCHEMA_URL)}`,
     ...(d.subject ? [`subject = ${q(d.subject)}`] : []),
     ...(d.from ? [`from = ${q(d.from)}`] : []),
     `signature = [${d.signature.map(q).join(', ')}]`,
@@ -111,7 +110,7 @@ export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string)
 }
 
 export function readOwnText(name: string, source: string, foreign = false): Theme {
-  return readTheme(`${slugOf(name)}.toml`, source, { name, ...(foreign ? { foreign: true as const } : {}) })
+  return readTheme(slugOf(name), source, { name, ...(foreign ? { foreign: true as const } : {}) })
 }
 
 class Writer {

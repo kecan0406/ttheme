@@ -1,0 +1,337 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "hachiman"
+subject = "oregairu/hachiman"
+signature = ["cursor", "ansi3", "ansi4"]
+ansi_source = "Smyck + Service Club"
+
+[palette.colors]
+background = "#17171f"
+foreground = "#e2e1f2"
+cursor = "#737483"
+selection_background = "#15434c"
+ansi = [
+  "#23232b",
+  "#ee689a",
+  "#63d6a2",
+  "#d6ba52",
+  "#659db9",
+  "#c0a4ed",
+  "#81b0da",
+  "#d5d3de",
+
+  "#777680",
+  "#ef9fb9",
+  "#6bf5b9",
+  "#f4dab7",
+  "#83afde",
+  "#e4c6ff",
+  "#80d1f3",
+  "#eeecfe",
+]
+
+[palette.colors.light]
+background = "#fbf8ff"
+foreground = "#1d1f2b"
+cursor = "#595b6b"
+selection_background = "#b3dfea"
+ansi = [
+  "#f4f2fd",
+  "#b42d67",
+  "#005c3e",
+  "#766100",
+  "#2f6a84",
+  "#7450af",
+  "#205479",
+  "#2b2c34",
+
+  "#767680",
+  "#8b3859",
+  "#004c33",
+  "#68512d",
+  "#285882",
+  "#674589",
+  "#00485d",
+  "#1d1f2b",
+]
+
+[[palette]]
+slug = "yukino"
+subject = "oregairu/yukino"
+signature = ["cursor", "ansi1", "foreground"]
+ansi_source = "Mariana + Service Club"
+
+[palette.colors]
+background = "#12181d"
+foreground = "#e0e3e5"
+cursor = "#7faed1"
+selection_background = "#333f49"
+ansi = [
+  "#1e242a",
+  "#da7b78",
+  "#91cdae",
+  "#b2c365",
+  "#629bcb",
+  "#b3aae4",
+  "#67b7c8",
+  "#cfd5dc",
+
+  "#71787e",
+  "#f3a0b6",
+  "#afe9cb",
+  "#d2e48a",
+  "#84b0d7",
+  "#d3ccff",
+  "#8fd1e1",
+  "#e3effb",
+]
+
+[palette.colors.light]
+background = "#f6faff"
+foreground = "#1c2022"
+cursor = "#497999"
+selection_background = "#ccd9e5"
+ansi = [
+  "#eef4fb",
+  "#a84141",
+  "#1f5a42",
+  "#815e00",
+  "#296895",
+  "#6a57a1",
+  "#005866",
+  "#272d32",
+
+  "#71787e",
+  "#8c3754",
+  "#104b36",
+  "#6f5000",
+  "#2a597b",
+  "#5a4b88",
+  "#004955",
+  "#162129",
+]
+
+[[palette]]
+slug = "yuigahama"
+subject = "oregairu/yuigahama"
+signature = ["cursor", "ansi13", "ansi1"]
+ansi_source = "Snazzy Soft + Service Club"
+
+[palette.colors]
+background = "#201511"
+foreground = "#fddbd1"
+cursor = "#f7a98f"
+selection_background = "#1a4252"
+ansi = [
+  "#2d211d",
+  "#de7a69",
+  "#d0c526",
+  "#e0b55e",
+  "#9a88e7",
+  "#ff8fa3",
+  "#7eb887",
+  "#e6d0c9",
+
+  "#85736d",
+  "#f3a193",
+  "#ede12a",
+  "#ffd88c",
+  "#b0a1e8",
+  "#ffc3c2",
+  "#98d5a0",
+  "#ffe9e3",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b15"
+cursor = "#ba6548"
+selection_background = "#b6ddf1"
+ansi = [
+  "#fff1ed",
+  "#ab402f",
+  "#385921",
+  "#7f5e0b",
+  "#674bd0",
+  "#b03654",
+  "#115c3b",
+  "#362925",
+
+  "#85736e",
+  "#8c3c30",
+  "#2e4a1a",
+  "#6e5000",
+  "#5945a1",
+  "#7d4545",
+  "#004c32",
+  "#2d1b15",
+]
+
+[[palette]]
+slug = "iroha"
+subject = "oregairu/iroha"
+signature = ["cursor", "ansi1", "foreground"]
+ansi_source = "Andromeda + Service Club"
+
+[palette.colors]
+background = "#1e160d"
+foreground = "#f3dfcd"
+cursor = "#eab774"
+selection_background = "#3b3e43"
+ansi = [
+  "#2b2218",
+  "#cc846f",
+  "#a7ce49",
+  "#dfb664",
+  "#b180e6",
+  "#ff8eac",
+  "#53be8c",
+  "#e1d2c2",
+
+  "#817567",
+  "#f3a37e",
+  "#c2eb62",
+  "#ffda47",
+  "#bf9ee8",
+  "#ffc1ce",
+  "#71dba6",
+  "#ffebd5",
+]
+
+[palette.colors.light]
+background = "#fff8f4"
+foreground = "#281e13"
+cursor = "#a2763a"
+selection_background = "#d5d7dd"
+ansi = [
+  "#fff1e5",
+  "#915340",
+  "#315a14",
+  "#7e5e13",
+  "#833ccd",
+  "#b0345e",
+  "#005c3c",
+  "#332b20",
+
+  "#817567",
+  "#893f18",
+  "#284a0f",
+  "#6e4f00",
+  "#693f9f",
+  "#7e4252",
+  "#004c31",
+  "#291d0e",
+]
+
+[[palette]]
+slug = "komachi"
+subject = "oregairu/komachi"
+signature = ["cursor", "ansi13", "ansi11"]
+ansi_source = "Catppuccin Frappe + Service Club"
+
+[palette.colors]
+background = "#16171f"
+foreground = "#e0e1f3"
+cursor = "#9da9dd"
+selection_background = "#4c3935"
+ansi = [
+  "#22232b",
+  "#d57a98",
+  "#85d0ab",
+  "#e3b776",
+  "#7b94d9",
+  "#c4a5db",
+  "#76b5c9",
+  "#d4d3de",
+
+  "#767680",
+  "#e7a3b8",
+  "#b0eacb",
+  "#f3dd80",
+  "#98aadc",
+  "#d9caff",
+  "#92d0e7",
+  "#ecedfe",
+]
+
+[palette.colors.light]
+background = "#faf8ff"
+foreground = "#1c1f2b"
+cursor = "#6072b5"
+selection_background = "#eed1cb"
+ansi = [
+  "#f3f2fd",
+  "#9e4566",
+  "#015c3f",
+  "#7f5d25",
+  "#4060ae",
+  "#785397",
+  "#075869",
+  "#2a2c34",
+
+  "#767680",
+  "#843e58",
+  "#114b35",
+  "#635400",
+  "#3a538d",
+  "#5b4b89",
+  "#00495a",
+  "#1c1f2b",
+]
+
+[[palette]]
+slug = "haruno"
+subject = "oregairu/haruno"
+signature = ["cursor", "foreground", "ansi13"]
+ansi_source = "Whimsy + Service Club"
+
+[palette.colors]
+background = "#201516"
+foreground = "#e9e0e8"
+cursor = "#dd939d"
+selection_background = "#3c3b57"
+ansi = [
+  "#2d2122",
+  "#f26888",
+  "#d5c33b",
+  "#f8aa6a",
+  "#a086e3",
+  "#db9fc5",
+  "#76aff0",
+  "#e5cfd1",
+
+  "#847374",
+  "#f39ead",
+  "#f2e055",
+  "#ffd5b6",
+  "#b4a0e8",
+  "#f5bfff",
+  "#a9c9f3",
+  "#ffe9ea",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#221e24"
+cursor = "#ae5967"
+selection_background = "#d7d4f7"
+ansi = [
+  "#fff0f1",
+  "#ba2654",
+  "#395922",
+  "#935316",
+  "#7049cb",
+  "#8f4c7b",
+  "#00528d",
+  "#36292a",
+
+  "#847374",
+  "#8e374c",
+  "#2e491b",
+  "#724d2d",
+  "#5e43a1",
+  "#783c89",
+  "#1e446a",
+  "#2d1b1d",
+]

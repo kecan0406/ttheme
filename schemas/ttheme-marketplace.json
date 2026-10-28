@@ -2,11 +2,11 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://www.schemastore.org/ttheme-marketplace.json",
   "title": "ttheme marketplace",
-  "description": "The ttheme-marketplace.toml at the root of a ttheme marketplace: a repository or folder whose palettes/*.toml are the marketplace's palettes and whose works/*.toml propose works and characters the commons does not hold yet\nhttps://ttheme.dev/docs/creating-palettes/publish",
+  "description": "The ttheme-marketplace.toml at the root of a ttheme marketplace: a repository or folder whose sets/*.toml hold the marketplace's palettes and whose works/*.toml propose works and characters the commons does not hold yet\nhttps://ttheme.dev/docs/creating-palettes/publish",
   "type": "object",
   "definitions": {
     "palette": {
-      "description": "A palette's name within the marketplace, its file name under palettes/ without .toml",
+      "description": "A palette's name within the marketplace, the slug its [[palette]] table names",
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
       "maxLength": 40

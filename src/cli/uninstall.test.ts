@@ -22,8 +22,8 @@ import { applyUninstall, planUninstall, type UninstallPaths } from './uninstall.
 function entry(name: string): PaletteEntry {
   return {
     name,
-    subject: `jujutsu-kaisen/${name.slice(name.indexOf('/') + 1)}`,
-    ansiSource: 'Horizon + Jujutsu',
+    subject: `tidewater/${name.slice(name.indexOf('/') + 1)}`,
+    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -39,7 +39,7 @@ function entry(name: string): PaletteEntry {
 const manifest: Manifest = {
   version: '0.1.0',
   gate: [],
-  palettes: [entry('ttheme/gojo'), entry('ttheme/geto')],
+  palettes: [entry('ttheme/orla'), entry('ttheme/juno')],
   works: [],
 }
 
@@ -71,18 +71,18 @@ test('uninstall gives every config back as it was and deletes only what ttheme w
   const p = paths()
   const ghostty = join(p.configHome, 'ghostty', 'config')
   const kitty = join(p.configHome, 'kitty', 'kitty.conf')
-  const mine = join(p.configHome, 'ghostty', 'themes', 'gojo')
+  const mine = join(p.configHome, 'ghostty', 'themes', 'orla')
   put(ghostty, 'font-size = 13\ntheme = Dracula\n')
   put(mine, 'background = #000000\n')
   install(p, {
     terminals: ['ghostty', 'kitty', 'alacritty', 'wezterm'],
-    palettes: ['ttheme/gojo', 'ttheme/geto'],
-    startup: 'ttheme/gojo',
+    palettes: ['ttheme/orla', 'ttheme/juno'],
+    startup: 'ttheme/orla',
   })
   install(p, {
     terminals: ['ghostty', 'kitty', 'alacritty', 'wezterm'],
-    palettes: ['ttheme/gojo', 'ttheme/geto'],
-    startup: 'ttheme/geto',
+    palettes: ['ttheme/orla', 'ttheme/juno'],
+    startup: 'ttheme/juno',
   })
   assert.equal(readFileSync(backupPath(ghostty), 'utf8'), 'font-size = 13\ntheme = Dracula\n')
   assert.ok(!existsSync(backupPath(kitty)))
@@ -95,7 +95,7 @@ test('uninstall gives every config back as it was and deletes only what ttheme w
   assert.ok(!existsSync(join(p.configHome, 'alacritty', 'alacritty.toml')))
   assert.ok(!existsSync(join(p.configHome, 'wezterm', 'wezterm.lua')))
   assert.equal(readFileSync(mine, 'utf8'), 'background = #000000\n')
-  assert.ok(!existsSync(join(p.configHome, 'ghostty', 'themes', 'ttheme-ttheme--gojo.dark')))
+  assert.ok(!existsSync(join(p.configHome, 'ghostty', 'themes', 'ttheme-ttheme--orla.dark')))
   assert.ok(!existsSync(join(p.configHome, 'ttheme')))
   assert.deepEqual(planUninstall(p), { edits: [], removals: [], touches: [] })
 })
@@ -105,15 +105,15 @@ test("uninstall also deletes the palette files ttheme 1.0.34 and older wrote wit
   const at = (...parts: string[]) => join(p.configHome, ...parts)
   install(p, {
     terminals: ['ghostty', 'kitty', 'alacritty', 'wezterm'],
-    palettes: ['ttheme/gojo'],
-    startup: 'ttheme/gojo',
+    palettes: ['ttheme/orla'],
+    startup: 'ttheme/orla',
   })
 
   const old = [
-    [at('ghostty', 'themes', 'geto'), '# geto — Jujutsu Kaisen (呪術廻戦)\n# ANSI: Horizon\nbackground = #11191c\n'],
-    [at('kitty', 'themes', 'geto.conf'), '# geto — Jujutsu Kaisen\n# ANSI: Horizon\nbackground #11191c\n'],
-    [at('alacritty', 'themes', 'geto.toml'), '# geto — Jujutsu Kaisen\n# ANSI: Horizon\n[colors.primary]\n'],
-    [at('wezterm', 'colors', 'geto.toml'), '[metadata]\nname = "geto"\norigin_url = "Horizon"\n\n[colors]\n'],
+    [at('ghostty', 'themes', 'juno'), '# juno — Tidewater (潮汐)\n# ANSI: Horizon\nbackground = #11191c\n'],
+    [at('kitty', 'themes', 'juno.conf'), '# juno — Tidewater\n# ANSI: Horizon\nbackground #11191c\n'],
+    [at('alacritty', 'themes', 'juno.toml'), '# juno — Tidewater\n# ANSI: Horizon\n[colors.primary]\n'],
+    [at('wezterm', 'colors', 'juno.toml'), '[metadata]\nname = "juno"\norigin_url = "Horizon"\n\n[colors]\n'],
   ]
 
   const mine = [
@@ -141,7 +141,7 @@ test('uninstall keeps the backup when the config changed after ttheme first edit
   const p = paths()
   const ghostty = join(p.configHome, 'ghostty', 'config')
   put(ghostty, 'font-size = 13\n')
-  install(p, { terminals: ['ghostty'], palettes: ['ttheme/gojo'] })
+  install(p, { terminals: ['ghostty'], palettes: ['ttheme/orla'] })
   writeFileSync(ghostty, `window-padding-x = 4\n${readFileSync(ghostty, 'utf8')}`)
 
   applyUninstall(planUninstall(p), p, host)
@@ -155,7 +155,7 @@ test('uninstall gives back a config that ended without a newline or with blank l
     const p = paths()
     const ghostty = join(p.configHome, 'ghostty', 'config')
     put(ghostty, mine)
-    install(p, { terminals: ['ghostty'], palettes: ['ttheme/gojo'] })
+    install(p, { terminals: ['ghostty'], palettes: ['ttheme/orla'] })
 
     applyUninstall(planUninstall(p), p, host)
 
@@ -185,7 +185,7 @@ test('a config kept as a symlink stays one through install and uninstall', () =>
   put(real, 'font-size = 13\n')
   mkdirSync(join(ghostty, '..'), { recursive: true })
   symlinkSync(real, ghostty)
-  install(p, { terminals: ['ghostty'], palettes: ['ttheme/gojo'] })
+  install(p, { terminals: ['ghostty'], palettes: ['ttheme/orla'] })
   assert.ok(lstatSync(ghostty).isSymbolicLink())
   assert.match(readFileSync(real, 'utf8'), /# ttheme begin/)
 
@@ -205,9 +205,9 @@ test('uninstall puts back the Warp theme ttheme replaced', () => {
 
   const before = '[appearance.themes]\ntheme = "Dracula"\n'
   put(settings, before)
-  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'] })
-  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'] })
-  assert.match(readFileSync(settings, 'utf8'), /ttheme-ttheme--gojo\.dark\.[0-9a-f]{8}\.yaml/)
+  install(p, { terminals: ['warp'], palettes: ['ttheme/orla'] })
+  install(p, { terminals: ['warp'], palettes: ['ttheme/orla'] })
+  assert.match(readFileSync(settings, 'utf8'), /ttheme-ttheme--orla\.dark\.[0-9a-f]{8}\.yaml/)
 
   applyUninstall(planUninstall(p), p, host)
 
@@ -228,9 +228,9 @@ test('uninstall puts back a linked Warp settings file through its link, which an
   put(real, before)
   mkdirSync(join(settings, '..'), { recursive: true })
   symlinkSync(real, settings)
-  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'] })
-  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'] })
-  assert.match(readFileSync(real, 'utf8'), /ttheme-ttheme--gojo\.dark\.[0-9a-f]{8}\.yaml/)
+  install(p, { terminals: ['warp'], palettes: ['ttheme/orla'] })
+  install(p, { terminals: ['warp'], palettes: ['ttheme/orla'] })
+  assert.match(readFileSync(real, 'utf8'), /ttheme-ttheme--orla\.dark\.[0-9a-f]{8}\.yaml/)
   const link = lstatSync(settings).ino
 
   applyUninstall(planUninstall(p), p, host)
@@ -250,9 +250,9 @@ test('uninstall drops the Warp backup that ttheme off already made true again', 
 
   const before = '[appearance.themes]\ntheme = "Dracula"\n'
   put(settings, before)
-  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'], off: true })
-  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'] })
-  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'], off: true })
+  install(p, { terminals: ['warp'], palettes: ['ttheme/orla'], off: true })
+  install(p, { terminals: ['warp'], palettes: ['ttheme/orla'] })
+  install(p, { terminals: ['warp'], palettes: ['ttheme/orla'], off: true })
   assert.equal(readFileSync(settings, 'utf8'), before)
   assert.ok(existsSync(backupPath(settings)))
 

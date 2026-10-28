@@ -14,8 +14,8 @@ test('the drawing cache keeps what was used last within its size, and leaves an 
 
   keys.forEach((key, at) => {
     remember(key, {
-      stem: 'kagami.0',
-      fill: 'kagami.0@fill-50.png',
+      stem: 'tamsin.0',
+      fill: 'tamsin.0@fill-50.png',
       figure: Buffer.alloc(1000),
       picture: Buffer.alloc(1000),
     })

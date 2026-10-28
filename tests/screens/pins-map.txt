@@ -1,13 +1,13 @@
-ttheme: unknown palette 'ttheme/ryo' pinned to ~/notes/**
+ttheme: unknown palette 'ttheme/rue' pinned to ~/notes/**
 ~
-├── notes/                   ttheme/ryo  and below · not installed
-└── work/                    konata      and below
+├── notes/                   ttheme/rue  and below · not installed
+└── work/                    korund      and below
     ├── api/v2/ ← here
-    └── site/                kita        this directory
-/nonexistent-ttheme/archive  kita        and below · no such directory
+    └── site/                kipa        this directory
+/nonexistent-ttheme/archive  kipa        and below · no such directory
 ssh
-├── *.prod                   kita        while connected
-└── tusa                     konata      while connected
+├── *.prod                   kipa        while connected
+└── teal                     korund      while connected
 
-Here · konata pinned to ~/work and below
+Here · korund pinned to ~/work and below
 ttheme pin picks one here · ttheme unpin drops one · ~/ttheme/pins

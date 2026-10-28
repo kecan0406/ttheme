@@ -15,7 +15,7 @@ import { baseLook, iniValue, konsole, konsoleData, konsoleProfile, konsolerc, wi
 function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    ansiSource: 'Horizon + Jujutsu',
+    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -35,9 +35,9 @@ const manifest: Manifest = {
   works: [],
   palettes: [
     entry('neutral', { default: true }),
-    entry('gojo', { cursor: '#ff0000' }),
-    entry('geto'),
-    entry('kec@dust/fern'),
+    entry('orla', { cursor: '#ff0000' }),
+    entry('juno'),
+    entry('kai@dust/fern'),
   ],
 }
 
@@ -110,7 +110,7 @@ function bus(konsoles: { service: string; loaded: string[] }[]) {
 }
 
 test('a color scheme carries all thirty of Konsole entries: normal, intense from the brights, faint halfway to the background', () => {
-  const theme = toTheme(entry('gojo'))
+  const theme = toTheme(entry('orla'))
   const scheme = konsoleScheme(theme)
   const groups = [...scheme.matchAll(/^\[(\w+)\]$/gm)].map(([, group]) => group)
   assert.equal(new Set(groups).size, 31)
@@ -119,17 +119,17 @@ test('a color scheme carries all thirty of Konsole entries: normal, intense from
   assert.equal(iniValue(scheme, 'Color1Intense', 'Color'), '144,128,128')
   assert.equal(iniValue(scheme, 'Color1Faint', 'Color'), '17,77,78')
   assert.equal(iniValue(scheme, 'ForegroundIntense', 'Color'), '227,226,231')
-  assert.equal(iniValue(scheme, 'General', 'Description'), 'ttheme · gojo')
+  assert.equal(iniValue(scheme, 'General', 'Description'), 'ttheme · orla')
   assert.equal(iniValue(scheme, 'General', 'Wallpaper'), '')
-  const pictured = konsoleScheme(theme, { image: '/p/gojo.png', opacity: 0.3, cover: true, position: 'top-right' })
-  assert.equal(iniValue(pictured, 'General', 'Wallpaper'), '/p/gojo.png')
+  const pictured = konsoleScheme(theme, { image: '/p/orla.png', opacity: 0.3, cover: true, position: 'top-right' })
+  assert.equal(iniValue(pictured, 'General', 'Wallpaper'), '/p/orla.png')
   assert.equal(iniValue(pictured, 'General', 'FillStyle'), 'Crop')
   assert.equal(iniValue(pictured, 'General', 'Anchor'), '1,0')
   assert.equal(iniValue(pictured, 'General', 'WallpaperOpacity'), '0.3')
-  const contained = konsoleScheme(theme, { image: '/p/gojo.png', opacity: 0.3, cover: false, position: 'center' })
+  const contained = konsoleScheme(theme, { image: '/p/orla.png', opacity: 0.3, cover: false, position: 'center' })
   assert.equal(iniValue(contained, 'General', 'FillStyle'), 'Adapt')
   assert.equal(iniValue(contained, 'General', 'Anchor'), '0.5,0.5')
-  const hidden = konsoleScheme(theme, { image: '/p/gojo.png', opacity: 0, cover: true, position: 'center' })
+  const hidden = konsoleScheme(theme, { image: '/p/orla.png', opacity: 0, cover: true, position: 'center' })
   assert.equal(iniValue(hidden, 'General', 'Wallpaper'), '')
 })
 
@@ -138,7 +138,7 @@ test('sync gives every listed palette and the default a profile on top of the us
 
   const state: Installed = {
     terminals: ['konsole'],
-    palettes: ['neutral', 'gojo', 'geto', 'kec@dust/fern'],
+    palettes: ['neutral', 'orla', 'juno', 'kai@dust/fern'],
     konsoleBase: 'Mine.profile',
   }
 
@@ -150,18 +150,18 @@ test('sync gives every listed palette and the default a profile on top of the us
       .filter((file) => !versioned(file))
       .sort(),
     [
-      'ttheme-geto.colorscheme',
-      'ttheme-geto.profile',
-      'ttheme-gojo.colorscheme',
-      'ttheme-gojo.profile',
-      'ttheme-kec--dust--fern.colorscheme',
-      'ttheme-kec--dust--fern.profile',
+      'ttheme-juno.colorscheme',
+      'ttheme-juno.profile',
+      'ttheme-kai--dust--fern.colorscheme',
+      'ttheme-kai--dust--fern.profile',
       'ttheme-neutral.colorscheme',
       'ttheme-neutral.profile',
+      'ttheme-orla.colorscheme',
+      'ttheme-orla.profile',
     ],
   )
 
-  for (const stem of ['geto', 'gojo', 'kec--dust--fern', 'neutral']) {
+  for (const stem of ['juno', 'kai--dust--fern', 'neutral', 'orla']) {
     const [file, ...more] = readdirSync(dir).filter((f) => versioned(f) && f.startsWith(`ttheme-${stem}.`))
     assert.ok(file && more.length === 0, stem)
     assert.equal(readFileSync(join(dir, file), 'utf8'), readFileSync(join(dir, `ttheme-${stem}.colorscheme`), 'utf8'))
@@ -174,23 +174,23 @@ test('sync gives every listed palette and the default a profile on top of the us
     )
   }
 
-  const gojo = readFileSync(join(dir, 'ttheme-gojo.profile'), 'utf8')
-  assert.equal(gojo, konsoleProfile(toTheme(manifest.palettes[1] as PaletteEntry), 'Mine.profile'))
-  assert.equal(iniValue(gojo, 'Appearance', 'ColorScheme'), 'ttheme-gojo')
-  assert.equal(iniValue(gojo, 'Cursor Options', 'CustomCursorColor'), '255,0,0')
-  assert.equal(iniValue(gojo, 'General', 'Name'), 'ttheme · gojo')
-  assert.equal(iniValue(gojo, 'General', 'Parent'), 'Mine.profile')
+  const orla = readFileSync(join(dir, 'ttheme-orla.profile'), 'utf8')
+  assert.equal(orla, konsoleProfile(toTheme(manifest.palettes[1] as PaletteEntry), 'Mine.profile'))
+  assert.equal(iniValue(orla, 'Appearance', 'ColorScheme'), 'ttheme-orla')
+  assert.equal(iniValue(orla, 'Cursor Options', 'CustomCursorColor'), '255,0,0')
+  assert.equal(iniValue(orla, 'General', 'Name'), 'ttheme · orla')
+  assert.equal(iniValue(orla, 'General', 'Parent'), 'Mine.profile')
 
-  sync(configHome, manifest, { ...state, palettes: ['gojo'], konsoleBase: undefined }, home)
-  assert.ok(!existsSync(join(dir, 'ttheme-geto.profile')))
+  sync(configHome, manifest, { ...state, palettes: ['orla'], konsoleBase: undefined }, home)
+  assert.ok(!existsSync(join(dir, 'ttheme-juno.profile')))
   assert.ok(!existsSync(join(dir, 'ttheme-neutral.profile')))
   assert.deepEqual(
     readdirSync(dir)
       .filter(versioned)
       .map((file) => file.split('.')[0]),
-    ['ttheme-gojo'],
+    ['ttheme-orla'],
   )
-  assert.equal(iniValue(readFileSync(join(dir, 'ttheme-gojo.profile'), 'utf8'), 'General', 'Parent'), 'FALLBACK/')
+  assert.equal(iniValue(readFileSync(join(dir, 'ttheme-orla.profile'), 'utf8'), 'General', 'Parent'), 'FALLBACK/')
   assert.match(
     readFileSync(join(configHome, 'ttheme', 'palettes.zsh'), 'utf8'),
     /^typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'$/m,
@@ -203,35 +203,35 @@ test('Konsole opens new tabs on the default palette’s profile, follows ttheme 
   const mine = '[General]\nConfigVersion=1\n\n[Desktop Entry]\nDefaultProfile=Mine.profile\n'
   put(rc, mine)
   put(join(konsoleData(home), 'Mine.profile'), '[General]\nName=Mine\nParent=FALLBACK/\n')
-  const before: Installed = { terminals: ['konsole'], palettes: ['gojo', 'geto'], off: true }
+  const before: Installed = { terminals: ['konsole'], palettes: ['orla', 'juno'], off: true }
   writeInstalled(configHome, before)
 
   const on = commit(
     configHome,
     manifest,
     before,
-    { terminals: ['konsole'], palettes: ['gojo', 'geto'] },
+    { terminals: ['konsole'], palettes: ['orla', 'juno'] },
     false,
     nobody,
     home,
   )
 
   assert.deepEqual([...on], [['konsole', { restart: false }]])
-  assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-gojo.profile')
-  const state: Installed = { terminals: ['konsole'], palettes: ['gojo', 'geto'], konsoleBase: 'Mine.profile' }
+  assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-orla.profile')
+  const state: Installed = { terminals: ['konsole'], palettes: ['orla', 'juno'], konsoleBase: 'Mine.profile' }
   assert.equal(readFileSync(backupPath(rc), 'utf8'), mine)
 
-  commit(configHome, manifest, state, { ...state, startup: 'geto' }, true, nobody, home)
-  assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-geto.profile')
+  commit(configHome, manifest, state, { ...state, startup: 'juno' }, true, nobody, home)
+  assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-juno.profile')
 
-  commit(configHome, manifest, { ...state, startup: 'geto' }, { ...state, palettes: ['gojo'] }, false, nobody, home)
-  assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-gojo.profile')
+  commit(configHome, manifest, { ...state, startup: 'juno' }, { ...state, palettes: ['orla'] }, false, nobody, home)
+  assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-orla.profile')
 
   commit(
     configHome,
     manifest,
-    { ...state, palettes: ['gojo'] },
-    { ...state, palettes: ['gojo'], off: true },
+    { ...state, palettes: ['orla'] },
+    { ...state, palettes: ['orla'], off: true },
     false,
     nobody,
     home,
@@ -243,30 +243,30 @@ test('a default the user picks in Konsole stays through an add or remove, and tt
   const { configHome, home } = fixture()
   const rc = konsolerc(configHome)
   put(rc, '[Desktop Entry]\nDefaultProfile=Picked.profile\n')
-  const state: Installed = { terminals: ['konsole'], palettes: ['gojo', 'geto'], konsoleBase: 'Mine.profile' }
-  commit(configHome, manifest, state, { ...state, palettes: ['geto'] }, false, nobody, home)
+  const state: Installed = { terminals: ['konsole'], palettes: ['orla', 'juno'], konsoleBase: 'Mine.profile' }
+  commit(configHome, manifest, state, { ...state, palettes: ['juno'] }, false, nobody, home)
   assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'Picked.profile')
-  const pointed = commit(configHome, manifest, state, { ...state, startup: 'geto' }, true, nobody, home)
+  const pointed = commit(configHome, manifest, state, { ...state, startup: 'juno' }, true, nobody, home)
   assert.ok(pointed.has('konsole'))
-  assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-geto.profile')
+  assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-juno.profile')
 })
 
 test('every running Konsole takes the new default over D-Bus, and one that cannot yet asks for a restart', () => {
   const { configHome, home } = fixture()
-  const state: Installed = { terminals: ['konsole'], palettes: ['gojo', 'geto'], konsoleBase: 'Mine.profile' }
+  const state: Installed = { terminals: ['konsole'], palettes: ['orla', 'juno'], konsoleBase: 'Mine.profile' }
 
   const live = bus([
-    { service: 'org.kde.konsole-8187', loaded: ['ttheme · gojo', 'ttheme · geto'] },
-    { service: 'org.kde.konsole', loaded: ['ttheme · gojo', 'ttheme · geto'] },
+    { service: 'org.kde.konsole-8187', loaded: ['ttheme · orla', 'ttheme · juno'] },
+    { service: 'org.kde.konsole', loaded: ['ttheme · orla', 'ttheme · juno'] },
   ])
 
-  const took = commit(configHome, manifest, state, { ...state, startup: 'geto' }, true, live.host, home)
+  const took = commit(configHome, manifest, state, { ...state, startup: 'juno' }, true, live.host, home)
   assert.deepEqual([...took], [['konsole', { restart: false }]])
-  assert.deepEqual([...live.defaults.values()], ['ttheme · geto', 'ttheme · geto'])
+  assert.deepEqual([...live.defaults.values()], ['ttheme · juno', 'ttheme · juno'])
 
-  const stale = bus([{ service: 'org.kde.konsole-9', loaded: ['ttheme · gojo'] }])
+  const stale = bus([{ service: 'org.kde.konsole-9', loaded: ['ttheme · orla'] }])
   assert.deepEqual(
-    [...commit(configHome, manifest, state, { ...state, startup: 'geto' }, true, stale.host, home)],
+    [...commit(configHome, manifest, state, { ...state, startup: 'juno' }, true, stale.host, home)],
     [['konsole', { restart: true }]],
   )
 })
@@ -290,18 +290,18 @@ test('a Konsole reset while off wears the user’s own profile, its scheme and c
 })
 
 test('DefaultProfile is set, replaced and taken out of konsolerc without touching anything else', () => {
-  assert.equal(withDefaultProfile('', 'ttheme-gojo.profile'), '[Desktop Entry]\nDefaultProfile=ttheme-gojo.profile\n')
-  assert.equal(withDefaultProfile(withDefaultProfile('', 'ttheme-gojo.profile'), undefined), '')
+  assert.equal(withDefaultProfile('', 'ttheme-orla.profile'), '[Desktop Entry]\nDefaultProfile=ttheme-orla.profile\n')
+  assert.equal(withDefaultProfile(withDefaultProfile('', 'ttheme-orla.profile'), undefined), '')
   const theirs = '[General]\nConfigVersion=1\n'
-  assert.equal(withDefaultProfile(withDefaultProfile(theirs, 'ttheme-gojo.profile'), undefined), theirs)
+  assert.equal(withDefaultProfile(withDefaultProfile(theirs, 'ttheme-orla.profile'), undefined), theirs)
   const both = '[Desktop Entry]\nDefaultProfile=Mine.profile\nOther=1\n\n[MainWindow]\nState=x\n'
   assert.equal(
-    withDefaultProfile(both, 'ttheme-geto.profile'),
-    '[Desktop Entry]\nDefaultProfile=ttheme-geto.profile\nOther=1\n\n[MainWindow]\nState=x\n',
+    withDefaultProfile(both, 'ttheme-juno.profile'),
+    '[Desktop Entry]\nDefaultProfile=ttheme-juno.profile\nOther=1\n\n[MainWindow]\nState=x\n',
   )
   assert.equal(withDefaultProfile(both, undefined), '[Desktop Entry]\nOther=1\n\n[MainWindow]\nState=x\n')
   assert.equal(
-    withDefaultProfile('[Desktop Entry]\nDefaultProfile=ttheme-geto.profile\n\n[MainWindow]\nState=x\n', undefined),
+    withDefaultProfile('[Desktop Entry]\nDefaultProfile=ttheme-juno.profile\n\n[MainWindow]\nState=x\n', undefined),
     '[MainWindow]\nState=x\n',
   )
 })
@@ -312,9 +312,9 @@ test('uninstall gives Konsole its own default back and deletes every scheme and 
   const mine = '[Desktop Entry]\nDefaultProfile=Mine.profile\n'
   put(rc, mine)
   put(join(konsoleData(home), 'Mine.profile'), '[General]\nName=Mine\n')
-  const off: Installed = { terminals: ['konsole'], palettes: ['gojo'], off: true }
+  const off: Installed = { terminals: ['konsole'], palettes: ['orla'], off: true }
   writeInstalled(configHome, off)
-  commit(configHome, manifest, off, { terminals: ['konsole'], palettes: ['gojo'] }, false, nobody, home)
+  commit(configHome, manifest, off, { terminals: ['konsole'], palettes: ['orla'] }, false, nobody, home)
 
   const paths = {
     home,
@@ -336,9 +336,9 @@ test('uninstall drops the konsolerc backup that ttheme off already made true aga
   const mine = '[Desktop Entry]\nDefaultProfile=Mine.profile\n'
   put(rc, mine)
   put(join(konsoleData(home), 'Mine.profile'), '[General]\nName=Mine\n')
-  const off: Installed = { terminals: ['konsole'], palettes: ['gojo'], off: true }
+  const off: Installed = { terminals: ['konsole'], palettes: ['orla'], off: true }
   writeInstalled(configHome, off)
-  commit(configHome, manifest, off, { terminals: ['konsole'], palettes: ['gojo'] }, false, nobody, home)
+  commit(configHome, manifest, off, { terminals: ['konsole'], palettes: ['orla'] }, false, nobody, home)
   const on = JSON.parse(readFileSync(join(configHome, 'ttheme', 'installed.json'), 'utf8')) as Installed
   commit(configHome, manifest, on, { ...on, off: true }, false, nobody, home)
   assert.equal(readFileSync(rc, 'utf8'), mine)
@@ -365,7 +365,7 @@ test('init offers Konsole where it runs, preselects it once it has run, and says
   assert.equal(konsole.present({ configHome, home }), false)
   put(konsolerc(configHome), '')
   assert.equal(konsole.present({ configHome, home }), true)
-  const state: Installed = { terminals: ['konsole'], palettes: ['gojo'] }
+  const state: Installed = { terminals: ['konsole'], palettes: ['orla'] }
   assert.deepEqual(wiringPlan(configHome, state, home), [
     `Write ${konsoleData(home).replace(home, '~')}/ttheme-* — the palettes' theme files`,
     `Write ${konsoleData(home).replace(home, '~')}/ttheme-*.profile — a "ttheme · <palette>" profile per palette, on top of your own`,
@@ -373,6 +373,6 @@ test('init offers Konsole where it runs, preselects it once it has run, and says
   ])
   assert.deepEqual(wiringNext(configHome, state, new Map([['konsole', { restart: true }]]), home), [
     'Konsole profiles  A "ttheme · <palette>" per palette in its profile list',
-    'Restart Konsole   New tabs open on "ttheme · gojo"',
+    'Restart Konsole   New tabs open on "ttheme · orla"',
   ])
 })

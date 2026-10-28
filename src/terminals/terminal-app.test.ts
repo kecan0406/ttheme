@@ -13,7 +13,7 @@ import { TERMINAL_JS, terminalScript } from './terminal-app.ts'
 function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    ansiSource: 'Horizon + Jujutsu',
+    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -31,7 +31,7 @@ const manifest: Manifest = {
   version: '0.1.0',
   gate: [],
   works: [],
-  palettes: [entry('neutral', { default: true }), entry('gojo', { background: '#101010' }), entry('geto')],
+  palettes: [entry('neutral', { default: true }), entry('orla', { background: '#101010' }), entry('juno')],
 }
 
 interface Terminal {
@@ -80,7 +80,7 @@ function terminal(own: string, running = false, loaded = '1'): Terminal {
 test('sync writes a profile per listed palette over the user’s own, and the script that does it', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-terminal-app-'))
   const { host, scripts } = terminal('Clear Dark')
-  const state = withBases(configHome, { terminals: ['terminal-app'], palettes: ['gojo', 'geto'] }, host)
+  const state = withBases(configHome, { terminals: ['terminal-app'], palettes: ['orla', 'juno'] }, host)
   assert.equal(state.terminalBase, 'Clear Dark')
   sync(configHome, manifest, state, configHome, host)
   assert.equal(readFileSync(terminalScript(configHome), 'utf8'), TERMINAL_JS)
@@ -88,7 +88,7 @@ test('sync writes a profile per listed palette over the user’s own, and the sc
   assert.deepEqual([verb, base], ['write', 'Clear Dark'])
   assert.deepEqual(
     rest.filter((arg) => arg.startsWith('ttheme')),
-    ['ttheme · gojo', 'ttheme · geto'],
+    ['ttheme · orla', 'ttheme · juno'],
   )
   assert.equal(rest.length, 44)
   assert.equal(rest[1], '#101010')
@@ -98,10 +98,10 @@ test('sync writes a profile per listed palette over the user’s own, and the sc
 test('Terminal.app opens new windows on the default palette’s profile, gives the user’s own back while off and drops every profile once nothing is installed', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-terminal-app-'))
   const { host, scripts, defaults } = terminal('Clear Dark')
-  const state: Installed = withBases(configHome, { terminals: ['terminal-app'], palettes: ['gojo'] }, host)
+  const state: Installed = withBases(configHome, { terminals: ['terminal-app'], palettes: ['orla'] }, host)
   assert.deepEqual(pointDefaults(configHome, state, true, host).get('terminal-app'), { restart: false })
-  assert.equal(defaults.get('Default Window Settings'), 'ttheme · gojo')
-  assert.equal(defaults.get('Startup Window Settings'), 'ttheme · gojo')
+  assert.equal(defaults.get('Default Window Settings'), 'ttheme · orla')
+  assert.equal(defaults.get('Startup Window Settings'), 'ttheme · orla')
   assert.ok(pointDefaults(configHome, { ...state, off: true }, false, host).has('terminal-app'))
   assert.equal(defaults.get('Default Window Settings'), 'Clear Dark')
   assert.ok(!pointDefaults(configHome, { ...state, off: true }, false, host).has('terminal-app'))
@@ -115,7 +115,7 @@ test('Terminal.app keeps a default the user picked, and asks for a restart only 
   assert.equal(
     pointDefaults(
       configHome,
-      { terminals: ['terminal-app'], palettes: ['gojo'], terminalBase: 'Basic' },
+      { terminals: ['terminal-app'], palettes: ['orla'], terminalBase: 'Basic' },
       false,
       picked.host,
     ).size,
@@ -124,14 +124,14 @@ test('Terminal.app keeps a default the user picked, and asks for a restart only 
   assert.equal(picked.defaults.get('Default Window Settings'), 'Pro')
   const fresh = terminal('Basic', true, '0')
   assert.deepEqual(
-    pointDefaults(configHome, { terminals: ['terminal-app'], palettes: ['gojo'] }, true, fresh.host).get(
+    pointDefaults(configHome, { terminals: ['terminal-app'], palettes: ['orla'] }, true, fresh.host).get(
       'terminal-app',
     ),
     { restart: true },
   )
   const loaded = terminal('Basic', true, '1')
   assert.deepEqual(
-    pointDefaults(configHome, { terminals: ['terminal-app'], palettes: ['gojo'] }, true, loaded.host).get(
+    pointDefaults(configHome, { terminals: ['terminal-app'], palettes: ['orla'] }, true, loaded.host).get(
       'terminal-app',
     ),
     { restart: false },

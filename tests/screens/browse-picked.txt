@@ -5,17 +5,17 @@
                                                  ╭─ ttheme ───────────────────────────────────────╮
     + Add marketplace   owner/repo or a folder   │ Updates with ttheme                            │
     ⌕ Search marketplace   find one on GitHub    │                                                │
-                                                 │    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・ろっ…  │
-    ● ttheme                                     │ ▌    ● bocchi                                  │
-      Built in                                   │      ● kita                                    │
-      6 available · 2 installed · 1 to install   │      ○ ryo                                     │
-                                                 │    ▸ Lucky☆Star (1/3) らき☆すた                │
+                                                 │    ▾ Briarwood Rocks! (2/3) すたあ・ふ・ばら…  │
+    ● ttheme                                     │ ▌    ● briony                                  │
+      Built in                                   │      ● kipa                                    │
+      6 available · 2 installed · 1 to install   │      ○ rue                                     │
+                                                 │    ▸ Lumen☆Song (1/3) たい☆なみ                │
                                                  │                                                │
                                                  │                                                │
                                                  │                                                │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
-                                                 │ ttheme/bocchi  Will install                    │
+                                                 │ ttheme/briony  Will install                    │
                                                  │ Contrast 8/12 · ✗ accent hue outside its ANSI… │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤

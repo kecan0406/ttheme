@@ -59,8 +59,8 @@ import { prepareOne, redrawOne } from './redrawing.ts'
 
 process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'ttheme-cache-'))
 
-const KAGAMI: Colors = {
-  name: 'kagami',
+const TAMSIN: Colors = {
+  name: 'tamsin',
   background: '#19161e',
   foreground: '#e8dff1',
   cursor: '#9b86c8',
@@ -84,32 +84,32 @@ const KAGAMI: Colors = {
   ],
 }
 
-const PAINT: Paint = { hue: { color: '#9b86c8', opacity: 0.2 }, colors: KAGAMI }
+const PAINT: Paint = { hue: { color: '#9b86c8', opacity: 0.2 }, colors: TAMSIN }
 
-test('kagami at 0.2 is the brightness every other palette is matched to, and its accents hold kagami itself just under it', () => {
-  const tone = toneFor(KAGAMI, 'cursor')
+test('tamsin at 0.2 is the brightness every other palette is matched to, and its accents hold tamsin itself just under it', () => {
+  const tone = toneFor(TAMSIN, 'cursor')
   assert.equal(Math.floor(tone.matched * 100) / 100, 0.2)
   assert.equal(tone.opacity, 0.19)
 })
 
 test('a palette that already misses the gate without a picture still gets the opacity its picture allows', () => {
-  const missing = { ...KAGAMI, ansi: KAGAMI.ansi.map((c, i) => (i === 1 ? '#2a2530' : c)) }
-  assert.equal(toneFor(missing, 'cursor').opacity, toneFor(KAGAMI, 'cursor').opacity)
+  const missing = { ...TAMSIN, ansi: TAMSIN.ansi.map((c, i) => (i === 1 ? '#2a2530' : c)) }
+  assert.equal(toneFor(missing, 'cursor').opacity, toneFor(TAMSIN, 'cursor').opacity)
 })
 
 test('the tint stays on the cursor while it leaves a visible opacity', () => {
-  assert.equal(backdropTone(KAGAMI, ['cursor', 'ansi4', 'ansi1']).slot, 'cursor')
+  assert.equal(backdropTone(TAMSIN, ['cursor', 'ansi4', 'ansi1']).slot, 'cursor')
 })
 
 test('a cursor too faint to show moves the tint to the signature slot that shows most, not the darkest', () => {
-  const tight = { ...KAGAMI, name: 'tight', foreground: '#b4b0b8', cursor: '#ffffff' }
+  const tight = { ...TAMSIN, name: 'tight', foreground: '#b4b0b8', cursor: '#ffffff' }
   assert.ok(toneFor(tight, 'cursor').opacity < 0.1)
   assert.equal(toneFor(tight, 'ansi0').opacity, 1)
   assert.equal(backdropTone(tight, ['cursor', 'ansi0', 'ansi4']).slot, 'ansi4')
 })
 
-const KYUBEY: Colors = {
-  name: 'kyubey',
+const LINNET: Colors = {
+  name: 'linnet',
   background: '#fff8f7',
   foreground: '#1f1c39',
   cursor: '#b83b64',
@@ -134,10 +134,10 @@ const KYUBEY: Colors = {
 }
 
 test('a light palette lets its picture darken the background as far as a dark one lets its picture brighten it, mirrored', () => {
-  const tone = toneFor(KYUBEY, 'cursor')
+  const tone = toneFor(LINNET, 'cursor')
   assert.ok(tone.opacity >= 0.1, String(tone.opacity))
-  assert.ok(luminance(mix(KYUBEY.background, KYUBEY.cursor, tone.matched)) >= 0.6)
-  assert.ok(luminance(mix(KYUBEY.background, KYUBEY.cursor, tone.matched + 0.02)) < 0.61)
+  assert.ok(luminance(mix(LINNET.background, LINNET.cursor, tone.matched)) >= 0.6)
+  assert.ok(luminance(mix(LINNET.background, LINNET.cursor, tone.matched + 0.02)) < 0.61)
 })
 
 test('on a light background the ink is how dark the picture is, so it reads the right way round', () => {
@@ -188,12 +188,12 @@ test("the fill is made at the window's shape, no wider than 2560", () => {
   assert.deepEqual(fillSize(1200, 800), { width: 1200, height: 800 })
 })
 
-function install(configHome: string, id: number, artist = id === 1 ? ['akoiro', 'potate fluffy'] : undefined): void {
+function install(configHome: string, id: number, artist = id === 1 ? ['inkwell', 'paper boat'] : undefined): void {
   const image = { width: 4, height: 4, data: new Uint8Array(64).fill(200 + id) }
   installBackdrop(
     configHome,
-    KAGAMI,
-    toneFor(KAGAMI, 'cursor'),
+    TAMSIN,
+    toneFor(TAMSIN, 'cursor'),
     image,
     {
       site: 'safebooru',
@@ -203,7 +203,7 @@ function install(configHome: string, id: number, artist = id === 1 ? ['akoiro', 
       from: `safebooru ${id} https://example.test/${id}`,
       ...(artist ? { artist } : {}),
       ...(id === 1
-        ? { source: 'https://www.pixiv.net/artworks/1', profiles: { akoiro: ['https://x.com/akoiro'] } }
+        ? { source: 'https://www.pixiv.net/artworks/1', profiles: { inkwell: ['https://x.com/inkwell'] } }
         : {}),
     },
     { width: 40, height: 20 },
@@ -212,27 +212,27 @@ function install(configHome: string, id: number, artist = id === 1 ? ['akoiro', 
 }
 
 function shown(dir: string): string | undefined {
-  return /^# image (\S+)/m.exec(readFileSync(join(dir, 'kagami.conf'), 'utf8'))?.[1]
+  return /^# image (\S+)/m.exec(readFileSync(join(dir, 'tamsin.conf'), 'utf8'))?.[1]
 }
 
 function shownPath(dir: string): string | undefined {
-  return /^background-image = (.+)$/m.exec(readFileSync(join(dir, 'kagami.conf'), 'utf8'))?.[1]
+  return /^background-image = (.+)$/m.exec(readFileSync(join(dir, 'tamsin.conf'), 'utf8'))?.[1]
 }
 
 function keys(dir: string): string[] {
-  return readStore(dir).palettes.kagami?.pictures.map((picture) => picture.key) ?? []
+  return readStore(dir).palettes.tamsin?.pictures.map((picture) => picture.key) ?? []
 }
 
 function tuning(dir: string): string {
   return join(
     dir,
-    /^config-file = \?(.+\.tune\.conf)$/m.exec(readFileSync(join(dir, 'kagami.conf'), 'utf8'))?.[1] ?? '',
+    /^config-file = \?(.+\.tune\.conf)$/m.exec(readFileSync(join(dir, 'tamsin.conf'), 'utf8'))?.[1] ?? '',
   )
 }
 
 test('a palette named like a property every object has keeps its pictures as any other does', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
-  const named = { ...KAGAMI, name: 'constructor' }
+  const named = { ...TAMSIN, name: 'constructor' }
   const image = { width: 4, height: 4, data: new Uint8Array(64).fill(201) }
   const source = { site: 'safebooru', id: 1, ext: 'png', bytes: new Uint8Array([1]), from: 'safebooru 1' }
   assert.deepEqual(rackOf(configHome, 'constructor'), [])
@@ -256,13 +256,13 @@ test('a picture whose artist is named like a property every object has still get
     ext: 'png',
     bytes: new Uint8Array([1]),
     from: 'safebooru 1 https://example.test/1',
-    artist: ['constructor', 'akoiro'],
-    profiles: { akoiro: ['https://x.com/akoiro'] },
+    artist: ['constructor', 'inkwell'],
+    profiles: { inkwell: ['https://x.com/inkwell'] },
   }
 
-  installBackdrop(configHome, KAGAMI, toneFor(KAGAMI, 'cursor'), image, source, { width: 40, height: 20 }, 0)
+  installBackdrop(configHome, TAMSIN, toneFor(TAMSIN, 'cursor'), image, source, { width: 40, height: 20 }, 0)
   assert.match(
-    readFileSync(join(backgroundsDir(configHome), 'kagami.conf'), 'utf8'),
+    readFileSync(join(backgroundsDir(configHome), 'tamsin.conf'), 'utf8'),
     /^# credit safebooru_1 .*constructor/m,
   )
   freshenConfs(configHome)
@@ -275,7 +275,7 @@ test('each picture shows under a path of its own, since terminals reload a backg
   const first = shownPath(dir)
   install(configHome, 2)
   assert.notEqual(shownPath(dir), first)
-  showImage(configHome, 'kagami', 'safebooru_1')
+  showImage(configHome, 'tamsin', 'safebooru_1')
   assert.equal(shownPath(dir), first)
   assert.ok(existsSync(first as string))
 })
@@ -289,47 +289,47 @@ test('installing another picture keeps the one shown, and installing the shown o
   assert.equal(shown(dir), 'safebooru_2')
   install(configHome, 2)
   assert.deepEqual(keys(dir), ['safebooru_1', 'safebooru_2'])
-  assert.match(readFileSync(join(dir, 'kagami.conf'), 'utf8'), /^# image safebooru_2 2\/2$/m)
+  assert.match(readFileSync(join(dir, 'tamsin.conf'), 'utf8'), /^# image safebooru_2 2\/2$/m)
 })
 
 test('a picture installed before pictures had keys is kept when another one is installed', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const dir = backgroundsDir(configHome)
   mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, 'kagami.1a2b3c4d.png'), 'old')
-  writeFileSync(join(dir, 'kagami.1a2b3c4d@fill-9.png'), 'old')
-  writeFileSync(join(dir, 'kagami.conf'), `background-image = ${join(dir, 'kagami.1a2b3c4d@fill-9.png')}\n`)
+  writeFileSync(join(dir, 'tamsin.1a2b3c4d.png'), 'old')
+  writeFileSync(join(dir, 'tamsin.1a2b3c4d@fill-9.png'), 'old')
+  writeFileSync(join(dir, 'tamsin.conf'), `background-image = ${join(dir, 'tamsin.1a2b3c4d@fill-9.png')}\n`)
   install(configHome, 1)
   assert.deepEqual(keys(dir), ['picture_1a2b3c4d', 'safebooru_1'])
-  assert.ok(existsSync(join(dir, 'kagami.1a2b3c4d@fill-9.png')))
-  assert.deepEqual(showImage(configHome, 'kagami', 'picture_1a2b3c4d'), { at: 1, of: 2 })
+  assert.ok(existsSync(join(dir, 'tamsin.1a2b3c4d@fill-9.png')))
+  assert.deepEqual(showImage(configHome, 'tamsin', 'picture_1a2b3c4d'), { at: 1, of: 2 })
 })
 
 test('a conf ttheme did not write stays as it is and out of the store', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const dir = backgroundsDir(configHome)
   mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, 'kagami.conf'), 'background-image = ~/walls/kagami.png\n')
+  writeFileSync(join(dir, 'tamsin.conf'), 'background-image = ~/walls/tamsin.png\n')
   assert.deepEqual(readStore(dir).palettes, {})
-  assert.equal(readFileSync(join(dir, 'kagami.conf'), 'utf8'), 'background-image = ~/walls/kagami.png\n')
+  assert.equal(readFileSync(join(dir, 'tamsin.conf'), 'utf8'), 'background-image = ~/walls/tamsin.png\n')
 })
 
 function shelved(): string {
   const dir = backgroundsDir(mkdtempSync(join(tmpdir(), 'ttheme-images-')))
-  const shelf = join(dir, 'shelf', 'kagami', 'safebooru_1')
+  const shelf = join(dir, 'shelf', 'tamsin', 'safebooru_1')
   mkdirSync(shelf, { recursive: true })
   mkdirSync(join(dir, 'originals'))
-  writeFileSync(join(dir, 'originals', 'kagami-safebooru_1.png'), 'one')
-  writeFileSync(join(dir, 'originals', 'kagami-safebooru_2.png'), 'two')
+  writeFileSync(join(dir, 'originals', 'tamsin-safebooru_1.png'), 'one')
+  writeFileSync(join(dir, 'originals', 'tamsin-safebooru_2.png'), 'two')
   writeFileSync(
-    join(dir, 'kagami.conf'),
-    `# from safebooru 2 x\n# image safebooru_2\nbackground-image = ${join(dir, 'kagami.bbbbbbbb@fill-30.png')}\nbackground-image-opacity = 0.3\nconfig-file = ?kagami.tune.conf\n`,
+    join(dir, 'tamsin.conf'),
+    `# from safebooru 2 x\n# image safebooru_2\nbackground-image = ${join(dir, 'tamsin.bbbbbbbb@fill-30.png')}\nbackground-image-opacity = 0.3\nconfig-file = ?tamsin.tune.conf\n`,
   )
-  writeFileSync(join(dir, 'kagami.bbbbbbbb@fill-30.png'), 'two')
-  writeFileSync(join(dir, 'kagami.tune.conf'), 'background-image-opacity = 0.5\n')
+  writeFileSync(join(dir, 'tamsin.bbbbbbbb@fill-30.png'), 'two')
+  writeFileSync(join(dir, 'tamsin.tune.conf'), 'background-image-opacity = 0.5\n')
   writeFileSync(
     join(shelf, '.conf'),
-    `# image safebooru_1\nbackground-image = ${join(dir, 'kagami.aaaaaaaa@fill-20.png')}\nbackground-image-opacity = 0.2\n`,
+    `# image safebooru_1\nbackground-image = ${join(dir, 'tamsin.aaaaaaaa@fill-20.png')}\nbackground-image-opacity = 0.2\n`,
   )
   writeFileSync(join(shelf, '.aaaaaaaa@fill-20.png'), 'one')
   writeFileSync(join(shelf, '.aaaaaaaa@60-center.png'), 'baked')
@@ -340,41 +340,41 @@ function shelved(): string {
 
 test('the shelf layout moves into the store once, each picture keeping its tuning, bakes and original', () => {
   const dir = shelved()
-  assert.deepEqual(readStore(dir).palettes.kagami, {
+  assert.deepEqual(readStore(dir).palettes.tamsin, {
     active: 'safebooru_2',
     pictures: [
       {
         key: 'safebooru_1',
-        stem: 'kagami.aaaaaaaa',
-        fill: 'kagami.aaaaaaaa@fill-20.png',
+        stem: 'tamsin.aaaaaaaa',
+        fill: 'tamsin.aaaaaaaa@fill-20.png',
         opacity: 0.2,
-        original: join('originals', 'kagami-safebooru_1.png'),
+        original: join('originals', 'tamsin-safebooru_1.png'),
       },
       {
         key: 'safebooru_2',
-        stem: 'kagami.bbbbbbbb',
-        fill: 'kagami.bbbbbbbb@fill-30.png',
+        stem: 'tamsin.bbbbbbbb',
+        fill: 'tamsin.bbbbbbbb@fill-30.png',
         opacity: 0.3,
         from: 'safebooru 2 x',
-        original: join('originals', 'kagami-safebooru_2.png'),
+        original: join('originals', 'tamsin-safebooru_2.png'),
       },
     ],
   })
   assert.ok(!existsSync(join(dir, 'shelf')))
   assert.deepEqual(
     readdirSync(dir)
-      .filter((file) => file.startsWith('kagami.'))
+      .filter((file) => file.startsWith('tamsin.'))
       .sort(),
     [
-      'kagami.aaaaaaaa.off.conf',
-      'kagami.aaaaaaaa@60-center.png',
-      'kagami.aaaaaaaa@fill-20.png',
-      'kagami.bbbbbbbb.tune.conf',
-      'kagami.bbbbbbbb@fill-30.png',
-      'kagami.conf',
+      'tamsin.aaaaaaaa.off.conf',
+      'tamsin.aaaaaaaa@60-center.png',
+      'tamsin.aaaaaaaa@fill-20.png',
+      'tamsin.bbbbbbbb.tune.conf',
+      'tamsin.bbbbbbbb@fill-30.png',
+      'tamsin.conf',
     ],
   )
-  assert.match(readFileSync(join(dir, 'kagami.conf'), 'utf8'), /^config-file = \?kagami\.bbbbbbbb\.tune\.conf$/m)
+  assert.match(readFileSync(join(dir, 'tamsin.conf'), 'utf8'), /^config-file = \?tamsin\.bbbbbbbb\.tune\.conf$/m)
 })
 
 test('a shelf move that fails before the store is written is finished by the next read, losing no picture', () => {
@@ -383,7 +383,7 @@ test('a shelf move that fails before the store is written is finished by the nex
   assert.throws(() => readStore(dir))
   rmSync(join(dir, 'images.json'), { recursive: true })
   assert.deepEqual(keys(dir), ['safebooru_1', 'safebooru_2'])
-  assert.ok(existsSync(join(dir, 'kagami.aaaaaaaa@fill-20.png')))
+  assert.ok(existsSync(join(dir, 'tamsin.aaaaaaaa@fill-20.png')))
   assert.ok(!existsSync(join(dir, 'shelf')))
 })
 
@@ -393,9 +393,9 @@ test('showing another saved picture moves no file', () => {
   install(configHome, 1)
   install(configHome, 2)
   const files = readdirSync(dir).sort()
-  assert.deepEqual(showImage(configHome, 'kagami', 'safebooru_1'), { at: 1, of: 2 })
+  assert.deepEqual(showImage(configHome, 'tamsin', 'safebooru_1'), { at: 1, of: 2 })
   assert.equal(shown(dir), 'safebooru_1')
-  assert.deepEqual(showImage(configHome, 'kagami', 'safebooru_2'), { at: 2, of: 2 })
+  assert.deepEqual(showImage(configHome, 'tamsin', 'safebooru_2'), { at: 2, of: 2 })
   assert.equal(shown(dir), 'safebooru_2')
   assert.deepEqual(readdirSync(dir).sort(), files)
 })
@@ -409,7 +409,7 @@ test('each saved picture keeps its own tuning and off switch', () => {
   install(configHome, 2)
   assert.notEqual(tuning(dir), first)
   assert.ok(existsSync(first))
-  showImage(configHome, 'kagami', 'safebooru_1')
+  showImage(configHome, 'tamsin', 'safebooru_1')
   assert.equal(tuning(dir), first)
   assert.equal(readFileSync(first, 'utf8'), 'background-image-opacity = 0.42\n')
 })
@@ -430,11 +430,11 @@ test('dropping a picture takes its files, tuning and original with it', () => {
   install(configHome, 2)
   const gone = tuning(dir)
   writeFileSync(gone, 'background-image-opacity = 0.42\n')
-  assert.deepEqual(dropImage(configHome, 'kagami'), { key: 'safebooru_2', left: 1 })
+  assert.deepEqual(dropImage(configHome, 'tamsin'), { key: 'safebooru_2', left: 1 })
   assert.ok(!existsSync(gone))
   assert.equal(shown(dir), 'safebooru_1')
-  assert.deepEqual(readdirSync(join(dir, 'originals')), ['kagami-safebooru_1.png'])
-  assert.equal(readdirSync(dir).filter((file) => file.startsWith('kagami.') && file.endsWith('.png')).length, 3)
+  assert.deepEqual(readdirSync(join(dir, 'originals')), ['tamsin-safebooru_1.png'])
+  assert.equal(readdirSync(dir).filter((file) => file.startsWith('tamsin.') && file.endsWith('.png')).length, 3)
 })
 
 test('the conf lists every picture preview can switch to with its artist, and one not shown drops by key', () => {
@@ -442,10 +442,10 @@ test('the conf lists every picture preview can switch to with its artist, and on
   const dir = backgroundsDir(configHome)
   install(configHome, 1)
   install(configHome, 2)
-  const conf = () => readFileSync(join(dir, 'kagami.conf'), 'utf8')
+  const conf = () => readFileSync(join(dir, 'tamsin.conf'), 'utf8')
   const listed = [...conf().matchAll(/^# picture (\S+) \S+ \S+ \S+ (\S+) (.*)$/gm)].map((m) => m.slice(1))
   assert.deepEqual(listed, [
-    ['safebooru_1', 'akoiro,potate_fluffy', 'safebooru 1 https://example.test/1'],
+    ['safebooru_1', 'inkwell,paper_boat', 'safebooru 1 https://example.test/1'],
     ['safebooru_2', '-', 'safebooru 2 https://example.test/2'],
   ])
   assert.doesNotMatch(conf(), /^# by /m)
@@ -454,22 +454,22 @@ test('the conf lists every picture preview can switch to with its artist, and on
       .split('\n')
       .filter((line) => /^# (?:credit|source|profile) /.test(line)),
     [
-      '# credit safebooru_1 Background art by akoiro (x.com/akoiro), potate fluffy · https://www.pixiv.net/artworks/1',
+      '# credit safebooru_1 Background art by inkwell (x.com/inkwell), paper boat · https://www.pixiv.net/artworks/1',
       '# source safebooru_1 pixiv 1 https://www.pixiv.net/artworks/1',
-      '# profile safebooru_1 akoiro x https://x.com/akoiro',
+      '# profile safebooru_1 inkwell x https://x.com/inkwell',
       '# credit safebooru_2 Background art (artist unknown) · https://example.test/2',
     ],
   )
-  showImage(configHome, 'kagami', 'safebooru_1')
-  assert.match(conf(), /^# by akoiro,potate_fluffy$/m)
-  assert.deepEqual(dropImage(configHome, 'kagami', 'safebooru_1'), { key: 'safebooru_1', left: 1 })
+  showImage(configHome, 'tamsin', 'safebooru_1')
+  assert.match(conf(), /^# by inkwell,paper_boat$/m)
+  assert.deepEqual(dropImage(configHome, 'tamsin', 'safebooru_1'), { key: 'safebooru_1', left: 1 })
   assert.equal(shown(dir), 'safebooru_2')
 })
 
 test('an artist name a site sends with control characters reaches the conf without them', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   install(configHome, 3, ['mallory\x1b]52;c;aGk=\x07', 'bell\x07'])
-  const conf = readFileSync(join(backgroundsDir(configHome), 'kagami.conf'), 'utf8')
+  const conf = readFileSync(join(backgroundsDir(configHome), 'tamsin.conf'), 'utf8')
   assert.match(conf, /^# by mallory_\]52;c;aGk=_,bell_$/m)
   assert.doesNotMatch(conf.replaceAll('\n', ''), /\p{Cc}/u)
 })
@@ -480,8 +480,8 @@ test('a picture whose file name or artist breaks a line reaches the conf on one 
   const dir = backgroundsDir(configHome)
   installBackdrop(
     configHome,
-    KAGAMI,
-    toneFor(KAGAMI, 'cursor'),
+    TAMSIN,
+    toneFor(TAMSIN, 'cursor'),
     { width: 4, height: 4, data: new Uint8Array(64).fill(200) },
     {
       site: 'local',
@@ -494,7 +494,7 @@ test('a picture whose file name or artist breaks a line reaches the conf on one 
     { width: 40, height: 20 },
     0,
   )
-  const conf = readFileSync(join(dir, 'kagami.conf'), 'utf8')
+  const conf = readFileSync(join(dir, 'tamsin.conf'), 'utf8')
   const keys = conf.split('\n').flatMap((each) => /^([a-z-]+) = /.exec(each)?.[1] ?? [])
   assert.deepEqual(
     [...new Set(keys)],
@@ -514,11 +514,11 @@ test('removing the last picture leaves the palette bare', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const dir = backgroundsDir(configHome)
   install(configHome, 1)
-  assert.deepEqual(dropImage(configHome, 'kagami'), { key: 'safebooru_1', left: 0 })
+  assert.deepEqual(dropImage(configHome, 'tamsin'), { key: 'safebooru_1', left: 0 })
   assert.deepEqual(keys(dir), [])
-  assert.ok(!existsSync(join(dir, 'kagami.conf')))
-  assert.throws(() => showImage(configHome, 'kagami', 'safebooru_1'), /has no picture/)
-  assert.throws(() => dropImage(configHome, 'kagami'), /has no picture/)
+  assert.ok(!existsSync(join(dir, 'tamsin.conf')))
+  assert.throws(() => showImage(configHome, 'tamsin', 'safebooru_1'), /has no picture/)
+  assert.throws(() => dropImage(configHome, 'tamsin'), /has no picture/)
 })
 
 test('frameAt places a picture exactly as the shell layer does', () => {
@@ -575,7 +575,7 @@ test('a shared framing written for a picture reads back the same, and the defaul
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-tune-'))
   const dir = backgroundsDir(configHome)
   install(configHome, 3)
-  const [picture] = rackOf(configHome, 'kagami')
+  const [picture] = rackOf(configHome, 'tamsin')
   assert.ok(picture)
   assert.equal(writeTune(dir, picture, {}, true, configHome), undefined)
   assert.deepEqual(tuneOf(dir, picture), {})
@@ -594,7 +594,7 @@ test('a shared framing written for a picture reads back the same, and the defaul
 test("a marketplace's palette keeps its pictures in files named with -- for the @ and the /", () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-slash-'))
   const image = { width: 4, height: 4, data: new Uint8Array(64).fill(90) }
-  const colors = { ...KAGAMI, name: 'kec@dust/rei' }
+  const colors = { ...TAMSIN, name: 'kai@dust/pip' }
   installBackdrop(
     configHome,
     colors,
@@ -605,9 +605,9 @@ test("a marketplace's palette keeps its pictures in files named with -- for the 
     0,
   )
   const files = readdirSync(backgroundsDir(configHome))
-  assert.ok(files.includes('kec--dust--rei.conf'))
-  assert.ok(files.some((f) => /^kec--dust--rei\.[0-9a-f]{8}\.png$/.test(f)))
-  assert.ok(readBackdrop(backgroundsDir(configHome), 'kec@dust/rei', configHome))
+  assert.ok(files.includes('kai--dust--pip.conf'))
+  assert.ok(files.some((f) => /^kai--dust--pip\.[0-9a-f]{8}\.png$/.test(f)))
+  assert.ok(readBackdrop(backgroundsDir(configHome), 'kai@dust/pip', configHome))
 })
 
 function figure(): Rgba {
@@ -626,7 +626,7 @@ function installFigure(configHome: string, id: number): Picture {
   const image = figure()
   installBackdrop(
     configHome,
-    KAGAMI,
+    TAMSIN,
     { color: '#9b86c8', opacity: 0.2 },
     image,
     { site: 'safebooru', id, ext: 'png', bytes: encodeRgba(image) },
@@ -634,7 +634,7 @@ function installFigure(configHome: string, id: number): Picture {
     0,
   )
 
-  return rackOf(configHome, 'kagami')[0] as Picture
+  return rackOf(configHome, 'tamsin')[0] as Picture
 }
 
 test('a picture file is the tone with the ink as its alpha, so a terminal lays the tint over the background itself', () => {
@@ -713,11 +713,11 @@ test('a palette that changes its tone paints its pictures again, under new names
   const dir = backgroundsDir(configHome)
   const before = installFigure(configHome, 5)
   writeTune(dir, before, { size: 60, position: 'center' }, true, configHome)
-  assert.deepEqual(retint(configHome, new Map([['kagami', PAINT]])), [])
-  assert.deepEqual(retint(configHome, new Map([['kagami', { ...PAINT, hue: { color: '#5fa8d3', opacity: 0.15 } }]])), [
-    'kagami',
+  assert.deepEqual(retint(configHome, new Map([['tamsin', PAINT]])), [])
+  assert.deepEqual(retint(configHome, new Map([['tamsin', { ...PAINT, hue: { color: '#5fa8d3', opacity: 0.15 } }]])), [
+    'tamsin',
   ])
-  const after = rackOf(configHome, 'kagami')[0] as Picture
+  const after = rackOf(configHome, 'tamsin')[0] as Picture
   assert.notEqual(after.stem, before.stem)
   assert.deepEqual([after.tone, after.opacity], ['#5fa8d3', before.opacity])
 
@@ -743,7 +743,7 @@ test("every picture keeps a thumbnail of its fill for preview's strip, which a n
 
   installBackdrop(
     configHome,
-    KAGAMI,
+    TAMSIN,
     PAINT.hue,
     image,
     { site: 'safebooru', id: 40, ext: 'png', bytes: encodeRgba(image) },
@@ -752,15 +752,15 @@ test("every picture keeps a thumbnail of its fill for preview's strip, which a n
   )
 
   const thumb = (picture: Picture) => decodePng(new Uint8Array(readFileSync(join(dir, `${picture.stem}@thumb.png`))))
-  const before = rackOf(configHome, 'kagami')[0] as Picture
+  const before = rackOf(configHome, 'tamsin')[0] as Picture
   const small = thumb(before)
   assert.deepEqual([small.width, small.height, ...small.data.subarray(0, 3)], [213, 160, 0x9b, 0x86, 0xc8])
-  retint(configHome, new Map([['kagami', { ...PAINT, hue: { color: '#5fa8d3', opacity: 0.15 } }]]))
-  const after = rackOf(configHome, 'kagami')[0] as Picture
+  retint(configHome, new Map([['tamsin', { ...PAINT, hue: { color: '#5fa8d3', opacity: 0.15 } }]]))
+  const after = rackOf(configHome, 'tamsin')[0] as Picture
   assert.deepEqual([...thumb(after).data.subarray(0, 3)], [0x5f, 0xa8, 0xd3])
   rmSync(join(dir, `${after.stem}@thumb.png`))
-  assert.deepEqual(thumbless(configHome), [{ name: 'kagami', key: after.key }])
-  assert.equal(writeThumb(configHome, 'kagami', after.key), true)
+  assert.deepEqual(thumbless(configHome), [{ name: 'tamsin', key: after.key }])
+  assert.equal(writeThumb(configHome, 'tamsin', after.key), true)
   assert.deepEqual([thumbless(configHome), thumb(after).height], [[], 160])
 })
 
@@ -769,7 +769,7 @@ test('a picture drawn before its tone was kept is drawn again from its original,
   const dir = backgroundsDir(configHome)
   const legacy = installFigure(configHome, 6)
   const store = readStore(dir)
-  store.palettes.kagami = {
+  store.palettes.tamsin = {
     active: legacy.key,
     pictures: [{ key: legacy.key, stem: legacy.stem, fill: legacy.fill, opacity: 0.2, original: legacy.original }],
   }
@@ -779,10 +779,10 @@ test('a picture drawn before its tone was kept is drawn again from its original,
     `background-image = ${join(dir, legacy.fill)}\nbackground-image-fit = cover\nbackground-image-position = bottom-left\nbackground-image-opacity = 0.3\n`,
   )
   writeFileSync(join(dir, `${legacy.stem}.off.conf`), 'background-image =\n')
-  const picture = await redrawOne(configHome, 'kagami', legacy.key, PAINT, 2, true, configHome)
+  const picture = await redrawOne(configHome, 'tamsin', legacy.key, PAINT, 2, true, configHome)
   assert.ok(picture)
-  applyRedraw(configHome, [{ name: 'kagami', picture }])
-  const after = rackOf(configHome, 'kagami')[0] as Picture
+  applyRedraw(configHome, [{ name: 'tamsin', picture }])
+  const after = rackOf(configHome, 'tamsin')[0] as Picture
   assert.notEqual(after.stem, legacy.stem)
   assert.deepEqual([after.tone, after.blur, after.window], ['#9b86c8', 2, { width: 40, height: 20 }])
   assert.deepEqual(tuneOf(dir, after), { position: 'bottom-left', opacity: 0.3 })
@@ -809,7 +809,7 @@ function installColorful(configHome: string, id: number): Picture {
   const image = colorful()
   installBackdrop(
     configHome,
-    KAGAMI,
+    TAMSIN,
     PAINT.hue,
     image,
     { site: 'safebooru', id, ext: 'png', bytes: encodeRgba(image) },
@@ -818,7 +818,7 @@ function installColorful(configHome: string, id: number): Picture {
     'original',
   )
 
-  return rackOf(configHome, 'kagami')[0] as Picture
+  return rackOf(configHome, 'tamsin')[0] as Picture
 }
 
 test('the peak of a picture is the color of its brightest 1% of visible pixels, and a clear pixel does not count', () => {
@@ -837,18 +837,18 @@ test('the peak of a picture is the color of its brightest 1% of visible pixels, 
 })
 
 test('original colors are as faint as their brightest pixel needs, and the text still passes the gate on it', () => {
-  const white = originalOpacity(KAGAMI, '#ffffff')
-  const dark = originalOpacity(KAGAMI, '#5a5a5a')
-  assert.ok(white < toneFor(KAGAMI, 'cursor').opacity, 'white is the worst pixel a picture can hold')
+  const white = originalOpacity(TAMSIN, '#ffffff')
+  const dark = originalOpacity(TAMSIN, '#5a5a5a')
+  assert.ok(white < toneFor(TAMSIN, 'cursor').opacity, 'white is the worst pixel a picture can hold')
   assert.ok(dark > white, 'a dark picture may be drawn stronger')
 
   for (const [peak, opacity] of [
     ['#ffffff', white],
     ['#5a5a5a', dark],
   ] as const) {
-    const under = mix(KAGAMI.background, peak, opacity)
+    const under = mix(TAMSIN.background, peak, opacity)
     assert.deepEqual(
-      checkReadability({ ...KAGAMI, background: under, waive: [] }),
+      checkReadability({ ...TAMSIN, background: under, waive: [] }),
       [],
       `${peak} at ${opacity} keeps the palette readable`,
     )
@@ -861,23 +861,23 @@ test('a picture drawn in its own colors keeps them, with the picture own alpha, 
   const dir = backgroundsDir(configHome)
   const picture = installColorful(configHome, 21)
   assert.deepEqual([picture.coloring, picture.tone, picture.peak], ['original', undefined, '#ffffff'])
-  assert.equal(picture.opacity, originalOpacity(KAGAMI, '#ffffff'))
+  assert.equal(picture.opacity, originalOpacity(TAMSIN, '#ffffff'))
   assert.equal(coloringOf(picture), 'original')
   const figureFile = decodePng(new Uint8Array(readFileSync(join(dir, `${picture.stem}.png`))))
   assert.deepEqual([figureFile.width, figureFile.height], [8, 12])
   assert.deepEqual([...figureFile.data.subarray(0, 4)], [255, 255, 255, 255])
   assert.deepEqual([...figureFile.data.subarray(8 * 4, 8 * 4 + 4)], [200, 60, 40, 255])
-  const conf = readFileSync(join(dir, 'kagami.conf'), 'utf8')
+  const conf = readFileSync(join(dir, 'tamsin.conf'), 'utf8')
   assert.ok(conf.includes(`# colors ${picture.key} original`))
   assert.ok(conf.includes(`background-image-opacity = ${picture.opacity}`))
-  assert.equal(readBackdrop(dir, 'kagami', configHome)?.opacity, picture.opacity)
+  assert.equal(readBackdrop(dir, 'tamsin', configHome)?.opacity, picture.opacity)
 })
 
 test('a tone picture has no colors line, and a tuned size of an original-color picture keeps its colors', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-colors-tune-'))
   const dir = backgroundsDir(configHome)
   installFigure(configHome, 3)
-  assert.ok(!readFileSync(join(dir, 'kagami.conf'), 'utf8').includes('# colors'))
+  assert.ok(!readFileSync(join(dir, 'tamsin.conf'), 'utf8').includes('# colors'))
   const own = installColorful(configHome, 22)
   writeTune(dir, own, { size: 60, position: 'center' }, true, configHome)
   const tuned = decodePng(new Uint8Array(readFileSync(join(dir, `${own.stem}@60-center.png`))))
@@ -896,10 +896,10 @@ test('a palette whose colors change leaves an original-color picture and its opa
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-colors-retint-'))
   const dir = backgroundsDir(configHome)
   const before = installColorful(configHome, 23)
-  const dimmer = { ...PAINT, colors: { ...KAGAMI, foreground: '#b9b1c2' } }
-  assert.deepEqual(retint(configHome, new Map([['kagami', dimmer]])), [])
-  assert.deepEqual(rackOf(configHome, 'kagami')[0], before)
-  assert.equal(readBackdrop(dir, 'kagami', configHome)?.opacity, before.opacity)
+  const dimmer = { ...PAINT, colors: { ...TAMSIN, foreground: '#b9b1c2' } }
+  assert.deepEqual(retint(configHome, new Map([['tamsin', dimmer]])), [])
+  assert.deepEqual(rackOf(configHome, 'tamsin')[0], before)
+  assert.equal(readBackdrop(dir, 'tamsin', configHome)?.opacity, before.opacity)
 })
 
 test('drawing a picture in its other colors keeps its tuning, drops its opacity and takes the old files away', async () => {
@@ -907,24 +907,24 @@ test('drawing a picture in its other colors keeps its tuning, drops its opacity 
   const dir = backgroundsDir(configHome)
   const before = installFigure(configHome, 7)
   writeTune(dir, before, { size: 60, position: 'center', opacity: 0.3 }, true, configHome)
-  const original = await redrawOne(configHome, 'kagami', before.key, PAINT, 0, true, configHome, 'original')
+  const original = await redrawOne(configHome, 'tamsin', before.key, PAINT, 0, true, configHome, 'original')
   assert.ok(original)
-  applyRedraw(configHome, [{ name: 'kagami', picture: original }])
-  const own = rackOf(configHome, 'kagami')[0] as Picture
+  applyRedraw(configHome, [{ name: 'tamsin', picture: original }])
+  const own = rackOf(configHome, 'tamsin')[0] as Picture
   assert.deepEqual([own.coloring, own.tone, own.peak !== undefined], ['original', undefined, true])
-  assert.equal(own.opacity, originalOpacity(KAGAMI, own.peak as string))
+  assert.equal(own.opacity, originalOpacity(TAMSIN, own.peak as string))
   assert.deepEqual(tuneOf(dir, own), { size: 60, position: 'center' })
   assert.ok(existsSync(join(dir, `${own.stem}@60-center.png`)))
   assert.deepEqual(
     readdirSync(dir).filter((file) => file.startsWith(before.stem)),
     [],
   )
-  const back = await redrawOne(configHome, 'kagami', own.key, PAINT, 0, true, configHome, 'tone')
+  const back = await redrawOne(configHome, 'tamsin', own.key, PAINT, 0, true, configHome, 'tone')
   assert.ok(back)
-  applyRedraw(configHome, [{ name: 'kagami', picture: back }])
-  const tinted = rackOf(configHome, 'kagami')[0] as Picture
+  applyRedraw(configHome, [{ name: 'tamsin', picture: back }])
+  const tinted = rackOf(configHome, 'tamsin')[0] as Picture
   assert.deepEqual([tinted.coloring, tinted.tone, tinted.peak, tinted.opacity], ['tone', '#9b86c8', undefined, 0.2])
-  assert.ok(!readFileSync(join(dir, 'kagami.conf'), 'utf8').includes('# colors'))
+  assert.ok(!readFileSync(join(dir, 'tamsin.conf'), 'utf8').includes('# colors'))
 })
 
 test('a coloring drawn once is kept, so the other one can be got ready and going back needs no original', async () => {
@@ -932,29 +932,29 @@ test('a coloring drawn once is kept, so the other one can be got ready and going
   const dir = backgroundsDir(configHome)
   const before = installFigure(configHome, 31)
   const original = join(dir, before.original as string)
-  assert.equal(prepareOne(configHome, 'kagami', before.key, PAINT, 0, 'original'), true)
+  assert.equal(prepareOne(configHome, 'tamsin', before.key, PAINT, 0, 'original'), true)
   chmodSync(original, 0o000)
 
   try {
-    const own = await redrawOne(configHome, 'kagami', before.key, PAINT, 0, true, configHome, 'original')
+    const own = await redrawOne(configHome, 'tamsin', before.key, PAINT, 0, true, configHome, 'original')
     assert.ok(own)
     assert.equal(own.coloring, 'original')
-    applyRedraw(configHome, [{ name: 'kagami', picture: own }])
-    const back = await redrawOne(configHome, 'kagami', before.key, PAINT, 0, true, configHome, 'tone')
+    applyRedraw(configHome, [{ name: 'tamsin', picture: own }])
+    const back = await redrawOne(configHome, 'tamsin', before.key, PAINT, 0, true, configHome, 'tone')
     assert.ok(back)
     assert.deepEqual([back.stem, back.fill, back.coloring], [before.stem, before.fill, 'tone'])
-    applyRedraw(configHome, [{ name: 'kagami', picture: back }])
+    applyRedraw(configHome, [{ name: 'tamsin', picture: back }])
     assert.ok(existsSync(join(dir, `${before.stem}.png`)) && existsSync(join(dir, before.fill)))
     assert.ok(!existsSync(join(dir, `${own.stem}.png`)))
   } finally {
     chmodSync(original, 0o644)
   }
 
-  const own = await redrawOne(configHome, 'kagami', before.key, PAINT, 0, true, configHome, 'original')
+  const own = await redrawOne(configHome, 'tamsin', before.key, PAINT, 0, true, configHome, 'original')
   assert.ok(own)
-  applyRedraw(configHome, [{ name: 'kagami', picture: own }])
+  applyRedraw(configHome, [{ name: 'tamsin', picture: own }])
   const bluer = { ...PAINT, hue: { color: '#336699', opacity: 0.2 } }
-  const recolored = await redrawOne(configHome, 'kagami', before.key, bluer, 0, true, configHome, 'tone')
+  const recolored = await redrawOne(configHome, 'tamsin', before.key, bluer, 0, true, configHome, 'tone')
   assert.ok(recolored)
   assert.deepEqual([recolored.tone, recolored.stem === before.stem], ['#336699', false])
 })
@@ -964,12 +964,12 @@ test('a drawing kept for one tone serves a palette whose tone moved, as the pict
   const dir = backgroundsDir(configHome)
   const before = installFigure(configHome, 32)
   const bluer = { ...PAINT, hue: { color: '#336699', opacity: 0.2 } }
-  assert.equal(prepareOne(configHome, 'kagami', before.key, PAINT, 0, 'tone'), true)
+  assert.equal(prepareOne(configHome, 'tamsin', before.key, PAINT, 0, 'tone'), true)
   const original = join(dir, before.original as string)
   chmodSync(original, 0o000)
 
   try {
-    const moved = await redrawOne(configHome, 'kagami', before.key, bluer, 0, true, configHome, 'tone')
+    const moved = await redrawOne(configHome, 'tamsin', before.key, bluer, 0, true, configHome, 'tone')
     assert.ok(moved)
     assert.deepEqual([moved.tone, moved.stem === before.stem], ['#336699', false])
     const fresh = mkdtempSync(join(tmpdir(), 'ttheme-drawn-fresh-'))
@@ -977,7 +977,7 @@ test('a drawing kept for one tone serves a palette whose tone moved, as the pict
 
     installBackdrop(
       fresh,
-      KAGAMI,
+      TAMSIN,
       bluer.hue,
       image,
       { site: 'safebooru', id: 32, ext: 'png', bytes: encodeRgba(image) },
@@ -985,7 +985,7 @@ test('a drawing kept for one tone serves a palette whose tone moved, as the pict
       0,
     )
 
-    assert.equal((rackOf(fresh, 'kagami')[0] as Picture).stem, moved.stem)
+    assert.equal((rackOf(fresh, 'tamsin')[0] as Picture).stem, moved.stem)
   } finally {
     chmodSync(original, 0o644)
   }
@@ -993,12 +993,12 @@ test('a drawing kept for one tone serves a palette whose tone moved, as the pict
 
 test('trying a picture on in its own colors lays it over the background at the default opacity, straight alpha', () => {
   const held = inked(colorful())
-  const tone = tryOn(held, KAGAMI, PAINT.hue, 40, 20, 0)
-  const own = tryOn(held, KAGAMI, PAINT.hue, 40, 20, 0, undefined, 'original')
+  const tone = tryOn(held, TAMSIN, PAINT.hue, 40, 20, 0)
+  const own = tryOn(held, TAMSIN, PAINT.hue, 40, 20, 0, undefined, 'original')
   assert.equal(tone.opacity, 0.2)
-  assert.equal(own.opacity, originalOpacity(KAGAMI, '#ffffff'))
+  assert.equal(own.opacity, originalOpacity(TAMSIN, '#ffffff'))
   assert.notDeepEqual([...own.image.data], [...tone.image.data])
-  const stronger = tryOn(held, KAGAMI, PAINT.hue, 40, 20, 0, { opacity: 0.5 }, 'original')
+  const stronger = tryOn(held, TAMSIN, PAINT.hue, 40, 20, 0, { opacity: 0.5 }, 'original')
   assert.equal(stronger.opacity, own.opacity, 'the default stays the default while a framing overrides it')
   const [r, g, b] = [0x19, 0x16, 0x1e]
 
@@ -1018,7 +1018,7 @@ test('blurring a picture in its own colors softens its edge without dimming the 
   const image = colorful()
   installBackdrop(
     configHome,
-    KAGAMI,
+    TAMSIN,
     PAINT.hue,
     image,
     { site: 'safebooru', id: 24, ext: 'png', bytes: encodeRgba(image) },
@@ -1026,7 +1026,7 @@ test('blurring a picture in its own colors softens its edge without dimming the 
     1.5,
     'original',
   )
-  const picture = rackOf(configHome, 'kagami')[0] as Picture
+  const picture = rackOf(configHome, 'tamsin')[0] as Picture
   const fill = decodePng(new Uint8Array(readFileSync(join(dir, picture.fill))))
 
   const soft = Array.from({ length: fill.width * fill.height }, (_, i) => fill.data.subarray(i * 4, i * 4 + 4)).filter(

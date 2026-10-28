@@ -72,8 +72,9 @@ ttheme add gojo geto           # install palettes by name
 ttheme add alice@pastel/dusk   # a palette from another marketplace
 ```
 
-`add` also takes a [share link](../creating-palettes/share.md) or a palette file
-(`ttheme add dusk.toml`).
+`add` also takes a [share link](../creating-palettes/share.md) or a
+[set](../creating-palettes/publish.md#a-set): `ttheme add dusk.toml` adds every
+palette the set holds to your own marketplace.
 
 ## Marketplaces
 

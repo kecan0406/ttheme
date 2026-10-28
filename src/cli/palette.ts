@@ -25,21 +25,23 @@ import { colorsOfTheme } from '../core/manifest.ts'
 import { lookalikes, mirrored, withSlot } from '../core/mirror.ts'
 import { decodeImage, encodeRgba, type Rgba, resample } from '../core/png.ts'
 import type { Colors } from '../core/seeds.ts'
+import { readSet, setNameOf } from '../core/sets.ts'
 import {
   BUILTIN,
   characterIdOf,
   MARKETPLACE_FILE,
-  readTheme,
   type Shade,
+  slugOf,
   type Theme,
   textProblem,
+  themeOf,
   toml,
   workIdOf,
 } from '../core/theme.ts'
 import { artDir, artKey, fetchArt } from '../pictures/art.ts'
 import { reach, readMarketplaces } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
-import { marketplaceFiles, palettesDir, readMarketplaceDir, warning, worksDir } from '../store/local.ts'
+import { ownIn, readMarketplaceDir, setFiles, setsDir, warning, worksDir, writeOwnIn } from '../store/local.ts'
 import { configHome } from '../store/paths.ts'
 import { readSchemes, schemesDir, syncSchemes } from '../store/schemes.ts'
 import { normalize } from '../tui/find/attach.ts'
@@ -432,8 +434,10 @@ function taggedIn(works: readonly Work[], tag: string): string | undefined {
 }
 
 function shippedIn(dir: string): Theme[] {
-  return marketplaceFiles(dir).map((f) =>
-    readTheme(f.path, readFileSync(f.path, 'utf8'), { name: `${BUILTIN}/${f.slug}`, builtin: true }),
+  return setFiles(dir).flatMap((f) =>
+    readSet(f.path, readFileSync(f.path, 'utf8')).map(({ slug, doc }) =>
+      themeOf(`${f.path}: ${slug}`, doc, { name: `${BUILTIN}/${slug}`, builtin: true }),
+    ),
   )
 }
 
@@ -544,6 +548,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
   const known = mergeWorks(commons.works, target?.proposals ?? [])
   const held = (id: string) => workOf(target?.builtin ? commons.works : (target?.proposals ?? []), id)
   const shipped = target?.builtin ? shippedIn(target.dir) : []
+  const owned = target ? ownIn(target.dir) : undefined
   const notes: string[] = []
   const schemes = await corpus(notes)
   const made: Made[] = []
@@ -617,14 +622,15 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
       ...(other ? { other } : {}),
     })
 
-    const file = target ? join(palettesDir(target.dir), `${anchors.name}.toml`) : ''
+    const own = owned?.get(anchors.name)
+    const file = target ? (own?.path ?? join(setsDir(target.dir), `${setNameOf(subject)}.toml`)) : ''
     const theme = { ...ranked.shade, name: anchors.name, signatureSlots, waive: [] }
 
     made.push({
       name,
       ...(subject ? { subject } : {}),
       file,
-      changed: file === '' || !existsSync(file) || readFileSync(file, 'utf8') !== text,
+      changed: file === '' || own?.text !== text,
       written: false,
       ...(anchors.source ? { source: anchors.source } : {}),
       ...(nativeNames ? { nativeNames } : {}),
@@ -665,7 +671,12 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
   let installed: string[] = []
 
   if (!dry && target) {
-    for (const item of [...made, ...recorded].filter((x) => x.changed)) {
+    for (const item of made.filter((m) => m.changed)) {
+      item.file = writeOwnIn(target.dir, slugOf(item.name), item.text)
+      item.written = true
+    }
+
+    for (const item of recorded.filter((r) => r.changed)) {
       writeAtomic(item.file, item.text)
       item.written = true
     }

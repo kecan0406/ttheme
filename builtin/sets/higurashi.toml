@@ -1,0 +1,281 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "rena"
+subject = "higurashi/rena"
+signature = ["cursor", "foreground", "ansi1"]
+ansi_source = "Japanesque + Watanagashi"
+
+[palette.colors]
+background = "#20150f"
+foreground = "#e4e3d9"
+cursor = "#ea8942"
+selection_background = "#593525"
+ansi = [
+  "#2d211a",
+  "#f26883",
+  "#d3c33e",
+  "#faab34",
+  "#a886d9",
+  "#ec96be",
+  "#77b987",
+  "#e5d1c6",
+
+  "#84746a",
+  "#f0a19f",
+  "#ede078",
+  "#ffd6ab",
+  "#b4a0e6",
+  "#ffbfdf",
+  "#9ed3a6",
+  "#ffeade",
+]
+
+[palette.colors.light]
+background = "#fff8f5"
+foreground = "#1f201a"
+cursor = "#ae5a14"
+selection_background = "#ffccb8"
+ansi = [
+  "#fff1ea",
+  "#bb264f",
+  "#395822",
+  "#8a5900",
+  "#794abb",
+  "#a14074",
+  "#0c5d38",
+  "#362a22",
+
+  "#84746a",
+  "#8a3c3d",
+  "#2e491b",
+  "#714d21",
+  "#5e449e",
+  "#7f3f64",
+  "#064c34",
+  "#2c1c11",
+]
+
+[[palette]]
+slug = "mion"
+subject = "higurashi/mion"
+signature = ["cursor", "ansi1", "ansi3"]
+ansi_source = "Patina Moss"
+
+[palette.colors]
+background = "#141911"
+foreground = "#dce6d1"
+cursor = "#84b96e"
+selection_background = "#3c3f35"
+ansi = [
+  "#20251d",
+  "#cc8282",
+  "#8dd09f",
+  "#d0bb6a",
+  "#59a1a1",
+  "#e29eb8",
+  "#78b8a1",
+  "#d1d6c9",
+
+  "#73796e",
+  "#f1a186",
+  "#a8ecb9",
+  "#dee292",
+  "#6eb7b7",
+  "#ffc0d7",
+  "#92d4bb",
+  "#e7f1dc",
+]
+
+[palette.colors.light]
+background = "#f6fbed"
+foreground = "#192215"
+cursor = "#4f813d"
+selection_background = "#d6d8cb"
+ansi = [
+  "#f0f5e8",
+  "#9b4b4d",
+  "#185b35",
+  "#73621a",
+  "#1f6e6e",
+  "#954b6b",
+  "#0d5a4d",
+  "#282e25",
+
+  "#73796e",
+  "#8a3e22",
+  "#024d28",
+  "#555817",
+  "#005f5f",
+  "#7f415c",
+  "#004b3f",
+  "#192215",
+]
+
+[[palette]]
+slug = "rika"
+subject = "higurashi/rika"
+signature = ["cursor", "ansi13", "foreground"]
+ansi_source = "Nocturnal Winter"
+
+[palette.colors]
+background = "#16171f"
+foreground = "#e3e1e9"
+cursor = "#818bd9"
+selection_background = "#3c3b54"
+ansi = [
+  "#23232b",
+  "#f1669a",
+  "#69d6a4",
+  "#b0c166",
+  "#6793f3",
+  "#ff88d4",
+  "#00bdcd",
+  "#d5d3de",
+
+  "#777680",
+  "#f3a4a4",
+  "#74f5bb",
+  "#cee46b",
+  "#96a9e8",
+  "#ffc1d0",
+  "#00dbed",
+  "#edecfe",
+]
+
+[palette.colors.light]
+background = "#fbf8ff"
+foreground = "#1f1f25"
+cursor = "#515fc7"
+selection_background = "#d7d4f4"
+ansi = [
+  "#f4f2fd",
+  "#b72762",
+  "#005c3e",
+  "#815e00",
+  "#235fc5",
+  "#b31e8d",
+  "#005961",
+  "#2b2b34",
+
+  "#777680",
+  "#8a3c3c",
+  "#004c33",
+  "#6e5000",
+  "#3250a2",
+  "#7e4254",
+  "#004a51",
+  "#1d1f2b",
+]
+
+[[palette]]
+slug = "satoko"
+subject = "higurashi/satoko"
+signature = ["cursor", "ansi9", "ansi12"]
+ansi_source = "Espresso"
+
+[palette.colors]
+background = "#1b170c"
+foreground = "#ede2c5"
+cursor = "#e4c767"
+selection_background = "#4c3a28"
+ansi = [
+  "#272318",
+  "#ea761c",
+  "#c3c759",
+  "#e2b55a",
+  "#5d9eb3",
+  "#f494ad",
+  "#71b7b9",
+  "#dcd4c2",
+
+  "#7d7767",
+  "#f3a195",
+  "#e0e36c",
+  "#f4db81",
+  "#81b1d4",
+  "#ffc1ce",
+  "#8dd4c3",
+  "#f9edd0",
+]
+
+[palette.colors.light]
+background = "#fff8f0"
+foreground = "#251f0d"
+cursor = "#998028"
+selection_background = "#eed2b9"
+ansi = [
+  "#fcf3e0",
+  "#a04b00",
+  "#37591e",
+  "#805d03",
+  "#246b7f",
+  "#a73e60",
+  "#005a5c",
+  "#302c20",
+
+  "#7d7767",
+  "#8c3c32",
+  "#2c4a18",
+  "#6e4f01",
+  "#265979",
+  "#7e4252",
+  "#004b40",
+  "#251f0d",
+]
+
+[[palette]]
+slug = "hinamizawa"
+subject = "higurashi/hinamizawa"
+signature = ["cursor", "ansi2", "ansi3"]
+ansi_source = "Red Sands"
+
+[palette.colors]
+background = "#201512"
+foreground = "#fddbd3"
+cursor = "#ec6745"
+selection_background = "#5c3230"
+ansi = [
+  "#2e211d",
+  "#f16e4c",
+  "#78d665",
+  "#ebb308",
+  "#b67bf3",
+  "#ff8db8",
+  "#54c086",
+  "#e6d0ca",
+
+  "#85736f",
+  "#f3a193",
+  "#cded57",
+  "#ffd5ae",
+  "#bc9de8",
+  "#ffc1d5",
+  "#87da7f",
+  "#ffe9e4",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b16"
+cursor = "#b74122"
+selection_background = "#ffcbc7"
+ansi = [
+  "#fff1ed",
+  "#b13b1b",
+  "#005e00",
+  "#7e5e00",
+  "#8a2be0",
+  "#b1306c",
+  "#005c37",
+  "#372926",
+
+  "#85736f",
+  "#8c3c30",
+  "#3a4700",
+  "#724d25",
+  "#673fa1",
+  "#7e4259",
+  "#004e0d",
+  "#2d1b16",
+]

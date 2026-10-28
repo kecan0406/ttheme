@@ -178,8 +178,12 @@ drawn in it would disappear.
 
 A marketplace palette can waive a rule, with a reason that ships beside it:
 
-```toml title="palettes/rei.toml"
-[contrast]
+```toml title="sets/evangelion.toml"
+[[palette]]
+slug = "rei"
+...
+
+[palette.contrast]
 waive = ["bright-follows"]
 reason = "why this palette is the exception"
 ```

@@ -1,0 +1,225 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "konata"
+subject = "lucky-star/konata"
+signature = ["cursor", "ansi2", "ansi12"]
+ansi_source = "Dark Modern + Ryouou"
+
+[palette.colors]
+background = "#13181e"
+foreground = "#dae3f1"
+cursor = "#598fc4"
+selection_background = "#3b3e42"
+ansi = [
+  "#1f242a",
+  "#f2659a",
+  "#7ad58d",
+  "#b2c365",
+  "#589add",
+  "#d897ff",
+  "#43b7e8",
+  "#d0d5dd",
+
+  "#73777f",
+  "#f3a0bb",
+  "#63f5c8",
+  "#cce54d",
+  "#79b0e8",
+  "#dac9ff",
+  "#8ccff3",
+  "#e6effc",
+]
+
+[palette.colors.light]
+background = "#f8f9ff"
+foreground = "#18202a"
+cursor = "#306a9d"
+selection_background = "#d5d7dc"
+ansi = [
+  "#f0f4fc",
+  "#b72767",
+  "#005d2a",
+  "#815e00",
+  "#1466a6",
+  "#8f35c6",
+  "#005773",
+  "#282d33",
+
+  "#73777f",
+  "#8c3759",
+  "#004c3a",
+  "#6f5000",
+  "#14588b",
+  "#5d4a8a",
+  "#004861",
+  "#18202a",
+]
+
+[[palette]]
+slug = "kagami"
+subject = "lucky-star/kagami"
+signature = ["cursor", "ansi4", "selection"]
+ansi_source = "Nightfox + Ryouou"
+
+[palette.colors]
+background = "#19161e"
+foreground = "#e8dff1"
+cursor = "#b79ad0"
+selection_background = "#45282d"
+ansi = [
+  "#25222a",
+  "#c9828e",
+  "#96ceb1",
+  "#efaf7f",
+  "#858ee7",
+  "#bfa7dc",
+  "#6ab3e2",
+  "#d9d2dd",
+
+  "#7a757f",
+  "#f39fba",
+  "#b1eacc",
+  "#fad7bd",
+  "#9aa9e2",
+  "#ddc8ff",
+  "#97cdf3",
+  "#f4eafd",
+]
+
+[palette.colors.light]
+background = "#fff7fe"
+foreground = "#241d2a"
+cursor = "#8763a9"
+selection_background = "#e8bbc1"
+ansi = [
+  "#faf0fc",
+  "#954d5b",
+  "#235a43",
+  "#8d5628",
+  "#4855d1",
+  "#725698",
+  "#00567a",
+  "#2f2a32",
+
+  "#7c757e",
+  "#8d3658",
+  "#124b36",
+  "#6e4e34",
+  "#3a5199",
+  "#60488a",
+  "#004766",
+  "#241d2a",
+]
+
+[[palette]]
+slug = "tsukasa"
+subject = "lucky-star/tsukasa"
+signature = ["cursor", "ansi11", "selection"]
+ansi_source = "Sublette + Ryouou"
+
+[palette.colors]
+background = "#1b161d"
+foreground = "#eddeef"
+cursor = "#c8a6da"
+selection_background = "#2f4090"
+ansi = [
+  "#27222a",
+  "#ef679a",
+  "#68d7a4",
+  "#e4b76d",
+  "#8090e6",
+  "#c4a4df",
+  "#4cb4f9",
+  "#dbd1dc",
+
+  "#7c747e",
+  "#f39dba",
+  "#74f4bb",
+  "#eede89",
+  "#9ba7e8",
+  "#e0c8ff",
+  "#79d2f3",
+  "#f8e9fb",
+]
+
+[palette.colors.light]
+background = "#fff7fc"
+foreground = "#251d29"
+cursor = "#9168aa"
+selection_background = "#96a6fd"
+ansi = [
+  "#fbf0fb",
+  "#b52b67",
+  "#005c3e",
+  "#805d1c",
+  "#3e58d0",
+  "#79529d",
+  "#00557f",
+  "#302a32",
+
+  "#7c747e",
+  "#8e355a",
+  "#004c33",
+  "#60550d",
+  "#3c4ea2",
+  "#624889",
+  "#00485b",
+  "#251d29",
+]
+
+[[palette]]
+slug = "miyuki"
+subject = "lucky-star/miyuki"
+signature = ["cursor", "selection", "ansi1"]
+ansi_source = "Tinacious Design Dark + Ryouou"
+
+[palette.colors]
+background = "#201517"
+foreground = "#fadbe1"
+cursor = "#ffc1d0"
+selection_background = "#6e00ab"
+ansi = [
+  "#2c2123",
+  "#d17e8b",
+  "#d6c42f",
+  "#ffa76d",
+  "#828df3",
+  "#d597ff",
+  "#6bb0f9",
+  "#e4d0d3",
+
+  "#847376",
+  "#f39db7",
+  "#f5e030",
+  "#fdd5b8",
+  "#a0a6e8",
+  "#ffbdf0",
+  "#aac9f3",
+  "#ffe8ec",
+]
+
+[palette.colors.light]
+background = "#fff8f8"
+foreground = "#2c1b1f"
+cursor = "#b77285"
+selection_background = "#d290ff"
+ansi = [
+  "#fff0f2",
+  "#9d4858",
+  "#395922",
+  "#995100",
+  "#4151e3",
+  "#8d37c8",
+  "#00538c",
+  "#35292c",
+
+  "#847376",
+  "#8e3557",
+  "#2e491b",
+  "#714d30",
+  "#434ca2",
+  "#803a77",
+  "#1e446b",
+  "#2c1b1f",
+]

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, sep } from 'node:path'
 import { test } from 'node:test'
 import { modeOf } from '../core/mode.ts'
+import { setText } from '../core/sets.ts'
 import { readBundled, readMarketplaces } from '../store/available.ts'
 import type { Installed } from '../store/installed.ts'
 import { MANAGED, withSetting } from '../store/wiring.ts'
@@ -40,12 +41,12 @@ function bundleFixture() {
   return {
     version: '0.0.0',
     gate: [],
-    palettes: [palette('ttheme/neutral'), palette('ttheme/miku', 'vocaloid/miku')],
+    palettes: [palette('ttheme/neutral'), palette('ttheme/juno', 'starfall/juno')],
   }
 }
 
 const commonsFixture = {
-  works: [{ id: 'vocaloid', name: 'Vocaloid', characters: [{ id: 'miku', native: ['初音ミク'] }] }],
+  works: [{ id: 'starfall', name: 'Starfall', characters: [{ id: 'juno', native: ['ジュノ'] }] }],
   renames: {},
 }
 
@@ -65,9 +66,9 @@ function paletteText(): string {
 
 function withMarketplaces(paths: InitPaths): string {
   const dust = join(paths.home, 'dust')
-  mkdirSync(join(dust, 'palettes'), { recursive: true })
-  writeFileSync(join(dust, 'ttheme-marketplace.toml'), 'name = "moss"\n\n[owner]\nname = "kec"\n')
-  writeFileSync(join(dust, 'palettes', 'fern.toml'), paletteText())
+  mkdirSync(join(dust, 'sets'), { recursive: true })
+  writeFileSync(join(dust, 'ttheme-marketplace.toml'), 'name = "moss"\n\n[owner]\nname = "kai"\n')
+  writeFileSync(join(dust, 'sets', 'original.toml'), setText([{ slug: 'fern', text: paletteText() }]))
   const cache = join(paths.configHome, 'ttheme', 'marketplaces')
   mkdirSync(cache, { recursive: true })
   writeFileSync(
@@ -75,7 +76,7 @@ function withMarketplaces(paths: InitPaths): string {
     JSON.stringify({
       files: {
         'ttheme-marketplace.toml': 'name = "pastel"\n\n[owner]\nname = "alice"\n',
-        'palettes/dusk.toml': paletteText(),
+        'sets/original.toml': setText([{ slug: 'dusk', text: paletteText() }]),
       },
     }),
   )
@@ -97,11 +98,11 @@ function makeFixture(): InitPaths {
     'shell/adapters/_osc.zsh': 'osc',
     'shell/adapters/kitty.zsh': 'kitty adapter',
     'dist/ghostty/themes/neutral': 'neutral theme',
-    'dist/ghostty/themes/miku': 'miku theme',
+    'dist/ghostty/themes/juno': 'juno theme',
     'dist/kitty/themes/neutral.conf': 'neutral kitty',
-    'dist/kitty/themes/miku.conf': 'miku kitty',
+    'dist/kitty/themes/juno.conf': 'juno kitty',
     'dist/alacritty/themes/neutral.toml': 'neutral alacritty',
-    'dist/alacritty/themes/miku.toml': 'miku alacritty',
+    'dist/alacritty/themes/juno.toml': 'juno alacritty',
     'dist/builtin.json': JSON.stringify(bundleFixture()),
     'dist/commons.json': JSON.stringify(commonsFixture),
     'skills/ttheme-palette/SKILL.md': '---\nname: ttheme-palette\n---\n',
@@ -162,11 +163,11 @@ test('applyInit leaves a fresh install with an empty table and no terminal theme
   const bundled = readBundled(paths.configHome)
   assert.deepEqual(
     bundled.builtin.palettes.map((e) => e.name),
-    ['ttheme/neutral', 'ttheme/miku'],
+    ['ttheme/neutral', 'ttheme/juno'],
   )
   assert.deepEqual(
     bundled.commons.works.map((w) => w.id),
-    ['vocaloid'],
+    ['starfall'],
   )
 })
 
@@ -206,7 +207,7 @@ test('applyInit seeds config.zsh once and keeps user edits on rerun', () => {
 test('init wears the first palette and leaves the new-tab setting at its default', () => {
   const paths = makeFixture()
   const tab = /^(?:# )?: \$\{TTHEME_TAB_PALETTE:=(\w+)\}$/m
-  applyInit(planInit(options({ palettes: ['ttheme/neutral', 'ttheme/miku'] }), paths))
+  applyInit(planInit(options({ palettes: ['ttheme/neutral', 'ttheme/juno'] }), paths))
   assert.match(
     readFileSync(join(paths.configHome, 'ttheme', 'ghostty.conf'), 'utf8'),
     /^theme = ttheme-ttheme--neutral\.dark$/m,
@@ -336,9 +337,9 @@ test('init writes its own alacritty block but never edits an alacritty.toml that
 
 test('an upgrade keeps what is installed and only replaces the layer', () => {
   const paths = makeFixture()
-  applyInit(planInit(options({ palettes: ['ttheme/neutral', 'ttheme/miku'] }), paths))
+  applyInit(planInit(options({ palettes: ['ttheme/neutral', 'ttheme/juno'] }), paths))
   const installedPath = join(paths.configHome, 'ttheme', 'installed.json')
-  const state = { ...JSON.parse(readFileSync(installedPath, 'utf8')), startup: 'ttheme/miku', off: true }
+  const state = { ...JSON.parse(readFileSync(installedPath, 'utf8')), startup: 'ttheme/juno', off: true }
   writeFileSync(installedPath, JSON.stringify(state))
   const configPath = join(paths.configHome, 'ttheme', 'config.zsh')
   writeFileSync(
@@ -351,9 +352,9 @@ test('an upgrade keeps what is installed and only replaces the layer', () => {
   applyInit(planUpgrade(current, paths))
   assert.deepEqual(installedState(paths.configHome), {
     terminals: ['ghostty'],
-    startup: 'ttheme/miku',
+    startup: 'ttheme/juno',
     off: true,
-    palettes: ['ttheme/neutral', 'ttheme/miku'],
+    palettes: ['ttheme/neutral', 'ttheme/juno'],
   })
   assert.match(readFileSync(configPath, 'utf8'), /^: \$\{TTHEME_FX:=glitch\}$/m)
   assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'ttheme.zsh'), 'utf8'), 'ttheme layer, next version')
@@ -361,12 +362,12 @@ test('an upgrade keeps what is installed and only replaces the layer', () => {
 
 test('an upgrade lets the new layer ask again whether Ghostty names the terminal in front', () => {
   const paths = makeFixture()
-  applyInit(planInit(options({ palettes: ['ttheme/miku'] }), paths))
+  applyInit(planInit(options({ palettes: ['ttheme/juno'] }), paths))
   const stateDir = join(paths.home, '.local', 'state', 'ttheme')
   const blind = join(stateDir, 'ghostty', '.blind')
   mkdirSync(join(stateDir, 'ghostty'), { recursive: true })
   writeFileSync(blind, '1.3.2\n')
-  writeFileSync(join(stateDir, 'ghostty', 'ttys001'), '1 miku miku /dev/ttys001\n')
+  writeFileSync(join(stateDir, 'ghostty', 'ttys001'), '1 juno juno /dev/ttys001\n')
   const current = installedState(paths.configHome)
   assert.ok(current)
   applyInit(planUpgrade(current, { ...paths, stateDir }))
@@ -378,11 +379,11 @@ test('an upgrade drops palettes no marketplace has any more, and a default among
   const paths = makeFixture()
 
   const plan = planUpgrade(
-    { terminals: ['ghostty'], startup: 'ttheme/gone', palettes: ['ttheme/miku', 'ttheme/gone'] },
+    { terminals: ['ghostty'], startup: 'ttheme/gone', palettes: ['ttheme/juno', 'ttheme/gone'] },
     paths,
   )
 
-  assert.deepEqual(plan.installed, { terminals: ['ghostty'], palettes: ['ttheme/miku'] })
+  assert.deepEqual(plan.installed, { terminals: ['ghostty'], palettes: ['ttheme/juno'] })
   assert.match(plan.notes[0] ?? '', /^Dropped ttheme\/gone/)
 })
 
@@ -392,16 +393,16 @@ test('there is no install to upgrade before the first init', () => {
 
 test('setting it up again keeps the marketplaces, their auto-update, the handle and what was installed from them', () => {
   const paths = makeFixture()
-  applyInit(planInit(options({ palettes: ['ttheme/miku'] }), paths))
+  applyInit(planInit(options({ palettes: ['ttheme/juno'] }), paths))
   const dust = withMarketplaces(paths)
   const installedPath = join(paths.configHome, 'ttheme', 'installed.json')
   const marketplaces = ['ttheme', 'alice/pastel#v1', dust]
-  const palettes = ['ttheme/miku', 'alice@pastel/dusk', 'kec@moss/fern']
+  const palettes = ['ttheme/juno', 'alice@pastel/dusk', 'kai@moss/fern']
   writeFileSync(
     installedPath,
     JSON.stringify({
       terminals: ['ghostty'],
-      author: 'kec',
+      author: 'kai',
       startup: 'alice@pastel/dusk',
       marketplaces,
       updates: { 'alice/pastel#v1': true },
@@ -419,7 +420,7 @@ test('setting it up again keeps the marketplaces, their auto-update, the handle 
   applyInit(planAgain(state, options({ terminals: ['ghostty', 'kitty'], palettes }), paths))
   assert.deepEqual(installedState(paths.configHome), {
     terminals: ['ghostty', 'kitty'],
-    author: 'kec',
+    author: 'kai',
     startup: 'alice@pastel/dusk',
     marketplaces,
     updates: { 'alice/pastel#v1': true },
@@ -433,10 +434,10 @@ test('setting it up again keeps the marketplaces, their auto-update, the handle 
 
 test('an upgrade keeps what came from marketplaces when the caches it finds are in a shape this ttheme does not read', () => {
   const paths = makeFixture()
-  applyInit(planInit(options({ palettes: ['ttheme/miku'] }), paths))
+  applyInit(planInit(options({ palettes: ['ttheme/juno'] }), paths))
   const dust = withMarketplaces(paths)
   const home = join(paths.configHome, 'ttheme')
-  const palettes = ['ttheme/miku', 'alice@pastel/dusk', 'kec@moss/fern']
+  const palettes = ['ttheme/juno', 'alice@pastel/dusk', 'kai@moss/fern']
   const state = { terminals: ['ghostty' as const], marketplaces: ['ttheme', 'alice/pastel', dust], palettes }
   writeFileSync(join(home, 'installed.json'), JSON.stringify(state))
   sync(paths.configHome, readMarketplaces(paths.configHome), state)
@@ -468,19 +469,19 @@ test('setting it up again carries every setting it does not ask about again', ()
 
   const state: Required<Installed> = {
     terminals: ['ghostty', 'windows-terminal'],
-    author: 'kec',
-    startup: 'ttheme/miku',
+    author: 'kai',
+    startup: 'ttheme/juno',
     off: true,
     itermBase: 'A1B2C3',
     konsoleBase: 'Mine.profile',
     terminalBase: 'Clear Dark',
-    wtHome: '/mnt/c/Users/kec/AppData/Local',
+    wtHome: '/mnt/c/Users/kai/AppData/Local',
     wtProfile: '{61c54bbd-c2c6-5271-96e7-009a87ff44bf}',
     marketplaces: ['ttheme', 'alice/pastel#v1'],
     updates: { 'alice/pastel#v1': true },
     colorsMoved: true,
     skills: ['agents', 'claude'],
-    palettes: ['ttheme/miku'],
+    palettes: ['ttheme/juno'],
   }
 
   const { installed } = planAgain(state, options({ terminals: ['kitty'], palettes: ['ttheme/neutral'] }), paths)

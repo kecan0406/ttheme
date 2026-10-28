@@ -24,22 +24,22 @@ function entry(name: string, subject?: string, partial: Partial<PaletteEntry> = 
 
 const WORKS: Work[] = [
   {
-    id: 'jubeat',
-    name: 'jubeat',
-    characters: [{ id: 'knit', native: ['ニット'], danbooru: 'knit_(jubeat)', also: ['popn'] }],
+    id: 'glass-arcade',
+    name: 'Glass Arcade',
+    characters: [{ id: 'lumi', native: ['ルミ'], danbooru: 'lumi_(glass_arcade)', also: ['night-parade'] }],
   },
-  { id: 'popn', name: "pop'n music", characters: [] },
-  { id: 'evangelion', name: 'Evangelion', native: 'エヴァンゲリオン', characters: [{ id: 'rei' }] },
+  { id: 'night-parade', name: "Night Parade's Eve", characters: [] },
+  { id: 'starfall', name: 'Starfall', native: 'スターフォール', characters: [{ id: 'orla' }] },
 ]
 
 test('palettes.zsh tells the shell what each palette is of, which works hold them, and which palettes a bare name means', () => {
   const text = palettesZsh(
     [
       entry('ttheme/neutral', undefined, { default: true }),
-      entry('kec@dust/glow'),
-      entry('kec@dust/rei', 'evangelion/rei'),
-      entry('ttheme/knit', 'jubeat/knit'),
-      entry('ttheme/rei', 'evangelion/rei'),
+      entry('kai@dust/glow'),
+      entry('kai@dust/orla', 'starfall/orla'),
+      entry('ttheme/lumi', 'glass-arcade/lumi'),
+      entry('ttheme/orla', 'starfall/orla'),
     ],
     WORKS,
   )
@@ -47,15 +47,15 @@ test('palettes.zsh tells the shell what each palette is of, which works hold the
   const line = (name: string) => text.split('\n').find((l) => l.startsWith(`typeset -ga ${name}=`))
   const table = (name: string) => text.slice(text.indexOf(`typeset -gA ${name}=(`)).split('\n)')[0] ?? ''
 
-  assert.equal(line('TTHEME_ORDER'), 'typeset -ga TTHEME_ORDER=(ttheme/rei kec@dust/rei ttheme/knit kec@dust/glow)')
-  assert.equal(line('TTHEME_WORKS'), 'typeset -ga TTHEME_WORKS=(evangelion jubeat popn)')
-  assert.match(table('TTHEME_SUBJECT'), /^ {2}ttheme\/knit +"jubeat\/knit"$/m)
+  assert.equal(line('TTHEME_ORDER'), 'typeset -ga TTHEME_ORDER=(ttheme/lumi ttheme/orla kai@dust/orla kai@dust/glow)')
+  assert.equal(line('TTHEME_WORKS'), 'typeset -ga TTHEME_WORKS=(glass-arcade night-parade starfall)')
+  assert.match(table('TTHEME_SUBJECT'), /^ {2}ttheme\/lumi +"glass-arcade\/lumi"$/m)
   assert.doesNotMatch(table('TTHEME_SUBJECT'), /glow|neutral/)
-  assert.match(table('TTHEME_ALSO'), /^ {2}ttheme\/knit +"popn"$/m)
-  assert.match(table('TTHEME_WORK_NAME'), /^ {2}popn +"pop'n music"$/m)
-  assert.match(table('TTHEME_WORK_NATIVE'), /^ {2}evangelion +"エヴァンゲリオン"$/m)
-  assert.match(table('TTHEME_SHORT'), /^ {2}rei +"kec@dust\/rei ttheme\/rei"$/m)
+  assert.match(table('TTHEME_ALSO'), /^ {2}ttheme\/lumi +"night-parade"$/m)
+  assert.match(table('TTHEME_WORK_NAME'), /^ {2}night-parade +"Night Parade's Eve"$/m)
+  assert.match(table('TTHEME_WORK_NATIVE'), /^ {2}starfall +"スターフォール"$/m)
+  assert.match(table('TTHEME_SHORT'), /^ {2}orla +"kai@dust\/orla ttheme\/orla"$/m)
   assert.match(table('TTHEME_SHORT'), /^ {2}neutral +"ttheme\/neutral"$/m)
-  assert.match(table('TTHEME_NATIVE_NAMES'), /^ {2}ttheme\/knit +"ニット"$/m)
-  assert.match(table('TTHEME_CHARACTER'), /^ {2}ttheme\/knit +"knit"$/m)
+  assert.match(table('TTHEME_NATIVE_NAMES'), /^ {2}ttheme\/lumi +"ルミ"$/m)
+  assert.match(table('TTHEME_CHARACTER'), /^ {2}ttheme\/lumi +"lumi"$/m)
 })

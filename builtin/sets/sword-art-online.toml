@@ -1,0 +1,337 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "kirito"
+subject = "sword-art-online/kirito"
+signature = ["cursor", "ansi2", "selection"]
+ansi_source = "Karasu Night + Aincrad"
+
+[palette.colors]
+background = "#16171f"
+foreground = "#e1e1f3"
+cursor = "#828bc6"
+selection_background = "#2e2f35"
+ansi = [
+  "#22232b",
+  "#e17299",
+  "#8cceb9",
+  "#f0af7d",
+  "#7b97c4",
+  "#b3aae1",
+  "#79b4cc",
+  "#d5d3de",
+
+  "#767680",
+  "#f39eba",
+  "#8dede9",
+  "#fad7bd",
+  "#90acdf",
+  "#d3cbff",
+  "#92cfe9",
+  "#edecfe",
+]
+
+[palette.colors.light]
+background = "#fbf8ff"
+foreground = "#1d1f2b"
+cursor = "#5562ae"
+selection_background = "#c8c7cf"
+ansi = [
+  "#f4f2fd",
+  "#a83c67",
+  "#125a4a",
+  "#8e5626",
+  "#48648e",
+  "#6a589d",
+  "#10576c",
+  "#2b2c34",
+
+  "#767680",
+  "#8e3559",
+  "#004b49",
+  "#6e4e34",
+  "#375585",
+  "#5b4b88",
+  "#06475e",
+  "#1d1f2b",
+]
+
+[[palette]]
+slug = "asuna"
+subject = "sword-art-online/asuna"
+signature = ["cursor", "ansi1", "foreground"]
+ansi_source = "Melange Dark + Aincrad"
+
+[palette.colors]
+background = "#1f160d"
+foreground = "#e3e2e7"
+cursor = "#e9ac73"
+selection_background = "#433d36"
+ansi = [
+  "#2c2219",
+  "#f16d5e",
+  "#c0c67e",
+  "#f6ac6a",
+  "#a48dc2",
+  "#eb9aa9",
+  "#8fb682",
+  "#e3d1c4",
+
+  "#837469",
+  "#f3a380",
+  "#d7e49b",
+  "#ffd6a1",
+  "#bba1db",
+  "#ffc1ce",
+  "#a5d2a0",
+  "#ffeadb",
+]
+
+[palette.colors.light]
+background = "#fff8f5"
+foreground = "#1e1f23"
+cursor = "#a4703c"
+selection_background = "#e0d5cc"
+ansi = [
+  "#fff1e8",
+  "#bd2920",
+  "#3c5828",
+  "#8f551b",
+  "#72559a",
+  "#9e475b",
+  "#1c5b41",
+  "#352a21",
+
+  "#837469",
+  "#8a3f19",
+  "#2f4a1c",
+  "#724e14",
+  "#65458e",
+  "#7e4252",
+  "#084c34",
+  "#2b1d0f",
+]
+
+[[palette]]
+slug = "sinon"
+subject = "sword-art-online/sinon"
+signature = ["cursor", "ansi3", "ansi4"]
+ansi_source = "Catppuccin Macchiato + Aincrad"
+
+[palette.colors]
+background = "#111916"
+foreground = "#d5e7dd"
+cursor = "#9edfc4"
+selection_background = "#4a3a37"
+ansi = [
+  "#1d2622",
+  "#db7a59",
+  "#8cd099",
+  "#b9c266",
+  "#699bc0",
+  "#b4a9de",
+  "#71b8a8",
+  "#cdd7d1",
+
+  "#707974",
+  "#f1a187",
+  "#b4e9bd",
+  "#d6e49c",
+  "#78b3cd",
+  "#d5c9ff",
+  "#8fd4c4",
+  "#e0f2e8",
+]
+
+[palette.colors.light]
+background = "#f2fcf5"
+foreground = "#14231d"
+cursor = "#53927a"
+selection_background = "#ead2cd"
+ansi = [
+  "#ecf6ef",
+  "#9e4b2e",
+  "#185c30",
+  "#606815",
+  "#34688b",
+  "#665a9c",
+  "#015b4e",
+  "#252e2a",
+
+  "#707974",
+  "#8a3e23",
+  "#1b4b2b",
+  "#4e5a21",
+  "#175c73",
+  "#584b8c",
+  "#004b41",
+  "#14231d",
+]
+
+[[palette]]
+slug = "leafa"
+subject = "sword-art-online/leafa"
+signature = ["cursor", "ansi11", "selection"]
+ansi_source = "Kanagawa Wave + Aincrad"
+
+[palette.colors]
+background = "#141911"
+foreground = "#dbe6d2"
+cursor = "#60aa4f"
+selection_background = "#005236"
+ansi = [
+  "#20251d",
+  "#e6724c",
+  "#a5cc95",
+  "#c5be73",
+  "#47a1b6",
+  "#b2a7de",
+  "#63bc91",
+  "#d1d6ca",
+
+  "#73796e",
+  "#f3a085",
+  "#bdea9a",
+  "#f2dd79",
+  "#70b8b7",
+  "#d3c8fc",
+  "#95d4b5",
+  "#e6f1dd",
+]
+
+[palette.colors.light]
+background = "#f6fbee"
+foreground = "#192216"
+cursor = "#337c27"
+selection_background = "#75b996"
+ansi = [
+  "#f0f6e8",
+  "#a84422",
+  "#37582c",
+  "#6a6524",
+  "#006d80",
+  "#66599f",
+  "#005c3d",
+  "#282e25",
+
+  "#73796e",
+  "#8c3d21",
+  "#274b0d",
+  "#625400",
+  "#025f5f",
+  "#574c8a",
+  "#044c35",
+  "#192216",
+]
+
+[[palette]]
+slug = "alice"
+subject = "sword-art-online/alice"
+signature = ["cursor", "selection", "ansi5"]
+ansi_source = "Cobalt Next Dark + Aincrad"
+
+[palette.colors]
+background = "#1b170c"
+foreground = "#ede2c6"
+cursor = "#e8d082"
+selection_background = "#10409c"
+ansi = [
+  "#272318",
+  "#f16e40",
+  "#afcb7a",
+  "#e3b53a",
+  "#6e92f2",
+  "#b2a5ff",
+  "#6cbb84",
+  "#dcd4c2",
+
+  "#7d7767",
+  "#f3a288",
+  "#cee6a4",
+  "#f9da8b",
+  "#75ade0",
+  "#e6c6ff",
+  "#90d6a3",
+  "#f9edd0",
+]
+
+[palette.colors.light]
+background = "#fff8ef"
+foreground = "#251f0d"
+cursor = "#99853f"
+selection_background = "#8ba9ff"
+ansi = [
+  "#fcf3e0",
+  "#ae3e12",
+  "#36591d",
+  "#805d00",
+  "#255cce",
+  "#634fc9",
+  "#005d30",
+  "#302c20",
+
+  "#7d7767",
+  "#8b3e23",
+  "#2f491c",
+  "#6c5010",
+  "#145987",
+  "#684589",
+  "#004d28",
+  "#251f0d",
+]
+
+[[palette]]
+slug = "yuuki"
+subject = "sword-art-online/yuuki"
+signature = ["cursor", "selection", "ansi13"]
+ansi_source = "Catppuccin Mocha + Aincrad"
+
+[palette.colors]
+background = "#1b161d"
+foreground = "#eddeef"
+cursor = "#7a5a88"
+selection_background = "#8f1115"
+ansi = [
+  "#282229",
+  "#f26c62",
+  "#83d2ab",
+  "#efaf7e",
+  "#8b8ede",
+  "#d1a2cf",
+  "#7bb2d6",
+  "#dcd1dc",
+
+  "#7d747e",
+  "#eaa3b1",
+  "#b1eacc",
+  "#fad7bd",
+  "#a4a7de",
+  "#ebc4fb",
+  "#9ccdef",
+  "#f9e9fa",
+]
+
+[palette.colors.light]
+background = "#fff7fc"
+foreground = "#251c29"
+cursor = "#7b5b89"
+selection_background = "#ff897f"
+ansi = [
+  "#fcf0fb",
+  "#be2626",
+  "#005c3e",
+  "#8d5627",
+  "#5256c4",
+  "#845185",
+  "#145575",
+  "#302a32",
+
+  "#7d747e",
+  "#853e50",
+  "#124b36",
+  "#6e4e34",
+  "#494e93",
+  "#6e4384",
+  "#094763",
+  "#251c29",
+]

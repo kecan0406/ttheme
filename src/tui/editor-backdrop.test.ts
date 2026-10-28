@@ -11,7 +11,7 @@ import { listOf } from '../core/slots.ts'
 import { backgroundsDir } from '../pictures/backdrop.ts'
 import { Backdrop } from './editor-backdrop.ts'
 
-const NAME = 'kec@dust/rei'
+const NAME = 'kai@dust/rei'
 const SIGNATURE = ['background', 'foreground', 'cursor']
 const colors = grow(SEEDS)
 
@@ -19,16 +19,16 @@ function home() {
   const at = mkdtempSync(join(tmpdir(), 'ttheme-backdrop-'))
   const dir = backgroundsDir(at)
   mkdirSync(dir, { recursive: true })
-  const image = join(dir, 'kec--dust--rei.a1.png')
+  const image = join(dir, 'kai--dust--rei.a1.png')
   const tone = backdropTone({ name: NAME, ...colors }, SIGNATURE).color
   writeFileSync(image, encodeMask({ width: 40, height: 20, data: new Uint8Array(800).fill(200) }, tone))
-  const picture = { key: 'a', stem: 'kec--dust--rei.a1', fill: 'kec--dust--rei.a1.png', opacity: 0.3, tone }
+  const picture = { key: 'a', stem: 'kai--dust--rei.a1', fill: 'kai--dust--rei.a1.png', opacity: 0.3, tone }
   writeFileSync(
     join(dir, 'images.json'),
     JSON.stringify({ version: 1, palettes: { [NAME]: { active: 'a', pictures: [picture] } } }),
   )
   writeFileSync(
-    join(dir, 'kec--dust--rei.conf'),
+    join(dir, 'kai--dust--rei.conf'),
     `background-image = ${image}\nbackground-image-fit = cover\nbackground-image-position = top-right\nbackground-image-opacity = 0.3\n`,
   )
 

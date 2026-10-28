@@ -77,8 +77,9 @@ export function MarketplacePage({
             your marketplace, listed here
           </h2>
           <p class="text-sm text-soft-foreground">
-            A marketplace is a GitHub repository of palette files: <code class="font-mono text-xs">init</code> makes
-            one, <code class="font-mono text-xs">check</code> reads it as an install would, and once it carries the{' '}
+            A marketplace is a GitHub repository of palettes, a file for each work:{' '}
+            <code class="font-mono text-xs">init</code> makes one, <code class="font-mono text-xs">check</code> reads it
+            as an install would, and once it carries the{' '}
             <code class="font-mono text-xs text-foreground">ttheme-marketplace</code> topic it shows up here and in
             ttheme's own search within about an hour.
           </p>

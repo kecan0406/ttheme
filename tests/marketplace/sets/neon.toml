@@ -1,0 +1,61 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "arcade"
+subject = "neon/arcade"
+signature = ["cursor", "selection", "ansi4"]
+
+[palette.colors]
+background = "#140504"
+foreground = "#ffedeb"
+cursor = "#ff958d"
+selection_background = "#5c1717"
+ansi = [
+  "#271513",
+  "#ff716d",
+  "#00bead",
+  "#e48f00",
+  "#829eff",
+  "#ff62b3",
+  "#58a8ff",
+  "#e5d3d1",
+
+  "#7f605d",
+  "#ffaaa7",
+  "#00e6a5",
+  "#ffae84",
+  "#c4b9ff",
+  "#ffa7bd",
+  "#98c8ff",
+  "#fff6f5",
+]
+
+[[palette]]
+slug = "volt"
+subject = "neon/volt"
+signature = ["cursor", "selection", "ansi4"]
+
+[palette.colors]
+background = "#0d0900"
+foreground = "#f6f2e3"
+cursor = "#d8b500"
+selection_background = "#3d3200"
+ansi = [
+  "#1f1a09",
+  "#ff7546",
+  "#81b900",
+  "#d09b00",
+  "#00b2f5",
+  "#ff6a97",
+  "#00c739",
+  "#dbd8c9",
+
+  "#70694f",
+  "#ffad91",
+  "#cecc00",
+  "#f7b900",
+  "#00dbfd",
+  "#ffa7bc",
+  "#00ea78",
+  "#faf8f1",
+]

@@ -5,15 +5,13 @@ import { tarballOf } from '../../tests/tarball.ts'
 import { untar } from './tarball.ts'
 
 test("a repository's archive reads as its files under paths without the top folder, however long or far from ASCII", () => {
-  const long = `palettes/팝픈 뮤직/${'a'.repeat(120)}.toml`
+  const long = `sets/팝픈 뮤직/${'a'.repeat(120)}.toml`
 
-  const files = untar(
-    tarballOf({ 'ttheme-marketplace.toml': 'name = "pastel"\n', [long]: 'x', 'palettes/dusk.toml': '' }),
-  )
+  const files = untar(tarballOf({ 'ttheme-marketplace.toml': 'name = "pastel"\n', [long]: 'x', 'sets/dusk.toml': '' }))
 
-  assert.deepEqual([...files.keys()].sort(), ['palettes/dusk.toml', long, 'ttheme-marketplace.toml'].sort())
+  assert.deepEqual([...files.keys()].sort(), ['sets/dusk.toml', long, 'ttheme-marketplace.toml'].sort())
   assert.equal(new TextDecoder().decode(files.get('ttheme-marketplace.toml')), 'name = "pastel"\n')
-  assert.equal(files.get('palettes/dusk.toml')?.length, 0)
+  assert.equal(files.get('sets/dusk.toml')?.length, 0)
 })
 
 test('an archive that unpacks past the limit or is not gzip refuses to read instead of filling memory', () => {

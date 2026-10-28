@@ -9,13 +9,14 @@ import { brotliDecompressSync, deflateRawSync, inflateRawSync } from 'node:zlib'
 import { readMarketplaceDir, warning } from '../store/local.ts'
 import { codeOf, type Draft, paletteToml, readOwnText, shareLink, withPictures } from './draft.ts'
 import { fromCode, readCodes, recolor, resign, shareCode } from './own.ts'
+import { setText } from './sets.ts'
 import { quoted } from './text.ts'
 import { publisherOf } from './theme.ts'
 
 const draft: Draft = {
-  name: 'kecan0406@dust/rei',
-  subject: 'sword-art-online/alice',
-  from: 'ttheme/alice',
+  name: 'kumquat09@dust/wren',
+  subject: 'starfall/orla',
+  from: 'ttheme/orla',
   signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
   foreground: '#ede2c6',
@@ -78,9 +79,9 @@ test('a share link reads as the code it carries, however it was pasted', () => {
   assert.equal(codeOf(link.replace('tt5:', 'tt5%3A')), code)
   assert.equal(codeOf(code), code)
   assert.equal(codeOf('https://ttheme.dev/marketplace'), undefined)
-  assert.equal(codeOf('https://ttheme.dev/builder/miku'), undefined)
+  assert.equal(codeOf('https://ttheme.dev/builder/pip'), undefined)
   assert.equal(codeOf(`https://ttheme.dev/p/${code}`), undefined)
-  assert.equal(codeOf('kecan0406@dust/rei'), undefined)
+  assert.equal(codeOf('kumquat09@dust/wren'), undefined)
 })
 
 const UNPACK = [(b: Buffer) => b, (b: Buffer) => inflateRawSync(b), (b: Buffer) => brotliDecompressSync(b)]
@@ -113,10 +114,10 @@ test('a share code that was cut, padded or retyped is refused, and so is one fro
   assert.throws(() => fromCode(raw(bad)), { name: 'Error', message: /text it cannot read/ })
 })
 
-const asuna: Draft = { ...draft, name: 'kecan0406@dust/asuna', from: 'kecan0406@sao/asuna', pictures: [] }
+const juno: Draft = { ...draft, name: 'kumquat09@dust/juno', from: 'kumquat09@tide/juno', pictures: [] }
 
 test('a share link carries several palettes, where each one came from and the other modes they keep', () => {
-  const { pictures: _, ...bare } = asuna
+  const { pictures: _, ...bare } = juno
   const code = shareCode([draft, { ...bare, other: lit }])
   assert.match(code, /^tt5:[A-Za-z0-9_-]+$/)
   assert.deepEqual(fromCode(code), [draft, { ...bare, other: lit }])
@@ -130,7 +131,7 @@ test('a share code that packs too much, names a palette twice or marks an other 
   assert.throws(() => fromCode(signed(Buffer.from([7, 1, 2]))), /packed in a way/)
   const flood = Buffer.concat([Buffer.from([1]), deflateRawSync(Buffer.alloc(200_000, 1))])
   assert.throws(() => fromCode(signed(flood)), { name: 'Error', message: /does not unpack/ })
-  assert.throws(() => fromCode(shareCode([draft, draft])), /holds kecan0406@dust\/rei twice/)
+  assert.throws(() => fromCode(shareCode([draft, draft])), /holds kumquat09@dust\/wren twice/)
   const one = bodyOf(shareCode([draft]))
   const marked = Buffer.from(one)
   marked[one.length - 1] = 2
@@ -150,31 +151,37 @@ test('a share code with any one character changed is refused', () => {
 test('a share code whose subject or palette name breaks the rules is refused, so it never reaches kept.json', () => {
   const rlo = String.fromCodePoint(0x202e)
 
-  for (const subject of ['../../alacritty', 'Vocaloid', 'ttheme/miku', 'a/b/c']) {
+  for (const subject of ['../../alacritty', 'Starfall', 'ttheme/pip', 'a/b/c']) {
     assert.throws(() => readCodes(shareCode([{ ...draft, subject }])), /subject/, subject)
   }
 
-  for (const name of ['kecan0406@dust\ncommand = x/rei', `kecan0406@du${rlo}st/rei`, 'dust/rei', 'a@b@c/rei', 'Rei']) {
+  for (const name of [
+    'kumquat09@dust\ncommand = x/wren',
+    `kumquat09@du${rlo}st/wren`,
+    'dust/wren',
+    'a@b@c/wren',
+    'Wren',
+  ]) {
     assert.throws(() => readCodes(shareCode([{ ...draft, name }])), /the share code's palette/, name)
   }
 
-  assert.equal(readCodes(shareCode([draft]))[0]?.name, 'kecan0406@dust/rei')
-  assert.equal(readCodes(shareCode([draft]))[0]?.subject, 'sword-art-online/alice')
-  assert.equal(readCodes(shareCode([{ ...draft, name: 'ttheme/rei' }]))[0]?.name, 'ttheme/rei')
+  assert.equal(readCodes(shareCode([draft]))[0]?.name, 'kumquat09@dust/wren')
+  assert.equal(readCodes(shareCode([draft]))[0]?.subject, 'starfall/orla')
+  assert.equal(readCodes(shareCode([{ ...draft, name: 'ttheme/wren' }]))[0]?.name, 'ttheme/wren')
 })
 
 test('a share code may carry a palette no marketplace holds yet, named by its slug alone', () => {
-  const [unplaced] = readCodes(shareCode([{ ...draft, name: 'rei-tuned' }]))
-  assert.equal(unplaced?.name, 'rei-tuned')
-  assert.equal(unplaced?.from, 'ttheme/alice')
+  const [unplaced] = readCodes(shareCode([{ ...draft, name: 'wren-tuned' }]))
+  assert.equal(unplaced?.name, 'wren-tuned')
+  assert.equal(unplaced?.from, 'ttheme/orla')
 })
 
 test('the TOML a draft writes reads back as the same palette', () => {
   const theme = readOwnText(draft.name, paletteToml(draft))
-  assert.equal(theme.name, 'kecan0406@dust/rei')
-  assert.equal(theme.subject, 'sword-art-online/alice')
-  assert.equal(theme.from, 'ttheme/alice')
-  assert.equal(readOwnText(asuna.name, paletteToml(asuna)).from, 'kecan0406@sao/asuna')
+  assert.equal(theme.name, 'kumquat09@dust/wren')
+  assert.equal(theme.subject, 'starfall/orla')
+  assert.equal(theme.from, 'ttheme/orla')
+  assert.equal(readOwnText(juno.name, paletteToml(juno)).from, 'kumquat09@tide/juno')
   assert.equal(theme.waiveReason, 'the red is the character')
   assert.deepEqual(theme.pictures, draft.pictures)
   assert.deepEqual(theme.ansi, draft.ansi)
@@ -199,43 +206,43 @@ test('recolor rewrites the twenty colors and nothing else', () => {
   assert.deepEqual(pictured.pictures?.at(-1), { site: 'danbooru', id: 42, size: 'fill' })
 })
 
-test('a marketplace reads its palettes flat, named by their files, and its proposed works beside them', () => {
+test('a marketplace reads its palettes from the set files flat in sets/, named by their slugs, and its proposed works beside them', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
   const { waive: _, reason: __, pictures: ___, ...plain } = draft
 
-  const put = (path: string, subject?: string) => {
-    mkdirSync(join(dir, 'palettes', path, '..'), { recursive: true })
-    writeFileSync(join(dir, 'palettes', path), paletteToml({ ...plain, subject }))
+  const put = (path: string, slug: string, subject?: string) => {
+    mkdirSync(join(dir, 'sets', path, '..'), { recursive: true })
+    writeFileSync(join(dir, 'sets', path), setText([{ slug, text: paletteToml({ ...plain, subject }) }]))
   }
 
-  put('arcade.toml', 'neon/arcade')
-  put('neon/volt.toml', 'neon/volt')
-  put('dusk.toml')
+  put('neon.toml', 'arcade', 'neon/arcade')
+  put('neon/volt.toml', 'volt', 'neon/volt')
+  put('original.toml', 'dusk')
   mkdirSync(join(dir, 'works'))
   writeFileSync(join(dir, 'works', 'neon.toml'), 'name = "Neon"\n[[character]]\nid = "arcade"\n')
-  const { entries, works } = readMarketplaceDir(dir, 'kec@shop', warning(false))
+  const { entries, works } = readMarketplaceDir(dir, 'kai@shop', warning(false))
   assert.deepEqual(
     entries.map((e) => [e.name, e.subject]),
     [
-      ['kec@shop/arcade', 'neon/arcade'],
-      ['kec@shop/dusk', undefined],
+      ['kai@shop/arcade', 'neon/arcade'],
+      ['kai@shop/dusk', undefined],
     ],
   )
-  assert.ok(entries.every((e) => publisherOf(e.name) === 'kec@shop'))
+  assert.ok(entries.every((e) => publisherOf(e.name) === 'kai@shop'))
   assert.deepEqual(
     works.map((w) => [w.id, w.name, w.characters.map((c) => c.id)]),
     [['neon', 'Neon', ['arcade']]],
   )
 })
 
-test('a palette or work file whose name holds a control character or a direction mark is skipped with it spelled out', () => {
+test('a palette whose slug, or a set or work file whose name, holds a control character or a direction mark is skipped with it spelled out', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
   const { waive: _, reason: __, pictures: ___, ...plain } = draft
   const night = `night${String.fromCodePoint(0x202e)}`
   const odd = 'x\x1b]52;c;aGk=\x07'
-  mkdirSync(join(dir, 'palettes'), { recursive: true })
+  mkdirSync(join(dir, 'sets'), { recursive: true })
   mkdirSync(join(dir, 'works'), { recursive: true })
-  writeFileSync(join(dir, 'palettes', `${odd}.toml`), paletteToml(plain))
+  writeFileSync(join(dir, 'sets', `${odd}.toml`), setText([{ slug: odd, text: paletteToml(plain) }]))
   writeFileSync(join(dir, 'works', `${night}.toml`), 'name = "Night"\n')
   const said: string[] = []
 
@@ -246,13 +253,43 @@ test('a palette or work file whose name holds a control character or a direction
   })
 
   try {
-    assert.deepEqual(readMarketplaceDir(dir, 'kec@shop', warning(true)), { entries: [], works: [] })
+    assert.deepEqual(readMarketplaceDir(dir, 'kai@shop', warning(true)), { entries: [], works: [] })
   } finally {
     write.mockRestore()
   }
 
   assert.equal(said.length, 2)
   assert.ok(said.every((line) => !/[\p{Cc}\p{Bidi_Control}]/u.test(line.slice(0, -1))))
-  assert.ok(said.some((line) => line.includes(`the file name ${quoted(odd)}`)))
+  assert.ok(said.some((line) => line.includes(`the slug ${quoted(odd)}`)))
   assert.ok(said.some((line) => line.includes(`the work ${quoted(night)}`)))
+})
+
+test('a slug two set files of one marketplace hold is reported, and the second is skipped', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
+  const { waive: _, reason: __, pictures: ___, ...plain } = draft
+  const palette = (subject?: string) => paletteToml({ ...plain, subject })
+  mkdirSync(join(dir, 'sets'))
+  writeFileSync(join(dir, 'sets', 'neon.toml'), setText([{ slug: 'arcade', text: palette('neon/arcade') }]))
+
+  writeFileSync(
+    join(dir, 'sets', 'original.toml'),
+    setText([
+      { slug: 'arcade', text: palette() },
+      { slug: 'dusk', text: palette() },
+    ]),
+  )
+
+  const said: [string, string][] = []
+  const { entries } = readMarketplaceDir(dir, 'kai@shop', (where, message) => said.push([where, message]))
+
+  assert.deepEqual(
+    entries.map((e) => [e.name, e.subject]),
+    [
+      ['kai@shop/arcade', 'neon/arcade'],
+      ['kai@shop/dusk', undefined],
+    ],
+  )
+  assert.deepEqual(said, [
+    [join(dir, 'sets', 'original.toml'), 'arcade is in neon.toml too — a slug is used once in a marketplace'],
+  ])
 })

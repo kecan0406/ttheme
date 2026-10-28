@@ -54,16 +54,16 @@ const LUA_DRIVER = [
 
 function fixtureFiles(dir: string): string {
   conf(dir, 'tune.conf', ['background-image-opacity = 0.4'])
-  conf(dir, 'kagami.conf', [
+  conf(dir, 'tamsin.conf', [
     '# by someone',
-    'background-image = /pictures/kagami.png',
+    'background-image = /pictures/tamsin.png',
     'background-image-fit = cover',
     'background-image-position = top-right',
     'background-image-opacity = 0.2',
     'config-file = ?tune.conf',
   ])
 
-  return join(dir, 'kagami.conf')
+  return join(dir, 'tamsin.conf')
 }
 
 test('the Python reader reads a conf the way the TypeScript one does', { skip: !PYTHON }, () => {

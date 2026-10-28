@@ -1,0 +1,337 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "reimu"
+subject = "touhou-project/reimu"
+signature = ["cursor", "foreground", "ansi3"]
+ansi_source = "Firewatch"
+
+[palette.colors]
+background = "#201513"
+foreground = "#e8e1df"
+cursor = "#ee6556"
+selection_background = "#58333b"
+ansi = [
+  "#2e211f",
+  "#f26b6b",
+  "#d4c341",
+  "#dfb563",
+  "#a788d5",
+  "#ff8cab",
+  "#7db0e9",
+  "#e6d0cc",
+
+  "#857370",
+  "#f3a09e",
+  "#f2df5b",
+  "#ffd5b3",
+  "#bd9de8",
+  "#ffc0ce",
+  "#a8cbf1",
+  "#ffe9e6",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#221f1e"
+cursor = "#c52e25"
+selection_background = "#ffcad3"
+ansi = [
+  "#fff0ee",
+  "#bd2632",
+  "#395922",
+  "#7f5e13",
+  "#774db5",
+  "#b1325f",
+  "#135386",
+  "#362927",
+
+  "#857370",
+  "#8c3b3c",
+  "#2f4a1b",
+  "#724d2a",
+  "#683fa0",
+  "#7f4253",
+  "#204564",
+  "#2d1b18",
+]
+
+[[palette]]
+slug = "marisa"
+subject = "touhou-project/marisa"
+signature = ["cursor", "foreground", "ansi1"]
+ansi_source = "Apple Classic"
+
+[palette.colors]
+background = "#1b170c"
+foreground = "#efe1bf"
+cursor = "#f5cf00"
+selection_background = "#473d15"
+ansi = [
+  "#272418",
+  "#f16d55",
+  "#aacf39",
+  "#cebe00",
+  "#b77cf3",
+  "#ff8dab",
+  "#59be81",
+  "#dbd4c2",
+
+  "#7c7767",
+  "#f2a46f",
+  "#c0ec58",
+  "#f0e049",
+  "#bf9fe8",
+  "#ffc1ce",
+  "#72db9a",
+  "#f8edd1",
+]
+
+[palette.colors.light]
+background = "#fff9ee"
+foreground = "#261f09"
+cursor = "#9e8500"
+selection_background = "#e7d7a1"
+ansi = [
+  "#fbf3e0",
+  "#b9301b",
+  "#335a16",
+  "#815e00",
+  "#8a2cdf",
+  "#b1335e",
+  "#005d34",
+  "#302c20",
+
+  "#7c7767",
+  "#804619",
+  "#284b0e",
+  "#6e5000",
+  "#683f9e",
+  "#7e4252",
+  "#004d2a",
+  "#241f0e",
+]
+
+[[palette]]
+slug = "cirno"
+subject = "touhou-project/cirno"
+signature = ["cursor", "ansi6", "ansi5"]
+ansi_source = "Forest Blue"
+
+[palette.colors]
+background = "#12181d"
+foreground = "#d8e4ef"
+cursor = "#a5d8fa"
+selection_background = "#2e3e5a"
+ansi = [
+  "#1e2529",
+  "#e07298",
+  "#89cfac",
+  "#b2c45b",
+  "#5da0ad",
+  "#c0a2f9",
+  "#74b2e3",
+  "#cfd5dc",
+
+  "#71787e",
+  "#f39db9",
+  "#a3ecc7",
+  "#cde462",
+  "#53b9c9",
+  "#c7cfff",
+  "#99cdf3",
+  "#e3f0fa",
+]
+
+[palette.colors.light]
+background = "#f5faff"
+foreground = "#152129"
+cursor = "#3d8eb9"
+selection_background = "#c7d8fb"
+ansi = [
+  "#eef4fb",
+  "#a73c66",
+  "#0e5b40",
+  "#815d00",
+  "#236c78",
+  "#744bbf",
+  "#00557f",
+  "#262d32",
+
+  "#71787e",
+  "#8e3559",
+  "#004c34",
+  "#6e5000",
+  "#005e69",
+  "#45518a",
+  "#004767",
+  "#152129",
+]
+
+[[palette]]
+slug = "youmu"
+subject = "touhou-project/youmu"
+signature = ["cursor", "foreground", "ansi6"]
+ansi_source = "Everforest Dark Med"
+
+[palette.colors]
+background = "#101917"
+foreground = "#e6e3d3"
+cursor = "#0cbba4"
+selection_background = "#32413c"
+ansi = [
+  "#1c2623",
+  "#db7958",
+  "#c7c181",
+  "#b0c481",
+  "#59a1a1",
+  "#b5a9df",
+  "#7cb88b",
+  "#ccd7d3",
+
+  "#6f7976",
+  "#f29f84",
+  "#eddb3b",
+  "#cee866",
+  "#44bad2",
+  "#d5caff",
+  "#65dbb5",
+  "#dff2ec",
+]
+
+[palette.colors.light]
+background = "#f1fcf7"
+foreground = "#202016"
+cursor = "#008271"
+selection_background = "#cadbd4"
+ansi = [
+  "#ecf6f2",
+  "#9f4a2d",
+  "#40572e",
+  "#7c5e1e",
+  "#1f6e6e",
+  "#67599d",
+  "#205b36",
+  "#252e2c",
+
+  "#6f7976",
+  "#8c3d21",
+  "#2e491b",
+  "#6e5000",
+  "#005e6c",
+  "#574c8b",
+  "#004c3a",
+  "#12231f",
+]
+
+[[palette]]
+slug = "patchouli"
+subject = "touhou-project/patchouli"
+signature = ["cursor", "ansi5", "ansi3"]
+ansi_source = "SeedFlip Ultraviolet"
+
+[palette.colors]
+background = "#1b161d"
+foreground = "#ecdef0"
+cursor = "#c67ffb"
+selection_background = "#443858"
+ansi = [
+  "#27222a",
+  "#ef679a",
+  "#67d7a4",
+  "#d6bb29",
+  "#858cf3",
+  "#f789f0",
+  "#48b4f9",
+  "#dbd1dc",
+
+  "#7c757e",
+  "#f39eb9",
+  "#7cf5bd",
+  "#f3dbb7",
+  "#9fa6e8",
+  "#f7bfff",
+  "#9dccf3",
+  "#f8e9fb",
+]
+
+[palette.colors.light]
+background = "#fff7fd"
+foreground = "#241d29"
+cursor = "#9f33ec"
+selection_background = "#e1d0f8"
+ansi = [
+  "#fbf0fb",
+  "#b52b67",
+  "#005c3e",
+  "#736300",
+  "#474fe3",
+  "#a824aa",
+  "#00557e",
+  "#302a32",
+
+  "#7c757e",
+  "#8e3658",
+  "#004c33",
+  "#67522d",
+  "#424da2",
+  "#793b89",
+  "#0c4667",
+  "#241d29",
+]
+
+[[palette]]
+slug = "flandre"
+subject = "touhou-project/flandre"
+signature = ["cursor", "ansi11", "ansi12"]
+ansi_source = "Molokai"
+
+[palette.colors]
+background = "#201514"
+foreground = "#fcdbd9"
+cursor = "#ee6466"
+selection_background = "#59323e"
+ansi = [
+  "#2d2120",
+  "#f2697f",
+  "#d7c52e",
+  "#e8b543",
+  "#6998f3",
+  "#f988ec",
+  "#6bb5f3",
+  "#e5cfce",
+
+  "#857372",
+  "#f39ead",
+  "#d1ed64",
+  "#ede05d",
+  "#6ab2e8",
+  "#ffbcf6",
+  "#99d2e9",
+  "#ffe9e8",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1a"
+cursor = "#c42f3a"
+selection_background = "#ffc9d7"
+ansi = [
+  "#fff0ef",
+  "#bb274a",
+  "#395922",
+  "#805e00",
+  "#2460be",
+  "#ac1ea8",
+  "#005483",
+  "#362928",
+
+  "#857372",
+  "#8e374c",
+  "#2a4a12",
+  "#5d5600",
+  "#005a86",
+  "#81387e",
+  "#00495b",
+  "#2d1b1a",
+]

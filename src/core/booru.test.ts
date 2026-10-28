@@ -63,7 +63,7 @@ test('each ticked rating lets through what that site calls by that name, and onl
 })
 
 test('nudity and underwear are blocked apart, in every site spelling', () => {
-  const tags = ['hiiragi_kagami', 'pantsu', 'naked', 'swimsuit']
+  const tags = ['orla_(starfall)', 'pantsu', 'naked', 'swimsuit']
   assert.deepEqual(exposed({ tags }), ['pantsu', 'naked'])
   assert.deepEqual(exposed({ tags }, ['underwear']), ['pantsu'])
   assert.deepEqual(exposed({ tags }, ['nudity']), ['naked'])
@@ -96,8 +96,8 @@ test('the rating a site asks for in the query follows the ticked set, where the 
 })
 
 test('a rating does not count against a tag budget, since danbooru lets it through free', () => {
-  assert.equal(tagsOf('amane_suzuha transparent_background rating:s,q,e'), 2)
-  assert.equal(tagsOf('amane_suzuha order:score'), 2)
+  assert.equal(tagsOf('orla_(starfall) transparent_background rating:s,q,e'), 2)
+  assert.equal(tagsOf('orla_(starfall) order:score'), 2)
 })
 
 test('the advanced filters ask each site in its own terms, and danbooru takes them free of its tag budget', () => {
@@ -107,10 +107,10 @@ test('the advanced filters ask each site in its own terms, and danbooru takes th
   assert.deepEqual(zero.narrow(all), ['dimension:large'], 'zerochan keeps no score and names no file type')
   assert.deepEqual(zero.narrow({ score: 0, size: 1800, png: false }), ['dimension:huge'])
   assert.deepEqual(dan.narrow({ score: 0, size: 0, png: false }), [])
-  assert.equal(tagsOf(`amane_suzuha transparent_background ${dan.narrow(all).join(' ')} rating:g`), 2)
-  assert.equal(tagsOf('amane_suzuha transparent_background order:score'), 3, 'an order still counts')
-  const url = new URL(zero.postsUrl('gotou_hitori dimension:huge', 0))
-  assert.deepEqual([url.pathname, url.searchParams.get('d')], ['/gotou+hitori', 'huge'])
+  assert.equal(tagsOf(`orla_(starfall) transparent_background ${dan.narrow(all).join(' ')} rating:g`), 2)
+  assert.equal(tagsOf('orla_(starfall) transparent_background order:score'), 3, 'an order still counts')
+  const url = new URL(zero.postsUrl('wren_tidewell dimension:huge', 0))
+  assert.deepEqual([url.pathname, url.searchParams.get('d')], ['/wren+tidewell', 'huge'])
 })
 
 test('typed hide tags read as one lowercase list, commas or spaces, a leading minus dropped', () => {
@@ -123,14 +123,14 @@ test('typed hide tags read as one lowercase list, commas or spaces, a leading mi
 })
 
 test('a zerochan count means something only for one plain tag, since its filters leave the count as it was', () => {
-  assert.equal(zero.counts?.('makise_kurisu'), true)
-  assert.equal(zero.counts?.('makise_kurisu dimension:huge'), false)
-  assert.equal(zero.counts?.('makise_kurisu transparent_background'), false)
+  assert.equal(zero.counts?.('orla_starling'), true)
+  assert.equal(zero.counts?.('orla_starling dimension:huge'), false)
+  assert.equal(zero.counts?.('orla_starling transparent_background'), false)
   assert.equal(dan.counts, undefined, 'the boorus count every query they are asked')
 })
 
 test('hidden kinds are told by tag, in every site spelling, and none hides nothing', () => {
-  const post = { tags: ['makise_kurisu', 'comic', 'line_art', 'solo'] }
+  const post = { tags: ['pip_(starfall)', 'comic', 'line_art', 'solo'] }
   assert.deepEqual(hidden(post, ['comic', 'sketch']), ['comic', 'line_art'])
   assert.deepEqual(hidden(post, ['chibi']), [])
   assert.deepEqual(hidden(post, []), [])
@@ -182,27 +182,27 @@ test('a post over the pixel cap is fetched as the largest smaller copy the site 
   const [big, small] = parseMoebooru(
     JSON.stringify([
       {
-        id: 1243551,
+        id: 1200001,
         width: 9450,
         height: 9450,
-        file_url: 'https://files.yande.re/image/a/1243551.png',
+        file_url: 'https://files.yande.re/image/a/1200001.png',
         file_ext: 'png',
-        jpeg_url: 'https://files.yande.re/jpeg/a/1243551.jpg',
+        jpeg_url: 'https://files.yande.re/jpeg/a/1200001.jpg',
         jpeg_width: 3500,
         jpeg_height: 3500,
-        sample_url: 'https://files.yande.re/sample/a/1243551.jpg',
+        sample_url: 'https://files.yande.re/sample/a/1200001.jpg',
         sample_width: 1200,
         sample_height: 1200,
         preview_url: 'https://assets.yande.re/data/preview/a.jpg',
         rating: 's',
       },
       {
-        id: 1268690,
+        id: 1200002,
         width: 1527,
         height: 2000,
-        file_url: 'https://files.yande.re/image/b/1268690.png',
+        file_url: 'https://files.yande.re/image/b/1200002.png',
         file_ext: 'png',
-        jpeg_url: 'https://files.yande.re/jpeg/b/1268690.jpg',
+        jpeg_url: 'https://files.yande.re/jpeg/b/1200002.jpg',
         jpeg_width: 1527,
         jpeg_height: 2000,
         preview_url: 'https://assets.yande.re/data/preview/b.jpg',
@@ -212,7 +212,7 @@ test('a post over the pixel cap is fetched as the largest smaller copy the site 
   )
 
   assert.deepEqual(big && rendition(big), {
-    file: 'https://files.yande.re/jpeg/a/1243551.jpg',
+    file: 'https://files.yande.re/jpeg/a/1200001.jpg',
     width: 3500,
     height: 3500,
     ext: 'jpg',
@@ -250,34 +250,34 @@ test('parseCount reads the count attribute of the post list', () => {
 
 test('mates groups palettes by uploader and skips posts with none', () => {
   const owners = new Map([
-    ['tsukasa', 'moeimouto'],
-    ['miyuki', 'moeimouto'],
-    ['reimu', ''],
+    ['wren', 'inkwell'],
+    ['orla', 'inkwell'],
+    ['pip', ''],
   ])
 
-  assert.deepEqual([...mates(owners)], [['moeimouto', ['miyuki', 'tsukasa']]])
+  assert.deepEqual([...mates(owners)], [['inkwell', ['orla', 'wren']]])
 })
 
 test('parseMoebooru takes the extension from file_ext and the uploader from author', () => {
   const [found] = parseMoebooru(
     JSON.stringify([
       {
-        id: 214705,
+        id: 200001,
         width: 1197,
         height: 2599,
-        file_url: 'https://files.yande.re/image/4dd1/yande.re%20214705%20hiiragi_kagami.png',
+        file_url: 'https://files.yande.re/image/4dd1/yande.re%20200001%20orla_(starfall).png',
         file_ext: 'png',
         preview_url: 'https://assets.yande.re/data/preview/4d/d1/4dd1.jpg',
-        author: 'gnarf1975',
+        author: 'paperboat',
         rating: 's',
-        tags: 'hiiragi_kagami lucky_star',
+        tags: 'orla_(starfall) starfall',
       },
     ]),
   )
 
   assert.deepEqual(
     [found?.id, found?.ext, found?.owner, found && rated(yande, found)],
-    [214705, 'png', 'gnarf1975', true],
+    [200001, 'png', 'paperboat', true],
   )
 })
 
@@ -308,7 +308,7 @@ test('a file_ext that is not a plain extension is not taken, so it can never lea
 
 test('the url builders pass the tags through as given, rating included', () => {
   for (const site of SITES.filter((s) => s.key === 'yande' || s.key === 'konachan')) {
-    for (const url of [site.postsUrl('hiiragi_kagami rating:s', 0), site.countUrl('hiiragi_kagami rating:s')]) {
+    for (const url of [site.postsUrl('orla_(starfall) rating:s', 0), site.countUrl('orla_(starfall) rating:s')]) {
       assert.match(new URL(url).searchParams.get('tags') ?? '', / rating:s$/, `${site.name}: ${url}`)
     }
   }
@@ -328,15 +328,15 @@ test('a chosen list is cut to what each site can OR: its budget, or one where it
 test('related tags are the characters danbooru names, and a challenge page names none', () => {
   const body = JSON.stringify({
     related_tags: [
-      { tag: { name: 'rche_(beatmania)', post_count: 90 }, frequency: 0.5 },
-      { tag: { name: 'cuvelia', post_count: 34 }, frequency: 0.19 },
+      { tag: { name: 'lumi_(glass_arcade)', post_count: 90 }, frequency: 0.5 },
+      { tag: { name: 'tamsin', post_count: 34 }, frequency: 0.19 },
       { tag: {} },
     ],
   })
 
   assert.deepEqual(parseRelated(body), [
-    { value: 'rche_(beatmania)', count: 90 },
-    { value: 'cuvelia', count: 34 },
+    { value: 'lumi_(glass_arcade)', count: 90 },
+    { value: 'tamsin', count: 34 },
   ])
   assert.deepEqual(parseRelated('<html>Just a moment...</html>'), [])
 })
@@ -355,7 +355,7 @@ test('pages are counted from zero everywhere, whichever way each site numbers th
 
 test('originHost keeps the site a source url points at and drops free-text sources', () => {
   assert.equal(originHost('http://img01.pixiv.net/img/x/123.jpg'), 'pixiv.net')
-  assert.equal(originHost('https://drawingshit.deviantart.com/art/1'), 'deviantart.com')
+  assert.equal(originHost('https://inkwell.deviantart.com/art/1'), 'deviantart.com')
   assert.equal(originHost('Image board'), '')
   assert.equal(originHost(''), '')
 })
@@ -365,23 +365,23 @@ test('parseMoebooru reads the artist out of the tag types the same answer carrie
     JSON.stringify({
       posts: [
         {
-          id: 214705,
+          id: 200001,
           width: 1197,
           height: 2599,
           file_url: 'https://files.yande.re/image/4dd1/x.png',
           file_ext: 'png',
           preview_url: 'https://assets.yande.re/data/preview/4d.jpg',
-          author: 'gnarf1975',
+          author: 'paperboat',
           score: 42,
           rating: 's',
-          tags: 'hiiragi_kagami lucky_star kantoku',
+          tags: 'orla_(starfall) starfall inkwell',
         },
       ],
-      tags: { hiiragi_kagami: 'character', lucky_star: 'copyright', kantoku: 'artist' },
+      tags: { 'orla_(starfall)': 'character', starfall: 'copyright', inkwell: 'artist' },
     }),
   )
 
-  assert.deepEqual(found?.named.artist, ['kantoku'])
+  assert.deepEqual(found?.named.artist, ['inkwell'])
   assert.equal(found?.score, 42)
 })
 
@@ -389,15 +389,15 @@ test('parseDanbooru takes the artist, the score, the 360 px preview and only the
   const [found] = parseDanbooru(
     JSON.stringify([
       {
-        id: 12223134,
+        id: 12000001,
         image_width: 9000,
         image_height: 9000,
         file_url: 'https://cdn.donmai.us/original/e1/cb/e1cb.png',
         file_ext: 'png',
         preview_file_url: 'https://cdn.donmai.us/180x180/e1/cb/e1cb.jpg',
         score: 7,
-        tag_string: 'kirisame_marisa touhou hinohari',
-        tag_string_artist: 'hinohari',
+        tag_string: 'wren_(starfall) starfall inkwell',
+        tag_string_artist: 'inkwell',
         media_asset: {
           variants: [
             { type: '180x180', width: 180, height: 180, file_ext: 'jpg', url: 'https://cdn.donmai.us/180x180/e.jpg' },
@@ -410,7 +410,7 @@ test('parseDanbooru takes the artist, the score, the 360 px preview and only the
     ]),
   )
 
-  assert.deepEqual(found?.named.artist, ['hinohari'])
+  assert.deepEqual(found?.named.artist, ['inkwell'])
   assert.equal(found?.score, 7)
   assert.deepEqual(
     found?.smaller.map((v) => [v.width, v.ext]),
@@ -431,13 +431,13 @@ test('parseCounts reads the number danbooru answers a count query with', () => {
 })
 
 test('postRef turns a pasted post page, a site:id or a bare number into one post to jump to', () => {
-  assert.deepEqual(postRef('https://yande.re/post/show/214705', dan), { site: yande, id: 214705 })
-  assert.deepEqual(postRef('https://danbooru.donmai.us/posts/12223134', yande), { site: dan, id: 12223134 })
-  assert.deepEqual(postRef('https://zerochan.net/3248583', dan), { site: zero, id: 3248583 })
+  assert.deepEqual(postRef('https://yande.re/post/show/200001', dan), { site: yande, id: 200001 })
+  assert.deepEqual(postRef('https://danbooru.donmai.us/posts/12000001', yande), { site: dan, id: 12000001 })
+  assert.deepEqual(postRef('https://zerochan.net/3200001', dan), { site: zero, id: 3200001 })
   assert.deepEqual(postRef('konachan:244200', dan), { site: kona, id: 244200 })
-  assert.deepEqual(postRef('7159377', dan), { site: dan, id: 7159377 })
-  assert.equal(postRef('hakurei_reimu', dan), undefined)
-  assert.equal(postRef('https://safebooru.org/index.php?page=post&s=view&id=7159377', dan), undefined)
+  assert.deepEqual(postRef('7100001', dan), { site: dan, id: 7100001 })
+  assert.equal(postRef('orla_(starfall)', dan), undefined)
+  assert.equal(postRef('https://safebooru.org/index.php?page=post&s=view&id=7100001', dan), undefined)
 })
 
 test('sweepCache drops the oldest cached files until the tree fits its budget', () => {
@@ -468,11 +468,11 @@ test('parseSuggestions keeps each completed tag with its post count', () => {
   assert.deepEqual(
     parseSuggestions(
       JSON.stringify([
-        { type: 'tag-word', label: 'amane suzuha', value: 'amane_suzuha', category: 4, post_count: 937 },
+        { type: 'tag-word', label: 'orla (starfall)', value: 'orla_(starfall)', category: 4, post_count: 937 },
         { type: 'tag-word', label: 'x', value: '', post_count: 1 },
       ]),
     ),
-    [{ value: 'amane_suzuha', count: 937 }],
+    [{ value: 'orla_(starfall)', count: 937 }],
   )
   assert.deepEqual(parseSuggestions(''), [])
 })
@@ -488,9 +488,9 @@ const listed = (fields: Record<string, string | number | boolean | null>) => ({
 })
 
 test('danbooru knows whether a picture shows one person, the moebooru sites leave it unknown', () => {
-  const [alone] = parseDanbooru(JSON.stringify([listed({ tag_string: 'amane_suzuha solo' })]))
-  const [crowd] = parseDanbooru(JSON.stringify([listed({ tag_string: 'amane_suzuha 2girls' })]))
-  const [moe] = parseMoebooru(JSON.stringify([listed({ tags: 'amane_suzuha solo' })]))
+  const [alone] = parseDanbooru(JSON.stringify([listed({ tag_string: 'orla_(starfall) solo' })]))
+  const [crowd] = parseDanbooru(JSON.stringify([listed({ tag_string: 'orla_(starfall) 2girls' })]))
+  const [moe] = parseMoebooru(JSON.stringify([listed({ tags: 'orla_(starfall) solo' })]))
   assert.deepEqual([alone?.solo, crowd?.solo, moe?.solo], [true, false, undefined])
 })
 
@@ -519,8 +519,8 @@ test('a moebooru post borrows the tags danbooru holds for the same file, headcou
 test('a post takes from danbooru only the credits it lacks, one role at a time', () => {
   const posts = parseMoebooru(
     JSON.stringify({
-      posts: [listed({ id: 1, md5: 'aa', tags: 'reimu', source: 'https://x.com/a/status/1' })],
-      tags: { reimu: 'character' },
+      posts: [listed({ id: 1, md5: 'aa', tags: 'orla', source: 'https://x.com/a/status/1' })],
+      tags: { orla: 'character' },
     }),
   )
 
@@ -531,38 +531,43 @@ test('a post takes from danbooru only the credits it lacks, one role at a time',
       JSON.stringify([
         {
           md5: 'aa',
-          tag_string_artist: 'hrbzz',
-          tag_string_character: 'hakurei_reimu',
+          tag_string_artist: 'paperboat',
+          tag_string_character: 'orla_(starfall)',
           source: 'https://pixiv.net/artworks/2',
         },
-        { md5: 'bb', tag_string_artist: 'potate', tag_string_copyright: 'vocaloid', source: 'https://pixiv.net/3' },
+        {
+          md5: 'bb',
+          tag_string_artist: 'inkwell',
+          tag_string_copyright: 'glass_arcade',
+          source: 'https://pixiv.net/3',
+        },
       ]),
     ),
   )
   assert.deepEqual(
     [posts[0]?.named, posts[0]?.source],
-    [{ artist: ['hrbzz'], character: ['reimu'], copyright: [] }, 'https://x.com/a/status/1'],
+    [{ artist: ['paperboat'], character: ['orla'], copyright: [] }, 'https://x.com/a/status/1'],
   )
   assert.deepEqual(
     [zc?.named, zc?.source],
-    [{ artist: ['potate'], character: [], copyright: ['vocaloid'] }, 'https://pixiv.net/3'],
+    [{ artist: ['inkwell'], character: [], copyright: ['glass_arcade'] }, 'https://pixiv.net/3'],
   )
 })
 
 test('a pixiv file or old illust link is credited as the artwork page it came from', () => {
   for (const file of [
-    'https://i.pximg.net/img-original/img/2023/11/30/20/19/54/113837973_p0.jpg',
-    'https://i.pximg.net/c/600x1200_90/img-master/img/2023/11/30/20/19/54/113837973_p1_master1200.jpg',
-    'https://i3.pixiv.net/img-original/img/2014/01/02/03/04/05/113837973_p0.png',
-    'http://i2.pixiv.net/img07/img/swordsouls/113837973.png',
-    'https://www.pixiv.net/member_illust.php?mode=medium&illust_id=113837973',
+    'https://i.pximg.net/img-original/img/2023/11/30/20/19/54/100000123_p0.jpg',
+    'https://i.pximg.net/c/600x1200_90/img-master/img/2023/11/30/20/19/54/100000123_p1_master1200.jpg',
+    'https://i3.pixiv.net/img-original/img/2014/01/02/03/04/05/100000123_p0.png',
+    'http://i2.pixiv.net/img07/img/inkwell/100000123.png',
+    'https://www.pixiv.net/member_illust.php?mode=medium&illust_id=100000123',
   ]) {
-    assert.equal(sourcePage(file), 'https://www.pixiv.net/artworks/113837973', file)
+    assert.equal(sourcePage(file), 'https://www.pixiv.net/artworks/100000123', file)
   }
 
   for (const kept of [
-    'https://www.pixiv.net/en/artworks/149948109',
-    'https://x.com/oda_koden/status/2103440708585783307',
+    'https://www.pixiv.net/en/artworks/100000456',
+    'https://x.com/paperboat/status/2000000000000000123',
     'https://booth.pximg.net/fcecdcff-8acd-4cc/i/2310/abc.jpg',
     'pixiv 12345',
     '',
@@ -575,22 +580,22 @@ test('a zerochan post page names its artist, cast and series by tag type, with i
   const page = `
     <script type="application/ld+json">{ "datePublished": "2026-07-29T19:49:12+00:00" }</script>
     <ul id="tags">
-      <li class="mangaka" data-tag="Akoiro" title="Added by Roy4127" data-user="Roy4127"><a>Akoiro</a></li>
-      <li class="character primary" data-tag="Hakurei Reimu" data-user="Roy4127"><a>Hakurei Reimu</a></li>
-      <li class="series fav" data-tag="Steins;Gate" data-user="Roy4127"><a>Steins;Gate</a></li>
-      <li class="game" data-tag="Touhou &amp; Friends" data-user="Roy4127"><a>Touhou</a></li>
-      <li class="theme" data-tag="Red Skirt" data-user="Roy4127"><a>Red Skirt</a></li>
-      <li class="source" data-tag="Fanart" data-user="Roy4127"><a>Fanart</a></li>
+      <li class="mangaka" data-tag="Inkwell" title="Added by user4127" data-user="user4127"><a>Inkwell</a></li>
+      <li class="character primary" data-tag="Wren Tidewell" data-user="user4127"><a>Wren Tidewell</a></li>
+      <li class="series fav" data-tag="Moon;Tide" data-user="user4127"><a>Moon;Tide</a></li>
+      <li class="game" data-tag="Night Parade &amp; Friends" data-user="user4127"><a>Night Parade</a></li>
+      <li class="theme" data-tag="Red Skirt" data-user="user4127"><a>Red Skirt</a></li>
+      <li class="source" data-tag="Fanart" data-user="user4127"><a>Fanart</a></li>
     </ul>
     <script>var uploader = {
-      name: 'Roy4127',
+      name: 'user4127',
       status: 2,
     }</script>`
 
   assert.deepEqual(parseZerochanPage(page), {
-    named: { artist: ['akoiro'], character: ['hakurei_reimu'], copyright: ['steins;gate', 'touhou_&_friends'] },
+    named: { artist: ['inkwell'], character: ['wren_tidewell'], copyright: ['moon;tide', 'night_parade_&_friends'] },
     source: '',
-    owner: 'Roy4127',
+    owner: 'user4127',
     posted: '2026-07-29',
   })
   assert.deepEqual(parseZerochanPage(''), {
@@ -632,9 +637,9 @@ test('the files to borrow for go to danbooru as one md5 list', () => {
 test('parseTagList reads a moebooru tag search as completions with their post counts', () => {
   assert.deepEqual(
     parseTagList(
-      JSON.stringify([{ id: 33398, name: 'amane_suzuha', count: 86, type: 4, ambiguous: false }, { id: 1 }]),
+      JSON.stringify([{ id: 33398, name: 'orla_(starfall)', count: 86, type: 4, ambiguous: false }, { id: 1 }]),
     ),
-    [{ value: 'amane_suzuha', count: 86 }],
+    [{ value: 'orla_(starfall)', count: 86 }],
   )
 })
 
@@ -643,77 +648,77 @@ test('zerochan names its tags in words, so they are read as tags, and nudity mak
     JSON.stringify({
       items: [
         {
-          id: 3248583,
+          id: 3200001,
           width: 2000,
           height: 3805,
           md5: 'cd77',
-          tag: 'Hatsune Miku',
-          tags: ['Hatsune Miku', 'Solo', 'Transparent Background'],
+          tag: 'Orla Starling',
+          tags: ['Orla Starling', 'Solo', 'Transparent Background'],
         },
-        { id: 1, width: 900, height: 900, md5: 'ee', tag: 'Hatsune Miku', tags: ['Nude'] },
+        { id: 1, width: 900, height: 900, md5: 'ee', tag: 'Orla Starling', tags: ['Nude'] },
       ],
     }),
   )
 
-  assert.deepEqual(plain?.tags, ['hatsune_miku', 'solo', 'transparent_background'])
+  assert.deepEqual(plain?.tags, ['orla_starling', 'solo', 'transparent_background'])
   assert.deepEqual([plain?.solo, plain?.file, plain?.ext], [true, '', ''], 'a list names no file')
-  assert.equal(plain?.preview, 'https://s1.zerochan.net/Hatsune.Miku.600.3248583.jpg')
+  assert.equal(plain?.preview, 'https://s1.zerochan.net/Orla.Starling.600.3200001.jpg')
   assert.deepEqual([plain && rated(zero, plain), nude && rated(zero, nude)], [true, false])
 
   const [detail] = parseZerochan(
     JSON.stringify({
-      id: 3248583,
+      id: 3200001,
       width: 2000,
       height: 3805,
       hash: 'cd77',
-      primary: 'Hatsune Miku',
-      full: 'https://static.zerochan.net/Hatsune.Miku.full.3248583.png',
+      primary: 'Orla Starling',
+      full: 'https://static.zerochan.net/Orla.Starling.full.3200001.png',
       tags: ['Solo'],
     }),
   )
 
   assert.deepEqual(
     [detail?.file, detail?.ext, detail?.md5],
-    ['https://static.zerochan.net/Hatsune.Miku.full.3248583.png', 'png', 'cd77'],
+    ['https://static.zerochan.net/Orla.Starling.full.3200001.png', 'png', 'cd77'],
   )
   assert.deepEqual(parseZerochan('{ }'), [])
 })
 
 test('zerochan takes its words joined by plus in the path, extra tags after a comma, and sorts by favourites for score', () => {
-  const plain = new URL(zero.postsUrl('gotou_hitori', 0))
-  assert.equal(plain.pathname, '/gotou+hitori')
+  const plain = new URL(zero.postsUrl('wren_tidewell', 0))
+  assert.equal(plain.pathname, '/wren+tidewell')
   assert.deepEqual(
     [plain.searchParams.get('p'), plain.searchParams.get('s'), plain.searchParams.get('l')],
     ['1', 'id', '100'],
   )
-  const best = new URL(zero.postsUrl('gotou_hitori transparent_background order:fav', 2))
-  assert.equal(best.pathname, '/gotou+hitori,transparent+background')
+  const best = new URL(zero.postsUrl('wren_tidewell transparent_background order:fav', 2))
+  assert.equal(best.pathname, '/wren+tidewell,transparent+background')
   assert.deepEqual([best.searchParams.get('p'), best.searchParams.get('s')], ['3', 'fav'])
   assert.equal(zero.rate(['safe']), '', 'zerochan has no rating to ask for')
-  assert.equal(parseZerochanCount('<description>Zerochan has 84,051 Hatsune Miku anime images'), 84051)
+  assert.equal(parseZerochanCount('<description>Zerochan has 84,051 Orla Starling anime images'), 84051)
 })
 
 test('a zerochan file is looked for as jpg first, or png first when the post is a cutout', () => {
   const [photo, cut] = parseZerochan(
     JSON.stringify({
       items: [
-        { id: 7, tag: 'Amane Suzuha', tags: [] },
-        { id: 8, tag: 'Amane Suzuha', tags: ['Transparent Background'] },
+        { id: 7, tag: 'Pip Lantern', tags: [] },
+        { id: 8, tag: 'Pip Lantern', tags: ['Transparent Background'] },
       ],
     }),
   )
 
   assert.deepEqual(photo && zero.guesses?.(photo), [
-    'https://static.zerochan.net/Amane.Suzuha.full.7.jpg',
-    'https://static.zerochan.net/Amane.Suzuha.full.7.png',
+    'https://static.zerochan.net/Pip.Lantern.full.7.jpg',
+    'https://static.zerochan.net/Pip.Lantern.full.7.png',
   ])
-  assert.equal(cut && zero.guesses?.(cut)[0], 'https://static.zerochan.net/Amane.Suzuha.full.8.png')
+  assert.equal(cut && zero.guesses?.(cut)[0], 'https://static.zerochan.net/Pip.Lantern.full.8.png')
 })
 
 test("a redirect keeps the query the target left off, and keeps the target's own", () => {
   assert.equal(
-    redirected('https://www.zerochan.net/lucy?json=&l=100', 'https://www.zerochan.net/Lucyna+Kushinada'),
-    'https://www.zerochan.net/Lucyna+Kushinada?json=&l=100',
+    redirected('https://www.zerochan.net/orla?json=&l=100', 'https://www.zerochan.net/Orla+Starling'),
+    'https://www.zerochan.net/Orla+Starling?json=&l=100',
   )
   assert.equal(redirected('https://a.test/x?q=1', '/y?z=2'), 'https://a.test/y?z=2')
 })

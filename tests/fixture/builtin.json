@@ -76,9 +76,9 @@
   ],
   "palettes": [
     {
-      "name": "ttheme/bocchi",
-      "subject": "bocchi-the-rock/bocchi",
-      "ansiSource": "Sakura + Kessoku",
+      "name": "ttheme/briony",
+      "subject": "briarwood-rocks/briony",
+      "ansiSource": "Sakura + Stellar",
       "background": "#201517",
       "foreground": "#fadbe1",
       "cursor": "#feabc0",
@@ -135,9 +135,9 @@
       }
     },
     {
-      "name": "ttheme/kagami",
-      "subject": "lucky-star/kagami",
-      "ansiSource": "Nightfox + Ryouou",
+      "name": "ttheme/kestra",
+      "subject": "lumen-song/kestra",
+      "ansiSource": "Nightfox + Harbor",
       "background": "#19161e",
       "foreground": "#e8dff1",
       "cursor": "#9b86c8",
@@ -194,9 +194,9 @@
       }
     },
     {
-      "name": "ttheme/kita",
-      "subject": "bocchi-the-rock/kita",
-      "ansiSource": "Wild Cherry + Kessoku",
+      "name": "ttheme/kipa",
+      "subject": "briarwood-rocks/kipa",
+      "ansiSource": "Wild Cherry + Stellar",
       "background": "#201513",
       "foreground": "#fddbd6",
       "cursor": "#ee6555",
@@ -253,9 +253,9 @@
       }
     },
     {
-      "name": "ttheme/konata",
-      "subject": "lucky-star/konata",
-      "ansiSource": "Dark Modern + Ryouou",
+      "name": "ttheme/korund",
+      "subject": "lumen-song/korund",
+      "ansiSource": "Dark Modern + Harbor",
       "background": "#13181e",
       "foreground": "#dae3f1",
       "cursor": "#5f95ca",
@@ -371,8 +371,8 @@
       "default": true
     },
     {
-      "name": "ttheme/ryo",
-      "subject": "bocchi-the-rock/ryo",
+      "name": "ttheme/rue",
+      "subject": "briarwood-rocks/rue",
       "ansiSource": "TokyoNight Storm",
       "background": "#19180d",
       "foreground": "#e7e3c8",
@@ -430,9 +430,9 @@
       }
     },
     {
-      "name": "ttheme/tsukasa",
-      "subject": "lucky-star/tsukasa",
-      "ansiSource": "Sublette + Ryouou",
+      "name": "ttheme/tamsine",
+      "subject": "lumen-song/tamsine",
+      "ansiSource": "Sublette + Harbor",
       "background": "#1b161d",
       "foreground": "#eddeef",
       "cursor": "#c8a6da",

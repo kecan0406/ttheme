@@ -53,16 +53,16 @@ each rule.
 
 `s` saves. `esc` leaves, asking first when something changed.
 
-Your palettes are files in a marketplace of your own on your machine. The first
-`new` asks for its name and creates `~/.config/ttheme/marketplace/<name>`, where
-each palette is `palettes/<palette>.toml`, named
-`<you>@<marketplace>/<palette>`.
+Your palettes live in a marketplace of your own on your machine. The first
+`new` asks for its name and creates `~/.config/ttheme/marketplace/<name>`. Each
+palette there is named `<you>@<marketplace>/<palette>` and kept in a set under
+`sets/`: its work's, `<work>.toml`, or `original.toml` for a palette of no work.
 
 A palette made `--from` another keeps the work or character that one is of, so
 lists shelve it beside it, and names the palette it first came from — a copy
 of a copy names the original. One made from
-blank is an original until its file names a `subject`
-([a palette file](publish.md#a-palette-file)).
+blank is an original until its table names a `subject`
+([a set](publish.md#a-set)).
 
 ## A picture for it
 
@@ -96,7 +96,7 @@ added it.
 
 [ttheme.dev/builder](https://ttheme.dev/builder) is the same builder in the
 browser: start from any palette, a share link or blank seeds, and tune both
-modes against the contrast checks. It exports a palette file, which `ttheme add <file>.toml`
+modes against the contrast checks. It exports a set, which `ttheme add <file>.toml`
 installs into your own marketplace, a share link, or a marketplace ready to push.
 Every visit starts clean; a palette you changed stays in that browser as a
 draft, up to thirty, which its **drafts** tab lists and reopens.

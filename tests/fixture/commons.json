@@ -1,68 +1,68 @@
 {
   "works": [
     {
-      "id": "bocchi-the-rock",
-      "name": "Bocchi the Rock!",
-      "native": "ぼっち・ざ・ろっく!",
-      "lead": "bocchi-the-rock/bocchi",
+      "id": "briarwood-rocks",
+      "name": "Briarwood Rocks!",
+      "native": "すたあ・ふ・ばらど!",
+      "lead": "briarwood-rocks/briony",
       "characters": [
         {
-          "id": "bocchi",
-          "native": ["後藤ひとり"],
-          "danbooru": "gotoh_hitori",
+          "id": "briony",
+          "native": ["星砂ぶりお"],
+          "danbooru": "hoshi_briony",
           "sites": {
-            "konachan": ["gotou_hitori"],
-            "yande": ["gotou_hitori"],
-            "zerochan": ["gotou_hitori"]
+            "konachan": ["hoshi_brioni"],
+            "yande": ["hoshi_brioni"],
+            "zerochan": ["hoshi_brioni"]
           }
         },
         {
-          "id": "kita",
-          "native": ["喜多郁代"],
-          "danbooru": "kita_ikuyo"
+          "id": "kipa",
+          "native": ["木羽波代"],
+          "danbooru": "kiba_kipaa"
         },
         {
-          "id": "nijika",
-          "native": ["伊地知虹夏"],
-          "danbooru": "ijichi_nijika"
+          "id": "nadine",
+          "native": ["名出井波夏"],
+          "danbooru": "nadeji_nadine"
         },
         {
-          "id": "ryo",
-          "native": ["山田リョウ"],
-          "danbooru": "yamada_ryo",
+          "id": "rue",
+          "native": ["留井ルーエ"],
+          "danbooru": "ruinoa_rue",
           "sites": {
-            "konachan": ["yamada_ryou"],
-            "yande": ["yamada_ryou"],
-            "zerochan": ["yamada_ryou"]
+            "konachan": ["ruinoa_ruee"],
+            "yande": ["ruinoa_ruee"],
+            "zerochan": ["ruinoa_ruee"]
           }
         }
       ]
     },
     {
-      "id": "lucky-star",
-      "name": "Lucky☆Star",
-      "native": "らき☆すた",
-      "lead": "lucky-star/konata",
+      "id": "lumen-song",
+      "name": "Lumen☆Song",
+      "native": "たい☆なみ",
+      "lead": "lumen-song/korund",
       "characters": [
         {
-          "id": "kagami",
-          "native": ["柊かがみ"],
-          "danbooru": "hiiragi_kagami"
+          "id": "kestra",
+          "native": ["楓けすと"],
+          "danbooru": "kaedeno_kestra"
         },
         {
-          "id": "konata",
-          "native": ["泉こなた"],
-          "danbooru": "izumi_konata"
+          "id": "korund",
+          "native": ["湊こるん"],
+          "danbooru": "minat_korund"
         },
         {
-          "id": "miyuki",
-          "native": ["高良みゆき"],
-          "danbooru": "takara_miyuki"
+          "id": "marlow",
+          "native": ["真浦まろう"],
+          "danbooru": "maura_marlowe"
         },
         {
-          "id": "tsukasa",
-          "native": ["柊つかさ"],
-          "danbooru": "hiiragi_tsukasa"
+          "id": "tamsine",
+          "native": ["楓たみね"],
+          "danbooru": "kaedeno_tamsine"
         }
       ]
     }

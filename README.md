@@ -105,8 +105,8 @@ ttheme marketplace add alice/ttheme-pastel   # add alice's marketplace
 ttheme add alice@pastel/dusk                 # install one of its palettes
 ```
 
-A palette is a file of colors, never code. Nobody reviews a marketplace, and
-only the built-in palettes are held to the contrast checks.
+A palette is colors in a TOML file, never code. Nobody reviews a marketplace,
+and only the built-in palettes are held to the contrast checks.
 [The marketplace page](https://ttheme.dev/marketplace) lists the public ones.
 
 ## Your own palettes

@@ -13,8 +13,8 @@ import { CLEAR, detectTerminal, linkable, livePaint, SETTLE_MS, type Terminal, T
 const root = ROOT
 const read = (...path: string[]) => readFileSync(join(root, ...path), 'utf8')
 
-const miku: PaletteEntry = {
-  name: 'miku',
+const orla: PaletteEntry = {
+  name: 'orla',
   ansiSource: 'Test',
   background: '#0e2124',
   foreground: '#e0f4f2',
@@ -162,11 +162,11 @@ test('a palette is worn whole by its color scheme in a wired Konsole, and not at
   const live = livePaint({ KONSOLE_VERSION: '230805' }, true)
   assert.ok(live)
   assert.equal(
-    live.wear(miku, ['konsole']),
-    '\x1b]50;ColorScheme=ttheme-miku;UseCustomCursorColor=true;customCursorColor=#39c5bb\x07',
+    live.wear(orla, ['konsole']),
+    '\x1b]50;ColorScheme=ttheme-orla;UseCustomCursorColor=true;customCursorColor=#39c5bb\x07',
   )
-  assert.equal(live.wear(miku, ['ghostty']), undefined)
-  assert.ok(livePaint({ GHOSTTY_RESOURCES_DIR: '/x' }, true)?.wear(miku, [])?.includes('\x1b]4;15;'))
+  assert.equal(live.wear(orla, ['ghostty']), undefined)
+  assert.ok(livePaint({ GHOSTTY_RESOURCES_DIR: '/x' }, true)?.wear(orla, [])?.includes('\x1b]4;15;'))
 })
 
 test('a live repaint goes nowhere the shell layer keeps its colors off', () => {
@@ -180,14 +180,14 @@ test('iTerm2 is repainted in its background and foreground at once and in the re
   const written: string[] = []
   const live = livePaint({ ITERM_SESSION_ID: 'w0' }, true, (text) => written.push(text))
   assert.ok(live)
-  assert.equal(live.paint({ ...miku, background: '#000000' }), '\x1b]11;#000000\x1b\\\x1b]10;#e0f4f2\x1b\\')
-  assert.equal(live.paint(miku), '\x1b]11;#0e2124\x1b\\\x1b]10;#e0f4f2\x1b\\')
+  assert.equal(live.paint({ ...orla, background: '#000000' }), '\x1b]11;#000000\x1b\\\x1b]10;#e0f4f2\x1b\\')
+  assert.equal(live.paint(orla), '\x1b]11;#0e2124\x1b\\\x1b]10;#e0f4f2\x1b\\')
   await new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 300))
   assert.deepEqual(
     written.map((text) => text.split('\x1b\\').length - 1),
     [4, 4, 4, 4, 2],
   )
-  assert.equal(written.join(''), paletteOsc(miku).replace('\x1b]11;#0e2124\x1b\\\x1b]10;#e0f4f2\x1b\\', ''))
+  assert.equal(written.join(''), paletteOsc(orla).replace('\x1b]11;#0e2124\x1b\\\x1b]10;#e0f4f2\x1b\\', ''))
 
   const saved = new Map([
     ['11', 'rgb:1111/1111/1111'],
@@ -204,7 +204,7 @@ test('an iTerm2 repaint that never settled restores the background and foregroun
   const written: string[] = []
   const live = livePaint({ ITERM_SESSION_ID: 'w0' }, true, (text) => written.push(text))
   assert.ok(live)
-  live.paint(miku)
+  live.paint(orla)
   assert.equal(live.restore(new Map([['11', 'rgb:1111/1111/1111']])), '\x1b]11;rgb:1111/1111/1111\x1b\\\x1b]110\x1b\\')
   await new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 300))
   assert.deepEqual(written, [])
@@ -214,8 +214,8 @@ test('iTerm2 is put back on the profile the tab wore when the shell switches pro
   const tab = { ITERM_SESSION_ID: 'w0', TTHEME_ITERM_SWITCH: '1', TTHEME_ITERM_DYED: '0' }
   const reset = '\x1b]111\x1b\\\x1b]110\x1b\\'
   assert.equal(
-    livePaint({ ...tab, TTHEME_ITERM_SHOWN: 'kita' }, true)?.restore(new Map()),
-    `\x1b[?2026h${reset}\x1b]1337;SetProfile=ttheme · kita\x07\x1b[?2026l`,
+    livePaint({ ...tab, TTHEME_ITERM_SHOWN: 'wren' }, true)?.restore(new Map()),
+    `\x1b[?2026h${reset}\x1b]1337;SetProfile=ttheme · wren\x07\x1b[?2026l`,
   )
   assert.equal(
     livePaint({ ...tab, TTHEME_ITERM_SHOWN: 'default' }, true)?.restore(new Map()),
@@ -224,8 +224,8 @@ test('iTerm2 is put back on the profile the tab wore when the shell switches pro
 
   for (const env of [
     { ...tab, TTHEME_ITERM_SHOWN: '' },
-    { ...tab, TTHEME_ITERM_SHOWN: 'kita', TTHEME_ITERM_DYED: '1' },
-    { ...tab, TTHEME_ITERM_SHOWN: 'kita', TTHEME_ITERM_SWITCH: '' },
+    { ...tab, TTHEME_ITERM_SHOWN: 'wren', TTHEME_ITERM_DYED: '1' },
+    { ...tab, TTHEME_ITERM_SHOWN: 'wren', TTHEME_ITERM_SWITCH: '' },
   ]) {
     assert.equal(livePaint(env, true)?.restore(new Map()), reset)
   }
@@ -332,10 +332,10 @@ test('Konsole opens links only where the default profile, or a profile it inheri
   }
 
   mkdirSync(join(data, 'konsole'), { recursive: true })
-  writeFileSync(join(home, 'konsolerc'), '[Desktop Entry]\nDefaultProfile=ttheme-miku.profile\n')
+  writeFileSync(join(home, 'konsolerc'), '[Desktop Entry]\nDefaultProfile=ttheme-orla.profile\n')
   writeFileSync(
-    join(data, 'konsole', 'ttheme-miku.profile'),
-    '[Appearance]\nColorScheme=ttheme-miku\n\n[General]\nParent=Own.profile\n',
+    join(data, 'konsole', 'ttheme-orla.profile'),
+    '[Appearance]\nColorScheme=ttheme-orla\n\n[General]\nParent=Own.profile\n',
   )
   writeFileSync(join(data, 'konsole', 'Own.profile'), '[General]\nName=Own\n')
   assert.equal(linkable(env), false)
@@ -345,7 +345,7 @@ test('Konsole opens links only where the default profile, or a profile it inheri
   )
   assert.equal(linkable(env), true)
   writeFileSync(
-    join(data, 'konsole', 'ttheme-miku.profile'),
+    join(data, 'konsole', 'ttheme-orla.profile'),
     '[General]\nParent=Own.profile\n\n[Interaction Options]\nAllowEscapedLinks=false\n',
   )
   assert.equal(linkable(env), false)

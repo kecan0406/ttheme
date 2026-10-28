@@ -6,12 +6,13 @@ import { SITES } from '../core/booru.ts'
 import { CHARACTER_KEYS, WORK_KEYS } from '../core/commons.ts'
 import { RULES } from '../core/contrast.ts'
 import { MODES } from '../core/mode.ts'
+import { SET_KEYS, SET_SCHEMA_URL } from '../core/sets.ts'
 import {
   MARKETPLACE_SCHEMA_URL,
   nameProblem,
   PALETTE_KEYS,
-  PALETTE_SCHEMA_URL,
   POSITIONS,
+  slugProblem,
   subjectProblem,
   WORK_SCHEMA_URL,
 } from '../core/theme.ts'
@@ -54,16 +55,28 @@ function takes(node: Node | undefined, value: string): boolean {
   return new RegExp(pattern).test(value) && !(node?.not?.pattern && new RegExp(node.not.pattern).test(value))
 }
 
-const SUBJECTS = ['evangelion', 'evangelion/rei', 'k-on/yui', 'ttheme', 'ttheme/rei', 'Evangelion', 'a--b', 'a/b/c', '']
+const SLUGS = ['wren', 'pip01', 'orla-dusk', 'Wren', 'a--b', '-wren', 'wren/x', '']
+
+const SUBJECTS = [
+  'starfall',
+  'starfall/wren',
+  'glass-arcade/lumi',
+  'ttheme',
+  'ttheme/wren',
+  'Starfall',
+  'a--b',
+  'a/b/c',
+  '',
+]
 
 const NAMES = [
-  'ttheme/rei',
-  'alice@dust/rei',
-  'rei',
-  'ttheme@dust/rei',
-  'alice/rei',
-  'alice@dust/rei/x',
-  'Alice@dust/rei',
+  'ttheme/wren',
+  'alice@dust/wren',
+  'wren',
+  'ttheme@dust/wren',
+  'alice/wren',
+  'alice@dust/wren/x',
+  'Alice@dust/wren',
 ]
 
 test('the marketplace schema SchemaStore serves describes the keys ttheme reads from ttheme-marketplace.toml', () => {
@@ -73,26 +86,28 @@ test('the marketplace schema SchemaStore serves describes the keys ttheme reads 
   assert.deepEqual(keys(marketplace.properties?.owner), [...OWNER_KEYS].sort())
 })
 
-test('the palette schema describes the keys, sites, positions, slots and gate rules the palette reader knows', () => {
-  const palette = read('ttheme-palette.json')
-  assert.equal(palette.$id, PALETTE_SCHEMA_URL)
+test('the set schema describes the keys, sites, positions, slots and gate rules the set and palette readers know', () => {
+  const set = read('ttheme-set.json')
+  assert.equal(set.$id, SET_SCHEMA_URL)
+  assert.deepEqual(keys(set), [...SET_KEYS].sort())
+  const palette = set.properties?.palette?.items
   assert.deepEqual(keys(palette), [...(PALETTE_KEYS.get('') ?? [])].sort())
 
   for (const table of ['colors', 'contrast', 'ghostty']) {
-    assert.deepEqual(keys(palette.properties?.[table]), [...(PALETTE_KEYS.get(table) ?? [])].sort(), table)
+    assert.deepEqual(keys(palette?.properties?.[table]), [...(PALETTE_KEYS.get(table) ?? [])].sort(), table)
   }
 
-  assert.deepEqual(keys(palette.properties?.picture?.items), [...(PALETTE_KEYS.get('picture') ?? [])].sort())
-  const defs = palette.definitions ?? {}
+  assert.deepEqual(keys(palette?.properties?.picture?.items), [...(PALETTE_KEYS.get('picture') ?? [])].sort())
+  const defs = set.definitions ?? {}
 
   for (const mode of MODES) {
-    assert.equal(palette.properties?.colors?.properties?.[mode]?.$ref, '#/definitions/shade', mode)
+    assert.equal(palette?.properties?.colors?.properties?.[mode]?.$ref, '#/definitions/shade', mode)
     assert.deepEqual(keys(defs.shade), [...(PALETTE_KEYS.get(`colors.${mode}`) ?? [])].sort(), mode)
   }
 
   grows(defs.site, SITE_KEYS, 'the find sites')
-  grows(palette.properties?.picture?.items?.properties?.position, POSITIONS, 'the positions')
-  grows(palette.properties?.contrast?.properties?.waive?.items, RULES, 'the gate rules')
+  grows(palette?.properties?.picture?.items?.properties?.position, POSITIONS, 'the positions')
+  grows(palette?.properties?.contrast?.properties?.waive?.items, RULES, 'the gate rules')
   assert.deepEqual(defs.slot?.enum, [
     'background',
     'foreground',
@@ -102,8 +117,12 @@ test('the palette schema describes the keys, sites, positions, slots and gate ru
   ])
 })
 
-test('the palette schema takes the subjects and full names the palette reader takes', () => {
-  const props = read('ttheme-palette.json').properties ?? {}
+test('the set schema takes the slugs, subjects and full names the set and palette readers take', () => {
+  const props = read('ttheme-set.json').properties?.palette?.items?.properties ?? {}
+
+  for (const slug of SLUGS) {
+    assert.equal(takes(props.slug, slug), slugProblem(slug) === undefined, `slug ${slug}`)
+  }
 
   for (const subject of SUBJECTS) {
     assert.equal(takes(props.subject, subject), subjectProblem(subject) === undefined, `subject ${subject}`)

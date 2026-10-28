@@ -1,4 +1,4 @@
-◆ Edit palette  ttheme/konata                                              ✗ Fails 5 contrast checks
+◆ Edit palette  ttheme/korund                                              ✗ Fails 5 contrast checks
           ╭─ Help ──────────────────────────────────────────────────────────────────────╮
 ╭─ Base ─ │ ⌕ Type to filter                                                            │
 │▌ Backgro│                                                                             │

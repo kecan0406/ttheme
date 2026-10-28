@@ -20,8 +20,9 @@ import {
 import { type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import { memo } from './memo.ts'
 import type { Colors } from './seeds.ts'
+import { readSet, SETS_DIR, type SetPalette } from './sets.ts'
 import { quoted } from './text.ts'
-import { nameProblem, slugProblem } from './theme.ts'
+import { nameProblem, slugOf, slugProblem, themeOf } from './theme.ts'
 
 const PACKS: ((bytes: Uint8Array) => Uint8Array)[] = [
   (bytes) => bytes,
@@ -35,9 +36,9 @@ const UNPACKS: ((bytes: Uint8Array) => Uint8Array)[] = [
   (bytes) => brotliDecompressSync(bytes, { maxOutputLength: UNPACKED }),
 ]
 
-export interface MarketplaceFile {
+export interface SetFile {
   path: string
-  slug: string
+  name: string
 }
 
 export interface WorkFile {
@@ -63,8 +64,8 @@ function flatToml(paths: Iterable<string>, folder: string): { path: string; stem
   return found.sort((a, b) => byName(a.stem, b.stem))
 }
 
-export function marketplaceLayout(paths: Iterable<string>, at: (path: string) => string): MarketplaceFile[] {
-  return flatToml(paths, 'palettes').map(({ path, stem }) => ({ path: at(path), slug: stem }))
+export function marketplaceLayout(paths: Iterable<string>, at: (path: string) => string): SetFile[] {
+  return flatToml(paths, SETS_DIR).map(({ path, stem }) => ({ path: at(path), name: stem }))
 }
 
 export function workLayout(paths: Iterable<string>, at: (path: string) => string): WorkFile[] {
@@ -73,32 +74,68 @@ export function workLayout(paths: Iterable<string>, at: (path: string) => string
 
 export type Report = (where: string, message: string) => void
 
+interface Shelf {
+  entries: PaletteEntry[]
+  problems: [string, string][]
+}
+
+function shelfOf(path: string, text: string, id: string, foreign: boolean): Shelf {
+  let palettes: SetPalette[]
+
+  try {
+    palettes = readSet(basename(path), text)
+  } catch (error) {
+    return { entries: [], problems: [[path, (error as Error).message]] }
+  }
+
+  const place = foreign ? { foreign: true as const } : {}
+  const shelf: Shelf = { entries: [], problems: [] }
+
+  for (const { slug, doc } of palettes) {
+    try {
+      shelf.entries.push(paletteEntry(themeOf(slug, doc, { name: `${id}/${slug}`, ...place })))
+    } catch (error) {
+      shelf.problems.push([path, (error as Error).message])
+    }
+  }
+
+  return shelf
+}
+
 export function readMarketplaceFiles(
-  files: MarketplaceFile[],
-  read: (file: MarketplaceFile) => string,
+  files: SetFile[],
+  read: (file: SetFile) => string,
   id: string,
   report: Report,
   foreign = false,
 ): PaletteEntry[] {
-  return files.flatMap((file) => {
-    try {
-      const problem = slugProblem(file.slug)
+  const seen = new Map<string, string>()
 
-      if (problem) {
-        throw new Error(`the file name ${quoted(file.slug)} ${problem} — it is the palette's name`)
+  return files.flatMap((file) => {
+    const text = read(file)
+
+    const shelf = memo('set', JSON.stringify([foreign, id, file.path, text]), () =>
+      shelfOf(file.path, text, id, foreign),
+    )
+
+    for (const [where, message] of shelf.problems) {
+      report(where, message)
+    }
+
+    return shelf.entries.filter((entry) => {
+      const slug = slugOf(entry.name)
+      const first = seen.get(slug)
+
+      if (first !== undefined) {
+        report(file.path, `${slug} is in ${basename(first)} too — a slug is used once in a marketplace`)
+
+        return false
       }
 
-      const name = `${id}/${file.slug}`
-      const text = read(file)
+      seen.set(slug, file.path)
 
-      return [
-        memo('entry', JSON.stringify([foreign, name, text]), () => paletteEntry(readOwnText(name, text, foreign))),
-      ]
-    } catch (error) {
-      report(file.path, (error as Error).message)
-
-      return []
-    }
+      return true
+    })
   })
 }
 

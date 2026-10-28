@@ -1,0 +1,281 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "sayori"
+subject = "doki-doki-literature-club/sayori"
+signature = ["cursor", "ansi9", "ansi4"]
+ansi_source = "0x96f"
+
+[palette.colors]
+background = "#211512"
+foreground = "#fddbd4"
+cursor = "#ffbaab"
+selection_background = "#543539"
+ansi = [
+  "#2e211e",
+  "#f26c63",
+  "#d7c530",
+  "#ffa849",
+  "#00a4bb",
+  "#e497db",
+  "#86b785",
+  "#e6d0cb",
+
+  "#85736f",
+  "#f3a0a0",
+  "#f6e139",
+  "#ffd5af",
+  "#4ab7e8",
+  "#ffbcf7",
+  "#a3d3a2",
+  "#ffe9e5",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b17"
+cursor = "#ba6f5f"
+selection_background = "#faccd0"
+ansi = [
+  "#fff0ee",
+  "#be2627",
+  "#395922",
+  "#925500",
+  "#006d7d",
+  "#964392",
+  "#1e5b3b",
+  "#372926",
+
+  "#85736f",
+  "#8c3a3e",
+  "#2e491b",
+  "#724d26",
+  "#005c7b",
+  "#81387f",
+  "#044d34",
+  "#2d1b17",
+]
+
+[[palette]]
+slug = "natsuki"
+subject = "doki-doki-literature-club/natsuki"
+signature = ["cursor", "ansi9", "ansi3"]
+ansi_source = "Fairyfloss"
+
+[palette.colors]
+background = "#1f1518"
+foreground = "#f8dbe3"
+cursor = "#ffb8d1"
+selection_background = "#4d3552"
+ansi = [
+  "#2c2124",
+  "#f06893",
+  "#c2c67c",
+  "#ddb900",
+  "#679dba",
+  "#de9ec0",
+  "#67aff3",
+  "#e3d0d4",
+
+  "#837377",
+  "#f3a09c",
+  "#e7df91",
+  "#f8d9af",
+  "#7cb2cf",
+  "#ffc0d6",
+  "#a0c9f3",
+  "#ffe8ee",
+]
+
+[palette.colors.light]
+background = "#fff8f8"
+foreground = "#2b1b21"
+cursor = "#bb6b8b"
+selection_background = "#eecdf1"
+ansi = [
+  "#fff0f3",
+  "#b72a60",
+  "#3c5728",
+  "#766200",
+  "#316984",
+  "#924b76",
+  "#005387",
+  "#35292d",
+
+  "#837377",
+  "#8c3b3a",
+  "#2f491c",
+  "#6b5025",
+  "#1f5b75",
+  "#7f415b",
+  "#174569",
+  "#2b1b21",
+]
+
+[[palette]]
+slug = "yuri"
+subject = "doki-doki-literature-club/yuri"
+signature = ["cursor", "ansi11", "ansi9"]
+ansi_source = "Purple Portal + DDLC"
+
+[palette.colors]
+background = "#1b161d"
+foreground = "#eddeef"
+cursor = "#c29ed1"
+selection_background = "#4e3551"
+ansi = [
+  "#282229",
+  "#e66bae",
+  "#5ddaa3",
+  "#ff9eac",
+  "#858cf3",
+  "#b99fff",
+  "#3ab7ef",
+  "#dcd1dc",
+
+  "#7d747e",
+  "#f39fa9",
+  "#99f0c5",
+  "#ffd0e4",
+  "#a3a6e1",
+  "#d9c7ff",
+  "#99cded",
+  "#f9e9fa",
+]
+
+[palette.colors.light]
+background = "#fff7fc"
+foreground = "#251d29"
+cursor = "#9064a5"
+selection_background = "#efccf0"
+ansi = [
+  "#fcf0fb",
+  "#a9377a",
+  "#005c3e",
+  "#a64055",
+  "#474fe3",
+  "#7547c9",
+  "#005676",
+  "#302a32",
+
+  "#7d747e",
+  "#8d3947",
+  "#004c33",
+  "#74475d",
+  "#484d98",
+  "#6e4380",
+  "#024762",
+  "#251d29",
+]
+
+[[palette]]
+slug = "monika"
+subject = "doki-doki-literature-club/monika"
+signature = ["cursor", "foreground", "ansi3"]
+ansi_source = "Hipster Green + DDLC"
+
+[palette.colors]
+background = "#141911"
+foreground = "#d4e8cc"
+cursor = "#80ad64"
+selection_background = "#26442c"
+ansi = [
+  "#20251c",
+  "#ec7045",
+  "#7dd662",
+  "#c2c207",
+  "#00a5b4",
+  "#ff8caa",
+  "#45bda4",
+  "#d2d6c9",
+
+  "#74796d",
+  "#f3a086",
+  "#acef8a",
+  "#cbea4e",
+  "#00bae7",
+  "#ffc1ce",
+  "#3ddeb3",
+  "#e8f1db",
+]
+
+[palette.colors.light]
+background = "#f7fbed"
+foreground = "#142312"
+cursor = "#517b38"
+selection_background = "#bde0bf"
+ansi = [
+  "#f1f5e7",
+  "#ab4119",
+  "#115d00",
+  "#676700",
+  "#006e78",
+  "#b1325e",
+  "#005b4c",
+  "#292e24",
+
+  "#74796d",
+  "#8c3d22",
+  "#184d00",
+  "#4b5b00",
+  "#005c74",
+  "#7e4252",
+  "#004c3a",
+  "#1a2214",
+]
+
+[[palette]]
+slug = "glitch"
+subject = "doki-doki-literature-club/glitch"
+signature = ["cursor", "ansi10", "ansi12"]
+ansi_source = "Neon + DDLC"
+
+[palette.colors]
+background = "#1d151b"
+foreground = "#f3dcea"
+cursor = "#d767c5"
+selection_background = "#443858"
+ansi = [
+  "#2a2127",
+  "#f06893",
+  "#a9d45b",
+  "#ffa75f",
+  "#918af3",
+  "#fc87e7",
+  "#66b0f9",
+  "#e0d0d9",
+
+  "#80747b",
+  "#f39eb2",
+  "#81f68d",
+  "#ffd5b6",
+  "#8eabe8",
+  "#ffbdef",
+  "#a2cbf2",
+  "#ffe7f5",
+]
+
+[palette.colors.light]
+background = "#fff7f9"
+foreground = "#291c25"
+cursor = "#a83e9a"
+selection_background = "#e1d0f8"
+ansi = [
+  "#ffeff7",
+  "#b72a60",
+  "#3d5800",
+  "#995000",
+  "#594ae1",
+  "#b115a4",
+  "#005389",
+  "#332930",
+
+  "#80747b",
+  "#8e3751",
+  "#004e19",
+  "#724d2d",
+  "#2e5494",
+  "#803b76",
+  "#184566",
+  "#291c25",
+]

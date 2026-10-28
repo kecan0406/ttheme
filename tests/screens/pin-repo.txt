@@ -3,9 +3,9 @@
  │ ⌕ Search… ‹hint› │
  ╰─────────────────────────────────────────────╯
 
-   ▾ Bocchi the Rock!  ぼっち・ざ・ろっく!    1
-▌    ■ kita
-   ▸ Lucky☆Star  らき☆すた                    1
+   ▾ Briarwood Rocks!  すたあ・ふ・ばらど!    1
+▌    ■ kipa
+   ▸ Lumen☆Song  たい☆なみ                    1
 
 
 
@@ -14,11 +14,11 @@
 
 
 
-kita  → ~/work · and below
-~/work     kita  and below  new
+kipa  → ~/work · and below
+~/work     kipa  and below  new
 ├── api/v2/ ← here
-└── site/  kita  this directory
+└── site/  kipa  this directory
 
-Replaces konata on ~/work · and below
-Then here · kita pinned to ~/work and below
+Replaces korund on ~/work · and below
+Then here · kipa pinned to ~/work and below
  [PREVIEW (PIN)]  This directory   And below  [Repository]   ←→ choose   enter confirm     esc back

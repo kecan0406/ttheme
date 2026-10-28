@@ -1,0 +1,393 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "gojo"
+subject = "jujutsu-kaisen/gojo"
+signature = ["cursor", "foreground", "ansi13"]
+ansi_source = "Horizon + Jujutsu"
+
+[palette.colors]
+background = "#11191c"
+foreground = "#e3e2e7"
+cursor = "#7cc1d6"
+selection_background = "#383b5b"
+ansi = [
+  "#1d2528",
+  "#ee6699",
+  "#64d6a3",
+  "#c5be73",
+  "#6e99c4",
+  "#aeabdf",
+  "#27bcca",
+  "#cdd6d9",
+
+  "#70787c",
+  "#f39cb8",
+  "#70f4b9",
+  "#e7df91",
+  "#48b6e2",
+  "#e2c7ff",
+  "#5fd7e5",
+  "#e0f1f7",
+]
+
+[palette.colors.light]
+background = "#f2fbfe"
+foreground = "#1e1f23"
+cursor = "#3c8397"
+selection_background = "#d2d4fc"
+ansi = [
+  "#ecf5f9",
+  "#b42d67",
+  "#005c3e",
+  "#7c5f1e",
+  "#3a678f",
+  "#5f5c9d",
+  "#005961",
+  "#252d30",
+
+  "#70787c",
+  "#8f3458",
+  "#004c33",
+  "#6b5011",
+  "#005c78",
+  "#654789",
+  "#004a51",
+  "#132226",
+]
+
+[[palette]]
+slug = "yuji"
+subject = "jujutsu-kaisen/yuji"
+signature = ["cursor", "ansi3", "ansi1"]
+ansi_source = "Rose Pine Moon + Jujutsu"
+
+[palette.colors]
+background = "#211513"
+foreground = "#fddbd6"
+cursor = "#e79a8e"
+selection_background = "#3e3b53"
+ansi = [
+  "#2e211f",
+  "#f26b69",
+  "#83d1aa",
+  "#f1ac7e",
+  "#8395c6",
+  "#de9dcb",
+  "#7cb3d2",
+  "#e6d0cc",
+
+  "#857370",
+  "#f39fa6",
+  "#aceac9",
+  "#ffd1b1",
+  "#98aadc",
+  "#ffbeec",
+  "#aacbe1",
+  "#ffe9e6",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b18"
+cursor = "#b35e51"
+selection_background = "#d9d3f2"
+ansi = [
+  "#fff0ee",
+  "#be2630",
+  "#005c3e",
+  "#925323",
+  "#4d6296",
+  "#934982",
+  "#165671",
+  "#362927",
+
+  "#857370",
+  "#8d3944",
+  "#094c34",
+  "#754b2b",
+  "#3a538d",
+  "#803c72",
+  "#254658",
+  "#2d1b18",
+]
+
+[[palette]]
+slug = "megumi"
+subject = "jujutsu-kaisen/megumi"
+signature = ["cursor", "ansi11", "ansi3"]
+ansi_source = "Night Owl + Jujutsu"
+
+[palette.colors]
+background = "#13181e"
+foreground = "#dae3f1"
+cursor = "#6794c2"
+selection_background = "#224156"
+ansi = [
+  "#1f242a",
+  "#f1659a",
+  "#67d6a3",
+  "#ddb66d",
+  "#7d96c5",
+  "#b8a2ff",
+  "#00bdcd",
+  "#d0d5dd",
+
+  "#73777f",
+  "#f3a0ba",
+  "#72f4ba",
+  "#eedd8e",
+  "#87ade8",
+  "#d6cbff",
+  "#7ad4e4",
+  "#e6effc",
+]
+
+[palette.colors.light]
+background = "#f7f9ff"
+foreground = "#17202a"
+cursor = "#3e6c98"
+selection_background = "#bcdbf5"
+ansi = [
+  "#f0f4fc",
+  "#b62967",
+  "#005c3e",
+  "#7d5e1e",
+  "#4b648f",
+  "#6c4bca",
+  "#005961",
+  "#282d33",
+
+  "#73777f",
+  "#8c3758",
+  "#004c33",
+  "#5c5110",
+  "#2d568b",
+  "#574c8a",
+  "#004a53",
+  "#17202a",
+]
+
+[[palette]]
+slug = "nobara"
+subject = "jujutsu-kaisen/nobara"
+signature = ["cursor", "ansi4", "ansi3"]
+ansi_source = "Spacedust + Jujutsu"
+
+[palette.colors]
+background = "#20160e"
+foreground = "#faddca"
+cursor = "#c08355"
+selection_background = "#273f58"
+ansi = [
+  "#2c211a",
+  "#f16e40",
+  "#afca82",
+  "#d3ba63",
+  "#8793c6",
+  "#ff8ba9",
+  "#67bd7d",
+  "#e4d1c5",
+
+  "#84746a",
+  "#f3a287",
+  "#d7e49b",
+  "#fcd8a9",
+  "#b1a4e0",
+  "#ffbfcd",
+  "#99d4af",
+  "#ffeadd",
+]
+
+[palette.colors.light]
+background = "#fff8f5"
+foreground = "#2c1c11"
+cursor = "#925c32"
+selection_background = "#c1d9f9"
+ansi = [
+  "#fff1e9",
+  "#ae3e12",
+  "#395823",
+  "#756212",
+  "#4e60a1",
+  "#b2315d",
+  "#005d2c",
+  "#352a22",
+
+  "#84746a",
+  "#8b3e22",
+  "#2f4a1c",
+  "#6e4f1e",
+  "#594995",
+  "#804252",
+  "#054c34",
+  "#2c1c11",
+]
+
+[[palette]]
+slug = "nanami"
+subject = "jujutsu-kaisen/nanami"
+signature = ["cursor", "ansi2", "ansi4"]
+ansi_source = "Pnevma + Jujutsu"
+
+[palette.colors]
+background = "#18180e"
+foreground = "#e6e4c9"
+cursor = "#aeb069"
+selection_background = "#3d3e3e"
+ansi = [
+  "#242419",
+  "#cd836a",
+  "#aeca8c",
+  "#dbb76d",
+  "#679cbb",
+  "#e79aad",
+  "#7eb980",
+  "#d7d5c4",
+
+  "#797869",
+  "#f3a186",
+  "#e0e195",
+  "#fed88b",
+  "#70b5c5",
+  "#ffc1ce",
+  "#9dd3aa",
+  "#f1efd4",
+]
+
+[palette.colors.light]
+background = "#fdfae8"
+foreground = "#202110"
+cursor = "#777938"
+selection_background = "#d8d7d7"
+ansi = [
+  "#f7f4e2",
+  "#92523c",
+  "#405725",
+  "#7b5f1e",
+  "#316986",
+  "#9b4861",
+  "#235b2c",
+  "#2d2d21",
+
+  "#797869",
+  "#8b3d22",
+  "#434508",
+  "#6c5005",
+  "#015e6c",
+  "#7e4252",
+  "#184b2d",
+  "#202110",
+]
+
+[[palette]]
+slug = "geto"
+subject = "jujutsu-kaisen/geto"
+signature = ["cursor", "ansi3", "ansi2"]
+ansi_source = "Royal + Jujutsu"
+
+[palette.colors]
+background = "#16171f"
+foreground = "#e1e1f3"
+cursor = "#858ec1"
+selection_background = "#3e3c4b"
+ansi = [
+  "#22232b",
+  "#e86b99",
+  "#a0cc9a",
+  "#e1b46d",
+  "#8095c9",
+  "#b3a7f8",
+  "#89afd8",
+  "#d4d3de",
+
+  "#767680",
+  "#f3a0bb",
+  "#74f4ba",
+  "#f5d738",
+  "#8fabe8",
+  "#d5cbff",
+  "#a2cbf2",
+  "#ececfe",
+]
+
+[palette.colors.light]
+background = "#fbf8ff"
+foreground = "#1d1f2b"
+cursor = "#5865a6"
+selection_background = "#d9d5e8"
+ansi = [
+  "#f4f2fd",
+  "#ae3467",
+  "#325931",
+  "#805d1f",
+  "#4b6297",
+  "#6f4fb9",
+  "#2b5377",
+  "#2b2c34",
+
+  "#767680",
+  "#8c3759",
+  "#004c33",
+  "#625400",
+  "#2f5395",
+  "#564c8a",
+  "#184566",
+  "#1d1f2b",
+]
+
+[[palette]]
+slug = "sukuna"
+subject = "jujutsu-kaisen/sukuna"
+signature = ["cursor", "foreground", "ansi9"]
+ansi_source = "Hurtado + Jujutsu"
+
+[palette.colors]
+background = "#211513"
+foreground = "#e0e3e6"
+cursor = "#ed6652"
+selection_background = "#293f59"
+ansi = [
+  "#2e211e",
+  "#e3766a",
+  "#d7c42f",
+  "#feaa1b",
+  "#9590c6",
+  "#ff8cbb",
+  "#7ab1ed",
+  "#e6d0cc",
+
+  "#857370",
+  "#f3a18f",
+  "#f6e130",
+  "#ffd6a3",
+  "#bf9ce8",
+  "#ffc1d7",
+  "#a8cbf2",
+  "#ffe9e5",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#1c2023"
+cursor = "#c33221"
+selection_background = "#c2d9f9"
+ansi = [
+  "#fff0ee",
+  "#b13930",
+  "#395922",
+  "#8a5900",
+  "#615ba1",
+  "#b12e70",
+  "#065389",
+  "#362927",
+
+  "#857370",
+  "#8c3d2b",
+  "#2e491b",
+  "#724e17",
+  "#6b3da1",
+  "#7e415b",
+  "#1f4566",
+  "#2d1b18",
+]

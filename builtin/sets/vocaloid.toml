@@ -1,0 +1,393 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "miku"
+subject = "vocaloid/miku"
+signature = ["cursor", "ansi1", "ansi12"]
+ansi_source = "vauxe Miku"
+
+[palette.colors]
+background = "#101918"
+foreground = "#d3e6e3"
+cursor = "#39c5bb"
+selection_background = "#234246"
+ansi = [
+  "#1c2524",
+  "#dc74a8",
+  "#4dd89e",
+  "#b2c380",
+  "#7395cf",
+  "#b4a7e4",
+  "#1abfae",
+  "#ccd7d4",
+
+  "#6f7977",
+  "#f39eb5",
+  "#57f8b5",
+  "#d3e49e",
+  "#a1a6e8",
+  "#d7c8ff",
+  "#00ddd6",
+  "#dff2ef",
+]
+
+[palette.colors.light]
+background = "#f1fcf9"
+foreground = "#122221"
+cursor = "#00877f"
+selection_background = "#bcdde2"
+ansi = [
+  "#ebf6f3",
+  "#a14074",
+  "#005c3e",
+  "#7c5f1e",
+  "#41649a",
+  "#6757a5",
+  "#005a56",
+  "#242e2d",
+
+  "#6f7977",
+  "#8e3654",
+  "#004c32",
+  "#6c5011",
+  "#454ca1",
+  "#624888",
+  "#004b4a",
+  "#122221",
+]
+
+[[palette]]
+slug = "kumori"
+subject = "vocaloid/kumori"
+signature = ["cursor", "ansi12", "ansi14"]
+ansi_source = "Everblush + Crypton"
+
+[palette.colors]
+background = "#201516"
+foreground = "#fbdbdc"
+cursor = "#f5959f"
+selection_background = "#383f42"
+ansi = [
+  "#2d2021",
+  "#e47479",
+  "#d5c448",
+  "#f4ac6a",
+  "#9b8adb",
+  "#f291d2",
+  "#66bac9",
+  "#e5cfd0",
+
+  "#857374",
+  "#f3a0a2",
+  "#f1e063",
+  "#ffd5b3",
+  "#a2a7dd",
+  "#ffbee6",
+  "#8cd3cf",
+  "#ffe9e9",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1c"
+cursor = "#c05463"
+selection_background = "#d1d8dc"
+ansi = [
+  "#fff0f0",
+  "#b03843",
+  "#395922",
+  "#8e561c",
+  "#6950bf",
+  "#a7348b",
+  "#005964",
+  "#36292a",
+
+  "#857374",
+  "#8c3a40",
+  "#2e491b",
+  "#724d2a",
+  "#474f93",
+  "#803d6c",
+  "#004b48",
+  "#2d1b1c",
+]
+
+[[palette]]
+slug = "rin"
+subject = "vocaloid/rin"
+signature = ["cursor", "ansi4", "ansi1"]
+ansi_source = "Citruszest"
+
+[palette.colors]
+background = "#1b170c"
+foreground = "#efe1c5"
+cursor = "#fecb10"
+selection_background = "#4a3c16"
+ansi = [
+  "#282318",
+  "#f26c67",
+  "#97d24b",
+  "#e0b700",
+  "#00a1d7",
+  "#ff8dab",
+  "#6bbc7c",
+  "#ddd3c2",
+
+  "#7e7667",
+  "#f3a283",
+  "#afef68",
+  "#f5df22",
+  "#00bad3",
+  "#ffc1ce",
+  "#6edd84",
+  "#faedd0",
+]
+
+[palette.colors.light]
+background = "#fff8f1"
+foreground = "#251f0d"
+cursor = "#a48200"
+selection_background = "#ebd5a2"
+ansi = [
+  "#fdf2e0",
+  "#be262c",
+  "#2e5a0b",
+  "#815d00",
+  "#006b90",
+  "#b1335e",
+  "#005d2c",
+  "#312c20",
+
+  "#7e7667",
+  "#8b3e1d",
+  "#244c05",
+  "#6e4f00",
+  "#005e6b",
+  "#7e4252",
+  "#004d23",
+  "#251f0d",
+]
+
+[[palette]]
+slug = "len"
+subject = "vocaloid/len"
+signature = ["cursor", "ansi6", "ansi9"]
+ansi_source = "Srcery"
+
+[palette.colors]
+background = "#19180d"
+foreground = "#e9e3c7"
+cursor = "#e4d517"
+selection_background = "#483d18"
+ansi = [
+  "#262418",
+  "#eb7425",
+  "#a4ce61",
+  "#e3b61d",
+  "#00a3be",
+  "#ff8caa",
+  "#2fbcc1",
+  "#d9d5c3",
+
+  "#7a7768",
+  "#f3a195",
+  "#d6e752",
+  "#fbda75",
+  "#3fbcbc",
+  "#ffbfcd",
+  "#0edfc2",
+  "#f4eed2",
+]
+
+[palette.colors.light]
+background = "#fff9e7"
+foreground = "#22200e"
+cursor = "#938800"
+selection_background = "#e8d6a4"
+ansi = [
+  "#f9f4e1",
+  "#a44800",
+  "#305b0f",
+  "#805d00",
+  "#006d80",
+  "#b1325e",
+  "#005a5c",
+  "#2e2c20",
+
+  "#7a7768",
+  "#8c3c32",
+  "#2b4a15",
+  "#6e4f00",
+  "#005f5f",
+  "#804252",
+  "#004b40",
+  "#22200e",
+]
+
+[[palette]]
+slug = "luka"
+subject = "vocaloid/luka"
+signature = ["cursor", "ansi3", "ansi2"]
+ansi_source = "Rose Pine"
+
+[palette.colors]
+background = "#1f1517"
+foreground = "#f9dbe1"
+cursor = "#ffbacc"
+selection_background = "#4d3747"
+ansi = [
+  "#2c2123",
+  "#e96e93",
+  "#8ac9e8",
+  "#e6b26a",
+  "#8395c6",
+  "#d69fd5",
+  "#85afd4",
+  "#e4d0d3",
+
+  "#837376",
+  "#f39eb3",
+  "#9de8f5",
+  "#fdd5bc",
+  "#98aadc",
+  "#f9bff8",
+  "#a8cbe2",
+  "#ffe8ec",
+]
+
+[palette.colors.light]
+background = "#fff8f8"
+foreground = "#2c1b1f"
+cursor = "#ba6d84"
+selection_background = "#eecee3"
+ansi = [
+  "#fff0f2",
+  "#b13360",
+  "#005772",
+  "#845b1b",
+  "#4d6296",
+  "#894d8d",
+  "#2e5276",
+  "#35292c",
+
+  "#837376",
+  "#8e3752",
+  "#004a52",
+  "#714d34",
+  "#3a538d",
+  "#7b3c80",
+  "#244659",
+  "#2c1b1f",
+]
+
+[[palette]]
+slug = "kaito"
+subject = "vocaloid/kaito"
+signature = ["cursor", "ansi4", "ansi3"]
+ansi_source = "Aardvark Blue + Crypton"
+
+[palette.colors]
+background = "#15171e"
+foreground = "#dfe2f2"
+cursor = "#4e7ee6"
+selection_background = "#2f3e5a"
+ansi = [
+  "#21232b",
+  "#f1659a",
+  "#65d6a3",
+  "#daba00",
+  "#5696f3",
+  "#c99cff",
+  "#65b3e9",
+  "#d3d4de",
+
+  "#757780",
+  "#f39fba",
+  "#70f4b9",
+  "#d2e37a",
+  "#8cace0",
+  "#e0c7ff",
+  "#94cef3",
+  "#eaedfe",
+]
+
+[palette.colors.light]
+background = "#faf8ff"
+foreground = "#1b1f2b"
+cursor = "#1351b8"
+selection_background = "#c8d7fa"
+ansi = [
+  "#f2f3fd",
+  "#b62967",
+  "#005c3e",
+  "#746200",
+  "#0a62bc",
+  "#8041c9",
+  "#00557d",
+  "#2a2c33",
+
+  "#757780",
+  "#8d3658",
+  "#004c33",
+  "#4e5a00",
+  "#355684",
+  "#63478a",
+  "#004764",
+  "#1b1f2b",
+]
+
+[[palette]]
+slug = "meiko"
+subject = "vocaloid/meiko"
+signature = ["cursor", "ansi11", "ansi14"]
+ansi_source = "Sundried + Crypton"
+
+[palette.colors]
+background = "#201514"
+foreground = "#fcdbda"
+cursor = "#ee6368"
+selection_background = "#5a323a"
+ansi = [
+  "#2d2120",
+  "#e5756e",
+  "#b7cc81",
+  "#fda680",
+  "#aa87d3",
+  "#fd90ad",
+  "#afac76",
+  "#e5cfcf",
+
+  "#857372",
+  "#f3a09f",
+  "#f6e030",
+  "#ffc5ad",
+  "#bf9de8",
+  "#ffc1ce",
+  "#e6c274",
+  "#ffe9e8",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1b"
+cursor = "#c42e3d"
+selection_background = "#ffcad2"
+ansi = [
+  "#fff0ef",
+  "#b33734",
+  "#3a5823",
+  "#a04a20",
+  "#7a4cb2",
+  "#ae365e",
+  "#545225",
+  "#362928",
+
+  "#857372",
+  "#8c3a3d",
+  "#2f4a1b",
+  "#7c472f",
+  "#6a3ea0",
+  "#7e4254",
+  "#553f00",
+  "#2d1b1b",
+]

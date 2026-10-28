@@ -18,13 +18,13 @@ const RLO = String.fromCodePoint(0x202e)
 const LRI = String.fromCodePoint(0x2066)
 
 test('a palette name is its marketplace and a slug, the built-in marketplace being ttheme', () => {
-  assert.equal(nameProblem('ttheme/madoka'), undefined)
-  assert.equal(nameProblem('kecan0406@dust/rei-2'), undefined)
+  assert.equal(nameProblem('ttheme/orla'), undefined)
+  assert.equal(nameProblem('kumquat09@dust/wren-2'), undefined)
 
   for (const bad of [
-    'madoka',
-    'Madoka',
-    'ttheme/-madoka',
+    'orla',
+    'Orla',
+    'ttheme/-orla',
     'ttheme/a--b',
     'a/b',
     'a@b',
@@ -37,29 +37,29 @@ test('a palette name is its marketplace and a slug, the built-in marketplace bei
     assert.notEqual(nameProblem(bad), undefined, bad)
   }
 
-  assert.equal(stem('kecan0406@dust/rei'), 'kecan0406--dust--rei')
-  assert.equal(stem('ttheme/rei'), 'ttheme--rei')
-  assert.equal(publisherOf('kecan0406@dust/rei'), 'kecan0406@dust')
-  assert.equal(publisherOf('ttheme/madoka'), 'ttheme')
-  assert.equal(isBuiltin('ttheme/madoka'), true)
-  assert.equal(isBuiltin('ttheme@dust/madoka'), false)
-  assert.equal(slugOf('kecan0406@dust/rei'), 'rei')
+  assert.equal(stem('kumquat09@dust/wren'), 'kumquat09--dust--wren')
+  assert.equal(stem('ttheme/wren'), 'ttheme--wren')
+  assert.equal(publisherOf('kumquat09@dust/wren'), 'kumquat09@dust')
+  assert.equal(publisherOf('ttheme/orla'), 'ttheme')
+  assert.equal(isBuiltin('ttheme/orla'), true)
+  assert.equal(isBuiltin('ttheme@dust/orla'), false)
+  assert.equal(slugOf('kumquat09@dust/wren'), 'wren')
 })
 
 test('a subject is a work, or a work and one of its characters', () => {
-  assert.equal(subjectProblem('evangelion'), undefined)
-  assert.equal(subjectProblem('evangelion/rei'), undefined)
-  assert.equal(workIdOf('evangelion/rei'), 'evangelion')
-  assert.equal(characterIdOf('evangelion/rei'), 'rei')
-  assert.equal(characterIdOf('evangelion'), undefined)
+  assert.equal(subjectProblem('starfall'), undefined)
+  assert.equal(subjectProblem('starfall/wren'), undefined)
+  assert.equal(workIdOf('starfall/wren'), 'starfall')
+  assert.equal(characterIdOf('starfall/wren'), 'wren')
+  assert.equal(characterIdOf('starfall'), undefined)
 
-  for (const bad of ['', 'Evangelion', 'a/b/c', 'ttheme', 'ttheme/rei', 'eva rei', 'eva/', '/rei']) {
+  for (const bad of ['', 'Starfall', 'a/b/c', 'ttheme', 'ttheme/wren', 'star wren', 'star/', '/wren']) {
     assert.notEqual(subjectProblem(bad), undefined, bad)
   }
 })
 
 test('free text that would break a config line or zsh quoting is refused', () => {
-  assert.equal(textProblem('Sword Art Online'), undefined)
+  assert.equal(textProblem('Glass Arcade'), undefined)
 
   for (const bad of ['a\nb', 'a"b', 'a$b', 'a`b', 'a\\b', 'x'.repeat(81), `ab${RLO}cd`, `ab${LRI}cd`]) {
     assert.notEqual(textProblem(bad), undefined, JSON.stringify(bad))
@@ -77,35 +77,32 @@ selection_background = "#303060"
 ansi = [${Array.from({ length: 16 }, () => '"#808080"').join(', ')}]
 `
 
-const place = { name: 'kec@dust/dusk' }
+const place = { name: 'kai@dust/dusk' }
 
-test('a palette names its subject and where it was copied from at the top, and its slug is its file', () => {
-  const theme = readTheme('dusk.toml', palette('subject = "neon/dusk"\nfrom = "ttheme/madoka"'), place)
-  assert.equal(theme.name, 'kec@dust/dusk')
+test('a palette names its subject and where it was copied from at the top', () => {
+  const theme = readTheme('dusk', palette('subject = "neon/dusk"\nfrom = "ttheme/orla"'), place)
+  assert.equal(theme.name, 'kai@dust/dusk')
   assert.equal(theme.subject, 'neon/dusk')
-  assert.equal(theme.from, 'ttheme/madoka')
+  assert.equal(theme.from, 'ttheme/orla')
   assert.equal(theme.ansiSource, 'original')
-  assert.equal(readTheme('d.toml', palette(''), place).subject, undefined)
-  assert.throws(() => readTheme('d.toml', palette('subject = "Neon"'), place), /names a work/)
-  assert.throws(() => readTheme('d.toml', palette('from = "madoka"'), place), /lowercase letters/)
+  assert.equal(readTheme('d', palette(''), place).subject, undefined)
+  assert.throws(() => readTheme('d', palette('subject = "Neon"'), place), /names a work/)
+  assert.throws(() => readTheme('d', palette('from = "orla"'), place), /lowercase letters/)
   assert.throws(
-    () => readTheme('d.toml', palette('subject = "neon\\u001b]52;c;aGk=\\u0007"'), place),
+    () => readTheme('d', palette('subject = "neon\\u001b]52;c;aGk=\\u0007"'), place),
     (error: Error) => !error.message.includes('\x1b') && !error.message.includes('\x07'),
   )
 })
 
 test('[[picture]] takes a known site, a post number and an optional framing', () => {
   const withPicture = (table: string) => `${palette('')}\n[[picture]]\n${table}\n`
-  assert.deepEqual(readTheme('d.toml', withPicture('site = "danbooru"\nid = 12\nsize = 130'), place).pictures, [
+  assert.deepEqual(readTheme('d', withPicture('site = "danbooru"\nid = 12\nsize = 130'), place).pictures, [
     { site: 'danbooru', id: 12, size: 130 },
   ])
-  assert.throws(() => readTheme('d.toml', withPicture('site = "pixiv"\nid = 12'), place), /site must be one of/)
-  assert.throws(() => readTheme('d.toml', withPicture('site = "danbooru"\nid = "12"'), place), /post's number/)
-  assert.throws(() => readTheme('d.toml', withPicture('site = "danbooru"\nid = 12\nsize = 5'), place), /size/)
-  assert.throws(
-    () => readTheme('d.toml', withPicture('site = "danbooru"\nid = 12\nposition = "left"'), place),
-    /position/,
-  )
+  assert.throws(() => readTheme('d', withPicture('site = "pixiv"\nid = 12'), place), /site must be one of/)
+  assert.throws(() => readTheme('d', withPicture('site = "danbooru"\nid = "12"'), place), /post's number/)
+  assert.throws(() => readTheme('d', withPicture('site = "danbooru"\nid = 12\nsize = 5'), place), /size/)
+  assert.throws(() => readTheme('d', withPicture('site = "danbooru"\nid = 12\nposition = "left"'), place), /position/)
 })
 
 test('a palette another ttheme wrote drops the picture sites and framings this one does not know instead of refusing the palette', () => {
@@ -122,36 +119,33 @@ id = 12
 position = "left"
 `
 
-  assert.deepEqual(readTheme('d.toml', pictures, foreign).pictures, [{ site: 'danbooru', id: 12 }])
-  assert.equal(
-    readTheme('d.toml', `${palette('')}\n[[picture]]\nsite = "pixiv"\nid = 3\n`, foreign).pictures,
-    undefined,
-  )
+  assert.deepEqual(readTheme('d', pictures, foreign).pictures, [{ site: 'danbooru', id: 12 }])
+  assert.equal(readTheme('d', `${palette('')}\n[[picture]]\nsite = "pixiv"\nid = 3\n`, foreign).pictures, undefined)
 })
 
-test('a palette carries its other mode in [colors.light] or [colors.dark], whichever its [colors] is not', () => {
+test('a palette carries its other mode in [palette.colors.light] or [palette.colors.dark], whichever its [palette.colors] is not', () => {
   const gray = Array.from({ length: 16 }, () => '"#606060"').join(', ')
 
   const other = (table: string, background: string, foreground: string, cursor = '#a04060') =>
     `${palette('')}\n[${table}]\nbackground = "${background}"\nforeground = "${foreground}"\ncursor = "${cursor}"\nselection_background = "#c0c0e0"\nansi = [${gray}]\n`
 
-  assert.equal(readTheme('d.toml', palette(''), place).other, undefined)
-  assert.equal(readTheme('d.toml', other('colors.light', '#fafafa', '#202020'), place).other?.background, '#fafafa')
-  assert.throws(() => readTheme('d.toml', other('colors.dark', '#050505', '#f0f0f0'), place), /already dark/)
-  assert.throws(() => readTheme('d.toml', other('colors.light', '#202020', '#fafafa'), place), /must be light/)
+  assert.equal(readTheme('d', palette(''), place).other, undefined)
+  assert.equal(readTheme('d', other('colors.light', '#fafafa', '#202020'), place).other?.background, '#fafafa')
+  assert.throws(() => readTheme('d', other('colors.dark', '#050505', '#f0f0f0'), place), /already dark/)
+  assert.throws(() => readTheme('d', other('colors.light', '#202020', '#fafafa'), place), /must be light/)
   assert.throws(
-    () => readTheme('d.toml', other('colors.light', '#fafafa', '#202020', '#fafafa'), place),
-    /three colors that differ in \[colors\.light\]/,
+    () => readTheme('d', other('colors.light', '#fafafa', '#202020', '#fafafa'), place),
+    /three colors that differ in \[palette\.colors\.light\]/,
   )
 })
 
 test('a built-in palette carries its other mode and names where its ANSI colors came from', () => {
   const builtin = { name: 'ttheme/dusk', builtin: true as const }
   assert.throws(
-    () => readTheme('d.toml', palette('ansi_source = "Neon"'), builtin),
-    /built-in palette carries its other mode in \[colors\.light\]/,
+    () => readTheme('d', palette('ansi_source = "Neon"'), builtin),
+    /built-in palette carries its other mode in \[palette\.colors\.light\]/,
   )
   const light = `\n[colors.light]\nbackground = "#fafafa"\nforeground = "#202020"\ncursor = "#a04060"\nselection_background = "#c0c0e0"\nansi = [${Array.from({ length: 16 }, () => '"#606060"').join(', ')}]\n`
-  assert.equal(readTheme('d.toml', `${palette('ansi_source = "Neon"')}${light}`, builtin).ansiSource, 'Neon')
-  assert.throws(() => readTheme('d.toml', `${palette('')}${light}`, builtin), /ansi_source must be a non-empty string/)
+  assert.equal(readTheme('d', `${palette('ansi_source = "Neon"')}${light}`, builtin).ansiSource, 'Neon')
+  assert.throws(() => readTheme('d', `${palette('')}${light}`, builtin), /ansi_source must be a non-empty string/)
 })

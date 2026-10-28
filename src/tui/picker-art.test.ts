@@ -14,7 +14,7 @@ const released = (out: string) => [...out.matchAll(/a=d,d=I,i=(\d+)/g)].map((m) 
 test('the picker layer sends a picture only when it changes, under a spare id, and lets go of the old one after', () => {
   const e = new PaletteEditor({
     title: 'Edit palette',
-    name: 'kec@dust/dusk',
+    name: 'kai@dust/dusk',
     colors: grow(SEEDS),
     signature: ['background', 'foreground', 'cursor'],
     check: () => undefined,
@@ -66,7 +66,7 @@ function plotOf(line: string, from: number, to: number): string {
 test('the relations charts go out as pictures over blank cells, again only when they change, and go with the view', () => {
   const e = new PaletteEditor({
     title: 'Edit palette',
-    name: 'kec@dust/dusk',
+    name: 'kai@dust/dusk',
     colors: grow(SEEDS),
     signature: ['background', 'foreground', 'cursor'],
     check: () => undefined,

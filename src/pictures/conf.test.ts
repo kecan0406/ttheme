@@ -32,9 +32,9 @@ test('the reader reads the keys the format names and follows the include it hold
 
   conf(dir, 'tune.conf', ['background-image-opacity = 0.4'])
 
-  const file = conf(dir, 'kagami.conf', [
+  const file = conf(dir, 'tamsin.conf', [
     '# by someone',
-    'background-image = /pictures/kagami.png',
+    'background-image = /pictures/tamsin.png',
     'background-image-fit = cover',
     'background-image-position = top-right',
     'background-image-opacity = 0.2',
@@ -44,7 +44,7 @@ test('the reader reads the keys the format names and follows the include it hold
   const set = readConf(file, dir, '/home/ke')
 
   assert.ok(set)
-  assert.equal(set.get('background-image'), '/pictures/kagami.png')
+  assert.equal(set.get('background-image'), '/pictures/tamsin.png')
   assert.equal(set.get('background-image-fit'), 'cover')
   assert.equal(set.get('background-image-position'), 'top-right')
   assert.equal(set.get('background-image-opacity'), '0.4')
@@ -101,7 +101,7 @@ test('every key the format names is one the reader takes', () => {
 
   const file = conf(
     dir,
-    'kagami.conf',
+    'tamsin.conf',
     CONF_KEYS.map((key, index) => `${key} = ${index}`),
   )
 

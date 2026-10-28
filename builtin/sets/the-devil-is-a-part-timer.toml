@@ -1,0 +1,337 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "maou"
+subject = "the-devil-is-a-part-timer/maou"
+signature = ["cursor", "selection", "ansi3"]
+ansi_source = "Electron Highlighter + Ente Isla"
+
+[palette.colors]
+background = "#211512"
+foreground = "#fddbd4"
+cursor = "#df7259"
+selection_background = "#842329"
+ansi = [
+  "#2e211e",
+  "#eb7072",
+  "#c0c926",
+  "#e3b463",
+  "#b580dc",
+  "#ee94c8",
+  "#59bf6f",
+  "#e6d0cb",
+
+  "#85736f",
+  "#f3a0a0",
+  "#dbe63d",
+  "#ffd6a9",
+  "#be9ce8",
+  "#ffbfe0",
+  "#76db88",
+  "#ffe9e4",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b17"
+cursor = "#af4932"
+selection_background = "#ff8888"
+ansi = [
+  "#fff0ed",
+  "#b7303b",
+  "#36591d",
+  "#815d12",
+  "#8741bb",
+  "#a33c7f",
+  "#005d26",
+  "#372926",
+
+  "#85736f",
+  "#8c3a3e",
+  "#2c4a16",
+  "#714d1e",
+  "#6a3ea1",
+  "#7f3f65",
+  "#004d1e",
+  "#2d1b17",
+]
+
+[[palette]]
+slug = "emi"
+subject = "the-devil-is-a-part-timer/emi"
+signature = ["cursor", "ansi10", "ansi5"]
+ansi_source = "Paraiso Dark + Ente Isla"
+
+[palette.colors]
+background = "#201516"
+foreground = "#fbdbdf"
+cursor = "#b2395a"
+selection_background = "#463a44"
+ansi = [
+  "#2d2122",
+  "#f26b70",
+  "#d2c349",
+  "#ffa763",
+  "#8b8af2",
+  "#c3a5da",
+  "#7cafe8",
+  "#e4d0d2",
+
+  "#847375",
+  "#f3a0a0",
+  "#d6e677",
+  "#ffd5b8",
+  "#a6a5e8",
+  "#ffbdf6",
+  "#a7caf3",
+  "#ffe9eb",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2c1b1e"
+cursor = "#9c284a"
+selection_background = "#e4d2df"
+ansi = [
+  "#fff0f1",
+  "#bd2638",
+  "#595100",
+  "#9a4f00",
+  "#514ce2",
+  "#785496",
+  "#135386",
+  "#36292b",
+
+  "#847375",
+  "#8c3a3e",
+  "#3e4700",
+  "#724c2f",
+  "#4b4aa1",
+  "#80397e",
+  "#1d4468",
+  "#2c1b1e",
+]
+
+[[palette]]
+slug = "chiho"
+subject = "the-devil-is-a-part-timer/chiho"
+signature = ["cursor", "ansi6", "ansi3"]
+ansi_source = "Pencil Dark + Ente Isla"
+
+[palette.colors]
+background = "#211512"
+foreground = "#fddbd3"
+cursor = "#cc8472"
+selection_background = "#273f58"
+ansi = [
+  "#2e211e",
+  "#f2697f",
+  "#c3c748",
+  "#f7a987",
+  "#9e87e3",
+  "#e09ccd",
+  "#69b9ab",
+  "#e6d0cb",
+
+  "#85736f",
+  "#f39fa4",
+  "#dbe56f",
+  "#ffd4ad",
+  "#b1a1e8",
+  "#ffbcf9",
+  "#93d5d9",
+  "#ffe9e4",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b16"
+cursor = "#965342"
+selection_background = "#c1d9f9"
+ansi = [
+  "#fff1ed",
+  "#bb274a",
+  "#36581e",
+  "#9b4e28",
+  "#6d4acb",
+  "#944785",
+  "#005b50",
+  "#372926",
+
+  "#85736f",
+  "#8d3942",
+  "#2c4a16",
+  "#734d24",
+  "#5a45a1",
+  "#813782",
+  "#004a4e",
+  "#2d1b16",
+]
+
+[[palette]]
+slug = "ashiya"
+subject = "the-devil-is-a-part-timer/ashiya"
+signature = ["cursor", "foreground", "ansi2"]
+ansi_source = "Apple System Colors + Ente Isla"
+
+[palette.colors]
+background = "#1d170c"
+foreground = "#e9e2cb"
+cursor = "#bd9852"
+selection_background = "#283f59"
+ansi = [
+  "#292318",
+  "#f16d40",
+  "#b4ca78",
+  "#e4b61b",
+  "#00a6ae",
+  "#ff8fa5",
+  "#60bb9b",
+  "#dfd3c2",
+
+  "#807667",
+  "#f3a187",
+  "#cee94b",
+  "#ffd972",
+  "#52c0e0",
+  "#ffc2cb",
+  "#74dab3",
+  "#feebd0",
+]
+
+[palette.colors.light]
+background = "#fff8f3"
+foreground = "#222011"
+cursor = "#8a6a28"
+selection_background = "#c2d9f9"
+ansi = [
+  "#fff2e0",
+  "#af3d13",
+  "#455611",
+  "#805d00",
+  "#006e74",
+  "#b03657",
+  "#005c45",
+  "#322b1f",
+
+  "#807667",
+  "#8b3d23",
+  "#3c4700",
+  "#6e5000",
+  "#005d71",
+  "#7e434e",
+  "#004c37",
+  "#271e0d",
+]
+
+[[palette]]
+slug = "urushihara"
+subject = "the-devil-is-a-part-timer/urushihara"
+signature = ["cursor", "ansi5", "ansi12"]
+ansi_source = "Abernathy + Ente Isla"
+
+[palette.colors]
+background = "#1a161e"
+foreground = "#e9dff1"
+cursor = "#705c8e"
+selection_background = "#3c3e3d"
+ansi = [
+  "#26222a",
+  "#ef679a",
+  "#69d6a4",
+  "#ffa76d",
+  "#7690f3",
+  "#d49de2",
+  "#46b5f4",
+  "#d9d2dd",
+
+  "#7b757f",
+  "#f39db9",
+  "#74f5bb",
+  "#fdd5b9",
+  "#aea4db",
+  "#f4c0ff",
+  "#98cdf3",
+  "#f5eafc",
+]
+
+[palette.colors.light]
+background = "#fef7ff"
+foreground = "#231d2a"
+cursor = "#725e90"
+selection_background = "#d7d7d6"
+ansi = [
+  "#f9f1fc",
+  "#b52b67",
+  "#005c3e",
+  "#995100",
+  "#2455e3",
+  "#8a47a0",
+  "#00567b",
+  "#2e2a33",
+
+  "#7b757f",
+  "#8e3559",
+  "#004c33",
+  "#714d31",
+  "#574b90",
+  "#773d89",
+  "#004766",
+  "#231d2a",
+]
+
+[[palette]]
+slug = "suzuno"
+subject = "the-devil-is-a-part-timer/suzuno"
+signature = ["cursor", "ansi3", "ansi1"]
+ansi_source = "owl + Ente Isla"
+
+[palette.colors]
+background = "#12181d"
+foreground = "#d9e4f0"
+cursor = "#3c6a8c"
+selection_background = "#3c3e3e"
+ansi = [
+  "#1e242a",
+  "#f26a79",
+  "#8eceb2",
+  "#f0b03e",
+  "#689cbb",
+  "#baa8df",
+  "#71b7bd",
+  "#cfd5dc",
+
+  "#72787e",
+  "#f39ebe",
+  "#aaeacd",
+  "#eadc98",
+  "#7db2d1",
+  "#dbc9ff",
+  "#8cd2da",
+  "#e4effb",
+]
+
+[palette.colors.light]
+background = "#f6f9ff"
+foreground = "#162129"
+cursor = "#29597a"
+selection_background = "#d7d7d7"
+ansi = [
+  "#eff4fc",
+  "#bc2743",
+  "#185a44",
+  "#855b00",
+  "#336986",
+  "#6d579d",
+  "#00595f",
+  "#272d32",
+
+  "#72787e",
+  "#8e355d",
+  "#034c37",
+  "#5e551f",
+  "#205a76",
+  "#5d4a8a",
+  "#004a50",
+  "#162129",
+]

@@ -56,7 +56,7 @@ function Mark({ slot }: { slot: string }) {
 }
 
 export function TabSession({ theme }: { theme: Theme }) {
-  const file = `builtin/palettes/${theme.name}.toml`
+  const file = `builtin/sets/${theme.work?.id ?? 'original'}.toml`
 
   return (
     <pre translate="no" class="overflow-hidden px-4.5 pt-3 pb-4 font-mono text-code whitespace-pre text-(--fg)">

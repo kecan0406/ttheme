@@ -20,9 +20,9 @@ const quoted = (text: string) => text.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')
 const CANONICAL = new RegExp(quoted(stemZsh('EXPR')).replace('EXPR', '[^}]*'), 'g')
 
 test('the rules turn a palette name into the file stem the terminals use', () => {
-  assert.equal(stem('miku'), 'miku')
-  assert.equal(stem('kecan@marketplace'), 'kecan--marketplace')
-  assert.equal(stem('kecan@marketplace/miku'), 'kecan--marketplace--miku')
+  assert.equal(stem('orla'), 'orla')
+  assert.equal(stem('kumquat@marketplace'), 'kumquat--marketplace')
+  assert.equal(stem('kumquat@marketplace/orla'), 'kumquat--marketplace--orla')
 })
 
 test('the rules replace the first match of each, as the shell does', () => {
@@ -51,7 +51,7 @@ test('every mangling in the shell layer is the canonical form the rules make', (
 })
 
 test('the canonical form computes what the rules compute', () => {
-  const names = ['miku', 'kecan@marketplace', 'kecan@marketplace/miku', 'a@b@c']
+  const names = ['orla', 'kumquat@marketplace', 'kumquat@marketplace/orla', 'a@b@c']
 
   const shell = spawnSync('zsh', ['-f', '-c', `for x in "$@"; do print -r -- ${stemZsh('x')}; done`, '--', ...names], {
     encoding: 'utf8',

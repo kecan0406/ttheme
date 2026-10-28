@@ -16,9 +16,9 @@ typeset -gi PAINTED=0
 
 typeset -gA STATES=(
   empty  ''
-  few    'ttheme/konata ttheme/kita'
-  marketplace 'ttheme/konata fix@shop/arcade fix@shop/dusk'
-  pinned 'ttheme/konata ttheme/kita'
+  few    'ttheme/korund ttheme/kipa'
+  marketplace 'ttheme/korund fix@shop/arcade fix@shop/dusk'
+  pinned 'ttheme/korund ttheme/kipa'
 )
 
 typeset -ga SCENARIOS=(
@@ -74,7 +74,7 @@ fixture_home() {
   fi
   if [[ $state == pinned ]]; then
     mkdir -p $home/work/.git $home/work/api/v2 $home/work/site $home/notes
-    print -l '~/work/**  ttheme/konata' '~/work/site  ttheme/kita' '~/notes/**  ttheme/ryo' '/nonexistent-ttheme/archive/**  ttheme/kita' 'ssh:tusa  ttheme/konata' 'ssh:*.prod  ttheme/kita' > $home/ttheme/pins
+    print -l '~/work/**  ttheme/korund' '~/work/site  ttheme/kipa' '~/notes/**  ttheme/rue' '/nonexistent-ttheme/archive/**  ttheme/kipa' 'ssh:teal  ttheme/korund' 'ssh:*.prod  ttheme/kipa' > $home/ttheme/pins
   fi
   print -r -- $home
 }
@@ -89,7 +89,7 @@ command_for() {
     pins) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work/api/v2; ttheme pins" ;;
     pin) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work; ttheme pin" ;;
     pin-deep) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work/api/v2; ttheme pin" ;;
-    pin-ssh) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work; ttheme pin ssh:tusa" ;;
+    pin-ssh) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work; ttheme pin ssh:teal" ;;
     unpin) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work/site; ttheme unpin" ;;
     *) print -u2 "unknown target $target"; return 1 ;;
   esac

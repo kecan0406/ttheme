@@ -52,7 +52,7 @@ export async function runAdd(asked: string[], into?: string): Promise<void> {
     const code = codeOf(n)
 
     if (isPaletteFile(n)) {
-      listed.push(await takeFile(home, n, into))
+      listed.push(...(await takeFile(home, n, into)))
       manifest = readMarketplaces(home)
     } else if (code) {
       const adopted = await adopt(home, code, manifest, into)

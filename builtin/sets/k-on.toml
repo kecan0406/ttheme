@@ -1,0 +1,281 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "yui"
+subject = "k-on/yui"
+signature = ["cursor", "ansi11", "ansi13"]
+ansi_source = "Espresso Libre + HTT"
+
+[palette.colors]
+background = "#211513"
+foreground = "#fddbd5"
+cursor = "#ed6650"
+selection_background = "#4b3a2b"
+ansi = [
+  "#2e211e",
+  "#ef7146",
+  "#d1c532",
+  "#e9b600",
+  "#b67bf3",
+  "#fe928e",
+  "#7dba76",
+  "#e6d0cc",
+
+  "#857370",
+  "#f2a290",
+  "#c2f061",
+  "#e6e346",
+  "#b89ee8",
+  "#ffc3c4",
+  "#89da81",
+  "#ffe9e5",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b18"
+cursor = "#c23521"
+selection_background = "#edd2bd"
+ansi = [
+  "#fff0ee",
+  "#ac4019",
+  "#385821",
+  "#7c5f00",
+  "#8a2be0",
+  "#ad3c3d",
+  "#185c29",
+  "#372926",
+
+  "#857370",
+  "#8a3d2c",
+  "#284b0e",
+  "#595700",
+  "#6341a1",
+  "#7d4447",
+  "#024e0c",
+  "#2d1b18",
+]
+
+[[palette]]
+slug = "ritsu"
+subject = "k-on/ritsu"
+signature = ["cursor", "ansi1", "ansi6"]
+ansi_source = "Acid Lime"
+
+[palette.colors]
+background = "#19180d"
+foreground = "#e8e3c7"
+cursor = "#e1d626"
+selection_background = "#433e1a"
+ansi = [
+  "#252418",
+  "#f26b6a",
+  "#aecd34",
+  "#cabe00",
+  "#00a2d5",
+  "#ff8cbe",
+  "#00c383",
+  "#d9d5c3",
+
+  "#7a7768",
+  "#f3a282",
+  "#c9ea50",
+  "#efdf26",
+  "#4ab7e8",
+  "#ffc1d8",
+  "#83db66",
+  "#f4eed2",
+]
+
+[palette.colors.light]
+background = "#fef9e7"
+foreground = "#22200f"
+cursor = "#918900"
+selection_background = "#e1d8a7"
+ansi = [
+  "#f8f4e1",
+  "#be2631",
+  "#335917",
+  "#805d00",
+  "#006b8e",
+  "#b12d73",
+  "#005c3c",
+  "#2e2c20",
+
+  "#7a7768",
+  "#8b3e1c",
+  "#2a4a12",
+  "#6e5000",
+  "#005c7b",
+  "#7e415c",
+  "#0f4d00",
+  "#22200f",
+]
+
+[[palette]]
+slug = "mio"
+subject = "k-on/mio"
+signature = ["cursor", "ansi4", "foreground"]
+ansi_source = "Ardoise + HTT"
+
+[palette.colors]
+background = "#14181e"
+foreground = "#dfe3e9"
+cursor = "#84aadc"
+selection_background = "#373e47"
+ansi = [
+  "#20242a",
+  "#f1649a",
+  "#64d6a2",
+  "#f7ae75",
+  "#5f95f3",
+  "#bba2ff",
+  "#00bdca",
+  "#d1d4dd",
+
+  "#73777f",
+  "#f3a0bb",
+  "#6cf5b9",
+  "#ffce80",
+  "#7aafe8",
+  "#d9caff",
+  "#52d8e8",
+  "#e7eefd",
+]
+
+[palette.colors.light]
+background = "#f8f9ff"
+foreground = "#1b2025"
+cursor = "#4d76a7"
+selection_background = "#d1d8e3"
+ansi = [
+  "#f0f3fd",
+  "#b62868",
+  "#005c3d",
+  "#935319",
+  "#2061bc",
+  "#6e4bc8",
+  "#005960",
+  "#282c33",
+
+  "#73777f",
+  "#8c3759",
+  "#004c33",
+  "#724e00",
+  "#18588b",
+  "#5b4b89",
+  "#004a51",
+  "#18202b",
+]
+
+[[palette]]
+slug = "mugi"
+subject = "k-on/mugi"
+signature = ["cursor", "ansi3", "ansi4"]
+ansi_source = "Tomorrow Night Eighties"
+
+[palette.colors]
+background = "#1f1518"
+foreground = "#f9dbe2"
+cursor = "#f4a7c0"
+selection_background = "#463c29"
+ansi = [
+  "#2c2124",
+  "#e87084",
+  "#d0c46f",
+  "#e5b451",
+  "#679acd",
+  "#dd9ec8",
+  "#65b6df",
+  "#e3d0d4",
+
+  "#837377",
+  "#f39faa",
+  "#ebe088",
+  "#fbd7b8",
+  "#95abe8",
+  "#ffbeea",
+  "#a7caf2",
+  "#ffe8ed",
+]
+
+[palette.colors.light]
+background = "#fff8f8"
+foreground = "#2c1b20"
+cursor = "#b96181"
+selection_background = "#e5d5bb"
+ansi = [
+  "#fff0f2",
+  "#b23450",
+  "#3a5824",
+  "#815d00",
+  "#306797",
+  "#914a7f",
+  "#005774",
+  "#35292c",
+
+  "#837377",
+  "#8d3948",
+  "#2e491a",
+  "#6e4e2f",
+  "#30529d",
+  "#803c70",
+  "#1f4566",
+  "#2c1b20",
+]
+
+[[palette]]
+slug = "azusa"
+subject = "k-on/azusa"
+signature = ["cursor", "ansi9", "foreground"]
+ansi_source = "Retro Legends"
+
+[palette.colors]
+background = "#131912"
+foreground = "#dfe3e0"
+cursor = "#81e473"
+selection_background = "#423b48"
+ansi = [
+  "#1f251d",
+  "#e47444",
+  "#75d769",
+  "#c4c033",
+  "#00a4c7",
+  "#b79eff",
+  "#26bfa7",
+  "#d0d6ca",
+
+  "#73796e",
+  "#f3a09d",
+  "#8ff482",
+  "#dbe650",
+  "#00badf",
+  "#ebc4fe",
+  "#4adcc9",
+  "#e6f1de",
+]
+
+[palette.colors.light]
+background = "#f6fbee"
+foreground = "#1c211f"
+cursor = "#369731"
+selection_background = "#dfd3e4"
+ansi = [
+  "#f0f6e9",
+  "#a64619",
+  "#005e0a",
+  "#805d00",
+  "#006c84",
+  "#6e49ce",
+  "#005b4e",
+  "#282e25",
+
+  "#73796e",
+  "#8c3b3b",
+  "#004e08",
+  "#6e5000",
+  "#005d71",
+  "#6e4288",
+  "#004b43",
+  "#192216",
+]

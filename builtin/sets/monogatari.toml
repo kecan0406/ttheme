@@ -1,0 +1,225 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "hitagi"
+subject = "monogatari/hitagi"
+signature = ["cursor", "ansi9", "ansi13"]
+ansi_source = "Duskfox"
+
+[palette.colors]
+background = "#1e151a"
+foreground = "#f5dce8"
+cursor = "#c379ab"
+selection_background = "#403956"
+ansi = [
+  "#2b2127",
+  "#e46fa2",
+  "#d0c473",
+  "#f2ae7a",
+  "#8294ce",
+  "#cea1db",
+  "#89afd9",
+  "#e1d0d8",
+
+  "#81737a",
+  "#f39eb4",
+  "#ece18d",
+  "#fad6bc",
+  "#96a9e6",
+  "#e0c7ff",
+  "#a7caf1",
+  "#ffe8f3",
+]
+
+[palette.colors.light]
+background = "#fff8f9"
+foreground = "#291b24"
+cursor = "#965281"
+selection_background = "#dcd2f6"
+ansi = [
+  "#fff0f6",
+  "#a9396f",
+  "#3b5826",
+  "#905522",
+  "#4860a5",
+  "#834e97",
+  "#2b5378",
+  "#33292f",
+
+  "#81737a",
+  "#8e3653",
+  "#2e491b",
+  "#6e4e34",
+  "#32519f",
+  "#63478a",
+  "#204565",
+  "#291b24",
+]
+
+[[palette]]
+slug = "shinobu"
+subject = "monogatari/shinobu"
+signature = ["cursor", "ansi9", "ansi13"]
+ansi_source = "Mona Lisa + Oddity"
+
+[palette.colors]
+background = "#1c170c"
+foreground = "#efe1c5"
+cursor = "#f2c230"
+selection_background = "#4f3a1d"
+ansi = [
+  "#282318",
+  "#ea7609",
+  "#d0c275",
+  "#faab46",
+  "#679cb9",
+  "#ff9472",
+  "#89b884",
+  "#ddd3c2",
+
+  "#7e7667",
+  "#f3a195",
+  "#edde89",
+  "#ffd1ac",
+  "#7cb2d0",
+  "#ffc3c3",
+  "#96d890",
+  "#fbecd0",
+]
+
+[palette.colors.light]
+background = "#fff8f1"
+foreground = "#261f0d"
+cursor = "#a07d00"
+selection_background = "#f3d2aa"
+ansi = [
+  "#fdf2e0",
+  "#9e4d00",
+  "#3c5728",
+  "#8d5700",
+  "#326984",
+  "#ac401a",
+  "#115b41",
+  "#312c1f",
+
+  "#7e7667",
+  "#8c3c32",
+  "#2e491b",
+  "#754c26",
+  "#1f5b75",
+  "#683435",
+  "#0c4d16",
+  "#261f0d",
+]
+
+[[palette]]
+slug = "tsubasa"
+subject = "monogatari/tsubasa"
+signature = ["cursor", "foreground", "ansi12"]
+ansi_source = "Kanso Ink"
+
+[palette.colors]
+background = "#201517"
+foreground = "#dfe3e1"
+cursor = "#fbafc0"
+selection_background = "#3a3e45"
+ansi = [
+  "#2d2123",
+  "#d17f84",
+  "#cec474",
+  "#f0ad7c",
+  "#6f9cc5",
+  "#d8a0c8",
+  "#7bb5d0",
+  "#e4d0d3",
+
+  "#847376",
+  "#f39faa",
+  "#ebe08e",
+  "#fdd5b8",
+  "#78b3cb",
+  "#f1c3f6",
+  "#9fccf2",
+  "#ffe8ec",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#1c2020"
+cursor = "#bb667c"
+selection_background = "#d4d7e0"
+ansi = [
+  "#fff0f2",
+  "#9f4850",
+  "#3b5826",
+  "#8f5526",
+  "#38678d",
+  "#8c4d7f",
+  "#11576e",
+  "#35292b",
+
+  "#847376",
+  "#8d3948",
+  "#2e491b",
+  "#714d30",
+  "#185c71",
+  "#73427e",
+  "#114666",
+  "#2c1b1f",
+]
+
+[[palette]]
+slug = "nadeko"
+subject = "monogatari/nadeko"
+signature = ["cursor", "ansi4", "ansi2"]
+ansi_source = "Tinacious Design Dark"
+
+[palette.colors]
+background = "#1f1518"
+foreground = "#f9dbe3"
+cursor = "#f2a0bd"
+selection_background = "#53334b"
+ansi = [
+  "#2c2124",
+  "#ed689f",
+  "#59d97b",
+  "#fba969",
+  "#00a3cd",
+  "#f788ef",
+  "#64b2f7",
+  "#e3d0d4",
+
+  "#837377",
+  "#f39dba",
+  "#b7f36e",
+  "#fdd5b9",
+  "#78b3e4",
+  "#ffbcf4",
+  "#97d0e9",
+  "#ffe8ee",
+]
+
+[palette.colors.light]
+background = "#fff8f8"
+foreground = "#2b1b21"
+cursor = "#ba5c81"
+selection_background = "#f7cae8"
+ansi = [
+  "#fff0f3",
+  "#b22e6c",
+  "#005d28",
+  "#97510e",
+  "#006c89",
+  "#a924a9",
+  "#005486",
+  "#35292d",
+
+  "#837377",
+  "#8e355a",
+  "#2c4a00",
+  "#714d31",
+  "#0d5986",
+  "#81397c",
+  "#00485c",
+  "#2b1b21",
+]

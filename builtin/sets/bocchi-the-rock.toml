@@ -1,0 +1,225 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "bocchi"
+subject = "bocchi-the-rock/bocchi"
+signature = ["cursor", "ansi4", "ansi9"]
+ansi_source = "Sakura + Kessoku"
+
+[palette.colors]
+background = "#201517"
+foreground = "#fadbe1"
+cursor = "#ffb7c8"
+selection_background = "#51344e"
+ansi = [
+  "#2c2123",
+  "#f06894",
+  "#d7c52e",
+  "#f4ae78",
+  "#7b96c8",
+  "#ff89d1",
+  "#88b883",
+  "#e4d0d3",
+
+  "#847376",
+  "#f39cbf",
+  "#f6e135",
+  "#fad8bf",
+  "#a6a8e8",
+  "#ffbeeb",
+  "#a2d59d",
+  "#ffe8ec",
+]
+
+[palette.colors.light]
+background = "#fff8f8"
+foreground = "#2c1b1f"
+cursor = "#bb6b81"
+selection_background = "#f4cbec"
+ansi = [
+  "#fff0f2",
+  "#b62a61",
+  "#395922",
+  "#91541f",
+  "#486492",
+  "#b32289",
+  "#1a5c3c",
+  "#35292b",
+
+  "#847376",
+  "#8f335f",
+  "#2e491b",
+  "#6d4e35",
+  "#494c9e",
+  "#7d3d76",
+  "#004c33",
+  "#2c1b1f",
+]
+
+[[palette]]
+slug = "nijika"
+subject = "bocchi-the-rock/nijika"
+signature = ["cursor", "ansi12", "ansi1"]
+ansi_source = "Medallion"
+
+[palette.colors]
+background = "#1d170c"
+foreground = "#f3e0c5"
+cursor = "#ffb400"
+selection_background = "#493c11"
+ansi = [
+  "#2a2318",
+  "#ec742e",
+  "#d5c23e",
+  "#eab21c",
+  "#a18bd8",
+  "#f097ad",
+  "#6ab9ad",
+  "#e0d3c2",
+
+  "#807567",
+  "#f2a55b",
+  "#f3df39",
+  "#ffd880",
+  "#9ca7e8",
+  "#ffc0ce",
+  "#7fd7c8",
+  "#ffebd0",
+]
+
+[palette.colors.light]
+background = "#fff8f3"
+foreground = "#281e0d"
+cursor = "#a97600"
+selection_background = "#ebd69d"
+ansi = [
+  "#fff2e2",
+  "#a74600",
+  "#395822",
+  "#805d00",
+  "#6e50b8",
+  "#a34260",
+  "#005b52",
+  "#332b20",
+
+  "#807567",
+  "#7f4700",
+  "#2e491b",
+  "#6e5000",
+  "#3d4ea2",
+  "#7f4253",
+  "#004b43",
+  "#281e0d",
+]
+
+[[palette]]
+slug = "ryo"
+subject = "bocchi-the-rock/ryo"
+signature = ["cursor", "ansi4", "ansi6"]
+ansi_source = "TokyoNight Storm"
+
+[palette.colors]
+background = "#19180d"
+foreground = "#e7e3c8"
+cursor = "#d6d233"
+selection_background = "#333d5b"
+ansi = [
+  "#252419",
+  "#eb7149",
+  "#b0cc5c",
+  "#d8b86a",
+  "#6c94e9",
+  "#fe8eae",
+  "#61b5e3",
+  "#d8d5c4",
+
+  "#797769",
+  "#f3a187",
+  "#cce875",
+  "#fbd987",
+  "#65aee8",
+  "#ffc1cf",
+  "#67d4ed",
+  "#f2efd3",
+]
+
+[palette.colors.light]
+background = "#fefae7"
+foreground = "#21200f"
+cursor = "#8b8800"
+selection_background = "#ccd6fc"
+ansi = [
+  "#f8f4e2",
+  "#aa411d",
+  "#335a16",
+  "#7d5f1b",
+  "#3060b8",
+  "#b03461",
+  "#005677",
+  "#2d2d21",
+
+  "#797769",
+  "#8b3d23",
+  "#294a11",
+  "#6d500b",
+  "#005988",
+  "#7e4253",
+  "#004956",
+  "#21200f",
+]
+
+[[palette]]
+slug = "kita"
+subject = "bocchi-the-rock/kita"
+signature = ["cursor", "ansi2", "ansi3"]
+ansi_source = "Wild Cherry + Kessoku"
+
+[palette.colors]
+background = "#201513"
+foreground = "#fddbd6"
+cursor = "#ee6555"
+selection_background = "#5a323b"
+ansi = [
+  "#2e211f",
+  "#f26883",
+  "#61d976",
+  "#e1b557",
+  "#b77cf3",
+  "#e29cb8",
+  "#70bb9a",
+  "#e6d0cc",
+
+  "#857370",
+  "#f3a198",
+  "#ccec9f",
+  "#ffd5b2",
+  "#b1a1e8",
+  "#ffc1ce",
+  "#abd0bd",
+  "#ffe9e6",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2d1b18"
+cursor = "#c52e24"
+selection_background = "#ffcad3"
+ansi = [
+  "#fff0ee",
+  "#bb264f",
+  "#005d22",
+  "#805e00",
+  "#8a2cdf",
+  "#974a6d",
+  "#005c41",
+  "#362927",
+
+  "#857370",
+  "#8c3c35",
+  "#31490e",
+  "#724d29",
+  "#5a45a1",
+  "#7e4252",
+  "#27493a",
+  "#2d1b18",
+]

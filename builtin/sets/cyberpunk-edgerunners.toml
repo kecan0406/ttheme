@@ -1,0 +1,225 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "david"
+subject = "cyberpunk-edgerunners/david"
+signature = ["cursor", "ansi12", "ansi1"]
+ansi_source = "Cobalt2 + Edgerunner"
+
+[palette.colors]
+background = "#1a180d"
+foreground = "#ece2c6"
+cursor = "#f0cc09"
+selection_background = "#264058"
+ansi = [
+  "#272418",
+  "#f16d5a",
+  "#aacf39",
+  "#d6bb00",
+  "#688fdd",
+  "#ff8caa",
+  "#5ebd81",
+  "#dbd4c2",
+
+  "#7c7767",
+  "#f2a376",
+  "#c5eb53",
+  "#ffdb37",
+  "#a4a5e8",
+  "#ffc0ce",
+  "#72daad",
+  "#f8edd1",
+]
+
+[palette.colors.light]
+background = "#fff9ee"
+foreground = "#241f0e"
+cursor = "#9b8300"
+selection_background = "#bfdaf8"
+ansi = [
+  "#fbf3e0",
+  "#bd291b",
+  "#335a16",
+  "#805d00",
+  "#3862ac",
+  "#b1325e",
+  "#005d32",
+  "#302c20",
+
+  "#7c7767",
+  "#83441b",
+  "#294a11",
+  "#6e5000",
+  "#494ba1",
+  "#7f4253",
+  "#004c35",
+  "#241f0e",
+]
+
+[[palette]]
+slug = "lucy"
+subject = "cyberpunk-edgerunners/lucy"
+signature = ["cursor", "foreground", "ansi12"]
+ansi_source = "Mellow"
+
+[palette.colors]
+background = "#1e151a"
+foreground = "#e3e1eb"
+cursor = "#e29eca"
+selection_background = "#473757"
+ansi = [
+  "#2b2127",
+  "#cd818b",
+  "#d0c275",
+  "#eeb080",
+  "#aa8abd",
+  "#e09cc8",
+  "#4db6e9",
+  "#e1d0d8",
+
+  "#81737a",
+  "#efa1ab",
+  "#ecde8f",
+  "#fad7bf",
+  "#b1a3db",
+  "#ffbee8",
+  "#a0cce8",
+  "#ffe8f3",
+]
+
+[palette.colors.light]
+background = "#fff8f9"
+foreground = "#1f1f26"
+cursor = "#ad5d95"
+selection_background = "#e5cff7"
+ansi = [
+  "#fff0f6",
+  "#9a4b57",
+  "#3c5728",
+  "#8c5729",
+  "#795492",
+  "#95487f",
+  "#005676",
+  "#33292f",
+
+  "#81737a",
+  "#8a3b49",
+  "#2f491c",
+  "#6d4e36",
+  "#5a4990",
+  "#803d6e",
+  "#16475e",
+  "#291b24",
+]
+
+[[palette]]
+slug = "rebecca"
+subject = "cyberpunk-edgerunners/rebecca"
+signature = ["ansi1", "ansi2", "cursor"]
+ansi_source = "Emerald Synth"
+
+[palette.colors]
+background = "#201516"
+foreground = "#fbdbde"
+cursor = "#99dfd0"
+selection_background = "#17453c"
+ansi = [
+  "#2d2122",
+  "#f26885",
+  "#4ada83",
+  "#ffa768",
+  "#ae82df",
+  "#ff8cbe",
+  "#70b1f6",
+  "#e4d0d1",
+
+  "#847375",
+  "#f39eae",
+  "#aef179",
+  "#ffd5b7",
+  "#bd9ee3",
+  "#ffbfdb",
+  "#a7caf1",
+  "#ffe9ea",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2c1b1d"
+cursor = "#4d9285"
+selection_background = "#b2e1d4"
+ansi = [
+  "#fff0f1",
+  "#bb2651",
+  "#005d2f",
+  "#9c4e01",
+  "#8042c4",
+  "#b12d73",
+  "#00538b",
+  "#36292a",
+
+  "#847375",
+  "#8e374d",
+  "#234b00",
+  "#724c2e",
+  "#684199",
+  "#7e4064",
+  "#204565",
+  "#2c1b1d",
+]
+
+[[palette]]
+slug = "nightcity"
+subject = "cyberpunk-edgerunners/nightcity"
+signature = ["cursor", "ansi13", "ansi14"]
+ansi_source = "Vibrant Ink"
+
+[palette.colors]
+background = "#19180d"
+foreground = "#e8e3c7"
+cursor = "#e2d61a"
+selection_background = "#423f14"
+ansi = [
+  "#252418",
+  "#e7724b",
+  "#bbca26",
+  "#daba00",
+  "#19a6a6",
+  "#ff8bc1",
+  "#50bca3",
+  "#d9d5c3",
+
+  "#7a7768",
+  "#f3a187",
+  "#bbed5c",
+  "#e8e330",
+  "#00bcdb",
+  "#ffbdf3",
+  "#00dddd",
+  "#f4eed2",
+]
+
+[palette.colors.light]
+background = "#fef9e7"
+foreground = "#22200f"
+cursor = "#918900"
+selection_background = "#dfd9a0"
+ansi = [
+  "#f9f4e1",
+  "#a84320",
+  "#36591c",
+  "#805d00",
+  "#006f6f",
+  "#b22b77",
+  "#005b4b",
+  "#2e2c20",
+
+  "#7a7768",
+  "#8b3d23",
+  "#274b0c",
+  "#6e4f00",
+  "#005d6e",
+  "#803a7a",
+  "#004a4a",
+  "#22200f",
+]

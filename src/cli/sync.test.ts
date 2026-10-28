@@ -48,7 +48,7 @@ import { forget, pointDefaults, refreshPictures, resolve, sync, wiringNotes, wit
 function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    ansiSource: 'Horizon + Jujutsu',
+    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -65,7 +65,7 @@ function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry 
 const manifest: Manifest = {
   version: '0.1.0',
   gate: [],
-  palettes: [entry('ttheme/neutral', { default: true }), entry('ttheme/gojo'), entry('ttheme/geto')],
+  palettes: [entry('ttheme/neutral', { default: true }), entry('ttheme/orla'), entry('ttheme/juno')],
   works: [],
 }
 
@@ -74,15 +74,15 @@ function fixture(): string {
 }
 
 test('toTheme derives the ghostty icon colors from the palette', () => {
-  const theme = toTheme(entry('ttheme/gojo'))
+  const theme = toTheme(entry('ttheme/orla'))
   assert.equal(theme.ghostty.iconGhost, '#7cc1d6')
   assert.deepEqual(theme.ghostty.iconScreen, ['#7cc1d6', '#383b5b', '#11191c'])
   assert.equal(theme.selectionBackground, '#383b5b')
 })
 
 test("each of a palette's Ghostty themes carries the dock icon colors of its own mode", () => {
-  const light = inMode(entry('ttheme/gojo'), 'light')
-  const files = ghostty.emit?.(toTheme(inMode(entry('ttheme/gojo'), 'dark')))
+  const light = inMode(entry('ttheme/orla'), 'light')
+  const files = ghostty.emit?.(toTheme(inMode(entry('ttheme/orla'), 'dark')))
   const content = files?.find((file) => file.path.endsWith('.light'))?.content ?? ''
   assert.match(
     content,
@@ -91,15 +91,15 @@ test("each of a palette's Ghostty themes carries the dock icon colors of its own
 })
 
 test('resolve rejects a name no marketplace carries, and names the marketplace to add when none of its palettes is there', () => {
-  assert.throws(() => resolve(manifest, ['ttheme/gojo', 'nobody']), /not in any marketplace: nobody/)
+  assert.throws(() => resolve(manifest, ['ttheme/orla', 'nobody']), /not in any marketplace: nobody/)
   assert.throws(() => resolve(manifest, ['alice@pastel/dusk']), /add alice@pastel first/)
   assert.throws(() => resolve(manifest, ['ttheme/gone']), /not in any marketplace: ttheme\/gone — the Browse tab/)
 })
 
 test("resolve returns the marketplaces' order, not the order asked for", () => {
   assert.deepEqual(
-    resolve(manifest, ['ttheme/geto', 'ttheme/gojo']).map((p) => p.name),
-    ['ttheme/gojo', 'ttheme/geto'],
+    resolve(manifest, ['ttheme/juno', 'ttheme/orla']).map((p) => p.name),
+    ['ttheme/orla', 'ttheme/juno'],
   )
 })
 
@@ -108,31 +108,31 @@ test('sync writes a theme file per terminal and the zsh table', () => {
 
   const written = sync(home, manifest, {
     terminals: ['ghostty', 'kitty'],
-    palettes: ['ttheme/neutral', 'ttheme/gojo'],
+    palettes: ['ttheme/neutral', 'ttheme/orla'],
   })
 
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-ttheme--gojo.dark')))
-  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-ttheme--gojo.dark.conf')))
-  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-ttheme--gojo.light.conf')))
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-ttheme--orla.dark')))
+  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-ttheme--orla.dark.conf')))
+  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-ttheme--orla.light.conf')))
   assert.ok(existsSync(join(home, 'ttheme', 'palettes.zsh')))
   assert.ok(written.includes(join(home, 'ghostty', 'config')))
   assert.ok(written.includes(join(home, 'kitty', 'kitty.conf')))
 
   const table = readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8')
-  assert.match(table, /TTHEME_ORDER=\(ttheme\/gojo\)/)
+  assert.match(table, /TTHEME_ORDER=\(ttheme\/orla\)/)
   assert.match(table, /^typeset -ga TTHEME_TERMINALS=\(ghostty kitty\)$/m)
   assert.match(table, /^typeset -ga TTHEME_MARKETPLACES=\('ttheme'\)$/m)
-  assert.doesNotMatch(table, /geto/)
+  assert.doesNotMatch(table, /juno/)
 })
 
 test("sync keeps Ghostty's themes folder to both modes of the listed palettes, and leaves the user's own themes", () => {
   const home = fixture()
   const themes = join(home, 'ghostty', 'themes')
   mkdirSync(themes, { recursive: true })
-  writeFileSync(join(themes, 'ttheme-ttheme--gojo'), 'older')
+  writeFileSync(join(themes, 'ttheme-ttheme--orla'), 'older')
   writeFileSync(join(themes, 'Dracula'), 'mine')
-  sync(home, manifest, { terminals: ['ghostty'], palettes: ['ttheme/gojo'] })
-  assert.deepEqual(readdirSync(themes).sort(), ['Dracula', 'ttheme-ttheme--gojo.dark', 'ttheme-ttheme--gojo.light'])
+  sync(home, manifest, { terminals: ['ghostty'], palettes: ['ttheme/orla'] })
+  assert.deepEqual(readdirSync(themes).sort(), ['Dracula', 'ttheme-ttheme--orla.dark', 'ttheme-ttheme--orla.light'])
 })
 
 test("sync forgets the appearance outside auto, takes the system's again on the way back, and at every sync where no wired terminal reports it", () => {
@@ -143,7 +143,7 @@ test("sync forgets the appearance outside auto, takes the system's again on the 
 
   const wear = (mode: string, terminals: Installed['terminals'], style: string | undefined) => {
     writeFileSync(join(home, 'ttheme', 'config.zsh'), `: \${TTHEME_MODE:=${mode}}\n`)
-    sync(home, manifest, { terminals, palettes: ['ttheme/gojo'] }, undefined, answering(style))
+    sync(home, manifest, { terminals, palettes: ['ttheme/orla'] }, undefined, answering(style))
   }
 
   process.env.XDG_STATE_HOME = join(home, 'state')
@@ -172,21 +172,21 @@ test("sync forgets the appearance outside auto, takes the system's again on the 
 test('sync names every marketplace the install holds in the zsh table, by the name remove and update take', () => {
   const home = fixture()
   const local = mkdtempSync(join(tmpdir(), 'ttheme-local-'))
-  writeFileSync(join(local, 'ttheme-marketplace.toml'), 'name = "dust"\n\n[owner]\nname = "kec"\n')
+  writeFileSync(join(local, 'ttheme-marketplace.toml'), 'name = "dust"\n\n[owner]\nname = "kai"\n')
 
   sync(home, manifest, {
     terminals: ['ghostty'],
-    palettes: ['ttheme/gojo'],
+    palettes: ['ttheme/orla'],
     marketplaces: ['ttheme', local, 'ann/ttheme-pastel'],
   })
 
   const table = readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8')
-  assert.match(table, /^typeset -ga TTHEME_MARKETPLACES=\('ttheme' 'kec@dust' 'ann\/ttheme-pastel'\)$/m)
+  assert.match(table, /^typeset -ga TTHEME_MARKETPLACES=\('ttheme' 'kai@dust' 'ann\/ttheme-pastel'\)$/m)
 })
 
 test('sync leaves palettes.zsh and its compiled copy alone when nothing it holds changed', () => {
   const home = fixture()
-  const state: Installed = { terminals: ['ghostty'], palettes: ['ttheme/gojo', 'ttheme/geto'] }
+  const state: Installed = { terminals: ['ghostty'], palettes: ['ttheme/orla', 'ttheme/juno'] }
   sync(home, manifest, state)
   const table = join(home, 'ttheme', 'palettes.zsh')
   writeFileSync(`${table}.zwc`, '')
@@ -194,7 +194,7 @@ test('sync leaves palettes.zsh and its compiled copy alone when nothing it holds
   sync(home, manifest, state)
   assert.equal(statSync(table).mtimeMs, 0)
   assert.ok(existsSync(`${table}.zwc`))
-  sync(home, manifest, { ...state, startup: 'ttheme/geto' })
+  sync(home, manifest, { ...state, startup: 'ttheme/juno' })
   assert.ok(statSync(table).mtimeMs > 0)
   assert.ok(!existsSync(`${table}.zwc`))
 })
@@ -208,7 +208,7 @@ test('sync moves palettes.zsh whenever it touches Windows Terminal settings, so 
 
   const state: Installed = {
     terminals: ['windows-terminal'],
-    palettes: ['ttheme/gojo'],
+    palettes: ['ttheme/orla'],
     wtHome,
     wtProfile: '{00000000-0000-0000-0000-000000000001}',
   }
@@ -232,29 +232,29 @@ test('sync writes an empty but valid table when nothing is installed', () => {
 
 test('sync points the terminal at the startup palette once one is installed', () => {
   const home = fixture()
-  sync(home, manifest, { terminals: ['ghostty'], palettes: ['ttheme/gojo'] })
-  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-ttheme--gojo\.dark$/m)
+  sync(home, manifest, { terminals: ['ghostty'], palettes: ['ttheme/orla'] })
+  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-ttheme--orla\.dark$/m)
 })
 
 test('sync leaves the terminal theme alone while ttheme is off', () => {
   const home = fixture()
-  sync(home, manifest, { terminals: ['ghostty', 'kitty'], off: true, palettes: ['ttheme/gojo'] })
+  sync(home, manifest, { terminals: ['ghostty', 'kitty'], off: true, palettes: ['ttheme/orla'] })
   const config = readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8')
   assert.doesNotMatch(config, /^theme = /m)
   assert.match(config, /^config-file = \?backgrounds\/shown\.conf$/m)
   assert.doesNotMatch(readFileSync(join(home, 'ttheme', 'kitty.conf'), 'utf8'), /^include /m)
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-ttheme--gojo.dark')))
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-ttheme--orla.dark')))
 })
 
 test('sync wires WezTerm through a module its config runs, and creates the config when there is none', () => {
   const configHome = fixture()
   const home = fixture()
-  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/orla'] }, home)
   const module = join(configHome, 'ttheme', 'wezterm.lua')
-  assert.ok(existsSync(join(configHome, 'wezterm', 'colors', 'ttheme-ttheme--gojo.dark.toml')))
-  assert.ok(existsSync(join(configHome, 'wezterm', 'colors', 'ttheme-ttheme--gojo.light.toml')))
-  assert.match(readFileSync(module, 'utf8'), /^local STARTUP = "ttheme-ttheme--gojo\.dark"$/m)
-  assert.match(readFileSync(module, 'utf8'), /^ {2}\["ttheme\/gojo"\] = "#11191c",$/m)
+  assert.ok(existsSync(join(configHome, 'wezterm', 'colors', 'ttheme-ttheme--orla.dark.toml')))
+  assert.ok(existsSync(join(configHome, 'wezterm', 'colors', 'ttheme-ttheme--orla.light.toml')))
+  assert.match(readFileSync(module, 'utf8'), /^local STARTUP = "ttheme-ttheme--orla\.dark"$/m)
+  assert.match(readFileSync(module, 'utf8'), /^ {2}\["ttheme\/orla"\] = "#11191c",$/m)
   const config = readFileSync(join(configHome, 'wezterm', 'wezterm.lua'), 'utf8')
   assert.ok(config.endsWith(`-- ttheme begin\n${weztermBlock(module, home)}\n-- ttheme end\n\nreturn config\n`))
 })
@@ -264,7 +264,7 @@ test('sync wires an existing wezterm.lua before its last return, and leaves one 
   const home = fixture()
   const dotfile = join(home, '.wezterm.lua')
   writeFileSync(dotfile, 'local config = {}\nconfig.font_size = 13\nreturn config\n')
-  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/orla'] }, home)
   assert.match(
     readFileSync(dotfile, 'utf8'),
     /font_size = 13\n-- ttheme begin\n.*\n.*\n-- ttheme end\n\nreturn config\n$/,
@@ -272,7 +272,7 @@ test('sync wires an existing wezterm.lua before its last return, and leaves one 
   assert.ok(!existsSync(join(configHome, 'wezterm', 'wezterm.lua')))
 
   writeFileSync(dotfile, 'return { font_size = 13 }\n')
-  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/orla'] }, home)
   assert.equal(readFileSync(dotfile, 'utf8'), 'return { font_size = 13 }\n')
 })
 
@@ -286,7 +286,7 @@ test('sync wires the kaku.lua Kaku wrote through the WezTerm module, and makes n
 
   mkdirSync(join(configHome, 'kaku'), { recursive: true })
   writeFileSync(kaku, own)
-  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/orla'] }, home)
   const module = join(configHome, 'ttheme', 'wezterm.lua')
   assert.equal(
     readFileSync(kaku, 'utf8'),
@@ -294,11 +294,11 @@ test('sync wires the kaku.lua Kaku wrote through the WezTerm module, and makes n
   )
   assert.ok(!existsSync(join(configHome, 'wezterm', 'wezterm.lua')))
 
-  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/orla'] }, home)
   assert.ok(!existsSync(join(configHome, 'wezterm', 'wezterm.lua')))
 
   writeFileSync(join(configHome, 'wezterm', 'wezterm.lua'), 'local config = {}\nreturn config\n')
-  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/orla'] }, home)
   assert.ok(readFileSync(join(configHome, 'wezterm', 'wezterm.lua'), 'utf8').includes(weztermBlock(module, home)))
 })
 
@@ -309,17 +309,17 @@ test('sync names one theme of its own at the top of Rio config, and keeps the us
   const own = join(configHome, 'rio', 'themes', 'ttheme.toml')
   mkdirSync(join(configHome, 'rio'), { recursive: true })
   writeFileSync(config, "[fonts]\nsize = 18\n\n[colors]\nbackground = '#101010'\n\n[window]\nopacity = 1.0\n")
-  sync(configHome, manifest, { terminals: ['rio'], palettes: ['ttheme/gojo'], startup: 'ttheme/gojo' }, home)
+  sync(configHome, manifest, { terminals: ['rio'], palettes: ['ttheme/orla'], startup: 'ttheme/orla' }, home)
   assert.match(readFileSync(config, 'utf8'), /^# ttheme begin\n.*\ntheme = "ttheme"\n# ttheme end\n\n\[fonts\]/)
-  assert.ok(existsSync(join(configHome, 'rio', 'themes', 'ttheme-ttheme--gojo.dark.toml')))
+  assert.ok(existsSync(join(configHome, 'rio', 'themes', 'ttheme-ttheme--orla.dark.toml')))
   assert.match(readFileSync(own, 'utf8'), /^background = '#11191c'$/m)
 
-  sync(configHome, manifest, { terminals: ['rio'], palettes: ['ttheme/gojo'], off: true }, home)
+  sync(configHome, manifest, { terminals: ['rio'], palettes: ['ttheme/orla'], off: true }, home)
   assert.match(readFileSync(own, 'utf8'), /\n\[colors\]\nbackground = '#101010'\n$/)
   assert.equal(readFileSync(config, 'utf8').match(/^theme = /gm)?.length, 1)
 
   writeFileSync(config, 'theme = "dracula"\n')
-  sync(configHome, manifest, { terminals: ['rio'], palettes: ['ttheme/gojo'], startup: 'ttheme/gojo' }, home)
+  sync(configHome, manifest, { terminals: ['rio'], palettes: ['ttheme/orla'], startup: 'ttheme/orla' }, home)
   assert.equal(readFileSync(config, 'utf8'), 'theme = "dracula"\n')
 })
 
@@ -330,7 +330,7 @@ test('sync makes Contour open on a profile of its own over the default one, and 
   const settings = join(dir, 'settings.yml')
   mkdirSync(dir, { recursive: true })
   writeFileSync(settings, 'default_profile: work\nreflow_on_resize: true\n')
-  sync(configHome, manifest, { terminals: ['contour'], palettes: ['ttheme/gojo'], startup: 'ttheme/gojo' }, home)
+  sync(configHome, manifest, { terminals: ['contour'], palettes: ['ttheme/orla'], startup: 'ttheme/orla' }, home)
   const wired = readFileSync(settings, 'utf8')
   assert.match(
     wired,
@@ -339,9 +339,9 @@ test('sync makes Contour open on a profile of its own over the default one, and 
   assert.equal(wired.match(/^default_profile:/gm)?.length, 1)
   assert.equal(readFileSync(join(dir, 'profiles', 'ttheme.yml'), 'utf8').split('\n')[1], 'colors: ttheme.dark')
   assert.match(readFileSync(join(dir, 'colorschemes', 'ttheme.dark.yml'), 'utf8'), /^ {4}background: '#11191c'$/m)
-  assert.ok(existsSync(join(dir, 'colorschemes', 'ttheme-ttheme--gojo.dark.yml')))
+  assert.ok(existsSync(join(dir, 'colorschemes', 'ttheme-ttheme--orla.dark.yml')))
 
-  sync(configHome, manifest, { terminals: ['contour'], palettes: ['ttheme/gojo'], off: true }, home)
+  sync(configHome, manifest, { terminals: ['contour'], palettes: ['ttheme/orla'], off: true }, home)
   assert.equal(readFileSync(join(dir, 'profiles', 'ttheme.yml'), 'utf8').split('\n')[1], '{}')
   assert.equal(readFileSync(settings, 'utf8'), wired)
   assert.equal(removeContourDefault(wired), 'default_profile: work\nreflow_on_resize: true\n')
@@ -355,7 +355,7 @@ test('sync drops an alacritty.toml that held only the ttheme block and hid the c
   mkdirSync(join(configHome, 'alacritty'), { recursive: true })
   writeFileSync(shadow, only)
   writeFileSync(join(home, '.alacritty.toml'), '[font]\nsize = 14\n')
-  const state: Installed = { terminals: ['alacritty'], palettes: ['ttheme/gojo'] }
+  const state: Installed = { terminals: ['alacritty'], palettes: ['ttheme/orla'] }
   assert.ok(
     wiringNotes(configHome, state, home).some((note) => note.startsWith('~/.config/alacritty/alacritty.toml held')),
   )
@@ -383,18 +383,18 @@ test('sync gives Windows Terminal a fragment that dresses the zsh profile, and n
   mkdirSync(join(settings, '..'), { recursive: true })
   writeFileSync(settings, '{\n  // mine\n  "defaultProfile": "{2c4de342-38b7-51cf-b940-2309a097f518}",\n}\n')
   utimesSync(settings, new Date(0), new Date(0))
-  sync(configHome, manifest, { terminals: ['windows-terminal'], palettes: ['ttheme/gojo'], wtHome })
+  sync(configHome, manifest, { terminals: ['windows-terminal'], palettes: ['ttheme/orla'], wtHome })
   const fragment = JSON.parse(readFileSync(wtFragmentPath(wtHome), 'utf8'))
   assert.deepEqual(fragment.profiles, [
-    { updates: '{2c4de342-38b7-51cf-b940-2309a097f518}', colorScheme: 'ttheme-ttheme--gojo' },
+    { updates: '{2c4de342-38b7-51cf-b940-2309a097f518}', colorScheme: 'ttheme-ttheme--orla' },
   ])
-  assert.equal(fragment.schemes[0].name, 'ttheme-ttheme--gojo')
+  assert.equal(fragment.schemes[0].name, 'ttheme-ttheme--orla')
   assert.equal(fragment.schemes[0].brightPurple, '#808080')
   assert.ok(statSync(settings).mtimeMs > 0)
 
   sync(configHome, manifest, {
     terminals: ['windows-terminal'],
-    palettes: ['ttheme/gojo'],
+    palettes: ['ttheme/orla'],
     off: true,
     wtHome,
     wtProfile: '{00000000-0000-0000-0000-000000000001}',
@@ -405,16 +405,16 @@ test('sync gives Windows Terminal a fragment that dresses the zsh profile, and n
 test('sync drops Warp themes into its themes folder and wires nothing else', () => {
   const configHome = fixture()
   const home = fixture()
-  const written = sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo'] }, home)
-  const plain = plainTheme(home, 'ttheme/gojo')
-  const [light] = warpFiles(home, 'ttheme/gojo', 'light')
+  const written = sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla'] }, home)
+  const plain = plainTheme(home, 'ttheme/orla')
+  const [light] = warpFiles(home, 'ttheme/orla', 'light')
   const theme = readFileSync(join(warpThemes(home), plain), 'utf8')
-  assert.match(theme, /^name: "ttheme\/gojo · dark"$/m)
+  assert.match(theme, /^name: "ttheme\/orla · dark"$/m)
   assert.match(theme, /^background: "#11191c"$/m)
   assert.match(theme, /^details: darker$/m)
   assert.ok(light)
   const other = readFileSync(join(warpThemes(home), light), 'utf8')
-  assert.match(other, /^name: "ttheme\/gojo · light"$/m)
+  assert.match(other, /^name: "ttheme\/orla · light"$/m)
   assert.match(other, /^details: lighter$/m)
   assert.deepEqual(written, [
     join(warpThemes(home), plain),
@@ -426,34 +426,34 @@ test('sync drops Warp themes into its themes folder and wires nothing else', () 
 test('sync puts the startup palette on Warp through its settings file, and gives the old theme back while off', () => {
   const configHome = fixture()
   const home = fixture()
-  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'] }, home)
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'] }, home)
   const settings = warpSettings(home, configHome)
   mkdirSync(join(settings, '..'), { recursive: true })
   const mine = '[appearance]\n\n[appearance.themes]\ntheme = "Dracula"\n\n[appearance.vertical_tabs]\nenabled = true\n'
   writeFileSync(settings, mine)
-  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'] }, home)
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'] }, home)
   assert.match(
     readFileSync(settings, 'utf8'),
     new RegExp(
-      `^\\[appearance\\.themes\\]\\ntheme = \\{ custom = \\{ name = "ttheme/gojo · dark", path = "${RegExp.escape(plainTheme(home, 'ttheme/gojo'))}" \\} \\}\\n\\n\\[appearance\\.vertical_tabs\\]`,
+      `^\\[appearance\\.themes\\]\\ntheme = \\{ custom = \\{ name = "ttheme/orla · dark", path = "${RegExp.escape(plainTheme(home, 'ttheme/orla'))}" \\} \\}\\n\\n\\[appearance\\.vertical_tabs\\]`,
       'm',
     ),
   )
   sync(
     configHome,
     manifest,
-    { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'], startup: 'ttheme/geto' },
+    { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'], startup: 'ttheme/juno' },
     home,
   )
-  assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/geto · dark"/)
-  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo'], off: true }, home)
+  assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/juno · dark"/)
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla'], off: true }, home)
   assert.equal(readFileSync(settings, 'utf8'), mine)
 })
 
 test('ttheme off gives back the theme and the system themes picked in Warp while ttheme wore a palette', () => {
   const configHome = fixture()
   const home = fixture()
-  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'] }
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'] }
   sync(configHome, manifest, state, home)
   const settings = warpSettings(home, configHome)
   mkdirSync(dirname(settings), { recursive: true })
@@ -466,7 +466,7 @@ test('ttheme off gives back the theme and the system themes picked in Warp while
   const picked = '[appearance.themes]\nsystem_theme = true\nselected_system_themes = { light = "nord", dark = "koi" }\n'
   writeFileSync(settings, `${picked}theme = "koi"\n`)
   sync(configHome, manifest, state, home)
-  assert.match(readFileSync(settings, 'utf8'), /^theme = \{ custom = \{ name = "ttheme\/gojo · dark"/m)
+  assert.match(readFileSync(settings, 'utf8'), /^theme = \{ custom = \{ name = "ttheme\/orla · dark"/m)
   sync(configHome, manifest, { ...state, off: true }, home)
   assert.equal(readFileSync(settings, 'utf8'), `${picked}theme = "koi"\n`)
 })
@@ -474,7 +474,7 @@ test('ttheme off gives back the theme and the system themes picked in Warp while
 test("sync turns Warp's minimum contrast off while ttheme is on unless the user set it, and ttheme off and uninstall put it back", () => {
   const configHome = fixture()
   const home = fixture()
-  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/gojo'] }
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla'] }
   sync(configHome, manifest, state, home)
   const settings = warpSettings(home, configHome)
   mkdirSync(dirname(settings), { recursive: true })
@@ -500,20 +500,20 @@ test("sync turns Warp's minimum contrast off while ttheme is on unless the user 
 test('sync keeps Warp on the palette of the painted tab that ran the command, unless that palette went or ttheme went off', () => {
   const configHome = fixture()
   const home = fixture()
-  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'], startup: 'ttheme/gojo' }
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'], startup: 'ttheme/orla' }
   sync(configHome, manifest, state, home)
   const settings = warpSettings(home, configHome)
   mkdirSync(join(settings, '..'), { recursive: true })
-  const geto = warpThemeValue('ttheme/geto · dark', plainTheme(home, 'ttheme/geto'))
-  writeFileSync(settings, `[appearance.themes]\ntheme = ${geto}\n`)
-  process.env.TTHEME_WARP_WEARS = 'ttheme/geto'
+  const juno = warpThemeValue('ttheme/juno · dark', plainTheme(home, 'ttheme/juno'))
+  writeFileSync(settings, `[appearance.themes]\ntheme = ${juno}\n`)
+  process.env.TTHEME_WARP_WEARS = 'ttheme/juno'
 
   try {
     sync(configHome, manifest, state, home)
-    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/geto · dark"/)
-    sync(configHome, manifest, { ...state, palettes: ['ttheme/gojo'] }, home)
-    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/gojo · dark"/)
-    writeFileSync(settings, `[appearance.themes]\ntheme = ${geto}\n`)
+    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/juno · dark"/)
+    sync(configHome, manifest, { ...state, palettes: ['ttheme/orla'] }, home)
+    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/orla · dark"/)
+    writeFileSync(settings, `[appearance.themes]\ntheme = ${juno}\n`)
     sync(configHome, manifest, { ...state, off: true }, home)
     assert.match(readFileSync(settings, 'utf8'), /^theme = "dark"$/m)
   } finally {
@@ -530,20 +530,20 @@ test('a Warp theme written late lands when nothing came after it, and gives way 
     const settings = warpSettings(home, configHome)
     mkdirSync(join(settings, '..'), { recursive: true })
     writeFileSync(settings, mine)
-    sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo'] }, home)
+    sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla'] }, home)
 
     return { configHome, home, settings }
   }) as [{ configHome: string; home: string; settings: string }, { configHome: string; home: string; settings: string }]
 
-  sync(undone.configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo'], off: true }, undone.home)
+  sync(undone.configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla'], off: true }, undone.home)
   const until = Date.now() + 4000
 
-  while (!/name = "ttheme\/gojo · dark"/.test(readFileSync(kept.settings, 'utf8')) && Date.now() < until) {
+  while (!/name = "ttheme\/orla · dark"/.test(readFileSync(kept.settings, 'utf8')) && Date.now() < until) {
     await new Promise((resolve) => setTimeout(resolve, 50))
   }
 
   await new Promise((resolve) => setTimeout(resolve, 300))
-  assert.match(readFileSync(kept.settings, 'utf8'), /name = "ttheme\/gojo · dark"/)
+  assert.match(readFileSync(kept.settings, 'utf8'), /name = "ttheme\/orla · dark"/)
   assert.equal(readFileSync(undone.settings, 'utf8'), mine)
 })
 
@@ -567,25 +567,25 @@ test('a linked Warp settings file is written through its link, which an identica
     return readlinkSync(settings) === text && link !== was
   }
 
-  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'] }, home)
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'] }, home)
   const until = Date.now() + 4000
 
-  while (!/name = "ttheme\/gojo · dark"/.test(readFileSync(real, 'utf8')) && Date.now() < until) {
+  while (!/name = "ttheme\/orla · dark"/.test(readFileSync(real, 'utf8')) && Date.now() < until) {
     await new Promise((resolve) => setTimeout(resolve, 50))
   }
 
   await new Promise((resolve) => setTimeout(resolve, 100))
-  assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/gojo · dark"/)
+  assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/orla · dark"/)
   assert.ok(relinked())
   sync(
     configHome,
     manifest,
-    { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'], startup: 'ttheme/geto' },
+    { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'], startup: 'ttheme/juno' },
     home,
   )
-  assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/geto · dark"/)
+  assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/juno · dark"/)
   assert.ok(relinked())
-  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'], off: true }, home)
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'], off: true }, home)
   assert.equal(readFileSync(real, 'utf8'), mine)
   assert.ok(relinked())
 })
@@ -599,14 +599,14 @@ test('a linked Warp settings file in a folder ttheme cannot write still takes th
   mkdirSync(dirname(settings), { recursive: true })
   writeFileSync(real, '[appearance.themes]\ntheme = "Dracula"\n')
   symlinkSync(real, settings)
-  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'], startup: 'ttheme/gojo' }
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'], startup: 'ttheme/orla' }
   sync(configHome, manifest, state, home)
   sync(configHome, manifest, state, home)
   chmodSync(dirname(settings), 0o555)
 
   try {
-    const written = sync(configHome, manifest, { ...state, startup: 'ttheme/geto' }, home)
-    assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/geto · dark"/)
+    const written = sync(configHome, manifest, { ...state, startup: 'ttheme/juno' }, home)
+    assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/juno · dark"/)
     assert.ok(written.includes(join(configHome, 'ttheme', 'palettes.zsh')))
   } finally {
     chmodSync(dirname(settings), 0o755)
@@ -616,24 +616,24 @@ test('a linked Warp settings file in a folder ttheme cannot write still takes th
 test('sync adds the Warp theme table when there is none, gives Warp its default back while off, and leaves Warp alone without a settings file', () => {
   const configHome = fixture()
   const home = fixture()
-  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla'] }, home)
   assert.ok(!existsSync(warpSettings(home, configHome)))
   const settings = warpSettings(home, configHome)
   mkdirSync(join(settings, '..'), { recursive: true })
   writeFileSync(settings, '[general]\ndefault_session_mode = "agent"\n')
-  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla'] }, home)
   assert.match(
     readFileSync(settings, 'utf8'),
     /^default_session_mode = "agent"\n\n\[appearance\.themes\]\ntheme = \{ custom/m,
   )
-  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/gojo'], off: true }, home)
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla'], off: true }, home)
   assert.match(readFileSync(settings, 'utf8'), /^theme = "dark"$/m)
 })
 
 test("sync puts the palette in both of Warp's system slots while Warp follows the system, and gives the user's back while off", () => {
   const configHome = fixture()
   const home = fixture()
-  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/gojo'] }
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla'] }
   sync(configHome, manifest, state, home)
   const settings = warpSettings(home, configHome)
   mkdirSync(dirname(settings), { recursive: true })
@@ -643,15 +643,15 @@ test("sync puts the palette in both of Warp's system slots while Warp follows th
 
   writeFileSync(settings, mine)
   sync(configHome, manifest, state, home)
-  const gojo = warpThemeValue('ttheme/gojo · dark', plainTheme(home, 'ttheme/gojo'))
+  const orla = warpThemeValue('ttheme/orla · dark', plainTheme(home, 'ttheme/orla'))
   const worn = readFileSync(settings, 'utf8')
-  assert.equal(warpThemeOf(worn), gojo)
-  assert.equal(warpSystemOf(worn), warpSystemValue(gojo))
+  assert.equal(warpThemeOf(worn), orla)
+  assert.equal(warpSystemOf(worn), warpSystemValue(orla))
   sync(configHome, manifest, { ...state, off: true }, home)
   assert.equal(readFileSync(settings, 'utf8'), mine)
   writeFileSync(settings, '[appearance.themes]\nsystem_theme = true\n')
   sync(configHome, manifest, state, home)
-  assert.equal(warpSystemOf(readFileSync(settings, 'utf8')), warpSystemValue(gojo))
+  assert.equal(warpSystemOf(readFileSync(settings, 'utf8')), warpSystemValue(orla))
   sync(configHome, manifest, { ...state, off: true }, home)
   assert.equal(warpSystemOf(readFileSync(settings, 'utf8')), WARP_SYSTEM_DEFAULT)
 })
@@ -659,7 +659,7 @@ test("sync puts the palette in both of Warp's system slots while Warp follows th
 test("init says when Warp's Settings sync would carry ttheme's palettes to the account's other devices", () => {
   const configHome = fixture()
   const home = fixture()
-  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/gojo'] }
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla'] }
   const settings = warpSettings(home, configHome)
   mkdirSync(dirname(settings), { recursive: true })
   const synced = () => wiringNotes(configHome, state, home).filter((note) => note.includes('Settings sync on'))
@@ -693,7 +693,7 @@ test('a Warp tab names its channel by its app, else by the channel its version c
 test('sync wears the startup palette in every Warp channel it finds, each through its own settings, and writes a themes folder they share once', () => {
   const configHome = fixture()
   const home = fixture()
-  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/gojo'] }
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla'] }
   mkdirSync(dirname(warpThemes(home, 'preview')), { recursive: true })
   sync(configHome, manifest, state, home)
   assert.ok(!existsSync(dirname(warpThemes(home))))
@@ -703,7 +703,7 @@ test('sync wears the startup palette in every Warp channel it finds, each throug
   sync(configHome, manifest, state, home)
   assert.equal(
     warpThemeOf(readFileSync(preview, 'utf8')),
-    warpThemeValue('ttheme/gojo · dark', plainTheme(home, 'ttheme/gojo', 'preview')),
+    warpThemeValue('ttheme/orla · dark', plainTheme(home, 'ttheme/orla', 'preview')),
   )
   sync(configHome, manifest, { ...state, off: true }, home)
   assert.equal(readFileSync(preview, 'utf8'), '[appearance.themes]\ntheme = "koi"\n')
@@ -722,10 +722,10 @@ test('sync wears the startup palette in every Warp channel it finds, each throug
   }
 
   sync(configHome, manifest, state, linked)
-  const gojo = warpThemeValue('ttheme/gojo · dark', plainTheme(linked, 'ttheme/gojo'))
+  const orla = warpThemeValue('ttheme/orla · dark', plainTheme(linked, 'ttheme/orla'))
   assert.deepEqual(
     both.map((file) => warpThemeOf(readFileSync(file, 'utf8'))),
-    [gojo, gojo],
+    [orla, orla],
   )
 })
 
@@ -733,11 +733,11 @@ function pictured(configHome: string, opacity: number): void {
   const dir = join(configHome, 'ttheme', 'backgrounds')
   mkdirSync(dir, { recursive: true })
   writeFileSync(
-    join(dir, 'ttheme--gojo.conf'),
-    `background-image = ttheme--gojo@fill-40.png\nbackground-image-opacity = ${opacity}\n`,
+    join(dir, 'ttheme--orla.conf'),
+    `background-image = ttheme--orla@fill-40.png\nbackground-image-opacity = ${opacity}\n`,
   )
   writeFileSync(
-    join(dir, 'ttheme--gojo@fill-40.png'),
+    join(dir, 'ttheme--orla@fill-40.png'),
     encodeRgba({ width: 2, height: 1, data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 0]) }),
   )
 }
@@ -749,7 +749,7 @@ function warpFiles(home: string, name: string, mode = 'dark', channel: WarpChann
 }
 
 function picturedThemes(home: string): string[] {
-  return warpFiles(home, 'ttheme/gojo').filter((file) =>
+  return warpFiles(home, 'ttheme/orla').filter((file) =>
     readFileSync(join(warpThemes(home), file), 'utf8').includes('background_image'),
   )
 }
@@ -766,19 +766,19 @@ test("sync gives a palette's Warp theme its picture under a name of its own, and
   const configHome = fixture()
   const home = fixture()
   pictured(configHome, 0.2)
-  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'] }
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'] }
   sync(configHome, manifest, state, home)
   const themes = warpThemes(home)
   const first = picturedThemes(home)
   assert.equal(first.length, 1)
   const theme = readFileSync(join(themes, first[0] as string), 'utf8')
   const flat = /^ {2}path: "(.+)"$/m.exec(theme)?.[1] ?? ''
-  assert.match(flat, new RegExp(`^${RegExp.escape(themes)}/ttheme-ttheme--gojo\\.[0-9a-f]{8}\\.png$`))
-  assert.match(theme, /^name: "ttheme\/gojo · dark · picture"$/m)
+  assert.match(flat, new RegExp(`^${RegExp.escape(themes)}/ttheme-ttheme--orla\\.[0-9a-f]{8}\\.png$`))
+  assert.match(theme, /^name: "ttheme\/orla · dark · picture"$/m)
   assert.match(theme, /^background_image:\n {2}path: ".+"\n {2}opacity: 20$/m)
   assert.deepEqual([...decodePng(readFileSync(flat)).data], [255, 255, 255, 255, 17, 25, 28, 255])
-  assert.doesNotMatch(readFileSync(join(themes, plainTheme(home, 'ttheme/gojo')), 'utf8'), /background_image/)
-  assert.deepEqual(warpFiles(home, 'ttheme/geto'), [plainTheme(home, 'ttheme/geto')])
+  assert.doesNotMatch(readFileSync(join(themes, plainTheme(home, 'ttheme/orla')), 'utf8'), /background_image/)
+  assert.deepEqual(warpFiles(home, 'ttheme/juno'), [plainTheme(home, 'ttheme/juno')])
   const settings = warpSettings(home, configHome)
   mkdirSync(join(settings, '..'), { recursive: true })
   writeFileSync(settings, '[appearance.themes]\ntheme = "Dracula"\n')
@@ -795,9 +795,9 @@ test("sync gives a palette's Warp theme its picture under a name of its own, and
   assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${RegExp.escape(now[0] as string)}"`))
   const again = readFileSync(join(themes, now[0] as string), 'utf8')
   assert.match(again, new RegExp(`^ {2}path: "${RegExp.escape(flat)}"\\n {2}opacity: 50$`, 'm'))
-  const light = inMode(entry('ttheme/gojo'), 'light').background
-  const image = join(configHome, 'ttheme', 'backgrounds', 'ttheme--gojo@fill-40.png')
-  const ahead = warpPictureFile('ttheme/gojo', image, light)
+  const light = inMode(entry('ttheme/orla'), 'light').background
+  const image = join(configHome, 'ttheme', 'backgrounds', 'ttheme--orla@fill-40.png')
+  const ahead = warpPictureFile('ttheme/orla', image, light)
 
   assert.deepEqual(
     readdirSync(themes)
@@ -815,25 +815,25 @@ test('Warp wears the plain theme of a palette whose picture cannot be read', () 
   const home = fixture()
   const dir = join(configHome, 'ttheme', 'backgrounds')
   mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, 'ttheme--geto.conf'), 'background-image = ttheme--geto@fill-40.png\n')
+  writeFileSync(join(dir, 'ttheme--juno.conf'), 'background-image = ttheme--juno@fill-40.png\n')
   const settings = warpSettings(home, configHome)
   mkdirSync(join(settings, '..'), { recursive: true })
   writeFileSync(settings, '[appearance.themes]\ntheme = "Dracula"\n')
-  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'], startup: 'ttheme/geto' }
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'], startup: 'ttheme/juno' }
   sync(configHome, manifest, state, home)
   sync(configHome, manifest, state, home)
   assert.match(
     readFileSync(settings, 'utf8'),
-    new RegExp(`name = "ttheme/geto · dark", path = "${RegExp.escape(plainTheme(home, 'ttheme/geto'))}"`),
+    new RegExp(`name = "ttheme/juno · dark", path = "${RegExp.escape(plainTheme(home, 'ttheme/juno'))}"`),
   )
-  assert.deepEqual(warpFiles(home, 'ttheme/geto'), [plainTheme(home, 'ttheme/geto')])
+  assert.deepEqual(warpFiles(home, 'ttheme/juno'), [plainTheme(home, 'ttheme/juno')])
 })
 
 test('a picture changed anywhere moves Warp to the new pictured theme only while Warp wears that palette', () => {
   const configHome = fixture()
   const home = fixture()
   pictured(configHome, 0.2)
-  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/gojo', 'ttheme/geto'] }
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'] }
   writeBundled(configHome, { builtin: manifest, commons: { works: [], renames: {} } })
   writeInstalled(configHome, state)
   sync(configHome, manifest, state, home)
@@ -847,26 +847,26 @@ test('a picture changed anywhere moves Warp to the new pictured theme only while
   assert.equal(readFileSync(settings, 'utf8'), mine)
   writeFileSync(
     settings,
-    `[appearance.themes]\ntheme = ${warpThemeValue('ttheme/geto · dark', plainTheme(home, 'ttheme/geto'))}\n`,
+    `[appearance.themes]\ntheme = ${warpThemeValue('ttheme/juno · dark', plainTheme(home, 'ttheme/juno'))}\n`,
   )
   pictured(configHome, 0.3)
   refreshPictures(configHome, home)
   refreshPictures(configHome, home)
-  assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${RegExp.escape(plainTheme(home, 'ttheme/geto'))}"`))
-  const gone = `[appearance.themes]\ntheme = ${warpThemeValue('kaito', 'ttheme-kaito.0123abcd.yaml')}\n`
+  assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${RegExp.escape(plainTheme(home, 'ttheme/juno'))}"`))
+  const gone = `[appearance.themes]\ntheme = ${warpThemeValue('bram', 'ttheme-bram.0123abcd.yaml')}\n`
   writeFileSync(settings, gone)
   refreshPictures(configHome, home)
   assert.equal(readFileSync(settings, 'utf8'), gone)
   writeFileSync(
     settings,
-    `[appearance.themes]\ntheme = ${warpThemeValue('ttheme/gojo · dark', plainTheme(home, 'ttheme/gojo'))}\n`,
+    `[appearance.themes]\ntheme = ${warpThemeValue('ttheme/orla · dark', plainTheme(home, 'ttheme/orla'))}\n`,
   )
   refreshPictures(configHome, home)
   const now = picturedThemes(home)
   assert.equal(now.length, 1)
   assert.match(
     readFileSync(settings, 'utf8'),
-    new RegExp(`name = "ttheme/gojo · dark · picture", path = "${RegExp.escape(now[0] as string)}"`),
+    new RegExp(`name = "ttheme/orla · dark · picture", path = "${RegExp.escape(now[0] as string)}"`),
   )
   assert.match(readFileSync(join(warpThemes(home), now[0] as string), 'utf8'), /^ {2}opacity: 30$/m)
 })
@@ -877,10 +877,10 @@ test('the shell names a laid Warp picture as the CLI does, so preview draws stra
   const laid = layer.slice(from, layer.indexOf('\n}\n', from) + 2)
 
   const cases: [string, string, string][] = [
-    ['asuka', '/Users/kdh/.config/ttheme/backgrounds/asuka.6fc048f5@115-center-right-2912x2040.png', '#211513'],
+    ['wren', '/Users/ivo/.config/ttheme/backgrounds/wren.6fc048f5@115-center-right-2912x2040.png', '#211513'],
     [
-      'kecan@marketplace/miku',
-      '/home/사용자/.config/ttheme/backgrounds/kecan--marketplace--miku.0a1b2c3d@fill-40.png',
+      'kumquat@marketplace/orla',
+      '/home/사용자/.config/ttheme/backgrounds/kumquat--marketplace--orla.0a1b2c3d@fill-40.png',
       '#2A1B3C',
     ],
   ]
@@ -911,14 +911,14 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
     manifest,
     {
       terminals: ['iterm2'],
-      startup: 'ttheme/geto',
+      startup: 'ttheme/juno',
       itermBase: 'BASE',
-      palettes: ['ttheme/neutral', 'ttheme/gojo', 'ttheme/geto'],
+      palettes: ['ttheme/neutral', 'ttheme/orla', 'ttheme/juno'],
     },
     home,
   )
   const written = read()
-  const gojo = written[1]
+  const orla = written[1]
   assert.ok(
     written.every((p: { 'Dynamic Profile Parent GUID'?: string }) => p['Dynamic Profile Parent GUID'] === 'BASE'),
   )
@@ -926,29 +926,29 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
     written.map((p: { Name: string; Guid: string }) => [p.Name, p.Guid]),
     [
       ['ttheme · default', 'ttheme-default'],
-      ['ttheme · ttheme/gojo', 'ttheme-ttheme--gojo'],
-      ['ttheme · ttheme/geto', 'ttheme-ttheme--geto'],
+      ['ttheme · ttheme/orla', 'ttheme-ttheme--orla'],
+      ['ttheme · ttheme/juno', 'ttheme-ttheme--juno'],
     ],
   )
   assert.deepEqual({ ...written[0], Name: 0, Guid: 0 }, { ...written[2], Name: 0, Guid: 0 })
   assert.match(
     readFileSync(join(configHome, 'ttheme', 'palettes.zsh'), 'utf8'),
-    /^typeset -g TTHEME_STARTUP=ttheme\/geto$/m,
+    /^typeset -g TTHEME_STARTUP=ttheme\/juno$/m,
   )
-  assert.equal(gojo['Use Separate Colors for Light and Dark Mode'], false)
-  assert.equal('Harmonize 256 Colors' in gojo, false)
-  assert.equal(gojo['Background Image Location'], '')
-  assert.deepEqual(gojo['Background Color'], {
+  assert.equal(orla['Use Separate Colors for Light and Dark Mode'], false)
+  assert.equal('Harmonize 256 Colors' in orla, false)
+  assert.equal(orla['Background Image Location'], '')
+  assert.deepEqual(orla['Background Color'], {
     'Alpha Component': 1,
     'Blue Component': 0x1c / 255,
     'Color Space': 'P3',
     'Green Component': 0x19 / 255,
     'Red Component': 0x11 / 255,
   })
-  sync(configHome, manifest, { terminals: ['iterm2'], off: true, itermBase: 'BASE', palettes: ['ttheme/gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['iterm2'], off: true, itermBase: 'BASE', palettes: ['ttheme/orla'] }, home)
   assert.deepEqual(
     read().map((p: { Name: string }) => p.Name),
-    ['ttheme · default', 'ttheme · ttheme/gojo'],
+    ['ttheme · default', 'ttheme · ttheme/orla'],
   )
   assert.deepEqual(read()[0], {
     Name: 'ttheme · default',
@@ -956,10 +956,10 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
     'Dynamic Profile Parent GUID': 'BASE',
     'Background Image Location': '',
   })
-  sync(configHome, manifest, { terminals: ['iterm2'], off: true, palettes: ['ttheme/gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['iterm2'], off: true, palettes: ['ttheme/orla'] }, home)
   assert.deepEqual(
     read().map((p: { Name: string }) => p.Name),
-    ['ttheme · ttheme/gojo'],
+    ['ttheme · ttheme/orla'],
   )
   assert.ok(!existsSync(join(configHome, 'iterm2')))
 })
@@ -978,12 +978,12 @@ test('palettes.zsh tells the iTerm2 adapter whether iTerm2 lets a control sequen
         : undefined,
   })
 
-  sync(configHome, manifest, { terminals: ['iterm2'], palettes: ['ttheme/gojo'] }, home, prefs('0'))
+  sync(configHome, manifest, { terminals: ['iterm2'], palettes: ['ttheme/orla'] }, home, prefs('0'))
   assert.match(table(), /^typeset -g TTHEME_ITERM_SWITCH='1'$/m)
   assert.ok(table().includes(`\ntypeset -g TTHEME_ITERM_PROFILES='${itermProfilesPath(home)}'\n`))
 
   for (const value of ['1', undefined]) {
-    sync(configHome, manifest, { terminals: ['iterm2'], palettes: ['ttheme/gojo'] }, home, prefs(value))
+    sync(configHome, manifest, { terminals: ['iterm2'], palettes: ['ttheme/orla'] }, home, prefs(value))
     assert.match(table(), /^typeset -g TTHEME_ITERM_SWITCH=''$/m)
   }
 })
@@ -994,19 +994,19 @@ test("sync gives a palette's iTerm2 profile its picture, tuning and off switch",
   const dir = join(configHome, 'ttheme', 'backgrounds')
   mkdirSync(dir, { recursive: true })
   writeFileSync(
-    join(dir, 'ttheme--gojo.conf'),
-    'background-image = ttheme--gojo@fill-40.png\nbackground-image-fit = cover\nbackground-image-opacity = 0.2\nconfig-file = ?ttheme--gojo.tune.conf\n',
+    join(dir, 'ttheme--orla.conf'),
+    'background-image = ttheme--orla@fill-40.png\nbackground-image-fit = cover\nbackground-image-opacity = 0.2\nconfig-file = ?ttheme--orla.tune.conf\n',
   )
   writeFileSync(
-    join(dir, 'ttheme--gojo.tune.conf'),
-    'background-image = ~/gojo@60-center.png\nbackground-image-fit = contain\n',
+    join(dir, 'ttheme--orla.tune.conf'),
+    'background-image = ~/orla@60-center.png\nbackground-image-fit = contain\n',
   )
   writeFileSync(
-    join(dir, 'ttheme--geto.conf'),
-    `background-image = ${join(dir, 'ttheme--geto.png')}\nconfig-file = ?ttheme--geto.off.conf\n`,
+    join(dir, 'ttheme--juno.conf'),
+    `background-image = ${join(dir, 'ttheme--juno.png')}\nconfig-file = ?ttheme--juno.off.conf\n`,
   )
-  writeFileSync(join(dir, 'ttheme--geto.off.conf'), 'background-image =\n')
-  sync(configHome, manifest, { terminals: ['iterm2'], palettes: ['ttheme/gojo', 'ttheme/geto'] }, home)
+  writeFileSync(join(dir, 'ttheme--juno.off.conf'), 'background-image =\n')
+  sync(configHome, manifest, { terminals: ['iterm2'], palettes: ['ttheme/orla', 'ttheme/juno'] }, home)
 
   const pick = ({
     Name,
@@ -1019,31 +1019,31 @@ test("sync gives a palette's iTerm2 profile its picture, tuning and off switch",
   }) => [Name, p['Background Image Location'], p['Background Image Mode'], p.Blend]
 
   assert.deepEqual(JSON.parse(readFileSync(itermProfilesPath(home), 'utf8')).Profiles.map(pick), [
-    ['ttheme · default', join(home, 'gojo@60-center.png'), 3, 0.2],
-    ['ttheme · ttheme/gojo', join(home, 'gojo@60-center.png'), 3, 0.2],
-    ['ttheme · ttheme/geto', '', undefined, undefined],
+    ['ttheme · default', join(home, 'orla@60-center.png'), 3, 0.2],
+    ['ttheme · ttheme/orla', join(home, 'orla@60-center.png'), 3, 0.2],
+    ['ttheme · ttheme/juno', '', undefined, undefined],
   ])
 })
 
 test('startupPalette keeps an explicit choice and falls to the first otherwise', () => {
   assert.equal(
-    startupPalette({ terminals: [], startup: 'ttheme/geto', palettes: ['ttheme/gojo', 'ttheme/geto'] }),
-    'ttheme/geto',
+    startupPalette({ terminals: [], startup: 'ttheme/juno', palettes: ['ttheme/orla', 'ttheme/juno'] }),
+    'ttheme/juno',
   )
-  assert.equal(startupPalette({ terminals: [], startup: 'ttheme/gone', palettes: ['ttheme/gojo'] }), 'ttheme/gojo')
+  assert.equal(startupPalette({ terminals: [], startup: 'ttheme/gone', palettes: ['ttheme/orla'] }), 'ttheme/orla')
   assert.equal(startupPalette({ terminals: [], palettes: [] }), undefined)
 })
 
 test('forget removes only the named palettes', () => {
   const home = fixture()
-  sync(home, manifest, { terminals: ['ghostty'], palettes: ['ttheme/neutral', 'ttheme/gojo', 'ttheme/geto'] })
-  const removed = forget(home, manifest, ['ghostty'], ['ttheme/geto'])
+  sync(home, manifest, { terminals: ['ghostty'], palettes: ['ttheme/neutral', 'ttheme/orla', 'ttheme/juno'] })
+  const removed = forget(home, manifest, ['ghostty'], ['ttheme/juno'])
   assert.deepEqual(removed, [
-    join(home, 'ghostty', 'themes', 'ttheme-ttheme--geto.dark'),
-    join(home, 'ghostty', 'themes', 'ttheme-ttheme--geto.light'),
+    join(home, 'ghostty', 'themes', 'ttheme-ttheme--juno.dark'),
+    join(home, 'ghostty', 'themes', 'ttheme-ttheme--juno.light'),
   ])
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-ttheme--gojo.dark')))
-  assert.ok(!existsSync(join(home, 'ghostty', 'themes', 'ttheme-ttheme--geto.dark')))
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-ttheme--orla.dark')))
+  assert.ok(!existsSync(join(home, 'ghostty', 'themes', 'ttheme-ttheme--juno.dark')))
 })
 
 function defaultsAt(initial: string | undefined) {
@@ -1074,7 +1074,7 @@ function defaultsAt(initial: string | undefined) {
 
 test('iTerm2 takes ttheme · default as its default profile, keeps it while off and gives the one it replaced back once nothing is installed', () => {
   const { host, writes } = defaultsAt('USER')
-  const state = withBases('/nowhere', { terminals: ['iterm2'], palettes: ['ttheme/gojo'] }, host)
+  const state = withBases('/nowhere', { terminals: ['iterm2'], palettes: ['ttheme/orla'] }, host)
   assert.equal(state.itermBase, 'USER')
   assert.ok(pointDefaults('/nowhere', state, true, host).has('iterm2'))
   assert.ok(!pointDefaults('/nowhere', state, true, host).has('iterm2'))
@@ -1087,10 +1087,10 @@ test('iTerm2 takes ttheme · default as its default profile, keeps it while off 
 test('iTerm2 keeps its default profile when nothing is worn, it is not wired, or the user picked one ttheme did not take', () => {
   const { host, writes } = defaultsAt('USER')
   assert.equal(pointDefaults('/nowhere', { terminals: ['iterm2'], palettes: [] }, false, host).size, 0)
-  assert.equal(pointDefaults('/nowhere', { terminals: ['ghostty'], palettes: ['ttheme/gojo'] }, true, host).size, 0)
-  assert.equal(pointDefaults('/nowhere', { terminals: ['iterm2'], palettes: ['ttheme/gojo'] }, false, host).size, 0)
+  assert.equal(pointDefaults('/nowhere', { terminals: ['ghostty'], palettes: ['ttheme/orla'] }, true, host).size, 0)
+  assert.equal(pointDefaults('/nowhere', { terminals: ['iterm2'], palettes: ['ttheme/orla'] }, false, host).size, 0)
   assert.equal(
-    withBases('/nowhere', { terminals: ['iterm2'], palettes: ['ttheme/gojo'] }, defaultsAt('ttheme-ttheme--gojo').host)
+    withBases('/nowhere', { terminals: ['iterm2'], palettes: ['ttheme/orla'] }, defaultsAt('ttheme-ttheme--orla').host)
       .itermBase,
     undefined,
   )
@@ -1099,10 +1099,10 @@ test('iTerm2 keeps its default profile when nothing is worn, it is not wired, or
 
 test('a palette that leaves its marketplace keeps working from the copy the last sync kept', () => {
   const home = fixture()
-  sync(home, manifest, { terminals: ['ghostty'], palettes: ['ttheme/gojo', 'ttheme/geto'] })
-  const without: Manifest = { ...manifest, palettes: manifest.palettes.filter((p) => p.name !== 'ttheme/geto') }
-  sync(home, without, { terminals: ['ghostty'], palettes: ['ttheme/gojo', 'ttheme/geto'] })
-  assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(ttheme\/geto ttheme\/gojo\)/)
+  sync(home, manifest, { terminals: ['ghostty'], palettes: ['ttheme/orla', 'ttheme/juno'] })
+  const without: Manifest = { ...manifest, palettes: manifest.palettes.filter((p) => p.name !== 'ttheme/juno') }
+  sync(home, without, { terminals: ['ghostty'], palettes: ['ttheme/orla', 'ttheme/juno'] })
+  assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(ttheme\/juno ttheme\/orla\)/)
 })
 
 test("a marketplace's palette gets theme files and a startup line with -- for the @ and the /", () => {
@@ -1110,14 +1110,14 @@ test("a marketplace's palette gets theme files and a startup line with -- for th
 
   const shared: Manifest = {
     ...manifest,
-    palettes: [...manifest.palettes, entry('kec@dust/rei', { from: 'ttheme/gojo' })],
+    palettes: [...manifest.palettes, entry('kai@dust/pip', { from: 'ttheme/orla' })],
   }
 
-  sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['kec@dust/rei'] })
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-kec--dust--rei.dark')))
-  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-kec--dust--rei.dark.conf')))
-  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-kec--dust--rei\.dark$/m)
-  assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(kec@dust\/rei\)/)
+  sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['kai@dust/pip'] })
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-kai--dust--pip.dark')))
+  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-kai--dust--pip.dark.conf')))
+  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-kai--dust--pip\.dark$/m)
+  assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(kai@dust\/pip\)/)
 })
 
 test('installed.json keeps every field it holds through a write and a read', () => {
@@ -1125,19 +1125,19 @@ test('installed.json keeps every field it holds through a write and a read', () 
 
   const state: Required<Installed> = {
     terminals: ['ghostty', 'iterm2', 'windows-terminal'],
-    author: 'kec',
-    startup: 'ttheme/gojo',
+    author: 'kai',
+    startup: 'ttheme/orla',
     off: true,
     itermBase: 'A1B2C3',
     konsoleBase: 'Mine.profile',
     terminalBase: 'Clear Dark',
-    wtHome: '/mnt/c/Users/kec/AppData/Local',
+    wtHome: '/mnt/c/Users/kai/AppData/Local',
     wtProfile: '{61c54bbd-c2c6-5271-96e7-009a87ff44bf}',
     marketplaces: ['ttheme', 'alice/pastel#v1'],
     updates: { 'alice/pastel#v1': true, ttheme: false },
     colorsMoved: true,
     skills: ['agents', 'claude'],
-    palettes: ['ttheme/gojo', 'alice@pastel/dusk'],
+    palettes: ['ttheme/orla', 'alice@pastel/dusk'],
   }
 
   writeInstalled(home, state)

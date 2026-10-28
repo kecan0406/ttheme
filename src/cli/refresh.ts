@@ -3,6 +3,7 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { WORKS_DIR, type Work } from '../core/commons.ts'
 import { listed, type PaletteEntry } from '../core/manifest.ts'
+import { SETS_DIR } from '../core/sets.ts'
 import { untar } from '../core/tarball.ts'
 import { counted } from '../core/text.ts'
 import { BUILTIN, MARKETPLACE_FILE, marketplaceId, slugOf } from '../core/theme.ts'
@@ -54,7 +55,7 @@ export const REFRESH_AFTER = 24 * 60 * 60 * 1000
 export const RETRY_AFTER = 60 * 60 * 1000
 export const AUTO_TIMEOUT = 5_000
 const ARCHIVE_MOST = 16 * 1024 * 1024
-const MARKETPLACE_PATH = new RegExp(`^(?:palettes|${WORKS_DIR})/[^/]+\\.toml$`)
+const MARKETPLACE_PATH = new RegExp(`^(?:${SETS_DIR}|${WORKS_DIR})/[^/]+\\.toml$`)
 
 export interface Tried {
   at: number

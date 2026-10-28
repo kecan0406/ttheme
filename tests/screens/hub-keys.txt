@@ -4,8 +4,8 @@
  │ ⌕ Search… ‹hint› │
  ╰────────────│    ↑↓  ctrl+j  ctrl+k     Move up or down                           │
               │    pgup  pgdn  home  end  Move a page, or to either end             │
-▌  ▸ Bocchi th│    ←→  space              Close or open a shelf                     │
-   ▸ Lucky☆Sta│  Filter                                                             │
+▌  ▸ Briarwood│    ←→  space              Close or open a shelf                     │
+   ▸ Lumen☆Son│  Filter                                                             │
               │    type                   Filter by name or title, in Japanese too  │
               │    ctrl+u                 Clear the filter                          │
               │  Palette                                                            │

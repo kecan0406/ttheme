@@ -1,0 +1,281 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "nazuna"
+subject = "call-of-the-night/nazuna"
+signature = ["cursor", "ansi1", "ansi13"]
+ansi_source = "Purplepeter"
+
+[palette.colors]
+background = "#1e151a"
+foreground = "#f4dce9"
+cursor = "#e8abd3"
+selection_background = "#423859"
+ansi = [
+  "#2a2127",
+  "#f06e62",
+  "#d0c574",
+  "#f0ae7c",
+  "#6f96de",
+  "#e796da",
+  "#00b7f6",
+  "#e0d0d8",
+
+  "#81737a",
+  "#f39eac",
+  "#ece28d",
+  "#ffd4b9",
+  "#8cabe8",
+  "#eac4ff",
+  "#99ceed",
+  "#ffe8f3",
+]
+
+[palette.colors.light]
+background = "#fff8f9"
+foreground = "#291b24"
+cursor = "#ad6698"
+selection_background = "#dfd1fa"
+ansi = [
+  "#fff0f6",
+  "#bc2a25",
+  "#3b5826",
+  "#8e5626",
+  "#3963a7",
+  "#9a3f92",
+  "#005676",
+  "#33292f",
+
+  "#81737a",
+  "#8e384b",
+  "#2e491a",
+  "#734c31",
+  "#2e5492",
+  "#6d4389",
+  "#004862",
+  "#291b24",
+]
+
+[[palette]]
+slug = "kou"
+subject = "call-of-the-night/kou"
+signature = ["cursor", "ansi5", "ansi9"]
+ansi_source = "Under The Sea"
+
+[palette.colors]
+background = "#211513"
+foreground = "#fddbd5"
+cursor = "#e66c59"
+selection_background = "#264242"
+ansi = [
+  "#2e211e",
+  "#f16c5f",
+  "#dac126",
+  "#e7b171",
+  "#599ec2",
+  "#74b5ff",
+  "#00c0ae",
+  "#e6d0cc",
+
+  "#857370",
+  "#f3a09a",
+  "#fbdc23",
+  "#ffd5a7",
+  "#54b6e4",
+  "#c7d2ff",
+  "#29dec9",
+  "#ffe9e5",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b18"
+cursor = "#bd3a29"
+selection_background = "#bedddd"
+ansi = [
+  "#fff0ee",
+  "#bd2823",
+  "#395823",
+  "#855b23",
+  "#1a6a8c",
+  "#0266ad",
+  "#005b51",
+  "#362927",
+
+  "#857370",
+  "#8c3b37",
+  "#2f491c",
+  "#724d1d",
+  "#005c7b",
+  "#425288",
+  "#004b43",
+  "#2d1b18",
+]
+
+[[palette]]
+slug = "seri"
+subject = "call-of-the-night/seri"
+signature = ["cursor", "ansi12", "ansi9"]
+ansi_source = "Birds Of Paradise"
+
+[palette.colors]
+background = "#1e160d"
+foreground = "#f6dfc6"
+cursor = "#e99d2a"
+selection_background = "#523823"
+ansi = [
+  "#2b2218",
+  "#ee722b",
+  "#b0ca8b",
+  "#faab38",
+  "#5c9db6",
+  "#e69cae",
+  "#85b78d",
+  "#e2d2c2",
+
+  "#827568",
+  "#f3a191",
+  "#cce6a1",
+  "#feda51",
+  "#84b0d5",
+  "#ffc1ce",
+  "#a0d3a6",
+  "#ffebd6",
+]
+
+[palette.colors.light]
+background = "#fff8f4"
+foreground = "#291d0e"
+cursor = "#a46900"
+selection_background = "#f8cfb2"
+ansi = [
+  "#fff1e5",
+  "#a84500",
+  "#3c5828",
+  "#8b5800",
+  "#246b82",
+  "#994a61",
+  "#1f5a40",
+  "#342b20",
+
+  "#827568",
+  "#8c3c2e",
+  "#2e491a",
+  "#6e4f00",
+  "#2a597a",
+  "#7e4252",
+  "#074c33",
+  "#291d0e",
+]
+
+[[palette]]
+slug = "anko"
+subject = "call-of-the-night/anko"
+signature = ["cursor", "ansi4", "ansi2"]
+ansi_source = "Arthur"
+
+[palette.colors]
+background = "#201511"
+foreground = "#fddcd0"
+cursor = "#ee6d35"
+selection_background = "#473c32"
+ansi = [
+  "#2d211c",
+  "#e97360",
+  "#a1cc99",
+  "#f6ab68",
+  "#6495ed",
+  "#e19cb7",
+  "#7db2d1",
+  "#e6d0c9",
+
+  "#85736d",
+  "#f3a289",
+  "#cdee5b",
+  "#ffcba6",
+  "#a6a5e4",
+  "#ffc1d8",
+  "#99ceee",
+  "#ffe9e2",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b14"
+cursor = "#b7450d"
+selection_background = "#e6d4c6"
+ansi = [
+  "#fff1ec",
+  "#b53524",
+  "#335930",
+  "#90551a",
+  "#2a61b6",
+  "#964a6c",
+  "#195671",
+  "#362924",
+
+  "#85736d",
+  "#8b3e24",
+  "#394800",
+  "#784a24",
+  "#4c4b9c",
+  "#7e415c",
+  "#004862",
+  "#2d1b14",
+]
+
+[[palette]]
+slug = "yofukashi"
+subject = "call-of-the-night/yofukashi"
+signature = ["cursor", "ansi5", "ansi4"]
+ansi_source = "Bright Lights"
+
+[palette.colors]
+background = "#1d170c"
+foreground = "#f3e0c5"
+cursor = "#ffc251"
+selection_background = "#393b5b"
+ansi = [
+  "#2a2318",
+  "#f07035",
+  "#c7c63f",
+  "#ecb142",
+  "#3aa0c9",
+  "#d697ff",
+  "#88b77f",
+  "#e0d3c2",
+
+  "#807667",
+  "#f3a282",
+  "#e4e358",
+  "#ffd796",
+  "#36bbcc",
+  "#fabff3",
+  "#a2d499",
+  "#ffebd0",
+]
+
+[palette.colors.light]
+background = "#fff8f3"
+foreground = "#281e0d"
+cursor = "#ae7a00"
+selection_background = "#d3d4fc"
+ansi = [
+  "#fff2e2",
+  "#ad4001",
+  "#37591f",
+  "#845c00",
+  "#006b8c",
+  "#8e36c7",
+  "#1b5b39",
+  "#322b20",
+
+  "#807667",
+  "#8b3e1c",
+  "#2d4a19",
+  "#714e00",
+  "#005e68",
+  "#7c3d7b",
+  "#004c32",
+  "#281e0d",
+]

@@ -33,24 +33,25 @@ from.
 The link opens [the builder](https://ttheme.dev/builder) on the palette: a mock
 terminal in its colors, its color list, the contrast checks, and its pictures' posts
 with their artists. A change there makes a copy of your own, which the builder
-exports as a palette file.
+exports as a [set](publish.md#a-set).
 
 ## Install a link
 
 ```sh
 ttheme add https://ttheme.dev/builder/tt5:…
 ttheme add tt5:…              # the bare code works too
-ttheme add ~/Downloads/rei.toml   # a file the builder exported
+ttheme add ~/Downloads/rei.toml   # a set the builder exported
 ```
 
 A link installs its palettes as they are, with the pictures it names. A link to
 a palette you already have, such as a built-in one, installs yours when the
 colors match and leaves it out when they differ. A palette the link carries
-that lives in no marketplace joins your own, as a palette file does, where you
-can edit it.
+that lives in no marketplace joins your own, as every palette of a set you add
+does, where you can edit it.
 
 In the palette editor, pasting a link takes its colors into the palette you are
-editing, and `x` copies the palette's code, its `ttheme add` command or its file.
+editing, and `x` copies the palette's code, its `ttheme add` command or a set
+that holds it.
 
 ## Share as a marketplace
 

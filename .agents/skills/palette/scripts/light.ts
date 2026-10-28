@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { basename, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { deltaE } from '../../../../src/core/color.ts'
@@ -9,12 +9,19 @@ import { colorsOfTheme } from '../../../../src/core/manifest.ts'
 import { mirrored } from '../../../../src/core/mirror.ts'
 import { type Mode, modeOf, otherOf } from '../../../../src/core/mode.ts'
 import { withTable } from '../../../../src/core/own.ts'
+import { setBlocks, withPalette } from '../../../../src/core/sets.ts'
 import type { Shade } from '../../../../src/core/theme.ts'
 
 interface ThemeDoc {
   signature: string[]
   colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
   contrast?: { waive?: string[] }
+}
+
+export interface Palette {
+  file: string
+  slug: string
+  text: string
 }
 
 export interface Mirrored {
@@ -37,8 +44,14 @@ interface Member {
   moves: Move[]
 }
 
-function member(file: string, source: string): Member {
-  const doc = Bun.TOML.parse(source) as unknown as ThemeDoc
+export function setPalettes(files: string[]): Palette[] {
+  return [...new Set(files.map((file) => resolve(file)))].flatMap((file) =>
+    setBlocks(basename(file), readFileSync(file, 'utf8')).blocks.map(({ slug, text }) => ({ file, slug, text })),
+  )
+}
+
+function member({ file, slug, text }: Palette): Member {
+  const doc = Bun.TOML.parse(text) as unknown as ThemeDoc
   const c = doc.colors
   const own = {
     background: c.background,
@@ -48,13 +61,12 @@ function member(file: string, source: string): Member {
     ansi: c.ansi,
   }
   const waive = doc.contrast?.waive ?? []
-  const name = basename(file, '.toml')
-  const { shade, moves } = mirrored({ ...own, name, signatureSlots: doc.signature, waive })
+  const { shade, moves } = mirrored({ ...own, name: slug, signatureSlots: doc.signature, waive })
 
   return {
     file,
-    source,
-    name,
+    source: text,
+    name: slug,
     signature: doc.signature,
     waive,
     to: otherOf(modeOf(own)),
@@ -70,21 +82,22 @@ function textOf(m: Member): string {
   return withTable(cleared, table, colorsToml(colorsOfTheme(m.shade), table).join('\n'), 'colors')
 }
 
-export async function mirrorPalettes(files: string[], sources = new Map<string, string>()): Promise<Mirrored[]> {
-  const given = new Map([...sources].map(([file, text]) => [resolve(file), text]))
+export function mirrorPalettes(palettes: Palette[]): Mirrored[] {
+  return palettes.map((palette) => {
+    const m = member(palette)
 
-  return Promise.all(
-    [...new Set(files.map((file) => resolve(file)))].map(async (file) => {
-      const m = member(file, given.get(file) ?? (await Bun.file(file).text()))
-
-      return { file: m.file, name: m.name, to: m.to, shade: m.shade, moves: m.moves, text: textOf(m) }
-    }),
-  )
+    return { file: m.file, name: m.name, to: m.to, shade: m.shade, moves: m.moves, text: textOf(m) }
+  })
 }
 
-export async function writeMirrors(files: string[], sources = new Map<string, string>()): Promise<Mirrored[]> {
-  const made = await mirrorPalettes(files, sources)
-  for (const m of made) writeFileSync(m.file, m.text)
+export function writeMirrors(palettes: Palette[]): Mirrored[] {
+  const made = mirrorPalettes(palettes)
+  const sets = new Map<string, string>()
+  for (const m of made) {
+    const source = sets.get(m.file) ?? readFileSync(m.file, 'utf8')
+    sets.set(m.file, withPalette(basename(m.file), source, m.name, m.text) as string)
+  }
+  for (const [file, text] of sets) writeFileSync(file, text)
   return made
 }
 
@@ -95,11 +108,12 @@ if (import.meta.main) {
     options: { variants: { type: 'string' }, write: { type: 'boolean' } },
   })
   if (positionals.length === 0) {
-    console.error('usage: bun light.ts [--write] [--variants <variants.json>] builtin/palettes/<palette>.toml [...]')
+    console.error('usage: bun light.ts [--write] [--variants <variants.json>] builtin/sets/<work>.toml [...]')
     process.exit(1)
   }
   const out: Record<string, Partial<Record<Mode, { label: string; colors: Record<string, unknown> }>>> = {}
-  const made = values.write ? await writeMirrors(positionals) : await mirrorPalettes(positionals)
+  const palettes = setPalettes(positionals)
+  const made = values.write ? writeMirrors(palettes) : mirrorPalettes(palettes)
   let failed = 0
   for (const m of made) {
     const doc = Bun.TOML.parse(m.text) as unknown as ThemeDoc

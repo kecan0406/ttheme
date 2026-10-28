@@ -63,6 +63,6 @@ test('the system seeds the appearance only while none was heard', () => {
 })
 
 test("Ghostty's theme names one mode's file, or both under auto", () => {
-  assert.equal(ghosttyTheme('kec@dust/rei', 'light'), 'ttheme-kec--dust--rei.light')
+  assert.equal(ghosttyTheme('kai@dust/rei', 'light'), 'ttheme-kai--dust--rei.light')
   assert.equal(ghosttyTheme('miku', 'auto'), 'light:ttheme-miku.light,dark:ttheme-miku.dark')
 })

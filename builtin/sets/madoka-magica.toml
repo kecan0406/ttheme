@@ -1,0 +1,393 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "madoka"
+subject = "madoka-magica/madoka"
+signature = ["cursor", "ansi1", "ansi3"]
+ansi_source = "Elegant + Magica"
+
+[palette.colors]
+background = "#201516"
+foreground = "#fbdbdd"
+cursor = "#ffc1c6"
+selection_background = "#553444"
+ansi = [
+  "#2d2021",
+  "#f2697c",
+  "#d1c35e",
+  "#e6b271",
+  "#a48bc7",
+  "#e49cb4",
+  "#7bb2ed",
+  "#e5cfd0",
+
+  "#857374",
+  "#f39fa7",
+  "#eddf77",
+  "#fed1b9",
+  "#bb9fde",
+  "#ffc1d5",
+  "#a9ccf3",
+  "#ffe9e9",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1c"
+cursor = "#b7737a"
+selection_background = "#facade"
+ansi = [
+  "#fff0f0",
+  "#bc2647",
+  "#395922",
+  "#845b23",
+  "#7353a2",
+  "#984a68",
+  "#075388",
+  "#36292a",
+
+  "#857374",
+  "#8d3945",
+  "#2e491b",
+  "#744b33",
+  "#664393",
+  "#7d425c",
+  "#1e4566",
+  "#2d1b1c",
+]
+
+[[palette]]
+slug = "homura"
+subject = "madoka-magica/homura"
+signature = ["cursor", "foreground", "ansi5"]
+ansi_source = "Monokai Pro Machine"
+
+[palette.colors]
+background = "#19161e"
+foreground = "#d8e5e2"
+cursor = "#9f79fb"
+selection_background = "#453858"
+ansi = [
+  "#25222b",
+  "#f0679a",
+  "#69d6a4",
+  "#f9ab6f",
+  "#8c90d2",
+  "#bca3fb",
+  "#7dafe7",
+  "#d8d2dd",
+
+  "#7a757f",
+  "#f39fba",
+  "#74f4bb",
+  "#fbd7bc",
+  "#a3a6e2",
+  "#dac9ff",
+  "#a7caf3",
+  "#f3eafd",
+]
+
+[palette.colors.light]
+background = "#fef7ff"
+foreground = "#162220"
+cursor = "#7a3afa"
+selection_background = "#e2d0f8"
+ansi = [
+  "#f8f1fd",
+  "#b52a67",
+  "#005c3e",
+  "#965212",
+  "#535ab3",
+  "#6f4cc2",
+  "#165385",
+  "#2e2b33",
+
+  "#7a757f",
+  "#8d3658",
+  "#004c33",
+  "#6e4e33",
+  "#33539a",
+  "#5d4a8a",
+  "#1d4468",
+  "#211e2b",
+]
+
+[[palette]]
+slug = "sayaka"
+subject = "madoka-magica/sayaka"
+signature = ["cursor", "ansi4", "foreground"]
+ansi_source = "Teerb + Magica"
+
+[palette.colors]
+background = "#11191c"
+foreground = "#e3e2e2"
+cursor = "#76b1ca"
+selection_background = "#293f59"
+ansi = [
+  "#1d2528",
+  "#c78197",
+  "#7dd2a9",
+  "#afc382",
+  "#7a97c4",
+  "#b5a9df",
+  "#5abab3",
+  "#ced6da",
+
+  "#70787c",
+  "#eaa0b8",
+  "#93efca",
+  "#d5e39e",
+  "#7fb0d1",
+  "#d5caff",
+  "#8cd3d6",
+  "#e1f0f8",
+]
+
+[palette.colors.light]
+background = "#f3faff"
+foreground = "#1f2020"
+cursor = "#3f7b93"
+selection_background = "#c2d9f9"
+ansi = [
+  "#edf5fa",
+  "#914e65",
+  "#005c3e",
+  "#7b5e1f",
+  "#47648e",
+  "#67599d",
+  "#005a56",
+  "#252d31",
+
+  "#70787d",
+  "#873b59",
+  "#0c4c33",
+  "#6c5113",
+  "#255a77",
+  "#574c8b",
+  "#004a4d",
+  "#142127",
+]
+
+[[palette]]
+slug = "kyoko"
+subject = "madoka-magica/kyoko"
+signature = ["cursor", "ansi11", "foreground"]
+ansi_source = "Cursor Dark + Magica"
+
+[palette.colors]
+background = "#201515"
+foreground = "#e2e2e2"
+cursor = "#ee636b"
+selection_background = "#59323d"
+ansi = [
+  "#2d2120",
+  "#e9707e",
+  "#d8c141",
+  "#ffa76f",
+  "#9d8ec3",
+  "#e09ebc",
+  "#8ab1dc",
+  "#e5cfcf",
+
+  "#857372",
+  "#f39fa2",
+  "#edde80",
+  "#ffd6a7",
+  "#b3a3da",
+  "#ffc0dc",
+  "#a8cbf2",
+  "#ffe9e8",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#1e2020"
+cursor = "#c42e40"
+selection_background = "#ffc9d6"
+ansi = [
+  "#fff0ef",
+  "#b43349",
+  "#395823",
+  "#a04b00",
+  "#6b589d",
+  "#944b70",
+  "#2a5379",
+  "#362929",
+
+  "#857372",
+  "#8d3a40",
+  "#2f4a1b",
+  "#714e1c",
+  "#5c498e",
+  "#7f4061",
+  "#1f4566",
+  "#2d1b1b",
+]
+
+[[palette]]
+slug = "mami"
+subject = "madoka-magica/mami"
+signature = ["cursor", "foreground", "ansi11"]
+ansi_source = "Selenized Black"
+
+[palette.colors]
+background = "#1b170c"
+foreground = "#e3e2e2"
+cursor = "#e5c55c"
+selection_background = "#453e1f"
+ansi = [
+  "#272318",
+  "#f16e41",
+  "#b8cb29",
+  "#deb832",
+  "#00a6ab",
+  "#ff8caa",
+  "#70bc79",
+  "#dcd4c2",
+
+  "#7d7767",
+  "#f3a287",
+  "#d3e846",
+  "#ffd96c",
+  "#00bec3",
+  "#ffc0ce",
+  "#8ad992",
+  "#f9edd0",
+]
+
+[palette.colors.light]
+background = "#fff8f0"
+foreground = "#1f2020"
+cursor = "#9a7f1b"
+selection_background = "#e3d7ad"
+ansi = [
+  "#fcf3e0",
+  "#ae3e14",
+  "#35591b",
+  "#786100",
+  "#006f72",
+  "#b1325e",
+  "#085d26",
+  "#302c20",
+
+  "#7d7667",
+  "#8b3e22",
+  "#2b4a15",
+  "#685200",
+  "#005f61",
+  "#7f4253",
+  "#004d1d",
+  "#251f0d",
+]
+
+[[palette]]
+slug = "nagisa"
+subject = "madoka-magica/nagisa"
+signature = ["cursor", "foreground", "ansi12"]
+ansi_source = "Cutie Pro"
+
+[palette.colors]
+background = "#1f160d"
+foreground = "#e7e2da"
+cursor = "#f7941d"
+selection_background = "#56361e"
+ansi = [
+  "#2c2219",
+  "#f06f4d",
+  "#d0c468",
+  "#f9ab6d",
+  "#0aa1d6",
+  "#f394ad",
+  "#69c060",
+  "#e3d1c4",
+
+  "#837469",
+  "#f1a38d",
+  "#ebe18d",
+  "#ffd6ab",
+  "#70b5cd",
+  "#ffc1d2",
+  "#a3d49e",
+  "#ffeada",
+]
+
+[palette.colors.light]
+background = "#fff8f5"
+foreground = "#21201b"
+cursor = "#ad6300"
+selection_background = "#ffcdac"
+ansi = [
+  "#fff1e8",
+  "#b03c1d",
+  "#395822",
+  "#955213",
+  "#006b90",
+  "#a63f60",
+  "#005e0e",
+  "#352a21",
+
+  "#837469",
+  "#893f29",
+  "#2e491a",
+  "#714d21",
+  "#005d72",
+  "#7e4256",
+  "#004d33",
+  "#2b1d0f",
+]
+
+[[palette]]
+slug = "kyubey"
+subject = "madoka-magica/kyubey"
+signature = ["cursor", "foreground", "ansi3"]
+ansi_source = "Rose Pine Dawn + Magica"
+
+[palette.colors]
+background = "#fff8f7"
+foreground = "#1f1c39"
+cursor = "#b83b64"
+selection_background = "#edd0d9"
+ansi = [
+  "#fff0f2",
+  "#974b61",
+  "#1b5b40",
+  "#8b5800",
+  "#51628f",
+  "#7f557d",
+  "#005676",
+  "#35292b",
+
+  "#847376",
+  "#863d53",
+  "#034c33",
+  "#8b3f13",
+  "#435381",
+  "#70476f",
+  "#004763",
+  "#2c1b1f",
+]
+
+[palette.colors.dark]
+background = "#201517"
+foreground = "#e4dfff"
+cursor = "#ec638c"
+selection_background = "#4c383f"
+ansi = [
+  "#2d2123",
+  "#d37c93",
+  "#78d3a6",
+  "#fdaa30",
+  "#8495c5",
+  "#d2a1ce",
+  "#53b5e7",
+  "#e4cfd2",
+
+  "#847376",
+  "#f89bb3",
+  "#93efc2",
+  "#fed5be",
+  "#9aaadd",
+  "#f5c1f1",
+  "#81d0fd",
+  "#ffe8ec",
+]

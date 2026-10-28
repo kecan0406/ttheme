@@ -3,9 +3,9 @@
  │ ⌕ Search… ‹hint› │
  ╰─────────────────────────────────────────────╯
 
-   ▾ Bocchi the Rock!  ぼっち・ざ・ろっく!    1
-▌    ■ kita
-   ▸ Lucky☆Star  らき☆すた                    1
+   ▾ Briarwood Rocks!  すたあ・ふ・ばらど!    1
+▌    ■ kipa
+   ▸ Lumen☆Song  たい☆なみ                    1
 
 
 
@@ -15,10 +15,10 @@
 
 
 
-kita  → ssh tusa · while connected
+kipa  → ssh teal · while connected
 ssh
-├── *.prod  kita  while connected
-└── tusa    kita  while connected  new
+├── *.prod  kipa  while connected
+└── teal    kipa  while connected  new
 
-Replaces konata on ssh tusa · while connected
- [PREVIEW (PIN)] kita → [This host]   ssh tusa   ←→ choose   enter confirm                 esc back
+Replaces korund on ssh teal · while connected
+ [PREVIEW (PIN)] kipa → [This host]   ssh teal   ←→ choose   enter confirm                 esc back

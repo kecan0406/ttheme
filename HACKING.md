@@ -94,8 +94,8 @@ The screens `tests/tui.zsh`'s scenarios reach — Browse, the hub and preview, t
 palette panel, the palette editor below the builder's size and the pin screens —
 are captured and compared against `tests/screens/`; find, init's picker, the
 builder and `share` are not. The scenarios run in tmux at a fixed 100×24 against
-`tests/fixture/` — seven built-in palettes in `builtin.json` and their two
-works, `bocchi-the-rock` and `lucky-star`, in `commons.json` — pinned so that
+`tests/fixture/` — seven made-up built-in palettes in `builtin.json` and their
+two made-up works, `briarwood-rocks` and `lumen-song`, in `commons.json` — pinned so that
 adding a palette never rewrites a screen. A key written `key@text` in a scenario
 waits for the screen to draw `text` before the next key, and text that never
 shows within 15 s fails the scenario rather than letting it be compared late.

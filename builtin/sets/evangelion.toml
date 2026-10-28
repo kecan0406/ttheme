@@ -1,0 +1,337 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "asuka"
+subject = "evangelion/asuka"
+signature = ["cursor", "ansi11", "ansi4"]
+ansi_source = "GitLab Dark"
+
+[palette.colors]
+background = "#211513"
+foreground = "#fddbd5"
+cursor = "#ed664f"
+selection_background = "#5b322e"
+ansi = [
+  "#2e211e",
+  "#e77461",
+  "#d0c444",
+  "#ffa765",
+  "#639ad0",
+  "#ff8eac",
+  "#76bb70",
+  "#e6d0cc",
+
+  "#857370",
+  "#f1a296",
+  "#e7e086",
+  "#ffd795",
+  "#97ade8",
+  "#ffc1ce",
+  "#9bd684",
+  "#ffe9e5",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b18"
+cursor = "#c13621"
+selection_background = "#ffcbc5"
+ansi = [
+  "#fff0ee",
+  "#b33826",
+  "#385821",
+  "#965200",
+  "#2a679a",
+  "#b0345e",
+  "#185c1d",
+  "#372926",
+
+  "#857370",
+  "#8a3d33",
+  "#2e4a1a",
+  "#714f00",
+  "#30529a",
+  "#7e4252",
+  "#184d0a",
+  "#2d1b18",
+]
+
+[[palette]]
+slug = "rei"
+subject = "evangelion/rei"
+signature = ["cursor", "ansi9", "foreground"]
+ansi_source = "Idle Toes"
+
+[palette.colors]
+background = "#12181d"
+foreground = "#e2e2e2"
+cursor = "#7fb3d5"
+selection_background = "#2f3e55"
+ansi = [
+  "#1e2529",
+  "#f16594",
+  "#5fd7a2",
+  "#b2c271",
+  "#199cf3",
+  "#b9a2ff",
+  "#7ab5d0",
+  "#cfd5dc",
+
+  "#71787e",
+  "#f3a09e",
+  "#69f5b8",
+  "#d4e39d",
+  "#65b3e8",
+  "#d4cbff",
+  "#92d0e7",
+  "#e3effa",
+]
+
+[palette.colors.light]
+background = "#f5faff"
+foreground = "#1e2020"
+cursor = "#477b9b"
+selection_background = "#c8d8f5"
+ansi = [
+  "#eef4fb",
+  "#b72862",
+  "#005c3e",
+  "#7f5e0c",
+  "#0067a5",
+  "#6d4bc9",
+  "#0f576f",
+  "#262d32",
+
+  "#71787e",
+  "#8c3b3c",
+  "#004c33",
+  "#6c5113",
+  "#005a83",
+  "#564c8a",
+  "#00495a",
+  "#152129",
+]
+
+[[palette]]
+slug = "kaworu"
+subject = "evangelion/kaworu"
+signature = ["cursor", "foreground", "ansi1"]
+ansi_source = "Spacegray"
+
+[palette.colors]
+background = "#201515"
+foreground = "#dfe3ea"
+cursor = "#ee636e"
+selection_background = "#423959"
+ansi = [
+  "#2d2021",
+  "#e4747f",
+  "#cfc36b",
+  "#efae7a",
+  "#9e8ec3",
+  "#e29eb8",
+  "#8ab784",
+  "#e5cfcf",
+
+  "#857373",
+  "#f39fa4",
+  "#ebe084",
+  "#ffd5b6",
+  "#b4a2d9",
+  "#ffc0d8",
+  "#a3d39f",
+  "#ffe9e8",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#1b2025"
+cursor = "#c83045"
+selection_background = "#ded1f9"
+ansi = [
+  "#fff0f0",
+  "#b0384a",
+  "#395822",
+  "#8c5727",
+  "#6c589d",
+  "#954b6b",
+  "#1e5b3c",
+  "#362929",
+
+  "#857373",
+  "#8d3942",
+  "#2e491a",
+  "#724d2d",
+  "#5e488d",
+  "#7f415d",
+  "#034d33",
+  "#2d1b1b",
+]
+
+[[palette]]
+slug = "misato"
+subject = "evangelion/misato"
+signature = ["cursor", "ansi13", "foreground"]
+ansi_source = "Purple Rain"
+
+[palette.colors]
+background = "#201514"
+foreground = "#e5e2dd"
+cursor = "#ee645d"
+selection_background = "#453858"
+ansi = [
+  "#2d211f",
+  "#f16d5d",
+  "#d7c42f",
+  "#ffa851",
+  "#a880f3",
+  "#e296e7",
+  "#70b1f6",
+  "#e6d0cd",
+
+  "#857371",
+  "#f3a09d",
+  "#f4e14c",
+  "#ffd5ae",
+  "#aba5e8",
+  "#e1c8ff",
+  "#85cef3",
+  "#ffe9e7",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#20201d"
+cursor = "#c52f2f"
+selection_background = "#e2d0f8"
+ansi = [
+  "#fff0ef",
+  "#bd291f",
+  "#395922",
+  "#945300",
+  "#783ae3",
+  "#973ca4",
+  "#00538b",
+  "#362928",
+
+  "#857371",
+  "#8c3b3b",
+  "#2e491b",
+  "#724d25",
+  "#414ea2",
+  "#634789",
+  "#004860",
+  "#2d1b19",
+]
+
+[[palette]]
+slug = "eva01"
+subject = "evangelion/eva01"
+signature = ["cursor", "ansi4", "ansi3"]
+ansi_source = "Aura"
+
+[palette.colors]
+background = "#151910"
+foreground = "#dde6d0"
+cursor = "#8dd355"
+selection_background = "#443858"
+ansi = [
+  "#21251c",
+  "#e8724a",
+  "#5ed88b",
+  "#e5b370",
+  "#a581f3",
+  "#d18ff6",
+  "#75bb56",
+  "#d2d6c8",
+
+  "#74796d",
+  "#eda087",
+  "#a1edc5",
+  "#f1dd8d",
+  "#99a4e8",
+  "#d2c7ff",
+  "#7eda7f",
+  "#e9f1db",
+]
+
+[palette.colors.light]
+background = "#f7fbec"
+foreground = "#1a2214"
+cursor = "#4e8e14"
+selection_background = "#e1d0f8"
+ansi = [
+  "#f1f5e7",
+  "#a9431f",
+  "#005d30",
+  "#835c21",
+  "#763be2",
+  "#9034c5",
+  "#1d5d00",
+  "#292e24",
+
+  "#74796d",
+  "#893f25",
+  "#004c32",
+  "#625412",
+  "#3c4da6",
+  "#574b8e",
+  "#004e14",
+  "#1a2214",
+]
+
+[[palette]]
+slug = "magi"
+subject = "evangelion/magi"
+signature = ["cursor", "ansi10", "ansi9"]
+ansi_source = "lotap/magi-theme"
+
+[palette.colors]
+background = "#20150f"
+foreground = "#fcdccd"
+cursor = "#ec7420"
+selection_background = "#5c3230"
+ansi = [
+  "#2d211b",
+  "#f16e47",
+  "#b8cc46",
+  "#ffa938",
+  "#aa87d2",
+  "#f296a9",
+  "#00c0ae",
+  "#e5d0c7",
+
+  "#85746b",
+  "#f3a197",
+  "#9af279",
+  "#ffd6a4",
+  "#a3a0e8",
+  "#ffc1cc",
+  "#23e4a2",
+  "#ffeae0",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2c1c12"
+cursor = "#af4f00"
+selection_background = "#ffcbc7"
+ansi = [
+  "#fff1eb",
+  "#ae3e1b",
+  "#4a5500",
+  "#8e5700",
+  "#7b4cb1",
+  "#a4415b",
+  "#005b51",
+  "#362923",
+
+  "#85746b",
+  "#8c3c34",
+  "#124d00",
+  "#724e18",
+  "#4d48a7",
+  "#7e4350",
+  "#004c33",
+  "#2c1c12",
+]

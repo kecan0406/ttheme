@@ -1,0 +1,337 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "yukko"
+subject = "nichijou/yukko"
+signature = ["cursor", "selection", "ansi9"]
+ansi_source = "Graphite + Nichijou"
+
+[palette.colors]
+background = "#1f160e"
+foreground = "#faddc9"
+cursor = "#d09261"
+selection_background = "#443c34"
+ansi = [
+  "#2c2219",
+  "#d77f65",
+  "#c7c57b",
+  "#dcb66d",
+  "#9c8ec4",
+  "#df9ebc",
+  "#7cb79a",
+  "#e4d1c4",
+
+  "#847469",
+  "#f39fa5",
+  "#e3e193",
+  "#ffd6a4",
+  "#b2a3da",
+  "#ffc0dd",
+  "#97d4b3",
+  "#ffeadc",
+]
+
+[palette.colors.light]
+background = "#fff8f5"
+foreground = "#2c1c10"
+cursor = "#996336"
+selection_background = "#c0b4aa"
+ansi = [
+  "#fff1e9",
+  "#994e37",
+  "#3c5729",
+  "#7c5f1e",
+  "#6a589e",
+  "#934c71",
+  "#1f5a42",
+  "#352a21",
+
+  "#847469",
+  "#8d3943",
+  "#2e491b",
+  "#724e18",
+  "#5b498e",
+  "#7f4062",
+  "#0a4c33",
+  "#2c1c10",
+]
+
+[[palette]]
+slug = "naganohara"
+subject = "nichijou/naganohara"
+signature = ["cursor", "selection", "ansi3"]
+ansi_source = "Oceanic Next + Nichijou"
+
+[palette.colors]
+background = "#13181e"
+foreground = "#dae3f1"
+cursor = "#9cc2ec"
+selection_background = "#354660"
+ansi = [
+  "#1f242a",
+  "#f2649a",
+  "#91cdaf",
+  "#e9b173",
+  "#679acd",
+  "#b7a8e3",
+  "#6ab6cb",
+  "#d0d5dd",
+
+  "#73777f",
+  "#f3a0ba",
+  "#ade9ca",
+  "#f8d57d",
+  "#7dafe4",
+  "#d8caff",
+  "#86d2e7",
+  "#e6effc",
+]
+
+[palette.colors.light]
+background = "#f7f9ff"
+foreground = "#17202a"
+cursor = "#4982b7"
+selection_background = "#9caecc"
+ansi = [
+  "#f0f4fc",
+  "#b72767",
+  "#1e5a42",
+  "#865a24",
+  "#306797",
+  "#6a57a2",
+  "#005869",
+  "#282d33",
+
+  "#73777f",
+  "#8c3758",
+  "#0d4c35",
+  "#6a5101",
+  "#1e5888",
+  "#5a4b8a",
+  "#004957",
+  "#17202a",
+]
+
+[[palette]]
+slug = "mai"
+subject = "nichijou/mai"
+signature = ["cursor", "selection", "ansi1"]
+ansi_source = "Spacegray Eighties + Nichijou"
+
+[palette.colors]
+background = "#1b1713"
+foreground = "#ebe1d9"
+cursor = "#766f69"
+selection_background = "#383430"
+ansi = [
+  "#28231e",
+  "#d17f85",
+  "#a5cc86",
+  "#ecb245",
+  "#6799d4",
+  "#da9cdb",
+  "#4fbbbb",
+  "#dcd3cc",
+
+  "#7d7670",
+  "#f3a0a1",
+  "#aaedaa",
+  "#ffd976",
+  "#88ace8",
+  "#ffbcf6",
+  "#70d7d2",
+  "#f6ece4",
+]
+
+[palette.colors.light]
+background = "#fff8f4"
+foreground = "#231f1a"
+cursor = "#5f5953"
+selection_background = "#c7c0ba"
+ansi = [
+  "#fcf2ea",
+  "#9e4851",
+  "#385920",
+  "#835c00",
+  "#30669d",
+  "#8e4895",
+  "#005a5a",
+  "#302b26",
+
+  "#7d7670",
+  "#8c3a3f",
+  "#0a4d1c",
+  "#6f5000",
+  "#2e558d",
+  "#81387e",
+  "#004b48",
+  "#231f1a",
+]
+
+[[palette]]
+slug = "nano"
+subject = "nichijou/nano"
+signature = ["cursor", "ansi1", "selection"]
+ansi_source = "Tomorrow Night Eighties + Nichijou"
+
+[palette.colors]
+background = "#171819"
+foreground = "#e3e2e4"
+cursor = "#707072"
+selection_background = "#353432"
+ansi = [
+  "#232425",
+  "#d37f7e",
+  "#9acd9a",
+  "#e5b451",
+  "#679acd",
+  "#d3a0d3",
+  "#53babb",
+  "#d5d4d6",
+
+  "#777779",
+  "#f3a09f",
+  "#b5eab5",
+  "#ffd78e",
+  "#7dafe4",
+  "#f7c0f6",
+  "#71d7d7",
+  "#efedef",
+]
+
+[palette.colors.light]
+background = "#faf9fb"
+foreground = "#1f2021"
+cursor = "#595a5c"
+selection_background = "#c4c1be"
+ansi = [
+  "#f5f3f5",
+  "#a14648",
+  "#2c5a31",
+  "#815d00",
+  "#306797",
+  "#874e8b",
+  "#005a5b",
+  "#2b2c2e",
+
+  "#777779",
+  "#8c3a3d",
+  "#1c4b25",
+  "#6f4f00",
+  "#1e5888",
+  "#793e7e",
+  "#004a4b",
+  "#1f2021",
+]
+
+[[palette]]
+slug = "hakase"
+subject = "nichijou/hakase"
+signature = ["cursor", "selection", "ansi1"]
+ansi_source = "GitHub Dark Default + Nichijou"
+
+[palette.colors]
+background = "#1f160d"
+foreground = "#f9dec8"
+cursor = "#febf84"
+selection_background = "#204776"
+ansi = [
+  "#2c2219",
+  "#de7879",
+  "#c2c826",
+  "#f6ad3f",
+  "#b27fe8",
+  "#ff8bc3",
+  "#74bb74",
+  "#e3d1c4",
+
+  "#837469",
+  "#f3a284",
+  "#dee53b",
+  "#ffd79d",
+  "#bf9ce8",
+  "#ffc1d8",
+  "#91d88f",
+  "#ffeada",
+]
+
+[palette.colors.light]
+background = "#fff8f5"
+foreground = "#2b1d0f"
+cursor = "#b7752d"
+selection_background = "#8aaee3"
+ansi = [
+  "#fff1e8",
+  "#ac3d43",
+  "#37591e",
+  "#895900",
+  "#8539d0",
+  "#b22a79",
+  "#145d21",
+  "#352a21",
+
+  "#837469",
+  "#8b3e1f",
+  "#2c4a18",
+  "#714e0d",
+  "#6b3da1",
+  "#7e415c",
+  "#014e15",
+  "#2b1d0f",
+]
+
+[[palette]]
+slug = "sakamoto"
+subject = "nichijou/sakamoto"
+signature = ["selection", "cursor", "foreground"]
+ansi_source = "Red Sands + Nichijou"
+
+[palette.colors]
+background = "#171818"
+foreground = "#e2e2e2"
+cursor = "#ef7576"
+selection_background = "#474747"
+ansi = [
+  "#242424",
+  "#f16e4c",
+  "#78d665",
+  "#ebb308",
+  "#6793f3",
+  "#f888ee",
+  "#11bebe",
+  "#d6d4d4",
+
+  "#787777",
+  "#f3a197",
+  "#94f47e",
+  "#ffd882",
+  "#71b1e8",
+  "#ffbcf6",
+  "#0fdddd",
+  "#f0eded",
+]
+
+[palette.colors.light]
+background = "#fbf9f8"
+foreground = "#1e2020"
+cursor = "#c63a42"
+selection_background = "#acabab"
+ansi = [
+  "#f5f3f3",
+  "#b13b1b",
+  "#005e00",
+  "#805d00",
+  "#235fc5",
+  "#aa21a9",
+  "#005a5a",
+  "#2c2c2c",
+
+  "#777777",
+  "#8c3c34",
+  "#014e00",
+  "#6e5000",
+  "#00598a",
+  "#81387e",
+  "#004a4a",
+  "#1f2020",
+]

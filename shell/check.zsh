@@ -21,12 +21,12 @@ REPLY=; __tt_resolve homura && [[ $REPLY == ttheme/homura ]] || { print -u2 "a p
 REPLY=; __tt_resolve ttheme/homura && [[ $REPLY == ttheme/homura ]] || { print -u2 "a palette typed in full did not resolve: $REPLY"; exit 1 }
 __tt_resolve ho 2>/dev/null && { print -u2 "the start of a palette's name resolved to it: $REPLY"; exit 1 }
 (
-  TTHEME_PALETTE[kec@bemani/homura]=$TTHEME_PALETTE[ttheme/kita] TTHEME_SHORT[homura]="ttheme/homura kec@bemani/homura"
+  TTHEME_PALETTE[kai@arcade/homura]=$TTHEME_PALETTE[ttheme/kita] TTHEME_SHORT[homura]="ttheme/homura kai@arcade/homura"
   out=$(__tt_resolve homura 2>&1) && { print -u2 "a name two palettes share resolved to one of them"; exit 1 }
-  [[ $out == "ttheme: homura is ttheme/homura, kec@bemani/homura — name the one you mean" ]] || { print -u2 "a name two palettes share did not name both: $out"; exit 1 }
-  REPLY=; __tt_resolve kec@bemani/homura && [[ $REPLY == kec@bemani/homura ]] || { print -u2 "a palette typed in full was not found beside another of its name: $REPLY"; exit 1 }
-  TTHEME_PALETTE[kecan0406@bemani/rasis]=$TTHEME_PALETTE[ttheme/miku] TTHEME_SHORT[rasis]=kecan0406@bemani/rasis
-  for name want in ttheme/kita kita kecan0406@bemani/rasis rasis ttheme/homura ttheme/homura kec@bemani/homura kec@bemani/homura nosuchpalette nosuchpalette; do
+  [[ $out == "ttheme: homura is ttheme/homura, kai@arcade/homura — name the one you mean" ]] || { print -u2 "a name two palettes share did not name both: $out"; exit 1 }
+  REPLY=; __tt_resolve kai@arcade/homura && [[ $REPLY == kai@arcade/homura ]] || { print -u2 "a palette typed in full was not found beside another of its name: $REPLY"; exit 1 }
+  TTHEME_PALETTE[user4127@arcade/lumi]=$TTHEME_PALETTE[ttheme/miku] TTHEME_SHORT[lumi]=user4127@arcade/lumi
+  for name want in ttheme/kita kita user4127@arcade/lumi lumi ttheme/homura ttheme/homura kai@arcade/homura kai@arcade/homura nosuchpalette nosuchpalette; do
     REPLY=; __tt_label $name
     [[ $REPLY == "$want" ]] || { print -u2 "$name was shown as $REPLY, not $want"; exit 1 }
     [[ $want == nosuchpalette ]] && continue
@@ -67,42 +67,42 @@ functions[__tt_pv_bg_prepare_run]=$functions[__tt_pv_bg_prepare]
 __tt_pv_bg_prepare() { : }
 bgd=$XDG_CONFIG_HOME/ttheme/backgrounds
 mkdir -p $bgd && : > $bgd/ttheme--kagami@fill-42.png && : > $bgd/ttheme--kagami@60-bottom-right.png && : > $bgd/ttheme--kagami@130-bottom-right-1600x1000.png
-base=("# by akoiro,potate" "# from safebooru 416805 https://safebooru.org/index.php?page=post&s=view&id=416805" "# image safebooru_416805 1/1" "background-image = ttheme--kagami@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2"
-  "# credit safebooru_416805 Background art by akoiro (x.com/akoiro), potate · https://www.pixiv.net/artworks/123"
-  "# source safebooru_416805 pixiv 123 https://www.pixiv.net/artworks/123"
-  "# profile safebooru_416805 akoiro x https://x.com/akoiro" "# profile safebooru_416805 potate pixiv https://www.pixiv.net/users/9 x https://x.com/potepalette")
+base=("# by inkwell,paperboat" "# from safebooru 400001 https://safebooru.org/index.php?page=post&s=view&id=400001" "# image safebooru_400001 1/1" "background-image = ttheme--kagami@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2"
+  "# credit safebooru_400001 Background art by inkwell (x.com/inkwell), paperboat · https://www.pixiv.net/artworks/123"
+  "# source safebooru_400001 pixiv 123 https://www.pixiv.net/artworks/123"
+  "# profile safebooru_400001 inkwell x https://x.com/inkwell" "# profile safebooru_400001 paperboat pixiv https://www.pixiv.net/users/9 x https://x.com/paperboatart")
 print -l $base > $bgd/ttheme--kagami.conf
 print -l "background-image = ttheme--kagami@130-bottom-right-1600x1000.png" "background-image-fit = cover" "background-image-position = bottom-right" "background-image-opacity = 0.252" > $bgd/ttheme--kagami.tune.conf
 __tt_bg_load ttheme/kagami
 [[ $bgsrc[ttheme/kagami] == "$bgd/ttheme--kagami.png" && $bgfill[ttheme/kagami] == "$bgd/ttheme--kagami@fill-42.png" && $bgfocus[ttheme/kagami] == 42 && $bgsize[ttheme/kagami] == 130 && $bgpos[ttheme/kagami] == 9 && $bgop[ttheme/kagami] == 0.252 &&
   $bgshot[ttheme/kagami] == "$bgd/ttheme--kagami@130-bottom-right-1600x1000.png" && $bgdef[ttheme/kagami] == "fill 5 0.2" && $bgoff[ttheme/kagami] == 0 &&
-  $bgfrom[ttheme/kagami] == "safebooru 416805" && $bgby[ttheme/kagami] == "akoiro, potate" &&
-  $bgurl[ttheme/kagami] == "https://safebooru.org/index.php?page=post&s=view&id=416805" ]] ||
+  $bgfrom[ttheme/kagami] == "safebooru 400001" && $bgby[ttheme/kagami] == "inkwell, paperboat" &&
+  $bgurl[ttheme/kagami] == "https://safebooru.org/index.php?page=post&s=view&id=400001" ]] ||
   { print -u2 "__tt_bg_load misread the confs: $bgsrc[ttheme/kagami] $bgfill[ttheme/kagami]@$bgfocus[ttheme/kagami] $bgsize[ttheme/kagami] $bgpos[ttheme/kagami] $bgop[ttheme/kagami] $bgshot[ttheme/kagami] ($bgdef[ttheme/kagami]) off=$bgoff[ttheme/kagami] from=$bgfrom[ttheme/kagami] by=$bgby[ttheme/kagami] url=$bgurl[ttheme/kagami]"; exit 1 }
 tune=ttheme/kagami tpick=ttheme/kagami color=0
 art=$'\e]8;;https://www.pixiv.net/artworks/123\e\\pixiv 123\e]8;;\e\\'
 TTHEME_ADAPTER=ghostty __tt_pv_bg_credit 80
-[[ $REPLY == "by akoiro, potate · ⧉ $art · ⧉ "$'\e]8;;'"$bgurl[ttheme/kagami]"$'\e\\'"safebooru 416805"$'\e]8;;\e\\' ]] ||
+[[ $REPLY == "by inkwell, paperboat · ⧉ $art · ⧉ "$'\e]8;;'"$bgurl[ttheme/kagami]"$'\e\\'"safebooru 400001"$'\e]8;;\e\\' ]] ||
   { print -u2 "the picture's credit did not link its artwork and its post: ${(q+)REPLY}"; exit 1 }
 TTHEME_ADAPTER=ghostty __tt_pv_bg_credit 40
-[[ $REPLY == "by akoiro, potate · ⧉ $art" ]] ||
+[[ $REPLY == "by inkwell, paperboat · ⧉ $art" ]] ||
   { print -u2 "a narrower credit did not drop the post before the artwork: ${(q+)REPLY}"; exit 1 }
 TTHEME_ADAPTER=terminal-app __tt_pv_bg_credit 80
-[[ $REPLY == "by akoiro, potate · pixiv 123 · safebooru 416805" ]] ||
+[[ $REPLY == "by inkwell, paperboat · pixiv 123 · safebooru 400001" ]] ||
   { print -u2 "the picture's credit linked its pages where the terminal cannot open them: ${(q+)REPLY}"; exit 1 }
 TTHEME_ADAPTER=ghostty __tt_pv_bg_credit 30
-[[ $REPLY == "by akoiro, potate" ]] ||
+[[ $REPLY == "by inkwell, paperboat" ]] ||
   { print -u2 "a narrow credit did not keep the artist over the pages: ${(q+)REPLY}"; exit 1 }
 TTHEME_ADAPTER=ghostty __tt_pv_bg_profiles 80
-[[ $REPLY == "akoiro ⧉ "$'\e]8;;https://x.com/akoiro\e\\x\e]8;;\e\\'" · potate ⧉ "$'\e]8;;https://www.pixiv.net/users/9\e\\pixiv\e]8;;\e\\'" ⧉ "$'\e]8;;https://x.com/potepalette\e\\x\e]8;;\e\\' ]] ||
+[[ $REPLY == "inkwell ⧉ "$'\e]8;;https://x.com/inkwell\e\\x\e]8;;\e\\'" · paperboat ⧉ "$'\e]8;;https://www.pixiv.net/users/9\e\\pixiv\e]8;;\e\\'" ⧉ "$'\e]8;;https://x.com/paperboatart\e\\x\e]8;;\e\\' ]] ||
   { print -u2 "the picture's artists did not link their profiles: ${(q+)REPLY}"; exit 1 }
 TTHEME_ADAPTER=ghostty __tt_pv_bg_profiles 12
-[[ $REPLY == "akoiro ⧉ "$'\e]8;;https://x.com/akoiro\e\\x\e]8;;\e\\' ]] ||
+[[ $REPLY == "inkwell ⧉ "$'\e]8;;https://x.com/inkwell\e\\x\e]8;;\e\\' ]] ||
   { print -u2 "a narrow profile line did not stop at the last link that fits: ${(q+)REPLY}"; exit 1 }
 TTHEME_ADAPTER=terminal-app __tt_pv_bg_profiles 80
 [[ -z $REPLY ]] || { print -u2 "the profiles showed where the terminal cannot open them: ${(q+)REPLY}"; exit 1 }
-[[ $bgcred[ttheme/kagami:safebooru_416805] == "Background art by akoiro (x.com/akoiro), potate · https://www.pixiv.net/artworks/123" ]] ||
-  { print -u2 "__tt_bg_load misread the credit to copy: ${(q+)bgcred[ttheme/kagami:safebooru_416805]}"; exit 1 }
+[[ $bgcred[ttheme/kagami:safebooru_400001] == "Background art by inkwell (x.com/inkwell), paperboat · https://www.pixiv.net/artworks/123" ]] ||
+  { print -u2 "__tt_bg_load misread the credit to copy: ${(q+)bgcred[ttheme/kagami:safebooru_400001]}"; exit 1 }
 tune="" tpick=""
 bgsize[ttheme/kagami]=100 bgoff[ttheme/kagami]=1
 __tt_bg_write ttheme/kagami || { print -u2 "__tt_bg_write failed"; exit 1 }
@@ -315,17 +315,17 @@ plain=${out//$'\e[K'/}
   (
     typeset -A tmembers=() exp=() tstrip=() pvseek=()
     typeset -a tops=() rtop=() rows=()
-    TTHEME_PALETTE[kec@bemani/rei]=$TTHEME_PALETTE[ttheme/kita] TTHEME_PALETTE[kec@bemani/rasis]=$TTHEME_PALETTE[ttheme/miku]
-    TTHEME_PALETTE[kec@bemani/dusk]=$TTHEME_PALETTE[ttheme/rei] TTHEME_PALETTE[alice@pastel/mint]=$TTHEME_PALETTE[ttheme/mio]
-    TTHEME_SUBJECT[kec@bemani/rei]=evangelion/rei TTHEME_SUBJECT[kec@bemani/rasis]=pop-n-music/rasis TTHEME_ALSO[kec@bemani/rasis]=sound-voltex
-    TTHEME_WORKS=(evangelion pop-n-music sound-voltex vocaloid)
-    TTHEME_WORK_NAME=(evangelion Evangelion pop-n-music "pop'n music" sound-voltex "Sound Voltex" vocaloid Vocaloid)
+    TTHEME_PALETTE[kai@arcade/rei]=$TTHEME_PALETTE[ttheme/kita] TTHEME_PALETTE[kai@arcade/lumi]=$TTHEME_PALETTE[ttheme/miku]
+    TTHEME_PALETTE[kai@arcade/dusk]=$TTHEME_PALETTE[ttheme/rei] TTHEME_PALETTE[alice@pastel/mint]=$TTHEME_PALETTE[ttheme/mio]
+    TTHEME_SUBJECT[kai@arcade/rei]=evangelion/rei TTHEME_SUBJECT[kai@arcade/lumi]=glass-arcade/lumi TTHEME_ALSO[kai@arcade/lumi]=night-parade
+    TTHEME_WORKS=(evangelion glass-arcade night-parade vocaloid)
+    TTHEME_WORK_NAME=(evangelion Evangelion glass-arcade "Glass Arcade" night-parade "Night Parade's Eve" vocaloid Vocaloid)
     TTHEME_WORK_NATIVE=(evangelion エヴァンゲリオン)
-    TTHEME_ABC=(ttheme/asuka ttheme/rei kec@bemani/rei kec@bemani/rasis ttheme/kaito ttheme/miku ttheme/neutral alice@pastel/mint kec@bemani/dusk)
-    TTHEME_ORDER=(ttheme/rei kec@bemani/rei ttheme/asuka kec@bemani/rasis ttheme/miku ttheme/kaito ttheme/neutral alice@pastel/mint kec@bemani/dusk)
+    TTHEME_ABC=(ttheme/asuka ttheme/rei kai@arcade/rei kai@arcade/lumi ttheme/kaito ttheme/miku ttheme/neutral alice@pastel/mint kai@arcade/dusk)
+    TTHEME_ORDER=(ttheme/rei kai@arcade/rei ttheme/asuka kai@arcade/lumi ttheme/miku ttheme/kaito ttheme/neutral alice@pastel/mint kai@arcade/dusk)
     color=0 lw=40 cur=0 flt= TTHEME_SORT=abc
     __tt_pv_tops
-    [[ $tops == "evangelion pop-n-music sound-voltex vocaloid ttheme alice@pastel kec@bemani" ]] ||
+    [[ $tops == "evangelion glass-arcade night-parade vocaloid ttheme alice@pastel kai@arcade" ]] ||
       { print -u2 "preview did not shelve the palettes by work, then their originals by publisher: $tops"; exit 1 }
     for g in $tops; do exp[$g]=1; done
     __tt_pv_rows
@@ -334,47 +334,47 @@ plain=${out//$'\e[K'/}
       rows+=("${${${REPLY//  ##/ }# }% }")
     done
     o=$TTHEME_MARKS[opened]
-    want=("$o Evangelion エヴァンゲリオン 3" asuka rei "rei kec@bemani" "$o pop'n music 1" "rasis kec@bemani" "$o Sound Voltex 1" "rasis kec@bemani"
-      "$o Vocaloid 2" kaito miku "── Originals ${(l:23::─:)}" "$o ttheme 1" neutral "$o alice@pastel 1" mint "$o kec@bemani 1" dusk)
+    want=("$o Evangelion エヴァンゲリオン 3" asuka rei "rei kai@arcade" "$o Glass Arcade 1" "lumi kai@arcade" "$o Night Parade's Eve 1" "lumi kai@arcade"
+      "$o Vocaloid 2" kaito miku "── Originals ${(l:23::─:)}" "$o ttheme 1" neutral "$o alice@pastel 1" mint "$o kai@arcade 1" dusk)
     [[ ${(F)rows} == ${(F)want} ]] ||
       { print -u2 "preview's list did not read as works, the Originals rule and its publishers:"; print -rlu2 -- $rows; exit 1 }
-    __tt_pv_goto kec@bemani/rasis
-    [[ ${rval[cur]} == kec@bemani/rasis && ${rtop[cur]} == pop-n-music ]] || { print -u2 "preview did not land on a palette in its own work: ${rtop[cur]}"; exit 1 }
+    __tt_pv_goto kai@arcade/lumi
+    [[ ${rval[cur]} == kai@arcade/lumi && ${rtop[cur]} == glass-arcade ]] || { print -u2 "preview did not land on a palette in its own work: ${rtop[cur]}"; exit 1 }
     cur=8
     __tt_pv_left
-    [[ ${rtype[cur]} == hdr && ${rval[cur]} == sound-voltex && -z ${exp[sound-voltex]} && -n ${exp[pop-n-music]} ]] ||
+    [[ ${rtype[cur]} == hdr && ${rval[cur]} == night-parade && -z ${exp[night-parade]} && -n ${exp[glass-arcade]} ]] ||
       { print -u2 "← on a palette listed under a second work did not fold that work: ${rval[cur]}"; exit 1 }
     TTHEME_SORT=cast
     __tt_pv_tops
-    [[ ${tmembers[evangelion]} == " ttheme/rei kec@bemani/rei ttheme/asuka" ]] || { print -u2 "TTHEME_SORT=cast did not list a work's characters in their cast order: ${tmembers[evangelion]}"; exit 1 }
-    flt=bemani
+    [[ ${tmembers[evangelion]} == " ttheme/rei kai@arcade/rei ttheme/asuka" ]] || { print -u2 "TTHEME_SORT=cast did not list a work's characters in their cast order: ${tmembers[evangelion]}"; exit 1 }
+    flt=arcade
     __tt_pv_rows
-    (( ! ${rval[(Ie)ttheme/rei]} && ${rval[(Ie)kec@bemani/rei]} && ! ${rval[(Ie)alice@pastel/mint]} )) ||
+    (( ! ${rval[(Ie)ttheme/rei]} && ${rval[(Ie)kai@arcade/rei]} && ! ${rval[(Ie)alice@pastel/mint]} )) ||
       { print -u2 "preview's search did not match a marketplace's palettes by their publisher: $rval"; exit 1 }
     flt=エヴァ
     __tt_pv_rows
-    [[ ${(j: :)rval} == "evangelion ttheme/rei kec@bemani/rei ttheme/asuka" ]] || { print -u2 "preview's search did not match a work by its title: $rval"; exit 1 }
-    REPLY=; __tt_shelf kec@bemani/rasis
-    [[ $REPLY == "kec@bemani / pop'n music" ]] || { print -u2 "a palette's shelf was not its publisher and its work: $REPLY"; exit 1 }
+    [[ ${(j: :)rval} == "evangelion ttheme/rei kai@arcade/rei ttheme/asuka" ]] || { print -u2 "preview's search did not match a work by its title: $rval"; exit 1 }
+    REPLY=; __tt_shelf kai@arcade/lumi
+    [[ $REPLY == "kai@arcade / Glass Arcade" ]] || { print -u2 "a palette's shelf was not its publisher and its work: $REPLY"; exit 1 }
     REPLY=; __tt_shelf alice@pastel/mint
     [[ $REPLY == alice@pastel ]] || { print -u2 "an original's shelf was not its publisher alone: $REPLY"; exit 1 }
     TTHEME_SORT=abc TTHEME_GROUP=marketplace flt= cur=0 exp=() rows=()
     __tt_pv_tops
-    [[ $tops == "ttheme alice@pastel kec@bemani" ]] ||
+    [[ $tops == "ttheme alice@pastel kai@arcade" ]] ||
       { print -u2 "TTHEME_GROUP=marketplace did not list the marketplaces, the built-in one first: $tops"; exit 1 }
-    for g in $tops ttheme/evangelion ttheme/vocaloid kec@bemani/evangelion kec@bemani/pop-n-music kec@bemani/sound-voltex; do exp[$g]=1; done
+    for g in $tops ttheme/evangelion ttheme/vocaloid kai@arcade/evangelion kai@arcade/glass-arcade kai@arcade/night-parade; do exp[$g]=1; done
     __tt_pv_rows
     for (( i = 1; i <= ${#rval}; i++ )); do
       __tt_pv_row $i
       rows+=("${${${REPLY//  ##/ }# }% }")
     done
     want=("$o ttheme 5" "$o Evangelion エヴァンゲリオン 2" asuka rei "$o Vocaloid 2" kaito miku neutral "$o alice@pastel 1" mint
-      "$o kec@bemani 3" "$o Evangelion エヴァンゲリオン 1" rei "$o pop'n music 1" rasis "$o Sound Voltex 1" rasis dusk)
+      "$o kai@arcade 3" "$o Evangelion エヴァンゲリオン 1" rei "$o Glass Arcade 1" lumi "$o Night Parade's Eve 1" lumi dusk)
     [[ ${(F)rows} == ${(F)want} ]] ||
       { print -u2 "preview's list grouped by marketplace did not read as each marketplace, its works, then its originals:"; print -rlu2 -- $rows; exit 1 }
-    cur=${rval[(Ie)kec@bemani/rasis]} exp=() TTHEME_GROUP=work
+    cur=${rval[(Ie)kai@arcade/lumi]} exp=() TTHEME_GROUP=work
     __tt_pv_regroup
-    [[ ${rval[cur]} == kec@bemani/rasis && ${rtop[cur]} == pop-n-music && -n ${exp[pop-n-music]} ]] ||
+    [[ ${rval[cur]} == kai@arcade/lumi && ${rtop[cur]} == glass-arcade && -n ${exp[glass-arcade]} ]] ||
       { print -u2 "regrouping did not keep the cursor on its palette, its work opened: ${rval[cur]} under ${rtop[cur]}"; exit 1 }
   ) || exit 1
   (
@@ -418,7 +418,7 @@ plain=${out//$'\e[K'/}
     [[ $flt == kit ]] || { print -u2 "a key typed into preview's filter let a bidi control in: ${(q+)flt}"; exit 1 }
   ) || exit 1
 } || exit 1
-print -l "# image safebooru_2 2/3" "# picture safebooru_1 ttheme--kagami.aaaaaaaa ttheme--kagami.aaaaaaaa@fill-40.png 0.2 akoiro safebooru 1 x" \
+print -l "# image safebooru_2 2/3" "# picture safebooru_1 ttheme--kagami.aaaaaaaa ttheme--kagami.aaaaaaaa@fill-40.png 0.2 inkwell safebooru 1 x" \
   "# picture safebooru_2 ttheme--kagami.1a2b3c4d ttheme--kagami.1a2b3c4d@fill-42.png 0.2 -" "# picture safebooru_3 ttheme--kagami.cccccccc ttheme--kagami.cccccccc@fill-40.png 0.3 -" \
   "background-image = ttheme--kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
   "config-file = ?ttheme--kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--kagami.1a2b3c4d.off.conf" > $bgd/ttheme--kagami.conf
@@ -429,7 +429,7 @@ __tt_pv_bg_pick 1
 [[ $tpick == ttheme/kagami:safebooru_3 && $bgop[$tpick] == 0.3 && $bgtunef[$tpick] == ttheme--kagami.cccccccc.tune.conf ]] ||
   { print -u2 "the picture strip did not move to the next picture: $tpick op=$bgop[$tpick] tune=$bgtunef[$tpick]"; exit 1 }
 __tt_bg_load ttheme/kagami:safebooru_1
-[[ $bgby[ttheme/kagami:safebooru_1] == akoiro && $bgfrom[ttheme/kagami:safebooru_1] == "safebooru 1" && -z $bgby[$tpick] ]] ||
+[[ $bgby[ttheme/kagami:safebooru_1] == inkwell && $bgfrom[ttheme/kagami:safebooru_1] == "safebooru 1" && -z $bgby[$tpick] ]] ||
   { print -u2 "a held picture lost its artist or post: by=$bgby[ttheme/kagami:safebooru_1] from=$bgfrom[ttheme/kagami:safebooru_1] ($tpick by=$bgby[$tpick])"; exit 1 }
 bgop[$tpick]=0.5
 __tt_pv_untune
@@ -601,42 +601,42 @@ TTHEME_STARTUP=
   __tt_fresh() { : }
   TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
   for line want in \
-    'ssh tusa' tusa \
-    'ssh bob@Tusa' tusa \
-    'ssh -p 2222 -A tusa' tusa \
-    'ssh tusa -p 2222' tusa \
-    'ssh -p2222 -lbob -o ServerAliveInterval=30 tusa' tusa \
-    'TERM=xterm-256color command ssh tusa' tusa \
-    "ssh 'tusa'" tusa \
-    'ssh ssh://bob@tusa:2200' tusa \
-    'ssh -J jump -t tusa tmux attach' tusa \
-    'ssh tusa -t htop' tusa \
-    'ssh -- tusa' tusa \
-    'ssh tusa 2>/dev/null' tusa \
-    'ssh tusa; echo done' tusa \
-    '/usr/bin/ssh tusa' tusa \
-    'ssh tusa uptime' - \
-    'ssh tusa htop -t' - \
-    'ssh -N -L 8080:localhost:80 tusa' - \
-    'ssh -fN tusa' - \
+    'ssh teal' teal \
+    'ssh bob@Teal' teal \
+    'ssh -p 2222 -A teal' teal \
+    'ssh teal -p 2222' teal \
+    'ssh -p2222 -lbob -o ServerAliveInterval=30 teal' teal \
+    'TERM=xterm-256color command ssh teal' teal \
+    "ssh 'teal'" teal \
+    'ssh ssh://bob@teal:2200' teal \
+    'ssh -J jump -t teal tmux attach' teal \
+    'ssh teal -t htop' teal \
+    'ssh -- teal' teal \
+    'ssh teal 2>/dev/null' teal \
+    'ssh teal; echo done' teal \
+    '/usr/bin/ssh teal' teal \
+    'ssh teal uptime' - \
+    'ssh teal htop -t' - \
+    'ssh -N -L 8080:localhost:80 teal' - \
+    'ssh -fN teal' - \
     'ssh -T git@github.com' - \
-    'ssh -G tusa' - \
-    'ssh tusa | tee log' - \
-    'ssh tusa < script' - \
-    'ssh tusa > log' - \
-    'ssh tusa &' - \
-    'sshfs tusa:/ mnt' - \
-    'echo ssh tusa' - \
+    'ssh -G teal' - \
+    'ssh teal | tee log' - \
+    'ssh teal < script' - \
+    'ssh teal > log' - \
+    'ssh teal &' - \
+    'sshfs teal:/ mnt' - \
+    'echo ssh teal' - \
     'ssh -p 22' -
   do
     REPLY=-
     __tt_ssh_host "$line" || REPLY=-
     [[ $REPLY == "$want" ]] || { print -u2 "ssh read ${(q+)line} as ${(q+)REPLY}, not $want"; exit 1 }
   done
-  print -l "ssh:Tusa  ttheme/homura" "ssh:*.prod  ttheme/kaito" "ssh:db?.prod  ttheme/rei" "ssh:gone  nosuchpalette" "ssh:bad host  ttheme/mio" "ssh:  ttheme/mio" > $TTHEME_PINS_FILE
+  print -l "ssh:Teal  ttheme/homura" "ssh:*.prod  ttheme/kaito" "ssh:db?.prod  ttheme/rei" "ssh:gone  nosuchpalette" "ssh:bad host  ttheme/mio" "ssh:  ttheme/mio" > $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
-  [[ ${(j: :)${(ok)TTHEME_PINS}} == 'ssh:*.prod ssh:db?.prod ssh:gone ssh:tusa' ]] || { print -u2 "ssh pins did not load: ${(kv)TTHEME_PINS}"; exit 1 }
-  for host want in tusa ssh:tusa db1.prod 'ssh:db?.prod' db10.prod 'ssh:*.prod' gone - tusa2 -; do
+  [[ ${(j: :)${(ok)TTHEME_PINS}} == 'ssh:*.prod ssh:db?.prod ssh:gone ssh:teal' ]] || { print -u2 "ssh pins did not load: ${(kv)TTHEME_PINS}"; exit 1 }
+  for host want in teal ssh:teal db1.prod 'ssh:db?.prod' db10.prod 'ssh:*.prod' gone - teal2 -; do
     REPLY=-
     __tt_ssh_rule $host || REPLY=-
     [[ $REPLY == "$want" ]] || { print -u2 "ssh to $host took the pin ${(q+)REPLY}, not $want"; exit 1 }
@@ -644,13 +644,13 @@ TTHEME_STARTUP=
   TTHEME_STARTUP=ttheme/miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku]
   __tt_apply() { export TTHEME_PAINTED=1 }
   unset TTHEME_PAINTED
-  __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa' > /dev/null
+  __tt_ran 'ssh teal' 'ssh teal' 'ssh teal' > /dev/null
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/homura]" ]] || { print -u2 "ssh to a pinned host did not paint its palette"; exit 1 }
   __tt_prompt > /dev/null
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "the prompt after ssh did not put the palette back"; exit 1 }
   [[ -z ${TTHEME_PAINTED+x} ]] || { print -u2 "a tab that never painted came back from ssh painted, so it no longer follows the default"; exit 1 }
   export TTHEME_PAINTED=1
-  __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa' > /dev/null
+  __tt_ran 'ssh teal' 'ssh teal' 'ssh teal' > /dev/null
   __tt_prompt > /dev/null
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" && -n $TTHEME_PAINTED ]] || { print -u2 "a tab painted by hand came back from ssh unpainted"; exit 1 }
   __tt_apply() { : }
@@ -658,29 +658,29 @@ TTHEME_STARTUP=
   TTHEME_SPEC=$TTHEME_PALETTE[ttheme/rei]
   __tt_prompt
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/rei]" ]] || { print -u2 "the prompt after ssh overrode a palette painted by hand"; exit 1 }
-  __tt_ran 'ssh tusa uptime' 'ssh tusa uptime' 'ssh tusa uptime'
+  __tt_ran 'ssh teal uptime' 'ssh teal uptime' 'ssh teal uptime'
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/rei]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "a remote command painted the tab"; exit 1 }
   TTHEME_STARTUP=
-  __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa'
+  __tt_ran 'ssh teal' 'ssh teal' 'ssh teal'
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/rei]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "ssh to a pinned host painted the tab while ttheme is off"; exit 1 }
   TTHEME_STARTUP=ttheme/miku TTHEME_SPEC= resets=0
   __tt_osc_reset() { (( ++resets )) }
-  __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa'
+  __tt_ran 'ssh teal' 'ssh teal' 'ssh teal'
   __tt_prompt
   [[ -z $TTHEME_SPEC && $resets == 1 ]] || { print -u2 "the prompt after ssh did not reset a tab of unknown colors: spec=[$TTHEME_SPEC] resets=$resets"; exit 1 }
   TTHEME_SPEC=$TTHEME_PALETTE[ttheme/kaito]
-  out=$(__tt_pin_save ttheme/kaito ssh:tusa "$TTHEME_PALETTE[ttheme/miku]"; [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" ]] && print back)
-  [[ $out == "Pinned · kaito → ssh tusa · while connected"$'\n'back ]] || { print -u2 "pinning a host broke: $out"; exit 1 }
+  out=$(__tt_pin_save ttheme/kaito ssh:teal "$TTHEME_PALETTE[ttheme/miku]"; [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" ]] && print back)
+  [[ $out == "Pinned · kaito → ssh teal · while connected"$'\n'back ]] || { print -u2 "pinning a host broke: $out"; exit 1 }
   TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
-  [[ $TTHEME_PINS[ssh:tusa] == ttheme/kaito && ${#TTHEME_PINS} == 4 ]] || { print -u2 "a host pin did not round-trip: ${(kv)TTHEME_PINS}"; exit 1 }
-  out=$(__tt_unpin ssh:TUSA)
-  [[ $out == "Unpinned · kaito on ssh tusa · while connected" ]] || { print -u2 "unpinning a host broke: $out"; exit 1 }
+  [[ $TTHEME_PINS[ssh:teal] == ttheme/kaito && ${#TTHEME_PINS} == 4 ]] || { print -u2 "a host pin did not round-trip: ${(kv)TTHEME_PINS}"; exit 1 }
+  out=$(__tt_unpin ssh:TEAL)
+  [[ $out == "Unpinned · kaito on ssh teal · while connected" ]] || { print -u2 "unpinning a host broke: $out"; exit 1 }
   TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
-  [[ -z $TTHEME_PINS[ssh:tusa] ]] || { print -u2 "unpin left the host pin in the file"; exit 1 }
-  out=$(__tt_unpin ssh:tusa 2>&1) && { print -u2 "unpin dropped a host pin that was gone"; exit 1 }
-  [[ $out == "ttheme unpin: nothing pinned to ssh tusa" ]] || { print -u2 "unpin of a missing host said: $out"; exit 1 }
-  out=$(ttheme pin ssh:bob@tusa 2>&1) && { print -u2 "ttheme pin took a user in a host pin"; exit 1 }
-  [[ $out == "ttheme pin: an ssh pin names the host alone — ssh:tusa" ]] || { print -u2 "ttheme pin ssh:bob@tusa said: $out"; exit 1 }
+  [[ -z $TTHEME_PINS[ssh:teal] ]] || { print -u2 "unpin left the host pin in the file"; exit 1 }
+  out=$(__tt_unpin ssh:teal 2>&1) && { print -u2 "unpin dropped a host pin that was gone"; exit 1 }
+  [[ $out == "ttheme unpin: nothing pinned to ssh teal" ]] || { print -u2 "unpin of a missing host said: $out"; exit 1 }
+  out=$(ttheme pin ssh:bob@teal 2>&1) && { print -u2 "ttheme pin took a user in a host pin"; exit 1 }
+  [[ $out == "ttheme pin: an ssh pin names the host alone — ssh:teal" ]] || { print -u2 "ttheme pin ssh:bob@teal said: $out"; exit 1 }
   rm -f $TTHEME_PINS_FILE
 ) || exit 1
 (
@@ -850,7 +850,7 @@ TTHEME_STARTUP=
   print -r -- "//**  ttheme/rei" > $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load
   REPLY=; __tt_dir_rule $HOME/work && [[ $REPLY == "//**" ]] || { print -u2 "a pin on / and below skipped what is below it: $REPLY"; exit 1 }
-  print -l "~/work/**  ttheme/homura" "~/work/site  ttheme/kaito" "~/work/site/**  ttheme/miku" "~/notes/**  nosuchpalette" "/nonexistent-ttheme/place/**  ttheme/rei" "~  ttheme/mio" "ssh:tusa  ttheme/kaito" "ssh:*.prod  nosuchpalette" > $TTHEME_PINS_FILE
+  print -l "~/work/**  ttheme/homura" "~/work/site  ttheme/kaito" "~/work/site/**  ttheme/miku" "~/notes/**  nosuchpalette" "/nonexistent-ttheme/place/**  ttheme/rei" "~  ttheme/mio" "ssh:teal  ttheme/kaito" "ssh:*.prod  nosuchpalette" > $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
   REPLY=; __tt_dir_rule $HOME && [[ $REPLY == "$HOME" ]] || { print -u2 "a pin on ~ alone did not cover the home directory: $REPLY"; exit 1 }
   REPLY=; __tt_dir_rule $HOME/work/site && [[ $REPLY == "$HOME/work/site" ]] || { print -u2 "a directory's own pin lost to its pin on everything below: $REPLY"; exit 1 }
@@ -867,7 +867,7 @@ TTHEME_STARTUP=
     "/nonexistent-ttheme/place  rei            and below · no such directory"
     "ssh"
     "├── *.prod                 nosuchpalette  while connected · not installed"
-    "└── tusa                   kaito          while connected"
+    "└── teal                   kaito          while connected"
     ""
     "Here · homura pinned to ~/work and below"
     "ttheme pin picks one here · ttheme unpin drops one · $TTHEME_PINS_FILE"
@@ -883,7 +883,7 @@ TTHEME_STARTUP=
   [[ ${${(f)"$(color=0 __tt_map_tree)"}[-2]} == "Here · kaito pinned to this directory" ]] ||
     { print -u2 "the pins map named the wrong pin here: ${${(f)"$(color=0 __tt_map_tree)"}[-2]}"; exit 1 }
   out=$(__tt_pins_map)
-  want=("/nonexistent-ttheme/place/**"$'\t'ttheme/rei "$HOME"$'\t'ttheme/mio "~/notes/**"$'\t'nosuchpalette "~/work/**"$'\t'ttheme/homura "~/work/site"$'\t'ttheme/kaito "~/work/site/**"$'\t'ttheme/miku "ssh:*.prod"$'\t'nosuchpalette "ssh:tusa"$'\t'ttheme/kaito)
+  want=("/nonexistent-ttheme/place/**"$'\t'ttheme/rei "$HOME"$'\t'ttheme/mio "~/notes/**"$'\t'nosuchpalette "~/work/**"$'\t'ttheme/homura "~/work/site"$'\t'ttheme/kaito "~/work/site/**"$'\t'ttheme/miku "ssh:*.prod"$'\t'nosuchpalette "ssh:teal"$'\t'ttheme/kaito)
   [[ $out == ${(F)want} ]] || { print -u2 "piped, pins did not print path and palette per line:"; print -ru2 -- $out; exit 1 }
   rm -f $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=x
@@ -934,8 +934,8 @@ TTHEME_STARTUP=
   [[ ${reach[2]} == "└── acme/         homura  new" && ${reach[-1]} == "  pinned to ~/code/acme and b…" ]] ||
     { print -u2 "a narrow reach panel did not give up the notes before the tree, or wrap what paints here:"; print -rlu2 -- $reach; exit 1 }
   (
-    TTHEME_PALETTE[someone@mine/own-miku]=$TTHEME_PALETTE[ttheme/miku]
-    print -l "~/code/acme/docs/**  someone@mine/own-miku" "~/code/acme/web  ttheme/kita" > $TTHEME_PINS_FILE
+    TTHEME_PALETTE[someone@mine/own-orla]=$TTHEME_PALETTE[ttheme/miku]
+    print -l "~/code/acme/docs/**  someone@mine/own-orla" "~/code/acme/web  ttheme/kita" > $TTHEME_PINS_FILE
     TTHEME_PINS_RAW=; __tt_pins_load
     cd $HOME
     __tt_pin_scopes $HOME
@@ -1124,7 +1124,7 @@ forks_of() {
   pids=(${(u)${(f)"$(grep -oE '\+[0-9]+> ' $log | tr -dc '0-9\n')"}})
   REPLY=$(( ${#pids} - 1 ))
 }
-for pair in 'gojo Z29qbw==' 'owner@marketplace/slug b3duZXJAbWFya2V0cGxhY2Uvc2x1Zw==' '日本/é 5pel5pysL8Op' 'ab YWI='; do
+for pair in 'orla b3JsYQ==' 'owner@marketplace/slug b3duZXJAbWFya2V0cGxhY2Uvc2x1Zw==' '日本/é 5pel5pysL8Op' 'ab YWI='; do
   REPLY=; __tt_b64s ${pair% *}
   [[ $REPLY == ${pair##* } ]] || { print -u2 "__tt_b64s broke on ${pair% *}: $REPLY"; exit 1 }
 done

@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test'
 import { brotliCompressSync } from 'node:zlib'
 import { CODE, codeBody, type Draft, paletteToml, sealed } from '../../src/core/draft.ts'
 import { fromCode, readCodes } from '../../src/core/own.ts'
+import { setText } from '../../src/core/sets.ts'
 import { textDraft, webCheck, webCode } from './web-code'
 
 const ansi = [
@@ -24,9 +25,9 @@ const ansi = [
 ]
 
 const draft: Draft = {
-  name: 'rei-tuned',
-  subject: 'evangelion/rei',
-  from: 'ttheme/rei',
+  name: 'orla-tuned',
+  subject: 'starfall/orla',
+  from: 'ttheme/orla',
   ansiSource: 'alice',
   signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
@@ -67,6 +68,11 @@ test('the builder sends a link of any packing to its page, and turns away a code
   await expect(webCheck(`${code.slice(0, 6)}${code[6] === 'A' ? 'B' : 'A'}${code.slice(7)}`)).rejects.toThrow(/add up/)
 })
 
-test('a palette file the builder writes opens back as the same palette, named by its file', () => {
-  expect(textDraft('rei-tuned (1).toml', paletteToml(draft))).toEqual(draft)
+test('a set file the builder writes opens back as its first palette, named by its slug', () => {
+  const set = setText([
+    { slug: draft.name, text: paletteToml(draft) },
+    { slug: 'orla', text: paletteToml({ ...draft, name: 'orla' }) },
+  ])
+
+  expect(textDraft('starfall (1).toml', set)).toEqual(draft)
 })

@@ -865,8 +865,7 @@ function menuRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefined 
     return undefined
   }
 
-  const items =
-    e.menu === 'export' ? ['Share code', 'Add command', 'Palette file'] : ['Another palette', 'A share code']
+  const items = e.menu === 'export' ? ['Share code', 'Add command', 'Set file'] : ['Another palette', 'A share code']
 
   const width = 24
   const base = p.color ? `${p.bg(c.background)}${p.fg(c.foreground)}` : ''

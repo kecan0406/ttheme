@@ -5,8 +5,8 @@
                                                  ╭─ ttheme ───────────────────────────────────────╮
     + Add marketplace   owner/repo or a folder   │ Updates with ttheme                            │
     ⌕ Search marketplace   find one on GitHub    │                                                │
-                                                 │    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっ…  │
-    ● ttheme                                     │ ▌    ● kita                                    │
+                                                 │    ▾ Briarwood Rocks! (1/1) すたあ・ふ・ばら…  │
+    ● ttheme                                     │ ▌    ● kipa                                    │
       Built in                                   │                                                │
       1 of 6 match · 2 installed                 │                                                │
                                                  │                                                │
@@ -15,7 +15,7 @@
                                                  │                                                │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
-                                                 │ ttheme/kita  Installed                         │
+                                                 │ ttheme/kipa  Installed                         │
                                                  │ Contrast 8/12 · ✗ accent hue outside its ANSI… │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤

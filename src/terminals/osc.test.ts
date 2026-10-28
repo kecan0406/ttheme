@@ -4,8 +4,8 @@ import { test } from 'node:test'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { answered, colorQuery, paletteOsc, parseOscColors, restoreOsc, specColors } from './osc.ts'
 
-const miku: PaletteEntry = {
-  name: 'miku',
+const orla: PaletteEntry = {
+  name: 'orla',
   ansiSource: 'Test',
   background: '#0e2124',
   foreground: '#e0f4f2',
@@ -19,9 +19,9 @@ const miku: PaletteEntry = {
 }
 
 test('paletteOsc emits the same sequences as the zsh osc adapter', () => {
-  const osc = paletteOsc(miku)
+  const osc = paletteOsc(orla)
   assert.ok(osc.startsWith('\x1b]11;#0e2124\x1b\\\x1b]10;#e0f4f2\x1b\\\x1b]12;#39c5bb\x1b\\\x1b]17;#1b3b3e\x1b\\'))
-  assert.ok(osc.endsWith(miku.ansi.map((c, i) => `\x1b]4;${i};${c}\x1b\\`).join('')))
+  assert.ok(osc.endsWith(orla.ansi.map((c, i) => `\x1b]4;${i};${c}\x1b\\`).join('')))
 })
 
 test('parseOscColors reads terminal replies with ST and BEL terminators', () => {
@@ -60,7 +60,7 @@ test('the color query ends at a DSR, so a terminal that leaves OSC 17 unanswered
 })
 
 test('the look the hub hands Browse restores as its colors, and an empty one as resets', () => {
-  const spec = ['-', miku.foreground, miku.cursor, miku.selection, ...miku.ansi].join(' ')
+  const spec = ['-', orla.foreground, orla.cursor, orla.selection, ...orla.ansi].join(' ')
   const codes = ['11', '10', '4;3']
 
   assert.equal(

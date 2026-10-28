@@ -1,0 +1,169 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "kurisu"
+subject = "steins-gate/kurisu"
+signature = ["cursor", "ansi1", "ansi6"]
+ansi_source = "Duotone Dark"
+
+[palette.colors]
+background = "#1f160d"
+foreground = "#f9dec8"
+cursor = "#e0913f"
+selection_background = "#4d3a28"
+ansi = [
+  "#2c2219",
+  "#f26c68",
+  "#b9cb27",
+  "#e2b46f",
+  "#8e91c7",
+  "#f392bb",
+  "#7facf9",
+  "#e3d1c4",
+
+  "#837469",
+  "#f3a287",
+  "#d4e845",
+  "#ffd79d",
+  "#a4a7de",
+  "#ffc1d8",
+  "#98cdf3",
+  "#ffeadb",
+]
+
+[palette.colors.light]
+background = "#fff8f5"
+foreground = "#2b1d0f"
+cursor = "#a5610e"
+selection_background = "#efd2b9"
+ansi = [
+  "#fff1e8",
+  "#be262d",
+  "#35591b",
+  "#815d20",
+  "#585da4",
+  "#a73b71",
+  "#144f98",
+  "#352a21",
+
+  "#837469",
+  "#8b3e22",
+  "#2b4a15",
+  "#714e0d",
+  "#494e93",
+  "#7e415c",
+  "#004766",
+  "#2b1d0f",
+]
+
+[[palette]]
+slug = "mayuri"
+subject = "steins-gate/mayuri"
+signature = ["cursor", "foreground", "ansi13"]
+ansi_source = "Iceberg Dark"
+
+[palette.colors]
+background = "#11191c"
+foreground = "#e0e2eb"
+cursor = "#9bd5f0"
+selection_background = "#2b3f57"
+ansi = [
+  "#1d2529",
+  "#d97798",
+  "#92ceac",
+  "#bcc078",
+  "#6e9abf",
+  "#a5aee1",
+  "#75b5c7",
+  "#ced6db",
+
+  "#70787d",
+  "#f39cb8",
+  "#adeac7",
+  "#dde297",
+  "#84b0d5",
+  "#d8caff",
+  "#90d0e4",
+  "#e1f0f9",
+]
+
+[palette.colors.light]
+background = "#f4faff"
+foreground = "#1c2026"
+cursor = "#4b8ca7"
+selection_background = "#c4d9f7"
+ansi = [
+  "#edf5fa",
+  "#a24266",
+  "#1f5a3f",
+  "#7c5f1e",
+  "#3a678a",
+  "#525fa0",
+  "#055868",
+  "#262d31",
+
+  "#70787d",
+  "#8f3458",
+  "#0c4c32",
+  "#6c5011",
+  "#2a597a",
+  "#5a4b8a",
+  "#004958",
+  "#142128",
+]
+
+[[palette]]
+slug = "suzuha"
+subject = "steins-gate/suzuha"
+signature = ["cursor", "ansi9", "ansi4"]
+ansi_source = "Gruvbox Dark + Lab"
+
+[palette.colors]
+background = "#1f160d"
+foreground = "#f8dec7"
+cursor = "#d98e32"
+selection_background = "#423e2b"
+ansi = [
+  "#2b2218",
+  "#ef7131",
+  "#d5c440",
+  "#f6ad3c",
+  "#5ba1a4",
+  "#f593ac",
+  "#64b9ad",
+  "#e3d2c3",
+
+  "#837568",
+  "#f3a194",
+  "#f4e040",
+  "#ffd79d",
+  "#75b5c9",
+  "#ffc0ce",
+  "#76d8c9",
+  "#ffead9",
+]
+
+[palette.colors.light]
+background = "#fff8f4"
+foreground = "#2a1d0f"
+cursor = "#a06000"
+selection_background = "#dfd7bd"
+ansi = [
+  "#fff1e7",
+  "#ab4200",
+  "#395922",
+  "#895900",
+  "#216d70",
+  "#a83d5f",
+  "#005b52",
+  "#342a20",
+
+  "#837568",
+  "#8c3c31",
+  "#2e491b",
+  "#714e0d",
+  "#0f5d6f",
+  "#7f4253",
+  "#004b43",
+  "#2a1d0f",
+]

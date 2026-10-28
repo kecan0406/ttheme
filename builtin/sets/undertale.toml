@@ -1,0 +1,337 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "toriel"
+subject = "undertale/toriel"
+signature = ["cursor", "ansi4", "foreground"]
+ansi_source = "Shades Of Purple + Determination"
+
+[palette.colors]
+background = "#1a180d"
+foreground = "#e6e1e6"
+cursor = "#e9d30d"
+selection_background = "#3e3a5a"
+ansi = [
+  "#262418",
+  "#f06d40",
+  "#a6d03d",
+  "#d1bd00",
+  "#9986f3",
+  "#ff8caa",
+  "#53be85",
+  "#dad4c3",
+
+  "#7b7768",
+  "#f3a186",
+  "#c0ec58",
+  "#fadd20",
+  "#8ea5e8",
+  "#ffc1ce",
+  "#78d9b0",
+  "#f5eed2",
+]
+
+[palette.colors.light]
+background = "#fff9e9"
+foreground = "#201f23"
+cursor = "#968700"
+selection_background = "#d9d2fa"
+ansi = [
+  "#faf3e1",
+  "#ae3e13",
+  "#315a14",
+  "#805d00",
+  "#6644e2",
+  "#b1325e",
+  "#005c38",
+  "#2f2c20",
+
+  "#7b7768",
+  "#8b3d22",
+  "#284b0e",
+  "#6e5000",
+  "#2e51a2",
+  "#7e4252",
+  "#004c36",
+  "#23200e",
+]
+
+[[palette]]
+slug = "sans"
+subject = "undertale/sans"
+signature = ["cursor", "foreground", "ansi11"]
+ansi_source = "Galaxy"
+
+[palette.colors]
+background = "#12181d"
+foreground = "#dee3eb"
+cursor = "#3ec1ff"
+selection_background = "#2f3e59"
+ansi = [
+  "#1e2529",
+  "#f2649a",
+  "#69d5a3",
+  "#91ca43",
+  "#369beb",
+  "#b3a5ff",
+  "#16b8f1",
+  "#cfd5dc",
+
+  "#71787e",
+  "#f39eb9",
+  "#89f2c0",
+  "#e4e43b",
+  "#77b0e8",
+  "#e2c7ff",
+  "#97cfed",
+  "#e3f0fa",
+]
+
+[palette.colors.light]
+background = "#f5faff"
+foreground = "#1b2026"
+cursor = "#0082b2"
+selection_background = "#c8d7f9"
+ansi = [
+  "#eef4fb",
+  "#b72767",
+  "#005c3e",
+  "#456e00",
+  "#0067a6",
+  "#714ac3",
+  "#005774",
+  "#262d32",
+
+  "#71787e",
+  "#8e3658",
+  "#004c33",
+  "#585800",
+  "#0f588b",
+  "#654789",
+  "#004860",
+  "#152129",
+]
+
+[[palette]]
+slug = "papyrus"
+subject = "undertale/papyrus"
+signature = ["cursor", "foreground", "ansi4"]
+ansi_source = "Ubuntu + Determination"
+
+[palette.colors]
+background = "#201512"
+foreground = "#e6e2d9"
+cursor = "#ec6844"
+selection_background = "#563347"
+ansi = [
+  "#2e211d",
+  "#f16d54",
+  "#d6c42f",
+  "#fea933",
+  "#6a97da",
+  "#e29cb6",
+  "#7dba76",
+  "#e6d0ca",
+
+  "#85736f",
+  "#f3a194",
+  "#f5e030",
+  "#ffd6a0",
+  "#9fa8e8",
+  "#ffc0d6",
+  "#89da81",
+  "#ffe9e4",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#21201a"
+cursor = "#b74221"
+selection_background = "#fcc9e2"
+ansi = [
+  "#fff1ed",
+  "#b8311b",
+  "#395922",
+  "#8d5700",
+  "#3464a4",
+  "#974a6b",
+  "#185c29",
+  "#362925",
+
+  "#85736e",
+  "#8c3c31",
+  "#2e491b",
+  "#724e13",
+  "#404ea0",
+  "#7f415b",
+  "#024e0c",
+  "#2d1b16",
+]
+
+[[palette]]
+slug = "undyne"
+subject = "undertale/undyne"
+signature = ["cursor", "ansi2", "ansi3"]
+ansi_source = "Sea Shells + Determination"
+
+[palette.colors]
+background = "#201513"
+foreground = "#fddbd6"
+cursor = "#ee6557"
+selection_background = "#244056"
+ansi = [
+  "#2e211f",
+  "#f16e4e",
+  "#74ccee",
+  "#ffa945",
+  "#948dd6",
+  "#c2a0ee",
+  "#83b1e3",
+  "#e6d0cc",
+
+  "#857370",
+  "#f3a195",
+  "#9de9f1",
+  "#ffcfb0",
+  "#9da7e8",
+  "#d5c9ff",
+  "#a8cbf2",
+  "#ffe9e6",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2d1b18"
+cursor = "#c52e26"
+selection_background = "#bedaf6"
+ansi = [
+  "#fff0ee",
+  "#b2391c",
+  "#00576e",
+  "#905500",
+  "#6055b8",
+  "#7d4bb1",
+  "#1f5380",
+  "#362927",
+
+  "#857370",
+  "#8c3c32",
+  "#004a4f",
+  "#764b2b",
+  "#3e4ea2",
+  "#5e4989",
+  "#1f4566",
+  "#2d1b18",
+]
+
+[[palette]]
+slug = "mettaton"
+subject = "undertale/mettaton"
+signature = ["cursor", "ansi13", "ansi3"]
+ansi_source = "Laser"
+
+[palette.colors]
+background = "#1d151b"
+foreground = "#f3dceb"
+cursor = "#d468ca"
+selection_background = "#52344d"
+ansi = [
+  "#2a2128",
+  "#e6718e",
+  "#c9cc38",
+  "#dbb92a",
+  "#7792e6",
+  "#f689f1",
+  "#7eb2d1",
+  "#dfd0d9",
+
+  "#80747b",
+  "#eca1b2",
+  "#ece188",
+  "#f8d9b1",
+  "#96a9e8",
+  "#ffbcf9",
+  "#9ccdeb",
+  "#fee8f6",
+]
+
+[palette.colors.light]
+background = "#fff7f9"
+foreground = "#281c26"
+cursor = "#a53f9f"
+selection_background = "#f5cbea"
+ansi = [
+  "#ffeff8",
+  "#af365b",
+  "#37591f",
+  "#766100",
+  "#345cc5",
+  "#a726aa",
+  "#1b5671",
+  "#322930",
+
+  "#80747b",
+  "#883c51",
+  "#2e491a",
+  "#6b5027",
+  "#3250a2",
+  "#813782",
+  "#0c4760",
+  "#281c26",
+]
+
+[[palette]]
+slug = "determination"
+subject = "undertale/determination"
+signature = ["cursor", "ansi11", "ansi4"]
+ansi_source = "CGA + Determination"
+
+[palette.colors]
+background = "#211513"
+foreground = "#fddbd5"
+cursor = "#ed6653"
+selection_background = "#413f15"
+ansi = [
+  "#2e211f",
+  "#f16d5d",
+  "#58df9b",
+  "#debb5d",
+  "#898bf3",
+  "#ff8cbc",
+  "#79bb71",
+  "#e6d0cc",
+
+  "#857370",
+  "#f3a099",
+  "#60ffaf",
+  "#e4e43b",
+  "#bca2e8",
+  "#ffc1d8",
+  "#87da7f",
+  "#ffe9e6",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b18"
+cursor = "#c43021"
+selection_background = "#dedaa1"
+ansi = [
+  "#fff0ee",
+  "#bd291f",
+  "#005c38",
+  "#7b6003",
+  "#4d4de3",
+  "#b12e71",
+  "#1c5c1e",
+  "#362927",
+
+  "#857370",
+  "#8c3b36",
+  "#004d2d",
+  "#585800",
+  "#63429c",
+  "#7e415c",
+  "#004e0d",
+  "#2d1b18",
+]

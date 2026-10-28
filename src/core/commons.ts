@@ -150,7 +150,7 @@ function readCharacter(file: string, index: number, raw: unknown, foreign: boole
   const danbooru = c.danbooru === undefined ? undefined : tagOf(file, `${at}.danbooru`, c.danbooru)
 
   if (c.also !== undefined && !Array.isArray(c.also)) {
-    fail(file, `${at}.also must be a list of works, like ["pop-n-music"]`)
+    fail(file, `${at}.also must be a list of work ids`)
   }
 
   const also = Array.isArray(c.also) ? c.also.map((work, i) => slug(file, `${at}.also[${i}]`, work)) : undefined

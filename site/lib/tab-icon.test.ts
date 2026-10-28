@@ -4,13 +4,13 @@ import { faviconIco, touchIconPng } from '@/lib/tab-icon'
 import type { Theme } from '@/lib/themes'
 
 const theme: Theme = {
-  id: 'ttheme/kyubey',
+  id: 'ttheme/orla',
   marketplace: 'ttheme',
-  name: 'kyubey',
-  subject: 'madoka-magica/kyubey',
-  work: { id: 'madoka-magica', name: 'Madoka Magica', native: null, lang: null, lead: 'madoka-magica/madoka' },
+  name: 'orla',
+  subject: 'starfall/orla',
+  work: { id: 'starfall', name: 'Starfall', native: null, lang: null, lead: 'starfall/pip' },
   also: [],
-  character: { id: 'kyubey', native: [] },
+  character: { id: 'orla', native: [] },
   from: null,
   ansiSource: 'test',
   background: '#fff8f7',

@@ -1,0 +1,337 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "lelouch"
+subject = "code-geass/lelouch"
+signature = ["selection", "cursor", "ansi1"]
+ansi_source = "SilkCircuit Glow + Geass"
+
+[palette.colors]
+background = "#19161e"
+foreground = "#e8dff1"
+cursor = "#bb7aae"
+selection_background = "#562c9d"
+ansi = [
+  "#25222a",
+  "#f26c64",
+  "#69d6a4",
+  "#ffa76d",
+  "#7391f3",
+  "#c0a0ff",
+  "#2bb6f9",
+  "#d9d2dd",
+
+  "#7a757f",
+  "#f39fb1",
+  "#74f4bb",
+  "#fdd5b9",
+  "#88ace8",
+  "#f1c1ff",
+  "#97cdf3",
+  "#f4eafd",
+]
+
+[palette.colors.light]
+background = "#fef7ff"
+foreground = "#221d2a"
+cursor = "#905485"
+selection_background = "#bc99ff"
+ansi = [
+  "#f9f1fc",
+  "#be2628",
+  "#005c3e",
+  "#995100",
+  "#2458db",
+  "#7547c8",
+  "#00567a",
+  "#2e2b33",
+
+  "#7a757f",
+  "#8d384f",
+  "#004c33",
+  "#714d31",
+  "#2e558d",
+  "#743e89",
+  "#004766",
+  "#221d2a",
+]
+
+[[palette]]
+slug = "suzaku"
+subject = "code-geass/suzaku"
+signature = ["cursor", "ansi2", "selection"]
+ansi_source = "Eclipse + Geass"
+
+[palette.colors]
+background = "#211512"
+foreground = "#fddbd3"
+cursor = "#945545"
+selection_background = "#252968"
+ansi = [
+  "#2e211e",
+  "#f16c61",
+  "#a5cb95",
+  "#f9ab52",
+  "#8c90d6",
+  "#ed94d2",
+  "#53c27c",
+  "#e6d0cb",
+
+  "#85736f",
+  "#f3a099",
+  "#d6ea58",
+  "#ffd5ac",
+  "#b79fe8",
+  "#ffbee8",
+  "#8edb87",
+  "#ffe9e4",
+]
+
+[palette.colors.light]
+background = "#fff8f6"
+foreground = "#2d1b16"
+cursor = "#804535"
+selection_background = "#bfc2ff"
+ansi = [
+  "#fff1ed",
+  "#bd2825",
+  "#37582d",
+  "#905600",
+  "#5359b8",
+  "#a23a8b",
+  "#005d30",
+  "#372926",
+
+  "#85736f",
+  "#8c3b36",
+  "#3e4600",
+  "#724d23",
+  "#6142a1",
+  "#803d6e",
+  "#004e0f",
+  "#2d1b16",
+]
+
+[[palette]]
+slug = "cc"
+subject = "code-geass/cc"
+signature = ["cursor", "ansi3", "ansi12"]
+ansi_source = "Nebula Drift + Geass"
+
+[palette.colors]
+background = "#151910"
+foreground = "#dfe5ce"
+cursor = "#a8d966"
+selection_background = "#41395a"
+ansi = [
+  "#21251b",
+  "#f06d41",
+  "#76d683",
+  "#eeb05b",
+  "#00a4bf",
+  "#ff8eac",
+  "#3bbf9d",
+  "#d3d6c7",
+
+  "#75796c",
+  "#f3a187",
+  "#92f29c",
+  "#ffd793",
+  "#7bb2cf",
+  "#ffc0ce",
+  "#5ddcb7",
+  "#eaf1d9",
+]
+
+[palette.colors.light]
+background = "#f8fbeb"
+foreground = "#1c2213"
+cursor = "#648f25"
+selection_background = "#ddd1fa"
+ansi = [
+  "#f2f5e6",
+  "#ae3e15",
+  "#005d23",
+  "#895905",
+  "#006d80",
+  "#b0345e",
+  "#005b48",
+  "#2a2d23",
+
+  "#75796c",
+  "#8b3d23",
+  "#004d1c",
+  "#704f00",
+  "#1d5b75",
+  "#7f4253",
+  "#004c3b",
+  "#1c2213",
+]
+
+[[palette]]
+slug = "kallen"
+subject = "code-geass/kallen"
+signature = ["cursor", "selection", "ansi12"]
+ansi_source = "Kolorit + Geass"
+
+[palette.colors]
+background = "#201516"
+foreground = "#fbdbde"
+cursor = "#a3485a"
+selection_background = "#2e4b54"
+ansi = [
+  "#2d2122",
+  "#f26885",
+  "#cfc435",
+  "#fcaa3c",
+  "#8791c0",
+  "#ff89d0",
+  "#74aef9",
+  "#e5d0d1",
+
+  "#847374",
+  "#f39eac",
+  "#ece14f",
+  "#ffd6a9",
+  "#b0a3db",
+  "#ffbfe1",
+  "#a6caf2",
+  "#ffe9ea",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1d"
+cursor = "#8e384a"
+selection_background = "#92b0bb"
+ansi = [
+  "#fff0f1",
+  "#bb2651",
+  "#385921",
+  "#8d5700",
+  "#51609d",
+  "#b32288",
+  "#005193",
+  "#36292a",
+
+  "#847374",
+  "#8e384b",
+  "#2e4a1a",
+  "#714d1e",
+  "#594a90",
+  "#7f3f66",
+  "#1e4566",
+  "#2d1b1d",
+]
+
+[[palette]]
+slug = "nunnally"
+subject = "code-geass/nunnally"
+signature = ["cursor", "ansi12", "ansi5"]
+ansi_source = "London Embankment Dusk + Geass"
+
+[palette.colors]
+background = "#1f160d"
+foreground = "#f8dec7"
+cursor = "#c69057"
+selection_background = "#303e56"
+ansi = [
+  "#2c2219",
+  "#e9744d",
+  "#abca8e",
+  "#e7b358",
+  "#a98ac3",
+  "#ff8eac",
+  "#7db799",
+  "#e3d1c3",
+
+  "#837568",
+  "#f3a187",
+  "#c6e7ab",
+  "#ffd795",
+  "#b7a1d8",
+  "#ffc1d6",
+  "#98d4b1",
+  "#ffead9",
+]
+
+[palette.colors.light]
+background = "#fff8f4"
+foreground = "#2a1d0f"
+cursor = "#93632f"
+selection_background = "#c9d8f6"
+ansi = [
+  "#fff1e7",
+  "#a84421",
+  "#3d5727",
+  "#845c00",
+  "#79529c",
+  "#b0345e",
+  "#205a41",
+  "#342a20",
+
+  "#837568",
+  "#8b3d23",
+  "#2f491d",
+  "#714f00",
+  "#62478c",
+  "#7e415a",
+  "#054c35",
+  "#2a1d0f",
+]
+
+[[palette]]
+slug = "euphemia"
+subject = "code-geass/euphemia"
+signature = ["cursor", "ansi5", "ansi13"]
+ansi_source = "Whimsy + Geass"
+
+[palette.colors]
+background = "#1e1519"
+foreground = "#f6dbe6"
+cursor = "#e38dbb"
+selection_background = "#3c3b57"
+ansi = [
+  "#2b2126",
+  "#ef689a",
+  "#d5c43b",
+  "#f9ab6e",
+  "#948ae7",
+  "#c6a2e6",
+  "#76aff0",
+  "#e2d0d6",
+
+  "#827379",
+  "#f39db8",
+  "#f2e054",
+  "#fcd6b9",
+  "#aba3e8",
+  "#eec3f8",
+  "#a9c9f3",
+  "#ffe8f1",
+]
+
+[palette.colors.light]
+background = "#fff8f8"
+foreground = "#2a1b23"
+cursor = "#b54f8b"
+selection_background = "#d7d4f7"
+ansi = [
+  "#fff0f4",
+  "#b52b67",
+  "#395922",
+  "#955214",
+  "#5f4ed1",
+  "#7b4fa6",
+  "#00528d",
+  "#34292e",
+
+  "#827379",
+  "#8e3558",
+  "#2e491b",
+  "#6f4e30",
+  "#5348a1",
+  "#6d3e7d",
+  "#1e446a",
+  "#2a1b23",
+]

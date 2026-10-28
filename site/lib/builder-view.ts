@@ -15,15 +15,16 @@ import { pictureOf } from '@/lib/pictures'
 import { gateLinesOf, slotViewOf } from '@/lib/slot-view'
 import type { GateLine, Picture, SlotFormat, SlotView } from '@/lib/view-types'
 import { contrast, type Hex, mix } from '../../src/core/color.ts'
-import { paletteToml, readOwnText } from '../../src/core/draft.ts'
+import { paletteToml } from '../../src/core/draft.ts'
 import { marksOf } from '../../src/core/mark.ts'
 import { otherOf } from '../../src/core/mode.ts'
 import { PLANE_BOTTOM, PLANE_TOP, shareOf } from '../../src/core/plane.ts'
 import { repoFor } from '../../src/core/scaffold.ts'
 import { SEED_FIELDS, type Seeds } from '../../src/core/seeds.ts'
+import { readSet, setNameOf, setText } from '../../src/core/sets.ts'
 import { lchIn, lchTight, PAIRS, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
 import { ago } from '../../src/core/text.ts'
-import { nameProblem } from '../../src/core/theme.ts'
+import { nameProblem, themeOf } from '../../src/core/theme.ts'
 import { partnerOf } from '../../src/core/tune.ts'
 
 export type RowFormat = 'hex' | 'oklch'
@@ -367,13 +368,17 @@ export function modesOf(edit: Edit): ModesView {
   return { made, other: otherOf(made), own: edit.other.base !== null, tuned: Object.keys(edit.other.tuned).length }
 }
 
+function setFileOf(edit: Edit): string {
+  return `${setNameOf(edit.meta.subject)}.toml`
+}
+
 export function aboutOf(edit: Edit, view: View): AboutView {
   const list = listIn(edit, view)
   const colors = dotsOf(list, edit.signature)
 
   return {
     name: edit.name,
-    file: `${edit.name}.toml`,
+    file: setFileOf(edit),
     from: edit.meta.from ?? null,
     signature: edit.signature,
     slots: SLOT_NAMES,
@@ -402,19 +407,22 @@ export function exportProblem(edit: Edit): string | undefined {
 }
 
 export function fileOf(edit: Edit): FileView {
+  const file = setFileOf(edit)
   const problem = exportProblem(edit)
-  const text = problem ? '' : paletteToml(draftFrom(edit))
+  const text = problem ? '' : setText([{ slug: edit.name, text: paletteToml(draftFrom(edit)) }])
   let read = problem
 
   if (!read) {
     try {
-      readOwnText(edit.name, text)
+      for (const { slug, doc } of readSet(file, text)) {
+        themeOf(slug, doc, { name: slug })
+      }
     } catch (error) {
       read = `It would not read back — ${(error as Error).message}`
     }
   }
 
-  return { name: edit.name, file: `${edit.name}.toml`, text: read ? '' : text, problem: read }
+  return { name: edit.name, file, text: read ? '' : text, problem: read }
 }
 
 export function marketOf(owner: string, name: string): MarketView {

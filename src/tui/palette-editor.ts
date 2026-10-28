@@ -607,7 +607,7 @@ export class PaletteEditor {
             {
               group: 'Palette',
               keys: 'x',
-              does: 'Copy the share code, an add command or the file',
+              does: 'Copy the share code, an add command or the set file',
               ...when(roomy, 'x'),
             },
           ]
@@ -1172,7 +1172,7 @@ export class PaletteEditor {
       const code = exports.code(edited)
       this.copied = entry === 0 ? code : entry === 1 ? `${exports.command} ${code}` : exports.toml(edited)
       this.say(
-        `Copied ${entry === 0 ? 'the share code' : entry === 1 ? 'the add command' : 'the palette file'} — paste it where you need it`,
+        `Copied ${entry === 0 ? 'the share code' : entry === 1 ? 'the add command' : 'the set file'} — paste it where you need it`,
         'ok',
       )
     } catch (error) {

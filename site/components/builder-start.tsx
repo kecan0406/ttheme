@@ -108,7 +108,7 @@ export function StartPopover() {
         <div id="builder-open-box" data-open-box hidden class="grid gap-2 px-2 pt-1 pb-2">
           <textarea
             data-open-text
-            aria-label="a share link, a code or a palette's text"
+            aria-label="a share link, a code or the text of a .toml"
             rows="3"
             spellcheck="false"
             autocapitalize="none"
@@ -123,7 +123,7 @@ export function StartPopover() {
             <Button variant="outline" size="sm" data-open-file>
               choose a .toml
             </Button>
-            <input type="file" accept=".toml,text/plain" data-open-input hidden aria-label="a palette file" />
+            <input type="file" accept=".toml,text/plain" data-open-input hidden aria-label="a .toml file" />
           </div>
           <p data-open-error role="status" hidden class="text-xs text-destructive" />
         </div>

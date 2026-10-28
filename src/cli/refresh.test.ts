@@ -7,6 +7,7 @@ import { test } from 'node:test'
 import { tarballOf } from '../../tests/tarball.ts'
 import { paletteToml } from '../core/draft.ts'
 import type { Manifest, PaletteEntry } from '../core/manifest.ts'
+import { setText } from '../core/sets.ts'
 import { writeBundled } from '../store/available.ts'
 import { writeInstalled } from '../store/installed.ts'
 import { cachePath, marketplacesDir } from '../store/sources.ts'
@@ -119,8 +120,8 @@ test('a fetched archive keeps what a marketplace is read from — its file, its 
 
   const files = {
     ...MARKETPLACE,
-    'palettes/dusk.toml': dusk,
-    'palettes/K-On!/yui.toml': dusk,
+    'sets/neon.toml': setText([{ slug: 'dusk', text: dusk }]),
+    'sets/Lantern Row!/wren.toml': setText([{ slug: 'wren', text: dusk }]),
     'works/neon.toml': 'name = "Neon"\n\n[[character]]\nid = "volt"\n',
     'README.md': '# pastel\n',
   }
@@ -132,7 +133,7 @@ test('a fetched archive keeps what a marketplace is read from — its file, its 
       assert.ok('refreshed' in fresh)
       assert.equal(fresh.refreshed.count, 1)
       const kept = JSON.parse(readFileSync(cachePath(home, SOURCE), 'utf8')).files
-      assert.deepEqual(Object.keys(kept).sort(), ['palettes/dusk.toml', 'ttheme-marketplace.toml', 'works/neon.toml'])
+      assert.deepEqual(Object.keys(kept).sort(), ['sets/neon.toml', 'ttheme-marketplace.toml', 'works/neon.toml'])
     },
   )
 })
@@ -167,7 +168,7 @@ test('an archive larger than any marketplace is refused before it is read whole'
 function installed(name: string): PaletteEntry {
   return {
     name,
-    ansiSource: 'Horizon + Jujutsu',
+    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -186,20 +187,20 @@ test('applying a refresh hands back the palettes that left their marketplace ins
   const manifest: Manifest = {
     version: '0.1.0',
     gate: [],
-    palettes: [installed('ttheme/gojo'), installed('ttheme/geto')],
+    palettes: [installed('ttheme/orla'), installed('ttheme/juno')],
     works: [],
   }
 
-  const state = { terminals: ['ghostty' as const], palettes: ['ttheme/gojo', 'ttheme/geto'] }
+  const state = { terminals: ['ghostty' as const], palettes: ['ttheme/orla', 'ttheme/juno'] }
   writeBundled(home, { builtin: manifest, commons: { works: [], renames: {} } })
   writeInstalled(home, state)
   sync(home, manifest, state)
 
   const left = applyRefreshed(home, [
-    { source: 'ttheme', id: 'ttheme', count: 1, change: { added: [], changed: [], gone: ['ttheme/gojo'] } },
+    { source: 'ttheme', id: 'ttheme', count: 1, change: { added: [], changed: [], gone: ['ttheme/orla'] } },
   ])
 
-  assert.deepEqual(left, ['ttheme/gojo left its marketplace — ttheme keeps the copy you have'])
+  assert.deepEqual(left, ['ttheme/orla left its marketplace — ttheme keeps the copy you have'])
   assert.deepEqual(
     applyRefreshed(home, [
       { source: 'ttheme', id: 'ttheme', count: 1, change: { added: ['ttheme/x'], changed: [], gone: [] } },

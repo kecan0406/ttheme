@@ -1,7 +1,7 @@
  Review changes
 
  Palettes (1 to install)
-   + ttheme/bocchi  Bocchi the Rock!
+   + ttheme/briony  Briarwood Rocks!
 
 
 

@@ -367,7 +367,7 @@ export function toml(file: string, source: string): Record<string, unknown> {
 }
 
 export const PALETTE_KEYS = new Map([
-  ['', ['$schema', 'subject', 'from', 'signature', 'ansi_source', 'colors', 'contrast', 'ghostty', 'picture']],
+  ['', ['slug', 'subject', 'from', 'signature', 'ansi_source', 'colors', 'contrast', 'ghostty', 'picture']],
   ['colors', ['background', 'foreground', 'cursor', 'selection_background', 'ansi', ...MODES]],
   ...MODES.map((mode): [string, string[]] => [
     `colors.${mode}`,
@@ -386,9 +386,7 @@ export function oddKeys(path: string, value: unknown, known: readonly string[] =
     : []
 }
 
-export function unknownKeys(file: string, source: string): string[] {
-  const doc = toml(file, source)
-
+export function paletteOddKeys(doc: Record<string, unknown>): string[] {
   return [
     ...oddKeys('', doc, PALETTE_KEYS.get('')),
     ...['colors', 'contrast', 'ghostty'].flatMap((name) => oddKeys(name, doc[name], PALETTE_KEYS.get(name))),
@@ -420,7 +418,7 @@ function readOther(file: string, colors: Record<string, unknown>, own: Shade, si
   const want = otherOf(mode)
 
   if (colors[mode] !== undefined) {
-    fail(file, `[colors] is already ${mode} — the palette's other mode goes in [colors.${want}]`)
+    fail(file, `[palette.colors] is already ${mode} — the palette's other mode goes in [palette.colors.${want}]`)
   }
 
   if (colors[want] === undefined) {
@@ -432,21 +430,24 @@ function readOther(file: string, colors: Record<string, unknown>, own: Shade, si
   if (modeOf(other) !== want) {
     fail(
       file,
-      `[colors.${want}] must be ${want}: its background is ${modeOf(other) === 'light' ? 'lighter' : 'darker'} than its foreground`,
+      `[palette.colors.${want}] must be ${want}: its background is ${modeOf(other) === 'light' ? 'lighter' : 'darker'} than its foreground`,
     )
   }
 
   const known = slotColors({ ...other, selection: other.selectionBackground })
 
   if (new Set(signature.map((slot) => known.get(slot))).size !== signature.length) {
-    fail(file, `signature must name three colors that differ in [colors.${want}] too`)
+    fail(file, `signature must name three colors that differ in [palette.colors.${want}] too`)
   }
 
   return other
 }
 
 export function readTheme(file: string, source: string, place: Place): Theme {
-  const doc = toml(file, source)
+  return themeOf(file, toml(file, source), place)
+}
+
+export function themeOf(file: string, doc: Record<string, unknown>, place: Place): Theme {
   const colors = table(doc.colors)
   const contrastRules = table(doc.contrast)
   const builtin = place.builtin === true
@@ -468,7 +469,7 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   if (builtin && other === undefined) {
     fail(
       file,
-      `a built-in palette carries its other mode in [colors.${otherOf(modeOf(own))}] — bun .agents/skills/palette/scripts/light.ts --write writes it`,
+      `a built-in palette carries its other mode in [palette.colors.${otherOf(modeOf(own))}] — bun .agents/skills/palette/scripts/light.ts --write <its set> writes it`,
     )
   }
 
@@ -521,5 +522,4 @@ export function rotation(themes: Theme[], fallback?: string): Theme[] {
 }
 
 export const MARKETPLACE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-marketplace.json'
-export const PALETTE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-palette.json'
 export const WORK_SCHEMA_URL = 'https://www.schemastore.org/ttheme-work.json'

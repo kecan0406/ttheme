@@ -118,14 +118,14 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'add',
     args: ['<palette...>'],
-    about: `Install palettes — from your marketplaces, from a share link (ttheme add ${SHARE_URL}${CODE}…), whose palettes of no marketplace — a tuned copy, a builder draft — join your local marketplace, or from a palette file, which joins it under its file's name: ttheme add ~/Downloads/kisara.toml`,
+    about: `Install palettes — from your marketplaces, from a share link (ttheme add ${SHARE_URL}${CODE}…), whose palettes of no marketplace — a tuned copy, a builder draft — join your local marketplace, or from a set, every palette of which joins it under its slug: ttheme add ~/Downloads/evangelion.toml`,
     section: 'palettes',
     flags: {
       in: {
         type: 'string',
         value: '<marketplace>',
         about:
-          "The local marketplace a palette file, or a link's palette of no marketplace, goes into — when you have more than one",
+          "The local marketplace a set's palettes, or a link's palettes of no marketplace, go into — when you have more than one",
       },
     },
   },
@@ -188,7 +188,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'edit',
     args: ['[palette]'],
     about:
-      "Change a palette in the palette editor — your own in its file, any other as your tuning over its marketplace's colors, which R and s in the editor put back; with none named, asks to edit the one this tab shows",
+      "Change a palette in the palette editor — your own in its set, any other as your tuning over its marketplace's colors, which R and s in the editor put back; with none named, asks to edit the one this tab shows",
     section: 'own',
   },
   {

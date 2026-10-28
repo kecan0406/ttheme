@@ -1,7 +1,7 @@
 # Publish a marketplace
 
-A marketplace is a GitHub repository of palette files. Anyone can add it with
-one command, and what you push reaches them as an update they take. There is
+A marketplace is a GitHub repository of palettes. Anyone can add it with one
+command, and what you push reaches them as an update they take. There is
 nothing to build: ttheme reads the files as you pushed them.
 
 ## Publish from ttheme
@@ -37,16 +37,20 @@ A public repository with the `ttheme-marketplace` topic shows in Browse's
 
 ```text
 ttheme-marketplace.toml
-palettes/
-  rei.toml
-  dusk.toml
+sets/
+  evangelion.toml
+  original.toml
 works/
   starfall-academy.toml
 ```
 
-Every palette is a file straight under `palettes/`, and its file's name is its
-name: `palettes/dusk.toml` in alice's `pastel` marketplace is
-`alice@pastel/dusk`. A file in a folder under `palettes/` is not read.
+Every file straight under `sets/` is a set: one or more palettes, usually one
+work's. A palette's name is its `slug`, whichever set holds it: `slug = "dusk"`
+in alice's `pastel` marketplace is `alice@pastel/dusk`, and no two palettes of a
+marketplace share a slug. A set's file name means nothing to ttheme, but a new
+palette ttheme writes goes into its work's set, `sets/<work>.toml`, or into
+`sets/original.toml` when it is of no work. A file in a folder under `sets/` is
+not read.
 
 `works/` is optional. It holds the works and characters your palettes are of
 that the commons does not hold yet, below.
@@ -67,26 +71,37 @@ sunset = false   # gone: installs drop it
 ```
 
 `force_remove_deleted_palettes = true` drops a palette from everyone's install
-when its file disappears, instead of keeping their copy. `[owner]` also takes
+when it disappears from every set, instead of keeping their copy. `[owner]` also takes
 `email` and `url`, and `[metadata]` holds anything of your own, which ttheme
 does not read. The `$schema` line gives your editor completion and checks.
 
-## A palette file
+## A set
 
-```toml title="palettes/rei.toml"
-"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+```toml title="sets/evangelion.toml"
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "rei"                               # its name in the marketplace
 subject = "evangelion/rei"                 # what it is of: a work, or a work's character
 from = "ttheme/rei"                        # the palette it was copied from, if any
 signature = ["cursor", "ansi1", "ansi12"]  # the three colors that identify it
 ansi_source = "Idle Toes"                  # where its ANSI colors came from
 
-[colors]
+[palette.colors]
 background = "#201516"
 foreground = "#fbdbdd"
 cursor = "#ffc1c6"
 selection_background = "#553444"
 ansi = [ ... 16 colors ... ]
+
+[[palette]]
+slug = "asuka"
+...
 ```
+
+Each `[[palette]]` table starts a palette, and the tables after it that start
+with `palette.` belong to it, up to the next `[[palette]]`. Every palette needs
+a `slug`, a `signature` and its `[palette.colors]`.
 
 `subject` says what the palette is of: a work in the commons, such as
 `undertale`, or one of its characters, such as `evangelion/rei`. ttheme's lists
@@ -95,9 +110,13 @@ palette without one is an original, which lists under your marketplace.
 `from` names the palette it was first copied from, and a copy of a copy keeps
 it. `ansi_source` reads `original` when you leave it out.
 
-`[colors.light]` (or `[colors.dark]`) may hold the palette in its other mode;
-without it, ttheme mirrors one. `[[picture]]` tables list background posts by
-number, which an install fetches. The schema names every field.
+`[palette.colors.light]` (or `[palette.colors.dark]`) may hold the palette in
+its other mode; without it, ttheme mirrors one. `[[palette.picture]]` tables
+list background posts by number, which an install fetches. The schema names
+every field.
+
+`ttheme add evangelion.toml` installs every palette of a set into your own
+marketplace, each under its slug.
 
 ## A work the commons lacks
 
@@ -128,9 +147,9 @@ to the ttheme repository, and it reads the same for every marketplace.
 ttheme marketplace check ./ttheme-pastel
 ```
 
-It reads the folder as an install would and lists every problem: a palette that
-does not parse, a palette file in a folder under `palettes/`, which no install
-reads, a subject neither the commons nor your `works/` holds, a character you
+It reads the folder as an install would and lists every problem: a set or a
+palette that does not parse, a set in a folder under `sets/`, which no install
+reads, a slug two palettes share, a subject neither the commons nor your `works/` holds, a character you
 propose that the commons already holds under another name, a subject the
 commons has renamed, a work you propose that the commons already holds, a key
 ttheme does not know, a rename that loops, and the
@@ -139,6 +158,7 @@ nothing.
 
 ## Rename or retire a palette
 
-Keep a palette's name once people have it. When you must change it, rename the
-file and add the old name to `[renames]`: installs follow the new name and keep
-their tuning, pictures and pins. `false` retires a palette.
+Keep a palette's name once people have it. When you must change it, change its
+`slug` and add the old one to `[renames]`: installs follow the new name and keep
+their tuning, pictures and pins. `false` retires a palette. Moving a palette to
+another set changes nothing for the people who have it.

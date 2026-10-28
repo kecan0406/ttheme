@@ -60,6 +60,7 @@
         "src/core/draft.ts",
         "src/core/manifest.ts",
         "src/core/own.ts",
+        "src/core/sets.ts",
         "src/core/theme.ts",
         "src/pictures/booru-net.ts",
         "src/store/available.ts",

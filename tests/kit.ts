@@ -103,7 +103,7 @@ function states(): string[] {
     heading('empty: what is missing, in the plural, what was typed in single quotes'),
     p.dim("No palettes match 'zzz'"),
     p.dim('No palettes yet'),
-    p.dim('No posts of kita on danbooru — tab tries yande.re'),
+    p.dim('No posts of orla on danbooru — tab tries yande.re'),
     '',
     heading('work under way: dim, led by the spinner where the screen turns one'),
     p.dim(`${SPINNER[0]} Fetching alice/ttheme-pastel…`),

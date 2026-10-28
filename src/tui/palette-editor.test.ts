@@ -15,10 +15,10 @@ const other: Colors = grow({ ...SEEDS, hue: 20, background: 0.15 })
 function editor(opts: Partial<EditorOptions> = {}): PaletteEditor {
   return new PaletteEditor({
     title: 'Edit palette',
-    name: 'kec@dust/dusk',
+    name: 'kai@dust/dusk',
     colors: start,
     signature: ['background', 'foreground', 'cursor'],
-    palettes: [{ name: 'kec@dust/dawn', colors: other }],
+    palettes: [{ name: 'kai@dust/dawn', colors: other }],
     check: () => undefined,
     ...opts,
   })
@@ -167,7 +167,7 @@ test('o takes another palette’s colors, filtered by what is typed', () => {
   assert.match(screen(e), /Take colors from {2}daw▏/)
   press(e, 'enter')
   assert.deepEqual(e.colors(), other)
-  assert.match(e.notice ?? '', /kec@dust\/dawn/)
+  assert.match(e.notice ?? '', /kai@dust\/dawn/)
 })
 
 test('space shows the colors you started from without touching yours', () => {
@@ -283,7 +283,7 @@ test('p, ctrl+v, an empty paste and a pasted path or link each ask find for a pi
 
 test('a picture find added counts as a change, and the dialog says it goes too', () => {
   const e = editor({ find: async () => ({ count: 1 }), pictures: 0 })
-  e.found({ count: 1, note: 'Background · kec@dust/dusk ← danbooru 1' })
+  e.found({ count: 1, note: 'Background · kai@dust/dusk ← danbooru 1' })
   assert.equal(e.added, 1)
   assert.match(screen(e), /▣ 1 picture/)
   press(e, 'esc')
@@ -300,19 +300,19 @@ test('the footer keeps enter and s at 80 columns, and names the tune', () => {
 })
 
 test('the top bar keeps Reset and Save however long the name, giving up the count, then the word, then the title', () => {
-  const e = press(editor({ name: 'kec@dust/a-rather-long-palette-name' }), 'tab', '9', 'enter')
+  const e = press(editor({ name: 'kai@dust/a-rather-long-palette-name' }), 'tab', '9', 'enter')
   const top = (cols: number) => renderEditor(e, cols, 40, false)[0] ?? ''
 
   for (const cols of [96, 100, 112, 120, 140, 200]) {
     assert.match(top(cols), /Reset(?: R)? {2}\S*Save/)
   }
 
-  assert.match(top(200), /◆ Edit palette {2}kec@dust\/a-rather-long-palette-name {3}● unsaved · 1 changed {3}Reset/)
-  assert.match(top(120), /◆ Edit palette {2}kec@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
-  assert.match(top(112), /◆ Edit palette {2}kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
-  assert.match(top(108), /│◆ kec@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
-  assert.match(top(100), /│◆ kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
-  assert.match(top(96), /│◆ kec@dust\/a-rather-long-palette-\S+… {3}● {3}Reset/)
+  assert.match(top(200), /◆ Edit palette {2}kai@dust\/a-rather-long-palette-name {3}● unsaved · 1 changed {3}Reset/)
+  assert.match(top(120), /◆ Edit palette {2}kai@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
+  assert.match(top(112), /◆ Edit palette {2}kai@dust\/a-rather-long-palette-name {3}● {3}Reset/)
+  assert.match(top(108), /│◆ kai@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
+  assert.match(top(100), /│◆ kai@dust\/a-rather-long-palette-name {3}● {3}Reset/)
+  assert.match(top(96), /│◆ kai@dust\/a-rather-long-palette-\S+… {3}● {3}Reset/)
 })
 
 test('←→ on a base row leaves the column alone, and ↑↓ through the base rows keep it', () => {
@@ -535,7 +535,7 @@ test('a paste into the palette picker keeps only what a typed key could add, so 
   assert.equal(e.filter, 'dawn')
   assert.deepEqual(
     e.choices().map((choice) => choice.name),
-    ['kec@dust/dawn'],
+    ['kai@dust/dawn'],
   )
   const frame = renderEditor(e, 140, 40, true).join('\n')
   assert.deepEqual(

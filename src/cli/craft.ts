@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { basename, dirname, join, resolve } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import * as p from '@clack/prompts'
 import { Cancelled } from '../core/cancelled.ts'
 import { aboutOf, type Work } from '../core/commons.ts'
@@ -19,9 +19,9 @@ import { mirror } from '../core/mirror.ts'
 import { type Mode, modeOf } from '../core/mode.ts'
 import { fromCode, gateLines, readCodes, resign, shareCode, withShade } from '../core/own.ts'
 import { type Colors, grow, SEEDS } from '../core/seeds.ts'
+import { type Block, setBlocks, setText } from '../core/sets.ts'
 import { listOf } from '../core/slots.ts'
-import { quoted } from '../core/text.ts'
-import { isBuiltin, nameProblem, publisherOf, type SharedPicture, slugProblem, type Theme } from '../core/theme.ts'
+import { isBuiltin, nameProblem, publisherOf, type SharedPicture, slugOf, type Theme } from '../core/theme.ts'
 import { dropImage, imageKey, rackOf, showImage } from '../pictures/backdrop.ts'
 import {
   available,
@@ -33,9 +33,8 @@ import {
   untuned,
   writeKept,
 } from '../store/available.ts'
-import { writeAtomic } from '../store/edits.ts'
 import { readInstalled } from '../store/installed.ts'
-import { localMarketplaces, marketplaceFiles, ownPath } from '../store/local.ts'
+import { localMarketplaces, type Own, ownFile, ownIn, writeOwn } from '../store/local.ts'
 import { configHome } from '../store/paths.ts'
 import { overrideOf, readTone, tonedEntry, toneOf, withTone, writeTone } from '../store/tone.ts'
 import { modeFor } from '../store/wiring.ts'
@@ -71,14 +70,10 @@ export async function thisTab(): Promise<string | undefined> {
 
 function mine(name: string, home: string): string | undefined {
   if (name.includes('/')) {
-    const path = mineAt(home, name)
-
-    return path && existsSync(path) ? name : undefined
+    return mineAt(home, name) ? name : undefined
   }
 
-  const [only, ...more] = localMarketplaces(home, false).filter((m) =>
-    marketplaceFiles(m.dir).some((f) => f.slug === name),
-  )
+  const [only, ...more] = localMarketplaces(home, false).filter((m) => ownIn(m.dir).has(name))
 
   return only && more.length === 0 ? `${only.id}/${name}` : undefined
 }
@@ -163,9 +158,9 @@ async function fileInto(
     throw new Error(`${what} cannot be added — ${(error as Error).message}`)
   }
 
-  const target = ownPath(home, full)
+  const own = ownFile(home, full)
 
-  if (existsSync(target) && readFileSync(target, 'utf8') !== text) {
+  if (own && own.text !== text) {
     if (!interactive()) {
       throw new Error(
         `${full} already exists — run this in a terminal to replace it, or \`ttheme edit ${full}\` changes it`,
@@ -182,7 +177,7 @@ async function fileInto(
     }
   }
 
-  writeAtomic(target, text)
+  writeOwn(home, full, text)
   sayProposed(marketplace.id, writeProposals(home, marketplace.dir, [subject]))
 
   return full
@@ -229,7 +224,7 @@ export function isPaletteFile(arg: string): boolean {
   return /\.toml$/i.test(arg.trim())
 }
 
-export async function takeFile(home: string, file: string, into: string | undefined): Promise<string> {
+export async function takeFile(home: string, file: string, into: string | undefined): Promise<string[]> {
   const path = file.startsWith('~/') ? join(homedir(), file.slice(2)) : resolve(file)
   let text: string
 
@@ -239,14 +234,21 @@ export async function takeFile(home: string, file: string, into: string | undefi
     throw new Error(`${file} cannot be read`)
   }
 
-  const slug = basename(path).replace(/\.toml$/i, '')
-  const misnamed = slugProblem(slug)
+  let blocks: Block[]
 
-  if (misnamed) {
-    throw new Error(`${file} cannot be added — the palette is named after its file, and ${quoted(slug)} ${misnamed}`)
+  try {
+    blocks = setBlocks(basename(path), text).blocks
+  } catch (error) {
+    throw new Error(`${file} cannot be added — ${(error as Error).message}`)
   }
 
-  return fileInto(home, slug, text, into, file)
+  const names: string[] = []
+
+  for (const block of blocks) {
+    names.push(await fileInto(home, block.slug, block.text, into, `${block.slug} in ${file}`))
+  }
+
+  return names
 }
 
 const SIGNATURE = ['background', 'foreground', 'cursor']
@@ -354,9 +356,7 @@ export async function runNew(name: string, from: string | undefined, into: strin
     throw new Error(`palettes in ${marketplace.dir} are named ${marketplace.id}/<palette> — ${full} belongs elsewhere`)
   }
 
-  const path = ownPath(home, full)
-
-  if (existsSync(path)) {
+  if (ownFile(home, full)) {
     throw new Error(`${full} already exists — \`ttheme edit ${full}\` changes it`)
   }
 
@@ -402,8 +402,7 @@ export async function runNew(name: string, from: string | undefined, into: strin
     return
   }
 
-  mkdirSync(dirname(path), { recursive: true })
-  writeAtomic(path, toml(edited))
+  const path = writeOwn(home, full, toml(edited))
   const proposed = writeProposals(home, marketplace.dir, [rest.subject])
   const { state: now } = install(home, manifest, [full])
   console.log(`  + ${full}${source ? `  from ${source.name}` : ''}\n    ${path}`)
@@ -427,14 +426,13 @@ export async function runEdit(name: string): Promise<void> {
   const manifest = readMarketplaces(home)
   const state = readInstalled(home)
   const full = nameIn(available(home, manifest, false), name, home, state.palettes)
-  const path = mineAt(home, full)
-  const theirs = !path || !existsSync(path)
+  const own = mineAt(home, full)
 
   if (!interactive()) {
     throw new Error('edit opens the palette editor — run it in a terminal')
   }
 
-  if (theirs) {
+  if (!own) {
     const count = await editTone(home, full, false)
     console.log(
       count === undefined
@@ -447,13 +445,13 @@ export async function runEdit(name: string): Promise<void> {
     return
   }
 
-  const before = readFileSync(path, 'utf8')
+  const before = own.text
   let theme: Theme
 
   try {
     theme = readOwnText(full, before)
   } catch (error) {
-    throw new Error(`${path} cannot be read — ${(error as Error).message}`)
+    throw new Error(`${full} in ${own.path} cannot be read — ${(error as Error).message}`)
   }
 
   const shelf = shelfFor(home, full)
@@ -497,7 +495,7 @@ export async function runEdit(name: string): Promise<void> {
     return
   }
 
-  writeAtomic(path, after)
+  writeOwn(home, full, after)
 
   if (state.palettes.includes(full)) {
     sync(home, manifest, state)
@@ -625,7 +623,7 @@ export function runCheck(name: string, fix = false): number {
   const { theme, moves, left } = fixGate(toTheme(entry))
 
   if (moves.length === 0) {
-    console.log('\nNo color change fixes it — waive the rule in [contrast] with a reason, or pick other colors')
+    console.log('\nNo color change fixes it — waive the rule in [palette.contrast] with a reason, or pick other colors')
 
     return 1
   }
@@ -633,8 +631,8 @@ export function runCheck(name: string, fix = false): number {
   console.log(
     `\n${left.length === 0 ? 'These colors pass' : 'These colors come closer'}:\n${movesText(moves).join('\n')}`,
   )
-  const path = mineAt(home, entry.name)
-  const theirs = !path || !existsSync(path)
+  const own = mineAt(home, entry.name)
+  const theirs = !own
 
   if (!fix) {
     console.log(`\n\`ttheme check --fix ${entry.name}\` writes them${theirs ? ' as your tuning of it' : ''}`)
@@ -642,7 +640,7 @@ export function runCheck(name: string, fix = false): number {
     return 1
   }
 
-  if (theirs) {
+  if (!own) {
     const base = find(shown(home, manifest, false).palettes, entry.name)
     writeTone(home, withTone(readTone(home), entry.name, modeOf(base), overrideOf(base, listOf(colorsOfTheme(theme)))))
     sync(home, manifest, state)
@@ -655,7 +653,7 @@ export function runCheck(name: string, fix = false): number {
 
   const made = modeOf(find(untuned(home, manifest, false).palettes, entry.name))
   const table = modeOf(entry) === made ? 'colors' : `colors.${modeOf(entry)}`
-  writeAtomic(path, withShade(readFileSync(path, 'utf8'), colorsOfTheme(theme), table))
+  const path = writeOwn(home, entry.name, withShade(own.text, colorsOfTheme(theme), table))
 
   if (state.palettes.includes(entry.name)) {
     sync(home, manifest, state)
@@ -666,11 +664,11 @@ export function runCheck(name: string, fix = false): number {
   return left.length === 0 ? 0 : 1
 }
 
-function mineAt(home: string, name: string): string | undefined {
+function mineAt(home: string, name: string): Own | undefined {
   const marketplace = publisherOf(name)
 
   return !isBuiltin(name) && localMarketplaces(home, false).some((m) => m.id === marketplace)
-    ? ownPath(home, name)
+    ? ownFile(home, name)
     : undefined
 }
 
@@ -701,15 +699,14 @@ function decoded(text: string): Colors | undefined {
 function exportsFor(home: string, full: string, text: (edited: Edited) => string): EditorOptions['exports'] {
   return {
     code: (edited) => shareCode([draftFor(home, paletteEntry(readOwnText(full, text(edited))))]),
-    toml: text,
+    toml: (edited) => setText([{ slug: slugOf(full), text: text(edited) }]),
     command: 'ttheme add',
   }
 }
 
 export function draftFor(home: string, entry: PaletteEntry): Draft {
-  const path = mineAt(home, entry.name)
-
-  const reason = path && existsSync(path) ? readOwnText(entry.name, readFileSync(path, 'utf8')).waiveReason : undefined
+  const own = mineAt(home, entry.name)
+  const reason = own ? readOwnText(entry.name, own.text).waiveReason : undefined
 
   const held = heldPictures(home, entry.name) ?? entry.pictures
   const { pictures: _, ...draft } = draftOf(entry, entry.name, reason)
