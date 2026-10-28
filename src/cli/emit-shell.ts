@@ -133,7 +133,7 @@ export function palettesZsh(palettes: PaletteEntry[], works: readonly Work[], co
     ')',
     `typeset -g TTHEME_HELP=${quote(helpText(false, true))}`,
     `typeset -g TTHEME_HELP_ALL=${quote(helpText(true, true))}`,
-    `typeset -g TTHEME_HELP_HEAD=${quote(bannerHead(painter(true)))}`,
+    `typeset -g TTHEME_HELP_HEAD=${quote(bannerHead(painter(true)).join('\n'))}`,
     '',
     '# the screens the bare ttheme switches between (src/hub.ts): the exit status of a screen run by the CLI says where it went',
     `typeset -ga TTHEME_HUB_TABS=(${HUB_TABS.map((tab) => tab.name).join(' ')})`,

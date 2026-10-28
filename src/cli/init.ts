@@ -54,7 +54,7 @@ import type { Pointed, Setup } from '../terminals/types.ts'
 import { warpChannelOf, warpSettings } from '../terminals/warp.ts'
 import { windowsAppData } from '../terminals/windows-terminal.ts'
 import { cap } from '../tui/keycaps.ts'
-import { markOf } from '../tui/parts.ts'
+import { logoOf } from '../tui/parts.ts'
 import { painter } from '../tui/style.ts'
 import { interactive } from '../tui/terminal.ts'
 import { build } from './build.ts'
@@ -583,6 +583,9 @@ function report(plan: InitPlan, pointed: ReadonlyMap<Wired, Pointed>, here: Shel
 }
 
 export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
+  const paint = painter(process.stdout.isTTY === true && !colorless())
+  console.log(['', ...logoOf(paint, ['ttheme', 'Installer']), ''].join('\n'))
+
   for (const file of ['ttheme.js', 'package.json']) {
     if (!existsSync(join(ROOT, 'bin', file))) {
       throw new Error(`bin/${file} is missing — run \`mise run bin:build\` first`)
@@ -660,8 +663,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     return
   }
 
-  const mark = markOf(painter(process.stdout.isTTY === true && !colorless()))
-  p.intro(`${mark ? `${mark} ` : ''}ttheme init`)
+  p.intro(`Setting up ttheme ${paint.accent(pkg.version)}`)
 
   if (existing) {
     const from = installedVersion(configHome)

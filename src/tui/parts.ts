@@ -1,4 +1,5 @@
 import type { Hex } from '../core/color.ts'
+import { PIXELS } from '../core/mark.ts'
 import { fit } from './ansi.ts'
 import { cap } from './keycaps.ts'
 import { FG_RESET, MARKS, type Paint } from './style.ts'
@@ -20,6 +21,45 @@ export function markOf(p: Paint, inks?: readonly Hex[]): string {
   }
 
   return mouth && upper ? p.bold(`${p.fg(upper)}>${p.fg(mouth)}ω${FG_RESET}`) : p.bold(`>${p.accent('ω')}`)
+}
+
+const SOLID = 0.5
+
+export function logoOf(p: Paint, beside: readonly string[]): string[] {
+  if (!p.color) {
+    return [...beside]
+  }
+
+  const dots = new Map(
+    PIXELS.filter(([, , , alpha]) => alpha >= SOLID).map(([x, y, tone]): [string, number] => [`${x},${y}`, tone]),
+  )
+
+  const xs = PIXELS.map(([x]) => x)
+  const ys = PIXELS.map(([, y]) => y)
+  const left = Math.min(...xs)
+  const top = Math.min(...ys)
+  const width = Math.max(...xs) - left + 1
+  const rows = Math.ceil((Math.max(...ys) - top + 1) / 2)
+
+  const cell = (x: number, y: number) => {
+    const upper = dots.get(`${x},${y}`)
+    const lower = dots.get(`${x},${y + 1}`)
+    const tone = upper ?? lower
+
+    if (tone === undefined) {
+      return ' '
+    }
+
+    const glyph = upper !== undefined && lower !== undefined ? '█' : upper !== undefined ? '▀' : '▄'
+
+    return tone === 0 ? p.accent(glyph) : p.bold(glyph)
+  }
+
+  return Array.from({ length: rows }, (_, row) => {
+    const logo = Array.from({ length: width }, (_, i) => cell(left + i, top + row * 2)).join('')
+
+    return `  ${logo}   ${beside[row - 1] ?? ''}`.trimEnd()
+  })
 }
 
 export function buttonOf(p: Paint, label: string, state: 'idle' | 'focus' | 'off', danger = false): string {

@@ -1,7 +1,7 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { CODE, SHARE_URL } from '../core/draft.ts'
 import { WIRED } from '../core/wired.ts'
-import { markOf } from '../tui/parts.ts'
+import { logoOf } from '../tui/parts.ts'
 import { type Paint, painter } from '../tui/style.ts'
 import { EXIT_CODES } from './answer.ts'
 
@@ -428,14 +428,12 @@ function listed(verb: VerbSpec, all: boolean): [string, string][] {
   ]
 }
 
-export function bannerHead(p: Paint): string {
-  const mark = markOf(p)
-
-  return `${mark ? `${mark} ` : ''}${p.bold('ttheme')} ${pkg.version}`
+export function bannerHead(p: Paint): string[] {
+  return p.color ? ['', ...logoOf(p, [p.bold('ttheme'), p.accent(pkg.version)]), ''] : [`ttheme ${pkg.version}`]
 }
 
 function bannerOf(color: boolean): string[] {
-  return [bannerHead(painter(color)), pkg.description, 'Usage: ttheme <command> [options] [args]']
+  return [...bannerHead(painter(color)), pkg.description, 'Usage: ttheme <command> [options] [args]']
 }
 
 const GETTING_HELP: [string, string][] = [
