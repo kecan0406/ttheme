@@ -5,13 +5,15 @@ import { basename, join } from 'node:path'
 const KB = 1024
 
 interface Budget {
-  lines: number
+  lines?: number
   bytes?: number
+  chars?: number
 }
 
 export const ROOT_AGENTS: Budget = { lines: 150, bytes: 10 * KB }
 export const AREA_AGENTS: Budget = { lines: 150, bytes: 12 * KB }
 export const SKILL: Budget = { lines: 500 }
+export const RULE: Budget = { chars: 40_000 }
 
 const lineCount = (text: string) => text.split('\n').length - (text.endsWith('\n') ? 1 : 0)
 
@@ -29,11 +31,19 @@ function filesOf(root: string): string[] {
 function overruns(file: string, text: string, budget: Budget): string[] {
   const lines = lineCount(text)
   const bytes = Buffer.byteLength(text)
+  const chars = Array.from(text).length
 
   return [
-    ...(lines > budget.lines ? [`${file} is ${lines} lines, over its budget of ${budget.lines}`] : []),
+    ...(budget.lines !== undefined && lines > budget.lines
+      ? [`${file} is ${lines} lines, over its budget of ${budget.lines}`]
+      : []),
     ...(budget.bytes !== undefined && bytes > budget.bytes
       ? [`${file} is ${kb(bytes)}, over its budget of ${kb(budget.bytes)}`]
+      : []),
+    ...(budget.chars !== undefined && chars > budget.chars
+      ? [
+          `${file} is ${chars} characters, over its budget of ${budget.chars}, the most Claude Code loads of a rule on a 200K window`,
+        ]
       : []),
   ]
 }
@@ -54,6 +64,10 @@ export function problems(root: string = join(import.meta.dirname, '..')): string
 
     if (name === 'SKILL.md') {
       return overruns(file, readFileSync(join(root, file), 'utf8'), SKILL)
+    }
+
+    if (file.startsWith('.claude/rules/') && name.endsWith('.md')) {
+      return overruns(file, readFileSync(join(root, file), 'utf8'), RULE)
     }
 
     return []

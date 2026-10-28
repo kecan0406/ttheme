@@ -44,6 +44,7 @@ While a change goes back and forth with the person you work for, run no check un
 - A change to a verb, a key, a setting or a terminal's support updates its page in `docs/` in the same commit.
 - Shell code works with both GNU and BSD tools; CI runs GNU's.
 - Never add a `CLAUDE.md`: Claude Code reads `AGENTS.md` by itself only while no `CLAUDE.md` is beside it or above it, nested files included.
+- A `.claude/rules` file stays under 40,000 characters, the most Claude Code loads of a rule on a 200K window; `mise run test` fails above that.
 
 ## Traps
 
