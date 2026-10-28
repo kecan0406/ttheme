@@ -279,7 +279,7 @@ Use whatever tools you like. You are the author of what you submit, whichever
 tool wrote it: read all of it before you ask for a review, run `mise run ci`
 yourself, and be ready to answer questions about it in the review.
 
-If a tool wrote a substantial part, say so at the end of the commit message: an
-`Assisted-by: <tool>` line, or the tool's own `Co-Authored-By:` trailer. It only
-helps the review; nothing is refused for having it or for leaving it out. The
-repository's own agent rules are in `AGENTS.md`.
+If a tool wrote a substantial part, say so at the end of the commit message with
+the tool's own `Co-Authored-By:` trailer. It only helps the review; nothing is
+refused for having it or for leaving it out. The repository's own agent rules
+are in `AGENTS.md`.

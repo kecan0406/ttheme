@@ -73,7 +73,7 @@ While a change goes back and forth with the person you work for, run no check un
 
 ## Contributions
 
-If a tool wrote a substantial part of a commit, say so at the end of its message: an `Assisted-by: <tool>` line, or the tool's own `Co-Authored-By:` trailer. `CONTRIBUTING.md` has the rest: issues, palettes, what the project accepts.
+If a tool wrote a substantial part of a commit, say so at the end of its message with the tool's own `Co-Authored-By:` trailer. `CONTRIBUTING.md` has the rest: issues, palettes, what the project accepts.
 
 ## Maintainers only
 
