@@ -37,7 +37,7 @@ jobs:
       - id: compare
         if: github.event_name != 'workflow_dispatch'
         run: |
-          same() { curl -fsS "https://kecan0406.github.io/ttheme/$1" | cmp -s - "pages/$1"; }
+          same() { curl -fsS "https://index.ttheme.dev/$1" | cmp -s - "pages/$1"; }
           index=changed
           if same marketplaces.json; then
             index=same

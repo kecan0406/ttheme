@@ -8,7 +8,7 @@ import { writeAtomic } from './edits.ts'
 import { cacheRoot } from './paths.ts'
 import { isRemote, parseSource } from './sources.ts'
 
-export const INDEX_URL = 'https://kecan0406.github.io/ttheme/marketplaces.json'
+export const INDEX_URL = 'https://index.ttheme.dev/marketplaces.json'
 
 const HEX = /^#[0-9a-f]{6}$/i
 const SLOT = /^(cursor|foreground|background|selection|ansi(1[0-5]|[0-9]))$/

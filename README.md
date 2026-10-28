@@ -1,7 +1,7 @@
 <h1 align="center">
   <picture>
-    <source media="(prefers-color-scheme: light)" srcset="https://kecan0406.github.io/ttheme/readme/banner-light.png">
-    <img src="https://kecan0406.github.io/ttheme/readme/banner-dark.png" alt="ttheme" width="640">
+    <source media="(prefers-color-scheme: light)" srcset="https://index.ttheme.dev/readme/banner-light.png">
+    <img src="https://index.ttheme.dev/readme/banner-dark.png" alt="ttheme" width="640">
   </picture>
 </h1>
 
