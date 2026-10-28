@@ -34,6 +34,22 @@ export function FilePanel({ view }: { view: FileView }) {
       >
         {view.text}
       </pre>
+      {view.others.length > 0 ? (
+        <p class={NOTE}>
+          also in this set:{' '}
+          <span translate="no" class="font-mono" safe>
+            {view.others.join(', ')}
+          </span>
+        </p>
+      ) : null}
+      {view.left.length > 0 ? (
+        <p class={NOTE}>
+          left out until their problems are fixed:{' '}
+          <span translate="no" class="font-mono" safe>
+            {view.left.join(', ')}
+          </span>
+        </p>
+      ) : null}
       <div class="flex flex-wrap gap-2">
         <LinkButton data-download-toml download={view.file} href="#">
           <Icon node={Download} />

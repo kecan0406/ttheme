@@ -40,7 +40,7 @@ exports as a [set](publish.md#a-set).
 ```sh
 ttheme add https://ttheme.dev/builder/tt5:…
 ttheme add tt5:…              # the bare code works too
-ttheme add ~/Downloads/rei.toml   # a set the builder exported
+ttheme add ~/Downloads/evangelion.toml   # a set the builder exported
 ```
 
 A link installs its palettes as they are, with the pictures it names. A link to

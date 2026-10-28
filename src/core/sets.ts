@@ -1,5 +1,5 @@
 import { quoted } from './text.ts'
-import { fail, oddKeys, paletteOddKeys, slugProblem, toml } from './theme.ts'
+import { fail, oddKeys, paletteOddKeys, slugProblem, toml, workIdOf } from './theme.ts'
 
 export const SETS_DIR = 'sets'
 export const SET_SCHEMA_URL = 'https://www.schemastore.org/ttheme-set.json'
@@ -27,7 +27,7 @@ export interface Blocks {
 }
 
 export function setNameOf(subject: string | undefined): string {
-  return subject ? (subject.split('/')[0] as string) : ORIGINAL
+  return subject ? workIdOf(subject) : ORIGINAL
 }
 
 export function setNameFor(text: string): string {

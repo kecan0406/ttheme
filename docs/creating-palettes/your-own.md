@@ -96,7 +96,9 @@ added it.
 
 [ttheme.dev/builder](https://ttheme.dev/builder) is the same builder in the
 browser: start from any palette, a share link or blank seeds, and tune both
-modes against the contrast checks. It exports a set, which `ttheme add <file>.toml`
-installs into your own marketplace, a share link, or a marketplace ready to push.
-Every visit starts clean; a palette you changed stays in that browser as a
-draft, up to thirty, which its **drafts** tab lists and reopens.
+modes against the contrast checks. Every visit starts clean; a palette you
+changed stays in that browser as a draft, up to thirty, which its **drafts** tab
+lists and reopens. Export takes the palette open with every draft of the same
+work, or every original draft when it is an original, as one set: a `.toml` that
+`ttheme add <file>.toml` installs into your own marketplace, a share link, or a
+marketplace ready to push.

@@ -15,7 +15,7 @@ import { pictureOf } from '@/lib/pictures'
 import { gateLinesOf, slotViewOf } from '@/lib/slot-view'
 import type { GateLine, Picture, SlotFormat, SlotView } from '@/lib/view-types'
 import { contrast, type Hex, mix } from '../../src/core/color.ts'
-import { paletteToml } from '../../src/core/draft.ts'
+import { type Draft, paletteToml } from '../../src/core/draft.ts'
 import { marksOf } from '../../src/core/mark.ts'
 import { otherOf } from '../../src/core/mode.ts'
 import { PLANE_BOTTOM, PLANE_TOP, shareOf } from '../../src/core/plane.ts'
@@ -254,6 +254,13 @@ export interface FileView {
   file: string
   text: string
   problem: string | undefined
+  others: string[]
+  left: string[]
+}
+
+export interface SetMembers {
+  members: Edit[]
+  left: string[]
 }
 
 export interface LinkView {
@@ -406,10 +413,33 @@ export function exportProblem(edit: Edit): string | undefined {
   return subject ? `The subject ${subject} — fix it in the about tab.` : undefined
 }
 
-export function fileOf(edit: Edit): FileView {
+export function setMembersOf(edit: Edit, drafts: readonly Edit[]): SetMembers {
+  const set = setNameOf(edit.meta.subject)
+  const seen = new Set([edit.name])
+  const members: Edit[] = [edit]
+  const left: string[] = []
+
+  for (const draft of drafts) {
+    if (draft.id === edit.id || setNameOf(draft.meta.subject) !== set || seen.has(draft.name)) continue
+    seen.add(draft.name)
+
+    if (exportProblem(draft)) left.push(draft.name)
+    else members.push(draft)
+  }
+
+  return { members: members.toSorted((a, b) => (a.name < b.name ? -1 : 1)), left }
+}
+
+export function setDrafts(edit: Edit, drafts: readonly Edit[]): Draft[] | null {
+  return exportProblem(edit) ? null : setMembersOf(edit, drafts).members.map(draftFrom)
+}
+
+export function fileOf(edit: Edit, drafts: readonly Edit[] = []): FileView {
   const file = setFileOf(edit)
   const problem = exportProblem(edit)
-  const text = problem ? '' : setText([{ slug: edit.name, text: paletteToml(draftFrom(edit)) }])
+  const { members, left } = setMembersOf(edit, drafts)
+  const others = members.flatMap((member) => (member.id === edit.id ? [] : [member.name]))
+  const text = problem ? '' : setText(members.map((m) => ({ slug: m.name, text: paletteToml(draftFrom(m)) })))
   let read = problem
 
   if (!read) {
@@ -422,7 +452,7 @@ export function fileOf(edit: Edit): FileView {
     }
   }
 
-  return { name: edit.name, file, text: read ? '' : text, problem: read }
+  return { name: edit.name, file, text: read ? '' : text, problem: read, others, left }
 }
 
 export function marketOf(owner: string, name: string): MarketView {

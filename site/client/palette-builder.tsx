@@ -32,7 +32,6 @@ import {
   changedIn,
   changes,
   dirty,
-  draftFrom,
   dropped,
   type Edit,
   editOf,
@@ -72,6 +71,7 @@ import {
   type StartGroup,
   type StartList,
   seedRowsOf,
+  setDrafts,
   slotVars,
   statusOf,
 } from '@/lib/builder-view'
@@ -1118,8 +1118,7 @@ class PaletteBuilder extends HTMLElement {
     const dialog = this.querySelector<HTMLDialogElement>('[data-export]')
 
     if (!dialog || (!dialog.open && !force)) return
-    const edit = this.#state
-    const file = fileOf(edit)
+    const file = fileOf(this.#state, this.#drafts)
     this.#fill(this.querySelector('[data-export-panel="toml"]'), html(<FilePanel view={file} />))
     const download = this.querySelector<HTMLAnchorElement>('[data-download-toml]')
 
@@ -1132,11 +1131,15 @@ class PaletteBuilder extends HTMLElement {
     this.#renderMarket()
   }
 
+  get #drafts(): Edit[] {
+    return this.#stored?.drafts ?? []
+  }
+
   async #renderLink() {
     const edit = this.#state
     const problem = exportProblem(edit)
-    const draft = problem ? null : draftFrom(edit)
-    const key = JSON.stringify(draft)
+    const drafts = setDrafts(edit, this.#drafts)
+    const key = JSON.stringify(drafts)
     const panel = this.querySelector('[data-export-panel="link"]')
 
     if (problem) {
@@ -1155,9 +1158,9 @@ class PaletteBuilder extends HTMLElement {
     this.#fill(panel, html(<LinkPanel view={{ name: edit.name, link: null, code: null, failed: null }} />))
 
     try {
-      const code = await webCode([draft as Draft])
+      const code = await webCode(drafts as Draft[])
 
-      if (key !== JSON.stringify(exportProblem(this.#state) ? null : draftFrom(this.#state))) return
+      if (key !== JSON.stringify(setDrafts(this.#state, this.#drafts))) return
       this.#link = { key, view: { name: edit.name, link: shareLink(code), code, failed: null } }
     } catch (failure) {
       this.#link = { key, view: { name: edit.name, link: null, code: null, failed: (failure as Error).message } }
@@ -1170,7 +1173,7 @@ class PaletteBuilder extends HTMLElement {
     const edit = this.#state
     const { owner, name, description } = this.#market
     const view = marketOf(owner, name)
-    const file = fileOf(edit)
+    const file = fileOf(edit, this.#drafts)
     const problem = view.problem ?? file.problem
     this.#fill(this.querySelector('[data-market-steps]'), html(<MarketSteps view={{ ...view, problem }} />))
     const download = this.querySelector<HTMLAnchorElement>('[data-download-zip]')
