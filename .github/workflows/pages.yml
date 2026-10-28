@@ -19,7 +19,6 @@ jobs:
     runs-on: ubuntu-26.04
     permissions:
       contents: read
-      deployments: read
     outputs:
       changed: ${{ steps.compare.outputs.changed }}
       index: ${{ steps.compare.outputs.index }}
@@ -36,23 +35,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - id: compare
-        if: github.event_name == 'schedule'
-        env:
-          GH_TOKEN: ${{ github.token }}
+        if: github.event_name != 'workflow_dispatch'
         run: |
-          deployed=$(gh api "repos/$GITHUB_REPOSITORY/deployments?environment=github-pages&per_page=1" --jq '.[0].sha')
+          same() { curl -fsS "https://kecan0406.github.io/ttheme/$1" | cmp -s - "pages/$1"; }
           index=changed
-          if curl -fsS https://kecan0406.github.io/ttheme/marketplaces.json | cmp -s - pages/marketplaces.json; then
+          if same marketplaces.json; then
             index=same
           fi
           stars=same
-          if [ -f pages/stars.json ] && ! curl -fsS https://kecan0406.github.io/ttheme/stars.json | cmp -s - pages/stars.json; then
+          if [ -f pages/stars.json ] && ! same stars.json; then
             stars=changed
           fi
-          changed=true
-          if [ "$deployed" = "$GITHUB_SHA" ] && [ "$index" = same ] && [ "$stars" = same ]; then
-            changed=false
-          fi
+          changed=false
+          for file in $(cd pages && find . -type f); do
+            if ! same "${file#./}"; then
+              changed=true
+            fi
+          done
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
           echo "index=$index" >> "$GITHUB_OUTPUT"
           echo "stars=$stars" >> "$GITHUB_OUTPUT"
@@ -80,7 +79,7 @@ jobs:
 
   site:
     needs: build
-    if: needs.build.outputs.index == 'changed' || needs.build.outputs.stars == 'changed'
+    if: github.event_name == 'schedule' && (needs.build.outputs.index == 'changed' || needs.build.outputs.stars == 'changed')
     runs-on: ubuntu-26.04
     permissions: {}
     steps:
