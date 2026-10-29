@@ -1,26 +1,12 @@
 import { COMMANDS, commandsToc } from '@/lib/commands'
 import { type Doc, type Heading, renderDoc } from '@/lib/markdown'
 import { SETTING_GROUPS } from '@/lib/settings'
-import publish from '../../docs/creating-palettes/publish.md' with { type: 'text' }
-import share from '../../docs/creating-palettes/share.md' with { type: 'text' }
-import tune from '../../docs/creating-palettes/tune.md' with { type: 'text' }
-import yourOwn from '../../docs/creating-palettes/your-own.md' with { type: 'text' }
-import firstPalette from '../../docs/getting-started/first-palette.md' with { type: 'text' }
-import install from '../../docs/getting-started/install.md' with { type: 'text' }
-import introduction from '../../docs/getting-started/introduction.md' with { type: 'text' }
-import quickstart from '../../docs/getting-started/quickstart.md' with { type: 'text' }
-import troubleshooting from '../../docs/getting-started/troubleshooting.md' with { type: 'text' }
-import whatChanged from '../../docs/getting-started/what-changed.md' with { type: 'text' }
+import make from '../../docs/guide/make.md' with { type: 'text' }
+import quickstart from '../../docs/guide/quickstart.md' with { type: 'text' }
+import use from '../../docs/guide/use.md' with { type: 'text' }
 import commands from '../../docs/reference/commands.md' with { type: 'text' }
-import contrastGate from '../../docs/reference/contrast-gate.md' with { type: 'text' }
-import keys from '../../docs/reference/keys.md' with { type: 'text' }
 import settings from '../../docs/reference/settings.md' with { type: 'text' }
 import terminals from '../../docs/reference/terminals.md' with { type: 'text' }
-import modes from '../../docs/usage/modes.md' with { type: 'text' }
-import palettes from '../../docs/usage/palettes.md' with { type: 'text' }
-import pictures from '../../docs/usage/pictures.md' with { type: 'text' }
-import pins from '../../docs/usage/pins.md' with { type: 'text' }
-import tabs from '../../docs/usage/tabs.md' with { type: 'text' }
 import { GATE_RULES } from '../../src/core/contrast.ts'
 
 export type Made = 'commands' | 'settings'
@@ -67,47 +53,21 @@ export const REPOSITORY = 'https://github.com/kecan0406/ttheme'
 
 const NAV: Group[] = [
   {
-    slug: 'getting-started',
-    title: 'Getting started',
+    slug: 'guide',
+    title: 'Guide',
     pages: [
-      { slug: 'introduction', label: 'What is ttheme', text: introduction },
       { slug: 'quickstart', label: 'Quick start', text: quickstart },
-      { slug: 'install', label: 'Install', text: install },
-      { slug: 'first-palette', label: 'Your first palette', text: firstPalette },
-      { slug: 'what-changed', label: 'What changed, how to undo', text: whatChanged },
-      { slug: 'troubleshooting', label: 'Troubleshooting', text: troubleshooting },
-    ],
-  },
-  {
-    slug: 'usage',
-    title: 'Usage',
-    pages: [
-      { slug: 'tabs', label: 'This tab, new tabs, default', text: tabs },
-      { slug: 'pins', label: 'Pin to a folder or ssh host', text: pins },
-      { slug: 'modes', label: 'Light, dark, auto', text: modes },
-      { slug: 'pictures', label: 'Pictures', text: pictures },
-      { slug: 'palettes', label: 'Add and update palettes', text: palettes },
-    ],
-  },
-  {
-    slug: 'creating-palettes',
-    title: 'Creating palettes',
-    pages: [
-      { slug: 'your-own', label: 'Your own palette', text: yourOwn },
-      { slug: 'tune', label: 'Tune a palette', text: tune },
-      { slug: 'share', label: 'Share a link', text: share },
-      { slug: 'publish', label: 'Publish a marketplace', text: publish },
+      { slug: 'use', label: 'Use ttheme', text: use },
+      { slug: 'make', label: 'Make a palette', text: make },
     ],
   },
   {
     slug: 'reference',
     title: 'Reference',
     pages: [
+      { slug: 'terminals', label: 'Terminal support', text: terminals },
       { slug: 'commands', label: 'Commands', text: commands, made: 'commands' },
       { slug: 'settings', label: 'Settings', text: settings, made: 'settings' },
-      { slug: 'keys', label: 'Keys', text: keys },
-      { slug: 'terminals', label: 'Terminal support', text: terminals },
-      { slug: 'contrast-gate', label: 'Contrast checks', text: contrastGate },
     ],
   },
 ]
@@ -219,9 +179,7 @@ function broken(): string[] {
 
 function ungated(): string[] {
   return GATE_RULES.flatMap((rule) =>
-    contrastGate.includes(`| \`${rule.rule}\` |`)
-      ? []
-      : [`docs/reference/contrast-gate.md leaves out the ${rule.rule} rule`],
+    make.includes(`| \`${rule.rule}\` |`) ? [] : [`docs/guide/make.md leaves out the ${rule.rule} rule`],
   )
 }
 
@@ -233,14 +191,12 @@ export function docAt(group: string, slug: string): DocPage | undefined {
   return DOC_PAGES.find((page) => page.group.slug === group && page.slug === slug)
 }
 
-const GUIDES = ['usage', 'creating-palettes', 'getting-started']
-
 function mentionsOf(page: DocPage, verb: string): number {
   return page.mentions.filter((mention) => mention === verb).length
 }
 
 export function guideOf(verb: string): DocPage | undefined {
-  return GUIDES.flatMap((group) => DOC_PAGES.filter((page) => page.group.slug === group)).reduce<DocPage | undefined>(
+  return DOC_PAGES.filter((page) => page.group.slug === 'guide').reduce<DocPage | undefined>(
     (best, page) => (mentionsOf(page, verb) > (best ? mentionsOf(best, verb) : 0) ? page : best),
     undefined,
   )

@@ -10,8 +10,6 @@ import { renderInline } from '@/lib/markdown'
 import { SETTING_GROUPS } from '@/lib/settings'
 import { DocsFrame, TocDetails } from './docs-frame'
 
-const COMMANDS_PATH = `${DOCS_PATH}/reference/commands`
-
 function Crumbs({ group }: { group?: string }) {
   return (
     <p class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -28,25 +26,6 @@ function Crumbs({ group }: { group?: string }) {
   )
 }
 
-function Chips({ verbs }: { verbs: string[] }) {
-  return verbs.length === 0 ? null : (
-    <ul aria-label="commands on this page" class="flex flex-wrap gap-1.5">
-      {verbs.map((verb) => (
-        <li>
-          <a
-            href={`${COMMANDS_PATH}#${verb}`}
-            translate="no"
-            class="inline-flex items-center rounded-full border border-border bg-muted/65 px-2.5 py-1 font-mono text-xs text-foreground transition-colors hover:border-input"
-            safe
-          >
-            {`ttheme ${verb}`}
-          </a>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
 function Head({ page }: { page: DocPage }) {
   const safeLede = page.safeLede
 
@@ -59,7 +38,6 @@ function Head({ page }: { page: DocPage }) {
       <p data-lede class="max-w-[62ch] text-pretty text-soft-foreground">
         {safeLede}
       </p>
-      <Chips verbs={page.verbs} />
       <TocDetails toc={page.toc} />
     </header>
   )
@@ -192,10 +170,9 @@ export function DocsPage({ page, facts }: { page: DocPage; facts: Facts }) {
 }
 
 function StartHere() {
-  const intro = docAt('getting-started', 'introduction')
-  const quick = docAt('getting-started', 'quickstart')
+  const quick = docAt('guide', 'quickstart')
 
-  return intro && quick ? (
+  return quick ? (
     <section aria-labelledby="start-here" class="grid gap-3.5 rounded-xl border border-border bg-muted/65 p-4.5">
       <div class="grid gap-1">
         <h2 id="start-here" class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">
@@ -210,9 +187,6 @@ function StartHere() {
         <LinkButton href={quick.path}>
           <span safe>{quick.title.toLowerCase()}</span>
           <Icon node={ArrowRight} />
-        </LinkButton>
-        <LinkButton href={intro.path} variant="outline">
-          <span safe>{intro.title.toLowerCase()}</span>
         </LinkButton>
       </div>
     </section>

@@ -43,10 +43,9 @@ ttheme edit dusk                   # the same editor; the contrast checks' numbe
 ttheme share                       # A marketplace on GitHub: creates the repository with gh and pushes, and again whenever it changes
 ```
 
-[Your own palette](docs/creating-palettes/your-own.md) and
-[Publish a marketplace](docs/creating-palettes/publish.md) cover the rest: the
-files a marketplace holds, what `subject` and `upstream` say, proposing a work
-the commons lacks, and `ttheme marketplace check`. Give the
+[Make a palette](docs/guide/make.md) covers the rest: the files a marketplace
+holds, what `subject` and `upstream` say, proposing a work the commons lacks,
+and `ttheme marketplace check`. Give the
 repository the `ttheme-marketplace` topic — `ttheme share` does for a public
 one — and Browse's search and the
 [marketplace page](https://ttheme.dev/marketplace) find it.
@@ -207,8 +206,8 @@ One palette per pull request. At most three open at a time.
   mirrors each palette's `[palette.colors]` in the set into the other mode;
   `mise run build` refuses a built-in palette without it.
 - Every palette passes the contrast gate in both modes (`GATE_RULES` in
-  `src/core/contrast.ts`; why each threshold:
-  [docs/reference/contrast-gate.md](docs/reference/contrast-gate.md)): body text
+  `src/core/contrast.ts`; the rules:
+  [docs/guide/make.md](docs/guide/make.md#contrast-checks)): body text
   and ANSI 7 and 15 on the background, and the text on the selection, at 7:1;
   every accent on the background, and black on each accent, at 4.5:1; ANSI 8 on
   the background, and white on ANSI 8, at 3:1; black dark enough in a dark

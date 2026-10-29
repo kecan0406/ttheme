@@ -29,14 +29,12 @@ test('the shell bakes pictures for exactly the wired terminals that cannot place
   )
 })
 
-test('every wired terminal has its column in the support tables', () => {
-  for (const file of [['README.md'], ['docs', 'reference', 'terminals.md']]) {
-    const head = read(...file)
-      .split('\n')
-      .find((line) => line.startsWith('|') && line.includes('Ghostty'))
+test('every wired terminal has its column in the support table', () => {
+  const head = read('docs', 'reference', 'terminals.md')
+    .split('\n')
+    .find((line) => line.startsWith('|') && line.includes('Ghostty'))
 
-    for (const id of WIRED) {
-      assert.ok(head?.includes(` ${WIRINGS[id].name} `), `${file.join('/')} has no ${WIRINGS[id].name} column`)
-    }
+  for (const id of WIRED) {
+    assert.ok(head?.includes(` ${WIRINGS[id].name} `), `docs/reference/terminals.md has no ${WIRINGS[id].name} column`)
   }
 })

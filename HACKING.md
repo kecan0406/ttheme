@@ -280,7 +280,7 @@ take the keys they list on their own last line while they are open. `find` is a
 screen of its own and keeps its own keys, and so does the palette editor (`new`,
 `edit`, and the Edit palette button of preview's panel); in both, as in browse,
 `?` opens the same help (`src/tui/help.ts`) with the keys of the mode the screen
-is in, which docs/reference/keys.md lists. The editor's esc, once something
+is in. The editor's esc, once something
 changed, opens a Save changes? dialog (`y` saves and leaves, `n` leaves without
 saving, esc keeps editing), and ctrl+c leaves from anywhere in it the same way —
 a tune it interrupts is kept, so it counts as a change — while a second ctrl+c

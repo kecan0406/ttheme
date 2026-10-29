@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://www.schemastore.org/ttheme-marketplace.json",
   "title": "ttheme marketplace",
-  "description": "The ttheme-marketplace.toml at the root of a ttheme marketplace: a repository or folder whose sets/*.toml hold the marketplace's palettes and whose works/*.toml propose works and characters the commons does not hold yet\nhttps://ttheme.dev/docs/creating-palettes/publish",
+  "description": "The ttheme-marketplace.toml at the root of a ttheme marketplace: a repository or folder whose sets/*.toml hold the marketplace's palettes and whose works/*.toml propose works and characters the commons does not hold yet\nhttps://ttheme.dev/docs/guide/make#publish-a-marketplace",
   "type": "object",
   "definitions": {
     "text": {
@@ -17,7 +17,7 @@
       "type": "string"
     },
     "name": {
-      "description": "The marketplace's name: its palettes are <owner>@<name>/<palette>, where the owner is the repository's owner on GitHub. The built-in marketplace alone is named ttheme, and its palettes ttheme/<palette>\nhttps://ttheme.dev/docs/creating-palettes/publish",
+      "description": "The marketplace's name: its palettes are <owner>@<name>/<palette>, where the owner is the repository's owner on GitHub. The built-in marketplace alone is named ttheme, and its palettes ttheme/<palette>\nhttps://ttheme.dev/docs/guide/make#publish-a-marketplace",
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
       "maxLength": 40

@@ -26,7 +26,6 @@ export interface Doc {
   toc: Heading[]
   ids: string[]
   targets: Target[]
-  verbs: string[]
   mentions: string[]
 }
 
@@ -342,7 +341,6 @@ export function renderDoc(source: string, place: Place): Doc {
     toc: [],
     ids: [],
     targets: [],
-    verbs: [],
     mentions: [],
   }
 
@@ -371,7 +369,6 @@ export function renderDoc(source: string, place: Place): Doc {
   })
   doc.safeLede = marked.parseInline(lede.text) as string
   doc.safeBody = marked.parser(grouped(body))
-  doc.verbs = [...new Set(doc.mentions)]
 
   if (doc.safeBody.split('<details data-slot="fold">').length !== doc.safeBody.split('</details>').length) {
     throw new Error(`${doc.title}: a <details> is never closed`)

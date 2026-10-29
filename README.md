@@ -27,12 +27,9 @@
   <img src="docs/demo.gif" alt="ttheme: typing nichi filters to the Nichijou palettes, the tab shows each one as the cursor lands on it, then rei is picked and kept" width="860">
 </p>
 
-ttheme gives your terminal the colors of a character you love. Each
-palette keeps the three colors that make its character recognizable, and every
-built-in one passes contrast checks, so your text stays easy to read.
-
-Every tab can show its own palette. Change one at any time, pin one to a
-project folder, or let each new tab open on the next character.
+ttheme gives your terminal the colors of a character you love. Every tab can
+show its own palette, and every built-in palette passes contrast checks, so your
+text stays easy to read.
 
 ## Quick start
 
@@ -41,8 +38,8 @@ npx @kecan0406/ttheme@latest init
 ```
 
 `init` asks which terminals to wire and which palettes to install, shows every
-file it will change, and writes nothing until you confirm. It needs Node 22 or
-newer and zsh, which macOS ships. From bash or fish, `ttheme` works too.
+file it will change, and writes nothing until you confirm. ttheme requires
+Node.js `>=22` and zsh, which macOS ships. From bash or fish, `ttheme` works too.
 
 Then load the command and try palettes on:
 
@@ -53,7 +50,7 @@ ttheme     # the tab shows each palette the cursor lands on; enter keeps one
 
 ttheme adds one line to each config it wires and sets colors only.
 `npx @kecan0406/ttheme@latest uninstall` takes it all back out
-([what changed](https://ttheme.dev/docs/getting-started/what-changed)).
+([what changed](https://ttheme.dev/docs/guide/use#what-init-changes)).
 
 ## What you can do
 
@@ -68,77 +65,28 @@ ttheme adds one line to each config it wires and sets colors only.
 | Share a palette as a link | `ttheme share dusk` |
 | Give the terminal its own colors back, then ttheme's again | `ttheme off` · `on` |
 
-`ttheme help` lists the everyday commands and `ttheme help all` every one. The
-[docs](https://ttheme.dev/docs) cover the rest, from
-[your first palette](https://ttheme.dev/docs/getting-started/first-palette) to
-[troubleshooting](https://ttheme.dev/docs/getting-started/troubleshooting).
+`ttheme help` lists the everyday commands and `ttheme help all` every one.
 
-## Terminals
+## Docs
 
-| | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Konsole | Terminal.app | Rio | Contour |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Setup with `init`** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **A palette per tab** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Background pictures** | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | — | — |
-| **Follows the system's appearance** | ✅ | ✅ | ✅ | — | ✅ | — | — | — | — | — | ✅ |
-
-Nothing is emulated: a terminal that cannot show something does not get it.
-[Terminal support](https://ttheme.dev/docs/reference/terminals) says what each
-one does.
-
-## Readable by rule
-
-Every built-in palette passes the contrast checks: body text at 7:1 against the
-background (WCAG AAA), every meaningful ANSI color at 4.5:1 (WCAG AA). Red still
-reads as an error and green as success, and the two stay apart for a
-deuteranope. The build fails when a palette slips.
-[Contrast checks](https://ttheme.dev/docs/reference/contrast-gate) explains each
-threshold.
-
-## More palettes
-
-Browse, the second tab of `ttheme` (`shift+tab`), adds and removes palettes.
-Anyone can publish their own from a GitHub repository, as a marketplace:
-
-```sh
-ttheme marketplace add alice/ttheme-pastel   # add alice's marketplace
-ttheme add alice@pastel/dusk                 # install one of its palettes
-```
-
-A palette is colors in a TOML file, never code. Nobody reviews a marketplace,
-and only the built-in palettes are held to the contrast checks.
-[The marketplace page](https://ttheme.dev/marketplace) lists the public ones.
-
-## Your own palettes
-
-```sh
-ttheme new dusk     # the palette editor, on a blank palette
-ttheme edit miku    # any palette; one that isn't yours keeps your changes as your tuning
-ttheme share dusk   # a link that carries the palette
-```
-
-The editor grows twenty readable colors from a few seeds and shows them in a
-mock terminal while you tune. The same builder runs at
-[ttheme.dev/builder](https://ttheme.dev/builder). A coding agent with the
-ttheme-palette skill makes one for a character you name: add it with
-`npx skills add kecan0406/ttheme`, or let `init` add it.
-[Your own palette](https://ttheme.dev/docs/creating-palettes/your-own) walks
-through it.
-
-## Background pictures
-
-A palette can show its character behind your text. ttheme ships no pictures:
-in `ttheme`, `tab` on a palette opens its panel, where `f` searches danbooru,
-konachan, yande.re and zerochan (safe-rated by default) or takes a picture you
-paste or drop. [Pictures](https://ttheme.dev/docs/usage/pictures) covers the
-rest.
+- [Quick start](https://ttheme.dev/docs/guide/quickstart): install, load the
+  command and pick a palette.
+- [Use ttheme](https://ttheme.dev/docs/guide/use): tabs, pins, light and dark,
+  marketplaces and pictures, what `init` changes and how to undo it, and fixes
+  when something goes wrong.
+- [Make a palette](https://ttheme.dev/docs/guide/make): the editor, the contrast
+  checks every built-in palette passes, share links and publishing a
+  marketplace.
+- [Terminal support](https://ttheme.dev/docs/reference/terminals): Ghostty,
+  iTerm2, kitty, Alacritty, WezTerm, Windows Terminal, Warp, Konsole,
+  Terminal.app, Rio and Contour, and what each can show.
 
 ## Contributing
 
 The built-in palettes and the commons (the shared list of works and characters)
-take pull requests. [CONTRIBUTING.md](CONTRIBUTING.md) has their rules and the
-checks a palette must pass, and [HACKING.md](HACKING.md) says how the code is
-put together. The docs are Markdown in [`docs/`](docs).
+take pull requests. [CONTRIBUTING.md](CONTRIBUTING.md) has their rules,
+[HACKING.md](HACKING.md) says how the code is put together, and the docs are
+Markdown in [`docs/`](docs).
 
 ## Credits
 

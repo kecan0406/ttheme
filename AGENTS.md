@@ -41,7 +41,7 @@ While a change goes back and forth with the person you work for, run no check un
 - Every palette has a full name, `<publisher>/<slug>`; the bare slug is never stored.
 - A format that released copies of ttheme read only gains fields; a breaking change goes under another file or prefix name (marketplace files, share codes `tt7:`, the marketplace index, `--json` output).
 - A change to the keys of a palette, marketplace or work file updates `schemas/`; `schemas.test.ts` holds them to the code.
-- A change to a verb, a key, a setting or a terminal's support updates its page in `docs/` in the same commit.
+- A change to a verb, a setting or a terminal's support updates its page in `docs/` in the same commit.
 - Shell code works with both GNU and BSD tools; CI runs GNU's.
 - Never add a `CLAUDE.md` or a `CLAUDE.local.md`: Claude Code reads `AGENTS.md` by itself only while neither is beside it or above it, nested files included.
 - A `.claude/rules` file stays under 40,000 characters, the most Claude Code loads of a rule on a 200K window; `mise run test` fails above that.
