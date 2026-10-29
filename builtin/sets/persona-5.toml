@@ -3,7 +3,6 @@
 [[palette]]
 slug = "joker"
 subject = "persona-5/joker"
-signature = ["cursor", "foreground", "ansi9"]
 
 [palette.colors]
 background = "#201513"
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "skull"
 subject = "persona-5/skull"
-signature = ["cursor", "ansi1", "foreground"]
 
 [palette.colors]
 background = "#1b170c"
@@ -76,7 +74,7 @@ ansi = [
   "#dbd4c2",
 
   "#7c7767",
-  "#f3a37c",
+  "#f5a185",
   "#c2eb56",
   "#f0e02f",
   "#82a8e6",
@@ -101,7 +99,7 @@ ansi = [
   "#302c20",
 
   "#7c7767",
-  "#884018",
+  "#8c3d20",
   "#284a0f",
   "#6e5000",
   "#2c558e",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "panther"
 subject = "persona-5/panther"
-signature = ["cursor", "ansi3", "ansi4"]
 
 [palette.colors]
 background = "#201514"
@@ -149,7 +146,7 @@ ansi = [
   "#fff0ef",
   "#be262c",
   "#2e5a0b",
-  "#636800",
+  "#815e00",
   "#2457df",
   "#b22b78",
   "#00538c",
@@ -158,7 +155,7 @@ ansi = [
   "#857371",
   "#8c3b3c",
   "#2d4a19",
-  "#625423",
+  "#685222",
   "#55489f",
   "#7e4253",
   "#1f4566",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "fox"
 subject = "persona-5/fox"
-signature = ["cursor", "foreground", "ansi1"]
 
 [palette.colors]
 background = "#12181d"
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "queen"
 subject = "persona-5/queen"
-signature = ["cursor", "foreground", "ansi4"]
 
 [palette.colors]
 background = "#201513"
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "oracle"
 subject = "persona-5/oracle"
-signature = ["cursor", "ansi2", "ansi4"]
 
 [palette.colors]
 background = "#1f160e"
@@ -313,7 +307,7 @@ selection_background = "#d1dacd"
 ansi = [
   "#fff1e8",
   "#b6341b",
-  "#385900",
+  "#2e5a0c",
   "#945300",
   "#7b38e1",
   "#b1325f",
@@ -322,7 +316,7 @@ ansi = [
 
   "#837469",
   "#8c3c2e",
-  "#454500",
+  "#2d4a19",
   "#6e5000",
   "#474ba2",
   "#7f4253",
@@ -333,7 +327,6 @@ ansi = [
 [[palette]]
 slug = "velvet"
 subject = "persona-5/velvet"
-signature = ["cursor", "ansi4", "ansi5"]
 
 [palette.colors]
 background = "#1b170c"

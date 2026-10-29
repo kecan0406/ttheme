@@ -19,10 +19,10 @@ import { hairOf, readRelated, type Tagged, type Verdict, verdictOf, worn } from 
 import { check } from '../core/contrast.ts'
 import { paletteToml } from '../core/draft.ts'
 import { type Crop, cropProblem, type Flat, flatsOf } from '../core/flats.ts'
-import { type Departure, departures } from '../core/harmonize.ts'
+import { type Anchored, type Departure, departures, lookalikes } from '../core/harmonize.ts'
 import { hctOf } from '../core/hct.ts'
 import { colorsOfTheme } from '../core/manifest.ts'
-import { lookalikes, mirrored, withSlot } from '../core/mirror.ts'
+import { mirrored, withSlot } from '../core/mirror.ts'
 import { decodeImage, encodeRgba, type Rgba, resample } from '../core/png.ts'
 import type { Colors } from '../core/seeds.ts'
 import { setNameOf } from '../core/sets.ts'
@@ -431,10 +431,10 @@ function taggedIn(works: readonly Work[], tag: string): string | undefined {
   return undefined
 }
 
-function anchoredOf(anchors: Anchors): Shade & { name: string; signatureSlots: string[] } {
+function anchoredOf(anchors: Anchors): Anchored {
   return {
     name: anchors.name,
-    signatureSlots: anchors.slots.map(([slot]) => slot),
+    anchorSlots: anchors.slots.map(([slot]) => slot),
     ...anchors.slots.reduce((shade, [slot, anchor]) => withSlot(shade, slot, anchor.hex), roleBase()),
   }
 }
@@ -584,26 +584,21 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
       records.set(id, { work: added, characters: [...(was?.characters ?? []), character] })
     }
 
-    const other = target?.builtin
-      ? colorsOfTheme(
-          mirrored({ ...ranked.shade, name: anchors.name, signatureSlots: anchors.slots.map(([s]) => s) }).shade,
-        )
-      : undefined
+    const other = target?.builtin ? colorsOfTheme(mirrored({ ...ranked.shade, name: anchors.name }).shade) : undefined
 
     const name = target ? `${target.id}/${anchors.name}` : anchors.name
-    const signatureSlots = anchors.slots.map(([slot]) => slot)
+    const slots = anchors.slots.map(([slot]) => slot)
 
     const text = paletteToml({
       name,
       ...(subject ? { subject } : {}),
-      signature: signatureSlots,
       ...colorsOfTheme(ranked.shade),
       ...(other ? { other } : {}),
     })
 
     const own = owned?.get(anchors.name)
     const file = target ? (own?.path ?? join(setsDir(target.dir), `${setNameOf(subject)}.toml`)) : ''
-    const theme = { ...ranked.shade, name: anchors.name, signatureSlots }
+    const theme = { ...ranked.shade, name: anchors.name }
 
     made.push({
       name,
@@ -617,7 +612,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
       base: ranked.name,
       signature: departures(
         Object.fromEntries(anchors.slots.map(([slot, a]) => [slot, [a.part, a.hex] as const])),
-        signatureSlots,
+        slots,
         ranked.shade,
       ).map((d) => ({
         ...d,
@@ -625,7 +620,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
         ...(d.shift === undefined ? {} : { shift: round(d.shift, 1) }),
       })),
       turned: ranked.moves,
-      lookalikes: lookalikes(theme, ranked.shade).map(([a, b]) => `${a}/${b}`),
+      lookalikes: lookalikes(slots, ranked.shade).map(([a, b]) => `${a}/${b}`),
       gate: check(theme).map((v) => `${v.rule} — ${v.detail}`),
       text,
     })

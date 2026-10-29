@@ -16,8 +16,6 @@ function entry(name: string, subject?: string): PaletteEntry {
     foreground: '#eeeeee',
     cursor: '#ffffff',
     selection: '#222222',
-    signature: ['#ffffff', '#eeeeee', '#000000'],
-    signatureSlots: ['foreground', 'cursor', 'background'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
     gate: [16.1, 4.6, 0, 16.1, 3.9, 16.1, 0, 0, 0, 4.6, 3.2, 0],
     backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
@@ -49,10 +47,10 @@ function listedOf(
   shelves: { subjects?: Record<string, string>; works?: ListedWork[] } = {},
 ): Listed {
   const palettes = names.map((name): ListedPalette => {
-    const { background, foreground, cursor, selection, ansi, signatureSlots } = entry(name)
+    const { background, foreground, cursor, selection, ansi } = entry(name)
     const subject = shelves.subjects?.[name]
 
-    return { name, ...(subject ? { subject } : {}), background, foreground, cursor, selection, ansi, signatureSlots }
+    return { name, ...(subject ? { subject } : {}), background, foreground, cursor, selection, ansi }
   })
 
   return { id, source, about, stars, updated: '2026-10-09', palettes, works: shelves.works ?? [] }

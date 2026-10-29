@@ -16,7 +16,6 @@ const theme: Theme = {
   foreground: '#1f1c39',
   cursor: '#b83b64',
   selectionBackground: '#edd0d9',
-  signatureSlots: ['cursor', 'foreground', 'ansi3'],
   ansi: Array.from({ length: 16 }, () => '#808080'),
   gate: [],
   mode: 'light',

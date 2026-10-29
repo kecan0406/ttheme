@@ -47,8 +47,6 @@ export interface Violation {
 export type Readable = Pick<Theme, 'name' | 'background' | 'foreground' | 'ansi'> &
   Partial<Pick<Theme, 'selectionBackground'>>
 
-export type Gated = Readable & Pick<Theme, 'signatureSlots'>
-
 export interface GateRule {
   rule: string
   label: string
@@ -162,40 +160,30 @@ export function hueGap(a: number, b: number): number {
 
 export const roleOf = (slot: number) => (slot > 8 ? slot - 8 : slot)
 
-export function exemptSlots(theme: Pick<Theme, 'signatureSlots'>): Set<number> {
-  const own = theme.signatureSlots.filter((s) => s.startsWith('ansi')).map((s) => Number(s.slice(4)))
-
-  return new Set(own.flatMap((s) => (ROLES.includes(roleOf(s)) ? [s, s > 8 ? s - 8 : s + 8] : [s])))
-}
-
 function chromatic(theme: Readable, slot: number): Oklch | undefined {
   const color = oklch(at(theme, slot))
 
   return color.c < ACHROMATIC ? undefined : color
 }
 
-export function offRole(theme: Gated): { slot: number; hue: number; over: number }[] {
-  const exempt = exemptSlots(theme)
-
+export function offRole(theme: Readable): { slot: number; hue: number; over: number }[] {
   return ACCENT_SLOTS.flatMap((slot) => {
     const color = chromatic(theme, slot)
     const band = ROLE_HUES.get(roleOf(slot))
 
-    if (color === undefined || band === undefined || exempt.has(slot)) return []
+    if (color === undefined || band === undefined) return []
     const over = hueGap(color.h, band.center) - band.width
 
     return over > 0 ? [{ slot, hue: color.h, over }] : []
   })
 }
 
-export function brightDrift(theme: Gated): { normal: number; gap: number }[] {
-  const own = new Set(theme.signatureSlots)
-
+export function brightDrift(theme: Readable): { normal: number; gap: number }[] {
   return ROLES.flatMap((normal) => {
     const n = chromatic(theme, normal)
     const b = chromatic(theme, normal + 8)
 
-    if (n === undefined || b === undefined || (own.has(`ansi${normal}`) && own.has(`ansi${normal + 8}`))) return []
+    if (n === undefined || b === undefined) return []
 
     return [{ normal, gap: hueGap(n.h, b.h) }]
   })
@@ -209,15 +197,11 @@ export function apart(x: Lab, y: Lab): number {
   )
 }
 
-export function lookalikes(theme: Gated): [number, number][] {
-  const exempt = exemptSlots(theme)
-
+export function lookalikes(theme: Readable): [number, number][] {
   return [0, 8].flatMap((base) =>
     ROLES.flatMap((i) =>
       ROLES.filter((j) => j > i).flatMap((j): [number, number][] => {
         const [a, b] = [base + i, base + j]
-
-        if (exempt.has(a) && exempt.has(b)) return []
 
         return apart(lab(at(theme, a)), lab(at(theme, b))) < 1 ? [[a, b]] : []
       }),
@@ -225,16 +209,11 @@ export function lookalikes(theme: Gated): [number, number][] {
   )
 }
 
-export function confusions(theme: Gated): [number, number][] {
-  const exempt = exemptSlots(theme)
-
-  return RED_GREEN.filter(
-    ([red, green]) =>
-      !(exempt.has(red) && exempt.has(green)) && apart(deuteranope(at(theme, red)), deuteranope(at(theme, green))) < 1,
-  )
+export function confusions(theme: Readable): [number, number][] {
+  return RED_GREEN.filter(([red, green]) => apart(deuteranope(at(theme, red)), deuteranope(at(theme, green))) < 1)
 }
 
-const ROLE_CHECKS: Check<Gated>[] = [
+const ROLE_CHECKS: Check[] = [
   {
     rule: 'ansi-role',
     label: 'accent hue outside its ANSI role',
@@ -274,7 +253,7 @@ const ROLE_CHECKS: Check<Gated>[] = [
   },
 ]
 
-const PAIR_CHECKS: Check<Gated>[] = [
+const PAIR_CHECKS: Check[] = [
   {
     rule: 'ansi0-on-accents',
     label: 'ansi0 on the weakest accent',
@@ -321,7 +300,7 @@ const PAIR_CHECKS: Check<Gated>[] = [
   },
 ]
 
-const CHECKS: Check<Gated>[] = [...READABILITY, ...ROLE_CHECKS, ...PAIR_CHECKS]
+const CHECKS: Check[] = [...READABILITY, ...ROLE_CHECKS, ...PAIR_CHECKS]
 
 export const GATE_RULES: GateRule[] = CHECKS.map(({ rule, label, unit, min, max }) => ({
   rule,
@@ -331,11 +310,11 @@ export const GATE_RULES: GateRule[] = CHECKS.map(({ rule, label, unit, min, max 
   ...(max === undefined ? {} : { max }),
 }))
 
-export function measure(theme: Gated): number[] {
+export function measure(theme: Readable): number[] {
   return CHECKS.map((c) => Math.round(c.measure(theme) * 1000) / 1000)
 }
 
-export function missedRules(theme: Gated): GateRule[] {
+export function missedRules(theme: Readable): GateRule[] {
   const missed = new Set(check(theme).map((violation) => violation.rule))
 
   return GATE_RULES.filter((rule) => missed.has(rule.rule))
@@ -353,7 +332,7 @@ function run<T extends Readable>(checks: Check<T>[], theme: T): Violation[] {
   return checks.flatMap((c) => c.check(theme).map((detail) => ({ theme: theme.name, rule: c.rule, detail })))
 }
 
-export function check(theme: Gated): Violation[] {
+export function check(theme: Readable): Violation[] {
   return run(CHECKS, theme)
 }
 

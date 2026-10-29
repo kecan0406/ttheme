@@ -68,7 +68,7 @@ function Changed() {
 function RowMarks({ row }: { row: RowView }) {
   return (
     <>
-      <Marks signature={row.signature} miss={row.miss} />
+      <Marks miss={row.miss} />
       {row.changed ? <Changed /> : null}
     </>
   )
@@ -571,7 +571,7 @@ export function PickerHead({ p }: { p: PickerView }) {
       <div class="grid min-w-0 flex-1">
         <span class="flex items-center gap-1.5 text-sm font-semibold">
           <span safe>{s.name}</span>
-          <Marks signature={s.signature} miss={s.miss} />
+          <Marks miss={s.miss} />
         </span>
         {s.key === s.name.toLowerCase() ? null : (
           <span class="font-mono text-xs text-muted-foreground" safe>
@@ -794,32 +794,6 @@ export function FileNote({ about }: { about: AboutView }) {
   )
 }
 
-export function SignatureDots({ about }: { about: AboutView }) {
-  return (
-    <>
-      {about.signature.map((slot, i) => (
-        <label class="grid gap-1.5">
-          <i
-            class="h-2 rounded-full ring-1 ring-border forced-color-adjust-none"
-            style={`background:${about.colors[i]}`}
-          />
-          <select
-            data-signature={String(i)}
-            aria-label={`signature ${i + 1}`}
-            class="h-8 w-full min-w-0 rounded-lg border border-border bg-card px-2 font-mono text-xs outline-none hover:border-input focus-visible:border-ring"
-          >
-            {about.slots.map((key) => (
-              <option value={key} selected={key === slot} safe>
-                {key}
-              </option>
-            ))}
-          </select>
-        </label>
-      ))}
-    </>
-  )
-}
-
 export function Modes({ modes }: { modes: ModesView }) {
   return (
     <>
@@ -885,16 +859,10 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
         </p>
       </div>
       <div class="grid gap-3 border-b border-border p-4">
-        <SectionLabel icon={<Icon node={Sparkles} />}>Signature</SectionLabel>
+        <SectionLabel icon={<Icon node={Sparkles} />}>Mark</SectionLabel>
         <div data-mark-tile class="contents">
           <MarkTile about={about} />
         </div>
-        <div data-signature-dots class="grid grid-cols-3 gap-2">
-          <SignatureDots about={about} />
-        </div>
-        <p data-signature-trouble hidden={!about.trouble} class="text-xs text-destructive">
-          pick three colors that differ
-        </p>
       </div>
       <div class="grid gap-2.5 border-b border-border p-4">
         <SectionLabel icon={<Icon node={Blend} />}>Modes</SectionLabel>

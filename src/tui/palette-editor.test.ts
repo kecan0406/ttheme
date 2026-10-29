@@ -17,7 +17,6 @@ function editor(opts: Partial<EditorOptions> = {}): PaletteEditor {
     title: 'Edit palette',
     name: 'kai@dust/dusk',
     colors: start,
-    signature: ['background', 'foreground', 'cursor'],
     palettes: [{ name: 'kai@dust/dawn', colors: other }],
     check: () => undefined,
     ...opts,
@@ -132,21 +131,12 @@ test('c and v copy a slot, = makes the bright follow its normal, r puts a slot b
   assert.ok(Math.abs((e.lch[13]?.h ?? 0) - (e.lch[5]?.h ?? 0)) < 1)
 })
 
-test('* marks a signature color, keeping the last three and saying which one went', () => {
-  const e = press(editor(), ...RED, '*')
-  assert.deepEqual(e.signature, ['foreground', 'cursor', 'ansi1'])
-  assert.match(e.notice ?? '', /background dropped/)
-  press(e, '*')
-  assert.deepEqual(e.signature, ['foreground', 'cursor'])
-  assert.match(e.notice ?? '', /needs three/)
-})
-
 test('the older screen counts the rules the gate misses, as its Gate box and the builder do', () => {
   const dim = { ...start, ansi: start.ansi.map((hex, i) => (i >= 1 && i <= 6 ? start.background : hex)) }
   const e = editor({ colors: dim })
   const count = Number(/✗ Fails (\d+) contrast checks?/.exec(screen(e))?.[1])
   assert.equal(count, gateMisses(e))
-  assert.ok(count < check(gatedOf(e.list, e.signature)).length)
+  assert.ok(count < check(gatedOf(e.list)).length)
 })
 
 test('a ratio just under its floor misses the gate in the count as on the slots, though it reads as the floor', () => {
@@ -154,12 +144,6 @@ test('a ratio just under its floor misses the gate in the count as on the slots,
   assert.equal(gateMisses(e), 1)
   assert.match(screen(e), /✗ Fails 1 contrast check\b/)
   assert.ok(e.misses().has(1))
-})
-
-test('a signature slot is marked ✦ in the list and in its detail alike', () => {
-  const lines = screen(editor()).split('\n')
-  assert.match(lines.find((line) => line.includes('▌ Background')) ?? '', /Background›✦/)
-  assert.match(lines.find((line) => line.includes('│ Background')) ?? '', /✦ signature/)
 })
 
 test('o takes another palette’s colors, filtered by what is typed', () => {
@@ -185,10 +169,10 @@ test('f moves the colors the gate misses', () => {
 })
 
 test('esc asks to save changes: y saves, n leaves without saving, esc and other keys keep editing', () => {
-  const e = press(editor({ check: () => 'signature must name three colors that differ' }), 'tab', '9')
+  const e = press(editor({ check: () => 'colors.ansi must hold exactly 16 colors, got 15' }), 'tab', '9')
   press(e, 'enter', 's')
   assert.equal(e.result, undefined)
-  assert.match(e.notice ?? '', /signature/)
+  assert.match(e.notice ?? '', /16 colors/)
   press(e, 'esc')
   assert.match(screen(e), /\[EDIT \(QUIT\)\] Save changes\?/)
   assert.match(renderEditor(e, 80, 24, false).join('\n'), /1 color changed/)
@@ -200,7 +184,7 @@ test('esc asks to save changes: y saves, n leaves without saving, esc and other 
   assert.equal(e.result, undefined)
   press(e, 'esc', 'y')
   assert.equal(e.result, undefined)
-  assert.match(e.notice ?? '', /signature/)
+  assert.match(e.notice ?? '', /16 colors/)
   press(e, 'esc', 'n')
   assert.equal(e.result, 'cancelled')
 })
@@ -469,7 +453,7 @@ test('m keeps the slots that changed, and the cursor skips the rest', () => {
   assert.equal(e.visible(6), true)
 })
 
-test('editing a tone marks the slots off the original colors, and leaves signature, other palettes and pictures out', () => {
+test('editing a tone marks the slots off the original colors, and leaves other palettes and pictures out', () => {
   const tuned = { ...start, ansi: start.ansi.map((c, i) => (i === 1 ? '#ff6fa5' : c)) as string[] }
   const e = editor({ colors: tuned, original: start, tone: true })
   assert.deepEqual(
@@ -477,10 +461,9 @@ test('editing a tone marks the slots off the original colors, and leaves signatu
     [true, false, false],
   )
   assert.equal(e.dirty(), false)
-  press(e, 'p', 'ctrl-v', 'o', '*')
+  press(e, 'p', 'ctrl-v', 'o')
   assert.equal(e.overlay, undefined)
   assert.equal(e.wants, undefined)
-  assert.equal(e.signature.join(), 'background,foreground,cursor')
   press(e, 'R')
   assert.equal(e.changes(), 0)
   assert.equal(e.dirty(), true)
@@ -545,8 +528,8 @@ test('a paste into the palette picker keeps only what a typed key could add, so 
 })
 
 test('a share code pasted into the editor takes its colors, and a plain paste is still a color', () => {
-  const e = editor({ decode: (text) => (text === 'tt7:dawn' ? other : undefined) })
-  e.paste('tt7:dawn')
+  const e = editor({ decode: (text) => (text === 'tt8:dawn' ? other : undefined) })
+  e.paste('tt8:dawn')
   assert.deepEqual(e.colors(), other)
   press(e, 'u')
   assert.deepEqual(e.colors(), start)

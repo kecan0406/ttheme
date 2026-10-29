@@ -165,7 +165,6 @@ table in it — copy any of them:
 [[palette]]
 slug = "madoka"                            # its name: ttheme/madoka
 subject = "madoka-magica/madoka"           # the work and character in the commons
-signature = ["cursor", "ansi1", "ansi3"]   # the three colors the character is made from
 
 [palette.colors]
 background = "#201516"
@@ -195,11 +194,9 @@ One palette per pull request. At most three open at a time.
 - `subject` names a work or a character the commons holds: a new one comes
   with its record in `commons/works/` in the same pull request, and
   `mise run build` refuses a subject the commons lacks.
-- `signature` names three of the palette's colors (`cursor`, `foreground`,
-  `background`, `selection`, `ansi0`–`ansi15`) that must differ in both modes —
-  the character's own colors, the first the seed the other mode and the
-  harmonizer lean toward. Every screen and card draws a palette by its cursor,
-  selection and foreground instead.
+- The character's colors go in `cursor`, `selection` and `foreground`, which
+  every screen and card draws a palette by; an ANSI color holds one only where
+  its hue fits that color's role.
 - Take the ANSI ramp's base scheme from
   [mbadolato/iTerm2-Color-Schemes](https://github.com/mbadolato/iTerm2-Color-Schemes),
   or from a source whose license permits it — say which in the PR.
@@ -217,10 +214,8 @@ One palette per pull request. At most three open at a time.
   the background, and white on ANSI 8, at 3:1; black dark enough in a dark
   palette; each accent's hue inside its ANSI role's band and each bright within
   25° of its normal; no two accents in a row that read as one color at text
-  size; and red and green apart for a deuteranope. ANSI slots named in
-  `signature`, and their normal or bright twins, are exempt from the band and
-  the comparisons. `mise run build` fails on a violation, so every built-in
-  palette passes the gate in both modes.
+  size; and red and green apart for a deuteranope. `mise run build` fails on a
+  violation, so every built-in palette passes the gate in both modes.
 
 `.agents/skills/palette/SKILL.md` documents how the existing palettes were
 measured and harmonized, if you want to build one the same way.

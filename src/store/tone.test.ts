@@ -16,8 +16,6 @@ function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry 
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
     selection: '#383b5b',
-    signature: ['#7cc1d6', '#e3e2e7', '#d7bcf3'],
-    signatureSlots: ['cursor', 'foreground', 'ansi13'],
     ansi: Array.from({ length: 16 }, (_, i) => `#${(0x20 + i * 8).toString(16).padStart(2, '0').repeat(3)}`),
     gate: [13.8, 6.8, 0.02, 10.4, 4.0],
     backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
@@ -36,14 +34,13 @@ function home(): string {
   return mkdtempSync(join(tmpdir(), 'ttheme-tone-'))
 }
 
-test('a tone overrides only the slots it names, and the signature and the picture tint follow them', () => {
+test('a tone overrides only the slots it names, and the picture tint follows them', () => {
   const gojo = entry('ttheme/gojo')
   const toned = tonedEntry(gojo, { cursor: '#ff8800', ansi13: '#00ff88' })
   assert.equal(toned.cursor, '#ff8800')
   assert.equal(toned.ansi[13], '#00ff88')
   assert.equal(toned.background, gojo.background)
   assert.equal(toned.ansi[0], gojo.ansi[0])
-  assert.deepEqual(toned.signature, ['#ff8800', '#e3e2e7', '#00ff88'])
   assert.equal(toned.backdrop.color, '#ff8800')
   assert.equal(toned.gate.length, GATE_RULES.length)
   assert.equal(toned.name, 'ttheme/gojo')

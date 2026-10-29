@@ -3,7 +3,6 @@
 [[palette]]
 slug = "hachiman"
 subject = "oregairu/hachiman"
-signature = ["cursor", "ansi3", "ansi4"]
 
 [palette.colors]
 background = "#17171f"
@@ -32,14 +31,14 @@ ansi = [
 
 [palette.colors.light]
 background = "#fbf8ff"
-foreground = "#1d1f2b"
+foreground = "#1e1f2b"
 cursor = "#595b6b"
 selection_background = "#b3dfea"
 ansi = [
   "#f4f2fd",
   "#b42d67",
   "#005c3e",
-  "#766100",
+  "#805d00",
   "#2f6a84",
   "#7450af",
   "#205479",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "yukino"
 subject = "oregairu/yukino"
-signature = ["cursor", "ansi1", "foreground"]
 
 [palette.colors]
 background = "#12181d"
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "yuigahama"
 subject = "oregairu/yuigahama"
-signature = ["cursor", "ansi13", "ansi1"]
 
 [palette.colors]
 background = "#201511"
@@ -126,7 +123,7 @@ ansi = [
   "#d0c526",
   "#e0b55e",
   "#9a88e7",
-  "#ff8fa3",
+  "#fd8fac",
   "#7eb887",
   "#e6d0c9",
 
@@ -135,7 +132,7 @@ ansi = [
   "#ede12a",
   "#ffd88c",
   "#b0a1e8",
-  "#ffc3c2",
+  "#fdc2cf",
   "#98d5a0",
   "#ffe9e3",
 ]
@@ -151,7 +148,7 @@ ansi = [
   "#385921",
   "#7f5e0b",
   "#674bd0",
-  "#b03654",
+  "#af365f",
   "#115c3b",
   "#362925",
 
@@ -160,7 +157,7 @@ ansi = [
   "#2e4a1a",
   "#6e5000",
   "#5945a1",
-  "#7d4545",
+  "#7c4353",
   "#004c32",
   "#2d1b15",
 ]
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "iroha"
 subject = "oregairu/iroha"
-signature = ["cursor", "ansi1", "foreground"]
 
 [palette.colors]
 background = "#1e160d"
@@ -186,7 +182,7 @@ ansi = [
   "#e1d2c2",
 
   "#817567",
-  "#f3a37e",
+  "#f5a185",
   "#c2eb62",
   "#ffda47",
   "#bf9ee8",
@@ -211,7 +207,7 @@ ansi = [
   "#332b20",
 
   "#817567",
-  "#893f18",
+  "#8c3d20",
   "#284a0f",
   "#6e4f00",
   "#693f9f",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "komachi"
 subject = "oregairu/komachi"
-signature = ["cursor", "ansi13", "ansi11"]
 
 [palette.colors]
 background = "#16171f"
@@ -252,7 +247,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#faf8ff"
-foreground = "#1c1f2b"
+foreground = "#1c1f2c"
 cursor = "#6072b5"
 selection_background = "#eed1cb"
 ansi = [
@@ -268,7 +263,7 @@ ansi = [
   "#767680",
   "#843e58",
   "#114b35",
-  "#635400",
+  "#6e5000",
   "#3a538d",
   "#5b4b89",
   "#00495a",
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "haruno"
 subject = "oregairu/haruno"
-signature = ["cursor", "foreground", "ansi13"]
 
 [palette.colors]
 background = "#201516"

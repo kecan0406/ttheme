@@ -3,7 +3,6 @@
 [[palette]]
 slug = "hitagi"
 subject = "monogatari/hitagi"
-signature = ["cursor", "ansi9", "ansi13"]
 
 [palette.colors]
 background = "#1e151a"
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "shinobu"
 subject = "monogatari/shinobu"
-signature = ["cursor", "ansi9", "ansi13"]
 
 [palette.colors]
 background = "#1c170c"
@@ -67,11 +65,11 @@ cursor = "#f2c230"
 selection_background = "#4f3a1d"
 ansi = [
   "#282318",
-  "#ea7609",
+  "#f06e40",
   "#d0c275",
   "#faab46",
   "#679cb9",
-  "#ff9472",
+  "#fd8dab",
   "#89b884",
   "#ddd3c2",
 
@@ -80,7 +78,7 @@ ansi = [
   "#edde89",
   "#ffd1ac",
   "#7cb2d0",
-  "#ffc3c3",
+  "#fdc2cf",
   "#96d890",
   "#fbecd0",
 ]
@@ -92,11 +90,11 @@ cursor = "#a07d00"
 selection_background = "#f3d2aa"
 ansi = [
   "#fdf2e0",
-  "#9e4d00",
+  "#ae3e13",
   "#3c5728",
   "#8d5700",
   "#326984",
-  "#ac401a",
+  "#b0345f",
   "#115b41",
   "#312c1f",
 
@@ -105,7 +103,7 @@ ansi = [
   "#2e491b",
   "#754c26",
   "#1f5b75",
-  "#683435",
+  "#7c4353",
   "#0c4d16",
   "#261f0d",
 ]
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "tsubasa"
 subject = "monogatari/tsubasa"
-signature = ["cursor", "foreground", "ansi12"]
 
 [palette.colors]
 background = "#201517"
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "nadeko"
 subject = "monogatari/nadeko"
-signature = ["cursor", "ansi4", "ansi2"]
 
 [palette.colors]
 background = "#1f1518"
@@ -197,7 +193,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f8"
-foreground = "#2b1b21"
+foreground = "#2c1b21"
 cursor = "#ba5c81"
 selection_background = "#f7cae8"
 ansi = [
@@ -212,7 +208,7 @@ ansi = [
 
   "#837377",
   "#8e355a",
-  "#2c4a00",
+  "#254b07",
   "#714d31",
   "#0d5986",
   "#81397c",

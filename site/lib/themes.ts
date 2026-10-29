@@ -42,7 +42,6 @@ export interface Theme extends Shade {
   also: WorkRef[]
   character: CharacterRef | null
   from: string | null
-  signatureSlots: string[]
   mode: Mode
   other: Shade
 }

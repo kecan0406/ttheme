@@ -22,17 +22,11 @@ test('every theme passes the contrast gate in both modes', () => {
   )
 })
 
-test('an accent outside its ANSI role fails unless the signature names it', () => {
+test('an accent outside its ANSI role fails', () => {
   const [theme] = themes
   assert.ok(theme)
   const ansi = [...theme.ansi]
   ansi[1] = theme.ansi[2] as string
 
-  const roles = (signatureSlots: string[]) =>
-    check({ ...theme, ansi, signatureSlots })
-      .filter((v) => v.rule === 'ansi-role')
-      .map((v) => v.detail)
-
-  assert.equal(roles(['cursor', 'foreground', 'background']).length, 1)
-  assert.deepEqual(roles(['cursor', 'foreground', 'ansi1']), [])
+  assert.equal(check({ ...theme, ansi }).filter((v) => v.rule === 'ansi-role').length, 1)
 })

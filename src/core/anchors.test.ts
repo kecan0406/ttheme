@@ -32,7 +32,7 @@ test('readAnchors keeps the slots in the order the file names them, colors lower
 test('readAnchors names every field it refuses by its path and reads none of that entry', () => {
   const { anchors, problems } = readAnchors({
     Bocchi: {
-      slots: { cursor: ['hair', '#f5b2c'], ansi44: ['eyes', '#6d9ad8'] },
+      slots: { foreground: ['hair', '#f5b2c'], ansi44: ['eyes', '#6d9ad8'] },
       booru: 'gotoh hitori',
       native_names: ['後藤|ひとり'],
       colour: 'pink',
@@ -47,7 +47,7 @@ test('readAnchors names every field it refuses by its path and reads none of tha
       'Bocchi',
       'Bocchi.colour',
       'Bocchi.slots',
-      'Bocchi.slots.cursor[1]',
+      'Bocchi.slots.foreground[1]',
       'Bocchi.slots.ansi44',
       'Bocchi.booru',
       'Bocchi.native_names[0]',

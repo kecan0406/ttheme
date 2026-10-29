@@ -3,7 +3,6 @@
 [[palette]]
 slug = "battler"
 subject = "umineko/battler"
-signature = ["cursor", "ansi4", "ansi11"]
 
 [palette.colors]
 background = "#201513"
@@ -48,7 +47,7 @@ ansi = [
   "#857370",
   "#8c3c32",
   "#2c4a16",
-  "#635400",
+  "#6e5000",
   "#5f449e",
   "#7f3e67",
   "#034e1e",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "beatrice"
 subject = "umineko/beatrice"
-signature = ["cursor", "foreground", "ansi9"]
 
 [palette.colors]
 background = "#19180d"
@@ -67,7 +65,7 @@ cursor = "#e1d61b"
 selection_background = "#473d12"
 ansi = [
   "#252418",
-  "#a29900",
+  "#dd724f",
   "#aacf67",
   "#c3c100",
   "#58a1a1",
@@ -76,7 +74,7 @@ ansi = [
   "#d9d5c3",
 
   "#7a7768",
-  "#c0b958",
+  "#f6997b",
   "#cdea81",
   "#eee061",
   "#6eb7b7",
@@ -92,7 +90,7 @@ cursor = "#918900"
 selection_background = "#e7d79e"
 ansi = [
   "#f8f4e1",
-  "#6b6500",
+  "#a44727",
   "#305a11",
   "#805d00",
   "#1d6e6e",
@@ -101,7 +99,7 @@ ansi = [
   "#2e2c20",
 
   "#7a7768",
-  "#5b5700",
+  "#923819",
   "#294a10",
   "#6e5000",
   "#005f5f",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "bernkastel"
 subject = "umineko/bernkastel"
-signature = ["cursor", "ansi5", "ansi1"]
 
 [palette.colors]
 background = "#13181e"
@@ -160,7 +157,7 @@ ansi = [
   "#004c32",
   "#685123",
   "#005b7f",
-  "#554d89",
+  "#5a4b87",
   "#004a50",
   "#18202a",
 ]
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "lambdadelta"
 subject = "umineko/lambdadelta"
-signature = ["cursor", "ansi3", "ansi4"]
 
 [palette.colors]
 background = "#1f1519"
@@ -204,7 +200,7 @@ ansi = [
   "#fff0f4",
   "#b52b67",
   "#315a14",
-  "#696600",
+  "#805d00",
   "#006b90",
   "#b31e8e",
   "#005484",
@@ -213,7 +209,7 @@ ansi = [
   "#827378",
   "#8e3658",
   "#2e491a",
-  "#62532e",
+  "#64522e",
   "#205888",
   "#7e3e6f",
   "#034761",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "rokkenjima"
 subject = "umineko/rokkenjima"
-signature = ["cursor", "ansi3", "ansi4"]
 
 [palette.colors]
 background = "#1d170c"
@@ -234,7 +229,7 @@ ansi = [
   "#292318",
   "#cd836a",
   "#b8c884",
-  "#ffa48e",
+  "#f6ac74",
   "#6a9bbd",
   "#f492bb",
   "#73b8ad",
@@ -243,7 +238,7 @@ ansi = [
   "#807667",
   "#f29e83",
   "#d4e49d",
-  "#ffd0b5",
+  "#fdd2b2",
   "#71b4c8",
   "#f6c0e9",
   "#8ed4c8",
@@ -259,7 +254,7 @@ ansi = [
   "#fff2e1",
   "#92523c",
   "#3c5728",
-  "#a24731",
+  "#93531a",
   "#356888",
   "#a83a70",
   "#055a52",
@@ -268,7 +263,7 @@ ansi = [
   "#807667",
   "#8d3c21",
   "#2f491c",
-  "#754b30",
+  "#734c2c",
   "#065d6f",
   "#794171",
   "#004b43",

@@ -1,5 +1,6 @@
 import type { Work } from '../core/commons.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
+import { FACE } from '../core/slots.ts'
 import { inert } from '../core/text.ts'
 import { slugOf } from '../core/theme.ts'
 import { reach } from '../store/available.ts'
@@ -88,7 +89,7 @@ export async function showcase(token?: string): Promise<Shown[]> {
   return (await Promise.all((await found(token)).map(shown))).flat()
 }
 
-function listedPalette(entry: PaletteEntry): ListedPalette {
+function listedPalette(entry: PaletteEntry): ListedPalette & { signatureSlots: string[] } {
   return {
     name: entry.name,
     ...(entry.subject ? { subject: entry.subject } : {}),
@@ -97,7 +98,7 @@ function listedPalette(entry: PaletteEntry): ListedPalette {
     cursor: entry.cursor,
     selection: entry.selection,
     ansi: entry.ansi,
-    signatureSlots: entry.signatureSlots,
+    signatureSlots: [...FACE],
   }
 }
 

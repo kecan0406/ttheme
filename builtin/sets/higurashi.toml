@@ -3,7 +3,6 @@
 [[palette]]
 slug = "rena"
 subject = "higurashi/rena"
-signature = ["cursor", "foreground", "ansi1"]
 
 [palette.colors]
 background = "#20150f"
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "mion"
 subject = "higurashi/mion"
-signature = ["cursor", "ansi1", "ansi3"]
 
 [palette.colors]
 background = "#141911"
@@ -87,14 +85,14 @@ ansi = [
 
 [palette.colors.light]
 background = "#f6fbed"
-foreground = "#192215"
+foreground = "#1a2215"
 cursor = "#4f813d"
 selection_background = "#d6d8cb"
 ansi = [
   "#f0f5e8",
   "#9b4b4d",
   "#185b35",
-  "#73621a",
+  "#7d5e19",
   "#1f6e6e",
   "#954b6b",
   "#0d5a4d",
@@ -103,7 +101,7 @@ ansi = [
   "#73796e",
   "#8a3e22",
   "#024d28",
-  "#555817",
+  "#6d500a",
   "#005f5f",
   "#7f415c",
   "#004b3f",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "rika"
 subject = "higurashi/rika"
-signature = ["cursor", "ansi13", "foreground"]
 
 [palette.colors]
 background = "#16171f"
@@ -147,20 +144,20 @@ cursor = "#515fc7"
 selection_background = "#d7d4f4"
 ansi = [
   "#f4f2fd",
-  "#b72762",
+  "#b62867",
   "#005c3e",
   "#815e00",
   "#235fc5",
-  "#b31e8d",
+  "#b31e8e",
   "#005961",
   "#2b2b34",
 
   "#777680",
-  "#8a3c3c",
+  "#8a3c3f",
   "#004c33",
   "#6e5000",
   "#3250a2",
-  "#7e4254",
+  "#7e4256",
   "#004a51",
   "#1d1f2b",
 ]
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "satoko"
 subject = "higurashi/satoko"
-signature = ["cursor", "ansi9", "ansi12"]
 
 [palette.colors]
 background = "#1b170c"
@@ -177,7 +173,7 @@ cursor = "#e4c767"
 selection_background = "#4c3a28"
 ansi = [
   "#272318",
-  "#ea761c",
+  "#ef6f43",
   "#c3c759",
   "#e2b55a",
   "#5d9eb3",
@@ -197,12 +193,12 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f0"
-foreground = "#251f0d"
+foreground = "#241f0d"
 cursor = "#998028"
 selection_background = "#eed2b9"
 ansi = [
   "#fcf3e0",
-  "#a04b00",
+  "#ad3f16",
   "#37591e",
   "#805d03",
   "#246b7f",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "hinamizawa"
 subject = "higurashi/hinamizawa"
-signature = ["cursor", "ansi2", "ansi3"]
 
 [palette.colors]
 background = "#201512"
@@ -259,7 +254,7 @@ ansi = [
   "#fff1ed",
   "#b13b1b",
   "#005e00",
-  "#7e5e00",
+  "#805d00",
   "#8a2be0",
   "#b1306c",
   "#005c37",
@@ -267,7 +262,7 @@ ansi = [
 
   "#85736f",
   "#8c3c30",
-  "#3a4700",
+  "#2a4a12",
   "#724d25",
   "#673fa1",
   "#7e4259",

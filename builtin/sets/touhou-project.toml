@@ -3,7 +3,6 @@
 [[palette]]
 slug = "reimu"
 subject = "touhou-project/reimu"
-signature = ["cursor", "foreground", "ansi3"]
 
 [palette.colors]
 background = "#201513"
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "marisa"
 subject = "touhou-project/marisa"
-signature = ["cursor", "foreground", "ansi1"]
 
 [palette.colors]
 background = "#1b170c"
@@ -76,7 +74,7 @@ ansi = [
   "#dbd4c2",
 
   "#7c7767",
-  "#f2a46f",
+  "#f89e81",
   "#c0ec58",
   "#f0e049",
   "#bf9fe8",
@@ -101,7 +99,7 @@ ansi = [
   "#302c20",
 
   "#7c7767",
-  "#804619",
+  "#903a1c",
   "#284b0e",
   "#6e5000",
   "#683f9e",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "cirno"
 subject = "touhou-project/cirno"
-signature = ["cursor", "ansi6", "ansi5"]
 
 [palette.colors]
 background = "#12181d"
@@ -135,14 +132,14 @@ ansi = [
   "#a3ecc7",
   "#cde462",
   "#53b9c9",
-  "#c7cfff",
+  "#d4cbfb",
   "#99cdf3",
   "#e3f0fa",
 ]
 
 [palette.colors.light]
 background = "#f5faff"
-foreground = "#152129"
+foreground = "#162129"
 cursor = "#3d8eb9"
 selection_background = "#c7d8fb"
 ansi = [
@@ -160,7 +157,7 @@ ansi = [
   "#004c34",
   "#6e5000",
   "#005e69",
-  "#45518a",
+  "#564d86",
   "#004767",
   "#152129",
 ]
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "youmu"
 subject = "touhou-project/youmu"
-signature = ["cursor", "foreground", "ansi6"]
 
 [palette.colors]
 background = "#101917"
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "patchouli"
 subject = "touhou-project/patchouli"
-signature = ["cursor", "ansi5", "ansi3"]
 
 [palette.colors]
 background = "#1b161d"
@@ -259,7 +254,7 @@ ansi = [
   "#fbf0fb",
   "#b52b67",
   "#005c3e",
-  "#736300",
+  "#815e00",
   "#474fe3",
   "#a824aa",
   "#00557e",
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "flandre"
 subject = "touhou-project/flandre"
-signature = ["cursor", "ansi11", "ansi12"]
 
 [palette.colors]
 background = "#201514"
@@ -323,7 +317,7 @@ ansi = [
   "#857372",
   "#8e374c",
   "#2a4a12",
-  "#5d5600",
+  "#6e5000",
   "#005a86",
   "#81387e",
   "#00495b",

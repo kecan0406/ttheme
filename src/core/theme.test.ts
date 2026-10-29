@@ -67,7 +67,6 @@ test('free text that would break a config line or zsh quoting is refused', () =>
 })
 
 const palette = (head: string) => `${head}
-signature = ["cursor", "foreground", "background"]
 
 [colors]
 background = "#101010"
@@ -125,17 +124,13 @@ position = "left"
 test('a palette carries its other mode in [palette.colors.light] or [palette.colors.dark], whichever its [palette.colors] is not', () => {
   const gray = Array.from({ length: 16 }, () => '"#606060"').join(', ')
 
-  const other = (table: string, background: string, foreground: string, cursor = '#a04060') =>
-    `${palette('')}\n[${table}]\nbackground = "${background}"\nforeground = "${foreground}"\ncursor = "${cursor}"\nselection_background = "#c0c0e0"\nansi = [${gray}]\n`
+  const other = (table: string, background: string, foreground: string) =>
+    `${palette('')}\n[${table}]\nbackground = "${background}"\nforeground = "${foreground}"\ncursor = "#a04060"\nselection_background = "#c0c0e0"\nansi = [${gray}]\n`
 
   assert.equal(readTheme('d', palette(''), place).other, undefined)
   assert.equal(readTheme('d', other('colors.light', '#fafafa', '#202020'), place).other?.background, '#fafafa')
   assert.throws(() => readTheme('d', other('colors.dark', '#050505', '#f0f0f0'), place), /already dark/)
   assert.throws(() => readTheme('d', other('colors.light', '#202020', '#fafafa'), place), /must be light/)
-  assert.throws(
-    () => readTheme('d', other('colors.light', '#fafafa', '#202020', '#fafafa'), place),
-    /three colors that differ in \[palette\.colors\.light\]/,
-  )
 })
 
 test('a built-in palette carries its other mode', () => {

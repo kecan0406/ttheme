@@ -26,8 +26,6 @@ const entry: PaletteEntry = {
   foreground: '#e3e2e7',
   cursor: '#7cc1d6',
   selection: '#383b5b',
-  signature: ['#7cc1d6'],
-  signatureSlots: ['cursor'],
   ansi: Array.from({ length: 16 }, (_, i) => `#${(i * 17).toString(16).padStart(2, '0')}8080`),
   gate: [],
   backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },

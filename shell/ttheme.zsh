@@ -21,7 +21,7 @@ typeset -gA TTHEME_SGR=(
 )
 
 typeset -gA TTHEME_MARKS=(
-  gutter ▌ current ◆ focus ▶ signature ✦
+  gutter ▌ current ◆ focus ▶
   closed ▸ opened ▾ on ● off ○
   ok ✓ miss ✗ above ↑ below ↓
   update ⇡ auto ↻ remove × undo ↶

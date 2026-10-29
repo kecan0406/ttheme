@@ -54,8 +54,7 @@ palette. The checks leave them out and say why.
 | `ansi7-on-ansi8` | ANSI 7 as text on ANSI 8 ≥ 3:1 | fish's selection |
 | `cvd-red-green` | red and green apart for a deuteranope | a dichromat simulation |
 
-ANSI colors that a palette names in its signature, the colors that identify its
-character, are exempt from `ansi-role`, and a pair of them from the comparisons.
+Every palette is measured by the same rules: no palette is let off one.
 
 ### Body text: 7:1
 

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import { argbFromHex, Hct } from '@material/material-color-utilities'
-import { CHROMA_LIFT, lookalikes, mirror, OLIVE_EXIT, olive } from './mirror.ts'
+import { CHROMA_LIFT, mirror, OLIVE_EXIT, olive } from './mirror.ts'
 
 const mami = {
   name: 'mami',
@@ -28,7 +28,6 @@ const mami = {
     '#8ad992',
     '#f9edd0',
   ],
-  signatureSlots: ['cursor', 'foreground', 'ansi11'],
 }
 
 const hct = (hex: string) => Hct.fromInt(argbFromHex(hex))
@@ -50,54 +49,16 @@ test('the light mirror carries an accent as its share of the sRGB edge, never pa
   }
 })
 
-test('the light mirror turns a green its tones leave olive to green and keeps a signature yellow and its twin as they are', () => {
-  assert.ok(olive(light.ansi[11] as string))
-  assert.ok(Math.abs(hct(light.ansi[11] as string).hue - hct(mami.ansi[11] as string).hue) < 1)
-  assert.ok(Math.abs(hct(light.ansi[3] as string).hue - hct(mami.ansi[3] as string).hue) < 1)
+test('the light mirror turns a yellow or a green its tones leave olive to gold or green', () => {
+  const exits = new Map([
+    [2, OLIVE_EXIT.green],
+    [10, OLIVE_EXIT.green],
+    [3, OLIVE_EXIT.yellow],
+    [11, OLIVE_EXIT.yellow],
+  ])
 
-  for (const i of [2, 10]) {
+  for (const [i, exit] of exits) {
     assert.equal(olive(light.ansi[i] as string), false, `ansi${i}`)
-    assert.ok(Math.abs(hct(light.ansi[i] as string).hue - OLIVE_EXIT.green) < 1, `ansi${i}`)
+    assert.ok(Math.abs(hct(light.ansi[i] as string).hue - exit) < 1, `ansi${i}`)
   }
-})
-
-test('the mirror steps an ANSI signature slot off a named one it lands on, as the light bright white lands on the foreground', () => {
-  const plain = { ...mami, signatureSlots: ['foreground', 'ansi15', 'cursor'] }
-  const shade = mirror(plain)
-  assert.notEqual(shade.ansi[15], shade.foreground)
-  assert.deepEqual(lookalikes(plain, shade), [])
-})
-
-test('the mirror steps a bright white that lands a hair off the foreground toward the mode’s own end, never past the white', () => {
-  const near = {
-    name: 'near',
-    background: '#1d190b',
-    foreground: '#ddd9d8',
-    cursor: '#bb8e85',
-    selectionBackground: '#433400',
-    ansi: [
-      '#9ad49a',
-      '#c990be',
-      '#b0614c',
-      '#99919d',
-      '#a4b7ff',
-      '#a4bbff',
-      '#393d00',
-      '#005f5d',
-      '#59b69e',
-      '#f7a7dd',
-      '#681d44',
-      '#a78a91',
-      '#00b19e',
-      '#50585e',
-      '#d4b995',
-      '#49234e',
-    ],
-    signatureSlots: ['ansi3', 'foreground', 'ansi15'],
-  }
-
-  const shade = mirror(near)
-  assert.ok(hct(shade.ansi[15] as string).tone < hct(shade.foreground).tone)
-  assert.ok(hct(shade.ansi[15] as string).tone < hct(shade.ansi[7] as string).tone)
-  assert.deepEqual(lookalikes(near, shade), [])
 })

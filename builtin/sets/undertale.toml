@@ -3,7 +3,6 @@
 [[palette]]
 slug = "toriel"
 subject = "undertale/toriel"
-signature = ["cursor", "ansi4", "foreground"]
 
 [palette.colors]
 background = "#1a180d"
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "sans"
 subject = "undertale/sans"
-signature = ["cursor", "foreground", "ansi11"]
 
 [palette.colors]
 background = "#12181d"
@@ -69,7 +67,7 @@ ansi = [
   "#1e2529",
   "#f2649a",
   "#69d5a3",
-  "#91ca43",
+  "#acc31c",
   "#369beb",
   "#b3a5ff",
   "#16b8f1",
@@ -94,7 +92,7 @@ ansi = [
   "#eef4fb",
   "#b72767",
   "#005c3e",
-  "#456e00",
+  "#815e00",
   "#0067a6",
   "#714ac3",
   "#005774",
@@ -103,7 +101,7 @@ ansi = [
   "#71787e",
   "#8e3658",
   "#004c33",
-  "#585800",
+  "#6e5000",
   "#0f588b",
   "#654789",
   "#004860",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "papyrus"
 subject = "undertale/papyrus"
-signature = ["cursor", "foreground", "ansi4"]
 
 [palette.colors]
 background = "#201512"
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "undyne"
 subject = "undertale/undyne"
-signature = ["cursor", "ansi2", "ansi3"]
 
 [palette.colors]
 background = "#201513"
@@ -178,7 +174,7 @@ selection_background = "#244056"
 ansi = [
   "#2e211f",
   "#f16e4e",
-  "#74ccee",
+  "#82d2ab",
   "#ffa945",
   "#948dd6",
   "#c2a0ee",
@@ -187,7 +183,7 @@ ansi = [
 
   "#857370",
   "#f3a195",
-  "#9de9f1",
+  "#adeacb",
   "#ffcfb0",
   "#9da7e8",
   "#d5c9ff",
@@ -203,7 +199,7 @@ selection_background = "#bedaf6"
 ansi = [
   "#fff0ee",
   "#b2391c",
-  "#00576e",
+  "#005c3f",
   "#905500",
   "#6055b8",
   "#7d4bb1",
@@ -212,7 +208,7 @@ ansi = [
 
   "#857370",
   "#8c3c32",
-  "#004a4f",
+  "#0b4c35",
   "#764b2b",
   "#3e4ea2",
   "#5e4989",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "mettaton"
 subject = "undertale/mettaton"
-signature = ["cursor", "ansi13", "ansi3"]
 
 [palette.colors]
 background = "#1d151b"
@@ -252,14 +247,14 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff7f9"
-foreground = "#281c26"
+foreground = "#291b26"
 cursor = "#a53f9f"
 selection_background = "#f5cbea"
 ansi = [
   "#ffeff8",
   "#af365b",
   "#37591f",
-  "#766100",
+  "#805d00",
   "#345cc5",
   "#a726aa",
   "#1b5671",
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "determination"
 subject = "undertale/determination"
-signature = ["cursor", "ansi11", "ansi4"]
 
 [palette.colors]
 background = "#211513"
@@ -314,7 +308,7 @@ ansi = [
   "#fff0ee",
   "#bd291f",
   "#005c38",
-  "#7b6003",
+  "#805e03",
   "#4d4de3",
   "#b12e71",
   "#1c5c1e",
@@ -323,7 +317,7 @@ ansi = [
   "#857370",
   "#8c3b36",
   "#004d2d",
-  "#585800",
+  "#6e5000",
   "#63429c",
   "#7e415c",
   "#004e0d",

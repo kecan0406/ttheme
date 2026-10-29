@@ -28,8 +28,6 @@ const ORLA: PaletteEntry = {
   foreground: '#e3e2e7',
   cursor: '#7cc1d6',
   selection: '#383b5b',
-  signature: ['#7cc1d6', '#e3e2e7', '#d7bcf3'],
-  signatureSlots: ['cursor', 'foreground', 'ansi13'],
   ansi: Array.from({ length: 16 }, (_, i) => `#${(0x30 + i * 8).toString(16).repeat(3)}`),
   gate: [13.8, 6.8, 0.02, 10.4, 4.0],
   backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },

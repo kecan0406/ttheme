@@ -19,8 +19,6 @@ function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry 
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
     selection: '#383b5b',
-    signature: ['#7cc1d6', '#e3e2e7', '#d7bcf3'],
-    signatureSlots: ['cursor', 'foreground', 'ansi13'],
     ansi: Array.from({ length: 16 }, (_, i) => `#${(i * 16).toString(16).padStart(2, '0')}8080`),
     gate: [13.8, 6.8, 0.02, 10.4, 4.0],
     backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },

@@ -82,8 +82,6 @@
       "foreground": "#fadbe1",
       "cursor": "#feabc0",
       "selection": "#51344e",
-      "signature": ["#feabc0", "#86a1d3", "#ffa7ca"],
-      "signatureSlots": ["cursor", "ansi4", "ansi9"],
       "ansi": [
         "#2c2123",
         "#fd729f",
@@ -140,8 +138,6 @@
       "foreground": "#e8dff1",
       "cursor": "#9b86c8",
       "selection": "#2f3f55",
-      "signature": ["#9b86c8", "#9099f2", "#d58c98"],
-      "signatureSlots": ["cursor", "ansi4", "ansi1"],
       "ansi": [
         "#25222a",
         "#d58c98",
@@ -198,8 +194,6 @@
       "foreground": "#fddbd6",
       "cursor": "#ee6555",
       "selection": "#5a323b",
-      "signature": ["#ee6555", "#49c262", "#e1b557"],
-      "signatureSlots": ["cursor", "ansi2", "ansi3"],
       "ansi": [
         "#2e211f",
         "#ff728d",
@@ -256,8 +250,6 @@
       "foreground": "#dae3f1",
       "cursor": "#5f95ca",
       "selection": "#3b3e42",
-      "signature": ["#5f95ca", "#64be79", "#8fc6ff"],
-      "signatureSlots": ["cursor", "ansi2", "ansi12"],
       "ansi": [
         "#1f242a",
         "#e07ae5",
@@ -314,8 +306,6 @@
       "foreground": "#e7e3c8",
       "cursor": "#d6d233",
       "selection": "#333d5b",
-      "signature": ["#d6d233", "#779ff4", "#67bae9"],
-      "signatureSlots": ["cursor", "ansi4", "ansi6"],
       "ansi": [
         "#252419",
         "#f38235",
@@ -372,8 +362,6 @@
       "foreground": "#eddeef",
       "cursor": "#c8a6da",
       "selection": "#3b3e40",
-      "signature": ["#c8a6da", "#eede89", "#8b9bf1"],
-      "signatureSlots": ["cursor", "ansi11", "ansi4"],
       "ansi": [
         "#27222a",
         "#f374c0",

@@ -3,7 +3,6 @@
 [[palette]]
 slug = "rentaro"
 subject = "black-bullet/rentaro"
-signature = ["cursor", "selection", "foreground"]
 
 [palette.colors]
 background = "#14181e"
@@ -34,7 +33,7 @@ ansi = [
 background = "#f9f9ff"
 foreground = "#1b2023"
 cursor = "#3d5580"
-selection_background = "#a1aad2"
+selection_background = "#ced5fc"
 ansi = [
   "#f2f3fd",
   "#a34167",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "enju"
 subject = "black-bullet/enju"
-signature = ["cursor", "ansi11", "ansi3"]
 
 [palette.colors]
 background = "#201512"
@@ -69,7 +67,7 @@ ansi = [
   "#2e211d",
   "#f16d5b",
   "#d6c32e",
-  "#ffa76f",
+  "#fcaa69",
   "#8293d0",
   "#ff8fa7",
   "#75bb75",
@@ -78,7 +76,7 @@ ansi = [
   "#85736f",
   "#f3a195",
   "#f5df2f",
-  "#ffd87f",
+  "#ffd697",
   "#98a9e6",
   "#ffc2cc",
   "#97d59e",
@@ -94,7 +92,7 @@ ansi = [
   "#fff1ed",
   "#bd291c",
   "#395922",
-  "#a04b00",
+  "#97510b",
   "#475fab",
   "#b03659",
   "#165c22",
@@ -103,7 +101,7 @@ ansi = [
   "#85736f",
   "#8c3c32",
   "#2f4a1b",
-  "#6b5100",
+  "#724e02",
   "#35509f",
   "#7e434f",
   "#054c26",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "kisara"
 subject = "black-bullet/kisara"
-signature = ["cursor", "selection", "ansi4"]
 
 [palette.colors]
 background = "#1c151c"
@@ -144,7 +141,7 @@ ansi = [
 background = "#fff7fa"
 foreground = "#271c27"
 cursor = "#7f5680"
-selection_background = "#ed9295"
+selection_background = "#ffcacb"
 ansi = [
   "#fef0f9",
   "#a3454a",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "tina"
 subject = "black-bullet/tina"
-signature = ["cursor", "ansi6", "selection"]
 
 [palette.colors]
 background = "#1b170c"
@@ -199,7 +195,7 @@ ansi = [
 background = "#fff8f0"
 foreground = "#251f0d"
 cursor = "#9a853f"
-selection_background = "#91afc6"
+selection_background = "#bcdbf4"
 ansi = [
   "#fcf3e0",
   "#af3d13",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "kohina"
 subject = "black-bullet/kohina"
-signature = ["cursor", "selection", "ansi9"]
 
 [palette.colors]
 background = "#12181d"
@@ -254,7 +249,7 @@ ansi = [
 background = "#f6f9ff"
 foreground = "#162129"
 cursor = "#447395"
-selection_background = "#ff8890"
+selection_background = "#ffcacc"
 ansi = [
   "#eff4fb",
   "#bc2740",
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "kagetane"
 subject = "black-bullet/kagetane"
-signature = ["cursor", "foreground", "selection"]
 
 [palette.colors]
 background = "#201515"
@@ -309,7 +303,7 @@ ansi = [
 background = "#fff8f7"
 foreground = "#1d1f26"
 cursor = "#8d3a3e"
-selection_background = "#b6a5bf"
+selection_background = "#e3d1ec"
 ansi = [
   "#fff0f0",
   "#a2454c",

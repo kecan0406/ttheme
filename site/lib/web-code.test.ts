@@ -28,7 +28,6 @@ const draft: Draft = {
   name: 'orla-tuned',
   subject: 'starfall/orla',
   upstream: { palette: 'ttheme/orla' },
-  signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
   foreground: '#ede2c6',
   cursor: '#e8d082',

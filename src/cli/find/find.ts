@@ -44,6 +44,7 @@ import {
 import { type About, aboutOf, siteTags, type Work } from '../../core/commons.ts'
 import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
 import { SCENES } from '../../core/scenes.ts'
+import { FACE } from '../../core/slots.ts'
 import { POSITIONS } from '../../core/theme.ts'
 import { backgroundsDir, fillSize, rackOf, rescaled, type Tune } from '../../pictures/backdrop.ts'
 import {
@@ -2853,7 +2854,7 @@ class Finder {
         const path = this.previewPath(pick)
         const from = previewOf(pick.site, pick.post)
         await this.kept.cached(from.site, path, from.url)
-        const look = await this.renders.run({ job: 'match', from: path, colors: this.entry.signature })
+        const look = await this.renders.run({ job: 'match', from: path, colors: FACE.map((slot) => this.entry[slot]) })
         this.looked.set(key, look)
         this.matched.set(pick.post, look.match)
 

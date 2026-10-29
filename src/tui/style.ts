@@ -26,7 +26,6 @@ export const MARKS = {
   gutter: '▌',
   current: '◆',
   focus: '▶',
-  signature: '✦',
   closed: '▸',
   opened: '▾',
   on: '●',

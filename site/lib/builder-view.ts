@@ -5,7 +5,6 @@ import {
   MOST_DRAFTS,
   madeMode,
   nameTrouble,
-  signatureTrouble,
   subjectTrouble,
   type View,
   writesOther,
@@ -36,7 +35,6 @@ export interface RowView {
   name: string
   hex: Hex
   value: string
-  signature: boolean
   miss: boolean
   changed: boolean
   open: boolean
@@ -104,21 +102,18 @@ const round = (value: number) => Math.round(value * 10_000) / 10_000
 export function rowOf(
   list: Hex[],
   slot: number,
-  signature: string[],
   missed: ReadonlySet<number>,
   changed: ReadonlySet<number>,
   format: RowFormat,
   open: number | null,
 ): RowView {
   const hex = list[slot] as Hex
-  const key = SLOT_NAMES[slot] as string
 
   return {
     slot,
     name: slotLabel(slot).name,
     hex,
     value: format === 'hex' ? hex : lchTight(lchIn(list, hex)).trim(),
-    signature: signature.includes(key),
     miss: missed.has(slot),
     changed: changed.has(slot),
     open: open === slot,
@@ -127,7 +122,6 @@ export function rowOf(
 
 export function rowsOf(
   list: Hex[],
-  signature: string[],
   missed: ReadonlySet<number>,
   changed: ReadonlySet<number>,
   format: RowFormat,
@@ -135,7 +129,7 @@ export function rowsOf(
   linked: ReadonlySet<number>,
   only: boolean,
 ): Rows {
-  const row = (slot: number) => rowOf(list, slot, signature, missed, changed, format, open)
+  const row = (slot: number) => rowOf(list, slot, missed, changed, format, open)
   const shown = (slot: number) => !only || changed.has(slot) || open === slot
   const base = [0, 1, 2, 3].flatMap((slot) => (shown(slot) ? [row(slot)] : []))
 
@@ -151,8 +145,8 @@ export function rowsOf(
   return { base, pairs, empty: base.length === 0 && pairs.length === 0 }
 }
 
-export function gateOf(list: Hex[], signature: string[]): Gate {
-  const lines = gateLinesOf(list, signature)
+export function gateOf(list: Hex[]): Gate {
+  const lines = gateLinesOf(list)
 
   return {
     lines,
@@ -179,7 +173,6 @@ export function pickerOf(
   list: Hex[],
   origin: Hex[],
   slot: number,
-  signature: string[],
   missed: ReadonlySet<number>,
   uses: number[],
   link: Link | null,
@@ -191,7 +184,7 @@ export function pickerOf(
 
   return {
     slot,
-    s: slotViewOf(list, signature, missed, slot, uses),
+    s: slotViewOf(list, missed, slot, uses),
     partner: partnered(list, slot),
     origin: at
       ? {
@@ -221,12 +214,8 @@ export interface AboutView {
   name: string
   file: string
   from: string | null
-  signature: string[]
-  slots: string[]
-  colors: string[]
   marks: string[]
   background: string
-  trouble: boolean
   subject: string
   unread: boolean
   pictures: Picture[]
@@ -349,8 +338,8 @@ export function draftListOf(
   return { count: drafts.length, most: MOST_DRAFTS, query, groups, deleted }
 }
 
-export function dotsOf(list: Hex[], signature: readonly string[]): Hex[] {
-  return signature.map((slot) => list[SLOT_NAMES.indexOf(slot)] ?? (list[0] as Hex))
+export function dotsOf(list: Hex[], slots: readonly string[]): Hex[] {
+  return slots.map((slot) => list[SLOT_NAMES.indexOf(slot)] ?? (list[0] as Hex))
 }
 
 export function seedRowsOf(seeds: Seeds): SeedRow[] {
@@ -377,18 +366,13 @@ function setFileOf(edit: Edit): string {
 
 export function aboutOf(edit: Edit, view: View): AboutView {
   const list = listIn(edit, view)
-  const colors = dotsOf(list, edit.signature)
 
   return {
     name: edit.name,
     file: setFileOf(edit),
     from: edit.meta.upstream?.palette ?? null,
-    signature: edit.signature,
-    slots: SLOT_NAMES,
-    colors,
     marks: marksOf(list[0] as Hex, list[1] as Hex, list[2] as Hex, list[3] as Hex),
     background: list[0] as Hex,
-    trouble: signatureTrouble(edit) !== undefined,
     subject: edit.meta.subject ?? '',
     unread: subjectTrouble(edit.meta.subject) !== undefined,
     pictures: (edit.meta.pictures ?? []).map(pictureOf),
@@ -400,9 +384,6 @@ export function exportProblem(edit: Edit): string | undefined {
   const named = nameTrouble(edit.name)
 
   if (named) return `The name ${named} — fix it in the bar first.`
-  const signed = signatureTrouble(edit)
-
-  if (signed) return `The signature ${signed} — pick them in the about tab.`
   const subject = subjectTrouble(edit.meta.subject)
 
   return subject ? `The subject ${subject} — fix it in the about tab.` : undefined

@@ -30,8 +30,6 @@ function bundleFixture() {
     foreground: '#f0f0f0',
     cursor: '#ff8800',
     selection: '#303030',
-    signature: ['#ff8800', '#f0f0f0', '#101010'],
-    signatureSlots: ['cursor', 'foreground', 'background'],
     backdrop: { slot: 'cursor', color: '#ff8800', opacity: 0.2 },
     ansi: Array.from({ length: 16 }, (_, i) => `#${i.toString(16).repeat(6)}`),
     gate: [21, 21, 0, 21, 21],
@@ -50,8 +48,6 @@ const commonsFixture = {
 
 function paletteText(): string {
   return [
-    'signature = ["cursor", "foreground", "background"]',
-    '',
     '[colors]',
     'background = "#101010"',
     'foreground = "#f0f0f0"',

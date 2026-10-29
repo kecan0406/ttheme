@@ -75,7 +75,6 @@ test('a fetched archive keeps what a marketplace is read from — its file, its 
   const dusk = paletteToml({
     name: 'ann@pastel/dusk',
     subject: 'neon/volt',
-    signature: ['cursor', 'foreground', 'background'],
     background: '#101010',
     foreground: '#f0f0f0',
     cursor: '#ff8800',

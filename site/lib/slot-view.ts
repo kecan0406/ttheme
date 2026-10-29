@@ -39,13 +39,7 @@ const LEVELS = Array.from(
   (_, row) => PLANE_TOP - (row / (PLANE_ROWS - 1)) * (PLANE_TOP - PLANE_BOTTOM),
 )
 
-export function slotViewOf(
-  list: Hex[],
-  signature: string[],
-  missed: ReadonlySet<number>,
-  slot: number,
-  uses: number[],
-): SlotView {
+export function slotViewOf(list: Hex[], missed: ReadonlySet<number>, slot: number, uses: number[]): SlotView {
   const hex = list[slot] as Hex
   const at = lchIn(list, hex)
   const key = SLOT_NAMES[slot] as string
@@ -62,16 +56,15 @@ export function slotViewOf(
     x: round(shareOf(at.l, at.c, at.h), 4),
     y: round(Math.min(1, Math.max(0, (PLANE_TOP - at.l) / (PLANE_TOP - PLANE_BOTTOM))), 4),
     along: round(at.h / 360, 4),
-    checks: slotChecks(list, signature, slot).map((check) => ({ ok: check.ok ?? null, text: check.text })),
+    checks: slotChecks(list, slot).map((check) => ({ ok: check.ok ?? null, text: check.text })),
     use: slotUse(slot),
     uses,
-    signature: signature.includes(key),
     miss: missed.has(slot),
   }
 }
 
-export function gateLinesOf(list: Hex[], signature: string[]): GateLine[] {
-  const theme = gatedOf(list, signature)
+export function gateLinesOf(list: Hex[]): GateLine[] {
+  const theme = gatedOf(list)
   const values = measure(theme)
   const missed = new Set(missedRules(theme).map((rule) => rule.rule))
 
@@ -79,6 +72,6 @@ export function gateLinesOf(list: Hex[], signature: string[]): GateLine[] {
     const value = values[i] ?? Number.NaN
     const ok = !missed.has(rule.rule)
 
-    return { rule, value, ok, slots: ok ? [] : ruleSlots(list, signature, rule.rule) }
+    return { rule, value, ok, slots: ok ? [] : ruleSlots(list, rule.rule) }
   })
 }

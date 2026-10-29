@@ -91,7 +91,7 @@ function clip(content: string, length: number): string {
   return content.length <= length ? content : `${content.slice(0, length - 1)}…`
 }
 
-function facets(signature: string[], base: string, { width, height }: Frame, strength: number): string {
+function facets(face: string[], base: string, { width, height }: Frame, strength: number): string {
   const scale = Math.max(width / FACET_WIDTH, height / FACET_HEIGHT)
   const reachX = width / scale
   const reachY = height / scale
@@ -104,7 +104,7 @@ function facets(signature: string[], base: string, { width, height }: Frame, str
 
     if (Math.max(...xs) < 0 || Math.min(...xs) > reachX || Math.max(...ys) < 0 || Math.min(...ys) > reachY) continue
     const { tint, lift } = shade(facet.tint, corners, FACET_LAMP)
-    const fill = liftOk(mixOk(base, signature[facet.tone] as string, tint * strength), lift * strength)
+    const fill = liftOk(mixOk(base, face[facet.tone] as string, tint * strength), lift * strength)
     polygons.push(`<polygon points="${facetPoints(corners)}" fill="${fill}" stroke="${fill}" stroke-width="0.6"/>`)
   }
 

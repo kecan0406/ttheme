@@ -264,7 +264,7 @@ export const VERB_SPECS: VerbSpec[] = [
       '      "source": "https://…"',
       '    }',
       '  }',
-      '  slots         three colors in the order the character reads, the first the seed — background, foreground,',
+      '  slots         the colors you measured, cursor always among them — background, foreground,',
       '                cursor, selection or ansi0–ansi15 — each ["<part>", "#rrggbb"] as measured',
       "  booru         the character's danbooru tag — a character the commons knows by it is the one the palette",
       '                is of; otherwise --work records it with the new character (optional)',

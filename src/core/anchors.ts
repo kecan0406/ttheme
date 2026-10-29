@@ -27,7 +27,6 @@ export interface Problem {
 
 export const ANCHOR_FIELDS = ['slots', 'booru', 'native_names', 'source']
 
-const SIGNATURE_SIZE = 3
 const TAG = /^[\p{L}\p{N}_()'.:!?~&+-]+$/u
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -53,21 +52,16 @@ function anchorOf(path: string, value: unknown, problems: Problem[]): Anchor | u
 
 function slotsOf(path: string, value: unknown, problems: Problem[]): [string, Anchor][] {
   if (!isRecord(value)) {
-    problems.push({ path, problem: `must map ${SIGNATURE_SIZE} colors to ["<part>", "#rrggbb"]` })
+    problems.push({ path, problem: 'must map colors of the palette to ["<part>", "#rrggbb"]' })
 
     return []
   }
 
-  const keys = Object.keys(value)
-
-  if (keys.length !== SIGNATURE_SIZE) {
-    problems.push({
-      path,
-      problem: `names ${keys.length} colors — the signature is ${SIGNATURE_SIZE}, in the order the character reads`,
-    })
+  if (!Object.hasOwn(value, 'cursor')) {
+    problems.push({ path, problem: "must name cursor, the character's main color" })
   }
 
-  return keys.flatMap((slot): [string, Anchor][] => {
+  return Object.keys(value).flatMap((slot): [string, Anchor][] => {
     if (!SLOT_NAMES.includes(slot)) {
       problems.push({
         path: `${path}.${slot}`,

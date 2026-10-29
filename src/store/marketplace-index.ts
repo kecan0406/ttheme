@@ -11,7 +11,6 @@ import { isRemote, parseSource } from './sources.ts'
 export const INDEX_URL = 'https://index.ttheme.dev/marketplaces.json'
 
 const HEX = /^#[0-9a-f]{6}$/i
-const SLOT = /^(cursor|foreground|background|selection|ansi(1[0-5]|[0-9]))$/
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 
 export interface ListedPalette {
@@ -22,7 +21,6 @@ export interface ListedPalette {
   cursor: string
   selection: string
   ansi: string[]
-  signatureSlots: string[]
 }
 
 export interface Listed {
@@ -70,7 +68,6 @@ function readPalette(id: string, value: unknown): ListedPalette | undefined {
   const name = word(v.name)
   const [background, foreground, cursor, selection] = [v.background, v.foreground, v.cursor, v.selection].map(color)
   const ansi = Array.isArray(v.ansi) ? v.ansi.map(color) : []
-  const slots = Array.isArray(v.signatureSlots) ? v.signatureSlots : []
 
   if (
     !name ||
@@ -80,9 +77,7 @@ function readPalette(id: string, value: unknown): ListedPalette | undefined {
     !cursor ||
     !selection ||
     ansi.length !== 16 ||
-    ansi.some((c) => c === undefined) ||
-    slots.length !== 3 ||
-    !slots.every((s) => typeof s === 'string' && SLOT.test(s))
+    ansi.some((c) => c === undefined)
   ) {
     return undefined
   }
@@ -97,7 +92,6 @@ function readPalette(id: string, value: unknown): ListedPalette | undefined {
     cursor,
     selection,
     ansi: ansi.filter((c): c is string => c !== undefined),
-    signatureSlots: slots,
   }
 }
 

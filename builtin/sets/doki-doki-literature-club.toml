@@ -3,7 +3,6 @@
 [[palette]]
 slug = "sayori"
 subject = "doki-doki-literature-club/sayori"
-signature = ["cursor", "ansi9", "ansi4"]
 
 [palette.colors]
 background = "#211512"
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "natsuki"
 subject = "doki-doki-literature-club/natsuki"
-signature = ["cursor", "ansi9", "ansi3"]
 
 [palette.colors]
 background = "#1f1518"
@@ -94,7 +92,7 @@ ansi = [
   "#fff0f3",
   "#b72a60",
   "#3c5728",
-  "#766200",
+  "#815e00",
   "#316984",
   "#924b76",
   "#005387",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "yuri"
 subject = "doki-doki-literature-club/yuri"
-signature = ["cursor", "ansi11", "ansi9"]
 
 [palette.colors]
 background = "#1b161d"
@@ -122,9 +119,9 @@ cursor = "#c29ed1"
 selection_background = "#4e3551"
 ansi = [
   "#282229",
-  "#e66bae",
+  "#ed699a",
   "#5ddaa3",
-  "#ff9eac",
+  "#f6ab70",
   "#858cf3",
   "#b99fff",
   "#3ab7ef",
@@ -133,7 +130,7 @@ ansi = [
   "#7d747e",
   "#f39fa9",
   "#99f0c5",
-  "#ffd0e4",
+  "#fed6ba",
   "#a3a6e1",
   "#d9c7ff",
   "#99cded",
@@ -147,9 +144,9 @@ cursor = "#9064a5"
 selection_background = "#efccf0"
 ansi = [
   "#fcf0fb",
-  "#a9377a",
+  "#b32e67",
   "#005c3e",
-  "#a64055",
+  "#92541a",
   "#474fe3",
   "#7547c9",
   "#005676",
@@ -158,7 +155,7 @@ ansi = [
   "#7d747e",
   "#8d3947",
   "#004c33",
-  "#74475d",
+  "#714d31",
   "#484d98",
   "#6e4380",
   "#024762",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "monika"
 subject = "doki-doki-literature-club/monika"
-signature = ["cursor", "foreground", "ansi3"]
 
 [palette.colors]
 background = "#141911"
@@ -204,7 +200,7 @@ ansi = [
   "#f1f5e7",
   "#ab4119",
   "#115d00",
-  "#676700",
+  "#815e00",
   "#006e78",
   "#b1325e",
   "#005b4c",
@@ -213,7 +209,7 @@ ansi = [
   "#74796d",
   "#8c3d22",
   "#184d00",
-  "#4b5b00",
+  "#6e4f00",
   "#005c74",
   "#7e4252",
   "#004c3a",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "glitch"
 subject = "doki-doki-literature-club/glitch"
-signature = ["cursor", "ansi10", "ansi12"]
 
 [palette.colors]
 background = "#1d151b"
@@ -258,7 +253,7 @@ selection_background = "#e1d0f8"
 ansi = [
   "#ffeff7",
   "#b72a60",
-  "#3d5800",
+  "#305a11",
   "#995000",
   "#594ae1",
   "#b115a4",

@@ -3,7 +3,6 @@
 [[palette]]
 slug = "jill"
 subject = "va-11-hall-a/jill"
-signature = ["cursor", "ansi1", "ansi5"]
 
 [palette.colors]
 background = "#15181e"
@@ -21,18 +20,18 @@ ansi = [
   "#d3d4de",
 
   "#757780",
-  "#f39ec6",
+  "#f79dba",
   "#82f2be",
   "#fad7be",
   "#90aae8",
-  "#d0ccff",
+  "#d5cafd",
   "#a3cbf3",
   "#eaedfe",
 ]
 
 [palette.colors.light]
 background = "#faf9ff"
-foreground = "#1b1f2b"
+foreground = "#1b202b"
 cursor = "#236ddf"
 selection_background = "#ccd6fc"
 ansi = [
@@ -40,17 +39,17 @@ ansi = [
   "#b52f51",
   "#005c3e",
   "#8d5628",
-  "#2f60b8",
+  "#3060b8",
   "#7647c7",
   "#005485",
   "#292c33",
 
   "#757780",
-  "#8d3365",
+  "#903358",
   "#004c33",
   "#6d4e35",
-  "#205697",
-  "#514e8a",
+  "#2f5398",
+  "#5d4a86",
   "#194567",
   "#1b1f2b",
 ]
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "dorothy"
 subject = "va-11-hall-a/dorothy"
-signature = ["cursor", "ansi4", "ansi5"]
 
 [palette.colors]
 background = "#201515"
@@ -87,7 +85,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f7"
-foreground = "#2d1b1c"
+foreground = "#2c1b1c"
 cursor = "#c2304c"
 selection_background = "#fec9de"
 ansi = [
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "alma"
 subject = "va-11-hall-a/alma"
-signature = ["cursor", "ansi12", "ansi9"]
 
 [palette.colors]
 background = "#1e160d"
@@ -122,7 +119,7 @@ cursor = "#eaa549"
 selection_background = "#483a3f"
 ansi = [
   "#2b2218",
-  "#ee722a",
+  "#f16e41",
   "#cec474",
   "#f4ae51",
   "#56a0ac",
@@ -142,12 +139,12 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f4"
-foreground = "#2a1d0e"
+foreground = "#291d0e"
 cursor = "#a66c10"
 selection_background = "#e7d2d8"
 ansi = [
   "#fff1e5",
-  "#a74500",
+  "#ae3e14",
   "#3b5826",
   "#8b5800",
   "#186d78",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "stella"
 subject = "va-11-hall-a/stella"
-signature = ["cursor", "ansi2", "ansi13"]
 
 [palette.colors]
 background = "#201515"
@@ -205,8 +201,8 @@ ansi = [
   "#bc263c",
   "#005d34",
   "#9c4e01",
-  "#7149c9",
-  "#b41498",
+  "#7249c9",
+  "#b41599",
   "#005193",
   "#362929",
 
@@ -214,8 +210,8 @@ ansi = [
   "#8c3b3c",
   "#194d00",
   "#724d2b",
-  "#6441a1",
-  "#773d89",
+  "#67409f",
+  "#793c87",
   "#1e4566",
   "#2d1b1b",
 ]
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "sei"
 subject = "va-11-hall-a/sei"
-signature = ["cursor", "ansi12", "ansi9"]
 
 [palette.colors]
 background = "#101916"
@@ -252,7 +247,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#f2fcf6"
-foreground = "#13231e"
+foreground = "#12231e"
 cursor = "#378b76"
 selection_background = "#c2d9f9"
 ansi = [
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "valhalla"
 subject = "va-11-hall-a/valhalla"
-signature = ["cursor", "ansi6", "ansi3"]
 
 [palette.colors]
 background = "#1f1518"
@@ -307,14 +301,14 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f8"
-foreground = "#2b1b20"
+foreground = "#2c1b21"
 cursor = "#b73871"
 selection_background = "#fcc9e2"
 ansi = [
   "#fff0f3",
   "#b32d6b",
   "#315a12",
-  "#686600",
+  "#805d00",
   "#703fe2",
   "#ad2a8f",
   "#005868",
@@ -323,7 +317,7 @@ ansi = [
   "#837377",
   "#8f335d",
   "#2e4a1a",
-  "#62532d",
+  "#65522d",
   "#5547a1",
   "#7c3e74",
   "#0c475f",

@@ -26,7 +26,6 @@ import {
   misses,
   PAIRS,
   ruleSlots,
-  SLOT_NAMES,
   slotLabel,
 } from '../core/slots.ts'
 import { inert } from '../core/text.ts'
@@ -107,7 +106,6 @@ export interface Choice {
 
 export interface Edited {
   colors: Colors
-  signature: string[]
 }
 
 export interface Found {
@@ -131,7 +129,6 @@ export interface EditorOptions {
   original?: Colors
   against?: string
   notice?: string
-  signature: string[]
   palettes?: Choice[]
   pictures?: number
   exports?: Exports
@@ -151,7 +148,6 @@ type Mode = 'seeds' | 'list' | 'tune'
 interface Snapshot {
   list: Hex[]
   lch: Oklch[]
-  signature: string[]
 }
 
 interface Step {
@@ -175,8 +171,8 @@ interface GateRow {
   slots: number[]
 }
 
-export function gateRows(list: Hex[], signature: string[]): GateRow[] {
-  const theme = gatedOf(list, signature)
+export function gateRows(list: Hex[]): GateRow[] {
+  const theme = gatedOf(list)
   const values = measure(theme)
   const missed = new Set(missedRules(theme).map((rule) => rule.rule))
 
@@ -189,12 +185,12 @@ export function gateRows(list: Hex[], signature: string[]): GateRow[] {
       label: rule.label,
       value: shownOf(value),
       bound: boundOf(rule),
-      slots: ok === false ? ruleSlots(list, signature, rule.rule) : [],
+      slots: ok === false ? ruleSlots(list, rule.rule) : [],
     }
   })
 }
 
-const ALWAYS = new Set(['reset', 'reset-all', 'hex', 'paste', 'fix', 'open', 'tune', 'sig', 'follow'])
+const ALWAYS = new Set(['reset', 'reset-all', 'hex', 'paste', 'fix', 'open', 'tune', 'follow'])
 
 const JUMPS = new Set(['jump', 'hex', 'paste', 'reset'])
 
@@ -232,7 +228,6 @@ export class PaletteEditor {
   lch: Oklch[]
   start: Hex[]
   original: Hex[]
-  signature: string[]
   row = 0
   col = 0
   channel = 0
@@ -266,7 +261,6 @@ export class PaletteEditor {
   readonly options: EditorOptions
   readonly fresh: boolean
   readonly tone: boolean
-  private readonly startSignature: string[]
   private seeded = false
   private tuneFrom: { list: Hex[]; lch: Oklch[] } | undefined
   private holds = new Map<number, number>()
@@ -290,8 +284,6 @@ export class PaletteEditor {
     this.lch = this.lchs()
     this.start = this.list
     this.original = options.original ? listOf(options.original) : this.list
-    this.signature = [...options.signature]
-    this.startSignature = [...options.signature]
     this.pictures = options.pictures ?? 0
     this.startPictures = this.pictures
     this.chain(this.original)
@@ -380,7 +372,7 @@ export class PaletteEditor {
   }
 
   edited(): Edited {
-    return { colors: this.colors(), signature: [...this.signature] }
+    return { colors: this.colors() }
   }
 
   shown(): Hex[] {
@@ -396,8 +388,7 @@ export class PaletteEditor {
       this.seeded ||
       this.options.against !== undefined ||
       this.pictures !== this.startPictures ||
-      this.list.some((c, i) => c !== this.start[i]) ||
-      this.signature.join() !== this.startSignature.join()
+      this.list.some((c, i) => c !== this.start[i])
     )
   }
 
@@ -406,7 +397,7 @@ export class PaletteEditor {
   }
 
   misses(): Set<number> {
-    return misses(this.list, this.signature)
+    return misses(this.list)
   }
 
   choices(): Choice[] {
@@ -552,7 +543,6 @@ export class PaletteEditor {
         more: '#rrggbb, rgb(r g b) or oklch(l c h). A paste works too.',
         ...when(true, '#'),
       },
-      ...(this.tone ? [] : [{ group: 'Edit', keys: '*', does: 'Mark it a signature color' }]),
       {
         group: 'Link',
         keys: 'l',
@@ -629,7 +619,6 @@ export class PaletteEditor {
     }
 
     return [
-      ...(this.tone ? [] : ([[MARKS.signature, 'signature color']] as Legend)),
       [MARKS.miss, 'fails a contrast check'],
       [MARKS.on, 'changed'],
       [MARKS.linked, 'follows its normal'],
@@ -1046,8 +1035,6 @@ export class PaletteEditor {
       this.lch = this.lchs()
     } else if (key === '=') {
       this.follow()
-    } else if (key === '*' && !this.tone) {
-      this.mark()
     } else if (key === 'f') {
       this.fix()
     } else if (key === 'o' && !this.tone) {
@@ -1781,7 +1768,7 @@ export class PaletteEditor {
   }
 
   private snapshot(): Snapshot {
-    return { list: this.list, lch: this.lch, signature: this.signature }
+    return { list: this.list, lch: this.lch }
   }
 
   private remember(edit: string): void {
@@ -1823,34 +1810,10 @@ export class PaletteEditor {
     this.say(`${slotLabel(bright).name} follows ${slotLabel(normal).name.toLowerCase()}`, 'ok')
   }
 
-  private mark(): void {
-    const name = SLOT_NAMES[this.slot()] as string
-    this.remember('sig')
-    const marked = this.signature.includes(name) ? this.signature.filter((s) => s !== name) : [...this.signature, name]
-    const dropped = marked.length > 3 ? marked[0] : undefined
-    this.signature = marked.slice(-3)
-    const whole = this.signature.length === 3
-
-    this.say(
-      whole
-        ? `Signature: ${this.signature.join(', ')}${dropped ? ` — ${dropped} dropped` : ''}`
-        : `The signature needs three colors — ${this.signature.length} marked`,
-      whole ? 'ok' : 'warn',
-    )
-  }
-
   private fix(): void {
-    const theme = gatedOf(this.list, this.signature)
+    const theme = gatedOf(this.list)
 
-    const {
-      theme: fixed,
-      moves,
-      left,
-    } = fixGate({
-      ...theme,
-      selectionBackground: theme.selectionBackground as Hex,
-      signatureSlots: this.signature,
-    })
+    const { theme: fixed, moves, left } = fixGate({ ...theme, selectionBackground: theme.selectionBackground as Hex })
 
     if (moves.length === 0) {
       const passes = check(theme).length === 0
@@ -1918,7 +1881,6 @@ export class PaletteEditor {
   private restore(snap: Snapshot): void {
     this.list = snap.list
     this.lch = snap.lch
-    this.signature = snap.signature
     this.lastEdit = undefined
   }
 }

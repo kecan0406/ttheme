@@ -3,7 +3,6 @@
 [[palette]]
 slug = "moon"
 subject = "sailor-moon/moon"
-signature = ["cursor", "ansi3", "ansi12"]
 
 [palette.colors]
 background = "#1f1518"
@@ -39,7 +38,7 @@ ansi = [
   "#fff0f2",
   "#ba2654",
   "#36591d",
-  "#736300",
+  "#815e00",
   "#0d66ac",
   "#9e3d8d",
   "#005b51",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "mercury"
 subject = "sailor-moon/mercury"
-signature = ["cursor", "ansi12", "ansi2"]
 
 [palette.colors]
 background = "#12181d"
@@ -77,7 +75,7 @@ ansi = [
 
   "#72787e",
   "#f3a0ba",
-  "#4ef5d7",
+  "#72f4ba",
   "#f6d67b",
   "#5bb4e6",
   "#ffbcfa",
@@ -87,7 +85,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#f6f9ff"
-foreground = "#162129"
+foreground = "#152129"
 cursor = "#0071a5"
 selection_background = "#c2d9f9"
 ansi = [
@@ -102,7 +100,7 @@ ansi = [
 
   "#72787e",
   "#8c3758",
-  "#004b40",
+  "#004c33",
   "#6e4f00",
   "#005b7f",
   "#813783",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "mars"
 subject = "sailor-moon/mars"
-signature = ["cursor", "ansi9", "foreground"]
 
 [palette.colors]
 background = "#201514"
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "jupiter"
 subject = "sailor-moon/jupiter"
-signature = ["cursor", "ansi1", "ansi11"]
 
 [palette.colors]
 background = "#131913"
@@ -204,7 +200,7 @@ ansi = [
   "#eff6ea",
   "#ab3d44",
   "#39582a",
-  "#6d6425",
+  "#7b5f22",
   "#1a6e6e",
   "#9e4661",
   "#015d43",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "venus"
 subject = "sailor-moon/venus"
-signature = ["cursor", "ansi3", "ansi12"]
 
 [palette.colors]
 background = "#1e160d"
@@ -253,7 +248,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f4"
 foreground = "#291e0e"
-cursor = "#a26c00"
+cursor = "#9d6800"
 selection_background = "#f1d3ac"
 ansi = [
   "#fff1e4",
@@ -268,7 +263,7 @@ ansi = [
   "#817567",
   "#8b3e23",
   "#2d4919",
-  "#675300",
+  "#6f5000",
   "#005d71",
   "#804252",
   "#004b43",

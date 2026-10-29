@@ -3,7 +3,6 @@
 [[palette]]
 slug = "miku"
 subject = "vocaloid/miku"
-signature = ["cursor", "ansi1", "ansi12"]
 
 [palette.colors]
 background = "#101918"
@@ -12,7 +11,7 @@ cursor = "#39c5bb"
 selection_background = "#234246"
 ansi = [
   "#1c2524",
-  "#dc74a8",
+  "#e1739a",
   "#4dd89e",
   "#b2c380",
   "#7395cf",
@@ -37,7 +36,7 @@ cursor = "#00877f"
 selection_background = "#bcdde2"
 ansi = [
   "#ebf6f3",
-  "#a14074",
+  "#a83b67",
   "#005c3e",
   "#7c5f1e",
   "#41649a",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "kumori"
 subject = "vocaloid/kumori"
-signature = ["cursor", "ansi12", "ansi14"]
 
 [palette.colors]
 background = "#201516"
@@ -87,7 +85,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f7"
-foreground = "#2d1b1c"
+foreground = "#2c1b1c"
 cursor = "#c05463"
 selection_background = "#d1d8dc"
 ansi = [
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "rin"
 subject = "vocaloid/rin"
-signature = ["cursor", "ansi4", "ansi1"]
 
 [palette.colors]
 background = "#1b170c"
@@ -142,7 +139,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f1"
-foreground = "#251f0d"
+foreground = "#261f0d"
 cursor = "#a48200"
 selection_background = "#ebd5a2"
 ansi = [
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "len"
 subject = "vocaloid/len"
-signature = ["cursor", "ansi6", "ansi9"]
 
 [palette.colors]
 background = "#19180d"
@@ -177,7 +173,7 @@ cursor = "#e4d517"
 selection_background = "#483d18"
 ansi = [
   "#262418",
-  "#eb7425",
+  "#ef6e42",
   "#a4ce61",
   "#e3b61d",
   "#00a3be",
@@ -202,7 +198,7 @@ cursor = "#938800"
 selection_background = "#e8d6a4"
 ansi = [
   "#f9f4e1",
-  "#a44800",
+  "#ad3f16",
   "#305b0f",
   "#805d00",
   "#006d80",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "luka"
 subject = "vocaloid/luka"
-signature = ["cursor", "ansi3", "ansi2"]
 
 [palette.colors]
 background = "#1f1517"
@@ -233,7 +228,7 @@ selection_background = "#4d3747"
 ansi = [
   "#2c2123",
   "#e96e93",
-  "#8ac9e8",
+  "#91cfb0",
   "#e6b26a",
   "#8395c6",
   "#d69fd5",
@@ -242,7 +237,7 @@ ansi = [
 
   "#837376",
   "#f39eb3",
-  "#9de8f5",
+  "#aceaca",
   "#fdd5bc",
   "#98aadc",
   "#f9bff8",
@@ -258,27 +253,26 @@ selection_background = "#eecee3"
 ansi = [
   "#fff0f2",
   "#b13360",
-  "#005772",
+  "#1c5a42",
   "#845b1b",
   "#4d6296",
   "#894d8d",
-  "#2e5276",
+  "#275474",
   "#35292c",
 
   "#837376",
   "#8e3752",
-  "#004a52",
+  "#094c35",
   "#714d34",
   "#3a538d",
   "#7b3c80",
-  "#244659",
+  "#234659",
   "#2c1b1f",
 ]
 
 [[palette]]
 slug = "kaito"
 subject = "vocaloid/kaito"
-signature = ["cursor", "ansi4", "ansi3"]
 
 [palette.colors]
 background = "#15171e"
@@ -308,13 +302,13 @@ ansi = [
 [palette.colors.light]
 background = "#faf8ff"
 foreground = "#1b1f2b"
-cursor = "#1351b8"
+cursor = "#265dc3"
 selection_background = "#c8d7fa"
 ansi = [
   "#f2f3fd",
   "#b62967",
   "#005c3e",
-  "#746200",
+  "#805d00",
   "#0a62bc",
   "#8041c9",
   "#00557d",
@@ -323,7 +317,7 @@ ansi = [
   "#757780",
   "#8d3658",
   "#004c33",
-  "#4e5a00",
+  "#6e4f00",
   "#355684",
   "#63478a",
   "#004764",
@@ -333,7 +327,6 @@ ansi = [
 [[palette]]
 slug = "meiko"
 subject = "vocaloid/meiko"
-signature = ["cursor", "ansi11", "ansi14"]
 
 [palette.colors]
 background = "#201514"
@@ -344,19 +337,19 @@ ansi = [
   "#2d2120",
   "#e5756e",
   "#b7cc81",
-  "#fda680",
+  "#f7ac71",
   "#aa87d3",
   "#fd90ad",
-  "#afac76",
+  "#8fb58b",
   "#e5cfcf",
 
   "#857372",
   "#f3a09f",
   "#f6e030",
-  "#ffc5ad",
+  "#fac9a4",
   "#bf9de8",
   "#ffc1ce",
-  "#e6c274",
+  "#a0d999",
   "#ffe9e8",
 ]
 
@@ -369,18 +362,18 @@ ansi = [
   "#fff0ef",
   "#b33734",
   "#3a5823",
-  "#a04a20",
+  "#935318",
   "#7a4cb2",
   "#ae365e",
-  "#545225",
+  "#2d593d",
   "#362928",
 
   "#857372",
   "#8c3a3d",
   "#2f4a1b",
-  "#7c472f",
+  "#774b24",
   "#6a3ea0",
   "#7e4254",
-  "#553f00",
+  "#0d4d21",
   "#2d1b1b",
 ]

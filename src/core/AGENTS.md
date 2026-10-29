@@ -13,8 +13,8 @@ The pure model. It does no I/O: no `process`, `fetch` or `Bun`, and of node only
 
 - Every built-in palette passes the contrast gate in both modes. A new rule goes on the end of `GATE_RULES`; a rule that does not apply to a palette measures `NaN`, which every reader skips.
 - `missedRules` (`contrast.ts`) decides which rules a palette misses, from the colors, unrounded. Count misses in rules, and never read an entry's stored `gate`, which an older copy holds with fewer rules. `measure`'s rounded values are only shown.
-- `signature` names three slots that resolve to three different colors, in both modes.
 - A palette is made in one mode (`modeOf`), and its other mode is the mirror (`mirror.ts`, the one implementation), the same whether a set keeps it or the runtime makes it.
+- Every rule reads a palette's colors alone: no key of a palette changes how the gate, `fixGate` or the mirror treat it.
 
 ## Memo and caches
 
@@ -24,7 +24,7 @@ The pure model. It does no I/O: no `process`, `fetch` or `Bun`, and of node only
 
 ## Share codes
 
-- A share code is `tt7:`. A change to its layout goes under another prefix, and an older prefix is refused, never read.
+- A share code is `tt8:`. A change to its layout goes under another prefix, and an older prefix is refused, never read.
 - The format is `draft.ts`, pure, with the hash and the packing handed in: `own.ts` packs with `node:zlib` and hashes with `node:crypto`; the site's builder uses `CompressionStream` and WebCrypto, never brotli.
 
 ## Decoders

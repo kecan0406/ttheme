@@ -10,32 +10,6 @@
       "type": "string",
       "pattern": "^#[0-9a-f]{6}$"
     },
-    "slot": {
-      "description": "One of the palette's twenty colors",
-      "type": "string",
-      "enum": [
-        "background",
-        "foreground",
-        "cursor",
-        "selection",
-        "ansi0",
-        "ansi1",
-        "ansi2",
-        "ansi3",
-        "ansi4",
-        "ansi5",
-        "ansi6",
-        "ansi7",
-        "ansi8",
-        "ansi9",
-        "ansi10",
-        "ansi11",
-        "ansi12",
-        "ansi13",
-        "ansi14",
-        "ansi15"
-      ]
-    },
     "site": {
       "description": "A site ttheme find searches",
       "anyOf": [
@@ -157,15 +131,6 @@
             },
             "required": ["palette"]
           },
-          "signature": {
-            "description": "The three colors the character is made from, which must differ: the first is the seed the other mode and the harmonizer lean toward, and these ANSI colors are let off their usual roles",
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/slot"
-            },
-            "minItems": 3,
-            "maxItems": 3
-          },
           "colors": {
             "description": "The colors the terminal shows, in the mode the palette was made in: light when its background is lighter than its foreground",
             "type": "object",
@@ -275,7 +240,7 @@
             "maxItems": 255
           }
         },
-        "required": ["slug", "signature", "colors"]
+        "required": ["slug", "colors"]
       },
       "minItems": 1
     }

@@ -18,7 +18,6 @@ import {
   PicturesBox,
   PlaneRows,
   SeedStrip,
-  SignatureDots,
   StartLabel,
   StatusText,
   Use,
@@ -108,7 +107,6 @@ import { tabKey } from './tabs'
 interface Snapshot {
   made: Hex[]
   other: Edit['other']
-  signature: string[]
 }
 
 const SAVE_MS = 400
@@ -125,7 +123,6 @@ function snapshotOf(edit: Edit): Snapshot {
   return {
     made: [...edit.made],
     other: { base: edit.other.base ? [...edit.other.base] : null, tuned: { ...edit.other.tuned } },
-    signature: [...edit.signature],
   }
 }
 
@@ -452,9 +449,9 @@ class PaletteBuilder extends HTMLElement {
   #render() {
     const edit = this.#state
     const list = this.#list()
-    const missed = misses(list, edit.signature)
+    const missed = misses(list)
     const changed = changedIn(edit, this.#view)
-    const gate = gateOf(list, edit.signature)
+    const gate = gateOf(list)
     const mock = this.querySelector<HTMLElement>('[data-mock]')
 
     for (const part of slotVars(list).split(';')) {
@@ -477,7 +474,7 @@ class PaletteBuilder extends HTMLElement {
     this.#enable('[data-reset]', edits > 0)
     this.#renderName()
 
-    const rows = rowsOf(list, edit.signature, missed, changed, this.#rows, this.#open, this.#linked(), this.#only)
+    const rows = rowsOf(list, missed, changed, this.#rows, this.#open, this.#linked(), this.#only)
     this.#fill(this.querySelector('[data-base-rows]'), html(<BaseRows rows={rows.base} />))
     this.#fill(this.querySelector('[data-pair-rows]'), html(<PairRows pairs={rows.pairs} />))
     const empty = this.querySelector<HTMLElement>('[data-rows-empty]')
@@ -581,12 +578,6 @@ class PaletteBuilder extends HTMLElement {
     if (!box) return
     this.#fill(this.querySelector('[data-file-note]'), html(<FileNote about={about} />))
     this.#fill(this.querySelector('[data-mark-tile]'), html(<MarkTile about={about} />))
-    const dots = this.querySelector('[data-signature-dots]')
-
-    if (dots && !dots.contains(document.activeElement)) this.#fill(dots, html(<SignatureDots about={about} />))
-    const trouble = this.querySelector<HTMLElement>('[data-signature-trouble]')
-
-    if (trouble) trouble.hidden = !about.trouble
     this.#fill(this.querySelector('[data-modes]'), html(<Modes modes={modesOf(edit)} />))
     const pictures = this.querySelector('[data-pictures]')
 
@@ -633,7 +624,7 @@ class PaletteBuilder extends HTMLElement {
     }
 
     this.#fill(this.querySelector('[data-seed-strip]'), html(<SeedStrip list={this.#state.made} />))
-    const gate = gateOf(this.#state.made, this.#state.signature)
+    const gate = gateOf(this.#state.made)
     const passed = this.querySelector('[data-seed-gate]')
 
     if (passed) passed.textContent = `${gate.passed} / ${gate.lines.length} pass`
@@ -652,8 +643,7 @@ class PaletteBuilder extends HTMLElement {
       list,
       originIn(edit, this.#view),
       slot,
-      edit.signature,
-      misses(list, edit.signature),
+      misses(list),
       this.#data?.uses[slot] ?? [],
       link,
       this.#format,
@@ -1538,17 +1528,6 @@ class PaletteBuilder extends HTMLElement {
     if (input.name === 'row-format') {
       this.#rows = input.value === 'oklch' ? 'oklch' : 'hex'
       this.#render()
-
-      return
-    }
-
-    const select = event.target
-
-    if (select instanceof HTMLSelectElement && select.dataset.signature !== undefined) {
-      this.#remember('!signature')
-      this.#settle()
-      const next = this.#state.signature.with(Number(select.dataset.signature), select.value)
-      this.#commit({ ...this.#state, signature: next })
 
       return
     }

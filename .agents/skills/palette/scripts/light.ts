@@ -13,7 +13,6 @@ import { setBlocks, withPalette } from '../../../../src/core/sets.ts'
 import type { Shade } from '../../../../src/core/theme.ts'
 
 interface ThemeDoc {
-  signature: string[]
   colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
 }
 
@@ -36,7 +35,6 @@ interface Member {
   file: string
   source: string
   name: string
-  signature: string[]
   to: Mode
   shade: Shade
   moves: Move[]
@@ -58,13 +56,12 @@ function member({ file, slug, text }: Palette): Member {
     selectionBackground: c.selection_background,
     ansi: c.ansi,
   }
-  const { shade, moves } = mirrored({ ...own, name: slug, signatureSlots: doc.signature })
+  const { shade, moves } = mirrored({ ...own, name: slug })
 
   return {
     file,
     source: text,
     name: slug,
-    signature: doc.signature,
     to: otherOf(modeOf(own)),
     shade,
     moves,
@@ -112,12 +109,7 @@ if (import.meta.main) {
   const made = values.write ? writeMirrors(palettes) : mirrorPalettes(palettes)
   let failed = 0
   for (const m of made) {
-    const doc = Bun.TOML.parse(m.text) as unknown as ThemeDoc
-    const left = check({
-      ...m.shade,
-      name: m.name,
-      signatureSlots: doc.signature,
-    })
+    const left = check({ ...m.shade, name: m.name })
     console.log(`${m.name}: ${m.to}`)
     for (const v of m.moves)
       console.log(`  turned  ${v.slot} ${v.from} → ${v.to} (${v.rule}, ΔE ${deltaE(v.from, v.to).toFixed(1)})`)

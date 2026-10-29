@@ -5,12 +5,10 @@ import { modeOf, otherOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
 import { POSITIONS, readTheme, type SharedPicture, slugOf, type Theme } from './theme.ts'
 
-export const CODE = 'tt7:'
+export const CODE = 'tt8:'
 export const SHARE_URL = 'https://ttheme.dev/builder/'
 export const SUM = 4
 export const UNPACKED = 64 * 1024
-
-const SLOTS = ['background', 'foreground', 'cursor', 'selection', ...Array.from({ length: 16 }, (_, i) => `ansi${i}`)]
 
 const BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 
@@ -18,7 +16,6 @@ export interface Draft {
   name: string
   subject?: string
   upstream?: UpstreamEntry
-  signature: string[]
   background: string
   foreground: string
   cursor: string
@@ -77,11 +74,13 @@ export function colorsToml(c: Colors, table: string): string[] {
 }
 
 export function paletteToml(d: Draft): string {
-  const lines = [
+  const head = [
     ...(d.subject ? [`subject = ${q(d.subject)}`] : []),
     ...(d.upstream ? [`upstream.palette = ${q(d.upstream.palette)}`] : []),
-    `signature = [${d.signature.map(q).join(', ')}]`,
-    '',
+  ]
+
+  const lines = [
+    ...(head.length > 0 ? [...head, ''] : []),
     ...colorsToml(d, 'colors'),
     ...(d.other ? ['', ...colorsToml(d.other, `colors.${otherOf(modeOf(d))}`)] : []),
     ...(d.pictures ?? []).flatMap((p) => ['', ...pictureToml(p)]),
@@ -99,7 +98,6 @@ export function draftOf(entry: PaletteEntry, name = entry.name): Draft {
     name,
     ...(entry.subject ? { subject: entry.subject } : {}),
     ...(entry.upstream ? { upstream: entry.upstream } : {}),
-    signature: entry.signatureSlots,
     background: entry.background,
     foreground: entry.foreground,
     cursor: entry.cursor,
@@ -250,10 +248,6 @@ function writeDraft(w: Writer, d: Draft): void {
     w.color(c)
   }
 
-  for (const slot of d.signature) {
-    w.u8(SLOTS.indexOf(slot))
-  }
-
   w.str(d.subject)
   w.str(d.upstream?.palette)
   const pictures = d.pictures ?? []
@@ -400,8 +394,6 @@ function colorsFromList([background, foreground, cursor, selection, ...ansi]: st
 function readDraft(r: Reader): Draft {
   const name = r.str()
   const { background, foreground, cursor, selection, ansi } = readColors(r)
-
-  const signature = [r.u8(), r.u8(), r.u8()].map((i) => SLOTS[i] ?? `slot${i}`)
   const subject = r.str()
   const upstream = r.str()
 
@@ -465,7 +457,6 @@ function readDraft(r: Reader): Draft {
           },
         }
       : {}),
-    signature,
     background,
     foreground,
     cursor,

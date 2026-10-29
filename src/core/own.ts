@@ -282,10 +282,6 @@ export function withShade(text: string, colors: Colors, table: string): string {
     : withTable(text, table, colorsToml(colors, table).join('\n'), 'colors')
 }
 
-export function resign(text: string, signature: string[]): string {
-  return text.replace(/^(signature\s*=\s*)\[[^\]]*\]/m, (_, head) => `${head}[${signature.map(q).join(', ')}]`)
-}
-
 export function gateLines(entry: PaletteEntry): string[] {
   const theme = toTheme(entry)
   const values = measure(theme)

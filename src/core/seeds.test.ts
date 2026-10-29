@@ -10,7 +10,6 @@ function failing(c: Colors): string[] {
     foreground: c.foreground,
     selectionBackground: c.selection,
     ansi: c.ansi,
-    signatureSlots: ['background', 'foreground', 'cursor'],
   }).map((v) => v.detail)
 }
 

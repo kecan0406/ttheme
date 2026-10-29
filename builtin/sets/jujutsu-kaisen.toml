@@ -3,7 +3,6 @@
 [[palette]]
 slug = "gojo"
 subject = "jujutsu-kaisen/gojo"
-signature = ["cursor", "foreground", "ansi13"]
 
 [palette.colors]
 background = "#11191c"
@@ -16,7 +15,7 @@ ansi = [
   "#64d6a3",
   "#c5be73",
   "#6e99c4",
-  "#aeabdf",
+  "#b4a9dd",
   "#27bcca",
   "#cdd6d9",
 
@@ -41,7 +40,7 @@ ansi = [
   "#005c3e",
   "#7c5f1e",
   "#3a678f",
-  "#5f5c9d",
+  "#675a9b",
   "#005961",
   "#252d30",
 
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "yuji"
 subject = "jujutsu-kaisen/yuji"
-signature = ["cursor", "ansi3", "ansi1"]
 
 [palette.colors]
 background = "#211513"
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "megumi"
 subject = "jujutsu-kaisen/megumi"
-signature = ["cursor", "ansi11", "ansi3"]
 
 [palette.colors]
 background = "#13181e"
@@ -158,7 +155,7 @@ ansi = [
   "#73777f",
   "#8c3758",
   "#004c33",
-  "#5c5110",
+  "#6c5011",
   "#2d568b",
   "#574c8a",
   "#004a53",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "nobara"
 subject = "jujutsu-kaisen/nobara"
-signature = ["cursor", "ansi4", "ansi3"]
 
 [palette.colors]
 background = "#20160e"
@@ -204,7 +200,7 @@ ansi = [
   "#fff1e9",
   "#ae3e12",
   "#395823",
-  "#756212",
+  "#7f5e10",
   "#4e60a1",
   "#b2315d",
   "#005d2c",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "nanami"
 subject = "jujutsu-kaisen/nanami"
-signature = ["cursor", "ansi2", "ansi4"]
 
 [palette.colors]
 background = "#18180e"
@@ -252,33 +247,32 @@ ansi = [
 
 [palette.colors.light]
 background = "#fdfae8"
-foreground = "#202110"
+foreground = "#202010"
 cursor = "#777938"
 selection_background = "#d8d7d7"
 ansi = [
   "#f7f4e2",
   "#92523c",
-  "#405725",
+  "#3c5828",
   "#7b5f1e",
   "#316986",
   "#9b4861",
-  "#235b2c",
+  "#1d5c30",
   "#2d2d21",
 
   "#797869",
   "#8b3d22",
-  "#434508",
+  "#2f491c",
   "#6c5005",
   "#015e6c",
   "#7e4252",
-  "#184b2d",
+  "#094c34",
   "#202110",
 ]
 
 [[palette]]
 slug = "geto"
 subject = "jujutsu-kaisen/geto"
-signature = ["cursor", "ansi3", "ansi2"]
 
 [palette.colors]
 background = "#16171f"
@@ -307,7 +301,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#fbf8ff"
-foreground = "#1d1f2b"
+foreground = "#1d1f2c"
 cursor = "#5865a6"
 selection_background = "#d9d5e8"
 ansi = [
@@ -323,7 +317,7 @@ ansi = [
   "#767680",
   "#8c3759",
   "#004c33",
-  "#625400",
+  "#6e4f00",
   "#2f5395",
   "#564c8a",
   "#184566",
@@ -333,7 +327,6 @@ ansi = [
 [[palette]]
 slug = "sukuna"
 subject = "jujutsu-kaisen/sukuna"
-signature = ["cursor", "foreground", "ansi9"]
 
 [palette.colors]
 background = "#211513"

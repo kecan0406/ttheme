@@ -11,7 +11,6 @@ import { checkMarketplace, runMarketplace } from './marketplaces.ts'
 
 const palette = {
   name: 'ann@pastel/x',
-  signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
   foreground: '#ede2c6',
   cursor: '#e8d082',

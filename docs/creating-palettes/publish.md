@@ -77,7 +77,6 @@ The `$schema` line gives your editor completion and checks.
 slug = "rei"                               # its name in the marketplace
 subject = "evangelion/rei"                 # what it is of: a work, or a work's character
 upstream.palette = "ttheme/rei"            # the palette it was copied from, if any
-signature = ["cursor", "ansi1", "ansi12"]  # the three colors the character is made from
 
 [palette.colors]
 background = "#201516"
@@ -93,7 +92,7 @@ slug = "asuka"
 
 Each `[[palette]]` table starts a palette, and the tables after it that start
 with `palette.` belong to it, up to the next `[[palette]]`. Every palette needs
-a `slug`, a `signature` and its `[palette.colors]`.
+a `slug` and its `[palette.colors]`.
 
 `subject` says what the palette is of: a work in the commons, such as
 `undertale`, or one of its characters, such as `evangelion/rei`. ttheme's lists

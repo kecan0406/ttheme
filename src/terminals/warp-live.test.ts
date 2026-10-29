@@ -33,8 +33,6 @@ function palette(name: string, background: string): PaletteEntry {
     foreground: '#e0f4f2',
     cursor: '#39c5bb',
     selection: '#1b3b3e',
-    signature: ['#39c5bb', '#e0f4f2', '#0e2124'],
-    signatureSlots: ['cursor', 'foreground', 'background'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
     gate: [],
     backdrop: { slot: 'cursor', color: '#39c5bb', opacity: 0.2 },

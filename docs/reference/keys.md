@@ -94,7 +94,6 @@ it and goes back to its card, and `ctrl+r` reloads the list.
 | `#` | type a color: `#rrggbb`, `rgb(r g b)` or `oklch(l c h)` |
 | `c` `v` | copy a color and paste it into another |
 | `r` `R` | put back this color, or every color |
-| `*` | mark a signature color, on your own palette |
 | `o`, `I` | take colors from another palette, or a share code |
 | `x` | copy the share code, an add command or the file |
 | `p`, `b` | find a picture; show or hide it behind the editor |

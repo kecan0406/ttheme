@@ -11,13 +11,12 @@ import {
   brightDrift,
   check,
   confusions,
-  exemptSlots,
-  type Gated,
   hueGap,
   isLight,
   lookalikes,
   ON_ACCENT_MIN,
   offRole,
+  type Readable,
   ROLE_HUES,
   ROLES,
   roleOf,
@@ -30,7 +29,7 @@ export interface Move {
   to: Hex
 }
 
-type Fixable = Gated & { selectionBackground: Hex; signatureSlots: string[] }
+type Fixable = Readable & { selectionBackground: Hex }
 
 const MARGIN = 5
 const PASSES = 6
@@ -141,17 +140,13 @@ function darken(hex: Hex, max: number): Hex {
   return inGamut(lo, c, h)
 }
 
-function place(ansi: Hex[], role: number, exempt: Set<number>): [number, number] | undefined {
+function place(ansi: Hex[], role: number): [number, number] | undefined {
   const band = ROLE_HUES.get(role) as { center: number; width: number }
   const [n, b] = [oklch(ansi[role] as Hex), oklch(ansi[role + 8] as Hex)]
 
-  const span = (slot: number, now: number) =>
-    exempt.has(slot)
-      ? [now]
-      : Array.from({ length: 2 * band.width + 1 }, (_, i) => (band.center - band.width + i + 360) % 360)
+  const span = Array.from({ length: 2 * band.width + 1 }, (_, i) => (band.center - band.width + i + 360) % 360)
 
   const clear = (slot: number, hue: number) => {
-    if (exempt.has(slot)) return true
     const mine = lab(rehue(ansi[slot] as Hex, hue))
 
     return ROLES.every((j) => {
@@ -161,8 +156,8 @@ function place(ansi: Hex[], role: number, exempt: Set<number>): [number, number]
     })
   }
 
-  const normals = span(role, n.h).filter((hue) => clear(role, hue))
-  const brights = span(role + 8, b.h).filter((hue) => clear(role + 8, hue))
+  const normals = span.filter((hue) => clear(role, hue))
+  const brights = span.filter((hue) => clear(role + 8, hue))
   let best: [number, number] | undefined
   let cost = Number.POSITIVE_INFINITY
 
@@ -219,8 +214,6 @@ class Fixer<T extends Fixable> {
   }
 
   roles(): void {
-    const own = new Set(this.theme.signatureSlots)
-
     for (const { slot, hue } of offRole(this.theme)) {
       const band = ROLE_HUES.get(roleOf(slot)) as { center: number; width: number }
       this.rehue(slot, 'ansi-role', band.center + toward(band.center, hue) * (band.width - MARGIN))
@@ -228,17 +221,14 @@ class Fixer<T extends Fixable> {
 
     for (const { normal, gap } of brightDrift(this.theme)) {
       if (gap <= BRIGHT_GAP) continue
-      const [anchor, mover] = own.has(`ansi${normal + 8}`) ? [normal + 8, normal] : [normal, normal + 8]
-      const a = oklch(this.theme.ansi[anchor] as Hex).h
-      const m = oklch(this.theme.ansi[mover] as Hex).h
-      this.rehue(mover, 'bright-follows', a + toward(a, m) * (BRIGHT_GAP - MARGIN))
+      const a = oklch(this.theme.ansi[normal] as Hex).h
+      const m = oklch(this.theme.ansi[normal + 8] as Hex).h
+      this.rehue(normal + 8, 'bright-follows', a + toward(a, m) * (BRIGHT_GAP - MARGIN))
     }
 
-    const exempt = exemptSlots(this.theme)
-
-    for (const [a, b] of lookalikes(this.theme)) {
-      const role = roleOf(exempt.has(b) ? a : b)
-      const hues = place(this.theme.ansi, role, exempt)
+    for (const [, b] of lookalikes(this.theme)) {
+      const role = roleOf(b)
+      const hues = place(this.theme.ansi, role)
 
       if (hues === undefined) continue
       this.rehue(role, 'distinct', hues[0])
@@ -285,10 +275,8 @@ class Fixer<T extends Fixable> {
   }
 
   separate(): void {
-    const exempt = exemptSlots(this.theme)
-
     for (const [red, green] of confusions(this.theme)) {
-      for (const mover of exempt.has(green) ? [red, green] : [green, red]) {
+      for (const mover of [green, red]) {
         if (this.pull(mover, mover === red ? green : red)) break
       }
     }

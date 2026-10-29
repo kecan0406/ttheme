@@ -32,8 +32,6 @@ function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
     selection: '#383b5b',
-    signature: ['#7cc1d6', '#e3e2e7', '#d7bcf3'],
-    signatureSlots: ['cursor', 'foreground', 'ansi13'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
     gate: [13.8, 6.8, 0.02, 10.4, 4.0],
     backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
@@ -135,8 +133,6 @@ function gated(partial: Partial<PaletteEntry> = {}): PaletteEntry {
     cursor: seeded.cursor,
     selection: seeded.selection,
     ansi: seeded.ansi,
-    signature: [seeded.background, seeded.foreground, seeded.cursor],
-    signatureSlots: ['background', 'foreground', 'cursor'],
     ...partial,
   })
 }
@@ -212,7 +208,6 @@ test('readMarketplaces lays the built-in palettes, each added marketplace and th
     paletteToml({
       name,
       subject,
-      signature: ['cursor', 'foreground', 'background'],
       background: '#101010',
       foreground: '#f0f0f0',
       cursor: '#e0c060',

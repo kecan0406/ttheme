@@ -27,7 +27,6 @@ const failing = {
     '#9be1ae',
     '#f9edd0',
   ],
-  signatureSlots: ['foreground', 'ansi5', 'selection'],
 }
 
 test('fixGate lifts every color that reads too faint until the palette passes', () => {

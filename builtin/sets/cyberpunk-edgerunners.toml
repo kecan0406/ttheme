@@ -3,7 +3,6 @@
 [[palette]]
 slug = "david"
 subject = "cyberpunk-edgerunners/david"
-signature = ["cursor", "ansi12", "ansi1"]
 
 [palette.colors]
 background = "#1a180d"
@@ -21,7 +20,7 @@ ansi = [
   "#dbd4c2",
 
   "#7c7767",
-  "#f2a376",
+  "#f69f83",
   "#c5eb53",
   "#ffdb37",
   "#a4a5e8",
@@ -46,7 +45,7 @@ ansi = [
   "#302c20",
 
   "#7c7767",
-  "#83441b",
+  "#8e3b1e",
   "#294a11",
   "#6e5000",
   "#494ba1",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "lucy"
 subject = "cyberpunk-edgerunners/lucy"
-signature = ["cursor", "foreground", "ansi12"]
 
 [palette.colors]
 background = "#1e151a"
@@ -70,7 +68,7 @@ ansi = [
   "#cd818b",
   "#d0c275",
   "#eeb080",
-  "#aa8abd",
+  "#a48cc1",
   "#e09cc8",
   "#4db6e9",
   "#e1d0d8",
@@ -95,7 +93,7 @@ ansi = [
   "#9a4b57",
   "#3c5728",
   "#8c5729",
-  "#795492",
+  "#73559a",
   "#95487f",
   "#005676",
   "#33292f",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "rebecca"
 subject = "cyberpunk-edgerunners/rebecca"
-signature = ["ansi1", "ansi2", "cursor"]
 
 [palette.colors]
 background = "#201516"
@@ -141,34 +138,33 @@ ansi = [
 ]
 
 [palette.colors.light]
-background = "#fff8f7"
+background = "#f1fcf8"
 foreground = "#2c1b1d"
 cursor = "#4d9285"
 selection_background = "#b2e1d4"
 ansi = [
-  "#fff0f1",
+  "#ecf6f2",
   "#bb2651",
   "#005d2f",
   "#9c4e01",
   "#8042c4",
   "#b12d73",
   "#00538b",
-  "#36292a",
+  "#252e2c",
 
-  "#847375",
+  "#6f7976",
   "#8e374d",
   "#234b00",
   "#724c2e",
   "#684199",
   "#7e4064",
   "#204565",
-  "#2c1b1d",
+  "#12231f",
 ]
 
 [[palette]]
 slug = "nightcity"
 subject = "cyberpunk-edgerunners/nightcity"
-signature = ["cursor", "ansi13", "ansi14"]
 
 [palette.colors]
 background = "#19180d"
@@ -197,7 +193,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#fef9e7"
-foreground = "#22200f"
+foreground = "#22200e"
 cursor = "#918900"
 selection_background = "#dfd9a0"
 ansi = [

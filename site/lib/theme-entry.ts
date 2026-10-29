@@ -61,7 +61,6 @@ export function toTheme(entry: PaletteEntry, shelves: Shelves): Theme {
     also,
     character,
     from: entry.upstream?.palette ?? null,
-    signatureSlots: entry.signatureSlots,
     ...shadeOf(entry),
     mode,
     other: shadeOf(inMode(entry, otherOf(mode))),

@@ -3,7 +3,6 @@
 [[palette]]
 slug = "kurisu"
 subject = "steins-gate/kurisu"
-signature = ["cursor", "ansi1", "ansi6"]
 
 [palette.colors]
 background = "#1f160d"
@@ -17,7 +16,7 @@ ansi = [
   "#e2b46f",
   "#8e91c7",
   "#f392bb",
-  "#7facf9",
+  "#70b0f7",
   "#e3d1c4",
 
   "#837469",
@@ -42,7 +41,7 @@ ansi = [
   "#815d20",
   "#585da4",
   "#a73b71",
-  "#144f98",
+  "#00528d",
   "#352a21",
 
   "#837469",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "mayuri"
 subject = "steins-gate/mayuri"
-signature = ["cursor", "foreground", "ansi13"]
 
 [palette.colors]
 background = "#11191c"
@@ -71,7 +69,7 @@ ansi = [
   "#92ceac",
   "#bcc078",
   "#6e9abf",
-  "#a5aee1",
+  "#b4a9dd",
   "#75b5c7",
   "#ced6db",
 
@@ -96,7 +94,7 @@ ansi = [
   "#1f5a3f",
   "#7c5f1e",
   "#3a678a",
-  "#525fa0",
+  "#675a9b",
   "#055868",
   "#262d31",
 
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "suzuha"
 subject = "steins-gate/suzuha"
-signature = ["cursor", "ansi9", "ansi4"]
 
 [palette.colors]
 background = "#1f160d"
@@ -122,7 +119,7 @@ cursor = "#d98e32"
 selection_background = "#423e2b"
 ansi = [
   "#2b2218",
-  "#ef7131",
+  "#f16e41",
   "#d5c440",
   "#f6ad3c",
   "#5ba1a4",
@@ -147,7 +144,7 @@ cursor = "#a06000"
 selection_background = "#dfd7bd"
 ansi = [
   "#fff1e7",
-  "#ab4200",
+  "#ae3e14",
   "#395922",
   "#895900",
   "#216d70",

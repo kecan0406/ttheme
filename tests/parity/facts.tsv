@@ -219,7 +219,7 @@ preview-default.new.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
 preview-default.new.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-tune.tune.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 preview-tune.tune.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-preview-tune.tune.text	txt:66a8f5918a	=	=	=	txt:e585ab6dc6	=	txt:e585ab6dc6	=	txt:c9eea19c35	txt:10afdc79b3	txt:e585ab6dc6	txt:e585ab6dc6
+preview-tune.tune.text	txt:b2a1c00aba	=	=	=	txt:b69a1dc437	=	txt:b69a1dc437	=	txt:2fca1220aa	txt:0953791768	txt:b69a1dc437	txt:b69a1dc437
 preview-tune.tune.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-tune.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 preview-tune.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none

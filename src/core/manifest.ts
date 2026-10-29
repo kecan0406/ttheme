@@ -25,8 +25,6 @@ export interface PaletteEntry {
   foreground: string
   cursor: string
   selection: string
-  signature: string[]
-  signatureSlots: string[]
   ansi: string[]
   other?: Colors
   gate: number[]
@@ -87,7 +85,7 @@ export function slotColor(colors: Painted, slot: string): string {
 }
 
 export function withColors(entry: PaletteEntry, colors: Colors): PaletteEntry {
-  const patched = { ...entry, ...colors, signature: entry.signatureSlots.map((slot) => slotColor(colors, slot)) }
+  const patched = { ...entry, ...colors }
   const theme = toTheme(patched)
 
   const { slot, color, opacity } = backdropTone({ name: patched.name, ...colors })
@@ -147,8 +145,6 @@ export function paletteEntry(t: Theme): PaletteEntry {
     foreground: t.foreground,
     cursor: t.cursor,
     selection: t.selectionBackground,
-    signature: t.signature,
-    signatureSlots: t.signatureSlots,
     ansi: t.ansi,
     ...(t.other ? { other: colorsOfTheme(t.other) } : {}),
     gate: measure(t),
@@ -168,8 +164,6 @@ export function toTheme(entry: PaletteEntry): Theme {
     selectionBackground: entry.selection,
     ansi: entry.ansi,
     ...(entry.other ? { other: shadeOf(entry.other) } : {}),
-    signature: entry.signature,
-    signatureSlots: entry.signatureSlots,
     ...(entry.pictures ? { pictures: entry.pictures } : {}),
   }
 }

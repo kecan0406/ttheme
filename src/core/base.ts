@@ -84,15 +84,13 @@ export function parseScheme(text: string): Shade | undefined {
 }
 
 export function seeded(theme: Anchored, scheme: Shade): Anchored {
-  const shade = theme.signatureSlots.reduce((out, slot) => withSlot(out, slot, slotOf(theme, slot)), scheme)
+  const shade = theme.anchorSlots.reduce((out, slot) => withSlot(out, slot, slotOf(theme, slot)), scheme)
 
-  return { name: theme.name, signatureSlots: theme.signatureSlots, ...shade, ansi: [...shade.ansi] }
+  return { name: theme.name, anchorSlots: theme.anchorSlots, ...shade, ansi: [...shade.ansi] }
 }
 
 export function gateOf(theme: Anchored, shade: Shade): string[] {
-  return check({ ...shade, name: theme.name, signatureSlots: theme.signatureSlots }).map(
-    (v) => `${v.rule} — ${v.detail}`,
-  )
+  return check({ ...shade, name: theme.name }).map((v) => `${v.rule} — ${v.detail}`)
 }
 
 function scored(name: string, held: ReadonlySet<number>, shade: Shade): Omit<Ranked, 'shade' | 'moves'> {
@@ -130,11 +128,7 @@ function scored(name: string, held: ReadonlySet<number>, shade: Shade): Omit<Ran
 }
 
 export function finished(theme: Anchored, shade: Shade) {
-  const { theme: fixed, moves } = fixRoles({
-    ...shade,
-    name: theme.name,
-    signatureSlots: theme.signatureSlots,
-  })
+  const { theme: fixed, moves } = fixRoles({ ...shade, name: theme.name })
 
   return { shade: { ...shade, ansi: fixed.ansi }, moves }
 }
@@ -154,7 +148,7 @@ export function roleBase(): Shade {
 }
 
 export function bestBase(theme: Anchored, schemes: Iterable<readonly [string, Shade | undefined]>): Choice {
-  const held = new Set(theme.signatureSlots.filter((s) => s.startsWith('ansi')).map((s) => Number(s.slice(4))))
+  const held = new Set(theme.anchorSlots.filter((s) => s.startsWith('ansi')).map((s) => Number(s.slice(4))))
   const candidates: Candidate[] = []
   const dropped: [number, string, string][] = []
   let at = 0

@@ -15,7 +15,7 @@ In `ttheme`, the same editor opens from a palette's panel: put the cursor on the
 palette, press `tab`, then `enter` on **Edit palette**.
 
 The editor works as it does for [your own palette](your-own.md): pick a color,
-tune it, and `s` saves. Tuning has no seeds or signature marks, and it never
+tune it, and `s` saves. Tuning has no seeds, and it never
 changes the palette in its marketplace.
 
 ## What tuning does

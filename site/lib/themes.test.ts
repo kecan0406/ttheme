@@ -27,7 +27,6 @@ function theme(mode: 'dark' | 'light'): Theme {
     also: [],
     character: null,
     from: null,
-    signatureSlots: ['cursor', 'foreground', 'ansi1'],
     mode,
     other,
   }

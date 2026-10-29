@@ -3,7 +3,6 @@
 [[palette]]
 slug = "lelouch"
 subject = "code-geass/lelouch"
-signature = ["selection", "cursor", "ansi1"]
 
 [palette.colors]
 background = "#19161e"
@@ -31,34 +30,33 @@ ansi = [
 ]
 
 [palette.colors.light]
-background = "#fef7ff"
+background = "#fff7f9"
 foreground = "#221d2a"
 cursor = "#905485"
-selection_background = "#bc99ff"
+selection_background = "#e0d0f9"
 ansi = [
-  "#f9f1fc",
+  "#ffeff7",
   "#be2628",
   "#005c3e",
   "#995100",
   "#2458db",
   "#7547c8",
   "#00567a",
-  "#2e2b33",
+  "#332930",
 
-  "#7a757f",
+  "#80747b",
   "#8d384f",
   "#004c33",
   "#714d31",
   "#2e558d",
   "#743e89",
   "#004766",
-  "#221d2a",
+  "#291c25",
 ]
 
 [[palette]]
 slug = "suzaku"
 subject = "code-geass/suzaku"
-signature = ["cursor", "ansi2", "selection"]
 
 [palette.colors]
 background = "#211512"
@@ -89,7 +87,7 @@ ansi = [
 background = "#fff8f6"
 foreground = "#2d1b16"
 cursor = "#804535"
-selection_background = "#bfc2ff"
+selection_background = "#d3d4fc"
 ansi = [
   "#fff1ed",
   "#bd2825",
@@ -102,7 +100,7 @@ ansi = [
 
   "#85736f",
   "#8c3b36",
-  "#3e4600",
+  "#2b4a15",
   "#724d23",
   "#6142a1",
   "#803d6e",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "cc"
 subject = "code-geass/cc"
-signature = ["cursor", "ansi3", "ansi12"]
 
 [palette.colors]
 background = "#151910"
@@ -142,7 +139,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#f8fbeb"
-foreground = "#1c2213"
+foreground = "#1c2113"
 cursor = "#648f25"
 selection_background = "#ddd1fa"
 ansi = [
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "kallen"
 subject = "code-geass/kallen"
-signature = ["cursor", "selection", "ansi12"]
 
 [palette.colors]
 background = "#201516"
@@ -197,9 +193,9 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f7"
-foreground = "#2d1b1d"
+foreground = "#2c1b1d"
 cursor = "#8e384a"
-selection_background = "#92b0bb"
+selection_background = "#bddce7"
 ansi = [
   "#fff0f1",
   "#bb2651",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "nunnally"
 subject = "code-geass/nunnally"
-signature = ["cursor", "ansi12", "ansi5"]
 
 [palette.colors]
 background = "#1f160d"
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "euphemia"
 subject = "code-geass/euphemia"
-signature = ["cursor", "ansi5", "ansi13"]
 
 [palette.colors]
 background = "#1e1519"
@@ -325,7 +319,7 @@ ansi = [
   "#2e491b",
   "#6f4e30",
   "#5348a1",
-  "#6d3e7d",
+  "#714281",
   "#1e446a",
   "#2a1b23",
 ]

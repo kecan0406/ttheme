@@ -40,7 +40,7 @@ const anchors: [string, string][] = [
 
 const theme = {
   name: 'probe',
-  signatureSlots: anchors.map(([slot]) => slot),
+  anchorSlots: anchors.map(([slot]) => slot),
   ...anchors.reduce((shade, [slot, hex]) => withSlot(shade, slot, hex), scheme),
 }
 
@@ -50,7 +50,7 @@ test('bestBase keeps a base the role fixer brings through the gate and hands bac
   const { best } = bestBase(theme, [['probe', scheme]])
 
   assert.ok(best)
-  assert.deepEqual(check({ ...best.shade, name: theme.name, signatureSlots: theme.signatureSlots }), [])
+  assert.deepEqual(check({ ...best.shade, name: theme.name }), [])
   assert.ok(best.moves.length > 0)
 })
 

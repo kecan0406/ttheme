@@ -16,7 +16,6 @@ test('the picker layer sends a picture only when it changes, under a spare id, a
     title: 'Edit palette',
     name: 'kai@dust/dusk',
     colors: grow(SEEDS),
-    signature: ['background', 'foreground', 'cursor'],
     check: () => undefined,
   })
 
@@ -68,7 +67,6 @@ test('the relations charts go out as pictures over blank cells, again only when 
     title: 'Edit palette',
     name: 'kai@dust/dusk',
     colors: grow(SEEDS),
-    signature: ['background', 'foreground', 'cursor'],
     check: () => undefined,
   })
 

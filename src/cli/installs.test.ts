@@ -28,8 +28,6 @@ function entry(name: string): PaletteEntry {
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
     selection: '#383b5b',
-    signature: ['#7cc1d6', '#e3e2e7', '#d7bcf3'],
-    signatureSlots: ['cursor', 'foreground', 'ansi13'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
     gate: [13.8, 6.8, 0.02, 10.4, 4.0],
     backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
@@ -331,7 +329,7 @@ test('edit asks which palette a name two share means, and says why your own pale
       inHome(home, () => runEdit('juno')),
       /juno is ttheme\/juno, kai@mine\/juno — name the one you mean/,
     )
-    writeFileSync(own, setText([{ slug: 'juno', text: 'signature = 3\n' }]))
+    writeFileSync(own, setText([{ slug: 'juno', text: 'colors = 3\n' }]))
     await assert.rejects(
       inHome(home, () => runEdit('juno')),
       /kai@mine\/juno in .*tidewater\.toml cannot be read/,

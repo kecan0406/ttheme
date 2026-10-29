@@ -3,7 +3,6 @@
 [[palette]]
 slug = "lain"
 subject = "lain/lain"
-signature = ["cursor", "ansi2", "ansi12"]
 
 [palette.colors]
 background = "#211513"
@@ -47,7 +46,7 @@ ansi = [
 
   "#857370",
   "#8b3c37",
-  "#404600",
+  "#2c4a16",
   "#714e05",
   "#29597a",
   "#7f405f",

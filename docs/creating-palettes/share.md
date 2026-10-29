@@ -17,12 +17,12 @@ a picture in Ghostty, kitty, iTerm2, WezTerm and Konsole outside tmux, and text
 elsewhere.
 
 ```text
-https://ttheme.dev/builder/tt7:…
+https://ttheme.dev/builder/tt8:…
 ```
 
 One link can carry several palettes. Everything after `/builder/` is the code:
 each palette's name, its twenty colors and its other mode where it keeps one,
-its signature, the work or character it is of and the posts of its pictures,
+the work or character it is of and the posts of its pictures,
 checked by a hash so a mistyped link is refused. A palette from a marketplace
 goes by its full name, such as `ttheme/rei`; one that lives in no marketplace,
 such as a tuned copy, goes by its own name and says which palette it came
@@ -38,8 +38,8 @@ exports as a [set](publish.md#a-set).
 ## Install a link
 
 ```sh
-ttheme add https://ttheme.dev/builder/tt7:…
-ttheme add tt7:…              # the bare code works too
+ttheme add https://ttheme.dev/builder/tt8:…
+ttheme add tt8:…              # the bare code works too
 ttheme add ~/Downloads/evangelion.toml   # a set the builder exported
 ```
 

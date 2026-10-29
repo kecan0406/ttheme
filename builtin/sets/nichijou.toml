@@ -3,7 +3,6 @@
 [[palette]]
 slug = "yukko"
 subject = "nichijou/yukko"
-signature = ["cursor", "selection", "ansi9"]
 
 [palette.colors]
 background = "#1f160e"
@@ -34,7 +33,7 @@ ansi = [
 background = "#fff8f5"
 foreground = "#2c1c10"
 cursor = "#996336"
-selection_background = "#c0b4aa"
+selection_background = "#e2d5ca"
 ansi = [
   "#fff1e9",
   "#994e37",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "naganohara"
 subject = "nichijou/naganohara"
-signature = ["cursor", "selection", "ansi3"]
 
 [palette.colors]
 background = "#13181e"
@@ -89,7 +87,7 @@ ansi = [
 background = "#f7f9ff"
 foreground = "#17202a"
 cursor = "#4982b7"
-selection_background = "#9caecc"
+selection_background = "#c6d8f8"
 ansi = [
   "#f0f4fc",
   "#b72767",
@@ -103,7 +101,7 @@ ansi = [
   "#73777f",
   "#8c3758",
   "#0d4c35",
-  "#6a5101",
+  "#6e4f01",
   "#1e5888",
   "#5a4b8a",
   "#004957",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "mai"
 subject = "nichijou/mai"
-signature = ["cursor", "selection", "ansi1"]
 
 [palette.colors]
 background = "#1b1713"
@@ -144,7 +141,7 @@ ansi = [
 background = "#fff8f4"
 foreground = "#231f1a"
 cursor = "#5f5953"
-selection_background = "#c7c0ba"
+selection_background = "#ded6d0"
 ansi = [
   "#fcf2ea",
   "#9e4851",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "nano"
 subject = "nichijou/nano"
-signature = ["cursor", "ansi1", "selection"]
 
 [palette.colors]
 background = "#171819"
@@ -197,9 +193,9 @@ ansi = [
 
 [palette.colors.light]
 background = "#faf9fb"
-foreground = "#1f2021"
+foreground = "#1e2021"
 cursor = "#595a5c"
-selection_background = "#c4c1be"
+selection_background = "#dad6d3"
 ansi = [
   "#f5f3f5",
   "#a14648",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "hakase"
 subject = "nichijou/hakase"
-signature = ["cursor", "selection", "ansi1"]
 
 [palette.colors]
 background = "#1f160d"
@@ -254,7 +249,7 @@ ansi = [
 background = "#fff8f5"
 foreground = "#2b1d0f"
 cursor = "#b7752d"
-selection_background = "#8aaee3"
+selection_background = "#c5d8fa"
 ansi = [
   "#fff1e8",
   "#ac3d43",
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "sakamoto"
 subject = "nichijou/sakamoto"
-signature = ["selection", "cursor", "foreground"]
 
 [palette.colors]
 background = "#171818"
@@ -306,26 +300,26 @@ ansi = [
 ]
 
 [palette.colors.light]
-background = "#fbf9f8"
+background = "#fff8f7"
 foreground = "#1e2020"
 cursor = "#c63a42"
-selection_background = "#acabab"
+selection_background = "#d9d7d6"
 ansi = [
-  "#f5f3f3",
+  "#fff0ef",
   "#b13b1b",
   "#005e00",
   "#805d00",
   "#235fc5",
   "#aa21a9",
   "#005a5a",
-  "#2c2c2c",
+  "#362928",
 
-  "#777777",
+  "#857372",
   "#8c3c34",
   "#014e00",
   "#6e5000",
   "#00598a",
   "#81387e",
   "#004a4a",
-  "#1f2020",
+  "#2d1b1a",
 ]

@@ -3,7 +3,6 @@
 [[palette]]
 slug = "maou"
 subject = "the-devil-is-a-part-timer/maou"
-signature = ["cursor", "selection", "ansi3"]
 
 [palette.colors]
 background = "#211512"
@@ -34,7 +33,7 @@ ansi = [
 background = "#fff8f6"
 foreground = "#2d1b17"
 cursor = "#af4932"
-selection_background = "#ff8888"
+selection_background = "#ffcbc9"
 ansi = [
   "#fff0ed",
   "#b7303b",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "emi"
 subject = "the-devil-is-a-part-timer/emi"
-signature = ["cursor", "ansi10", "ansi5"]
 
 [palette.colors]
 background = "#201516"
@@ -93,7 +91,7 @@ selection_background = "#e4d2df"
 ansi = [
   "#fff0f1",
   "#bd2638",
-  "#595100",
+  "#395822",
   "#9a4f00",
   "#514ce2",
   "#785496",
@@ -102,7 +100,7 @@ ansi = [
 
   "#847375",
   "#8c3a3e",
-  "#3e4700",
+  "#2b4a15",
   "#724c2f",
   "#4b4aa1",
   "#80397e",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "chiho"
 subject = "the-devil-is-a-part-timer/chiho"
-signature = ["cursor", "ansi6", "ansi3"]
 
 [palette.colors]
 background = "#211512"
@@ -124,7 +121,7 @@ ansi = [
   "#2e211e",
   "#f2697f",
   "#c3c748",
-  "#f7a987",
+  "#f1ae7a",
   "#9e87e3",
   "#e09ccd",
   "#69b9ab",
@@ -143,13 +140,13 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f6"
 foreground = "#2d1b16"
-cursor = "#965342"
+cursor = "#9f5846"
 selection_background = "#c1d9f9"
 ansi = [
   "#fff1ed",
   "#bb274a",
   "#36581e",
-  "#9b4e28",
+  "#8f5524",
   "#6d4acb",
   "#944785",
   "#005b50",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "ashiya"
 subject = "the-devil-is-a-part-timer/ashiya"
-signature = ["cursor", "foreground", "ansi2"]
 
 [palette.colors]
 background = "#1d170c"
@@ -203,7 +199,7 @@ selection_background = "#c2d9f9"
 ansi = [
   "#fff2e0",
   "#af3d13",
-  "#455611",
+  "#37581f",
   "#805d00",
   "#006e74",
   "#b03657",
@@ -212,7 +208,7 @@ ansi = [
 
   "#807667",
   "#8b3d23",
-  "#3c4700",
+  "#2a4a13",
   "#6e5000",
   "#005d71",
   "#7e434e",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "urushihara"
 subject = "the-devil-is-a-part-timer/urushihara"
-signature = ["cursor", "ansi5", "ansi12"]
 
 [palette.colors]
 background = "#1a161e"
@@ -252,8 +247,8 @@ ansi = [
 
 [palette.colors.light]
 background = "#fef7ff"
-foreground = "#231d2a"
-cursor = "#725e90"
+foreground = "#221d2a"
+cursor = "#5f4c7c"
 selection_background = "#d7d7d6"
 ansi = [
   "#f9f1fc",
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "suzuno"
 subject = "the-devil-is-a-part-timer/suzuno"
-signature = ["cursor", "ansi3", "ansi1"]
 
 [palette.colors]
 background = "#12181d"
@@ -323,7 +317,7 @@ ansi = [
   "#72787e",
   "#8e355d",
   "#034c37",
-  "#5e551f",
+  "#69511d",
   "#205a76",
   "#5d4a8a",
   "#004a50",

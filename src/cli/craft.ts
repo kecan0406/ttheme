@@ -17,7 +17,7 @@ import {
 } from '../core/manifest.ts'
 import { mirror } from '../core/mirror.ts'
 import { type Mode, modeOf } from '../core/mode.ts'
-import { fromCode, gateLines, readCodes, resign, shareCode, withShade } from '../core/own.ts'
+import { fromCode, gateLines, readCodes, shareCode, withShade } from '../core/own.ts'
 import { type Colors, grow, SEEDS } from '../core/seeds.ts'
 import { type Block, setBlocks, setText } from '../core/sets.ts'
 import { listOf } from '../core/slots.ts'
@@ -252,8 +252,6 @@ export async function takeFile(home: string, file: string, into: string | undefi
   return names
 }
 
-const SIGNATURE = ['background', 'foreground', 'cursor']
-
 function problemOf(read: () => void): string | undefined {
   try {
     read()
@@ -375,21 +373,20 @@ export async function runNew(name: string, from: string | undefined, into: strin
     source && plain ? { ...draftOf(source, full), upstream: upstreamFrom(plain) } : undefined
 
   const held = source ? (heldPictures(home, source.name) ?? source.pictures) : undefined
-  const blank: Draft = { name: full, signature: SIGNATURE, ...grow(SEEDS) }
+  const blank: Draft = { name: full, ...grow(SEEDS) }
   const rest = kept ?? blank
   const shelf = shelfFor(home, full)
 
-  const toml = ({ colors, signature }: Edited) => {
+  const toml = ({ colors }: Edited) => {
     const pictures = merged(held, shelf.fresh())
 
-    return paletteToml({ ...rest, ...colors, signature, ...(pictures ? { pictures } : {}) })
+    return paletteToml({ ...rest, ...colors, ...(pictures ? { pictures } : {}) })
   }
 
   const edited = await editColors({
     title: 'New palette',
     name: full,
     ...(kept ? { colors: kept } : {}),
-    signature: rest.signature,
     palettes: choicesOf(home, manifest, full),
     pictures: shelf.count(),
     find: finder(home, full, toml),
@@ -468,9 +465,9 @@ export async function runEdit(name: string): Promise<void> {
     colorsOfTheme(shade),
   )
 
-  const rewrite = ({ colors, signature }: Edited) => {
+  const rewrite = ({ colors }: Edited) => {
     const text = withPictures(
-      resign(withShade(before, colors, table), signature),
+      withShade(before, colors, table),
       shelf.fresh().filter((picture) => !listed.has(imageKey(picture))),
     )
 
@@ -482,7 +479,6 @@ export async function runEdit(name: string): Promise<void> {
     name: full,
     colors: colorsOfTheme(shade),
     ...(clash ? { original: clash.original, against: clash.against, notice: clashNote(clash) } : {}),
-    signature: theme.signatureSlots,
     palettes: choicesOf(home, manifest, full),
     pictures: shelf.count(),
     find: finder(home, full, rewrite),
@@ -590,7 +586,6 @@ async function editTone(home: string, name: string, hosted: boolean): Promise<nu
       colors: colorsOfTheme(toTheme(worn)),
       original: colorsOfTheme(toTheme(base)),
       tone: true,
-      signature: worn.signatureSlots,
       decode: decoded,
       check: () => undefined,
     },

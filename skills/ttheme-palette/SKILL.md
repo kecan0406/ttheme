@@ -64,13 +64,13 @@ Measured values always come from the picture; this step only picks which parts. 
 
 Castmates may share colors — twins, siblings, a series where everyone has red hair. Measure each on their own design and do not push them apart.
 
-## 6. Signature colors
+## 6. Anchors
 
-The anchors file's `slots` names three of the palette's colors per character, in the order the character reads — the first is the seed every other color leans toward:
+The anchors file's `slots` puts each part you measured into one of the palette's colors. Every character needs `cursor`, the color every other color leans toward:
 
-- `cursor` usually holds the seed: the hair, or the eyes when consensus picked them.
+- `cursor` holds the character's main color: the hair, or the eyes when consensus picked them.
 - A dark identity color (a cape, a uniform — anything darker than mid-grey) goes into `selection`; text colors cannot show it.
-- `ansi1`–`ansi6` keep their meaning (red error, green ok, yellow warning, blue, magenta, cyan). Put an anchor in the ANSI color whose role matches its hue; a pale one (butter yellow, pastel pink) in its bright twin `ansi9`–`ansi14`.
+- `ansi1`–`ansi6` keep their meaning (red error, green ok, yellow warning, blue, magenta, cyan). Put an anchor in the ANSI color whose role matches its hue; a pale one (butter yellow, pastel pink) in its bright twin `ansi9`–`ansi14`. An anchor whose hue falls outside that role's range is moved into it.
 - White or pale hair can be the `foreground`.
 
 ```json
@@ -106,7 +106,7 @@ Tell the user, per palette, in their language:
 - its full name and `ttheme use <owner>@<marketplace>/<name>` to use it in a tab — the short name alone works only while no other installed palette has it (you cannot change their tab from your shell);
 - the work and character it is of, and whether you added them to the marketplace's `works/` because the commons did not hold them;
 - which picture you measured;
-- each signature color: the part, the measured color, the final color and ΔE, and why that part (an official color, chromatic hair, or consensus with its share and post count);
+- each anchor: the part, the measured color, the final color and ΔE, and why that part (an official color, chromatic hair, or consensus with its share and post count);
 - the base scheme, the colors the role fixer turned and why, and any contrast check it still fails;
 - anything you were unsure of.
 

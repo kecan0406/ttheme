@@ -3,7 +3,6 @@
 [[palette]]
 slug = "bocchi"
 subject = "bocchi-the-rock/bocchi"
-signature = ["cursor", "ansi4", "ansi9"]
 
 [palette.colors]
 background = "#201517"
@@ -46,11 +45,11 @@ ansi = [
   "#35292b",
 
   "#847376",
-  "#8f335f",
+  "#913258",
   "#2e491b",
   "#6d4e35",
   "#494c9e",
-  "#7d3d76",
+  "#803c71",
   "#004c33",
   "#2c1b1f",
 ]
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "nijika"
 subject = "bocchi-the-rock/nijika"
-signature = ["cursor", "ansi12", "ansi1"]
 
 [palette.colors]
 background = "#1d170c"
@@ -67,7 +65,7 @@ cursor = "#ffb400"
 selection_background = "#493c11"
 ansi = [
   "#2a2318",
-  "#ec742e",
+  "#ef7044",
   "#d5c23e",
   "#eab21c",
   "#a18bd8",
@@ -76,7 +74,7 @@ ansi = [
   "#e0d3c2",
 
   "#807567",
-  "#f2a55b",
+  "#fe9a79",
   "#f3df39",
   "#ffd880",
   "#9ca7e8",
@@ -92,7 +90,7 @@ cursor = "#a97600"
 selection_background = "#ebd69d"
 ansi = [
   "#fff2e2",
-  "#a74600",
+  "#ac4017",
   "#395822",
   "#805d00",
   "#6e50b8",
@@ -101,7 +99,7 @@ ansi = [
   "#332b20",
 
   "#807567",
-  "#7f4700",
+  "#953612",
   "#2e491b",
   "#6e5000",
   "#3d4ea2",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "ryo"
 subject = "bocchi-the-rock/ryo"
-signature = ["cursor", "ansi4", "ansi6"]
 
 [palette.colors]
 background = "#19180d"
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "kita"
 subject = "bocchi-the-rock/kita"
-signature = ["cursor", "ansi2", "ansi3"]
 
 [palette.colors]
 background = "#201513"
@@ -212,7 +208,7 @@ ansi = [
 
   "#857370",
   "#8c3c35",
-  "#31490e",
+  "#2b4a14",
   "#724d29",
   "#5a45a1",
   "#7e4252",

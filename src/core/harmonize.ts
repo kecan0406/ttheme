@@ -1,25 +1,24 @@
-import { deltaE, type Hex } from './color.ts'
-import { ROLE_HUES } from './contrast.ts'
+import { deltaE, type Hex, lab } from './color.ts'
+import { apart, check, ROLE_HUES } from './contrast.ts'
 import { type Hued, hctHex, hctOf } from './hct.ts'
 import {
   CONTAINER_TONE,
   CURSOR_TONE,
+  FOREGROUND_CHROMA,
   SELECTION_CHROMA,
   SELECTION_TONE,
-  SIGNATURE_TEXT_CHROMA,
   SURFACE_CHROMA,
   SURFACE_TONE,
-  separated,
   slotOf,
   TEXT_CHROMA,
   TEXT_TONE,
   TONES,
   withSlot,
 } from './mirror.ts'
-import type { Mode } from './mode.ts'
+import { type Mode, modeOf } from './mode.ts'
 import type { Shade, Theme } from './theme.ts'
 
-export type Anchored = Pick<Theme, 'name' | 'signatureSlots'> & Shade
+export type Anchored = Pick<Theme, 'name'> & Shade & { anchorSlots: string[] }
 
 export interface Departure {
   slot: string
@@ -42,6 +41,8 @@ const DEPARTURE_MAX = 10
 const HUE_MAX = 12
 const ACHROMATIC = 5
 const HELD = new Set(['cursor', 'selection'])
+const STEP = 0.5
+const REACH = 20
 
 const clamp = (v: number, band: { min: number; max: number }) => Math.max(band.min, Math.min(band.max, v))
 
@@ -71,13 +72,13 @@ function cursor(value: Hex, mode: Mode): Hex {
   return hctHex(o.hue, o.chroma < OWN_CHROMA ? o.chroma : clamp(o.chroma, CHROMA), clamp(o.tone, CURSOR_TONE[mode]))
 }
 
-function signatureColor(theme: Anchored, slot: string, mode: Mode, seed: Hued): Hex {
+function anchorColor(theme: Anchored, slot: string, mode: Mode, seed: Hued): Hex {
   const value = slotOf(theme, slot)
   const o = hctOf(value)
 
   if (slot === 'background') return hctHex(o.hue, Math.min(seed.chroma, SURFACE_CHROMA), SURFACE_TONE[mode])
 
-  if (slot === 'foreground') return hctHex(o.hue, Math.min(o.chroma, SIGNATURE_TEXT_CHROMA), TEXT_TONE[mode])
+  if (slot === 'foreground') return hctHex(o.hue, Math.min(o.chroma, FOREGROUND_CHROMA), TEXT_TONE[mode])
 
   if (slot === 'cursor') return cursor(value, mode)
 
@@ -86,24 +87,100 @@ function signatureColor(theme: Anchored, slot: string, mode: Mode, seed: Hued): 
   return accent(value, Number(slot.slice(4)), seed.hue, mode, false)
 }
 
+const retoned = (value: Hex, tone: number) => {
+  const o = hctOf(value)
+
+  return hctHex(o.hue, o.chroma, tone)
+}
+
+const reads = (shade: Shade, a: string, b: string) => apart(lab(slotOf(shade, a)), lab(slotOf(shade, b))) >= 1
+
+export function lookalikes(slots: readonly string[], shade: Shade): [string, string][] {
+  return slots.flatMap((a, i) =>
+    slots.slice(i + 1).flatMap((b): [string, string][] => (reads(shade, a, b) ? [] : [[a, b]])),
+  )
+}
+
+function stepped(theme: Anchored, shade: Shade, slot: string, tones: number[], color: (tone: number) => Hex): Shade {
+  const failing = check({ ...shade, name: theme.name }).length
+
+  for (const tone of tones) {
+    const next = withSlot(shade, slot, color(tone))
+
+    if (
+      theme.anchorSlots.every((other) => other === slot || reads(next, slot, other)) &&
+      check({ ...next, name: theme.name }).length <= failing
+    )
+      return next
+  }
+
+  return shade
+}
+
+function nearest(start: number, band: { min: number; max: number }): number[] {
+  const out: number[] = []
+
+  for (let k = 1; k * STEP <= band.max - band.min; k++) {
+    for (const tone of [start - k * STEP, start + k * STEP]) if (tone >= band.min && tone <= band.max) out.push(tone)
+  }
+
+  return out
+}
+
+function away(from: number, past: number, mode: Mode): number[] {
+  const sign = Math.abs(from - past) <= STEP ? (mode === 'dark' ? 1 : -1) : Math.sign(from - past)
+  const out: number[] = []
+
+  for (let k = 1; k * STEP <= REACH; k++) {
+    const tone = from + sign * k * STEP
+
+    if (tone > 0 && tone < 100) out.push(tone)
+  }
+
+  return out
+}
+
+function separated(theme: Anchored, shade: Shade): Shade {
+  const mode = modeOf(shade)
+  let next = shade
+
+  if (lookalikes(theme.anchorSlots, next).some((pair) => pair.includes('cursor')))
+    next = stepped(theme, next, 'cursor', nearest(hctOf(next.cursor).tone, CURSOR_TONE[mode]), (tone) =>
+      retoned(shade.cursor, tone),
+    )
+
+  for (const [a, b] of lookalikes(theme.anchorSlots, next)) {
+    if ((!a.startsWith('ansi') && !b.startsWith('ansi')) || reads(next, a, b)) continue
+
+    const [still, mover] =
+      !b.startsWith('ansi') || (a.startsWith('ansi') && Number(a.slice(4)) >= 8 && Number(b.slice(4)) < 8)
+        ? [b, a]
+        : [a, b]
+
+    const value = slotOf(next, mover)
+
+    next = stepped(theme, next, mover, away(hctOf(value).tone, hctOf(slotOf(next, still)).tone, mode), (tone) =>
+      retoned(value, tone),
+    )
+  }
+
+  return next
+}
+
 export function harmonized(theme: Anchored): Shade {
-  const first = theme.signatureSlots[0]
-
-  if (first === undefined) throw new Error(`${theme.name}: signature is empty`)
-
-  const seed = hctOf(slotOf(theme, first))
+  const seed = hctOf(theme.cursor)
   const mode: Mode = hctOf(theme.background).tone > 50 ? 'light' : 'dark'
 
   const dark =
-    mode === 'light' || theme.signatureSlots.includes('selection')
+    mode === 'light' || theme.anchorSlots.includes('selection')
       ? []
-      : theme.signatureSlots.filter(
+      : theme.anchorSlots.filter(
           (slot) => slot.startsWith('ansi') && hctOf(slotOf(theme, slot)).tone < DARK_ANCHOR_TONE,
         )
 
   if (dark.length > 0) {
     throw new Error(
-      `${theme.name}: ${dark.join(', ')} hold${dark.length === 1 ? 's' : ''} an anchor darker than T${DARK_ANCHOR_TONE}, which a text color can only show as a pastel — put the darkest identity color in selection_background and name selection in signature`,
+      `${theme.name}: ${dark.join(', ')} hold${dark.length === 1 ? 's' : ''} an anchor darker than T${DARK_ANCHOR_TONE}, which a text color can only show as a pastel — put the darkest identity color in selection instead`,
     )
   }
 
@@ -127,12 +204,12 @@ export function harmonized(theme: Anchored): Shade {
     ),
   }
 
-  const signed = theme.signatureSlots.reduce(
-    (shade, slot) => withSlot(shade, slot, signatureColor(theme, slot, mode, seed)),
+  const placed = theme.anchorSlots.reduce(
+    (shade, slot) => withSlot(shade, slot, anchorColor(theme, slot, mode, seed)),
     base,
   )
 
-  return separated({ name: theme.name, signatureSlots: theme.signatureSlots }, signed)
+  return separated(theme, placed)
 }
 
 function hueShift(from: Hex, to: Hex): number | undefined {
@@ -146,10 +223,10 @@ function hueShift(from: Hex, to: Hex): number | undefined {
 
 export function departures(
   anchors: Readonly<Record<string, readonly [string, Hex]>>,
-  signatureSlots: readonly string[],
+  slots: readonly string[],
   shade: Shade,
 ): Departure[] {
-  return signatureSlots.flatMap((slot) => {
+  return slots.flatMap((slot) => {
     const anchor = Object.hasOwn(anchors, slot) ? anchors[slot] : undefined
 
     if (anchor === undefined) return []

@@ -159,7 +159,7 @@ function slotShort(slot: number): string {
 }
 
 function swatch(e: PaletteEditor, p: Paint, slot: number, restore: string): string {
-  const glyph = e.signature.includes(SLOT_NAMES[slot] as string) ? MARKS.signature : p.color ? MARKS.swatch : ' '
+  const glyph = p.color ? MARKS.swatch : ' '
 
   return p.color ? `${p.fg(e.list[slot] as Hex)}${glyph}${restore}` : glyph
 }

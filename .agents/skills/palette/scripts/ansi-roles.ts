@@ -8,7 +8,6 @@ import { type Palette, setPalettes, writeMirrors } from './light.ts'
 
 interface ThemeDoc {
   subject?: string
-  signature: string[]
   colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
 }
 
@@ -21,7 +20,6 @@ function gated(name: string, doc: ThemeDoc, ansi: string[]): Theme {
     foreground: doc.colors.foreground,
     selectionBackground: doc.colors.selection_background,
     ansi,
-    signatureSlots: doc.signature,
   } as unknown as Theme
 }
 
@@ -85,7 +83,6 @@ for (const palette of setPalettes(positionals)) {
   report.push({
     name,
     work: workOf(doc),
-    signature: doc.signature,
     background: doc.colors.background,
     foreground: doc.colors.foreground,
     cursor: doc.colors.cursor,

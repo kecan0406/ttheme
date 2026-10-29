@@ -5,23 +5,13 @@ import { Icon } from '@/lib/icons'
 import type { GateLine } from '@/lib/view-types'
 import { reading } from './palette-parts'
 
-export function Marks({ signature, miss }: { signature: boolean; miss: boolean }) {
-  return (
-    <>
-      {signature ? (
-        <span class="text-xs leading-none text-primary">
-          <span aria-hidden="true">✦</span>
-          <span class="sr-only">signature</span>
-        </span>
-      ) : null}
-      {miss ? (
-        <span class="text-xs leading-none font-bold text-destructive">
-          <span aria-hidden="true">✗</span>
-          <span class="sr-only">fails a contrast check</span>
-        </span>
-      ) : null}
-    </>
-  )
+export function Marks({ miss }: { miss: boolean }) {
+  return miss ? (
+    <span class="text-xs leading-none font-bold text-destructive">
+      <span aria-hidden="true">✗</span>
+      <span class="sr-only">fails a contrast check</span>
+    </span>
+  ) : null
 }
 
 export function Verdict({ ok }: { ok: boolean | null }) {

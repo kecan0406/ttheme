@@ -40,8 +40,6 @@ export interface Theme {
   selectionBackground: Hex
   ansi: Hex[]
   other?: Shade
-  signature: Hex[]
-  signatureSlots: string[]
   pictures?: SharedPicture[]
 }
 
@@ -55,16 +53,12 @@ export interface Place {
 
 export const BUILTIN = 'ttheme'
 export const MARKETPLACE_FILE = 'ttheme-marketplace.toml'
-const SIGNATURE_SIZE = 3
 const MAX_PICTURES = 255
 export const MAX_STRENGTH = 100
 const SLUG = '[a-z0-9]+(?:-[a-z0-9]+)*'
 const SLUG_ONLY = new RegExp(`^${SLUG}$`)
 const NAME = new RegExp(`^(?:${BUILTIN}|(${SLUG})@(${SLUG}))/(${SLUG})$`)
 const SUBJECT = new RegExp(`^(${SLUG})(?:/(${SLUG}))?$`)
-const NAMED_SLOTS = ['background', 'foreground', 'cursor', 'selection'] as const
-
-type NamedSlot = (typeof NAMED_SLOTS)[number]
 
 export function fail(file: string, message: string): never {
   throw new Error(`${escaped(file)}: ${message}`)
@@ -223,52 +217,6 @@ export function table(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
 }
 
-type Slots = Record<NamedSlot, Hex> & { ansi: Hex[] }
-
-interface Signature {
-  names: string[]
-  colors: Hex[]
-}
-
-function slotColors(slots: Slots): Map<string, Hex> {
-  return new Map<string, Hex>([
-    ...NAMED_SLOTS.map((slot): [string, Hex] => [slot, slots[slot]]),
-    ...slots.ansi.map((color, index): [string, Hex] => [`ansi${index}`, color]),
-  ])
-}
-
-function readSignature(file: string, value: unknown, slots: Slots): Signature {
-  if (!Array.isArray(value) || value.length !== SIGNATURE_SIZE) {
-    fail(file, `signature must name exactly ${SIGNATURE_SIZE} of the palette's colors`)
-  }
-
-  const known = slotColors(slots)
-  const names: string[] = []
-  const colors: Hex[] = []
-
-  for (const [i, raw] of value.entries()) {
-    const field = `signature[${i}]`
-    const slot = str(file, field, raw)
-    const color = known.get(slot)
-
-    if (color === undefined) {
-      fail(
-        file,
-        `${field} ${quoted(slot)} is not one of the palette's colors — use ${NAMED_SLOTS.join(', ')} or ansi0-ansi15`,
-      )
-    }
-
-    names.push(slot)
-    colors.push(color)
-  }
-
-  if (new Set(colors).size !== colors.length) {
-    fail(file, 'signature must name three colors that differ')
-  }
-
-  return { names, colors }
-}
-
 function readPictures(file: string, raw: unknown, foreign: boolean): SharedPicture[] | undefined {
   if (raw === undefined) {
     return undefined
@@ -338,7 +286,7 @@ export function toml(file: string, source: string): Record<string, unknown> {
 }
 
 export const PALETTE_KEYS = new Map([
-  ['', ['slug', 'subject', 'upstream', 'signature', 'colors', 'picture']],
+  ['', ['slug', 'subject', 'upstream', 'colors', 'picture']],
   ['colors', ['background', 'foreground', 'cursor', 'selection_background', 'ansi', ...MODES]],
   ...MODES.map((mode): [string, string[]] => [
     `colors.${mode}`,
@@ -397,7 +345,7 @@ function readShade(file: string, path: string, raw: Record<string, unknown>): Sh
   }
 }
 
-function readOther(file: string, colors: Record<string, unknown>, own: Shade, signature: string[]): Shade | undefined {
+function readOther(file: string, colors: Record<string, unknown>, own: Shade): Shade | undefined {
   const mode = modeOf(own)
   const want = otherOf(mode)
 
@@ -416,12 +364,6 @@ function readOther(file: string, colors: Record<string, unknown>, own: Shade, si
       file,
       `[palette.colors.${want}] must be ${want}: its background is ${modeOf(other) === 'light' ? 'lighter' : 'darker'} than its foreground`,
     )
-  }
-
-  const known = slotColors({ ...other, selection: other.selectionBackground })
-
-  if (new Set(signature.map((slot) => known.get(slot))).size !== signature.length) {
-    fail(file, `signature must name three colors that differ in [palette.colors.${want}] too`)
   }
 
   return other
@@ -483,16 +425,7 @@ export function themeOf(file: string, doc: Record<string, unknown>, place: Place
   const upstream = readUpstream(file, doc.upstream, place.name)
   const own = readShade(file, 'colors', colors)
   const { background, foreground, cursor, selectionBackground, ansi } = own
-
-  const signature = readSignature(file, doc.signature, {
-    background,
-    foreground,
-    cursor,
-    selection: selectionBackground,
-    ansi,
-  })
-
-  const other = readOther(file, colors, own, signature.names)
+  const other = readOther(file, colors, own)
 
   if (builtin && other === undefined) {
     fail(
@@ -513,8 +446,6 @@ export function themeOf(file: string, doc: Record<string, unknown>, place: Place
     selectionBackground,
     ansi,
     ...(other ? { other } : {}),
-    signature: signature.colors,
-    signatureSlots: signature.names,
     ...(pictures ? { pictures } : {}),
   }
 }
@@ -522,13 +453,7 @@ export function themeOf(file: string, doc: Record<string, unknown>, place: Place
 export function inOther(theme: Theme): Theme[] {
   const { other, ...rest } = theme
 
-  if (other === undefined) {
-    return []
-  }
-
-  const known = slotColors({ ...other, selection: other.selectionBackground })
-
-  return [{ ...rest, ...other, signature: theme.signatureSlots.map((slot) => known.get(slot) as Hex) }]
+  return other === undefined ? [] : [{ ...rest, ...other }]
 }
 
 export const MARKETPLACE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-marketplace.json'

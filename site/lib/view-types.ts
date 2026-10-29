@@ -23,7 +23,6 @@ export interface SlotView {
   checks: SlotCheck[]
   use: string
   uses: number[]
-  signature: boolean
   miss: boolean
 }
 

@@ -3,7 +3,6 @@
 [[palette]]
 slug = "kirito"
 subject = "sword-art-online/kirito"
-signature = ["cursor", "ansi2", "selection"]
 
 [palette.colors]
 background = "#16171f"
@@ -13,7 +12,7 @@ selection_background = "#2e2f35"
 ansi = [
   "#22232b",
   "#e17299",
-  "#8cceb9",
+  "#93cdb0",
   "#f0af7d",
   "#7b97c4",
   "#b3aae1",
@@ -22,7 +21,7 @@ ansi = [
 
   "#767680",
   "#f39eba",
-  "#8dede9",
+  "#a1edc7",
   "#fad7bd",
   "#90acdf",
   "#d3cbff",
@@ -32,13 +31,13 @@ ansi = [
 
 [palette.colors.light]
 background = "#fbf8ff"
-foreground = "#1d1f2b"
+foreground = "#1d1f2c"
 cursor = "#5562ae"
-selection_background = "#c8c7cf"
+selection_background = "#d7d6de"
 ansi = [
   "#f4f2fd",
   "#a83c67",
-  "#125a4a",
+  "#215a43",
   "#8e5626",
   "#48648e",
   "#6a589d",
@@ -47,18 +46,17 @@ ansi = [
 
   "#767680",
   "#8e3559",
-  "#004b49",
+  "#004c34",
   "#6e4e34",
   "#375585",
   "#5b4b88",
-  "#06475e",
+  "#00485c",
   "#1d1f2b",
 ]
 
 [[palette]]
 slug = "asuna"
 subject = "sword-art-online/asuna"
-signature = ["cursor", "ansi1", "foreground"]
 
 [palette.colors]
 background = "#1f160d"
@@ -76,7 +74,7 @@ ansi = [
   "#e3d1c4",
 
   "#837469",
-  "#f3a380",
+  "#f5a186",
   "#d7e49b",
   "#ffd6a1",
   "#bba1db",
@@ -101,7 +99,7 @@ ansi = [
   "#352a21",
 
   "#837469",
-  "#8a3f19",
+  "#8c3c21",
   "#2f4a1c",
   "#724e14",
   "#65458e",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "sinon"
 subject = "sword-art-online/sinon"
-signature = ["cursor", "ansi3", "ansi4"]
 
 [palette.colors]
 background = "#111916"
@@ -142,14 +139,14 @@ ansi = [
 
 [palette.colors.light]
 background = "#f2fcf5"
-foreground = "#14231d"
+foreground = "#13231c"
 cursor = "#53927a"
 selection_background = "#ead2cd"
 ansi = [
   "#ecf6ef",
   "#9e4b2e",
   "#185c30",
-  "#606815",
+  "#805d00",
   "#34688b",
   "#665a9c",
   "#015b4e",
@@ -158,7 +155,7 @@ ansi = [
   "#707974",
   "#8a3e23",
   "#1b4b2b",
-  "#4e5a21",
+  "#6c5010",
   "#175c73",
   "#584b8c",
   "#004b41",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "leafa"
 subject = "sword-art-online/leafa"
-signature = ["cursor", "ansi11", "selection"]
 
 [palette.colors]
 background = "#141911"
@@ -199,12 +195,12 @@ ansi = [
 background = "#f6fbee"
 foreground = "#192216"
 cursor = "#337c27"
-selection_background = "#75b996"
+selection_background = "#b7e1c8"
 ansi = [
   "#f0f6e8",
   "#a84422",
   "#37582c",
-  "#6a6524",
+  "#7c5f1e",
   "#006d80",
   "#66599f",
   "#005c3d",
@@ -213,7 +209,7 @@ ansi = [
   "#73796e",
   "#8c3d21",
   "#274b0d",
-  "#625400",
+  "#6e4f00",
   "#025f5f",
   "#574c8a",
   "#044c35",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "alice"
 subject = "sword-art-online/alice"
-signature = ["cursor", "selection", "ansi5"]
 
 [palette.colors]
 background = "#1b170c"
@@ -252,16 +247,16 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8ef"
-foreground = "#251f0d"
+foreground = "#241f0e"
 cursor = "#99853f"
-selection_background = "#8ba9ff"
+selection_background = "#ccd6fc"
 ansi = [
   "#fcf3e0",
   "#ae3e12",
   "#36591d",
   "#805d00",
   "#255cce",
-  "#634fc9",
+  "#714ac3",
   "#005d30",
   "#302c20",
 
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "yuuki"
 subject = "sword-art-online/yuuki"
-signature = ["cursor", "selection", "ansi13"]
 
 [palette.colors]
 background = "#1b161d"
@@ -307,9 +301,9 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff7fc"
-foreground = "#251c29"
-cursor = "#7b5b89"
-selection_background = "#ff897f"
+foreground = "#251d29"
+cursor = "#684976"
+selection_background = "#ffcbc5"
 ansi = [
   "#fcf0fb",
   "#be2626",

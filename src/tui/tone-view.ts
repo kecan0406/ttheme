@@ -3,7 +3,7 @@ import { oklch } from '../core/color.ts'
 import { missedRules } from '../core/contrast.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import type { Colors } from '../core/seeds.ts'
-import { BASE, gatedOf, lchTight, listOf, misses, PAIRS, SLOT_NAMES } from '../core/slots.ts'
+import { BASE, gatedOf, lchTight, listOf, misses, PAIRS } from '../core/slots.ts'
 import { slotColors } from '../store/tone.ts'
 import { boxEdge, boxed, contrastOf, SEP } from './parts.ts'
 import { FG_RESET, MARKS, painter } from './style.ts'
@@ -39,19 +39,15 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean,
   const p = painter(color)
   const list = listOf(colorsOfEntry(worn))
   const given = slotColors(base).map((hex) => hex.toLowerCase())
-  const bad = misses(list, worn.signatureSlots)
-  const failing = missedRules(gatedOf(list, worn.signatureSlots)).length
+  const bad = misses(list)
+  const failing = missedRules(gatedOf(list)).length
   const off = (slot: number) => list[slot]?.toLowerCase() !== given[slot]
   const tuned = list.filter((_, slot) => off(slot)).length
 
   const cell = (slot: number) => {
     const hex = list[slot] as Hex
 
-    const glyph = worn.signatureSlots.includes(SLOT_NAMES[slot] as string)
-      ? MARKS.signature
-      : color
-        ? MARKS.swatch
-        : ' '
+    const glyph = color ? MARKS.swatch : ' '
 
     const swatch = color ? `${p.fg(hex)}${glyph}${FG_RESET}` : glyph
     const mark = bad.has(slot) ? p.bold(MARKS.miss) : off(slot) ? p.warn(MARKS.on) : ' '

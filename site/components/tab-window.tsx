@@ -5,6 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Icon } from '@/lib/icons'
 import { paint, type Theme } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
+import { FACE } from '../../src/core/slots.ts'
 import { TerminalFrame } from './terminal-frame'
 
 export const FIRST_TABS = 3
@@ -76,13 +77,9 @@ export function TabSession({ theme }: { theme: Theme }) {
       </Line>
       <Line>
         {' '}
-        {theme.signatureSlots.slice(0, 3).map((slot) => (
+        {FACE.map((slot) => (
           <Mark slot={slot} />
         ))}
-        {'  '}
-        <span class="term-c7" safe>
-          {theme.signatureSlots.join(' ')}
-        </span>
       </Line>
       <Line>
         <Prompt />

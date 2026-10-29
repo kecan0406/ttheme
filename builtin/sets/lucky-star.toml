@@ -3,7 +3,6 @@
 [[palette]]
 slug = "konata"
 subject = "lucky-star/konata"
-signature = ["cursor", "ansi2", "ansi12"]
 
 [palette.colors]
 background = "#13181e"
@@ -22,7 +21,7 @@ ansi = [
 
   "#73777f",
   "#f3a0bb",
-  "#63f5c8",
+  "#74f4ba",
   "#cce54d",
   "#79b0e8",
   "#dac9ff",
@@ -32,7 +31,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#f8f9ff"
-foreground = "#18202a"
+foreground = "#17202a"
 cursor = "#306a9d"
 selection_background = "#d5d7dc"
 ansi = [
@@ -47,7 +46,7 @@ ansi = [
 
   "#73777f",
   "#8c3759",
-  "#004c3a",
+  "#004c33",
   "#6f5000",
   "#14588b",
   "#5d4a8a",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "kagami"
 subject = "lucky-star/kagami"
-signature = ["cursor", "ansi4", "selection"]
 
 [palette.colors]
 background = "#19161e"
@@ -87,9 +85,9 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff7fe"
-foreground = "#241d2a"
+foreground = "#221d2a"
 cursor = "#8763a9"
-selection_background = "#e8bbc1"
+selection_background = "#faccd2"
 ansi = [
   "#faf0fc",
   "#954d5b",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "tsukasa"
 subject = "lucky-star/tsukasa"
-signature = ["cursor", "ansi11", "selection"]
 
 [palette.colors]
 background = "#1b161d"
@@ -144,7 +141,7 @@ ansi = [
 background = "#fff7fc"
 foreground = "#251d29"
 cursor = "#9168aa"
-selection_background = "#96a6fd"
+selection_background = "#d0d5fc"
 ansi = [
   "#fbf0fb",
   "#b52b67",
@@ -158,7 +155,7 @@ ansi = [
   "#7c747e",
   "#8e355a",
   "#004c33",
-  "#60550d",
+  "#6d5009",
   "#3c4ea2",
   "#624889",
   "#00485b",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "miyuki"
 subject = "lucky-star/miyuki"
-signature = ["cursor", "selection", "ansi1"]
 
 [palette.colors]
 background = "#201517"
@@ -199,7 +195,7 @@ ansi = [
 background = "#fff8f8"
 foreground = "#2c1b1f"
 cursor = "#b77285"
-selection_background = "#d290ff"
+selection_background = "#e8cef5"
 ansi = [
   "#fff0f2",
   "#9d4858",

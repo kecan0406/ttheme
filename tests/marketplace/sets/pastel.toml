@@ -3,7 +3,6 @@
 [[palette]]
 slug = "sakura"
 subject = "pastel/sakura"
-signature = ["cursor", "selection", "ansi4"]
 
 [palette.colors]
 background = "#2a1921"

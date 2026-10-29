@@ -3,7 +3,7 @@ import { brightDrift, confusions, hueGap, lookalikes, offRole, ROLE_HUES, roleOf
 import { SCENES, sceneAt, sceneParts } from '../core/scenes.ts'
 import type { Colors } from '../core/seeds.ts'
 import { grow, SEED_FIELDS, type Seeds } from '../core/seeds.ts'
-import { BASE, colorsOf, gatedOf, lchTight, PAIRS, SLOT_NAMES, slotLabel } from '../core/slots.ts'
+import { BASE, colorsOf, gatedOf, lchTight, PAIRS, slotLabel } from '../core/slots.ts'
 import { cells } from '../core/text.ts'
 import { colorQuery, SLOT_CODES, slotColors } from '../terminals/osc.ts'
 import { CLEAR } from '../terminals/terminal.ts'
@@ -113,7 +113,7 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
   const cell = (slot: number) => {
     const hex = e.list[slot] as Hex
     const focused = slot === focus
-    const glyph = e.signature.includes(SLOT_NAMES[slot] as string) ? MARKS.signature : p.color ? MARKS.swatch : ' '
+    const glyph = p.color ? MARKS.swatch : ' '
     const mark = bad.has(slot) ? MARKS.miss : e.tone && e.changed(slot) ? MARKS.on : ' '
     const sw = p.color ? `${p.fg(hex)}${glyph}${focused ? p.fg(c.foreground) : FG_RESET} ` : `${glyph} `
     const text = `${sw}${lchTight(e.lch[slot] as Oklch)}${mark}`
@@ -441,8 +441,8 @@ function hueChart(shown: Hex[], ink: Hex, row: number): Chart {
   }
 }
 
-function relationNotes(p: Paint, e: PaletteEditor, shown: Hex[]): string[] {
-  const theme = gatedOf(shown, e.signature)
+function relationNotes(p: Paint, shown: Hex[]): string[] {
+  const theme = gatedOf(shown)
   const name = (ansi: number) => slotLabel(BASE.length + ansi).name
   const hue = (ansi: number) => oklch(shown[BASE.length + ansi] as Hex).h.toFixed(0)
 
@@ -519,7 +519,7 @@ function relations(
     lines.push(...hueLines(p, shown, drawn !== undefined))
   }
 
-  return { lines: [...lines, ...relationNotes(p, e, shown)].slice(0, height), charts }
+  return { lines: [...lines, ...relationNotes(p, shown)].slice(0, height), charts }
 }
 
 function moved(charts: readonly Chart[], rows: number, cols: number): Chart[] {
@@ -546,7 +546,6 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number, i
   const at = e.lch[slot] as Oklch
   const base = e.original[slot] as Hex
   const { name, about } = slotLabel(slot)
-  const sig = e.signature.includes(SLOT_NAMES[slot] as string)
   const barWidth = Math.max(8, Math.min(64, width - 12))
 
   if (e.view === 'relations' && e.mode !== 'tune') {
@@ -555,7 +554,7 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number, i
     return { lines: [viewTabs(p, e, width), '', ...plotted.lines], charts: moved(plotted.charts, 2, 0) }
   }
 
-  const right = slot >= BASE.length ? p.dim('Uses underlined below') : sig ? p.dim(`${MARKS.signature} signature`) : ''
+  const right = slot >= BASE.length ? p.dim('Uses underlined below') : ''
   const lines = [spread(`${p.bold(name)}  ${p.dim(about)}`, e.view === 'relations' ? '' : right, width), '']
   const block = p.color ? `${p.fg(hex)}${'█'.repeat(8)}${FG_RESET}  ` : ''
   const typed = e.typing !== undefined ? `${p.bold(`${e.typing}▏`)}` : undefined

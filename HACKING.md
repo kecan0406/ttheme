@@ -181,7 +181,7 @@ only through `open` and `close`) that hand text back unchanged when color is
 off, and `src/tui/parts.ts` holds the parts several screens draw: `tabOf`,
 `pillOf`, `hintOf`, `buttonOf`, `checkOf`, `markOf`, `boxEdge` and `boxed`.
 Glyphs that mean a state are in `MARKS`: ▌ the cursor's row, ◆ the palette worn
-or handled, ▶ the part in focus, ✦ a signature slot, ▸ ▾ a closed and an open
+or handled, ▶ the part in focus, ▸ ▾ a closed and an open
 work, ● ○ on and off, ✓ ✗ pass and miss, ↑ ↓ more rows, ⇡ an update, ↻
 auto-update, × a removal, ↶ taking one back, ★ stars, ⧉ a link, ⌕ search, ⇠ a
 bright that follows its normal, ◐ contrast, ■ a swatch, ▣ pictures, · a

@@ -2,7 +2,6 @@
 
 [[palette]]
 slug = "dusk"
-signature = ["cursor", "selection", "ansi4"]
 
 [palette.colors]
 background = "#0f1512"

@@ -3,7 +3,6 @@
 [[palette]]
 slug = "asuka"
 subject = "evangelion/asuka"
-signature = ["cursor", "ansi11", "ansi4"]
 
 [palette.colors]
 background = "#211513"
@@ -39,7 +38,7 @@ ansi = [
   "#fff0ee",
   "#b33826",
   "#385821",
-  "#965200",
+  "#9b4e00",
   "#2a679a",
   "#b0345e",
   "#185c1d",
@@ -48,7 +47,7 @@ ansi = [
   "#857370",
   "#8a3d33",
   "#2e4a1a",
-  "#714f00",
+  "#744d04",
   "#30529a",
   "#7e4252",
   "#184d0a",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "rei"
 subject = "evangelion/rei"
-signature = ["cursor", "ansi9", "foreground"]
 
 [palette.colors]
 background = "#12181d"
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "kaworu"
 subject = "evangelion/kaworu"
-signature = ["cursor", "foreground", "ansi1"]
 
 [palette.colors]
 background = "#201515"
@@ -143,7 +140,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f7"
 foreground = "#1b2025"
-cursor = "#c83045"
+cursor = "#c32f43"
 selection_background = "#ded1f9"
 ansi = [
   "#fff0f0",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "misato"
 subject = "evangelion/misato"
-signature = ["cursor", "ansi13", "foreground"]
 
 [palette.colors]
 background = "#201514"
@@ -205,8 +201,8 @@ ansi = [
   "#bd291f",
   "#395922",
   "#945300",
-  "#783ae3",
-  "#973ca4",
+  "#7a39e2",
+  "#963ca5",
   "#00538b",
   "#362928",
 
@@ -214,8 +210,8 @@ ansi = [
   "#8c3b3b",
   "#2e491b",
   "#724d25",
-  "#414ea2",
-  "#634789",
+  "#51499f",
+  "#674687",
   "#004860",
   "#2d1b19",
 ]
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "eva01"
 subject = "evangelion/eva01"
-signature = ["cursor", "ansi4", "ansi3"]
 
 [palette.colors]
 background = "#151910"
@@ -268,7 +263,7 @@ ansi = [
   "#74796d",
   "#893f25",
   "#004c32",
-  "#625412",
+  "#6c5010",
   "#3c4da6",
   "#574b8e",
   "#004e14",
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "magi"
 subject = "evangelion/magi"
-signature = ["cursor", "ansi10", "ansi9"]
 
 [palette.colors]
 background = "#20150f"
@@ -307,13 +301,13 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f6"
-foreground = "#2c1c12"
+foreground = "#2d1c13"
 cursor = "#af4f00"
 selection_background = "#ffcbc7"
 ansi = [
   "#fff1eb",
   "#ae3e1b",
-  "#4a5500",
+  "#34591a",
   "#8e5700",
   "#7b4cb1",
   "#a4415b",

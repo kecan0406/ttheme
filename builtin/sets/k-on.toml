@@ -3,7 +3,6 @@
 [[palette]]
 slug = "yui"
 subject = "k-on/yui"
-signature = ["cursor", "ansi11", "ansi13"]
 
 [palette.colors]
 background = "#211513"
@@ -16,7 +15,7 @@ ansi = [
   "#d1c532",
   "#e9b600",
   "#b67bf3",
-  "#fe928e",
+  "#fa90ac",
   "#7dba76",
   "#e6d0cc",
 
@@ -25,7 +24,7 @@ ansi = [
   "#c2f061",
   "#e6e346",
   "#b89ee8",
-  "#ffc3c4",
+  "#fdc2cf",
   "#89da81",
   "#ffe9e5",
 ]
@@ -39,18 +38,18 @@ ansi = [
   "#fff0ee",
   "#ac4019",
   "#385821",
-  "#7c5f00",
+  "#805d00",
   "#8a2be0",
-  "#ad3c3d",
+  "#ac385f",
   "#185c29",
   "#372926",
 
   "#857370",
   "#8a3d2c",
   "#284b0e",
-  "#595700",
+  "#6e4f00",
   "#6341a1",
-  "#7d4447",
+  "#7c4353",
   "#024e0c",
   "#2d1b18",
 ]
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "ritsu"
 subject = "k-on/ritsu"
-signature = ["cursor", "ansi1", "ansi6"]
 
 [palette.colors]
 background = "#19180d"
@@ -87,7 +85,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#fef9e7"
-foreground = "#22200f"
+foreground = "#22200e"
 cursor = "#918900"
 selection_background = "#e1d8a7"
 ansi = [
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "mio"
 subject = "k-on/mio"
-signature = ["cursor", "ansi4", "foreground"]
 
 [palette.colors]
 background = "#14181e"
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "mugi"
 subject = "k-on/mugi"
-signature = ["cursor", "ansi3", "ansi4"]
 
 [palette.colors]
 background = "#1f1518"
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "azusa"
 subject = "k-on/azusa"
-signature = ["cursor", "ansi9", "foreground"]
 
 [palette.colors]
 background = "#131912"

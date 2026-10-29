@@ -3,7 +3,6 @@
 [[palette]]
 slug = "arcade"
 subject = "neon/arcade"
-signature = ["cursor", "selection", "ansi4"]
 
 [palette.colors]
 background = "#140504"
@@ -33,7 +32,6 @@ ansi = [
 [[palette]]
 slug = "volt"
 subject = "neon/volt"
-signature = ["cursor", "selection", "ansi4"]
 
 [palette.colors]
 background = "#0d0900"

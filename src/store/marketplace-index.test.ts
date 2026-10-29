@@ -12,8 +12,6 @@ function palette(name: string): PaletteEntry {
     foreground: '#eeeeee',
     cursor: '#ffffff',
     selection: '#222222',
-    signature: ['#ffffff', '#eeeeee', '#000000'],
-    signatureSlots: ['foreground', 'cursor', 'background'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
     gate: [16.1, 4.6, 0, 16.1, 3.9, 16.1, 0, 0, 0, 4.6, 3.2, 0],
     backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
@@ -34,13 +32,14 @@ function shown(id: string, add: string, stars: number, about: string): Shown {
   }
 }
 
-test('the index the CI writes reads back as it was, most starred first', () => {
+test('the index the CI writes reads back as it was, most starred first, and keeps the slots released copies ask of a palette', () => {
   const text = indexText([
     shown('alice@pastel', 'alice/ttheme-pastel', 3, 'Soft'),
     shown('bob@neon', 'bob/ttheme-neon', 12, 'Neon'),
   ])
 
   const read = parseIndex(text)
+  assert.deepEqual(JSON.parse(text).marketplaces[0].palettes[0].signatureSlots, ['cursor', 'selection', 'foreground'])
   assert.deepEqual(
     read.map((m) => [m.id, m.source, m.stars, m.updated, m.palettes.map((e) => e.name)]),
     [
@@ -56,7 +55,6 @@ test('the index the CI writes reads back as it was, most starred first', () => {
     cursor: '#ffffff',
     selection: '#222222',
     ansi: Array.from({ length: 16 }, () => '#808080'),
-    signatureSlots: ['foreground', 'cursor', 'background'],
   })
 })
 

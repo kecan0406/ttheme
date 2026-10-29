@@ -5,13 +5,12 @@ import {
   BRIGHT_GAP,
   brightDrift,
   confusions,
-  exemptSlots,
   GATE_RULES,
-  type Gated,
   hueGap,
   isLight,
   lookalikes,
   offRole,
+  type Readable,
   ROLE_HUES,
   ROLES,
   roleOf,
@@ -55,8 +54,8 @@ export function slotUse(slot: number): string {
   return USES[slot] as string
 }
 
-export function ruleSlots(list: Hex[], signature: string[], rule: string): number[] {
-  const theme = gatedOf(list, signature)
+export function ruleSlots(list: Hex[], rule: string): number[] {
+  const theme = gatedOf(list)
   const { background: bg, foreground: fg, selection, ansi } = colorsOf(list)
   const under = (slot: number, color: Hex, against: Hex) => (contrast(color, against) < bound(rule) ? [slot] : [])
 
@@ -115,15 +114,13 @@ export function ruleSlots(list: Hex[], signature: string[], rule: string): numbe
   return []
 }
 
-export function misses(list: Hex[], signature: string[]): Set<number> {
-  return new Set(
-    [...SLOT_NAMES.keys()].filter((slot) => slotChecks(list, signature, slot).some((check) => check.ok === false)),
-  )
+export function misses(list: Hex[]): Set<number> {
+  return new Set([...SLOT_NAMES.keys()].filter((slot) => slotChecks(list, slot).some((check) => check.ok === false)))
 }
 
-export function slotChecks(list: Hex[], signature: string[], slot: number): Check[] {
+export function slotChecks(list: Hex[], slot: number): Check[] {
   const c = colorsOf(list)
-  const theme = gatedOf(list, signature)
+  const theme = gatedOf(list)
 
   if (slot === 0) {
     const weakest = ACCENT_SLOTS.reduce((a, b) =>
@@ -197,8 +194,6 @@ export function slotChecks(list: Hex[], signature: string[], slot: number): Chec
 
   if (here.c < ACHROMATIC) {
     checks.push({ ok: undefined, text: 'Too grey to have a hue' })
-  } else if (exemptSlots(theme).has(ansi)) {
-    checks.push({ ok: undefined, text: `Hue ${here.h.toFixed(0)}° · a signature, free of ${range}` })
   } else {
     const over = hueGap(here.h, band.center) - band.width
     checks.push(
@@ -320,7 +315,7 @@ export function colorsOf(list: Hex[]): Colors {
 
 export type Format = 'hex' | 'rgb' | 'oklch'
 
-export function gatedOf(list: Hex[], signature: string[]): Gated {
+export function gatedOf(list: Hex[]): Readable {
   const c = colorsOf(list)
 
   return {
@@ -329,7 +324,6 @@ export function gatedOf(list: Hex[], signature: string[]): Gated {
     foreground: c.foreground,
     selectionBackground: c.selection,
     ansi: c.ansi,
-    signatureSlots: signature,
   }
 }
 

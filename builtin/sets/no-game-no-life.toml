@@ -3,7 +3,6 @@
 [[palette]]
 slug = "sora"
 subject = "no-game-no-life/sora"
-signature = ["cursor", "ansi1", "selection"]
 
 [palette.colors]
 background = "#1a180d"
@@ -34,7 +33,7 @@ ansi = [
 background = "#fff9ea"
 foreground = "#23200e"
 cursor = "#96870c"
-selection_background = "#cd92ff"
+selection_background = "#e7cef6"
 ansi = [
   "#faf3e1",
   "#b8295b",
@@ -58,7 +57,6 @@ ansi = [
 [[palette]]
 slug = "shiro"
 subject = "no-game-no-life/shiro"
-signature = ["cursor", "ansi1", "selection"]
 
 [palette.colors]
 background = "#11191c"
@@ -76,7 +74,7 @@ ansi = [
   "#cdd6da",
 
   "#70787c",
-  "#f09bc0",
+  "#f39bb7",
   "#adeaca",
   "#d5e3a0",
   "#68b5d1",
@@ -89,7 +87,7 @@ ansi = [
 background = "#f2fbff"
 foreground = "#132227"
 cursor = "#4b8fa6"
-selection_background = "#d98dfb"
+selection_background = "#ebcdf3"
 ansi = [
   "#edf5f9",
   "#bb274b",
@@ -101,7 +99,7 @@ ansi = [
   "#252d31",
 
   "#70787c",
-  "#8e3362",
+  "#8f3458",
   "#0b4c35",
   "#6b5115",
   "#005d73",
@@ -113,7 +111,6 @@ ansi = [
 [[palette]]
 slug = "steph"
 subject = "no-game-no-life/steph"
-signature = ["cursor", "ansi4", "ansi12"]
 
 [palette.colors]
 background = "#201516"
@@ -134,7 +131,7 @@ ansi = [
   "#eca1b2",
   "#eae08e",
   "#ffd5b7",
-  "#7fb1d2",
+  "#87aed6",
   "#ffbfde",
   "#a3d59e",
   "#ffe9ea",
@@ -142,7 +139,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f7"
-foreground = "#2d1b1d"
+foreground = "#2c1b1d"
 cursor = "#bb3456"
 selection_background = "#e7d3ce"
 ansi = [
@@ -159,7 +156,7 @@ ansi = [
   "#883c51",
   "#2e491a",
   "#724c2e",
-  "#245a77",
+  "#2f587b",
   "#7d4068",
   "#014d33",
   "#2d1b1d",
@@ -168,7 +165,6 @@ ansi = [
 [[palette]]
 slug = "jibril"
 subject = "no-game-no-life/jibril"
-signature = ["cursor", "ansi3", "ansi12"]
 
 [palette.colors]
 background = "#1e151a"
@@ -179,7 +175,7 @@ ansi = [
   "#2b2126",
   "#f26889",
   "#d9c126",
-  "#ffa67d",
+  "#f9ab6f",
   "#9887f0",
   "#fb87e9",
   "#71b1f6",
@@ -197,14 +193,14 @@ ansi = [
 
 [palette.colors.light]
 background = "#fff8f9"
-foreground = "#2a1b24"
+foreground = "#291b24"
 cursor = "#9c2e81"
 selection_background = "#d5d7dd"
 ansi = [
   "#fff0f6",
   "#ba2655",
   "#395823",
-  "#a14a1b",
+  "#965212",
   "#6447de",
   "#af19a5",
   "#00538b",
@@ -223,7 +219,6 @@ ansi = [
 [[palette]]
 slug = "izuna"
 subject = "no-game-no-life/izuna"
-signature = ["cursor", "ansi1", "ansi3"]
 
 [palette.colors]
 background = "#19161e"
@@ -278,7 +273,6 @@ ansi = [
 [[palette]]
 slug = "tet"
 subject = "no-game-no-life/tet"
-signature = ["cursor", "ansi1", "ansi12"]
 
 [palette.colors]
 background = "#131913"
@@ -307,7 +301,7 @@ ansi = [
 
 [palette.colors.light]
 background = "#f5fcf0"
-foreground = "#172217"
+foreground = "#172218"
 cursor = "#649167"
 selection_background = "#d7d7d7"
 ansi = [

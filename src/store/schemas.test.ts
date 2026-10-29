@@ -85,7 +85,7 @@ test('the marketplace schema SchemaStore serves describes the keys ttheme reads 
   assert.deepEqual(keys(marketplace.properties?.owner), [...OWNER_KEYS].sort())
 })
 
-test('the set schema describes the keys, sites, positions, slots and gate rules the set and palette readers know', () => {
+test('the set schema describes the keys, sites, positions and gate rules the set and palette readers know', () => {
   const set = read('ttheme-set.json')
   assert.equal(set.$id, SET_SCHEMA_URL)
   assert.deepEqual(keys(set), [...SET_KEYS].sort())
@@ -106,13 +106,6 @@ test('the set schema describes the keys, sites, positions, slots and gate rules 
 
   grows(defs.site, SITE_KEYS, 'the find sites')
   grows(palette?.properties?.picture?.items?.properties?.position, POSITIONS, 'the positions')
-  assert.deepEqual(defs.slot?.enum, [
-    'background',
-    'foreground',
-    'cursor',
-    'selection',
-    ...Array.from({ length: 16 }, (_, i) => `ansi${i}`),
-  ])
 })
 
 test('the set schema takes the slugs, subjects and full names the set and palette readers take', () => {

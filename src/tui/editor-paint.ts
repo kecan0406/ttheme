@@ -79,7 +79,7 @@ export function fixHint(e: PaletteEditor, slot: number): string | undefined {
     return undefined
   }
 
-  if (ruleSlots(e.list, e.signature, 'bright-follows').includes(slot)) {
+  if (ruleSlots(e.list, 'bright-follows').includes(slot)) {
     return slot - BASE.length < 8 ? '= makes the bright follow its normal' : '= on the normal makes this follow it'
   }
 
@@ -87,7 +87,7 @@ export function fixHint(e: PaletteEditor, slot: number): string | undefined {
 }
 
 export function detailChecks(e: PaletteEditor, slot: number, at: Oklch): Check[] {
-  const checks = slotChecks(e.list, e.signature, slot)
+  const checks = slotChecks(e.list, slot)
   const held = heldOf(e, at)
 
   if (held !== undefined) {
@@ -105,7 +105,7 @@ export function lchShort(at: Oklch): string {
 }
 
 function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): string[] {
-  const rows = gateRows(e.list, e.signature).sort((a, b) => Number(a.ok !== false) - Number(b.ok !== false))
+  const rows = gateRows(e.list).sort((a, b) => Number(a.ok !== false) - Number(b.ok !== false))
   const failing = rows.filter((r) => r.ok === false).length
   const checked = (ok: boolean | undefined) => (failing === 0 && ok ? p.ok(MARKS.ok) : checkOf(p, ok))
   const width = wide - 4
@@ -212,7 +212,7 @@ export function position(value: number, min: number, max: number, width: number)
 }
 
 export function gateMisses(e: PaletteEditor): number {
-  return gateRows(e.list, e.signature).filter((row) => row.ok === false).length
+  return gateRows(e.list).filter((row) => row.ok === false).length
 }
 
 export function gateBox(p: Paint, e: PaletteEditor, room: number, width: number): string[] {

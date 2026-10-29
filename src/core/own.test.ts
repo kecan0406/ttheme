@@ -8,7 +8,7 @@ import { test } from 'node:test'
 import { brotliDecompressSync, deflateRawSync, inflateRawSync } from 'node:zlib'
 import { readMarketplaceDir, warning } from '../store/local.ts'
 import { codeOf, type Draft, paletteToml, readOwnText, shareLink, withPictures } from './draft.ts'
-import { fromCode, readCodes, recolor, resign, shareCode } from './own.ts'
+import { fromCode, readCodes, recolor, shareCode } from './own.ts'
 import { setText } from './sets.ts'
 import { quoted } from './text.ts'
 import { publisherOf } from './theme.ts'
@@ -16,7 +16,6 @@ import { publisherOf } from './theme.ts'
 const draft: Draft = {
   name: 'kumquat09@dust/wren',
   subject: 'starfall/orla',
-  signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
   foreground: '#ede2c6',
   cursor: '#e8d082',
@@ -66,7 +65,7 @@ const lit = {
 
 test('a share code carries the whole palette, its pictures and its other mode', () => {
   const code = shareCode([draft])
-  assert.match(code, /^tt7:[A-Za-z0-9_-]+$/)
+  assert.match(code, /^tt8:[A-Za-z0-9_-]+$/)
   assert.deepEqual(fromCode(code), [draft])
   assert.deepEqual(fromCode(shareCode([{ ...draft, other: lit }])), [{ ...draft, other: lit }])
   const both = { ...draft, other: lit, upstream: { ...draft.upstream, other: { ...lit, cursor: '#123456' } } } as Draft
@@ -86,7 +85,7 @@ test('a share link reads as the code it carries, however it was pasted', () => {
   assert.equal(codeOf(link), code)
   assert.equal(codeOf(`  ${link}/\n`), code)
   assert.equal(codeOf(`${link}?utm_source=chat`), code)
-  assert.equal(codeOf(link.replace('tt7:', 'tt7%3A')), code)
+  assert.equal(codeOf(link.replace('tt8:', 'tt8%3A')), code)
   assert.equal(codeOf(code), code)
   assert.equal(codeOf('https://ttheme.dev/marketplace'), undefined)
   assert.equal(codeOf('https://ttheme.dev/builder/pip'), undefined)
@@ -103,7 +102,7 @@ const bodyOf = (code: string): Buffer => {
 }
 
 const signed = (payload: Buffer): string =>
-  `tt7:${Buffer.concat([payload, createHash('sha256').update(payload).digest().subarray(0, 4)]).toString('base64url')}`
+  `tt8:${Buffer.concat([payload, createHash('sha256').update(payload).digest().subarray(0, 4)]).toString('base64url')}`
 
 const raw = (body: Buffer): string => signed(Buffer.concat([Buffer.from([0]), body]))
 
@@ -111,9 +110,9 @@ test('a share code that was cut, padded or retyped is refused, and so is one fro
   const code = shareCode([draft])
   assert.throws(() => fromCode(code.slice(0, -6)), /does not add up/)
   assert.throws(() => fromCode(`${code}AAAA`), /does not add up/)
-  assert.throws(() => fromCode('tt7:AAA'), /cut short/)
-  assert.throws(() => fromCode(code.replace('tt7:', 'tt2:')), /reads tt7: share codes, not tt2:/)
-  assert.throws(() => fromCode(code.replace('tt7:', 'xx:')), /starts with tt7:/)
+  assert.throws(() => fromCode('tt8:AAA'), /cut short/)
+  assert.throws(() => fromCode(code.replace('tt8:', 'tt7:')), /reads tt8: share codes, not tt7:/)
+  assert.throws(() => fromCode(code.replace('tt8:', 'xx:')), /starts with tt8:/)
   assert.throws(() => fromCode(`${code}!`), /characters it never uses/)
   const body = bodyOf(code)
   assert.deepEqual(fromCode(raw(body)), [draft])
@@ -134,7 +133,7 @@ const juno: Draft = {
 test('a share link carries several palettes, where each one came from and the other modes they keep', () => {
   const { pictures: _, ...bare } = juno
   const code = shareCode([draft, { ...bare, other: lit }])
-  assert.match(code, /^tt7:[A-Za-z0-9_-]+$/)
+  assert.match(code, /^tt8:[A-Za-z0-9_-]+$/)
   assert.deepEqual(fromCode(code), [draft, { ...bare, other: lit }])
   assert.equal(codeOf(shareLink(code)), code)
   const { subject: _subject, upstream: _upstream, ...plain } = draft
@@ -219,10 +218,7 @@ test('recolor rewrites the twenty colors and nothing else', () => {
   assert.equal(theme.cursor, '#00ff00')
   assert.equal(theme.selectionBackground, '#000080')
   assert.equal(theme.ansi[1], '#ff0000')
-  assert.deepEqual(theme.signatureSlots, draft.signature)
   assert.equal(out.split('\n').length, source.split('\n').length)
-  const marked = readOwnText(draft.name, resign(out, ['ansi1', 'foreground', 'cursor']))
-  assert.deepEqual(marked.signatureSlots, ['ansi1', 'foreground', 'cursor'])
   const pictured = readOwnText(draft.name, withPictures(out, [{ site: 'danbooru', id: 42, size: 'fill' }]))
   assert.deepEqual(pictured.pictures?.at(-1), { site: 'danbooru', id: 42, size: 'fill' })
 })

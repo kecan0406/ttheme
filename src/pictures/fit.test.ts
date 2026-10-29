@@ -118,7 +118,7 @@ function flat(width: number, height: number, [r, g, b]: number[], alpha = 255) {
   return { width, height, data }
 }
 
-test('paletteMatch is full on a picture in a signature color and nothing on grey or on clear pixels', () => {
+test('paletteMatch is full on a picture in a palette color and nothing on grey or on clear pixels', () => {
   const colors = ['#d98e32', '#ffac9e', '#66acaf']
   assert.equal(paletteMatch(flat(40, 40, [0xd9, 0x8e, 0x32]), colors), 1 / 3)
   assert.equal(paletteMatch(flat(40, 40, [128, 128, 128]), colors), 0)

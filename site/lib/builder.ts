@@ -4,7 +4,7 @@ import type { Draft } from '../../src/core/draft.ts'
 import type { UpstreamEntry } from '../../src/core/manifest.ts'
 import { mirror } from '../../src/core/mirror.ts'
 import { type Mode, modeOf, otherOf } from '../../src/core/mode.ts'
-import { colorsOf, listOf, SLOT_NAMES } from '../../src/core/slots.ts'
+import { colorsOf, listOf } from '../../src/core/slots.ts'
 import { type SharedPicture, slugOf, slugProblem, subjectProblem } from '../../src/core/theme.ts'
 
 export const STORE = 'ttheme-builder'
@@ -16,8 +16,6 @@ export const MOST_DRAFTS = 30
 export const RETURNS = ['reload', 'back_forward']
 
 export const BLANK_NAME = 'my-palette'
-
-export const BLANK_SIGNATURE = ['cursor', 'ansi5', 'ansi4']
 
 export interface Meta {
   subject?: string
@@ -35,7 +33,6 @@ export interface Edit {
   name: string
   made: Hex[]
   other: Side
-  signature: string[]
   meta: Meta
   keep: boolean
   origin: { made: Hex[]; other: Side }
@@ -109,7 +106,6 @@ export function editOf(draft: Draft, source: string | null, own: boolean, id: st
     name: copy ? `${slugOf(source)}-tuned` : slugOf(draft.name),
     made,
     other,
-    signature: [...draft.signature],
     meta: structuredClone(kept),
     keep: true,
     origin: { made: [...made], other: copied(other) },
@@ -124,7 +120,6 @@ export function blankEdit(colors: Hex[], id: string, at: number): Edit {
     name: BLANK_NAME,
     made: [...colors],
     other: { base: null, tuned: {} },
-    signature: [...BLANK_SIGNATURE],
     meta: {},
     keep: true,
     origin: { made: [...colors], other: { base: null, tuned: {} } },
@@ -147,8 +142,8 @@ export function modeOfView(edit: Pick<Edit, 'made'>, view: View): Mode {
 
 const mirrors = new Map<string, Hex[]>()
 
-export function mirrored(edit: Pick<Edit, 'made' | 'signature' | 'meta' | 'name'>): Hex[] {
-  const key = JSON.stringify([edit.made, edit.signature])
+export function mirrored(edit: Pick<Edit, 'made' | 'meta' | 'name'>): Hex[] {
+  const key = JSON.stringify(edit.made)
   const known = mirrors.get(key)
 
   if (known) return known
@@ -161,7 +156,6 @@ export function mirrored(edit: Pick<Edit, 'made' | 'signature' | 'meta' | 'name'
     cursor: c.cursor,
     selectionBackground: c.selection,
     ansi: c.ansi,
-    signatureSlots: edit.signature,
   })
 
   const list = listOf({ ...shade, selection: shade.selectionBackground })
@@ -172,7 +166,7 @@ export function mirrored(edit: Pick<Edit, 'made' | 'signature' | 'meta' | 'name'
   return list
 }
 
-type Body = Pick<Edit, 'name' | 'made' | 'other' | 'signature' | 'meta' | 'keep'>
+type Body = Pick<Edit, 'name' | 'made' | 'other' | 'meta' | 'keep'>
 
 export function otherBase(edit: Body): Hex[] {
   return edit.other.base ?? mirrored(edit)
@@ -245,19 +239,10 @@ export function draftFrom(edit: Body): Draft {
     name: edit.name,
     ...(meta.subject ? { subject: meta.subject } : {}),
     ...(meta.upstream ? { upstream: meta.upstream } : {}),
-    signature: [...edit.signature],
     ...made,
     ...(writesOther(edit) ? { other: colorsOf(otherList(edit)) } : {}),
     ...(pictures.length > 0 ? { pictures } : {}),
   }
-}
-
-export function signatureTrouble(edit: Edit): string | undefined {
-  const colors = edit.signature.map((slot) => edit.made[SLOT_NAMES.indexOf(slot)])
-
-  if (edit.signature.length !== 3 || colors.some((hex) => hex === undefined)) return 'needs three colors'
-
-  return new Set(colors).size === 3 ? undefined : 'needs three different colors'
 }
 
 export function dirty(edit: Edit): boolean {
