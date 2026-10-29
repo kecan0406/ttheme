@@ -103,6 +103,8 @@ __tt_followed() { : }
 
 __tt_follows_prompt() { return 1 }
 
+__tt_ssh_wrapped() { return 1 }
+
 __tt_prompted() { : }
 
 __tt_cli_env() { : }

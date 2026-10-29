@@ -695,7 +695,11 @@ __tt_ssh_host() {
   local -a words=(${(z)1})
   local -i i=1 tty=0 ended=0
   while [[ ${words[i]} == ([[:alpha:]_][[:alnum:]_]#=*|command|exec|noglob|nocorrect|-) ]]; do (( ++i )); done
-  [[ ${${(Q)words[i]}:t} == ssh ]] || return 1
+  if __tt_ssh_wrapped "${(@)words[i,-1]}"; then
+    (( i += REPLY - 1 ))
+  elif [[ ${${(Q)words[i]}:t} != ssh ]]; then
+    return 1
+  fi
   for (( ++i; i <= ${#words}; i++ )); do
     case ${words[i]} in
       ('&&'|'||'|';'|';;'|';&'|';|') break ;;

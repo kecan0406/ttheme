@@ -616,6 +616,13 @@ TTHEME_STARTUP=
     'ssh teal 2>/dev/null' teal \
     'ssh teal; echo done' teal \
     '/usr/bin/ssh teal' teal \
+    'ghostty +ssh teal' teal \
+    'ghostty +ssh -- -t teal tmux attach' teal \
+    'ghostty +ssh --terminfo=false --verbose -p 2222 teal' teal \
+    '/opt/ghostty/bin/ghostty +ssh -- bob@teal' teal \
+    'ghostty +ssh -- teal uptime' - \
+    'ghostty +ssh --help' - \
+    'ghostty +ssh-cache teal' - \
     'ssh teal uptime' - \
     'ssh teal htop -t' - \
     'ssh -N -L 8080:localhost:80 teal' - \

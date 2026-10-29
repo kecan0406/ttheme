@@ -15,6 +15,16 @@ __tt_follows_prompt() { return 0 }
 
 __tt_keepable() { return 0 }
 
+__tt_ssh_wrapped() {
+  local -i n=2
+  [[ ${${(Q)1}:t} == ghostty && ${(Q)2} == +ssh ]] || return 1
+  while [[ ${(Q)argv[n+1]} == --* ]]; do
+    (( ++n ))
+    [[ ${(Q)argv[n]} != -- ]] || break
+  done
+  REPLY=$n
+}
+
 __tt_bg_shown() { __tt_ghostty_shown }
 
 __tt_ghostty_key() { REPLY=${${1#/dev/}//\//-} }
