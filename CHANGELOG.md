@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.78
+
 - The ttheme-palette skill is skill format 3: an older copy, which may still take the first anchor for the color a palette leans toward, asks to be updated before it starts. The skill also says where a color no ANSI role holds, such as an orange between red and yellow, goes.
 
 ## 1.2.77
