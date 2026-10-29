@@ -18,7 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           persist-credentials: false
       - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         with:
@@ -43,10 +42,10 @@ jobs:
           tar -czf release/ttheme-all.tar.gz dist shell README.md
 
       - name: notes
+        if: github.ref_type == 'tag'
         run: |
-          prev=$(git describe --tags --abbrev=0 --match 'v*.*.*' "$GITHUB_REF_NAME^" 2>/dev/null || true)
-          git log --no-merges --invert-grep --grep='^Bump version to ' --format='- %s' \
-            "${prev:+$prev..}$GITHUB_REF_NAME" > notes.md
+          awk -v head="## ${GITHUB_REF_NAME#v}" '/^## / { on = ($0 == head); next } on' CHANGELOG.md | sed '/./,$!d' > notes.md
+          grep -q . notes.md
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

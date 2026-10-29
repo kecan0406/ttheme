@@ -84,7 +84,7 @@ if (import.meta.main) {
 
   if (found.length > 0) {
     process.stderr.write(
-      `${found.join('\n')}\nPut an area's rules in the AGENTS.md beside its code, move what a skill needs only sometimes into its references/ folder, and keep measurements, dates and history in the commit message.\n`,
+      `${found.join('\n')}\nPut an area's rules in the AGENTS.md beside its code, move what a skill needs only sometimes into its references/ folder, and keep measurements, dates and history in a commit's body.\n`,
     )
     process.exitCode = 1
   }

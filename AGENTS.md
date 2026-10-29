@@ -3,7 +3,7 @@
 Rules every coding agent needs in this repository: the gate, the hard rules, the traps and where the rest lives. This file stays under 150 lines and 10 KB, and `mise run test` fails above that.
 
 - An area's rules go in the `AGENTS.md` beside its code, not here.
-- Measurements, dates and history go in the commit message.
+- Measurements, dates and history go in a commit's body, not here.
 - Add a line only after the same mistake happened twice.
 
 ## Setup and the gate
@@ -71,9 +71,13 @@ While a change goes back and forth with the person you work for, run no check un
 | `builtin/`, `commons/`: palettes, works, characters | the `AGENTS.md` in that folder, `CONTRIBUTING.md` ("Works and characters"), the `palette` skill (`.agents/skills/palette/SKILL.md`) |
 | the wording of a screen, a message or a docs page | `.claude/rules/text.md` |
 
-## Contributions
+## Commits
 
-If a tool wrote a substantial part of a commit, say so at the end of its message with the tool's own `Co-Authored-By:` trailer. `CONTRIBUTING.md` has the rest: issues, palettes, what the project accepts.
+- A subject is `<area>: <summary>` in 72 characters at most, the summary lowercase, imperative and without a full stop. The area is where most of the change is: `core`, `store`, `pictures`, `terminals`, `tui` or `cli` under `src/`; `shell`, `site`, `docs`, `builtin`, `commons`, `schemas`, `skills` or `tests` for that folder; `ci` for `.github` and `mise.toml`; `agents` for `AGENTS.md`, `.agents` and `.claude`; `docs` also for the other Markdown at the root. `mise run ci` checks every commit `origin/main` lacks.
+- The body says how things were, how they are now and why.
+- A change a user would notice adds a line for that user under `## Unreleased` in `CHANGELOG.md`, in the same commit. `mise run release` refuses an empty section and turns its heading into the version in its own `release: <version>` commit; the GitHub release posts that section.
+
+`CONTRIBUTING.md` has the rest: issues, palettes, what the project accepts.
 
 ## Maintainers only
 

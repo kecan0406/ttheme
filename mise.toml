@@ -253,7 +253,7 @@ depends = ["build"]
 run = "rm -rf pages && bun src/cli/pages.ts pages && bun site/readme.ts pages"
 
 [tasks.release]
-description = "bump the version, tag it and push once HEAD is checked — `mise run ci` runs first unless it already passed on this very tree — then watch the release workflow publish it on npm and cut the GitHub release, and wait until npm serves it — `mise run release 1.0.0`"
+description = "bump the version, turn CHANGELOG.md's `## Unreleased` into it, tag it and push once HEAD is checked — `mise run ci` runs first unless it already passed on this very tree — then watch the release workflow publish it on npm and cut the GitHub release, and wait until npm serves it — `mise run release 1.0.0`"
 usage = 'arg "<version>" help="x.y.z, or patch | minor | major"'
 run = '''
 set -e
@@ -267,12 +267,20 @@ if printf '%s' "$times" | jq -e --arg v "$version" 'has($v)' > /dev/null; then
   echo "release: npm had $version once, and never takes a version twice, even one unpublished — pick the next"
   exit 1
 fi
+if ! awk '/^## / { on = ($0 == "## Unreleased"); next } on && /^- / { found = 1 } END { exit !found }' CHANGELOG.md; then
+  echo "release: CHANGELOG.md has nothing under ## Unreleased — add a line for each change a user would notice"
+  exit 1
+fi
 if zsh tests/checked.zsh fresh; then
   echo "release: mise run ci already passed on this tree"
 else
   mise run ci
 fi
-npm version "$version" -m "Bump version to %s"
+npm version "$version" --no-git-tag-version > /dev/null
+awk -v version="$version" '{ print } $0 == "## Unreleased" { print ""; print "## " version }' CHANGELOG.md > CHANGELOG.md.new
+mv CHANGELOG.md.new CHANGELOG.md
+git commit -q -m "release: $version" -- package.json CHANGELOG.md
+git tag -a "v$version" -m "release: $version"
 git push --atomic --follow-tags origin HEAD:main
 tag="v$version"
 run=
@@ -299,7 +307,11 @@ run = "zsh tests/checked.zsh begin"
 
 [tasks."ci:checks"]
 description = "every check the ci workflow runs but the parity walk, which it walks in parallel jobs, a few terminals each"
-depends = ["lint", "check", "test", "shell:check", "bin:check", "tui", "site:check", "costs"]
+depends = ["commits", "lint", "check", "test", "shell:check", "bin:check", "tui", "site:check", "costs"]
+
+[tasks.commits]
+description = "every commit origin/main lacks has a subject of `<area>: <summary>` in 72 characters at most, an area AGENTS.md (\"Commits\") lists and no full stop"
+run = "zsh tests/commits.zsh"
 
 [tasks.ci]
 description = "everything the ci workflow runs, the parity walk after the rest — and, once it passes, marks the tree it checked, which `mise run release` then does not check again"
