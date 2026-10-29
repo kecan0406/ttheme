@@ -1,11 +1,14 @@
 import { escapeHtml } from '@kitajs/html'
 import { Check, ChevronDown, Copy } from 'lucide'
 import { Marked, Renderer, type Token, type Tokens } from 'marked'
+import { PinsPlayer } from '@/components/pins-player'
 import { buttonVariants } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { highlightHtml } from '@/lib/highlight'
 import { Icon } from '@/lib/icons'
+import { idsOf, playPins, readPins, swatchOf } from '@/lib/pins-play'
 import { html } from '@/lib/render'
+import type { Theme } from '@/lib/themes'
 import { cells, graphemes } from '../../src/core/text.ts'
 
 export interface Heading {
@@ -33,6 +36,7 @@ export interface Doc {
 export interface Place {
   resolve: (href: string) => string
   verbs: readonly string[]
+  theme: (id: string) => Theme | undefined
 }
 
 type Tone = 'note' | 'tip' | 'warning'
@@ -147,6 +151,21 @@ function screen(text: string, title: string | undefined): string {
     .join('')
 
   return `<figure data-slot="screen"><figcaption><span data-lights aria-hidden="true"><i></i><i></i><i></i></span>${named}</figcaption><pre translate="no"><code>${drawn}</code></pre></figure>\n`
+}
+
+function pins(text: string, info: string, place: Place): string {
+  const start = /default="([^"]*)"/.exec(info)?.[1]
+  const script = readPins(text, start, (id) => place.theme(id) !== undefined)
+
+  const swatches = Object.fromEntries(
+    idsOf(script).flatMap((id) => {
+      const theme = place.theme(id)
+
+      return theme ? [[id, swatchOf(theme)] as const] : []
+    }),
+  )
+
+  return `${html(<PinsPlayer frames={playPins(script)} swatches={swatches} />)}\n`
 }
 
 function tabOf(token: Token): string | undefined {
@@ -292,6 +311,8 @@ function markdown(doc: Doc, place: Place): Marked {
         if (kind === 'sh') return shell(text)
 
         if (kind === 'screen') return screen(text, title)
+
+        if (kind === 'pins') return pins(text, info, place)
 
         if (title) return file(text, title, kind)
 

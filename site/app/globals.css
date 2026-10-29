@@ -2012,6 +2012,22 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   text-align: center;
 }
 
+[data-pins-cursor] {
+  animation: pins-cursor 1s steps(1) infinite;
+}
+
+@keyframes pins-cursor {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-pins-cursor] {
+    animation: none;
+  }
+}
+
 @media (forced-colors: active) {
   :is([data-doc-body], [data-lede]) kbd,
   [data-slot='steps'] > li::before,

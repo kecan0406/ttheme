@@ -1,3 +1,4 @@
+import { themes } from '@/lib/builtin'
 import { COMMANDS, commandsToc } from '@/lib/commands'
 import { type Doc, type Heading, renderDoc } from '@/lib/markdown'
 import { SETTING_GROUPS } from '@/lib/settings'
@@ -125,7 +126,12 @@ function madeToc(made: Made | undefined): Heading[] {
 
 const FLAT = NAV.flatMap((group) =>
   group.pages.map((entry) => {
-    const doc = renderDoc(entry.text, { resolve: resolver(group.slug, entry.slug), verbs: VERBS })
+    const doc = renderDoc(entry.text, {
+      resolve: resolver(group.slug, entry.slug),
+      verbs: VERBS,
+      theme: (id) => themes.find((theme) => theme.id === id),
+    })
+
     const file = `docs/${group.slug}/${entry.slug}.md`
     const extra = madeToc(entry.made)
 

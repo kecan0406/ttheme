@@ -67,6 +67,19 @@ ttheme default miku      # the default for new tabs
 A pin gives a folder, or an ssh host, its own palette. A tab shows it while it
 is there and puts back what it showed before when it leaves.
 
+```pins default="ttheme/miku"
+~/work/**     ttheme/konata
+~/work/site   ttheme/kita
+ssh:*.prod    ttheme/bocchi
+
+cd ~/work
+cd api/v2
+cd ~
+cd ~/work/site
+ssh db.prod
+exit
+```
+
 ```sh
 ttheme pin              # this folder
 ttheme pin ~/work/site  # another folder, without going there
