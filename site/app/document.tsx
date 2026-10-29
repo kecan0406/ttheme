@@ -7,6 +7,7 @@ import { HANDOFF_SCRIPT } from '@/lib/handoff'
 import { KEYS_SCRIPT } from '@/lib/keys'
 import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
+import { RUNNER_SCRIPT } from '@/lib/runner'
 import { CARD_REV, ORIGIN } from '@/lib/seo'
 import { SPECULATION_RULES } from '@/lib/speculation'
 import { rootStyle, themeIcon, wearScript } from '@/lib/wear'
@@ -101,6 +102,7 @@ function Document({
           <link rel="preload" href={font} as="font" type="font/woff2" crossorigin="" />
         ))}
         <script>{KEYS_SCRIPT}</script>
+        <script>{RUNNER_SCRIPT}</script>
         <script>{WEAR_SCRIPT}</script>
         <script type="application/json" data-fallback>
           {json(fallback)}

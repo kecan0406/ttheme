@@ -1,10 +1,9 @@
 import { Check, Copy, Link } from 'lucide'
 import { Button, LinkButton } from '@/components/ui/button'
-import { INIT } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import type { Shared } from '@/lib/share'
 import { pinned } from '@/lib/themes'
-import { CommandRow } from './command-row'
+import { CommandRow, InitRow } from './command-row'
 import { SectionLabel, Signature } from './palette-parts'
 
 function bringing(count: number): string {
@@ -32,7 +31,7 @@ function Installs({ shared }: { shared: Shared }) {
         </p>
       ) : null}
       <p class="text-xs text-muted-foreground">New to ttheme? Set it up first:</p>
-      <CommandRow command={INIT} class="bg-card" />
+      <InitRow class="bg-card" />
     </>
   )
 }

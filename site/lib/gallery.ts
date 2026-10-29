@@ -1,5 +1,6 @@
 import { BUILTIN, isBuiltin, shortName, type Theme } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
+import type { Runner } from '../../src/core/runner.ts'
 
 export type Source = 'all' | 'builtin' | 'community'
 
@@ -109,7 +110,9 @@ export function repoUrl(repo: string): string {
 
 export const NPM_URL = 'https://www.npmjs.com/package/@kecan0406/ttheme'
 
-export const INIT = 'npx @kecan0406/ttheme init'
+export function initOf(runner: Runner): string {
+  return `${runner} @kecan0406/ttheme init`
+}
 
 export const BUILTIN_ABOUT = "The palettes that come with ttheme, each measured from the character's official art."
 

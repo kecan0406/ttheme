@@ -1,10 +1,9 @@
 import { ArrowRight, ChevronRight } from 'lucide'
-import { CommandRow } from '@/components/command-row'
+import { InitRow } from '@/components/command-row'
 import { LinkButton } from '@/components/ui/button'
 import { COMMANDS, type Command, sectionId } from '@/lib/commands'
 import { DOC_PAGES, DOCS, DOCS_PATH, type DocPage, docAt, guideOf } from '@/lib/docs'
 import type { Facts } from '@/lib/facts'
-import { INIT } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { renderInline } from '@/lib/markdown'
 import { SETTING_GROUPS } from '@/lib/settings'
@@ -182,7 +181,7 @@ function StartHere() {
           {quick.description}
         </p>
       </div>
-      <CommandRow command={INIT} class="bg-card" />
+      <InitRow class="bg-card" />
       <div class="flex flex-wrap gap-2">
         <LinkButton href={quick.path}>
           <span safe>{quick.title.toLowerCase()}</span>

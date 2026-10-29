@@ -1,4 +1,5 @@
 import { MODE_KEY } from '@/lib/mode'
+import { RUNNER_KEY } from '@/lib/runner'
 import { WEAR_KEY } from '@/lib/wear'
 
 function replace() {
@@ -17,5 +18,5 @@ export function respeculate() {
 }
 
 window.addEventListener('storage', (event) => {
-  if (event.key === WEAR_KEY || event.key === MODE_KEY) respeculate()
+  if (event.key === WEAR_KEY || event.key === MODE_KEY || event.key === RUNNER_KEY) respeculate()
 })

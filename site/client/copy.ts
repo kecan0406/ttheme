@@ -16,7 +16,10 @@ async function write(text: string): Promise<boolean> {
 }
 
 function select(button: HTMLElement) {
-  getSelection()?.selectAllChildren(button.closest('[data-slot="command-row"]')?.querySelector('code') ?? button)
+  const codes = button.closest('[data-slot="command-row"]')?.querySelectorAll('code') ?? []
+  const shown = [...codes].find((code) => code.getClientRects().length > 0)
+
+  getSelection()?.selectAllChildren(shown ?? button)
 }
 
 function note(button: HTMLElement, text: string) {

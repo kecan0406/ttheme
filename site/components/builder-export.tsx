@@ -4,10 +4,9 @@ import { Dialog, DialogClose, DialogHeader, DialogTitle } from '@/components/ui/
 import { Input } from '@/components/ui/input'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { FileView, LinkView, MarketView } from '@/lib/builder-view'
-import { INIT } from '@/lib/gallery'
 import { highlightHtml } from '@/lib/highlight'
 import { Icon, NewTab } from '@/lib/icons'
-import { CommandRow } from './command-row'
+import { CommandRow, InitRow } from './command-row'
 
 const PANEL = 'grid content-start gap-4 pt-5'
 
@@ -72,7 +71,7 @@ export function FilePanel({ view }: { view: FileView }) {
       <p class={STEP}>then, in your terminal</p>
       <CommandRow command={`ttheme add ~/Downloads/${view.file}`} class="bg-card" />
       <p class={NOTE}>New to ttheme? Set it up first:</p>
-      <CommandRow command={INIT} class="bg-card" />
+      <InitRow class="bg-card" />
     </>
   )
 }
@@ -110,7 +109,7 @@ export function LinkPanel({ view }: { view: LinkView }) {
         </LinkButton>
       </div>
       <p class={NOTE}>New to ttheme? Set it up first:</p>
-      <CommandRow command={INIT} class="bg-card" />
+      <InitRow class="bg-card" />
     </>
   )
 }

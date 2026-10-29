@@ -2,14 +2,14 @@ import type { PropsWithChildren } from '@kitajs/html'
 import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide'
 import { Button, LinkButton } from '@/components/ui/button'
 import type { Facts } from '@/lib/facts'
-import { INIT, marketplacePath } from '@/lib/gallery'
+import { marketplacePath } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { BUILTIN, type Theme } from '@/lib/themes'
 import { headlineEm } from '@/lib/wear'
 import { leadsOf } from '@/lib/works'
 import { HeroScenes } from './cli-scenes'
-import { CommandRow } from './command-row'
+import { CommandRow, InitRow } from './command-row'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { FIRST_TABS, TabWindow } from './tab-window'
@@ -52,7 +52,6 @@ const STEPS = [
   {
     title: 'install',
     text: 'Needs Node 22+ and zsh. Asks which terminals and palettes to bring, shows every file it will change, and writes nothing until you confirm.',
-    command: INIT,
   },
   {
     title: 'browse',
@@ -148,7 +147,7 @@ export function Home({
                 browse the palettes
                 <Icon node={ArrowRight} />
               </LinkButton>
-              <CommandRow command={INIT} class="min-w-70 flex-1 bg-card" />
+              <InitRow class="min-w-70 flex-1 bg-card" />
             </div>
           </div>
 
@@ -231,7 +230,7 @@ export function Home({
           <ol class="grid grid-cols-3 gap-4 max-[1080px]:grid-cols-1">
             {STEPS.map((step, index) => (
               <Step number={index + 1} title={step.title} text={step.text}>
-                <CommandRow command={step.command} class="bg-card" />
+                {step.command ? <CommandRow command={step.command} class="bg-card" /> : <InitRow class="bg-card" />}
               </Step>
             ))}
             <Step number={3} title="use" text="This tab only. Every other tab keeps its own.">

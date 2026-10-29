@@ -1,5 +1,5 @@
 import { FACET_HEIGHT, FACET_LAMP, FACET_WIDTH, facetCorners, facetMesh, facetPoints, shade } from '@/lib/facets'
-import { BUILTIN_ABOUT, INIT } from '@/lib/gallery'
+import { BUILTIN_ABOUT, initOf } from '@/lib/gallery'
 import { type Raster, raster } from '@/lib/raster'
 import { BUILTIN, faceOf, isBuiltin, type Marketplace, shortName, type Theme } from '@/lib/themes'
 import { INK, wordmarkSvg } from '@/lib/wordmark'
@@ -408,7 +408,7 @@ function marketplace(kit: Raster, card: Extract<Card, { kind: 'marketplace' }>, 
   const theme = leadsOf(palettes)[0] as Theme
   const k = tones(theme)
   const about = market ? market.about : BUILTIN_ABOUT
-  const command = market ? `ttheme marketplace add ${market.add}` : INIT
+  const command = market ? `ttheme marketplace add ${market.add}` : initOf('npx')
   const window = windowOf(kit, theme, k, 'ttheme marketplace', frame)
   const { size, rows } = rowsOf(kit, market?.id ?? BUILTIN, window.left, 110, 56)
   const top = 250 + (rows.length - 1) * size * 0.92 + 58

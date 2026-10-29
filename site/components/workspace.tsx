@@ -7,7 +7,7 @@ import { Kbd } from '@/components/ui/kbd'
 import { Popover } from '@/components/ui/popover'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { Facts, Repo } from '@/lib/facts'
-import { BUILTIN_URL, INIT, palettePath, REPO, repoUrl, searchText } from '@/lib/gallery'
+import { BUILTIN_URL, palettePath, REPO, repoUrl, searchText } from '@/lib/gallery'
 import { gatePassed } from '@/lib/gate'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
@@ -17,7 +17,7 @@ import { wearStyle } from '@/lib/wear'
 import { byWork, leadOf, leadsOf } from '@/lib/works'
 import type { Where, WorkspaceData } from '@/lib/workspace'
 import { ByMode } from './by-mode'
-import { CommandRow } from './command-row'
+import { CommandRow, InitRow } from './command-row'
 import { ChecksHead, GateList, SwatchGrid } from './palette-parts'
 import { RepoLink } from './repo-link'
 import { TerminalFrame } from './terminal-frame'
@@ -46,8 +46,12 @@ const VIEW_SHOWN: Record<View, string> = {
   colors: 'group-has-[input[value=colors]:checked]/preview:block',
 }
 
-function installOf(where: Where): string {
-  return where ? `ttheme marketplace add ${where.add}` : INIT
+function InstallRow({ where }: { where: Where }) {
+  return where ? (
+    <CommandRow command={`ttheme marketplace add ${where.add}`} class="bg-card" />
+  ) : (
+    <InitRow class="bg-card" />
+  )
 }
 
 function signs(theme: Theme): string[] {
@@ -365,7 +369,7 @@ export function MarketplaceWorkspace({
               </TitleFacts>
             </WorkspaceTitle>
             <div class="max-w-full min-w-0 flex-[0_1_auto]">
-              <CommandRow command={installOf(where)} class="bg-card" />
+              <InstallRow where={where} />
             </div>
           </WorkspaceBar>
           <WorkspaceStage>
