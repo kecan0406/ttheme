@@ -164,12 +164,14 @@ ttheme update                  # ttheme itself, then every marketplace
 ttheme update alice@pastel     # one marketplace
 ```
 
-The built-in palettes change with a new ttheme release; other marketplaces are
+The built-in palettes change with a new ttheme release, which `ttheme update`
+installs through npx or bunx, whichever ran `init`; other marketplaces are
 fetched again. An installed palette keeps the colors it was installed with until
 you take its update: `ttheme update` names the palettes that have one, and
 Browse marks them `⇡`, where `ctrl+r` stages one for `enter` to apply. Your
 tuning stays on top. `TTHEME_AUTO_UPDATE=off` in `ttheme config` stops the daily
-npm check and the refetch of a marketplace you switched to update on its own.
+release check and the refetch of a marketplace you switched to update on its
+own.
 
 ## Pictures
 
@@ -216,8 +218,12 @@ in `~/.config/ttheme`. ttheme sets colors only, never a font or a shader, and
 `init` keeps `<file>.ttheme.bak` before its first edit of a file. Everything
 outside the block stays yours.
 
-```sh
+```sh tab="npx"
 npx @kecan0406/ttheme@latest uninstall
+```
+
+```sh tab="bunx"
+bunx @kecan0406/ttheme@latest uninstall
 ```
 
 Uninstall lists what it will do, then takes every ttheme block out of your
@@ -242,6 +248,7 @@ comes back byte for byte; one you edited keeps its backup.
   there is none. Run it in a terminal tab, or add `--yes`.
 
 When none of these fits, `ttheme info` prints what a bug report needs (before
-ttheme is set up, `npx @kecan0406/ttheme@latest info`).
+ttheme is set up, `npx @kecan0406/ttheme@latest info`, or the same through
+`bunx`).
 [Report a bug](https://github.com/kecan0406/ttheme/issues/new?template=bug.yml)
 with that output.

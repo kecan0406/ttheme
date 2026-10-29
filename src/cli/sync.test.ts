@@ -1116,6 +1116,7 @@ test('installed.json keeps every field it holds through a write and a read', () 
     updates: { 'alice/pastel#v1': true, ttheme: false },
     colorsMoved: true,
     skills: ['agents', 'claude'],
+    runner: 'bunx',
     palettes: ['ttheme/orla', 'alice@pastel/dusk'],
   }
 

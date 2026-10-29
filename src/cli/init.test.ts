@@ -6,6 +6,7 @@ import { test } from 'node:test'
 import { modeOf } from '../core/mode.ts'
 import { setText } from '../core/sets.ts'
 import { readBundled, readMarketplaces } from '../store/available.ts'
+import type { Host } from '../store/host.ts'
 import type { Installed } from '../store/installed.ts'
 import { MANAGED, withSetting } from '../store/wiring.ts'
 import {
@@ -14,6 +15,7 @@ import {
   type InitOptions,
   type InitPaths,
   installedState,
+  layerNode,
   planAgain,
   planInit,
   planUpgrade,
@@ -473,6 +475,7 @@ test('setting it up again carries every setting it does not ask about again', ()
     updates: { 'alice/pastel#v1': true },
     colorsMoved: true,
     skills: ['agents', 'claude'],
+    runner: 'bunx',
     palettes: ['ttheme/juno'],
   }
 
@@ -515,4 +518,23 @@ test('init places the agent skill it is asked for, records it, writes it again o
   applyUninstall(planUninstall(uninstall), uninstall, { platform: 'darwin', env: {}, run: () => undefined })
   assert.ok(!existsSync(dirname(skill)))
   assert.throws(() => lstatSync(linked))
+})
+
+test('init under Bun finds the Node.js the tab layer runs past the node bunx puts first on PATH, and none where Bun is alone', () => {
+  const host = (found: string, answers: Record<string, string>): Host => ({
+    platform: 'linux',
+    env: {},
+    run: (command) => (command === 'zsh' ? found : Object.hasOwn(answers, command) ? answers[command] : undefined),
+  })
+
+  const bun = { node: '24.3.0', bun: '1.3.0' }
+
+  const both = host('/tmp/bun-node/node\n/opt/node/bin/node', {
+    '/tmp/bun-node/node': '',
+    '/opt/node/bin/node': '22.12.0',
+  })
+
+  assert.equal(layerNode(both, bun), '22.12.0')
+  assert.equal(layerNode(host('/tmp/bun-node/node', { '/tmp/bun-node/node': '' }), bun), undefined)
+  assert.equal(layerNode(host('', {}), { node: '22.12.0' }), '22.12.0')
 })

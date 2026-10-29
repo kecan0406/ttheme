@@ -39,7 +39,7 @@ import {
 import { cap } from '../tui/keycaps.ts'
 import { pending } from '../tui/pending.ts'
 import { MARKS } from '../tui/style.ts'
-import { autoWanted, UPDATE_COMMAND } from './release.ts'
+import { autoWanted, initCommand } from './release.ts'
 import { behindOf, conflictLine, updatable } from './upstreams.ts'
 
 export const REFRESH_AFTER = 24 * 60 * 60 * 1000
@@ -206,7 +206,7 @@ export async function fetchMarketplace(
 ): Promise<Fetched> {
   if (source === BUILTIN) {
     if (!existsSync(builtinPath(home))) {
-      throw new Error(`the built-in palettes are not on this machine — \`${UPDATE_COMMAND}\` puts them back`)
+      throw new Error(`the built-in palettes are not on this machine — \`${initCommand()}\` puts them back`)
     }
 
     return { source, id: BUILTIN, entries: cachedEntries(home, BUILTIN), works: [] }

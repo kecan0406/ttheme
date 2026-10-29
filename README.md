@@ -37,9 +37,11 @@ text stays easy to read.
 npx @kecan0406/ttheme@latest init
 ```
 
-`init` asks which terminals to wire and which palettes to install, shows every
-file it will change, and writes nothing until you confirm. ttheme requires
-Node.js `>=22` and zsh, which macOS ships. From bash or fish, `ttheme` works too.
+With Bun, `bunx @kecan0406/ttheme@latest init` does the same, and `ttheme update`
+then updates through bunx. `init` asks which terminals to wire and which palettes
+to install, shows every file it will change, and writes nothing until you
+confirm. ttheme requires Node.js `>=22` and zsh, which macOS ships, with bunx
+too. From bash or fish, `ttheme` works too.
 
 Then load the command and try palettes on:
 

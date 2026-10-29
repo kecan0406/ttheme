@@ -5,13 +5,18 @@ changes until you confirm.
 
 1. **Run init.**
 
-   ```sh
+   ```sh tab="npx"
    npx @kecan0406/ttheme@latest init
    ```
 
-   ttheme requires Node.js `>=22` and zsh, which macOS ships. It asks a few
-   questions, lists every file it will change, and writes nothing until you say
-   yes.
+   ```sh tab="bunx"
+   bunx @kecan0406/ttheme@latest init
+   ```
+
+   ttheme requires Node.js `>=22` and zsh, which macOS ships, with bunx too. It
+   asks a few questions, lists every file it will change, and writes nothing
+   until you say yes. `ttheme update` later updates it the same way, through npx
+   or bunx.
 
    See [Terminal support](../reference/terminals.md) for the terminals it wires.
 

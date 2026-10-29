@@ -1,9 +1,11 @@
 import { execFile, spawn, spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import pkg from '../../package.json' with { type: 'json' }
+import { type Runner, runnerOf } from '../core/runner.ts'
 import { writeAtomic } from '../store/edits.ts'
+import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { colorless } from '../terminals/osc.ts'
 import {
@@ -17,7 +19,20 @@ import {
 } from '../tui/notice.ts'
 import { painter } from '../tui/style.ts'
 
-export const UPDATE_COMMAND = `npx ${pkg.name}@latest init`
+interface Tool {
+  name: string
+  asks: readonly [string, ...string[]]
+  flags: readonly string[]
+}
+
+const TOOLS: Record<Runner, Tool> = {
+  npx: { name: 'npm', asks: ['npm', 'view', `${pkg.name}@latest`, 'version', '--prefer-online'], flags: ['--yes'] },
+  bunx: { name: 'Bun', asks: ['bun', 'info', `${pkg.name}@latest`, 'version'], flags: [] },
+}
+
+export function launch(runner: Runner, verb: string): string {
+  return `${runner} ${pkg.name}@latest ${verb}`
+}
 
 const DAY = 24 * 60 * 60 * 1000
 const RETRY = 60 * 60 * 1000
@@ -76,20 +91,26 @@ function writeSeen(seen: Seen): void {
   writeAtomic(seenPath(), `${JSON.stringify(seen)}\n`)
 }
 
-function npmDir(): string {
+function askDir(runner: Runner): string {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-npm-'))
   mkdirSync(join(dir, 'node_modules'))
+
+  if (runner === 'bunx') {
+    writeFileSync(join(dir, 'package.json'), '{}\n')
+  }
 
   return dir
 }
 
 function fetchLatest(timeout = TIMEOUT): Promise<string> {
-  const cwd = npmDir()
+  const by = runner()
+  const [tool, ...args] = TOOLS[by].asks
+  const cwd = askDir(by)
 
   return new Promise((resolve, reject) => {
     execFile(
-      'npm',
-      ['view', `${pkg.name}@latest`, 'version', '--prefer-online'],
+      tool,
+      args,
       { cwd, encoding: 'utf8', timeout, env: { ...process.env, npm_config_update_notifier: 'false' } },
       (error, stdout, stderr) => {
         rmSync(cwd, { recursive: true, force: true })
@@ -98,16 +119,16 @@ function fetchLatest(timeout = TIMEOUT): Promise<string> {
           const said = stderr
             .split('\n')
             .find((line) => /\S/.test(line))
-            ?.replace(/^npm (error|ERR!) /, '')
+            ?.replace(/^(npm (error|ERR!)|error:) /, '')
 
           const { code, killed } = error as NodeJS.ErrnoException & { killed?: boolean }
           reject(
             new Error(
               code === 'ENOENT'
-                ? 'cannot run npm'
+                ? `cannot run ${tool}`
                 : killed
-                  ? `npm did not answer within ${timeout / 1000} s`
-                  : `npm could not ask its registry — ${said ?? 'it gave no reason'}`,
+                  ? `${tool} did not answer within ${timeout / 1000} s`
+                  : `${tool} could not ask its registry — ${said ?? 'it gave no reason'}`,
             ),
           )
 
@@ -202,12 +223,28 @@ function runsInstalled(): boolean {
   }
 }
 
+function runner(): Runner {
+  if (!runsInstalled()) {
+    return runnerOf(process.env.npm_config_user_agent)
+  }
+
+  try {
+    return readInstalled(configHome()).runner ?? 'npx'
+  } catch {
+    return 'npx'
+  }
+}
+
+export function initCommand(): string {
+  return launch(runner(), 'init')
+}
+
 function howToUpdate(): string {
-  return runsInstalled() ? UPDATE_HERE : `\`${UPDATE_COMMAND}\` updates it`
+  return runsInstalled() ? UPDATE_HERE : `\`${initCommand()}\` updates it`
 }
 
 function updateCommand(): string {
-  return runsInstalled() ? 'ttheme update' : UPDATE_COMMAND
+  return runsInstalled() ? 'ttheme update' : initCommand()
 }
 
 function outdatedLine(latest: string, running: string = pkg.version): string {
@@ -233,9 +270,11 @@ export function tellRelease(now = Date.now()): void {
 export function upgradeTo(latest: string, args: readonly string[]): number {
   console.log(`Updating ttheme ${pkg.version} → ${latest}`)
 
-  const cwd = npmDir()
+  const by = runner()
+  const again = launch(by, 'init')
+  const cwd = askDir(by)
 
-  const npx = spawnSync('npx', ['--yes', `${pkg.name}@${latest}`, 'init', '--yes'], {
+  const ran = spawnSync(by, [...TOOLS[by].flags, `${pkg.name}@${latest}`, 'init', '--yes'], {
     cwd,
     stdio: 'inherit',
     env: { ...process.env, npm_config_prefer_online: 'true' },
@@ -243,21 +282,21 @@ export function upgradeTo(latest: string, args: readonly string[]): number {
 
   rmSync(cwd, { recursive: true, force: true })
 
-  if (npx.error) {
-    throw new Error(`cannot run npx — ${npx.error.message}; \`${UPDATE_COMMAND}\` updates ttheme once npm is there`)
+  if (ran.error) {
+    throw new Error(
+      `cannot run ${by} — ${ran.error.message}; \`${again}\` updates ttheme once ${TOOLS[by].name} is there`,
+    )
   }
 
-  if (npx.status !== 0) {
-    throw new Error(`npx stopped with status ${npx.status} — ttheme ${pkg.version} is still installed`)
+  if (ran.status !== 0) {
+    throw new Error(`${by} stopped with status ${ran.status} — ttheme ${pkg.version} is still installed`)
   }
 
   const cli = installedCli()
   const now = spawnSync(process.execPath, [cli, '--version'], { encoding: 'utf8' }).stdout?.trim()
 
   if (now !== latest) {
-    throw new Error(
-      `${cli} is ${now || 'unreadable'} after the update, not ${latest} — \`${UPDATE_COMMAND}\` tries again`,
-    )
+    throw new Error(`${cli} is ${now || 'unreadable'} after the update, not ${latest} — \`${again}\` tries again`)
   }
 
   const seen = readSeen()

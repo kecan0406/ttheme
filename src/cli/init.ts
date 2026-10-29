@@ -8,6 +8,7 @@ import { Cancelled } from '../core/cancelled.ts'
 import { aboutOf, worldOrder } from '../core/commons.ts'
 import { inMode, type Manifest } from '../core/manifest.ts'
 import type { Mode, Setting } from '../core/mode.ts'
+import { type Runner, runnerOf } from '../core/runner.ts'
 import { BUILTIN, isBuiltin, publisherOf } from '../core/theme.ts'
 import { WIRED, type Wired } from '../core/wired.ts'
 import { backgroundsDir, coloringOf, decodable, readStore } from '../pictures/backdrop.ts'
@@ -60,6 +61,7 @@ import { interactive } from '../tui/terminal.ts'
 import { build } from './build.ts'
 import { pickPalettes } from './installs.ts'
 import { redrawPictures } from './redraw.ts'
+import { launch } from './release.ts'
 import { pointDefaults, sync, wiringNext, wiringNotes, wiringPlan, withBases } from './sync.ts'
 
 export interface InitOptions {
@@ -77,6 +79,7 @@ export interface InitPaths extends Setup {
   shells?: Shell[]
   platform?: NodeJS.Platform
   claudeHome?: string
+  runner?: Runner
 }
 
 interface InitPlan {
@@ -153,6 +156,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     ),
     ...(opts.off ? { off: true as const } : {}),
     ...(opts.skills && opts.skills.length > 0 ? { skills: opts.skills } : {}),
+    ...(paths.runner ? { runner: paths.runner } : {}),
   }
 
   const notes = [
@@ -255,6 +259,7 @@ export function planUpgrade(state: Installed, paths: InitPaths): InitPlan {
     ...rest,
     palettes,
     ...(startup && palettes.includes(startup) ? { startup } : {}),
+    ...(paths.runner ? { runner: paths.runner } : {}),
   }
 
   const notes =
@@ -324,7 +329,7 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
   plan.notes.push(
     ...failed.map(
       (where) =>
-        `Could not write the ${SKILL} skill to ${where} — run \`npx @kecan0406/ttheme init\` in your own terminal to add it`,
+        `Could not write the ${SKILL} skill to ${where} — run \`${launch(plan.installed.runner ?? 'npx', 'init')}\` in your own terminal to add it`,
     ),
   )
 
@@ -590,6 +595,21 @@ function report(plan: InitPlan, pointed: ReadonlyMap<Wired, Pointed>, here: Shel
   console.log(lines.join('\n'))
 }
 
+const LEAST_NODE = Number(/\d+/.exec(pkg.engines.node)?.[0])
+
+export function layerNode(host: Host, versions: { node: string; bun?: string } = process.versions): string | undefined {
+  if (!versions.bun) {
+    return versions.node
+  }
+
+  return host
+    .run('zsh', ['-fc', 'whence -ap node'])
+    ?.split('\n')
+    .values()
+    .map((node) => host.run(node, ['-p', 'process.versions.bun ? "" : process.versions.node']))
+    .find(Boolean)
+}
+
 export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const paint = painter(process.stdout.isTTY === true && !colorless())
   console.log(['', ...logoOf(paint, ['ttheme', 'Installer']), ''].join('\n'))
@@ -616,6 +636,17 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     throw new Error('ttheme runs its tab layer in zsh, even for bash and fish — install zsh first')
   }
 
+  const node = layerNode(host)
+
+  if (!node) {
+    throw new Error(`ttheme runs on Node.js ${LEAST_NODE} or newer, even through bunx — install Node.js first`)
+  }
+
+  if (Number.parseInt(node, 10) < LEAST_NODE) {
+    throw new Error(`ttheme runs on Node.js ${LEAST_NODE} or newer, not ${node} — update Node.js first`)
+  }
+
+  const runner = runnerOf(host.env.npm_config_user_agent)
   const wtHome = windowsAppData(host)
   const wtProfile = process.env.WT_PROFILE_ID
   const stateDir = join(process.env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme')
@@ -629,6 +660,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     platform: host.platform,
     stateDir,
     claudeHome: agentHomes(home, process.env).claude,
+    runner,
     ...(wtHome ? { wtHome } : {}),
     ...(wtProfile ? { wtProfile } : {}),
   }
@@ -740,7 +772,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       ...(skills.length > 0
         ? [`Add the ${SKILL} skill — ${skills.map((target) => tilde(skillPath(target, plan.agents), home)).join(', ')}`]
         : []),
-      'Each config is backed up once to <file>.ttheme.bak before the first edit — `npx @kecan0406/ttheme uninstall` takes it all out',
+      `Each config is backed up once to <file>.ttheme.bak before the first edit — \`${launch(runner, 'uninstall')}\` takes it all out`,
       wear
         ? choose
           ? `Open ttheme — every tab uses the palette picked there, ${first} until then`

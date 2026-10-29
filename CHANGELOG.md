@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- ttheme installs with Bun too: `bunx @kecan0406/ttheme@latest init`. `init` remembers whether npx or bunx ran it, and `ttheme update` checks for and installs a new release the same way, so a Bun setup needs no npm. ttheme still runs on Node.js 22 or newer.
+- `init` stops when it finds no Node.js 22 or newer on PATH, where under bunx alone it used to finish an install whose `ttheme` command then failed in every tab.
+
 ## 1.2.79
 
 - An ssh pin takes in Ghostty under the alias Ghostty 1.4 suggests, `alias ssh='ghostty +ssh --'`, and when you run `ghostty +ssh` yourself.
