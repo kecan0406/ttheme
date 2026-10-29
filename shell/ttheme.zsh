@@ -363,15 +363,19 @@ __tt_recheck() {
 }
 
 __tt_mend() {
-  local REPLY
+  local REPLY ask=$'\e]11;?\e\\\e]12;?\e\\'
   local -a p=(${(L)=TTHEME_SPEC})
   local -A got
+  local -i i
   TTHEME_RAN=0
   [[ -n $TTHEME_PAINTED ]] && (( ${#p} >= 20 )) && __tt_reverts || return 0
-  __tt_ask $'\e]11;?\e\\\e]12;?\e\\' || return 0
+  for i in {0..15}; do ask+=$'\e]4;'$i$';?\e\\'; done
+  __tt_ask $ask || return 0
   __tt_colors "$REPLY"
-  [[ $p[1] == - || ${got[11]:-$p[1]} == $p[1] ]] && [[ ${got[12]:-$p[3]} == $p[3] ]] && return 0
-  __tt_apply "$TTHEME_SPEC"
+  [[ $p[1] == - || ${got[11]:-$p[1]} == $p[1] ]] && [[ ${got[12]:-$p[3]} == $p[3] ]] || { __tt_apply "$TTHEME_SPEC"; return }
+  for i in {0..15}; do
+    [[ ${got[4;$i]:-$p[i+5]} == $p[i+5] ]] || { __tt_apply "$TTHEME_SPEC"; return }
+  done
 }
 
 source "$TTHEME_HOME/adapters/_osc.zsh"

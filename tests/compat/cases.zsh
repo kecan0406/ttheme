@@ -635,6 +635,31 @@ __cc_cases() {
     __cc_report reset-worn skip "nothing worn"
   fi
 
+  if __cc_unseen; then
+    __cc_report ris-worn skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+  elif (( $+functions[__tt_mend] )) && [[ -n $other && $TTHEME_SPEC == ${TTHEME_PALETTE[$other]} ]]; then
+    local -a held=(${=TTHEME_PALETTE[$other]})
+    local lbg="" lred="" hbg="" hred=""
+    printf '\ec\e]0;%s\a' ${CC_TITLE:-ttheme-compat}
+    sleep 0.1
+    __cc_color 11 && lbg=$REPLY
+    __cc_color '4;1' && lred=$REPLY
+    TTHEME_RAN=1
+    __tt_mend
+    sleep 0.1
+    __cc_color 11 && hbg=$REPLY
+    __cc_color '4;1' && hred=$REPLY
+    if [[ -z $lred$hred ]]; then
+      __cc_report ris-worn skip "this terminal answers no OSC 4, so what a RIS leaves of its ANSI colors cannot be read"
+    elif [[ -n $hbg && -n $hred ]] && __cc_near $held[1] $hbg && __cc_near $held[6] $hred; then
+      __cc_report ris-worn pass "after a program's RIS, which left ${lbg:-no answer} and ansi 1 ${lred:-no answer}, and the next prompt the tab still wears $other: $hbg, ansi 1 $hred"
+    else
+      __cc_report ris-worn fail "after a program's RIS, which left ${lbg:-no answer} and ansi 1 ${lred:-no answer}, and the next prompt the tab shows ${hbg:-no answer}, ansi 1 ${hred:-no answer}, not $other's $held[1] and $held[6]"
+    fi
+  else
+    __cc_report ris-worn skip "nothing worn"
+  fi
+
   local -a pair=(${TTHEME_ORDER:#$other})
   if [[ $TTHEME_ADAPTER != iterm2 ]]; then
     __cc_report reset-baseline fail "only iTerm2 switches a tab's profile from the shell, so a reset has no color of another profile to go back to"
