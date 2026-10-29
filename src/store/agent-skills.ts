@@ -3,7 +3,7 @@ import { dirname, join, relative } from 'node:path'
 
 export const SKILL = 'ttheme-palette'
 
-export const SKILL_FORMAT = 2
+export const SKILL_FORMAT = 3
 
 export const SKILL_TARGETS = ['agents', 'claude'] as const
 

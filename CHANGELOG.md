@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The ttheme-palette skill is skill format 3: an older copy, which may still take the first anchor for the color a palette leans toward, asks to be updated before it starts. The skill also says where a color no ANSI role holds, such as an orange between red and yellow, goes.
+
 ## 1.2.77
 
 - Palettes no longer carry a `signature`: every palette is measured, fixed and turned into its other mode by the same rules. ttheme ignores a `signature` line a marketplace's file still holds, and `ttheme marketplace check` warns about it.
