@@ -1648,6 +1648,15 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   overflow-wrap: anywhere;
 }
 
+:is([data-doc-body] :not(pre), [data-lede]) > code[data-version] {
+  border: 0;
+  border-radius: --theme(--radius-md inline);
+  background: color-mix(in oklab, var(--primary) 14%, var(--bg));
+  padding: 0.125em calc(var(--spacing) * 2);
+  color: color-mix(in oklab, var(--primary) 80%, var(--fg));
+  font-weight: 500;
+}
+
 [data-doc-body] :is(h2, h3) code {
   border: 0;
   background: none;

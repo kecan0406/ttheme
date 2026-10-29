@@ -57,6 +57,8 @@ const KEY =
   /^(?:(?:ctrl|alt|shift)\+|⇧)?(?:enter|esc|tab|space|bksp|del|home|end|pgup|pgdn|[↑↓←→]+|[a-zA-Z0-9?,.=+])$|^⇧$/
 
 const OPEN = /^<details>\s*<summary>([^<]+)<\/summary>$/
+const VERSION = /^(?:(?:[<>~^]=?|=)\d+(?:\.\d+)*|\d+(?:\.\d+)+)$/
+
 
 const CLOSE = /^<\/details>$/
 
@@ -291,7 +293,11 @@ function markdown(doc: Doc, place: Place): Marked {
         return `<pre data-slot="output" translate="no"><code>${escapeHtml(text)}</code></pre>\n`
       },
       codespan({ text }) {
-        return KEY.test(text) ? `<kbd translate="no">${escapeHtml(text)}</kbd>` : `<code>${escapeHtml(text)}</code>`
+        if (KEY.test(text)) return `<kbd translate="no">${escapeHtml(text)}</kbd>`
+
+        return VERSION.test(text)
+          ? `<code data-version translate="no">${escapeHtml(text)}</code>`
+          : `<code>${escapeHtml(text)}</code>`
       },
       list(token) {
         const out = Renderer.prototype.list.call(this, token)
