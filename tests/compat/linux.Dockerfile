@@ -2,25 +2,25 @@ FROM ubuntu:26.04 AS zig
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates xz-utils git pkg-config gettext libxml2-utils meson ninja-build \
-    python3 python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-dev libadwaita-1-dev libgtk4-layer-shell-dev \
+    python3 python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-dev libadwaita-1-dev libgtk4-layer-shell-dev libegl-dev \
   && rm -rf /var/lib/apt/lists/*
 
 FROM zig AS ghostty
-ARG GHOSTTY=1.3.1
-ARG ZIG=0.15.2
+ARG GHOSTTY=1.4.0
+ARG ZIG=0.17.0
 RUN curl -fsSL --retry 5 --retry-all-errors https://ziglang.org/download/$ZIG/zig-$(uname -m)-linux-$ZIG.tar.xz | tar -xJ -C /opt
 WORKDIR /src
 RUN curl -fsSL --retry 5 --retry-all-errors https://release.files.ghostty.org/$GHOSTTY/ghostty-$GHOSTTY.tar.gz | tar -xz --strip-components=1 \
   && /opt/zig-$(uname -m)-linux-$ZIG/zig build -Doptimize=ReleaseFast -Dcpu=baseline --prefix /opt/ghostty
 
-FROM zig AS ghostty-tip
-ARG GHOSTTY_TIP=c7cbc9bfd44cb11a9c7eae00f1166624671e363b
-ARG ZIG_TIP=0.16.0
+FROM ghostty AS ghostty-tip
+ARG GHOSTTY_TIP=b2c78c9bd9bc88a16d9c3769b0fb17ddde1b78b1
+ARG ZIG_TIP=0.17.0
 ARG BLUEPRINT=v0.20.4
 RUN git clone -q --depth 1 --branch $BLUEPRINT https://gitlab.gnome.org/GNOME/blueprint-compiler.git /tmp/blueprint \
   && meson setup /tmp/blueprint/build /tmp/blueprint --prefix=/usr/local && meson install -C /tmp/blueprint/build
 RUN curl -fsSL --retry 5 --retry-all-errors https://ziglang.org/download/$ZIG_TIP/zig-$(uname -m)-linux-$ZIG_TIP.tar.xz | tar -xJ -C /opt
-WORKDIR /src
+WORKDIR /tip
 RUN git init -q && git remote add origin https://github.com/ghostty-org/ghostty.git \
   && git fetch -q --depth 1 origin $GHOSTTY_TIP && git checkout -q FETCH_HEAD \
   && /opt/zig-$(uname -m)-linux-$ZIG_TIP/zig build -Doptimize=ReleaseFast -Dcpu=baseline --prefix /opt/ghostty-tip
