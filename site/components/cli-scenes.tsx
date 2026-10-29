@@ -1,22 +1,18 @@
-import type { PropsWithChildren } from '@kitajs/html'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import type { Theme } from '@/lib/themes'
+import { OWN_NAME, sceneLines } from '@/lib/sessions'
+import { type Line, linesOf, runOf } from '@/lib/terminal'
 import { cn } from '@/lib/utils'
 import { paneLines, paneTiles } from '../../src/core/builder-layout.ts'
-import { SCENES, sceneParts } from '../../src/core/scenes.ts'
-import { SceneLines } from './terminal-preview'
+import { SCENES } from '../../src/core/scenes.ts'
+import { TerminalScreen } from './terminal'
 
 const COLS = 83
 
 const ROWS = 24
 
-const ADVANCE = (COLS * 6) / 10
-
 const VIEWS = ['zsh', 'git', 'logs', 'nvim', 'htop'] as const
 
 type View = (typeof VIEWS)[number]
-
-type Run = [text: string, role: string]
 
 const SHOWN: Record<View, string> = {
   zsh: 'group-has-[input[value=zsh]:checked]/scene:visible',
@@ -26,79 +22,22 @@ const SHOWN: Record<View, string> = {
   htop: 'group-has-[input[value=htop]:checked]/scene:visible',
 }
 
-function sceneRuns(name: string): Run[][] {
-  const scene = SCENES.find((candidate) => candidate.name === name)
-
-  return (scene?.lines ?? []).map((line) => sceneParts(line, COLS)).filter((parts) => parts !== undefined)
+function sceneOf(name: string): Line[] {
+  return linesOf(SCENES.find((scene) => scene.name === name)?.lines ?? [], COLS)
 }
 
-function paneRuns(id: string): Run[][] {
+function paneOf(id: string): Line[] {
   const tile = paneTiles(COLS, ROWS).find((candidate) => candidate.id === id)
 
-  return tile ? paneLines(tile).map((line) => line.map((part): Run => [part.text, part.role])) : []
+  return tile ? paneLines(tile).map((line) => line.map((part) => runOf(part.text, part.role))) : []
 }
 
-function Part({ text, role }: { text: string; role: string }) {
-  const color = /^(B?)(\d+)$/.exec(role)
-  const ground = /^K(\d+)$/.exec(role)
-
-  if (color) {
-    return (
-      <span class={color[1] ? 'font-bold' : undefined} style={`color:var(--a${color[2]})`} safe>
-        {text}
-      </span>
-    )
-  }
-
-  if (ground) {
-    return (
-      <span style={`background:var(--a${ground[1]});color:var(--a0)`} safe>
-        {text}
-      </span>
-    )
-  }
-
-  const named = new Map([
-    ['d', 'text-(--fg)/60'],
-    ['b', 'font-bold'],
-    ['s', 'bg-(--se)'],
-    ['c', 'bg-(--cu) text-(--bg)'],
-  ])
-
-  return (
-    <span class={named.get(role)} safe>
-      {text}
-    </span>
-  )
-}
-
-function Lines({ lines }: { lines: Run[][] }) {
-  return (
-    <>
-      {lines.map((line, at) => (
-        <>
-          {at > 0 ? '\n' : ''}
-          {line.map(([text, role]) => (
-            <Part text={text} role={role} />
-          ))}
-        </>
-      ))}
-    </>
-  )
-}
-
-function Pane({ view, children }: PropsWithChildren<{ view: View }>) {
-  return (
-    <pre
-      translate="no"
-      class={cn(
-        'invisible col-start-1 row-start-1 overflow-hidden px-5 pt-3 pb-5 font-mono whitespace-pre text-(--fg)',
-        SHOWN[view],
-      )}
-    >
-      {children}
-    </pre>
-  )
+const LINES: Record<View, () => Line[]> = {
+  zsh: () => sceneLines('shell', OWN_NAME),
+  git: () => sceneOf('Diff'),
+  logs: () => sceneOf('Logs'),
+  nvim: () => paneOf('code'),
+  htop: () => paneOf('monitor'),
 }
 
 function SceneTabs() {
@@ -118,31 +57,18 @@ function SceneTabs() {
   )
 }
 
-export function HeroScenes({ theme }: { theme: Theme }) {
+export function HeroScenes() {
   return (
-    <div class="group/scene @container">
+    <div class="group/scene">
       <SceneTabs />
-      <div
-        data-lead-preview
-        aria-hidden="true"
-        class="grid leading-relaxed"
-        style={`font-size:clamp(8px,calc((100cqi - 2.5rem) / ${ADVANCE}),13px)`}
-      >
-        <Pane view="zsh">
-          <SceneLines theme={theme} scene="shell" own />
-        </Pane>
-        <Pane view="git">
-          <Lines lines={sceneRuns('Diff')} />
-        </Pane>
-        <Pane view="logs">
-          <Lines lines={sceneRuns('Logs')} />
-        </Pane>
-        <Pane view="nvim">
-          <Lines lines={paneRuns('code')} />
-        </Pane>
-        <Pane view="htop">
-          <Lines lines={paneRuns('monitor')} />
-        </Pane>
+      <div data-lead-preview aria-hidden="true" class="@container grid px-5">
+        {VIEWS.map((view) => (
+          <TerminalScreen
+            lines={LINES[view]()}
+            cols={COLS}
+            class={cn('invisible col-start-1 row-start-1 overflow-hidden pt-3 pb-5', SHOWN[view])}
+          />
+        ))}
       </div>
     </div>
   )

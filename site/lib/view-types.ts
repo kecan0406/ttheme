@@ -1,3 +1,4 @@
+import type { Line } from '@/lib/terminal'
 import type { GateRule } from '@/lib/themes'
 
 export const FORMATS = ['hex', 'rgb', 'oklch'] as const
@@ -51,19 +52,10 @@ export interface Picture {
   credit: PictureCredit | null
 }
 
-export interface Run {
-  text: string
-  t: number
-  g: number
-  bold: boolean
-  faint: boolean
-  cursor: boolean
-}
-
 export interface Pane {
   name: string
-  body: Run[][]
-  footer: Run[][]
+  body: Line[]
+  footer: Line[]
 }
 
 export interface GateLine {

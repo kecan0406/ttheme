@@ -1,9 +1,10 @@
 import { Pause, Play, RotateCcw } from 'lucide'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/lib/icons'
-import type { Frame, ListRow, Role, Run, Swatch } from '@/lib/pins-play'
+import type { Frame, ListRow, Run as PinsRun, Role, Swatch } from '@/lib/pins-play'
 import { json } from '@/lib/render'
-import { cn } from '@/lib/utils'
+import { type Line, plain, type Run } from '@/lib/terminal'
+import { TerminalLines, TerminalScreen } from './terminal'
 import { TerminalFrame } from './terminal-frame'
 
 export interface PinsData {
@@ -11,12 +12,14 @@ export interface PinsData {
   swatches: Record<string, Swatch>
 }
 
-const ROLES: Record<Role, string> = {
-  dim: 'text-(--fg)/55',
-  c2: 'term-c2',
-  c3: 'term-c3',
-  c6: 'term-c6',
+const ROLES: Record<Role, Partial<Run>> = {
+  dim: { faint: true },
+  c2: { t: 6 },
+  c3: { t: 7 },
+  c6: { t: 10 },
 }
+
+const CURSOR: Run = { text: ' ', t: 1, g: 2, cursor: true }
 
 export function swatchIn(swatches: Record<string, Swatch>, id: string): Swatch {
   if (!Object.hasOwn(swatches, id)) throw new Error(`a pins fence has no colors for ${id}`)
@@ -28,30 +31,33 @@ export function titleOf(frame: Frame): string {
   return frame.host ? `deploy@${frame.host}` : frame.cwd
 }
 
-function styleOf(run: Run, swatches: Record<string, Swatch>): string | undefined {
+function inkOf(run: PinsRun, swatches: Record<string, Swatch>): Partial<Run> {
   if (run.chip) {
     const chip = swatchIn(swatches, run.chip)
 
-    return `background:${chip.background};color:${chip.foreground}`
+    return { ink: chip.foreground, ground: chip.background }
   }
 
-  return run.tip ? `color:${swatchIn(swatches, run.tip).cursor}` : undefined
+  return run.tip ? { ink: swatchIn(swatches, run.tip).cursor } : {}
 }
 
-function Runs({ runs, swatches }: { runs: Run[]; swatches: Record<string, Swatch> }) {
-  return (
-    <>
-      {runs.map((run) => (
-        <span
-          class={cn(run.role && ROLES[run.role], run.bold && 'font-bold') || undefined}
-          style={styleOf(run, swatches)}
-          safe
-        >
-          {run.text}
-        </span>
-      ))}
-    </>
-  )
+function runIn(run: PinsRun, swatches: Record<string, Swatch>): Run {
+  return {
+    ...plain(run.text),
+    ...(run.role ? ROLES[run.role] : {}),
+    ...(run.bold ? { bold: true } : {}),
+    ...inkOf(run, swatches),
+  }
+}
+
+function linesIn(lines: PinsRun[][], swatches: Record<string, Swatch>): Line[] {
+  return lines.map((line) => line.map((run) => runIn(run, swatches)))
+}
+
+function shellLines(frame: Frame, typing: string, swatches: Record<string, Swatch>): Line[] {
+  const [prompt = []] = linesIn([frame.prompt], swatches)
+
+  return [...linesIn(frame.shell, swatches), [...prompt, plain(typing), CURSOR]]
 }
 
 export function PinsShell({
@@ -63,22 +69,7 @@ export function PinsShell({
   typing: string
   swatches: Record<string, Swatch>
 }) {
-  return (
-    <>
-      {frame.shell.map((line) => (
-        <div class="h-5 flex-none">
-          <Runs runs={line} swatches={swatches} />
-        </div>
-      ))}
-      <div class="h-5 flex-none">
-        <Runs runs={frame.prompt} swatches={swatches} />
-        <span safe>{typing}</span>
-        <span data-pins-cursor class="bg-(--cu)">
-          {' '}
-        </span>
-      </div>
-    </>
-  )
+  return <TerminalLines lines={shellLines(frame, typing, swatches)} />
 }
 
 function Row({ row, swatches }: { row: ListRow; swatches: Record<string, Swatch> }) {
@@ -87,9 +78,9 @@ function Row({ row, swatches }: { row: ListRow; swatches: Record<string, Swatch>
     : undefined
 
   return (
-    <div class="h-5 rounded-sm px-1" style={live}>
-      <Runs runs={row.runs} swatches={swatches} />
-    </div>
+    <span class="block rounded-sm px-1" style={live}>
+      <TerminalLines lines={linesIn([row.runs], swatches)} />
+    </span>
   )
 }
 
@@ -147,23 +138,17 @@ export function PinsPlayer({ frames, swatches }: PinsData) {
             />
           </div>
           <div class="grid h-56 grid-cols-[minmax(0,34ch)_2px_minmax(0,1fr)] font-mono text-code @max-[34rem]:h-auto @max-[34rem]:grid-cols-[minmax(0,1fr)] @max-[34rem]:grid-rows-[11rem_2px_auto]">
-            <div
-              data-pins-shell
-              aria-hidden="true"
-              translate="no"
-              class="flex flex-col justify-end overflow-hidden px-3.5 pt-1 pb-3.5 whitespace-pre"
-            >
-              <PinsShell frame={first} typing="" swatches={swatches} />
+            <div class="flex flex-col justify-end overflow-hidden px-3.5 pt-1 pb-3.5">
+              <TerminalScreen data-pins-shell decorative lines={shellLines(first, '', swatches)} />
             </div>
-            <div aria-hidden="true" class="bg-black/35" />
-            <div
+            <div aria-hidden="true" class="bg-[color-mix(in_oklab,var(--bg)_55%,black)]" />
+            <TerminalScreen
               data-pins-list
-              translate="no"
-              class="overflow-hidden bg-(--bg) px-2.5 pt-1 pb-3.5 text-xs leading-5 whitespace-pre text-(--fg)"
+              class="overflow-hidden bg-(--bg) px-2.5 pt-1 pb-3.5 text-xs text-(--fg)"
               style={swatchIn(swatches, first.local).style}
             >
               <PinsList frame={first} swatches={swatches} />
-            </div>
+            </TerminalScreen>
           </div>
         </TerminalFrame>
         <figcaption class="flex items-start gap-3 px-1">

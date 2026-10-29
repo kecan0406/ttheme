@@ -1,18 +1,6 @@
-import type { Pane, Run } from '@/lib/view-types'
-import { footerRows, lights, type Part, paneLines, paneTiles, slotsOfRole } from '../../src/core/builder-layout.ts'
-
-function runOf(part: Part): Run {
-  const { text, ground } = slotsOfRole(part.role)
-
-  return {
-    text: part.text,
-    t: text,
-    g: ground,
-    bold: part.role === 'b' || /^B\d+$/.test(part.role),
-    faint: part.role === 'd',
-    cursor: part.role === 'c',
-  }
-}
+import { runOf } from '@/lib/terminal'
+import type { Pane } from '@/lib/view-types'
+import { footerRows, lights, paneLines, paneTiles } from '../../src/core/builder-layout.ts'
 
 export interface Scenes {
   panes: Pane[]
@@ -25,7 +13,7 @@ export function scenePanes(cols: number, rows: number): Scenes {
   const parts = lines.map((pane) => pane.flat())
 
   const panes = tiles.map((tile, i): Pane => {
-    const runs = (lines[i] ?? []).map((line) => line.map(runOf))
+    const runs = (lines[i] ?? []).map((line) => line.map((part) => runOf(part.text, part.role)))
     const footer = footerRows(tile)
 
     return { name: tile.name, body: runs.slice(0, runs.length - footer), footer: runs.slice(runs.length - footer) }

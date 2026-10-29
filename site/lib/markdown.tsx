@@ -3,15 +3,17 @@ import { Check, ChevronRight, Copy, type IconNode, Info, Lightbulb, TriangleAler
 import { Marked, Renderer, type Token, type Tokens } from 'marked'
 import { CommandRow, RunnerRow } from '@/components/command-row'
 import { PinsPlayer } from '@/components/pins-player'
+import { TerminalScreen } from '@/components/terminal'
+import { TerminalFrame } from '@/components/terminal-frame'
 import { buttonVariants } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { highlightHtml } from '@/lib/highlight'
 import { Icon } from '@/lib/icons'
 import { idsOf, playPins, readPins, swatchOf } from '@/lib/pins-play'
 import { html } from '@/lib/render'
+import { textLines, widthOf } from '@/lib/terminal'
 import type { Theme } from '@/lib/themes'
 import type { Runner } from '../../src/core/runner.ts'
-import { cells, graphemes } from '../../src/core/text.ts'
 
 export interface Heading {
   depth: 2 | 3
@@ -171,15 +173,19 @@ function file(text: string, title: string, kind: string | undefined): string {
 }
 
 function screen(text: string, title: string | undefined): string {
-  const named = title ? `<span data-title translate="no">${escapeHtml(title)}</span>` : ''
+  const lines = textLines(text)
 
-  const drawn = [...graphemes(text)]
-    .map(({ segment }) =>
-      cells(segment) === 2 ? `<span data-wide>${escapeHtml(segment)}</span>` : escapeHtml(segment),
-    )
-    .join('')
+  const drawn = html(
+    <figure data-slot="screen">
+      <TerminalFrame title={title} class="shadow-sm">
+        <div class="@container px-4.5 pt-1 pb-4">
+          <TerminalScreen lines={lines} cols={Math.max(1, ...lines.map(widthOf))} />
+        </div>
+      </TerminalFrame>
+    </figure>,
+  )
 
-  return `<figure data-slot="screen"><figcaption><span data-lights aria-hidden="true"><i></i><i></i><i></i></span>${named}</figcaption><pre translate="no"><code>${drawn}</code></pre></figure>\n`
+  return `${drawn}\n`
 }
 
 function pins(text: string, info: string, place: Place): string {

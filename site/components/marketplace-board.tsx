@@ -38,11 +38,12 @@ import {
 } from '@/lib/gallery'
 import { BrandIcon, GitHubStar, Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
+import { sceneLines, useOf } from '@/lib/sessions'
 import { BUILTIN, faceOf, paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { byWork, leadOf, leadsOf } from '@/lib/works'
+import { TerminalScreen } from './terminal'
 import { TerminalFrame } from './terminal-frame'
-import { TerminalPreview } from './terminal-preview'
 
 const DOTS = 9
 
@@ -144,9 +145,9 @@ function PeekWindow({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
   return (
     <TerminalFrame
       data-peek={shelf.id}
-      data-slot="peek-window"
       style={peek.style}
       title={peek.title}
+      recolor
       class="min-w-0 flex-[0_1_440px]"
       controls={
         stacks.length > 1 ? (
@@ -161,7 +162,11 @@ function PeekWindow({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
         ) : undefined
       }
     >
-      <TerminalPreview theme={first.lead} scene="shell" worn class="min-h-0 px-4 pt-3 pb-3.5" />
+      <TerminalScreen
+        lines={sceneLines('shell', useOf(first.lead))}
+        decorative
+        class="overflow-hidden px-4 pt-3 pb-3.5 text-code"
+      />
     </TerminalFrame>
   )
 }

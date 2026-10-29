@@ -12,6 +12,7 @@ import { BUILTIN_URL, palettePath, REPO, repoUrl, searchText } from '@/lib/galle
 import { gatePassed } from '@/lib/gate'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
+import { SCENES, type Scene, sceneLines, useOf } from '@/lib/sessions'
 import { faceOf, type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
@@ -21,8 +22,8 @@ import { ByMode } from './by-mode'
 import { CommandRow, InitRow } from './command-row'
 import { ChecksHead, GateList, SwatchGrid } from './palette-parts'
 import { RepoLink } from './repo-link'
+import { TerminalScreen } from './terminal'
 import { TerminalFrame } from './terminal-frame'
-import { SCENES, type Scene, TerminalPreview } from './terminal-preview'
 import {
   GateButton,
   TitleDots,
@@ -39,8 +40,7 @@ type View = 'all' | Scene
 
 const VIEWS: View[] = ['all', ...SCENES]
 
-const VIEW_SHOWN: Record<View, string> = {
-  all: 'group-has-[input[value=all]:checked]/preview:grid',
+const SHOWN: Record<Scene, string> = {
   shell: 'group-has-[input[value=shell]:checked]/preview:block',
   git: 'group-has-[input[value=git]:checked]/preview:block',
   test: 'group-has-[input[value=test]:checked]/preview:block',
@@ -114,36 +114,36 @@ export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: stri
   )
 }
 
+export function statusOf(theme: Theme): string {
+  return `"${theme.name}"${theme.work ? ` ${theme.work.name}` : ''}`
+}
+
 export function ScenePanes({ theme }: { theme: Theme }) {
+  const use = useOf(theme)
+
   return (
-    <>
-      <div
-        class={cn(
-          'hidden min-h-full grid-cols-1 gap-px bg-[color-mix(in_oklab,var(--bg)_55%,black)] app:h-full app:grid-cols-2 app:grid-rows-[minmax(0,1fr)_minmax(0,1fr)_auto]',
-          VIEW_SHOWN.all,
-        )}
-      >
-        {SCENES.map((scene) => (
-          <TerminalPreview theme={theme} scene={scene} worn class="min-h-0 px-5 pt-4 pb-3.5" />
-        ))}
-        <p
-          aria-hidden="true"
-          class="col-span-full flex h-6 items-center justify-between gap-4 bg-(--a2) px-2.5 font-mono text-xs text-(--bg)"
-        >
-          <span>
-            <b>[ttheme]</b> 0:all*
-          </span>
-          <span class="truncate" translate="no" safe>
-            {`"${theme.name}"${theme.work ? ` ${theme.work.name}` : ''}`}
-          </span>
-        </p>
-      </div>
+    <div class="split:grid split:min-h-full split:grid-cols-1 split:gap-px split:bg-[color-mix(in_oklab,var(--bg)_55%,black)] app:split:h-full app:split:grid-cols-2 app:split:grid-rows-[minmax(0,1fr)_minmax(0,1fr)_auto]">
       {SCENES.map((scene) => (
-        <div class={cn('hidden', VIEW_SHOWN[scene])}>
-          <TerminalPreview theme={theme} scene={scene} worn class="min-h-0 bg-transparent px-6 pt-5 pb-6 text-sm" />
-        </div>
+        <TerminalScreen
+          lines={sceneLines(scene, use)}
+          class={cn(
+            'hidden overflow-hidden px-6 pt-5 pb-6 text-sm split:block split:min-h-0 split:bg-(--bg) split:px-5 split:pt-4 split:pb-3.5 split:text-code',
+            SHOWN[scene],
+          )}
+        />
       ))}
-    </>
+      <p
+        aria-hidden="true"
+        class="col-span-full hidden h-6 items-center justify-between gap-4 bg-(--a2) px-2.5 font-mono text-xs text-(--bg) split:flex"
+      >
+        <span>
+          <b>[ttheme]</b> 0:all*
+        </span>
+        <span data-status class="truncate" translate="no" safe>
+          {statusOf(theme)}
+        </span>
+      </p>
+    </div>
   )
 }
 

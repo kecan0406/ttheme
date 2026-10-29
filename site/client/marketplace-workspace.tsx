@@ -1,6 +1,7 @@
-import { GatePanel, PaletteFacts, ScenePanes, SlotsPanel, WorkspaceHead } from '@/components/workspace'
+import { GatePanel, PaletteFacts, SlotsPanel, statusOf, WorkspaceHead } from '@/components/workspace'
 import { palettePath, palettesPath } from '@/lib/gallery'
 import { html } from '@/lib/render'
+import { useOf } from '@/lib/sessions'
 import { BUILTIN, type Theme } from '@/lib/themes'
 import { paletteMeta } from '@/lib/titles'
 import { wearStyle } from '@/lib/wear'
@@ -198,7 +199,12 @@ class MarketplaceWorkspace extends HTMLElement {
     this.#theme = theme
     const { gate, where } = this.#data
     this.querySelector('[data-palette-preview]')?.setAttribute('style', wearStyle(theme))
-    fill(this.querySelector('[data-scenes]'), html(<ScenePanes theme={theme} />))
+    const scenes = this.querySelector('[data-scenes]')
+
+    for (const use of scenes?.querySelectorAll('[data-live="use"]') ?? []) use.textContent = useOf(theme).text
+    const status = scenes?.querySelector('[data-status]')
+
+    if (status) status.textContent = statusOf(theme)
     fill(this.querySelector('[data-facts]'), html(<PaletteFacts theme={theme} gate={gate} />))
     fill(this.querySelector('[data-gate-panel]'), html(<GatePanel theme={theme} gate={gate} where={where} />))
     fill(this.querySelector('[data-slots-panel]'), html(<SlotsPanel theme={theme} />))

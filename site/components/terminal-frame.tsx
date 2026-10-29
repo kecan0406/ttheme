@@ -23,6 +23,7 @@ export function TerminalFrame({
   controls,
   mode = false,
   raised = false,
+  recolor = false,
   class: className,
   children,
   ...props
@@ -34,18 +35,20 @@ export function TerminalFrame({
     controls?: JSX.Element
     mode?: boolean
     raised?: boolean
+    recolor?: boolean
     class?: string
   }
 >) {
   return (
     <div
+      {...props}
       data-slot="terminal-frame"
+      data-recolor={recolor ? '' : undefined}
       class={cn(
         'overflow-hidden rounded-xl bg-(--bg) text-(--fg) ring-1 ring-border',
         raised && 'shadow-lg',
         className,
       )}
-      {...props}
     >
       {tabs ? (
         <div class="flex h-10 flex-none items-center gap-3 pr-1.5 pl-3.5">
@@ -55,7 +58,7 @@ export function TerminalFrame({
           {mode ? <WindowMode /> : null}
         </div>
       ) : (
-        <div class="relative flex flex-none items-center gap-2 py-1 pr-1 pl-3.5">
+        <div class="relative flex min-h-9.5 flex-none items-center gap-2 py-1 pr-1 pl-3.5">
           <Lights />
           {heading ? (
             heading

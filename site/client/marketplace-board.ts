@@ -173,7 +173,7 @@ class MarketplaceBoard extends HTMLElement {
     const title = peek.querySelector('[data-window-title]')
 
     if (title) title.textContent = next.title
-    const use = peek.querySelector('[data-use]')
+    const use = peek.querySelector('[data-live="use"]')
 
     if (use) use.textContent = next.use
   }

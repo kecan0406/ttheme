@@ -79,7 +79,7 @@ import { html } from '@/lib/render'
 import { scenePanes } from '@/lib/scene-panes'
 import { hueTrack } from '@/lib/slot-view'
 import { BUILTIN } from '@/lib/themes'
-import { FORMATS, type Picture, type PictureCredit, type SlotFormat } from '@/lib/view-types'
+import { FORMATS, type Pane, type Picture, type PictureCredit, type SlotFormat } from '@/lib/view-types'
 import { textDraft, webCheck, webCode } from '@/lib/web-code'
 import { type Hex, mix, type Oklch } from '../../src/core/color.ts'
 import { codeOf, type Draft, shareLink } from '../../src/core/draft.ts'
@@ -201,6 +201,7 @@ class PaletteBuilder extends HTMLElement {
   #frame = 0
   #pending: (() => void) | null = null
   #grid = ''
+  #panes = new Map<string, Pane>()
   #sizer: ResizeObserver | undefined
   #sizing = 0
   #follow = new ResizeObserver(() => this.#placePicker())
@@ -771,16 +772,9 @@ class PaletteBuilder extends HTMLElement {
     const mock = this.querySelector<HTMLElement>('[data-mock]')
 
     if (!mock) return
-    const slot = this.#where && this.#open !== null ? String(this.#open) : null
 
-    if (mock.dataset.lit === (slot ?? '')) return
-    mock.dataset.lit = slot ?? ''
-
-    for (const run of mock.querySelectorAll<HTMLElement>('.r')) {
-      run.toggleAttribute('data-lit', slot !== null && (run.dataset.t === slot || run.dataset.g === slot))
-    }
-
-    mock.toggleAttribute('data-where', slot !== null)
+    if (this.#where && this.#open !== null) mock.dataset.lit = String(this.#open)
+    else delete mock.dataset.lit
   }
 
   #tail() {
@@ -804,21 +798,25 @@ class PaletteBuilder extends HTMLElement {
     if (grid === this.#grid) return
     this.#grid = grid
     const { panes, uses } = scenePanes(cols, rows)
-
-    for (const one of panes) fill(this.querySelector(`[data-pane-panel="${one.name}"]`), html(<PaneBody pane={one} />))
+    this.#panes = new Map(panes.map((one) => [one.name, one]))
     this.#data.uses = uses
     this.#inspector.release()
-    const mock = this.querySelector<HTMLElement>('[data-mock]')
-
-    if (mock) delete mock.dataset.lit
+    this.#drawPane(term.querySelector<HTMLElement>('[data-pane-panel]:not([hidden])')?.dataset.panePanel ?? '')
     term.dataset.sized = ''
-    this.#light()
-    this.#tail()
     this.#renderPicker()
   }
 
   #select(panel: string) {
     this.querySelector<HTMLElement>(`[data-panels] [data-value="${panel}"]`)?.click()
+  }
+
+  #drawPane(name: string) {
+    const pane = this.#panes.get(name)
+
+    if (!pane) return
+    this.#panes.delete(name)
+    fill(this.querySelector(`[data-pane-panel="${name}"]`), html(<PaneBody pane={pane} />))
+    this.#tail()
   }
 
   #changed = (event: CustomEvent<ValueChange>) => {
@@ -842,6 +840,7 @@ class PaletteBuilder extends HTMLElement {
 
     if (list.matches('[data-panes]')) {
       this.#inspector.release()
+      this.#drawPane(value)
       requestAnimationFrame(() => this.#tail())
 
       return

@@ -1,43 +1,19 @@
 import { escapeHtml } from '@kitajs/html'
 import { TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
-import type { Pane, Run } from '@/lib/view-types'
+import type { Pane } from '@/lib/view-types'
+import { TerminalScreen } from './terminal'
 import { TerminalFrame } from './terminal-frame'
-
-function Line({ runs }: { runs: Run[] }) {
-  return (
-    <div class="ln">
-      {runs.map((run) => (
-        <span
-          class={run.bold ? 'r font-bold' : 'r'}
-          data-t={String(run.t)}
-          data-g={String(run.g)}
-          data-f={run.faint ? '' : undefined}
-          data-c={run.cursor ? '' : undefined}
-          data-blank={run.cursor || run.text.trim() !== '' ? undefined : ''}
-          safe
-        >
-          {run.text}
-        </span>
-      ))}
-    </div>
-  )
-}
 
 export function PaneBody({ pane }: { pane: Pane }) {
   return (
     <>
-      <div class="mock-body" data-tail={pane.footer.length === 0 ? '' : undefined}>
-        {pane.body.map((runs) => (
-          <Line runs={runs} />
-        ))}
-      </div>
-      {pane.footer.length > 0 ? (
-        <div class="mock-foot">
-          {pane.footer.map((runs) => (
-            <Line runs={runs} />
-          ))}
-        </div>
-      ) : null}
+      <TerminalScreen
+        lines={pane.body}
+        inspect
+        class="mock-body"
+        data-tail={pane.footer.length === 0 ? '' : undefined}
+      />
+      {pane.footer.length > 0 ? <TerminalScreen lines={pane.footer} inspect class="mock-foot" /> : null}
     </>
   )
 }

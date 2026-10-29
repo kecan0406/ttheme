@@ -186,7 +186,7 @@ export function Home({
                 </>
               }
             >
-              <HeroScenes theme={theme} />
+              <HeroScenes />
             </TerminalFrame>
             <div aria-hidden="true" class="flex items-center justify-center gap-1.5 px-1">
               {SLOTS.map((slot) => (
