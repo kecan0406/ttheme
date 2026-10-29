@@ -148,8 +148,8 @@ Base ANSI ramps come from
 palettes start from a theme of their own: `miku` from
 [vauxe/hatsune-miku-theme](https://github.com/vauxe/hatsune-miku-theme) (MIT)
 and `magi` from [lotap/magi-theme](https://github.com/lotap/magi-theme) (MIT).
-Each built-in palette names its source in `ansi_source`. Only that source's hues
-survive, turned toward the palette's own, so no scheme is reproduced here.
+Only a base scheme's hues survive, turned toward the palette's own, so no scheme
+is reproduced here.
 
 JPEG pictures are decoded by [mozjpeg](https://github.com/mozilla/mozjpeg),
 compiled to WebAssembly and packaged as

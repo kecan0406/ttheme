@@ -12,7 +12,7 @@ b64d() {
   print -rn -- $in | base64 --decode
 }
 (( ${#TTHEME_PALETTE} > 0 )) || { print -u2 "no palettes loaded"; exit 1 }
-(( ${#TTHEME_ORDER} + 1 == ${#TTHEME_PALETTE} )) || { print -u2 "order/palette mismatch"; exit 1 }
+(( ${#TTHEME_ORDER} == ${#TTHEME_PALETTE} )) || { print -u2 "order/palette mismatch"; exit 1 }
 (( $+functions[__tt_bg_hide] && $+functions[__tt_pv_bg_reset] )) || { print -u2 "preview's Edit palette calls a picture hook a terminal without pictures lacks"; exit 1 }
 __tt_menu > /dev/null || exit 1
 ttheme help > /dev/null || { print -u2 "ttheme help broke"; exit 1 }
@@ -317,6 +317,7 @@ plain=${out//$'\e[K'/}
     typeset -a tops=() rtop=() rows=()
     TTHEME_PALETTE[kai@arcade/rei]=$TTHEME_PALETTE[ttheme/kita] TTHEME_PALETTE[kai@arcade/lumi]=$TTHEME_PALETTE[ttheme/miku]
     TTHEME_PALETTE[kai@arcade/dusk]=$TTHEME_PALETTE[ttheme/rei] TTHEME_PALETTE[alice@pastel/mint]=$TTHEME_PALETTE[ttheme/mio]
+    TTHEME_PALETTE[ttheme/neutral]=$TTHEME_PALETTE[ttheme/kaito]
     TTHEME_SUBJECT[kai@arcade/rei]=evangelion/rei TTHEME_SUBJECT[kai@arcade/lumi]=glass-arcade/lumi TTHEME_ALSO[kai@arcade/lumi]=night-parade
     TTHEME_WORKS=(evangelion glass-arcade night-parade vocaloid)
     TTHEME_WORK_NAME=(evangelion Evangelion glass-arcade "Glass Arcade" night-parade "Night Parade's Eve" vocaloid Vocaloid)
@@ -1322,8 +1323,8 @@ done
   [[ "$(__tt_unshown force)" == $'\e]1337;SetProfile=\a' ]] ||
     { print -u2 "iTerm2 reset a tab's colors before a switch it may refuse: ${(V)$(__tt_unshown force)}"; exit 1 }
   TTHEME_ITERM_DYED=0 TTHEME_ITERM_SWITCH=1
-  [[ "$(__tt_apply "$TTHEME_PALETTE[ttheme/neutral]")" == $'\e]11;'*$'\e]4;15;'* ]] ||
-    { print -u2 "iTerm2 switched to a profile ttheme never writes, for a palette outside the rotation"; exit 1 }
+  [[ "$(__tt_apply "#010203 ${TTHEME_PALETTE[ttheme/kaito]#* }")" == $'\e]11;'*$'\e]4;15;'* ]] ||
+    { print -u2 "iTerm2 switched to a profile ttheme never writes, for colors that are no palette's"; exit 1 }
   touch $TTHEME_ITERM_PROFILES
   [[ "$(__tt_apply "$TTHEME_PALETTE[ttheme/kaito]")" == $'\e]11;'*$'\e]4;15;'* ]] ||
     { print -u2 "iTerm2 switched to a profile in the second it may still be reading the profiles file"; exit 1 }

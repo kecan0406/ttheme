@@ -39,18 +39,12 @@ export class Tints {
   }
 }
 
-export function drafted(
-  picture: Picture,
-  image: string,
-  colors: Colors,
-  signature: readonly string[],
-  tints: Tints,
-): string {
+export function drafted(picture: Picture, image: string, colors: Colors, tints: Tints): string {
   if (coloringOf(picture) === 'original') {
     return image
   }
 
-  const tone = backdropTone(colors, [...signature])
+  const tone = backdropTone(colors)
 
   return tone.color === picture.tone ? image : tints.of(image, tone.color)
 }

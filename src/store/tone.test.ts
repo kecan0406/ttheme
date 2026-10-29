@@ -12,7 +12,6 @@ import { overrideOf, readTone, slotColors, tonedEntry, tonePath, tuned, withTone
 function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    ansiSource: 'Horizon + Jujutsu',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',

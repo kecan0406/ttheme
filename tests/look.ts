@@ -1,6 +1,5 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { Terminal } from '@xterm/headless'
 
@@ -89,14 +88,27 @@ const [top, bottom] = span(values.rows, rows)
 const [left, right] = span(values.cols, cols)
 const cropped = values.rows !== undefined || values.cols !== undefined
 
-const fixture = JSON.parse(readFileSync(join(import.meta.dirname, 'fixture', 'builtin.json'), 'utf8')) as {
-  palettes: (Shown & { default?: boolean })[]
-}
-
-const shown = fixture.palettes.find((p) => p.default) ?? fixture.palettes[0]
-
-if (!shown) {
-  throw new Error('tests/fixture/builtin.json has no palette')
+const shown: Shown = {
+  background: '#17171f',
+  foreground: '#e3e0f3',
+  ansi: [
+    '#23232b',
+    '#ca8fb2',
+    '#5db9c3',
+    '#f7a895',
+    '#72a7c9',
+    '#c796c8',
+    '#65bbe3',
+    '#c7c5d0',
+    '#777680',
+    '#edaed3',
+    '#7fdae5',
+    '#ffd3c9',
+    '#a1c3f2',
+    '#dabaf5',
+    '#95dbff',
+    '#eeecfe',
+  ],
 }
 
 function hex(n: number): string {

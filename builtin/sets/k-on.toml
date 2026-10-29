@@ -4,7 +4,6 @@
 slug = "yui"
 subject = "k-on/yui"
 signature = ["cursor", "ansi11", "ansi13"]
-ansi_source = "Espresso Libre + HTT"
 
 [palette.colors]
 background = "#211513"
@@ -60,7 +59,6 @@ ansi = [
 slug = "ritsu"
 subject = "k-on/ritsu"
 signature = ["cursor", "ansi1", "ansi6"]
-ansi_source = "Acid Lime"
 
 [palette.colors]
 background = "#19180d"
@@ -116,7 +114,6 @@ ansi = [
 slug = "mio"
 subject = "k-on/mio"
 signature = ["cursor", "ansi4", "foreground"]
-ansi_source = "Ardoise + HTT"
 
 [palette.colors]
 background = "#14181e"
@@ -172,7 +169,6 @@ ansi = [
 slug = "mugi"
 subject = "k-on/mugi"
 signature = ["cursor", "ansi3", "ansi4"]
-ansi_source = "Tomorrow Night Eighties"
 
 [palette.colors]
 background = "#1f1518"
@@ -228,7 +224,6 @@ ansi = [
 slug = "azusa"
 subject = "k-on/azusa"
 signature = ["cursor", "ansi9", "foreground"]
-ansi_source = "Retro Legends"
 
 [palette.colors]
 background = "#131912"

@@ -5,7 +5,7 @@ import { hctHex, hctOf } from './hct.ts'
 import { type Mode, modeOf, otherOf } from './mode.ts'
 import type { Shade, Theme } from './theme.ts'
 
-type Signed = Pick<Theme, 'name' | 'signatureSlots' | 'waive'>
+type Signed = Pick<Theme, 'name' | 'signatureSlots'>
 
 type Mirrored = Shade & Signed
 

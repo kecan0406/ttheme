@@ -457,7 +457,7 @@ export function tryOn(
   width: number,
   height: number,
   blurring: number,
-  framing?: Partial<Framing>,
+  framing?: Partial<Framing> & { scale?: number },
   coloring: Coloring = 'tone',
 ) {
   const { box, clear } = held
@@ -485,7 +485,7 @@ export function tryOn(
         }
 
   const fallback = coloring === 'original' ? originalOpacity(colors, held.peak) : tone.opacity
-  const opacity = framing?.opacity ?? fallback
+  const opacity = framing?.opacity ?? (framing?.scale === undefined ? fallback : rescaled(framing.scale, 1, fallback))
 
   return {
     image:
@@ -575,7 +575,6 @@ export function colorsOf(entry: Colors): Colors {
     cursor: entry.cursor,
     ...(entry.selection ? { selection: entry.selection } : {}),
     ansi: entry.ansi,
-    ...(entry.waived ? { waived: entry.waived } : {}),
   }
 }
 
@@ -670,26 +669,6 @@ function save(dir: string, store: Store, names: string[]): void {
     } else {
       rmSync(conf, { force: true })
     }
-  }
-}
-
-export function moveRacks(configHome: string, renamed: ReadonlyMap<string, string>): void {
-  const dir = backgroundsDir(configHome)
-  const store = readStore(dir)
-  const names: string[] = []
-
-  for (const [from, to] of renamed) {
-    const rack = rackIn(store, from)
-
-    if (rack && !rackIn(store, to)) {
-      store.palettes[to] = rack
-      delete store.palettes[from]
-      names.push(from, to)
-    }
-  }
-
-  if (names.length > 0) {
-    save(dir, store, names)
   }
 }
 
@@ -1053,9 +1032,13 @@ export function rackOf(configHome: string, name: string): Picture[] {
   return [...active, ...rack.pictures.filter((picture) => picture.key !== rack.active)]
 }
 
-export type Tune = Pick<SharedPicture, 'size' | 'position' | 'opacity'>
+export type Tune = Pick<SharedPicture, 'size' | 'position'> & { opacity?: number }
 
-const DEFAULT_POSITION = 'top-right'
+export const DEFAULT_POSITION = 'top-right'
+
+export function rescaled(opacity: number, from: number, to: number): number {
+  return Math.min(1, Math.round((opacity / from) * to * 1000) / 1000)
+}
 
 export function frameAt(
   iw: number,
@@ -1129,7 +1112,11 @@ export function writeTune(
   const position = tune.position ?? DEFAULT_POSITION
   const opacity = tune.opacity ?? picture.opacity
 
+  const conf = join(dir, `${picture.stem}.tune.conf`)
+
   if (size === 'fill' && position === DEFAULT_POSITION && opacity === picture.opacity) {
+    rmSync(conf, { force: true })
+
     return undefined
   }
 
@@ -1163,7 +1150,6 @@ export function writeTune(
     cover = window
   }
 
-  const conf = join(dir, `${picture.stem}.tune.conf`)
   writeAtomic(
     conf,
     [
@@ -1459,7 +1445,13 @@ export function redrawn(
 
   lay(dir, drawn.files)
   const tune = tuneOf(dir, picture)
-  writeTune(dir, next, same ? tune : { ...tune, opacity: undefined }, aligns, home)
+
+  const moved =
+    same || tune.opacity === undefined || picture.opacity <= 0
+      ? tune
+      : { ...tune, opacity: rescaled(tune.opacity, picture.opacity, next.opacity) }
+
+  writeTune(dir, next, moved, aligns, home)
   const off = join(dir, `${picture.stem}.off.conf`)
 
   if (existsSync(off)) {

@@ -247,13 +247,10 @@ class Fixer<T extends Fixable> {
   }
 
   readability(): void {
-    const waived = new Set(this.theme.waive)
     const { background } = this.theme
     const light = isLight(this.theme)
 
     const lift = (rule: string, slots: string[], min: number, against = background) => {
-      if (waived.has(rule)) return
-
       for (const slot of slots) {
         if (contrast(this.get(slot), against) < min) this.set(slot, rule, relight(this.get(slot), against, min))
       }
@@ -268,21 +265,19 @@ class Fixer<T extends Fixable> {
     lift('light-ansi', ['ansi7', 'ansi15'], BODY_MIN)
     lift('ansi8-visible', ['ansi8'], ANSI8_MIN)
 
-    if (!light && !waived.has('ansi0-dark') && luminance(this.get('ansi0')) > ANSI0_MAX_LUMINANCE) {
+    if (!light && luminance(this.get('ansi0')) > ANSI0_MAX_LUMINANCE) {
       this.set('ansi0', 'ansi0-dark', darken(this.get('ansi0'), ANSI0_MAX_LUMINANCE))
     }
 
-    if (!waived.has('ansi0-on-accents')) {
-      const weakest = ROLES.map((i) => this.get(`ansi${i}`)).reduce((a, b) =>
-        contrast(this.get('ansi0'), a) <= contrast(this.get('ansi0'), b) ? a : b,
-      )
+    const weakest = ROLES.map((i) => this.get(`ansi${i}`)).reduce((a, b) =>
+      contrast(this.get('ansi0'), a) <= contrast(this.get('ansi0'), b) ? a : b,
+    )
 
-      if (contrast(this.get('ansi0'), weakest) < ON_ACCENT_MIN) {
-        this.set('ansi0', 'ansi0-on-accents', relight(this.get('ansi0'), weakest, ON_ACCENT_MIN, light))
-      }
+    if (contrast(this.get('ansi0'), weakest) < ON_ACCENT_MIN) {
+      this.set('ansi0', 'ansi0-on-accents', relight(this.get('ansi0'), weakest, ON_ACCENT_MIN, light))
     }
 
-    if (!waived.has('ansi7-on-ansi8') && contrast(this.get('ansi7'), this.get('ansi8')) < ANSI7_ON_ANSI8_MIN) {
+    if (contrast(this.get('ansi7'), this.get('ansi8')) < ANSI7_ON_ANSI8_MIN) {
       this.set('ansi7', 'ansi7-on-ansi8', relight(this.get('ansi7'), this.get('ansi8'), ANSI7_ON_ANSI8_MIN, !light))
     }
 
@@ -290,7 +285,6 @@ class Fixer<T extends Fixable> {
   }
 
   separate(): void {
-    if (this.theme.waive.includes('cvd-red-green')) return
     const exempt = exemptSlots(this.theme)
 
     for (const [red, green] of confusions(this.theme)) {

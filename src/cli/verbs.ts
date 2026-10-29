@@ -153,7 +153,7 @@ export const VERB_SPECS: VerbSpec[] = [
       ],
       [
         'check [dir]',
-        "Check a marketplace's folder before you push it — ttheme-marketplace.toml, every palette, the works it proposes against the commons, the renames and the contrast checks; nothing is written",
+        "Check a marketplace's folder before you push it — ttheme-marketplace.toml, every palette, the works it proposes against the commons and the contrast checks; nothing is written",
       ],
     ],
     section: 'palettes',

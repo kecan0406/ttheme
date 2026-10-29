@@ -40,10 +40,8 @@ const draft: Draft = {
     '#9be1ae',
     '#f9edd0',
   ],
-  waive: ['accents'],
-  reason: 'the red is the character',
   pictures: [
-    { site: 'danbooru', id: 7123456, size: 130, position: 'top-right', opacity: 0.22 },
+    { site: 'danbooru', id: 7123456, size: 130, position: 'top-right', strength: 1.5 },
     { site: 'yande', id: 42, size: 'fill' },
   ],
 }
@@ -56,9 +54,9 @@ const lit = {
   ansi: draft.ansi.map((_, i) => `#${(0x30 + i * 4).toString(16).padStart(2, '0').repeat(3)}`),
 }
 
-test('a share code carries the whole palette, its waiver, its pictures and its other mode', () => {
+test('a share code carries the whole palette, its pictures and its other mode', () => {
   const code = shareCode([draft])
-  assert.match(code, /^tt5:[A-Za-z0-9_-]+$/)
+  assert.match(code, /^tt6:[A-Za-z0-9_-]+$/)
   assert.deepEqual(fromCode(code), [draft])
   assert.deepEqual(fromCode(shareCode([{ ...draft, other: lit }])), [{ ...draft, other: lit }])
 })
@@ -76,7 +74,7 @@ test('a share link reads as the code it carries, however it was pasted', () => {
   assert.equal(codeOf(link), code)
   assert.equal(codeOf(`  ${link}/\n`), code)
   assert.equal(codeOf(`${link}?utm_source=chat`), code)
-  assert.equal(codeOf(link.replace('tt5:', 'tt5%3A')), code)
+  assert.equal(codeOf(link.replace('tt6:', 'tt6%3A')), code)
   assert.equal(codeOf(code), code)
   assert.equal(codeOf('https://ttheme.dev/marketplace'), undefined)
   assert.equal(codeOf('https://ttheme.dev/builder/pip'), undefined)
@@ -93,7 +91,7 @@ const bodyOf = (code: string): Buffer => {
 }
 
 const signed = (payload: Buffer): string =>
-  `tt5:${Buffer.concat([payload, createHash('sha256').update(payload).digest().subarray(0, 4)]).toString('base64url')}`
+  `tt6:${Buffer.concat([payload, createHash('sha256').update(payload).digest().subarray(0, 4)]).toString('base64url')}`
 
 const raw = (body: Buffer): string => signed(Buffer.concat([Buffer.from([0]), body]))
 
@@ -101,9 +99,9 @@ test('a share code that was cut, padded or retyped is refused, and so is one fro
   const code = shareCode([draft])
   assert.throws(() => fromCode(code.slice(0, -6)), /does not add up/)
   assert.throws(() => fromCode(`${code}AAAA`), /does not add up/)
-  assert.throws(() => fromCode('tt5:AAA'), /cut short/)
-  assert.throws(() => fromCode(code.replace('tt5:', 'tt2:')), /reads tt5: share codes, not tt2:/)
-  assert.throws(() => fromCode(code.replace('tt5:', 'xx:')), /starts with tt5:/)
+  assert.throws(() => fromCode('tt6:AAA'), /cut short/)
+  assert.throws(() => fromCode(code.replace('tt6:', 'tt2:')), /reads tt6: share codes, not tt2:/)
+  assert.throws(() => fromCode(code.replace('tt6:', 'xx:')), /starts with tt6:/)
   assert.throws(() => fromCode(`${code}!`), /characters it never uses/)
   const body = bodyOf(code)
   assert.deepEqual(fromCode(raw(body)), [draft])
@@ -119,7 +117,7 @@ const juno: Draft = { ...draft, name: 'kumquat09@dust/juno', from: 'kumquat09@ti
 test('a share link carries several palettes, where each one came from and the other modes they keep', () => {
   const { pictures: _, ...bare } = juno
   const code = shareCode([draft, { ...bare, other: lit }])
-  assert.match(code, /^tt5:[A-Za-z0-9_-]+$/)
+  assert.match(code, /^tt6:[A-Za-z0-9_-]+$/)
   assert.deepEqual(fromCode(code), [draft, { ...bare, other: lit }])
   assert.equal(codeOf(shareLink(code)), code)
   const { subject: _subject, from: _from, ...plain } = draft
@@ -182,7 +180,6 @@ test('the TOML a draft writes reads back as the same palette', () => {
   assert.equal(theme.subject, 'starfall/orla')
   assert.equal(theme.from, 'ttheme/orla')
   assert.equal(readOwnText(juno.name, paletteToml(juno)).from, 'kumquat09@tide/juno')
-  assert.equal(theme.waiveReason, 'the red is the character')
   assert.deepEqual(theme.pictures, draft.pictures)
   assert.deepEqual(theme.ansi, draft.ansi)
 })
@@ -208,7 +205,7 @@ test('recolor rewrites the twenty colors and nothing else', () => {
 
 test('a marketplace reads its palettes from the set files flat in sets/, named by their slugs, and its proposed works beside them', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
-  const { waive: _, reason: __, pictures: ___, ...plain } = draft
+  const { pictures: _, ...plain } = draft
 
   const put = (path: string, slug: string, subject?: string) => {
     mkdirSync(join(dir, 'sets', path, '..'), { recursive: true })
@@ -237,7 +234,7 @@ test('a marketplace reads its palettes from the set files flat in sets/, named b
 
 test('a palette whose slug, or a set or work file whose name, holds a control character or a direction mark is skipped with it spelled out', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
-  const { waive: _, reason: __, pictures: ___, ...plain } = draft
+  const { pictures: _, ...plain } = draft
   const night = `night${String.fromCodePoint(0x202e)}`
   const odd = 'x\x1b]52;c;aGk=\x07'
   mkdirSync(join(dir, 'sets'), { recursive: true })
@@ -266,7 +263,7 @@ test('a palette whose slug, or a set or work file whose name, holds a control ch
 
 test('a slug two set files of one marketplace hold is reported, and the second is skipped', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
-  const { waive: _, reason: __, pictures: ___, ...plain } = draft
+  const { pictures: _, ...plain } = draft
   const palette = (subject?: string) => paletteToml({ ...plain, subject })
   mkdirSync(join(dir, 'sets'))
   writeFileSync(join(dir, 'sets', 'neon.toml'), setText([{ slug: 'arcade', text: palette('neon/arcade') }]))

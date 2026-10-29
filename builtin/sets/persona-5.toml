@@ -4,7 +4,6 @@
 slug = "joker"
 subject = "persona-5/joker"
 signature = ["cursor", "foreground", "ansi9"]
-ansi_source = "Red Alert + Phantom"
 
 [palette.colors]
 background = "#201513"
@@ -60,7 +59,6 @@ ansi = [
 slug = "skull"
 subject = "persona-5/skull"
 signature = ["cursor", "ansi1", "foreground"]
-ansi_source = "Desert"
 
 [palette.colors]
 background = "#1b170c"
@@ -116,7 +114,6 @@ ansi = [
 slug = "panther"
 subject = "persona-5/panther"
 signature = ["cursor", "ansi3", "ansi4"]
-ansi_source = "Warm Neon + Phantom"
 
 [palette.colors]
 background = "#201514"
@@ -172,7 +169,6 @@ ansi = [
 slug = "fox"
 subject = "persona-5/fox"
 signature = ["cursor", "foreground", "ansi1"]
-ansi_source = "Nord"
 
 [palette.colors]
 background = "#12181d"
@@ -228,7 +224,6 @@ ansi = [
 slug = "queen"
 subject = "persona-5/queen"
 signature = ["cursor", "foreground", "ansi4"]
-ansi_source = "Argonaut + Phantom"
 
 [palette.colors]
 background = "#201513"
@@ -284,7 +279,6 @@ ansi = [
 slug = "oracle"
 subject = "persona-5/oracle"
 signature = ["cursor", "ansi2", "ansi4"]
-ansi_source = "Monokai Remastered"
 
 [palette.colors]
 background = "#1f160e"
@@ -340,7 +334,6 @@ ansi = [
 slug = "velvet"
 subject = "persona-5/velvet"
 signature = ["cursor", "ansi4", "ansi5"]
-ansi_source = "Tomorrow Night Blue"
 
 [palette.colors]
 background = "#1b170c"

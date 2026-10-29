@@ -46,6 +46,7 @@ import {
   peakOf,
   rackOf,
   readStore,
+  rescaled,
   retint,
   showImage,
   thumbless,
@@ -98,14 +99,14 @@ test('a palette that already misses the gate without a picture still gets the op
 })
 
 test('the tint stays on the cursor while it leaves a visible opacity', () => {
-  assert.equal(backdropTone(TAMSIN, ['cursor', 'ansi4', 'ansi1']).slot, 'cursor')
+  assert.equal(backdropTone(TAMSIN).slot, 'cursor')
 })
 
-test('a cursor too faint to show moves the tint to the signature slot that shows most, not the darkest', () => {
+test('a cursor too faint to show moves the tint to the face color that shows most', () => {
   const tight = { ...TAMSIN, name: 'tight', foreground: '#b4b0b8', cursor: '#ffffff' }
   assert.ok(toneFor(tight, 'cursor').opacity < 0.1)
-  assert.equal(toneFor(tight, 'ansi0').opacity, 1)
-  assert.equal(backdropTone(tight, ['cursor', 'ansi0', 'ansi4']).slot, 'ansi4')
+  assert.equal(backdropTone(tight).slot, 'foreground')
+  assert.equal(backdropTone({ ...tight, selection: '#3a3046' }).slot, 'selection')
 })
 
 const LINNET: Colors = {
@@ -848,7 +849,7 @@ test('original colors are as faint as their brightest pixel needs, and the text 
   ] as const) {
     const under = mix(TAMSIN.background, peak, opacity)
     assert.deepEqual(
-      checkReadability({ ...TAMSIN, background: under, waive: [] }),
+      checkReadability({ ...TAMSIN, background: under }),
       [],
       `${peak} at ${opacity} keeps the palette readable`,
     )
@@ -902,7 +903,7 @@ test('a palette whose colors change leaves an original-color picture and its opa
   assert.equal(readBackdrop(dir, 'tamsin', configHome)?.opacity, before.opacity)
 })
 
-test('drawing a picture in its other colors keeps its tuning, drops its opacity and takes the old files away', async () => {
+test('drawing a picture in its other colors keeps its tuning, its opacity as the same multiple of the default, and takes the old files away', async () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-colors-switch-'))
   const dir = backgroundsDir(configHome)
   const before = installFigure(configHome, 7)
@@ -913,7 +914,8 @@ test('drawing a picture in its other colors keeps its tuning, drops its opacity 
   const own = rackOf(configHome, 'tamsin')[0] as Picture
   assert.deepEqual([own.coloring, own.tone, own.peak !== undefined], ['original', undefined, true])
   assert.equal(own.opacity, originalOpacity(TAMSIN, own.peak as string))
-  assert.deepEqual(tuneOf(dir, own), { size: 60, position: 'center' })
+  const scaled = rescaled(0.3, before.opacity, own.opacity)
+  assert.deepEqual(tuneOf(dir, own), { size: 60, position: 'center', opacity: scaled })
   assert.ok(existsSync(join(dir, `${own.stem}@60-center.png`)))
   assert.deepEqual(
     readdirSync(dir).filter((file) => file.startsWith(before.stem)),
@@ -924,6 +926,7 @@ test('drawing a picture in its other colors keeps its tuning, drops its opacity 
   applyRedraw(configHome, [{ name: 'tamsin', picture: back }])
   const tinted = rackOf(configHome, 'tamsin')[0] as Picture
   assert.deepEqual([tinted.coloring, tinted.tone, tinted.peak, tinted.opacity], ['tone', '#9b86c8', undefined, 0.2])
+  assert.equal(tuneOf(dir, tinted).opacity, rescaled(scaled, own.opacity, tinted.opacity))
   assert.ok(!readFileSync(join(dir, 'tamsin.conf'), 'utf8').includes('# colors'))
 })
 

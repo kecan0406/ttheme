@@ -11,7 +11,6 @@ import { checkMarketplace, runMarketplace } from './marketplaces.ts'
 
 const palette = {
   name: 'ann@pastel/x',
-  ansiSource: 'Test',
   signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
   foreground: '#ede2c6',
@@ -83,13 +82,7 @@ test('marketplace check holds the palettes and the works they propose to the com
 
   put('ttheme-marketplace.toml', 'name = "pastel"\ndescription = "Soft"\n\n[owner]\nname = "ann"\n')
 
-  put(
-    'sets/starfall.toml',
-    setText([
-      { slug: 'orla', text: paletteToml({ ...palette, subject: 'starfall/orla' }) },
-      { slug: 'orla-alt', text: paletteToml({ ...palette, subject: 'stars/orla' }) },
-    ]),
-  )
+  put('sets/starfall.toml', setText([{ slug: 'orla', text: paletteToml({ ...palette, subject: 'starfall/orla' }) }]))
 
   put(
     'sets/lantern-row.toml',
@@ -106,7 +99,6 @@ test('marketplace check holds the palettes and the works they propose to the com
 
   const commons = {
     works: [{ id: 'starfall', name: 'Starfall', characters: [{ id: 'orla', danbooru: 'orla_(starfall)' }] }],
-    renames: { stars: 'starfall' },
   }
 
   const { result, said } = heard(() => checkMarketplace(dir, commons))
@@ -120,7 +112,6 @@ test('marketplace check holds the palettes and the works they propose to the com
       '  ✗ works/starfall.toml: starfall/orla2 is "orla_(starfall)" on danbooru, which is starfall/orla already — name starfall/orla instead',
       '  ✗ works/starfall.toml: starfall/orla2 lists "lost" in also, which is not another work',
       '  ! works/starfall.toml: unknown key logo — ttheme ignores it',
-      '  ! sets/starfall.toml: orla-alt: the commons calls stars/orla starfall/orla now — name it that way',
       '  ! works/starfall.toml: the commons holds starfall/orla — its entry there wins',
     ],
   )

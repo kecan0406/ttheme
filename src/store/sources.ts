@@ -2,21 +2,12 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
-import { escaped, inert } from '../core/text.ts'
-import { BUILTIN, type Identity, MARKETPLACE_FILE, nameProblem, slugProblem } from '../core/theme.ts'
+import { inert } from '../core/text.ts'
+import { BUILTIN, type Identity, MARKETPLACE_FILE, nameProblem } from '../core/theme.ts'
 
-export const MARKETPLACE_KEYS = [
-  '$schema',
-  'name',
-  'description',
-  'owner',
-  'renames',
-  'force_remove_deleted_palettes',
-  'metadata',
-  'fallback',
-]
+export const MARKETPLACE_KEYS = ['$schema', 'name', 'description', 'owner']
 
-export const OWNER_KEYS = ['name', 'email', 'url']
+export const OWNER_KEYS = ['name']
 export const TOPIC = 'ttheme-marketplace'
 
 const OWNER = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i
@@ -146,17 +137,8 @@ function marketplaceProblem(owner: unknown, name: unknown): string | undefined {
   return nameProblem(`${owner}@${name}/x`)
 }
 
-export interface Owner {
-  name: string
-  email?: string
-  url?: string
-}
-
 export interface MarketplaceInfo extends Identity {
-  about: Owner
   description?: string
-  renames: Record<string, string | false>
-  forceRemove: boolean
 }
 
 function shown(where: string, key: string, value: unknown, kind: string): string {
@@ -169,28 +151,6 @@ function shown(where: string, key: string, value: unknown, kind: string): string
 
 function optional(where: string, key: string, value: unknown): string | undefined {
   return value === undefined ? undefined : inert(shown(where, key, value, 'one line of text, 200 characters at most'))
-}
-
-function renamesOf(where: string, raw: unknown) {
-  if (raw === undefined) {
-    return {}
-  }
-
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new Error(`${where}: [renames] maps an old palette name to its new name, or to false once it is gone`)
-  }
-
-  const renames: Record<string, string | false> = {}
-
-  for (const [from, to] of Object.entries(raw)) {
-    if (slugProblem(from) || (to !== false && (typeof to !== 'string' || slugProblem(to)))) {
-      throw new Error(`${where}: renames.${escaped(from)} must map a palette name to a palette name, or to false`)
-    }
-
-    renames[from] = to
-  }
-
-  return renames
 }
 
 export function readMarketplaceInfo(text: string, where: string): MarketplaceInfo {
@@ -209,30 +169,18 @@ export function readMarketplaceInfo(text: string, where: string): MarketplaceInf
     throw new Error(`${where}: owner is a table — [owner] with name = "<GitHub handle>"`)
   }
 
-  const owner = raw as Record<string, unknown>
-  const about: Owner = { name: shown(where, 'owner.name', owner.name, 'the GitHub handle') }
-  const email = optional(where, 'owner.email', owner.email)
-  const url = optional(where, 'owner.url', owner.url)
+  const owner = shown(where, 'owner.name', (raw as Record<string, unknown>).name, 'the GitHub handle')
   const description = optional(where, 'description', doc.description)
-  const force = doc.force_remove_deleted_palettes
-
-  if (force !== undefined && typeof force !== 'boolean') {
-    throw new Error(`${where}: force_remove_deleted_palettes must be true or false`)
-  }
-
-  const problem = marketplaceProblem(about.name, name)
+  const problem = marketplaceProblem(owner, name)
 
   if (problem) {
     throw new Error(`${where} ${problem}`)
   }
 
   return {
-    owner: about.name,
+    owner,
     name,
-    about: { ...about, ...(email ? { email } : {}), ...(url ? { url } : {}) },
     ...(description ? { description } : {}),
-    renames: renamesOf(where, doc.renames),
-    forceRemove: force === true,
   }
 }
 
@@ -258,17 +206,4 @@ export function shownSource(source: string): string {
   const home = homedir()
 
   return source === home || source.startsWith(`${home}/`) ? `~${source.slice(home.length)}` : source
-}
-
-export interface Change {
-  added: string[]
-  changed: string[]
-  gone: string[]
-}
-
-export interface Refreshed {
-  source: string
-  id: string
-  count: number
-  change: Change
 }

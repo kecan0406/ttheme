@@ -3,17 +3,8 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:f
 import { basename, join, relative } from 'node:path'
 import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
-import {
-  aboutOf,
-  type Commons,
-  followSubject,
-  mergeWorks,
-  parseCommons,
-  type Work,
-  workKeys,
-  workOf,
-} from '../core/commons.ts'
-import { listed, type PaletteEntry } from '../core/manifest.ts'
+import { aboutOf, type Commons, mergeWorks, parseCommons, type Work, workKeys, workOf } from '../core/commons.ts'
+import type { PaletteEntry } from '../core/manifest.ts'
 import { gateLines } from '../core/own.ts'
 import { marketplaceNameProblem, marketplaceToml, readmeOf } from '../core/scaffold.ts'
 import { SETS_DIR, unknownKeys } from '../core/sets.ts'
@@ -38,7 +29,6 @@ import {
   readMarketplaceDir,
   setFiles,
   setsDir,
-  warning,
   workFiles,
 } from '../store/local.ts'
 import { configHome } from '../store/paths.ts'
@@ -60,7 +50,6 @@ import {
 import { pending } from '../tui/pending.ts'
 import { interactive } from '../tui/terminal.ts'
 import { type Fetched, fetchedAt, fetchMarketplace, readTries, storeMarketplace } from './refresh.ts'
-import { renameProblems } from './renames.ts'
 import { sync } from './sync.ts'
 
 const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -124,7 +113,7 @@ async function handle(home: string, state: Installed, owner?: string): Promise<s
 export function commonsFor(home: string): Commons {
   const path = [join(ROOT, 'dist', 'commons.json'), commonsPath(home)].find((at) => existsSync(at))
 
-  return path ? parseCommons(readFileSync(path, 'utf8')) : { works: [], renames: {} }
+  return path ? parseCommons(readFileSync(path, 'utf8')) : { works: [] }
 }
 
 export function withMarketplaces(
@@ -229,7 +218,7 @@ async function addSource(home: string, arg: string): Promise<{ source: string; i
   if (was) {
     const fetched = await repin(home, was, source)
     console.log(
-      `Moved ${fetched.id} to ${refOf(source) ?? 'its default branch'} · ${shownSource(source)} — ${counted(listed(fetched.entries).length)}`,
+      `Moved ${fetched.id} to ${refOf(source) ?? 'its default branch'} · ${shownSource(source)} — ${counted(fetched.entries.length)}`,
     )
 
     return { source, id: fetched.id, fresh: false }
@@ -248,7 +237,7 @@ async function addSource(home: string, arg: string): Promise<{ source: string; i
   const auto = source === BUILTIN ? undefined : await askAuto(fetched.id)
   register(home, source, fetched.id, auto)
   storeMarketplace(home, fetched)
-  const count = counted(listed(fetched.entries).length)
+  const count = counted(fetched.entries.length)
   console.log(
     source === BUILTIN
       ? `Added the built-in marketplace — ${count}`
@@ -491,11 +480,7 @@ function againstCommons(
 
     const slug = slugOf(entry.name)
     const file = sets.get(slug) ?? slug
-    const subject = followSubject(commons.renames, entry.subject)
-
-    if (subject !== entry.subject) {
-      findings.warnings.push(`${file}: the commons calls ${entry.subject} ${subject} now — name it that way`)
-    }
+    const { subject } = entry
 
     if (!aboutOf(known, subject)?.known) {
       findings.errors.push(
@@ -597,10 +582,6 @@ export function checkMarketplace(arg: string | undefined, commons = commonsFor(c
   errors.push(...folded(dir))
   warnings.push(...unknownIn(dir, setFiles(dir), unknownKeys), ...unknownIn(dir, workFiles(dir), workKeys))
 
-  const renames = renameProblems(info.renames, new Set(entries.map((e) => slugOf(e.name))))
-  errors.push(...renames.errors.map((e) => `${MARKETPLACE_FILE}: ${e}`))
-  warnings.push(...renames.warnings.map((w) => `${MARKETPLACE_FILE}: ${w}`))
-
   const findings = againstCommons(dir, entries, works, commons)
   errors.push(...findings.errors)
   warnings.push(...findings.warnings)
@@ -662,10 +643,4 @@ function required(action: string, arg: string | undefined): string {
   }
 
   return arg
-}
-
-export function localLine(home: string, source: string): string {
-  const id = idOf(home, source)
-
-  return `${id} — ${counted(readMarketplaceDir(source, id, warning(false)).entries.length)}, always up to date`
 }

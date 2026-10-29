@@ -2,7 +2,7 @@ import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { Work } from '../core/commons.ts'
-import { inMode, listed, type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
+import { inMode, type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
 import { owned, publisherOf } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
 import { freshenConfs, paintFor, retint } from '../pictures/backdrop.ts'
@@ -31,7 +31,7 @@ export function resolve(manifest: Manifest, names: string[]): PaletteEntry[] {
     const hint =
       marketplaces.length > 0
         ? `add ${marketplaces.join(', ')} first — the Browse tab of \`ttheme\` finds a marketplace's repository`
-        : nearest(listed(manifest.palettes), missing)
+        : nearest(manifest.palettes, missing)
 
     throw new Error(`not in any marketplace: ${missing.join(', ')} — ${hint}`)
   }

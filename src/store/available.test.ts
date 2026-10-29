@@ -28,7 +28,6 @@ function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name: 'ttheme/tamsin',
     subject: 'tidewater/tamsin',
-    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -62,11 +61,10 @@ test('parseBuiltin rejects a document without its version, gate or palettes, and
   assert.equal(parseBuiltin(builtinJson([entry()])).palettes[0]?.name, 'ttheme/tamsin')
 })
 
-test('parseBuiltin refuses an entry whose name, subject or text would reach a path or a config line', () => {
+test('parseBuiltin refuses an entry whose name or subject would reach a path or a config line', () => {
   assert.throws(() => parseBuiltin(builtinJson([entry({ name: '../../x' })])), /lowercase letters/)
   assert.throws(() => parseBuiltin(builtinJson([entry({ name: 'tamsin' })])), /lowercase letters/)
   assert.throws(() => parseBuiltin(builtinJson([entry({ subject: '../x' })])), /names the subject/)
-  assert.throws(() => parseBuiltin(builtinJson([entry({ ansiSource: 'x\ncommand = rm' })])), /control character/)
   assert.throws(() => parseBuiltin(builtinJson([entry({ background: 'red' })])), /#rrggbb/)
 })
 
@@ -84,9 +82,9 @@ function home(sources: string[] = ['ttheme']): string {
 test('readMarketplaces can take the bundled palettes and works, so an upgrade never parses the copies it is about to replace', () => {
   const at = home()
   writeFileSync(join(at, 'ttheme', 'builtin.json'), JSON.stringify({ palettes: 'another shape' }))
-  writeFileSync(join(at, 'ttheme', 'commons.json'), JSON.stringify({ works: [], renames: {} }))
+  writeFileSync(join(at, 'ttheme', 'commons.json'), JSON.stringify({ works: [] }))
   assert.throws(() => readMarketplaces(at, false), /no version, gate or palettes/)
-  const bundled = { builtin: parseBuiltin(builtinJson([entry()])), commons: { works: [TIDEWATER], renames: {} } }
+  const bundled = { builtin: parseBuiltin(builtinJson([entry()])), commons: { works: [TIDEWATER] } }
   const read = readMarketplaces(at, false, bundled)
   assert.deepEqual(
     read.palettes.map((p) => p.name),
@@ -152,25 +150,19 @@ test('gateFailures reports a value above its maximum', () => {
   assert.match(gateFailures(gated({ ansi })).join('\n'), /ansi0 luminance \d+\.\d+ ≤ 0\.15/)
 })
 
-test('gateFailures honours a waiver by rule name', () => {
-  const failures = gateFailures(gated({ foreground: '#3a4150', waived: ['foreground'] }))
-  assert.ok(!failures.some((line) => line.startsWith('foreground on background')))
-})
-
 test('gateFailures measures the colors, never a gate stored before the rules it holds now', () => {
   const stale = gated({ foreground: '#3a4150', gate: [13.8, 6.8, 0.02, 10.4, 4.0] })
   assert.match(gateFailures(stale)[0] ?? '', /^foreground on background \d+\.\d+ ≥ 7$/)
 })
 
-test('search matches the palette, its work, its character’s names and the ANSI source', () => {
+test('search matches the palette, its work and its character’s names', () => {
   const works = [TIDEWATER, STARFALL]
-  const palettes = [entry(), entry({ name: 'ttheme/orla', subject: 'starfall/orla', ansiSource: 'Idle Toes' })]
+  const palettes = [entry(), entry({ name: 'ttheme/orla', subject: 'starfall/orla' })]
   const found = (query: string) => search(palettes, works, query).map((p) => p.name)
   assert.deepEqual(found('tidewater'), ['ttheme/tamsin'])
   assert.deepEqual(found('潮'), ['ttheme/tamsin'])
   assert.deepEqual(found('白砂'), ['ttheme/tamsin'])
   assert.deepEqual(found('starfall'), ['ttheme/orla'])
-  assert.deepEqual(found('idletoes'), ['ttheme/orla'])
 })
 
 test('booruTags finds the characters whose danbooru tag holds what was typed, this palette and its work first', () => {
@@ -234,7 +226,7 @@ test('readMarketplaces lays the built-in palettes, each added marketplace and th
       gate: [],
       palettes: [entry(), entry({ name: 'ttheme/bram', subject: 'tidewater/bram' })],
     },
-    commons: { works: [TIDEWATER], renames: { 'ebb/tamsin': 'tidewater/tamsin' } },
+    commons: { works: [TIDEWATER] },
   })
 
   writeFileSync(
@@ -243,7 +235,7 @@ test('readMarketplaces lays the built-in palettes, each added marketplace and th
       files: {
         'ttheme-marketplace.toml': 'name = "pastel"\n\n[owner]\nname = "someone"\n',
         'sets/pastel.toml': setText([{ slug: 'old', text: own('ann@pastel/old', 'pastel/old') }]),
-        'sets/ebb.toml': setText([{ slug: 'fan', text: own('ann@pastel/fan', 'ebb/tamsin') }]),
+        'sets/ebb.toml': setText([{ slug: 'fan', text: own('ann@pastel/fan', 'tidewater/tamsin') }]),
         'sets/night/deep.toml': setText([{ slug: 'deep', text: own('ann@pastel/deep') }]),
         'sets/broken.toml': 'not toml at all',
         'works/pastel.toml': 'name = "Pastel"\n[[character]]\nid = "old"\n',
@@ -292,7 +284,7 @@ test('without the built-in marketplace among the sources its palettes are gone b
   const at = home(['ann/ttheme-pastel'])
   writeBundled(at, {
     builtin: { version: '0.1.0', gate: [], palettes: [entry()] },
-    commons: { works: [TIDEWATER], renames: {} },
+    commons: { works: [TIDEWATER] },
   })
   const manifest = readMarketplaces(at, false)
   assert.deepEqual(manifest.palettes, [])
@@ -312,17 +304,12 @@ test("a marketplace names itself in ttheme-marketplace.toml — the owner of an 
   assert.deepEqual(
     archiveInfo(
       'ann/ttheme-pastel',
-      marketplace(
-        'name = "pastel"\ndescription = "Soft colors"\nforce_remove_deleted_palettes = true\n\n[owner]\nname = "ann"\nurl = "https://github.com/ann"\n\n[renames]\nold = "new"\ngone = false\n\n[metadata]\nmine = 1\n',
-      ),
+      marketplace('name = "pastel"\ndescription = "Soft colors"\n\n[owner]\nname = "ann"\n'),
     ),
     {
       owner: 'ann',
       name: 'pastel',
-      about: { name: 'ann', url: 'https://github.com/ann' },
       description: 'Soft colors',
-      renames: { old: 'new', gone: false },
-      forceRemove: true,
     },
   )
   assert.throws(() => archiveId('ann/ttheme-pastel', { files: {} }), /has no ttheme-marketplace\.toml/)
@@ -331,11 +318,6 @@ test("a marketplace names itself in ttheme-marketplace.toml — the owner of an 
     /owner is a table/,
   )
   assert.throws(() => archiveId('ann/ttheme-pastel', marketplace('name = "pastel"\n')), /owner is a table/)
-  assert.throws(
-    () =>
-      archiveId('ann/ttheme-pastel', marketplace('name = "pastel"\n\n[owner]\nname = "ann"\n\n[renames]\nold = 3\n')),
-    /renames\.old/,
-  )
 })
 
 test('a kept palette whose name or subject could not be one is left out, so share never copies it outside its marketplace', () => {

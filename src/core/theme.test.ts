@@ -84,7 +84,6 @@ test('a palette names its subject and where it was copied from at the top', () =
   assert.equal(theme.name, 'kai@dust/dusk')
   assert.equal(theme.subject, 'neon/dusk')
   assert.equal(theme.from, 'ttheme/orla')
-  assert.equal(theme.ansiSource, 'original')
   assert.equal(readTheme('d', palette(''), place).subject, undefined)
   assert.throws(() => readTheme('d', palette('subject = "Neon"'), place), /names a work/)
   assert.throws(() => readTheme('d', palette('from = "orla"'), place), /lowercase letters/)
@@ -139,13 +138,12 @@ test('a palette carries its other mode in [palette.colors.light] or [palette.col
   )
 })
 
-test('a built-in palette carries its other mode and names where its ANSI colors came from', () => {
+test('a built-in palette carries its other mode', () => {
   const builtin = { name: 'ttheme/dusk', builtin: true as const }
   assert.throws(
-    () => readTheme('d', palette('ansi_source = "Neon"'), builtin),
+    () => readTheme('d', palette(''), builtin),
     /built-in palette carries its other mode in \[palette\.colors\.light\]/,
   )
   const light = `\n[colors.light]\nbackground = "#fafafa"\nforeground = "#202020"\ncursor = "#a04060"\nselection_background = "#c0c0e0"\nansi = [${Array.from({ length: 16 }, () => '"#606060"').join(', ')}]\n`
-  assert.equal(readTheme('d', `${palette('ansi_source = "Neon"')}${light}`, builtin).ansiSource, 'Neon')
-  assert.throws(() => readTheme('d', `${palette('')}${light}`, builtin), /ansi_source must be a non-empty string/)
+  assert.equal(readTheme('d', `${palette('')}${light}`, builtin).other?.background, '#fafafa')
 })

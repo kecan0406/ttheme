@@ -4,7 +4,6 @@
 slug = "david"
 subject = "cyberpunk-edgerunners/david"
 signature = ["cursor", "ansi12", "ansi1"]
-ansi_source = "Cobalt2 + Edgerunner"
 
 [palette.colors]
 background = "#1a180d"
@@ -60,7 +59,6 @@ ansi = [
 slug = "lucy"
 subject = "cyberpunk-edgerunners/lucy"
 signature = ["cursor", "foreground", "ansi12"]
-ansi_source = "Mellow"
 
 [palette.colors]
 background = "#1e151a"
@@ -116,7 +114,6 @@ ansi = [
 slug = "rebecca"
 subject = "cyberpunk-edgerunners/rebecca"
 signature = ["ansi1", "ansi2", "cursor"]
-ansi_source = "Emerald Synth"
 
 [palette.colors]
 background = "#201516"
@@ -172,7 +169,6 @@ ansi = [
 slug = "nightcity"
 subject = "cyberpunk-edgerunners/nightcity"
 signature = ["cursor", "ansi13", "ansi14"]
-ansi_source = "Vibrant Ink"
 
 [palette.colors]
 background = "#19180d"

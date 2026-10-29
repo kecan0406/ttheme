@@ -112,14 +112,7 @@ sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakur
   and `[]` for a site that has none, which `find` then skips. A site it leaves
   out is searched for the danbooru tag. It is a search term; posts go in a
   palette's `[[palette.picture]]`, by number.
-- An id that has to move — a work renamed, a character's id corrected — moves
-  in `commons/renames.toml`, which maps the old subject to the new
-  (`"old-work" = "new-work"` moves a work and its characters,
-  `"evangelion/eva-01" = "evangelion/eva01"` one character), and the new
-  subject must be one the commons holds. Every other marketplace's palettes
-  that name the old subject follow it, but the built-in ones do not: the same
-  pull request moves their `subject` to the new id, or `mise run build`
-  refuses them. Keep the entry, and never give an old id to something else.
+- An id never changes once it ships: other marketplaces' palettes name it.
 
 ## What this project accepts
 
@@ -150,7 +143,7 @@ site = "yande"          # danbooru, konachan, yande or zerochan
 id = 825034             # the post's number on that site — never a URL
 size = 60               # optional: "fill" (the default) or a percentage, 20-999
 position = "center"     # optional: top-left … bottom-right, top-right by default
-opacity = 0.2           # optional: 0 to 1; by default the picture's own, or the palette's tint strength for a picture drawn in its tone
+strength = 1.5          # optional: how strongly it shows, as a multiple of the opacity ttheme picks for each user's colors and mode (1); 0 to 100
 ```
 
 `ttheme add` fetches each post from the site itself on the user's machine,
@@ -172,8 +165,7 @@ table in it — copy any of them:
 [[palette]]
 slug = "madoka"                            # its name: ttheme/madoka
 subject = "madoka-magica/madoka"           # the work and character in the commons
-signature = ["cursor", "ansi1", "ansi3"]   # the three colors the site draws as its identity
-ansi_source = "Elegant + Magica"           # what the harmonizer was fed
+signature = ["cursor", "ansi1", "ansi3"]   # the three colors the character is made from
 
 [palette.colors]
 background = "#201516"
@@ -202,15 +194,13 @@ One palette per pull request. At most three open at a time.
   characters, and no other built-in palette has it.
 - `subject` names a work or a character the commons holds: a new one comes
   with its record in `commons/works/` in the same pull request, and
-  `mise run build` refuses a subject the commons lacks. The one built-in
-  palette with no subject, `neutral`, is the marketplace's `fallback`: no list
-  or new-tab rotation shows it, while `ttheme use neutral` still uses it in a
-  tab.
+  `mise run build` refuses a subject the commons lacks.
 - `signature` names three of the palette's colors (`cursor`, `foreground`,
   `background`, `selection`, `ansi0`–`ansi15`) that must differ in both modes —
-  they are what the site draws as the palette's identity.
-- `ansi_source` records what the ANSI ramp was actually derived from, and must
-  stay accurate; a built-in palette cannot leave it out. Take base schemes from
+  the character's own colors, the first the seed the other mode and the
+  harmonizer lean toward. Every screen and card draws a palette by its cursor,
+  selection and foreground instead.
+- Take the ANSI ramp's base scheme from
   [mbadolato/iTerm2-Color-Schemes](https://github.com/mbadolato/iTerm2-Color-Schemes),
   or from a source whose license permits it — say which in the PR.
 - `[palette.colors]` is the palette in the mode it was made in, and
@@ -229,18 +219,8 @@ One palette per pull request. At most three open at a time.
   25° of its normal; no two accents in a row that read as one color at text
   size; and red and green apart for a deuteranope. ANSI slots named in
   `signature`, and their normal or bright twins, are exempt from the band and
-  the comparisons. `mise run build` fails on a violation. A waiver needs
-  `[palette.contrast] waive = [...]` **plus** a `reason`; a palette that waives
-  with no reason is refused when it is read.
-
-Every built-in palette passes the gate unwaived, in both modes. If a palette
-genuinely has to break a rule, waive it by name and say why:
-
-```toml
-[palette.contrast]
-waive = ["foreground"]     # foreground | accents | ansi0-dark | light-ansi | ansi8-visible | selection | ansi-role | bright-follows | distinct | ansi0-on-accents | ansi7-on-ansi8 | cvd-red-green
-reason = "why this palette is the exception"
-```
+  the comparisons. `mise run build` fails on a violation, so every built-in
+  palette passes the gate in both modes.
 
 `.agents/skills/palette/SKILL.md` documents how the existing palettes were
 measured and harmonized, if you want to build one the same way.

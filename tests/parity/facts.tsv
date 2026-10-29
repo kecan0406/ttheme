@@ -3,17 +3,17 @@ new-tab.open.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 new-tab.open.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
 new-tab.open.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 new-tab.open.repaints	0	=	=	=	=	=	=	=	=	=	=	=
-new-tab.open.text	txt:0ab46989ce	=	=	=	=	=	=	=	=	=	=	=
+new-tab.open.text	txt:95ca5f3476	=	=	=	=	=	=	=	=	=	=	=
 new-tab.open.issue	-	=	=	=	=	=	=	=	=	=	=	=
 new-tab-seq.open.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 new-tab-seq.open.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
 new-tab-seq.open.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
-new-tab-seq.open.text	txt:3e45ce77bc	=	=	=	=	=	=	=	=	=	=	=
+new-tab-seq.open.text	txt:944f1bf5d6	=	=	=	=	=	=	=	=	=	=	=
 new-tab-seq.open.issue	-	=	=	=	=	=	=	=	=	=	=	=
 use.used.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 use.used.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
 use.used.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
-use.used.text	txt:3e45ce77bc	=	=	=	=	=	=	=	=	=	=	=
+use.used.text	txt:944f1bf5d6	=	=	=	=	=	=	=	=	=	=	=
 use.used.issue	-	=	=	=	=	=	=	=	=	=	=	=
 use-plain.used.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
 use-plain.used.picture	none	=	=	=	=	=	=	=	=	=	=	=
@@ -21,7 +21,7 @@ use-plain.used.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
 use-plain.used.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.preview.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 hub.preview.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-hub.preview.text	txt:335fb4cc14	=	=	=	=	=	=	=	=	=	=	=
+hub.preview.text	txt:0a8c977c56	=	=	=	=	=	=	=	=	=	=	=
 hub.preview.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.browse.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 hub.browse.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
@@ -29,7 +29,7 @@ hub.browse.text	txt:13a4cf2da1	=	=	=	=	=	=	=	=	=	=	=
 hub.browse.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 hub.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-hub.back.text	txt:335fb4cc14	=	=	=	=	=	=	=	=	=	=	=
+hub.back.text	txt:0a8c977c56	=	=	=	=	=	=	=	=	=	=	=
 hub.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.closed.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 hub.closed.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
@@ -183,7 +183,7 @@ tmux-behind.pane.wears	ttheme/rei	=	=	=	=	=	=	=	=	=	=	=
 tmux-behind.pane.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.hover.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 preview-hover.hover.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-preview-hover.hover.text	txt:0d77a3d728	=	=	=	=	=	=	=	=	=	=	=
+preview-hover.hover.text	txt:9c19b900ea	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.hover.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
@@ -199,7 +199,7 @@ preview-default-same.followed.wears	ttheme/rei	=	=	=	=	=	=	=	=	=	=	=
 preview-default-same.followed.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-tab.pick.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 preview-tab.pick.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-preview-tab.pick.text	txt:cef9b7efc1	=	=	=	=	=	=	=	=	=	=	=
+preview-tab.pick.text	txt:97c1eea33c	=	=	=	=	=	=	=	=	=	=	=
 preview-tab.pick.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-tab.kept.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 preview-tab.kept.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
@@ -333,7 +333,7 @@ unwired.open.issue	-	=	=	=	=	=	=	=	=	=	=	=
 unwired.used.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:own fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 unwired.used.picture	none	=	=	=	=	=	=	ttheme/kita	=	=	=	=
 unwired.used.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
-unwired.used.text	txt:3e45ce77bc	=	=	=	=	=	=	txt:3f705bd8f7	=	=	=	=
+unwired.used.text	txt:944f1bf5d6	=	=	=	=	=	=	txt:e755ae2222	=	=	=	=
 unwired.used.issue	-	=	=	=	=	=	=	=	=	=	=	=
 reach.ghostty.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
 reach.ghostty.picture	none	=	=	=	=	=	=	=	=	=	=	=

@@ -39,7 +39,7 @@ While a change goes back and forth with the person you work for, run no check un
 - A user's config is edited only through `editUserFile` (`src/store/edits.ts`).
 - Every setting has one owner. `installed.json` owns the install state and `sync` derives the terminals' config blocks from it, so the zsh layer never edits them. `images.json` owns the pictures and only the CLI writes it. `config.zsh` owns the runtime settings.
 - Every palette has a full name, `<publisher>/<slug>`; the bare slug is never stored.
-- A format that released copies of ttheme read only gains fields; a breaking change goes under another file or prefix name (marketplace files, share codes `tt5:`, the marketplace index, `--json` output).
+- A format that released copies of ttheme read only gains fields; a breaking change goes under another file or prefix name (marketplace files, share codes `tt6:`, the marketplace index, `--json` output).
 - A change to the keys of a palette, marketplace or work file updates `schemas/`; `schemas.test.ts` holds them to the code.
 - A change to a verb, a key, a setting or a terminal's support updates its page in `docs/` in the same commit.
 - Shell code works with both GNU and BSD tools; CI runs GNU's.

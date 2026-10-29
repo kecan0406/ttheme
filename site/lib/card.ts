@@ -1,7 +1,7 @@
 import { FACET_HEIGHT, FACET_LAMP, FACET_WIDTH, facetCorners, facetMesh, facetPoints, shade } from '@/lib/facets'
 import { BUILTIN_ABOUT, INIT } from '@/lib/gallery'
 import { type Raster, raster } from '@/lib/raster'
-import { BUILTIN, isBuiltin, type Marketplace, shortName, type Theme } from '@/lib/themes'
+import { BUILTIN, faceOf, isBuiltin, type Marketplace, shortName, type Theme } from '@/lib/themes'
 import { INK, wordmarkSvg } from '@/lib/wordmark'
 import { leadsOf } from '@/lib/works'
 import { GLYPH, glyphSvg, marksOf } from '../../src/core/mark.ts'
@@ -64,7 +64,7 @@ function tones(theme: Theme): Tones {
     soft: mixOk(theme.background, theme.foreground, 0.82),
     hair: mixOk(theme.background, theme.foreground, 0.22),
     stage: mixOk(theme.background, theme.foreground, 0.08),
-    marks: marksOf(theme.background, theme.foreground, theme.signature),
+    marks: marksOf(theme.background, theme.foreground, theme.cursor, theme.selectionBackground),
   }
 }
 
@@ -304,7 +304,7 @@ function listing(
 
   for (const theme of themes) {
     const base = at.y + row++ * step + 10
-    out.push(dots(theme.signature, at.x, base - size * 0.32, 8, 6))
+    out.push(dots(faceOf(theme), at.x, base - size * 0.32, 8, 6))
     out.push(
       text(clip(theme.name, room), {
         x: at.x + 72,
@@ -360,7 +360,7 @@ function windowTitle(theme: Theme): string {
 }
 
 function sheet(frame: Frame, theme: Theme, k: Tones, shadow: string, body: string): string {
-  const ground = facets(theme.signature, k.stage, frame, 0.5)
+  const ground = facets(faceOf(theme), k.stage, frame, 0.5)
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${frame.width}" height="${frame.height}" viewBox="0 0 ${frame.width} ${frame.height}"><defs>${shadow}</defs>${ground}${body}</svg>`
 }
@@ -396,7 +396,7 @@ function palette(kit: Raster, card: Extract<Card, { kind: 'palette' | 'share' }>
     out.push(text(sub, { ...options, family: mono, weight: 400 }))
   }
 
-  out.push(dots(theme.signature, MARGIN, frame.height - MARGIN - 22, 22, 14))
+  out.push(dots(faceOf(theme), MARGIN, frame.height - MARGIN - 22, 22, 14))
   out.push(window.drawn)
   out.push(shell(kit, theme, k, shortName(theme.id), window.body.x, window.body.y, window.body.width))
 

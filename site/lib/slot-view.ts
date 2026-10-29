@@ -42,7 +42,6 @@ const LEVELS = Array.from(
 export function slotViewOf(
   list: Hex[],
   signature: string[],
-  waive: string[],
   missed: ReadonlySet<number>,
   slot: number,
   uses: number[],
@@ -63,7 +62,7 @@ export function slotViewOf(
     x: round(shareOf(at.l, at.c, at.h), 4),
     y: round(Math.min(1, Math.max(0, (PLANE_TOP - at.l) / (PLANE_TOP - PLANE_BOTTOM))), 4),
     along: round(at.h / 360, 4),
-    checks: slotChecks(list, signature, waive, slot).map((check) => ({ ok: check.ok ?? null, text: check.text })),
+    checks: slotChecks(list, signature, slot).map((check) => ({ ok: check.ok ?? null, text: check.text })),
     use: slotUse(slot),
     uses,
     signature: signature.includes(key),
@@ -71,15 +70,15 @@ export function slotViewOf(
   }
 }
 
-export function gateLinesOf(list: Hex[], signature: string[], waive: string[]): GateLine[] {
-  const theme = gatedOf(list, signature, waive)
+export function gateLinesOf(list: Hex[], signature: string[]): GateLine[] {
+  const theme = gatedOf(list, signature)
   const values = measure(theme)
   const missed = new Set(missedRules(theme).map((rule) => rule.rule))
 
   return RULES.map((rule, i): GateLine => {
     const value = values[i] ?? Number.NaN
-    const ok = waive.includes(rule.rule) ? null : !missed.has(rule.rule)
+    const ok = !missed.has(rule.rule)
 
-    return { rule, value, ok, slots: ok === false ? ruleSlots(list, signature, waive, rule.rule) : [] }
+    return { rule, value, ok, slots: ok ? [] : ruleSlots(list, signature, rule.rule) }
   })
 }

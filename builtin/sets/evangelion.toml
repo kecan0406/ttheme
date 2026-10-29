@@ -4,7 +4,6 @@
 slug = "asuka"
 subject = "evangelion/asuka"
 signature = ["cursor", "ansi11", "ansi4"]
-ansi_source = "GitLab Dark"
 
 [palette.colors]
 background = "#211513"
@@ -60,7 +59,6 @@ ansi = [
 slug = "rei"
 subject = "evangelion/rei"
 signature = ["cursor", "ansi9", "foreground"]
-ansi_source = "Idle Toes"
 
 [palette.colors]
 background = "#12181d"
@@ -116,7 +114,6 @@ ansi = [
 slug = "kaworu"
 subject = "evangelion/kaworu"
 signature = ["cursor", "foreground", "ansi1"]
-ansi_source = "Spacegray"
 
 [palette.colors]
 background = "#201515"
@@ -172,7 +169,6 @@ ansi = [
 slug = "misato"
 subject = "evangelion/misato"
 signature = ["cursor", "ansi13", "foreground"]
-ansi_source = "Purple Rain"
 
 [palette.colors]
 background = "#201514"
@@ -228,7 +224,6 @@ ansi = [
 slug = "eva01"
 subject = "evangelion/eva01"
 signature = ["cursor", "ansi4", "ansi3"]
-ansi_source = "Aura"
 
 [palette.colors]
 background = "#151910"
@@ -284,7 +279,6 @@ ansi = [
 slug = "magi"
 subject = "evangelion/magi"
 signature = ["cursor", "ansi10", "ansi9"]
-ansi_source = "lotap/magi-theme"
 
 [palette.colors]
 background = "#20150f"

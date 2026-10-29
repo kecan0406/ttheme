@@ -24,7 +24,6 @@ function entry(name: string): PaletteEntry {
   return {
     name,
     subject: `tidewater/${name.slice(name.indexOf('/') + 1)}`,
-    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -46,7 +45,6 @@ const manifest: Manifest = {
 
 const commons: Commons = {
   works: [{ id: 'tidewater', name: 'Tidewater', native: '潮汐', characters: [{ id: 'orla' }] }],
-  renames: {},
 }
 
 function installedHome(palettes: string[]): string {

@@ -150,7 +150,7 @@ function Test() {
         <C n={2}>✓</C> every palette passes the contrast checks <C n={8}>[4.1ms]</C>
       </L>
       <L>
-        <C n={2}>✓</C> a waiver needs a reason <C n={8}>[0.3ms]</C>
+        <C n={2}>✓</C> the other mode passes them too <C n={8}>[0.3ms]</C>
       </L>
       <L>
         <C n={1} bold>

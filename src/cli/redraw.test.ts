@@ -24,7 +24,6 @@ process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'ttheme-redraw-cache-'))
 const ORLA: PaletteEntry = {
   name: 'ttheme/orla',
   subject: 'tidewater/orla',
-  ansiSource: 'Horizon',
   background: '#11191c',
   foreground: '#e3e2e7',
   cursor: '#7cc1d6',
@@ -54,7 +53,7 @@ function home(mode: 'dark' | 'light'): string {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-redraw-'))
   mkdirSync(join(configHome, 'ttheme'), { recursive: true })
   writeFileSync(join(configHome, 'ttheme', 'config.zsh'), `: \${TTHEME_MODE:=${mode}}\n`)
-  writeBundled(configHome, { builtin: MANIFEST, commons: { works: [], renames: {} } })
+  writeBundled(configHome, { builtin: MANIFEST, commons: { works: [] } })
   writeInstalled(configHome, { terminals: [], palettes: ['ttheme/orla'] })
 
   return configHome

@@ -1,6 +1,5 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { listed } from '../core/manifest.ts'
 import { backgroundsDir } from '../pictures/backdrop.ts'
 import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
 import type { Host } from '../store/host.ts'
@@ -36,10 +35,8 @@ function profiles(ctx: Ctx): string {
     }
   }
 
-  const shown = new Set(listed(ctx.entries).map((entry) => entry.name))
-
   return itermProfiles(
-    ctx.themes.filter((theme) => shown.has(theme.name)),
+    ctx.themes,
     pictures,
     ctx.themes.find((theme) => theme.name === ctx.startup),
     ctx.state.itermBase,

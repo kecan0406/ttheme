@@ -4,7 +4,6 @@
 slug = "lelouch"
 subject = "code-geass/lelouch"
 signature = ["selection", "cursor", "ansi1"]
-ansi_source = "SilkCircuit Glow + Geass"
 
 [palette.colors]
 background = "#19161e"
@@ -60,7 +59,6 @@ ansi = [
 slug = "suzaku"
 subject = "code-geass/suzaku"
 signature = ["cursor", "ansi2", "selection"]
-ansi_source = "Eclipse + Geass"
 
 [palette.colors]
 background = "#211512"
@@ -116,7 +114,6 @@ ansi = [
 slug = "cc"
 subject = "code-geass/cc"
 signature = ["cursor", "ansi3", "ansi12"]
-ansi_source = "Nebula Drift + Geass"
 
 [palette.colors]
 background = "#151910"
@@ -172,7 +169,6 @@ ansi = [
 slug = "kallen"
 subject = "code-geass/kallen"
 signature = ["cursor", "selection", "ansi12"]
-ansi_source = "Kolorit + Geass"
 
 [palette.colors]
 background = "#201516"
@@ -228,7 +224,6 @@ ansi = [
 slug = "nunnally"
 subject = "code-geass/nunnally"
 signature = ["cursor", "ansi12", "ansi5"]
-ansi_source = "London Embankment Dusk + Geass"
 
 [palette.colors]
 background = "#1f160d"
@@ -284,7 +279,6 @@ ansi = [
 slug = "euphemia"
 subject = "code-geass/euphemia"
 signature = ["cursor", "ansi5", "ansi13"]
-ansi_source = "Whimsy + Geass"
 
 [palette.colors]
 background = "#1e1519"

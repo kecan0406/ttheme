@@ -161,13 +161,13 @@ export class Review {
     for (const m of staged.adds.values()) {
       const auto = m.source !== BUILTIN && staged.auto(m) ? 'updates on its own' : ''
       rows.push(
-        `+ ${m.id}  ${p.dim([m.source === BUILTIN ? 'Built in' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(SEP))}`,
+        `+ ${m.id}  ${p.dim([m.source === BUILTIN ? 'Built in' : m.shown, counted(m.entries.length), auto].filter(Boolean).join(SEP))}`,
       )
     }
 
     for (const source of staged.removes) {
       const m = staged.marketplaces.find((x) => x.source === source)
-      const stay = (m?.entries ?? []).filter((e) => !e.default && installed.has(e.name) && picked.has(e.name))
+      const stay = (m?.entries ?? []).filter((e) => installed.has(e.name) && picked.has(e.name))
       rows.push(
         `- ${m?.id ?? source}  ${p.dim([m?.shown ?? shownSource(source), stay.length > 0 ? `its ${counted(stay.length)} installed keep working` : ''].filter(Boolean).join(SEP))}`,
       )

@@ -16,7 +16,7 @@ import {
 } from '../store/available.ts'
 import { readInstalled, startupPalette } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
-import { installedPath, isLocal, marketplaceSources, type Refreshed, shownSource } from '../store/sources.ts'
+import { installedPath, isLocal, marketplaceSources, shownSource } from '../store/sources.ts'
 import { wirings } from '../terminals/index.ts'
 import { liveOf } from '../terminals/live.ts'
 import { colorless } from '../terminals/osc.ts'
@@ -24,10 +24,9 @@ import type { Pointed } from '../terminals/types.ts'
 import { PalettePrompt, type PickerScope, promptFx } from '../tui/palette-prompt.ts'
 import { pending, say } from '../tui/pending.ts'
 import { adopt, isPaletteFile, type Refused, takeFile } from './craft.ts'
-import { localLine } from './marketplaces.ts'
-import { bringPictures, since } from './pictures.ts'
+import { bringPictures, followPictures } from './pictures.ts'
 import { redrawPictures } from './redraw.ts'
-import { applyRefreshed, attempt, failureLine, refreshLine, updatesLine } from './refresh.ts'
+import { attempt, failureLine, updatesLine } from './refresh.ts'
 import { newerRelease, upgradeTo } from './release.ts'
 import { commit, sync } from './sync.ts'
 
@@ -259,17 +258,8 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   const kept = (source: string, failure: Error): string =>
     `${failureLine(source, failure)} — kept the copy from the last update`
 
-  for (const source of marketplaces.filter(isLocal)) {
-    try {
-      console.log(`  ${localLine(home, source)}`)
-    } catch (error) {
-      console.log(`  ${kept(source, error as Error)}`)
-    }
-  }
-
   const remote = marketplaces.filter((source) => !isLocal(source))
   const waiting = new Set(remote)
-  const done: Refreshed[] = []
   const line = pending()
 
   const show = (): void =>
@@ -280,12 +270,7 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   show()
   await Promise.all(
     remote.map(async (source) => {
-      const outcome = await attempt(home, source)
-
-      if ('refreshed' in outcome) {
-        done.push(outcome.refreshed)
-      }
-
+      const failure = await attempt(home, source)
       waiting.delete(source)
 
       if (waiting.size > 0) {
@@ -294,17 +279,15 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
         line.done()
       }
 
-      line.say(`  ${'refreshed' in outcome ? refreshLine(outcome.refreshed) : kept(source, outcome.failure)}`)
+      if (failure) {
+        line.say(`  ${kept(source, failure)}`)
+      }
     }),
   )
   line.done()
 
   if (!existsSync(installedPath(home))) {
     return stuck ? 1 : 0
-  }
-
-  for (const moved of applyRefreshed(home, done)) {
-    console.log(`  ${moved}`)
   }
 
   const updates = updatesLine(home)
@@ -336,12 +319,10 @@ export async function takeUpdates(home: string, names: string[]): Promise<void> 
   )
   const state = readInstalled(home)
   sync(home, manifest, state)
-  const pictures = new Map(was.map((e) => [e.name, e.pictures]))
-  await bringPictures(
+  await followPictures(
     home,
-    available(home, manifest, false)
-      .palettes.filter((e) => fresh.has(e.name))
-      .map((e) => since(e, pictures.get(e.name))),
+    available(home, manifest, false).palettes.filter((e) => fresh.has(e.name)),
+    new Map(was.map((e) => [e.name, e.pictures])),
     state.terminals,
   )
 }

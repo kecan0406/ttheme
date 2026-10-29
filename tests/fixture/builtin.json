@@ -78,7 +78,6 @@
     {
       "name": "ttheme/briony",
       "subject": "briarwood-rocks/briony",
-      "ansiSource": "Sakura + Stellar",
       "background": "#201517",
       "foreground": "#fadbe1",
       "cursor": "#feabc0",
@@ -137,7 +136,6 @@
     {
       "name": "ttheme/kestra",
       "subject": "lumen-song/kestra",
-      "ansiSource": "Nightfox + Harbor",
       "background": "#19161e",
       "foreground": "#e8dff1",
       "cursor": "#9b86c8",
@@ -196,7 +194,6 @@
     {
       "name": "ttheme/kipa",
       "subject": "briarwood-rocks/kipa",
-      "ansiSource": "Wild Cherry + Stellar",
       "background": "#201513",
       "foreground": "#fddbd6",
       "cursor": "#ee6555",
@@ -255,7 +252,6 @@
     {
       "name": "ttheme/korund",
       "subject": "lumen-song/korund",
-      "ansiSource": "Dark Modern + Harbor",
       "background": "#13181e",
       "foreground": "#dae3f1",
       "cursor": "#5f95ca",
@@ -312,68 +308,8 @@
       }
     },
     {
-      "name": "ttheme/neutral",
-      "ansiSource": "Nvim Dark",
-      "background": "#17171f",
-      "foreground": "#e3e0f3",
-      "cursor": "#cdcdff",
-      "selection": "#3e3c4c",
-      "signature": ["#cdcdff", "#72a7c9", "#c796c8"],
-      "signatureSlots": ["cursor", "ansi4", "ansi5"],
-      "ansi": [
-        "#23232b",
-        "#ca8fb2",
-        "#5db9c3",
-        "#f7a895",
-        "#72a7c9",
-        "#c796c8",
-        "#65bbe3",
-        "#c7c5d0",
-        "#777680",
-        "#edaed3",
-        "#7fdae5",
-        "#ffd3c9",
-        "#a1c3f2",
-        "#dabaf5",
-        "#95dbff",
-        "#eeecfe"
-      ],
-      "other": {
-        "background": "#fcf8ff",
-        "foreground": "#1e1e2b",
-        "cursor": "#7f81c0",
-        "selection": "#d9d5e9",
-        "ansi": [
-          "#f5f2fd",
-          "#905066",
-          "#225a42",
-          "#955417",
-          "#316988",
-          "#835187",
-          "#005773",
-          "#2c2b34",
-          "#777680",
-          "#873c58",
-          "#1b4b36",
-          "#6f4f36",
-          "#285789",
-          "#69448c",
-          "#004860",
-          "#1e1e2b"
-        ]
-      },
-      "gate": [13.762, 6.857, 0.017, 10.456, 3.977, 8.296, 38.63, 19.145, 2, 6.002, 2.63, 2],
-      "backdrop": {
-        "slot": "cursor",
-        "color": "#cdcdff",
-        "opacity": 0.12
-      },
-      "default": true
-    },
-    {
       "name": "ttheme/rue",
       "subject": "briarwood-rocks/rue",
-      "ansiSource": "TokyoNight Storm",
       "background": "#19180d",
       "foreground": "#e7e3c8",
       "cursor": "#d6d233",
@@ -432,7 +368,6 @@
     {
       "name": "ttheme/tamsine",
       "subject": "lumen-song/tamsine",
-      "ansiSource": "Sublette + Harbor",
       "background": "#1b161d",
       "foreground": "#eddeef",
       "cursor": "#c8a6da",

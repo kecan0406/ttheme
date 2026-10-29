@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
 import { type Hex, isHex, rgb } from '../core/color.ts'
-import { listed } from '../core/manifest.ts'
 import type { Theme } from '../core/theme.ts'
 import { owned } from '../core/theme.ts'
 import { backgroundsDir } from '../pictures/backdrop.ts'
@@ -201,12 +200,6 @@ function schemeVersions(dir: string): string {
     .join(' ')
 }
 
-function profiled(ctx: Ctx): Theme[] {
-  const shown = new Set(listed(ctx.entries).map((entry) => entry.name))
-
-  return ctx.themes.filter((theme) => shown.has(theme.name) || theme.name === ctx.startup)
-}
-
 const BUS = ['--session', '--print-reply', '--reply-timeout=2000']
 
 function konsoles(host: Host): { service: string; window: string }[] {
@@ -301,7 +294,7 @@ export const konsole: Wiring = {
     const parent = ctx.state.konsoleBase ?? 'FALLBACK/'
     const keep = new Set<string>()
 
-    for (const theme of profiled(ctx)) {
+    for (const theme of ctx.themes) {
       const file = join(dir, profileFile(theme.name))
       keep.add(file)
       out.write(file, konsoleProfile(theme, parent))

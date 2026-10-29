@@ -4,7 +4,6 @@
 slug = "reimu"
 subject = "touhou-project/reimu"
 signature = ["cursor", "foreground", "ansi3"]
-ansi_source = "Firewatch"
 
 [palette.colors]
 background = "#201513"
@@ -60,7 +59,6 @@ ansi = [
 slug = "marisa"
 subject = "touhou-project/marisa"
 signature = ["cursor", "foreground", "ansi1"]
-ansi_source = "Apple Classic"
 
 [palette.colors]
 background = "#1b170c"
@@ -116,7 +114,6 @@ ansi = [
 slug = "cirno"
 subject = "touhou-project/cirno"
 signature = ["cursor", "ansi6", "ansi5"]
-ansi_source = "Forest Blue"
 
 [palette.colors]
 background = "#12181d"
@@ -172,7 +169,6 @@ ansi = [
 slug = "youmu"
 subject = "touhou-project/youmu"
 signature = ["cursor", "foreground", "ansi6"]
-ansi_source = "Everforest Dark Med"
 
 [palette.colors]
 background = "#101917"
@@ -228,7 +224,6 @@ ansi = [
 slug = "patchouli"
 subject = "touhou-project/patchouli"
 signature = ["cursor", "ansi5", "ansi3"]
-ansi_source = "SeedFlip Ultraviolet"
 
 [palette.colors]
 background = "#1b161d"
@@ -284,7 +279,6 @@ ansi = [
 slug = "flandre"
 subject = "touhou-project/flandre"
 signature = ["cursor", "ansi11", "ansi12"]
-ansi_source = "Molokai"
 
 [palette.colors]
 background = "#201514"

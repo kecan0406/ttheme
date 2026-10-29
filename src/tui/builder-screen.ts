@@ -16,7 +16,7 @@ import { srgb } from '../core/fix.ts'
 import { marksOf, PIXELS } from '../core/mark.ts'
 import { PLANE_BOTTOM, PLANE_TOP, reach, shareOf } from '../core/plane.ts'
 import type { Colors } from '../core/seeds.ts'
-import { BASE, colorsOf, colorText, type Format, PAIRS, SLOT_NAMES, slotLabel, slotUse } from '../core/slots.ts'
+import { BASE, colorsOf, colorText, FACE, type Format, PAIRS, SLOT_NAMES, slotLabel, slotUse } from '../core/slots.ts'
 import { cells, printable } from '../core/text.ts'
 import { fit, spread, wrapText } from './ansi.ts'
 import type { Area } from './editor-backdrop.ts'
@@ -248,14 +248,14 @@ const STROKE_NAMES = ['mouth', 'upper arm', 'lower arm']
 const FADED = 0.28
 
 function markLines(e: PaletteEditor, p: Paint, c: Colors, slot: number): string[] {
-  const at = e.signature.indexOf(SLOT_NAMES[slot] as string)
+  const at = (FACE as readonly string[]).indexOf(SLOT_NAMES[slot] as string)
 
-  if (!p.color || at < 0 || e.signature.length !== 3) {
+  if (!p.color || at < 0) {
     return []
   }
 
-  const own = e.signature.map((name) => e.list[SLOT_NAMES.indexOf(name)] as Hex)
-  const inks = marksOf(e.list[0] as Hex, e.list[1] as Hex, own)
+  const inks = marksOf(e.list[0] as Hex, e.list[1] as Hex, e.list[2] as Hex, e.list[3] as Hex)
+  const own = FACE.map((name) => e.list[(SLOT_NAMES as readonly string[]).indexOf(name)])
 
   const dots = new Map(
     PIXELS.map(([x, y, tone, alpha]) => {
@@ -281,7 +281,7 @@ function markLines(e: PaletteEditor, p: Paint, c: Colors, slot: number): string[
   }
 
   const notes = [
-    p.bold(`Signature ${at + 1} of 3`),
+    p.bold(`Mark color ${at + 1} of 3`),
     p.dim(`The mark's ${STROKE_NAMES[at]}`),
     p.dim('Tab icon, share card'),
     inks[at] === own[at] ? '' : p.dim('Lifted to 3:1 there'),

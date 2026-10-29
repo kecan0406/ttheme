@@ -4,11 +4,6 @@ import { type Hex, isHex } from './color.ts'
 import { MODES, modeOf, otherOf } from './mode.ts'
 import { escaped, quoted } from './text.ts'
 
-export interface GhosttyExtras {
-  iconGhost: Hex
-  iconScreen: Hex[]
-}
-
 export const POSITIONS = [
   'top-left',
   'top-center',
@@ -26,14 +21,13 @@ export interface SharedPicture {
   id: number
   size?: 'fill' | number
   position?: string
-  opacity?: number
+  strength?: number
 }
 
 export interface Theme {
   name: string
   subject?: string
   from?: string
-  ansiSource: string
   background: Hex
   foreground: Hex
   cursor: Hex
@@ -42,9 +36,6 @@ export interface Theme {
   other?: Shade
   signature: Hex[]
   signatureSlots: string[]
-  ghostty: GhosttyExtras
-  waive: string[]
-  waiveReason?: string
   pictures?: SharedPicture[]
 }
 
@@ -59,7 +50,8 @@ export interface Place {
 export const BUILTIN = 'ttheme'
 export const MARKETPLACE_FILE = 'ttheme-marketplace.toml'
 const SIGNATURE_SIZE = 3
-const MAX_PICTURES = 8
+const MAX_PICTURES = 255
+export const MAX_STRENGTH = 100
 const SLUG = '[a-z0-9]+(?:-[a-z0-9]+)*'
 const SLUG_ONLY = new RegExp(`^${SLUG}$`)
 const NAME = new RegExp(`^(?:${BUILTIN}|(${SLUG})@(${SLUG}))/(${SLUG})$`)
@@ -225,33 +217,6 @@ export function table(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
 }
 
-interface IconColors {
-  background: Hex
-  cursor: Hex
-  selectionBackground: Hex
-}
-
-function readIconScreen(file: string, value: unknown, colors: IconColors): Hex[] {
-  if (value === undefined) {
-    return [colors.cursor, colors.selectionBackground, colors.background]
-  }
-
-  const raw = Array.isArray(value) ? value : [value]
-
-  if (raw.length === 0) fail(file, 'ghostty.icon_screen must not be empty')
-
-  return raw.map((c, i) => hex(file, `ghostty.icon_screen[${i}]`, c))
-}
-
-function readGhostty(file: string, own: unknown, colors: IconColors): GhosttyExtras {
-  const g = table(own)
-
-  return {
-    iconGhost: g.icon_ghost === undefined ? colors.cursor : hex(file, 'ghostty.icon_ghost', g.icon_ghost),
-    iconScreen: readIconScreen(file, g.icon_screen, colors),
-  }
-}
-
 type Slots = Record<NamedSlot, Hex> & { ansi: Hex[] }
 
 interface Signature {
@@ -324,7 +289,7 @@ function readPictures(file: string, raw: unknown, foreign: boolean): SharedPictu
       fail(file, `${field}.id must be the post's number on ${site.name}`)
     }
 
-    const { size, position, opacity } = t
+    const { size, position, strength } = t
 
     if (
       size !== undefined &&
@@ -340,8 +305,8 @@ function readPictures(file: string, raw: unknown, foreign: boolean): SharedPictu
       fail(file, `${field}.position must be one of ${POSITIONS.join(', ')}`)
     }
 
-    if (opacity !== undefined && !(typeof opacity === 'number' && opacity >= 0 && opacity <= 1)) {
-      fail(file, `${field}.opacity must be a number from 0 to 1`)
+    if (strength !== undefined && !(typeof strength === 'number' && strength >= 0 && strength <= MAX_STRENGTH)) {
+      fail(file, `${field}.strength must be a number from 0 to ${MAX_STRENGTH}`)
     }
 
     return [
@@ -350,7 +315,7 @@ function readPictures(file: string, raw: unknown, foreign: boolean): SharedPictu
         id: t.id,
         ...(size !== undefined ? { size: size as 'fill' | number } : {}),
         ...(position !== undefined && known ? { position: position as string } : {}),
-        ...(opacity !== undefined ? { opacity: opacity as number } : {}),
+        ...(strength !== undefined ? { strength: strength as number } : {}),
       },
     ]
   })
@@ -367,15 +332,13 @@ export function toml(file: string, source: string): Record<string, unknown> {
 }
 
 export const PALETTE_KEYS = new Map([
-  ['', ['slug', 'subject', 'from', 'signature', 'ansi_source', 'colors', 'contrast', 'ghostty', 'picture']],
+  ['', ['slug', 'subject', 'from', 'signature', 'colors', 'picture']],
   ['colors', ['background', 'foreground', 'cursor', 'selection_background', 'ansi', ...MODES]],
   ...MODES.map((mode): [string, string[]] => [
     `colors.${mode}`,
     ['background', 'foreground', 'cursor', 'selection_background', 'ansi'],
   ]),
-  ['contrast', ['waive', 'reason']],
-  ['ghostty', ['icon_ghost', 'icon_screen']],
-  ['picture', ['site', 'id', 'size', 'position', 'opacity']],
+  ['picture', ['site', 'id', 'size', 'position', 'strength']],
 ])
 
 export function oddKeys(path: string, value: unknown, known: readonly string[] = []): string[] {
@@ -389,7 +352,7 @@ export function oddKeys(path: string, value: unknown, known: readonly string[] =
 export function paletteOddKeys(doc: Record<string, unknown>): string[] {
   return [
     ...oddKeys('', doc, PALETTE_KEYS.get('')),
-    ...['colors', 'contrast', 'ghostty'].flatMap((name) => oddKeys(name, doc[name], PALETTE_KEYS.get(name))),
+    ...oddKeys('colors', doc.colors, PALETTE_KEYS.get('colors')),
     ...MODES.flatMap((mode) => oddKeys(`colors.${mode}`, table(doc.colors)[mode], PALETTE_KEYS.get(`colors.${mode}`))),
     ...(Array.isArray(doc.picture) ? doc.picture : []).flatMap((p, i) =>
       oddKeys(`picture[${i}]`, p, PALETTE_KEYS.get('picture')),
@@ -449,7 +412,6 @@ export function readTheme(file: string, source: string, place: Place): Theme {
 
 export function themeOf(file: string, doc: Record<string, unknown>, place: Place): Theme {
   const colors = table(doc.colors)
-  const contrastRules = table(doc.contrast)
   const builtin = place.builtin === true
   const subject = subjectOf(file, doc.subject)
   const origin = doc.from === undefined ? undefined : paletteName(file, 'from', doc.from)
@@ -473,19 +435,12 @@ export function themeOf(file: string, doc: Record<string, unknown>, place: Place
     )
   }
 
-  const waive = Array.isArray(contrastRules.waive) ? contrastRules.waive.map(String) : []
-
-  if (waive.length > 0 && typeof contrastRules.reason !== 'string') {
-    fail(file, 'contrast.waive needs a contrast.reason explaining why')
-  }
-
   const pictures = readPictures(file, doc.picture, place.foreign === true)
 
   return {
     name: place.name,
     ...(subject ? { subject } : {}),
     ...(origin ? { from: origin } : {}),
-    ansiSource: !builtin && doc.ansi_source === undefined ? 'original' : text(file, 'ansi_source', doc.ansi_source),
     background,
     foreground,
     cursor,
@@ -494,13 +449,6 @@ export function themeOf(file: string, doc: Record<string, unknown>, place: Place
     ...(other ? { other } : {}),
     signature: signature.colors,
     signatureSlots: signature.names,
-    ghostty: readGhostty(file, doc.ghostty, {
-      background,
-      cursor,
-      selectionBackground,
-    }),
-    waive,
-    waiveReason: typeof contrastRules.reason === 'string' ? contrastRules.reason : undefined,
     ...(pictures ? { pictures } : {}),
   }
 }
@@ -515,10 +463,6 @@ export function inOther(theme: Theme): Theme[] {
   const known = slotColors({ ...other, selection: other.selectionBackground })
 
   return [{ ...rest, ...other, signature: theme.signatureSlots.map((slot) => known.get(slot) as Hex) }]
-}
-
-export function rotation(themes: Theme[], fallback?: string): Theme[] {
-  return themes.filter((t) => t.name !== fallback)
 }
 
 export const MARKETPLACE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-marketplace.json'

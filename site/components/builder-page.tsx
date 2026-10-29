@@ -19,7 +19,7 @@ import { json } from '@/lib/render'
 import type { Shared } from '@/lib/share'
 import type { Pane } from '@/lib/view-types'
 import { grow, SEEDS } from '../../src/core/seeds.ts'
-import { listOf, misses, slotLabel } from '../../src/core/slots.ts'
+import { FACE, listOf, misses, slotLabel } from '../../src/core/slots.ts'
 import { brightLinks } from '../../src/core/tune.ts'
 import { DraftsPanel } from './builder-drafts'
 import { ExportDialog } from './builder-export'
@@ -42,9 +42,8 @@ export function BuilderPage({
 }) {
   const edit = editOf(data.first.draft, data.first.name, shared !== null, 'first', 0)
   const list = edit.made
-  const waive = edit.meta.waive ?? []
-  const missed = misses(list, edit.signature, waive)
-  const gate = gateOf(list, edit.signature, waive)
+  const missed = misses(list, edit.signature)
+  const gate = gateOf(list, edit.signature)
   const linked = new Set(brightLinks(list).keys())
   const rows = rowsOf(list, edit.signature, missed, new Set(), 'hex', null, linked, false)
   const mode = madeMode(edit)
@@ -105,11 +104,7 @@ export function BuilderPage({
             data-side
             class="app:min-h-0 app:flex-1 app:overflow-y-auto app:overscroll-contain app:[scrollbar-color:var(--border)_transparent] app:[scrollbar-width:thin]"
           >
-            <SeedsPanel
-              seeds={seedRowsOf(SEEDS)}
-              list={seeded}
-              gate={gateOf(seeded, ['cursor', 'ansi5', 'ansi4'], [])}
-            />
+            <SeedsPanel seeds={seedRowsOf(SEEDS)} list={seeded} gate={gateOf(seeded, ['cursor', 'ansi5', 'ansi4'])} />
             <ColorsPanel rows={rows} format="hex" />
             <AboutPanel
               about={about}
@@ -123,7 +118,7 @@ export function BuilderPage({
           name={edit.name}
           problem={nameTrouble(edit.name)}
           source={data.first.name}
-          dots={dotsOf(list, edit.signature)}
+          dots={dotsOf(list, FACE)}
           changed={0}
           gate={gate}
           link={shared?.link ?? null}

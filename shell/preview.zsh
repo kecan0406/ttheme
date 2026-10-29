@@ -1536,7 +1536,7 @@ __tt_pv_draw() {
       __tt_work_of $an
       wk=$REPLY
       __tt_label $an
-      __tt_pv_head 1 $sc $se "$REPLY" "$wk" "${TTHEME_SRC[$an]}"
+      __tt_pv_head 1 $sc $se "$REPLY" "$wk"
       __tt_pv_specimen
     else
       __tt_pv_head 1 $sc $se "Terminal colors"

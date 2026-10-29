@@ -25,23 +25,21 @@ import { colorsOfTheme } from '../core/manifest.ts'
 import { lookalikes, mirrored, withSlot } from '../core/mirror.ts'
 import { decodeImage, encodeRgba, type Rgba, resample } from '../core/png.ts'
 import type { Colors } from '../core/seeds.ts'
-import { readSet, setNameOf } from '../core/sets.ts'
+import { setNameOf } from '../core/sets.ts'
 import {
   BUILTIN,
   characterIdOf,
   MARKETPLACE_FILE,
   type Shade,
   slugOf,
-  type Theme,
   textProblem,
-  themeOf,
   toml,
   workIdOf,
 } from '../core/theme.ts'
 import { artDir, artKey, fetchArt } from '../pictures/art.ts'
 import { reach, readMarketplaces } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
-import { ownIn, readMarketplaceDir, setFiles, setsDir, warning, worksDir, writeOwnIn } from '../store/local.ts'
+import { ownIn, readMarketplaceDir, setsDir, warning, worksDir, writeOwnIn } from '../store/local.ts'
 import { configHome } from '../store/paths.ts'
 import { readSchemes, schemesDir, syncSchemes } from '../store/schemes.ts'
 import { normalize } from '../tui/find/attach.ts'
@@ -433,20 +431,6 @@ function taggedIn(works: readonly Work[], tag: string): string | undefined {
   return undefined
 }
 
-function shippedIn(dir: string): Theme[] {
-  return setFiles(dir).flatMap((f) =>
-    readSet(f.path, readFileSync(f.path, 'utf8')).map(({ slug, doc }) =>
-      themeOf(`${f.path}: ${slug}`, doc, { name: `${BUILTIN}/${slug}`, builtin: true }),
-    ),
-  )
-}
-
-function codenameIn(shipped: readonly Theme[], work: Work): string {
-  const named = shipped.find((t) => t.subject && workIdOf(t.subject) === work.id && t.ansiSource.includes(' + '))
-
-  return named?.ansiSource.split(' + ')[1] ?? work.name
-}
-
 function anchoredOf(anchors: Anchors): Shade & { name: string; signatureSlots: string[] } {
   return {
     name: anchors.name,
@@ -547,7 +531,6 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
   const commons = target?.commons ?? commonsFor(configHome())
   const known = mergeWorks(commons.works, target?.proposals ?? [])
   const held = (id: string) => workOf(target?.builtin ? commons.works : (target?.proposals ?? []), id)
-  const shipped = target?.builtin ? shippedIn(target.dir) : []
   const owned = target ? ownIn(target.dir) : undefined
   const notes: string[] = []
   const schemes = await corpus(notes)
@@ -603,20 +586,16 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
 
     const other = target?.builtin
       ? colorsOfTheme(
-          mirrored({ ...ranked.shade, name: anchors.name, signatureSlots: anchors.slots.map(([s]) => s), waive: [] })
-            .shade,
+          mirrored({ ...ranked.shade, name: anchors.name, signatureSlots: anchors.slots.map(([s]) => s) }).shade,
         )
       : undefined
 
-    const work = subject ? (records.get(workIdOf(subject))?.work ?? aboutOf(known, subject)?.work) : undefined
-    const source = target?.builtin && work ? `${ranked.name} + ${codenameIn(shipped, work)}` : ranked.name
     const name = target ? `${target.id}/${anchors.name}` : anchors.name
     const signatureSlots = anchors.slots.map(([slot]) => slot)
 
     const text = paletteToml({
       name,
       ...(subject ? { subject } : {}),
-      ansiSource: source,
       signature: signatureSlots,
       ...colorsOfTheme(ranked.shade),
       ...(other ? { other } : {}),
@@ -624,7 +603,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
 
     const own = owned?.get(anchors.name)
     const file = target ? (own?.path ?? join(setsDir(target.dir), `${setNameOf(subject)}.toml`)) : ''
-    const theme = { ...ranked.shade, name: anchors.name, signatureSlots, waive: [] }
+    const theme = { ...ranked.shade, name: anchors.name, signatureSlots }
 
     made.push({
       name,

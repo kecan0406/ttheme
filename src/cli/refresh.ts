@@ -2,15 +2,12 @@ import { existsSync, mkdirSync, readFileSync, statSync, utimesSync } from 'node:
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { WORKS_DIR, type Work } from '../core/commons.ts'
-import { listed, type PaletteEntry } from '../core/manifest.ts'
+import type { PaletteEntry } from '../core/manifest.ts'
 import { SETS_DIR } from '../core/sets.ts'
 import { untar } from '../core/tarball.ts'
-import { counted } from '../core/text.ts'
-import { BUILTIN, MARKETPLACE_FILE, marketplaceId, slugOf } from '../core/theme.ts'
-import { moveRacks } from '../pictures/backdrop.ts'
+import { BUILTIN, MARKETPLACE_FILE, marketplaceId } from '../core/theme.ts'
 import {
   type Archive,
-  archiveId,
   builtinPath,
   Missing,
   type ReadMarketplace,
@@ -25,11 +22,9 @@ import { writeAtomic } from '../store/edits.ts'
 import { type Installed, readInstalled } from '../store/installed.ts'
 import { readMarketplaceDir, warning } from '../store/local.ts'
 import { configHome } from '../store/paths.ts'
-import { movePins } from '../store/pins.ts'
 import {
   archiveUrl,
   autoUpdates,
-  type Change,
   cachePath,
   installedPath,
   isLocal,
@@ -38,18 +33,13 @@ import {
   type MarketplaceInfo,
   marketplacesDir,
   marketplacesOf,
-  type Refreshed,
   refOf,
   shownSource,
 } from '../store/sources.ts'
-import { moveTone } from '../store/tone.ts'
 import { cap } from '../tui/keycaps.ts'
-import { advise } from '../tui/notice.ts'
 import { pending } from '../tui/pending.ts'
 import { MARKS } from '../tui/style.ts'
 import { autoWanted, UPDATE_COMMAND } from './release.ts'
-import { type Moves, plan } from './renames.ts'
-import { commit, forget } from './sync.ts'
 
 export const REFRESH_AFTER = 24 * 60 * 60 * 1000
 export const RETRY_AFTER = 60 * 60 * 1000
@@ -259,17 +249,6 @@ export function cachedEntries(home: string, source: string): PaletteEntry[] {
   }
 }
 
-export function diffEntries(before: PaletteEntry[], after: PaletteEntry[]): Change {
-  const was = new Map(before.map((e) => [e.name, JSON.stringify(e)]))
-  const now = new Map(after.map((e) => [e.name, JSON.stringify(e)]))
-
-  return {
-    added: [...now.keys()].filter((name) => !was.has(name)),
-    changed: [...now.keys()].filter((name) => was.has(name) && was.get(name) !== now.get(name)),
-    gone: [...was.keys()].filter((name) => !now.has(name)),
-  }
-}
-
 async function fetchNewer(home: string, source: string, timeout?: number): Promise<Fetched | undefined> {
   if (!isRemote(source)) {
     return fetchMarketplace(home, source, timeout)
@@ -281,8 +260,7 @@ async function fetchNewer(home: string, source: string, timeout?: number): Promi
   return archive && fromArchive(source, archive)
 }
 
-export async function refreshMarketplace(home: string, source: string, timeout?: number): Promise<Refreshed> {
-  const before = cachedEntries(home, source)
+export async function refreshMarketplace(home: string, source: string, timeout?: number): Promise<void> {
   let fetched: Fetched | undefined
 
   try {
@@ -300,48 +278,20 @@ export async function refreshMarketplace(home: string, source: string, timeout?:
   }
 
   writeTry(source, undefined)
-  const entries = fetched?.entries ?? before
-
-  return {
-    source,
-    id: fetched?.id ?? archiveId(source, readCachedArchive(home, source)),
-    count: listed(entries).length,
-    change: diffEntries(before, entries),
-  }
 }
 
-type Outcome = { source: string; refreshed: Refreshed } | { source: string; failure: Error }
-
-export async function attempt(home: string, source: string, timeout?: number): Promise<Outcome> {
+export async function attempt(home: string, source: string, timeout?: number): Promise<Error | undefined> {
   try {
-    return { source, refreshed: await refreshMarketplace(home, source, timeout) }
+    await refreshMarketplace(home, source, timeout)
+
+    return undefined
   } catch (error) {
-    return { source, failure: error instanceof Error ? error : new Error(String(error)) }
+    return error instanceof Error ? error : new Error(String(error))
   }
 }
 
 export function failureLine(source: string, failure: Error): string {
   return `${shownSource(source)}: ${failure.message}`
-}
-
-function changed({ added, changed, gone }: Change): string {
-  return [
-    added.length > 0 ? `${added.length} new` : '',
-    changed.length > 0 ? `${changed.length} changed` : '',
-    gone.length > 0 ? `${gone.length} gone` : '',
-  ]
-    .filter(Boolean)
-    .join(', ')
-}
-
-export function refreshLine(r: Refreshed): string {
-  const parts = changed(r.change)
-
-  return `${r.id} — ${counted(r.count)}${parts ? ` (${parts})` : ''}`
-}
-
-export function updateNote(r: Refreshed): string | undefined {
-  return changed(r.change) ? `Updated ${refreshLine(r)}` : undefined
 }
 
 export function cachedMarketplace(home: string, source: string): ReadMarketplace | undefined {
@@ -359,52 +309,6 @@ export function cachedMarketplace(home: string, source: string): ReadMarketplace
   }
 }
 
-function followMarketplaces(home: string): string[] {
-  if (!existsSync(installedPath(home))) {
-    return []
-  }
-
-  const state = readInstalled(home)
-  const moves: Moves = { renamed: new Map(), removed: [] }
-
-  for (const source of marketplacesOf(state.marketplaces)) {
-    const marketplace = cachedMarketplace(home, source)
-
-    if (marketplace) {
-      plan(
-        marketplace.id,
-        marketplace.info,
-        new Set(marketplace.entries.map((e) => slugOf(e.name))),
-        state.palettes,
-        moves,
-      )
-    }
-  }
-
-  if (moves.renamed.size === 0 && moves.removed.length === 0) {
-    return []
-  }
-
-  const manifest = readMarketplaces(home, false)
-  forget(home, manifest, state.terminals, [...moves.renamed.keys(), ...moves.removed])
-  moveTone(home, moves.renamed, moves.removed)
-  moveRacks(home, moves.renamed)
-  movePins(home, moves.renamed, moves.removed)
-
-  const palettes = [
-    ...new Set(state.palettes.filter((n) => !moves.removed.includes(n)).map((n) => moves.renamed.get(n) ?? n)),
-  ]
-
-  const { startup, ...rest } = state
-  const kept = startup && !moves.removed.includes(startup) ? (moves.renamed.get(startup) ?? startup) : undefined
-  commit(home, manifest, state, { ...rest, palettes, ...(kept ? { startup: kept } : {}) })
-
-  return [
-    ...[...moves.renamed].map(([from, to]) => `${from} is ${to} now — its marketplace renamed it`),
-    ...moves.removed.map((name) => `${name} was removed from its marketplace`),
-  ]
-}
-
 export function updatesLine(home: string): string | undefined {
   const names = updatesOf(home, readMarketplaces(home, false)).map((e) => e.name)
 
@@ -413,18 +317,6 @@ export function updatesLine(home: string): string | undefined {
   }
 
   return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its marketplace' : 'their marketplaces'} — ${cap('ctrl+r')} on a palette marked ${MARKS.update} in Browse (\`ttheme\`) takes it`
-}
-
-export function applyRefreshed(home: string, done: Refreshed[]): string[] {
-  const moved = followMarketplaces(home)
-  const state = readInstalled(home)
-  const gone = new Set(done.flatMap((r) => r.change.gone))
-
-  const left = state.palettes
-    .filter((name) => gone.has(name))
-    .map((name) => `${name} left its marketplace — ttheme keeps the copy you have`)
-
-  return [...moved, ...left]
 }
 
 export async function autoRefresh(home = configHome()): Promise<void> {
@@ -440,16 +332,8 @@ export async function autoRefresh(home = configHome()): Promise<void> {
     }
 
     const line = pending(`Checking ${due.map(shownSource).join(', ')} for updates`)
-    const outcomes = await Promise.all(due.map((source) => attempt(home, source, AUTO_TIMEOUT)))
+    await Promise.all(due.map((source) => attempt(home, source, AUTO_TIMEOUT)))
     line.done()
-    const done = outcomes.flatMap((o) => ('refreshed' in o ? [o.refreshed] : []))
-    const notes = done.flatMap((r) => updateNote(r) ?? [])
-
-    if (notes.length === 0) {
-      return
-    }
-
-    advise([...notes, ...applyRefreshed(home, done), ...[updatesLine(home) ?? []].flat()])
   } catch {
     return
   }

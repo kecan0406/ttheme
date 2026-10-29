@@ -183,20 +183,13 @@ export class Backdrop {
         : undefined
   }
 
-  draw(
-    list: readonly Hex[],
-    signature: readonly string[],
-    waive: readonly string[],
-    cols: number,
-    rows: number,
-    area: Area = { col: 0, row: 0, cols, rows },
-  ): string {
+  draw(list: readonly Hex[], cols: number, rows: number, area: Area = { col: 0, row: 0, cols, rows }): string {
     if (this.cell.w === 0) {
       return ''
     }
 
     const background = list[0] as Hex
-    const look = this.look(list, signature, waive, area, !this.views || (area.cols === cols && area.rows === rows))
+    const look = this.look(list, area, !this.views || (area.cols === cols && area.rows === rows))
 
     if (this.views) {
       const W = cols * this.cell.w
@@ -258,21 +251,15 @@ export class Backdrop {
     return out
   }
 
-  private look(
-    list: readonly Hex[],
-    signature: readonly string[],
-    waive: readonly string[],
-    area: Area,
-    spills: boolean,
-  ): Look | undefined {
+  private look(list: readonly Hex[], area: Area, spills: boolean): Look | undefined {
     const held = this.held
 
     if (!held) {
       return undefined
     }
 
-    const colors = { name: this.name, ...colorsOf([...list]), waived: [...waive] }
-    const image = drafted(held.picture, held.image, colors, signature, this.tints)
+    const colors = { name: this.name, ...colorsOf([...list]) }
+    const image = drafted(held.picture, held.image, colors, this.tints)
     const size = sizeOf(image)
 
     if (!size) {

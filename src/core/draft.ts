@@ -1,12 +1,11 @@
 import { SITES } from './booru.ts'
 import { isHex } from './color.ts'
-import { RULES } from './contrast.ts'
 import type { PaletteEntry } from './manifest.ts'
 import { modeOf, otherOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
 import { POSITIONS, readTheme, type SharedPicture, slugOf, type Theme } from './theme.ts'
 
-export const CODE = 'tt5:'
+export const CODE = 'tt6:'
 export const SHARE_URL = 'https://ttheme.dev/builder/'
 export const SUM = 4
 export const UNPACKED = 64 * 1024
@@ -19,7 +18,6 @@ export interface Draft {
   name: string
   subject?: string
   from?: string
-  ansiSource?: string
   signature: string[]
   background: string
   foreground: string
@@ -27,8 +25,6 @@ export interface Draft {
   selection: string
   ansi: string[]
   other?: Colors
-  waive?: string[]
-  reason?: string
   pictures?: SharedPicture[]
 }
 
@@ -46,7 +42,7 @@ function pictureToml(p: SharedPicture): string[] {
     `id = ${p.id}`,
     ...(p.size === undefined ? [] : [`size = ${typeof p.size === 'number' ? p.size : q(p.size)}`]),
     ...(p.position === undefined ? [] : [`position = ${q(p.position)}`]),
-    ...(p.opacity === undefined ? [] : [`opacity = ${p.opacity}`]),
+    ...(p.strength === undefined ? [] : [`strength = ${p.strength}`]),
   ]
 }
 
@@ -76,25 +72,20 @@ export function paletteToml(d: Draft): string {
     ...(d.subject ? [`subject = ${q(d.subject)}`] : []),
     ...(d.from ? [`from = ${q(d.from)}`] : []),
     `signature = [${d.signature.map(q).join(', ')}]`,
-    ...(d.ansiSource ? [`ansi_source = ${q(d.ansiSource)}`] : []),
     '',
     ...colorsToml(d, 'colors'),
     ...(d.other ? ['', ...colorsToml(d.other, `colors.${otherOf(modeOf(d))}`)] : []),
-    ...(d.waive && d.waive.length > 0
-      ? ['', '[contrast]', `waive = [${d.waive.map(q).join(', ')}]`, `reason = ${q(d.reason ?? '')}`]
-      : []),
     ...(d.pictures ?? []).flatMap((p) => ['', ...pictureToml(p)]),
   ]
 
   return `${lines.join('\n')}\n`
 }
 
-export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string): Draft {
+export function draftOf(entry: PaletteEntry, name = entry.name): Draft {
   return {
     name,
     ...(entry.subject ? { subject: entry.subject } : {}),
     ...(entry.from ? { from: entry.from } : {}),
-    ansiSource: entry.ansiSource,
     signature: entry.signatureSlots,
     background: entry.background,
     foreground: entry.foreground,
@@ -102,9 +93,6 @@ export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string)
     selection: entry.selection,
     ansi: entry.ansi,
     ...(entry.other ? { other: entry.other } : {}),
-    ...(entry.waived && entry.waived.length > 0
-      ? { waive: entry.waived, reason: reason ?? 'kept from the palette' }
-      : {}),
     ...(entry.pictures ? { pictures: entry.pictures } : {}),
   }
 }
@@ -255,9 +243,6 @@ function writeDraft(w: Writer, d: Draft): void {
 
   w.str(d.subject)
   w.str(d.from)
-  w.str(d.ansiSource)
-  w.u16((d.waive ?? []).reduce((mask, rule) => mask | (1 << RULES.indexOf(rule)), 0))
-  w.str(d.waive && d.waive.length > 0 ? d.reason : '')
   const pictures = d.pictures ?? []
 
   if (pictures.length > 255) {
@@ -271,7 +256,7 @@ function writeDraft(w: Writer, d: Draft): void {
     w.u32(p.id)
     w.u16(p.size === undefined ? 0 : p.size === 'fill' ? 1 : p.size)
     w.u8(p.position === undefined ? 0 : (POSITIONS as readonly string[]).indexOf(p.position) + 1)
-    w.u16(p.opacity === undefined ? 0 : Math.round(p.opacity * 1000) + 1)
+    w.u16(p.strength === undefined ? 0 : Math.round(p.strength * 100) + 1)
   }
 
   w.u8(d.other ? 1 : 0)
@@ -381,24 +366,20 @@ function readDraft(r: Reader): Draft {
   const signature = [r.u8(), r.u8(), r.u8()].map((i) => SLOTS[i] ?? `slot${i}`)
   const subject = r.str()
   const from = r.str()
-  const ansiSource = r.str()
-  const mask = r.u16()
-  const reason = r.str()
-  const waive = RULES.filter((_, i) => mask & (1 << i))
 
   const pictures = Array.from({ length: r.u8() }, (): SharedPicture => {
     const site = SITES[r.u8()]?.key ?? 'unknown'
     const id = r.u32()
     const size = r.u16()
     const position = r.u8()
-    const opacity = r.u16()
+    const strength = r.u16()
 
     return {
       site,
       id,
       ...(size === 1 ? { size: 'fill' as const } : size > 1 ? { size } : {}),
       ...(position > 0 ? { position: POSITIONS[position - 1] ?? 'unknown' } : {}),
-      ...(opacity > 0 ? { opacity: (opacity - 1) / 1000 } : {}),
+      ...(strength > 0 ? { strength: (strength - 1) / 100 } : {}),
     }
   })
 
@@ -414,7 +395,6 @@ function readDraft(r: Reader): Draft {
     name,
     ...(subject ? { subject } : {}),
     ...(from ? { from } : {}),
-    ...(ansiSource ? { ansiSource } : {}),
     signature,
     background,
     foreground,
@@ -422,7 +402,6 @@ function readDraft(r: Reader): Draft {
     selection,
     ansi,
     ...(other ? { other } : {}),
-    ...(waive.length > 0 ? { waive, reason } : {}),
     ...(pictures.length > 0 ? { pictures } : {}),
   }
 }

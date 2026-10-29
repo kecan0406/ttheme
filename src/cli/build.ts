@@ -1,17 +1,9 @@
-import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { readdirSync, readFileSync, rmSync } from 'node:fs'
 import { basename, join } from 'node:path'
-import {
-  aboutOf,
-  type Commons,
-  commonsProblems,
-  RENAMES_FILE,
-  readRenames,
-  readWork,
-  WORKS_DIR,
-} from '../core/commons.ts'
+import { aboutOf, type Commons, commonsProblems, readWork, WORKS_DIR } from '../core/commons.ts'
 import { checkAll } from '../core/contrast.ts'
 import { readSet, SETS_DIR, setNameOf } from '../core/sets.ts'
-import { BUILTIN, fail, inOther, MARKETPLACE_FILE, rotation, str, type Theme, themeOf, toml } from '../core/theme.ts'
+import { BUILTIN, fail, inOther, MARKETPLACE_FILE, type Theme, themeOf, toml } from '../core/theme.ts'
 import { WIRED } from '../core/wired.ts'
 import { ROOT } from '../root.ts'
 import type { Emitter } from '../terminals/emit/types.ts'
@@ -26,11 +18,6 @@ const DIST = join(ROOT, 'dist')
 const TERMINAL_EMITTERS: Emitter[] = WIRED.map((id) => WIRINGS[id].emitter)
 
 export const EMITTED = TERMINAL_EMITTERS.map((e) => e.id)
-
-export interface Builtin {
-  themes: Theme[]
-  fallback: string
-}
 
 function tomlFiles(dir: string, at: string): string[] {
   return readdirSync(dir, { withFileTypes: true })
@@ -50,31 +37,21 @@ export function loadCommons(dir: string): Commons {
     readWork(`${WORKS_DIR}/${file}`, readFileSync(join(dir, WORKS_DIR, file), 'utf8'), basename(file, '.toml')),
   )
 
-  const at = join(dir, RENAMES_FILE)
-  const renames = existsSync(at) ? readRenames(RENAMES_FILE, readFileSync(at, 'utf8')) : {}
   const problems = commonsProblems(works)
-
-  for (const [from, to] of Object.entries(renames)) {
-    if (!aboutOf(works, to)?.known) {
-      problems.push(`${RENAMES_FILE}: ${from} moves to ${to}, which the commons does not hold`)
-    }
-  }
 
   if (problems.length > 0) {
     throw new Error(`the commons does not hold together:\n  ${problems.join('\n  ')}`)
   }
 
-  return { works, renames }
+  return { works }
 }
 
-export function loadBuiltin(dir: string, commons: Commons): Builtin {
+export function loadBuiltin(dir: string, commons: Commons): Theme[] {
   const doc = toml(MARKETPLACE_FILE, readFileSync(join(dir, MARKETPLACE_FILE), 'utf8'))
 
   if (doc.name !== BUILTIN) {
     fail(MARKETPLACE_FILE, `name must be "${BUILTIN}", the built-in marketplace's name`)
   }
-
-  const fallback = `${BUILTIN}/${str(MARKETPLACE_FILE, 'fallback', doc.fallback)}`
 
   const seen = new Map<string, string>()
 
@@ -106,11 +83,7 @@ export function loadBuiltin(dir: string, commons: Commons): Builtin {
     })
   })
 
-  if (!themes.some((t) => t.name === fallback)) {
-    fail(MARKETPLACE_FILE, `fallback "${fallback}" is not one of its palettes`)
-  }
-
-  return { themes, fallback }
+  return themes
 }
 
 export async function build({ only }: { only?: string[] } = {}): Promise<void> {
@@ -120,7 +93,7 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
 
   const terminals = only && only.length > 0 ? TERMINAL_EMITTERS.filter((e) => only.includes(e.id)) : TERMINAL_EMITTERS
   const commons = loadCommons(COMMONS_DIR)
-  const { themes, fallback } = loadBuiltin(BUILTIN_DIR, commons)
+  const themes = loadBuiltin(BUILTIN_DIR, commons)
 
   const violations = [
     ...checkAll(themes),
@@ -132,9 +105,7 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
       console.error(`  ✗ ${v.theme} [${v.rule}] ${v.detail}`)
     }
 
-    throw new Error(
-      `${violations.length} contrast violation(s). Fix the palette, or waive the rule in its [palette.contrast] table with a reason.`,
-    )
+    throw new Error(`${violations.length} contrast violation(s). Fix the palette.`)
   }
 
   if (terminals.length === TERMINAL_EMITTERS.length) {
@@ -166,7 +137,7 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
     console.log(`  ${emitter.id.padEnd(16)} ${label}`)
   }
 
-  const bundle = bundleOf(themes, fallback)
+  const bundle = bundleOf(themes)
 
   const shared = [
     { path: 'builtin.json', content: bundleJson(bundle) },
@@ -181,7 +152,5 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
 
   console.log(`  ${'shared'.padEnd(16)} ${shared.map((out) => out.path).join(' ')}`)
 
-  console.log(
-    `\n${themes.length} themes (${rotation(themes, fallback).length} in the new-tab rotation), ${commons.works.length} works -> ${count} files in dist/`,
-  )
+  console.log(`\n${themes.length} themes, ${commons.works.length} works -> ${count} files in dist/`)
 }

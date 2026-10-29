@@ -99,6 +99,7 @@ export type Tuning = Framing
 export interface TunePanel {
   field: number
   held: Tuning
+  base: number
   fill: number
   coloring: Coloring
 }
@@ -146,6 +147,7 @@ export interface FindView {
   info?: Info
   tune: Tuning
   untuned: Tuning
+  rescale?: number
   coloring: Coloring
   tuning?: TunePanel
   fetching?: { id: number; got: number; size: number }
@@ -1449,7 +1451,7 @@ const TUNE_KEYS: Key[] = [
     group: 'Tune',
     keys: 'c',
     does: 'Own colors or tinted',
-    more: 'The opacity goes back to its default.',
+    more: 'An opacity you changed keeps the same multiple of the default.',
     press: 'c',
   },
   {

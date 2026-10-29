@@ -14,11 +14,7 @@ name = "pastel"
 [owner]
 name = "alice"
 
-[renames]
-old-dusk = "dusk"
-gone = false
-
-[metadata]
+[notes]
 description = "not the marketplace's"
 `
 
@@ -38,7 +34,7 @@ test('a hand-written description over several lines is replaced whole, and the t
   assert.equal(readMarketplaceInfo(written, 'x').description, 'Soft colors')
   const replaced = withDescription(written, 'Softer')
   assert.equal(readMarketplaceInfo(replaced, 'x').description, 'Softer')
-  assert.deepEqual(readMarketplaceInfo(replaced, 'x').renames, { 'old-dusk': 'dusk', gone: false })
+  assert.equal(readMarketplaceInfo(replaced, 'x').owner, 'alice')
   assert.equal(withDescription(written, undefined), toml)
 })
 
@@ -49,7 +45,7 @@ test('a description written on the line after its quotes, starting with a bracke
     assert.equal(readMarketplaceInfo(text, 'x').description, '[WIP] Soft colors')
     const info = readMarketplaceInfo(withDescription(text, 'Softer'), 'x')
     assert.equal(info.description, 'Softer')
-    assert.deepEqual(info.renames, { 'old-dusk': 'dusk', gone: false })
+    assert.equal(info.owner, 'alice')
     assert.equal(readMarketplaceInfo(withDescription(text, undefined), 'x').description, undefined)
   }
 })

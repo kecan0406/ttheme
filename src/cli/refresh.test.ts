@@ -6,23 +6,10 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { tarballOf } from '../../tests/tarball.ts'
 import { paletteToml } from '../core/draft.ts'
-import type { Manifest, PaletteEntry } from '../core/manifest.ts'
 import { setText } from '../core/sets.ts'
 import { writeBundled } from '../store/available.ts'
-import { writeInstalled } from '../store/installed.ts'
 import { cachePath, marketplacesDir } from '../store/sources.ts'
-import {
-  applyRefreshed,
-  attempt,
-  diffEntries,
-  failureLine,
-  isDue,
-  REFRESH_AFTER,
-  RETRY_AFTER,
-  refreshLine,
-  updateNote,
-} from './refresh.ts'
-import { sync } from './sync.ts'
+import { attempt, failureLine, isDue, REFRESH_AFTER, RETRY_AFTER } from './refresh.ts'
 
 const { preconnect } = fetch
 
@@ -37,26 +24,6 @@ test('a marketplace is due once a day, never while auto-update is off, and an ho
   assert.equal(isDue(true, now - REFRESH_AFTER, now - RETRY_AFTER, now), true)
 })
 
-function entry(name: string, background = '#000000'): PaletteEntry {
-  return { name, background } as PaletteEntry
-}
-
-test('a refresh tells new, changed and gone palettes apart', () => {
-  const change = diffEntries([entry('a'), entry('b'), entry('c')], [entry('a'), entry('b', '#111111'), entry('d')])
-  assert.deepEqual(change, { added: ['d'], changed: ['b'], gone: ['c'] })
-})
-
-test('an update is noted only when something changed', () => {
-  const same = { source: 'alice/x', id: 'alice@x', count: 2, change: { added: [], changed: [], gone: [] } }
-  assert.equal(refreshLine(same), 'alice@x — 2 palettes')
-  assert.equal(updateNote(same), undefined)
-  const grown = { ...same, count: 3 }
-  assert.equal(
-    updateNote({ ...grown, change: { added: ['d'], changed: ['b'], gone: [] } }),
-    'Updated alice@x — 3 palettes (1 new, 1 changed)',
-  )
-})
-
 const SOURCE = 'ann/ttheme-pastel'
 
 const MARKETPLACE = { 'ttheme-marketplace.toml': 'name = "pastel"\n\n[owner]\nname = "ann"\n' }
@@ -67,7 +34,7 @@ async function withNetwork<T>(respond: () => Promise<Response>, run: (home: stri
   const home = mkdtempSync(join(tmpdir(), 'ttheme-refresh-'))
   mkdirSync(marketplacesDir(home), { recursive: true })
   writeFileSync(cachePath(home, SOURCE), `${JSON.stringify({ files: MARKETPLACE })}\n`)
-  writeBundled(home, { builtin: empty, commons: { works: [], renames: {} } })
+  writeBundled(home, { builtin: empty, commons: { works: [] } })
   const realState = process.env.XDG_STATE_HOME
   const fetched = spyOn(globalThis, 'fetch').mockImplementation(Object.assign(async () => respond(), { preconnect }))
   process.env.XDG_STATE_HOME = join(home, 'state')
@@ -92,16 +59,14 @@ test('an attempt hands back what happened instead of throwing', async () => {
     },
     async (home) => {
       const unreachable = await attempt(home, SOURCE)
-      assert.ok('failure' in unreachable)
-      assert.match(failureLine(SOURCE, unreachable.failure), /^github\.com\/ann\/ttheme-pastel: cannot reach/)
+      assert.ok(unreachable)
+      assert.match(failureLine(SOURCE, unreachable), /^github\.com\/ann\/ttheme-pastel: cannot reach/)
     },
   )
   await withNetwork(
     async () => new Response(tarballOf(MARKETPLACE)),
     async (home) => {
-      const fresh = await attempt(home, SOURCE)
-      assert.ok('refreshed' in fresh)
-      assert.equal(fresh.refreshed.id, 'ann@pastel')
+      assert.equal(await attempt(home, SOURCE), undefined)
     },
   )
 })
@@ -129,9 +94,7 @@ test('a fetched archive keeps what a marketplace is read from — its file, its 
   await withNetwork(
     async () => new Response(tarballOf(files)),
     async (home) => {
-      const fresh = await attempt(home, SOURCE)
-      assert.ok('refreshed' in fresh)
-      assert.equal(fresh.refreshed.count, 1)
+      assert.equal(await attempt(home, SOURCE), undefined)
       const kept = JSON.parse(readFileSync(cachePath(home, SOURCE), 'utf8')).files
       assert.deepEqual(Object.keys(kept).sort(), ['sets/neon.toml', 'ttheme-marketplace.toml', 'works/neon.toml'])
     },
@@ -157,54 +120,10 @@ test('an archive larger than any marketplace is refused before it is read whole'
         }),
       ),
     async (home) => {
-      const outcome = await attempt(home, SOURCE)
-      assert.ok('failure' in outcome)
-      assert.equal(failureLine(SOURCE, outcome.failure), 'github.com/ann/ttheme-pastel: the archive is more than 16 MB')
+      const failure = await attempt(home, SOURCE)
+      assert.ok(failure)
+      assert.equal(failureLine(SOURCE, failure), 'github.com/ann/ttheme-pastel: the archive is more than 16 MB')
       assert.ok(sent <= 18 * chunk.length, `${sent / chunk.length} MB read`)
     },
-  )
-})
-
-function installed(name: string): PaletteEntry {
-  return {
-    name,
-    ansiSource: 'Horizon',
-    background: '#11191c',
-    foreground: '#e3e2e7',
-    cursor: '#7cc1d6',
-    selection: '#383b5b',
-    signature: ['#7cc1d6', '#e3e2e7', '#d7bcf3'],
-    signatureSlots: ['cursor', 'foreground', 'ansi13'],
-    ansi: Array.from({ length: 16 }, () => '#808080'),
-    gate: [13.8, 6.8, 0.02, 10.4, 4.0],
-    backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
-  }
-}
-
-test('applying a refresh hands back the palettes that left their marketplace instead of printing them', async () => {
-  const home = mkdtempSync(join(tmpdir(), 'ttheme-apply-'))
-
-  const manifest: Manifest = {
-    version: '0.1.0',
-    gate: [],
-    palettes: [installed('ttheme/orla'), installed('ttheme/juno')],
-    works: [],
-  }
-
-  const state = { terminals: ['ghostty' as const], palettes: ['ttheme/orla', 'ttheme/juno'] }
-  writeBundled(home, { builtin: manifest, commons: { works: [], renames: {} } })
-  writeInstalled(home, state)
-  sync(home, manifest, state)
-
-  const left = applyRefreshed(home, [
-    { source: 'ttheme', id: 'ttheme', count: 1, change: { added: [], changed: [], gone: ['ttheme/orla'] } },
-  ])
-
-  assert.deepEqual(left, ['ttheme/orla left its marketplace — ttheme keeps the copy you have'])
-  assert.deepEqual(
-    applyRefreshed(home, [
-      { source: 'ttheme', id: 'ttheme', count: 1, change: { added: ['ttheme/x'], changed: [], gone: [] } },
-    ]),
-    [],
   )
 })

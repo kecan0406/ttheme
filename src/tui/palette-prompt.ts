@@ -145,12 +145,11 @@ export function pickerRows(
   mode: PickerMode = 'tree',
 ): PickerRow[] {
   const q = filter.trim()
-  const named = entries.filter((e) => !e.default)
-  const hit = new Set(q ? named.filter((e) => matchesPalette(e, works, q)) : named)
+  const hit = new Set(q ? entries.filter((e) => matchesPalette(e, works, q)) : entries)
   const rows: PickerRow[] = []
 
   const groups = Map.groupBy(
-    named.flatMap((entry) => seatsOf(entry, works, layout).map((seat) => ({ entry, ...seat }))),
+    entries.flatMap((entry) => seatsOf(entry, works, layout).map((seat) => ({ entry, ...seat }))),
     (seated) => seated.top,
   )
 
@@ -246,7 +245,7 @@ export function workRows(entries: PaletteEntry[], works: readonly Work[], filter
 
   const hit = new Set(
     entries
-      .filter((e) => !e.default && (q === '' || matchesPalette(e, works, q)))
+      .filter((e) => q === '' || matchesPalette(e, works, q))
       .flatMap((e) => seatsOf(e, works, 'world').map((seat) => seat.top)),
   )
 
@@ -355,7 +354,7 @@ export class PaletteList<X extends Extra = Extra> {
   maxItems: number
   focus: PickerFocus = 'lit'
   glide = false
-  named: PaletteEntry[] = []
+  entries: PaletteEntry[] = []
   workTitles: string[] = []
   private readonly layout: PickerLayout
   private readonly mode: PickerMode
@@ -370,7 +369,6 @@ export class PaletteList<X extends Extra = Extra> {
   private readonly heads?: () => X[]
   private readonly extras?: () => X[]
   private readonly pinned?: () => X[]
-  private entries: PaletteEntry[] = []
   private works: readonly Work[] = []
   private seats = new Map<string, Seat[]>()
   private topNames: string[] = []
@@ -411,12 +409,11 @@ export class PaletteList<X extends Extra = Extra> {
   private load(entries: PaletteEntry[], works: readonly Work[]): void {
     this.entries = entries
     this.works = works
-    this.named = entries.filter((e) => !e.default)
-    this.seats = new Map(this.named.map((e) => [e.name, seatsOf(e, works, this.layout)]))
-    this.topNames = [...new Set(this.named.flatMap((e) => this.seatsOf(e).map((seat) => seat.top)))]
+    this.seats = new Map(this.entries.map((e) => [e.name, seatsOf(e, works, this.layout)]))
+    this.topNames = [...new Set(this.entries.flatMap((e) => this.seatsOf(e).map((seat) => seat.top)))]
     this.titlePad = Math.max(0, ...this.topNames.map((top) => cells(workOf(works, top)?.name ?? top)))
-    this.workTitles = [...new Set(this.named.flatMap((e) => aboutOf(works, e.subject)?.work.name ?? []))]
-    this.namePad = Math.max(0, ...this.named.map((e) => this.indent(e).length + this.labelWidth(e)))
+    this.workTitles = [...new Set(this.entries.flatMap((e) => aboutOf(works, e.subject)?.work.name ?? []))]
+    this.namePad = Math.max(0, ...this.entries.map((e) => this.indent(e).length + this.labelWidth(e)))
   }
 
   private seatsOf(entry: PaletteEntry): Seat[] {
@@ -459,7 +456,7 @@ export class PaletteList<X extends Extra = Extra> {
   clear(): void {
     const row = this.rows[this.cursor]
 
-    if (row?.kind === 'palette' && !row.entry.default) {
+    if (row?.kind === 'palette') {
       this.expanded.add(row.top)
 
       if (row.shelf !== undefined) {
@@ -503,7 +500,7 @@ export class PaletteList<X extends Extra = Extra> {
   }
 
   private under(top: string, shelf?: string): PaletteEntry[] {
-    return this.named.filter((e) =>
+    return this.entries.filter((e) =>
       this.seatsOf(e).some((seat) => seat.top === top && (shelf === undefined || seat.shelf === shelf)),
     )
   }
@@ -557,14 +554,14 @@ export class PaletteList<X extends Extra = Extra> {
 
   pickedCount(): number {
     if (this.scope === 'palette') {
-      return this.named.filter((e) => this.picked.has(e.name)).length
+      return this.entries.filter((e) => this.picked.has(e.name)).length
     }
 
     return this.topNames.filter((top) => this.members(top).every((e) => this.picked.has(e.name))).length
   }
 
   total(): number {
-    return this.scope === 'work' ? this.topNames.length : this.named.length
+    return this.scope === 'work' ? this.topNames.length : this.entries.length
   }
 
   matched(): number {
@@ -574,7 +571,7 @@ export class PaletteList<X extends Extra = Extra> {
       return this.rows.filter((r) => r.kind === 'top').length
     }
 
-    return filter ? this.named.filter((e) => matchesPalette(e, this.works, filter)).length : this.named.length
+    return filter ? this.entries.filter((e) => matchesPalette(e, this.works, filter)).length : this.entries.length
   }
 
   private sync(): void {
@@ -750,7 +747,7 @@ export class PaletteList<X extends Extra = Extra> {
       } else if (!open && this.mode === 'tree') {
         this.reach(`top ${row.top}`)
       }
-    } else if (row?.kind === 'palette' && !open && !row.entry.default) {
+    } else if (row?.kind === 'palette' && !open) {
       if (row.shelf !== undefined) {
         const parent = shelfKey(row.top, row.shelf)
         this.climb(parent, `shelf ${parent}`)
@@ -935,7 +932,7 @@ export class PaletteList<X extends Extra = Extra> {
 }
 
 export function paletteExample<X extends Extra>(list: PaletteList<X>): string {
-  const pal = list.named[Math.floor(Math.random() * list.named.length)]
+  const pal = list.entries[Math.floor(Math.random() * list.entries.length)]
   const work = list.workTitles[Math.floor(Math.random() * list.workTitles.length)]
 
   if (!pal) {

@@ -185,14 +185,13 @@ async function fileInto(
 
 export async function adopt(home: string, code: string, manifest: Manifest, into?: string): Promise<Adopted> {
   const known = new Map(untuned(home, manifest, false).palettes.map((e) => [e.name, e]))
-  const reasons = fromCode(code).map((draft) => draft.reason)
   const entries: PaletteEntry[] = []
   const placed: PaletteEntry[] = []
   const refused: Refused[] = []
 
-  for (const [i, entry] of readCodes(code).entries()) {
+  for (const entry of readCodes(code)) {
     if (publisherOf(entry.name) === '') {
-      const text = paletteToml(draftOf(entry, entry.name, reasons[i]))
+      const text = paletteToml(draftOf(entry))
       const name = await fileInto(home, entry.name, text, into, `the ${entry.name} in the link`)
       entries.push({ ...entry, name })
       continue
@@ -366,13 +365,11 @@ export async function runNew(name: string, from: string | undefined, into: strin
     throw new Error('new opens the palette editor — run it in a terminal')
   }
 
-  const kept: Draft | undefined = source
-    ? { ...draftOf(source, full, `kept from ${source.name}`), from: source.from ?? source.name }
-    : undefined
+  const kept: Draft | undefined = source ? { ...draftOf(source, full), from: source.from ?? source.name } : undefined
 
   const held = source ? (heldPictures(home, source.name) ?? source.pictures) : undefined
   const blank: Draft = { name: full, signature: SIGNATURE, ...grow(SEEDS) }
-  const { ansiSource: _, ...rest } = kept ?? blank
+  const rest = kept ?? blank
   const shelf = shelfFor(home, full)
 
   const toml = ({ colors, signature }: Edited) => {
@@ -386,7 +383,6 @@ export async function runNew(name: string, from: string | undefined, into: strin
     name: full,
     ...(kept ? { colors: kept } : {}),
     signature: rest.signature,
-    ...(rest.waive ? { waive: rest.waive } : {}),
     palettes: choicesOf(home, manifest, full),
     pictures: shelf.count(),
     find: finder(home, full, toml),
@@ -471,7 +467,6 @@ export async function runEdit(name: string): Promise<void> {
     name: full,
     colors: colorsOfTheme(shade),
     signature: theme.signatureSlots,
-    waive: theme.waive,
     palettes: choicesOf(home, manifest, full),
     pictures: shelf.count(),
     find: finder(home, full, rewrite),
@@ -580,7 +575,6 @@ async function editTone(home: string, name: string, hosted: boolean): Promise<nu
       original: colorsOfTheme(toTheme(base)),
       tone: true,
       signature: worn.signatureSlots,
-      ...(worn.waived ? { waive: worn.waived } : {}),
       decode: decoded,
       check: () => undefined,
     },
@@ -623,7 +617,7 @@ export function runCheck(name: string, fix = false): number {
   const { theme, moves, left } = fixGate(toTheme(entry))
 
   if (moves.length === 0) {
-    console.log('\nNo color change fixes it — waive the rule in [palette.contrast] with a reason, or pick other colors')
+    console.log('\nNo color change fixes it — pick other colors')
 
     return 1
   }
@@ -705,11 +699,8 @@ function exportsFor(home: string, full: string, text: (edited: Edited) => string
 }
 
 export function draftFor(home: string, entry: PaletteEntry): Draft {
-  const own = mineAt(home, entry.name)
-  const reason = own ? readOwnText(entry.name, own.text).waiveReason : undefined
-
   const held = heldPictures(home, entry.name) ?? entry.pictures
-  const { pictures: _, ...draft } = draftOf(entry, entry.name, reason)
+  const { pictures: _, ...draft } = draftOf(entry)
 
   return { ...draft, ...(held ? { pictures: held } : {}) }
 }

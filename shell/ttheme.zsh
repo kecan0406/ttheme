@@ -38,7 +38,7 @@ typeset -ga TTHEME_KEYMODS=(ctrl ⌃ alt ⌥ shift ⇧)
 __tt_palettes_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local -a at
-  unset TTHEME_PALETTE TTHEME_SUBJECT TTHEME_ALSO TTHEME_SHORT TTHEME_SRC
+  unset TTHEME_PALETTE TTHEME_SUBJECT TTHEME_ALSO TTHEME_SHORT
   source $TTHEME_HOME/palettes.zsh || return 1
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null
   TTHEME_PALETTES_AT=$at[1]
@@ -399,15 +399,15 @@ __tt_announce() {
   __tt_label $full
   name=$REPLY
   __tt_shelf $full
-  local grp=$REPLY src=${TTHEME_SRC[$full]:-unknown}
+  local grp=$REPLY
   if ! __tt_color; then
-    print -r -- "$name · $grp · ANSI $src"
+    print -r -- "$name · $grp"
     return 0
   fi
   local fg=${p[2]#\#} cur=${p[3]#\#} sel=${p[4]#\#}
-  printf "\033[48;2;%d;%d;%d;38;2;%d;%d;%dm %s ${TTHEME_SGR[reset]}\n${TTHEME_SGR[reverse]}${TTHEME_SGR[bold]}\033[38;2;%d;%d;%dm %s ${TTHEME_SGR[reset]} ${TTHEME_SGR[dim]}· ANSI %s${TTHEME_SGR[reset]}\n" \
+  printf "\033[48;2;%d;%d;%d;38;2;%d;%d;%dm %s ${TTHEME_SGR[reset]}\n${TTHEME_SGR[reverse]}${TTHEME_SGR[bold]}\033[38;2;%d;%d;%dm %s ${TTHEME_SGR[reset]}\n" \
     $((16#${sel:0:2})) $((16#${sel:2:2})) $((16#${sel:4:2})) $((16#${fg:0:2})) $((16#${fg:2:2})) $((16#${fg:4:2})) "$grp" \
-    $((16#${cur:0:2})) $((16#${cur:2:2})) $((16#${cur:4:2})) "$name" "$src"
+    $((16#${cur:0:2})) $((16#${cur:2:2})) $((16#${cur:4:2})) "$name"
 }
 
 __tt_dir_rule() {
@@ -1709,7 +1709,7 @@ __tt_menu() {
   __tt_order
   for k in $reply; do
     __tt_shelf $k
-    printf '%s\t%s\t%s\n' "$k" "$REPLY" "${TTHEME_SRC[$k]:-unknown}"
+    printf '%s\t%s\n' "$k" "$REPLY"
   done
 }
 

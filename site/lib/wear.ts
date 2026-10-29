@@ -1,7 +1,7 @@
 import type { Point } from '@/lib/facets'
 import { MODE_KEY, type Mode } from '@/lib/mode'
 import { json } from '@/lib/render'
-import { inMode, pair, type Shade, shades, type Theme } from '@/lib/themes'
+import { faceOf, inMode, pair, type Shade, shades, type Theme } from '@/lib/themes'
 import { marksOf, tileSvg } from '../../src/core/mark.ts'
 
 export const WEAR_KEY = 'ttheme-site-wear'
@@ -49,9 +49,10 @@ export function wearIcon(background: string, foreground: string, marks: readonly
 export function themeIcon({
   background,
   foreground,
-  signature,
-}: Pick<Theme, 'background' | 'foreground' | 'signature'>) {
-  return wearIcon(background, foreground, marksOf(background, foreground, signature))
+  cursor,
+  selectionBackground,
+}: Pick<Theme, 'background' | 'foreground' | 'cursor' | 'selectionBackground'>) {
+  return wearIcon(background, foreground, marksOf(background, foreground, cursor, selectionBackground))
 }
 
 export function headlineEm(text: string): number {
@@ -65,7 +66,7 @@ export function headlineEm(text: string): number {
 export function wearScript(fallback: Theme): string {
   const light = json(wearVars(inMode(fallback, 'light')))
 
-  return `(function(){try{var h=document.documentElement,s=h.style,m=document.querySelector('meta[name=theme-color]'),c=document.querySelector('link[rel=icon]'),a=[${ADVANCES.join(',')}],g='${GLYPHS}',q=localStorage.getItem('${MODE_KEY}'),l=q==='light'||(q!=='dark'&&matchMedia('(prefers-color-scheme: light)').matches),d=l?'light':'dark',w=JSON.parse(localStorage.getItem('${WEAR_KEY}')),v=w&&w.v&&w.v[d],i,e=0,k,n,o,B,F,L,M,K=${json(MARKS)};h.setAttribute('data-mode',d);h.setAttribute('data-setting',q==='light'||q==='dark'?q:'auto');if(!v||!v.length){if(!l)return;v=${light};w=null}for(i=0;i<v.length;i++)if(v[i][0].indexOf('--')===0){s.setProperty(v[i][0],v[i][1]);if(m&&v[i][0]==='--bg')m.content=v[i][1]}s.colorScheme=l?'light only':'dark only';n=w&&w.t&&w.t.name;if(typeof n==='string'){h.setAttribute('data-picked','');for(i=0;i<n.length;i++){k=g.indexOf(n[i]);e+=(k<0?${WIDEST}:a[k])+(${TRACKING})}s.setProperty('--palette-name',JSON.stringify(n));s.setProperty('--palette-work',JSON.stringify(w.t.work&&w.t.work.name||''));s.setProperty('--palette-em',String(e/1000))}o=function(x){for(var z=0;z<v.length;z++)if(v[z][0]===x)return v[z][1]};B=o('--bg');F=o('--fg');L=${LIFT};M=[L(o('--sg0'),B,F),L(o('--sg1'),B,F),L(o('--sg2'),B,F)];for(i=0;i<3;i++)s.setProperty(K[i],M[i]);if(c)c.href=(${ICON})(B,F,M)}catch(x){}})()`
+  return `(function(){try{var h=document.documentElement,s=h.style,m=document.querySelector('meta[name=theme-color]'),c=document.querySelector('link[rel=icon]'),a=[${ADVANCES.join(',')}],g='${GLYPHS}',q=localStorage.getItem('${MODE_KEY}'),l=q==='light'||(q!=='dark'&&matchMedia('(prefers-color-scheme: light)').matches),d=l?'light':'dark',w=JSON.parse(localStorage.getItem('${WEAR_KEY}')),v=w&&w.v&&w.v[d],i,e=0,k,n,o,B,F,L,M,K=${json(MARKS)};h.setAttribute('data-mode',d);h.setAttribute('data-setting',q==='light'||q==='dark'?q:'auto');if(!v||!v.length){if(!l)return;v=${light};w=null}for(i=0;i<v.length;i++)if(v[i][0].indexOf('--')===0){s.setProperty(v[i][0],v[i][1]);if(m&&v[i][0]==='--bg')m.content=v[i][1]}s.colorScheme=l?'light only':'dark only';n=w&&w.t&&w.t.name;if(typeof n==='string'){h.setAttribute('data-picked','');for(i=0;i<n.length;i++){k=g.indexOf(n[i]);e+=(k<0?${WIDEST}:a[k])+(${TRACKING})}s.setProperty('--palette-name',JSON.stringify(n));s.setProperty('--palette-work',JSON.stringify(w.t.work&&w.t.work.name||''));s.setProperty('--palette-em',String(e/1000))}o=function(x){for(var z=0;z<v.length;z++)if(v[z][0]===x)return v[z][1]};B=o('--bg');F=o('--fg');L=${LIFT};M=[L(o('--cu'),B,F),L(o('--se'),B,F),L(o('--fg'),B,F)];for(i=0;i<3;i++)s.setProperty(K[i],M[i]);if(c)c.href=(${ICON})(B,F,M)}catch(x){}})()`
 }
 
 export const SLOTS = ['--bg', '--fg', '--cu', '--se', ...Array.from({ length: 16 }, (_, index) => `--a${index}`)]
@@ -95,7 +96,7 @@ export function wearSlots(theme: Theme): Vars {
 }
 
 export function wearSigns(theme: Theme): Vars {
-  return named(SIGNS, [JSON.stringify(theme.name), ...theme.signature.slice(0, 3)])
+  return named(SIGNS, [JSON.stringify(theme.name), ...faceOf(theme)])
 }
 
 export function wearVars(theme: Theme): Vars {
@@ -104,13 +105,12 @@ export function wearVars(theme: Theme): Vars {
 
 export function withMarks(vars: Vars): Vars {
   const value = (name: string) => vars.find(([slot]) => slot === name)?.[1] ?? ''
-  const [background, foreground] = [value('--bg'), value('--fg')]
-  const signature = TONES.map(value)
+  const [background, foreground, cursor, selection] = ['--bg', '--fg', '--cu', '--se'].map(value)
   const rest = vars.filter(([name]) => !MARKS.includes(name))
 
-  if (!background || !foreground || signature.some((tone) => !tone)) return rest
+  if (!background || !foreground || !cursor || !selection) return rest
 
-  return [...rest, ...named(MARKS, marksOf(background, foreground, signature))]
+  return [...rest, ...named(MARKS, marksOf(background, foreground, cursor, selection))]
 }
 
 export function wearOwn(theme: Theme): Vars {

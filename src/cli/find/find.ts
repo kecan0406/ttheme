@@ -45,7 +45,7 @@ import { type About, aboutOf, siteTags, type Work } from '../../core/commons.ts'
 import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
 import { SCENES } from '../../core/scenes.ts'
 import { POSITIONS } from '../../core/theme.ts'
-import { backgroundsDir, fillSize, rackOf, type Tune } from '../../pictures/backdrop.ts'
+import { backgroundsDir, fillSize, rackOf, rescaled, type Tune } from '../../pictures/backdrop.ts'
 import {
   cacheDir,
   fetchCount,
@@ -303,6 +303,10 @@ function resized(size: Tuning['size'], step: number, fill: number): Tuning['size
 
 function sameTuning(a: Tuning, b: Tuning): boolean {
   return a.size === b.size && a.at === b.at && a.opacity === b.opacity
+}
+
+function scaleOf(opacity: number, base: number): number | undefined {
+  return opacity === base || base <= 0 ? undefined : opacity / base
 }
 
 function toTune(tune: Tuning, untuned: Tuning): Tune | undefined {
@@ -576,7 +580,7 @@ class Finder {
     this.entry = entry
     this.about = aboutOf(manifest.works, entry.subject)
     this.characters = charactersOf(manifest.works)
-    this.tone = backdropTone(entry, entry.signatureSlots)
+    this.tone = backdropTone(entry)
     this.blurring = blurOf(home)
     const untuned: Tuning = { size: 'fill', at: TOP_RIGHT, opacity: this.tone.opacity }
     this.view = {
@@ -2094,7 +2098,13 @@ class Finder {
     }
 
     if (key === 't') {
-      view.tuning = { field: 0, held: { ...view.tune }, fill: this.current?.fill ?? 0, coloring: view.coloring }
+      view.tuning = {
+        field: 0,
+        held: { ...view.tune },
+        base: view.untuned.opacity,
+        fill: this.current?.fill ?? 0,
+        coloring: view.coloring,
+      }
       this.paint.draw()
 
       return
@@ -2163,6 +2173,7 @@ class Finder {
         tune.at = ((tune.at - 1 + Math.sign(step) + 9) % 9) + 1
       } else {
         tune.opacity = Math.max(0, Math.min(100, Math.round(tune.opacity * 100) + step)) / 100
+        view.rescale = undefined
       }
 
       this.retune()
@@ -2187,6 +2198,7 @@ class Finder {
         tune.at = base.at
       } else {
         tune.opacity = base.opacity
+        view.rescale = undefined
       }
 
       this.retune()
@@ -2196,6 +2208,7 @@ class Finder {
 
     if (key === '+') {
       view.tune = { ...view.untuned }
+      view.rescale = undefined
       this.retune()
 
       return
@@ -2215,7 +2228,9 @@ class Finder {
     }
 
     if (key === 'esc') {
-      view.tune = { ...panel.held, ...(panel.coloring === view.coloring ? {} : { opacity: view.untuned.opacity }) }
+      const moved = panel.coloring !== view.coloring
+      view.tune = { ...panel.held, ...(moved ? { opacity: view.untuned.opacity } : {}) }
+      view.rescale = moved ? scaleOf(panel.held.opacity, panel.base) : undefined
       view.tuning = undefined
       this.retune()
     }
@@ -2228,6 +2243,7 @@ class Finder {
       return
     }
 
+    view.rescale ??= scaleOf(view.tune.opacity, view.untuned.opacity)
     view.coloring = view.coloring === 'tone' ? 'original' : 'tone'
     view.tune.opacity = view.untuned.opacity
     this.paint.draw()
@@ -3421,9 +3437,17 @@ class Finder {
     const height = Math.max(1, Math.round((H * width) / W))
     const tune = { ...this.view.tune }
     const { coloring } = this.view
-    const tuned = !sameTuning(tune, this.view.untuned)
     const touched = tune.opacity !== this.view.untuned.opacity
-    const mark = tuned ? `-${tune.size}-${tune.at}${touched ? `-${Math.round(tune.opacity * 100)}` : ''}` : ''
+    const scale = touched ? undefined : this.view.rescale
+    const tuned = !sameTuning(tune, this.view.untuned) || scale !== undefined
+
+    const strength = touched
+      ? `-${Math.round(tune.opacity * 100)}`
+      : scale === undefined
+        ? ''
+        : `-x${Math.round(scale * 100)}`
+
+    const mark = tuned ? `-${tune.size}-${tune.at}${strength}` : ''
 
     const path = join(
       this.scratch,
@@ -3450,7 +3474,16 @@ class Finder {
       tone: this.tone,
       blur: (this.blurring * width) / fillSize(W, H).width,
       coloring,
-      ...(tuned ? { tune: { size: tune.size, at: tune.at, ...(touched ? { opacity: tune.opacity } : {}) } } : {}),
+      ...(tuned
+        ? {
+            tune: {
+              size: tune.size,
+              at: tune.at,
+              ...(touched ? { opacity: tune.opacity } : {}),
+              ...(scale === undefined ? {} : { scale }),
+            },
+          }
+        : {}),
     })
 
     this.clarity.set(key, made)
@@ -3495,7 +3528,8 @@ class Finder {
 
     if (!touched && this.view.tune.opacity === asked) {
       this.view.untuned.opacity = opacity
-      this.view.tune.opacity = opacity
+      this.view.tune.opacity = this.view.rescale === undefined ? opacity : rescaled(this.view.rescale, 1, opacity)
+      this.view.rescale = undefined
     }
 
     if (this.view.tuning && current.fill) {

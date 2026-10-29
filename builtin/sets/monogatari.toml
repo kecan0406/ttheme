@@ -4,7 +4,6 @@
 slug = "hitagi"
 subject = "monogatari/hitagi"
 signature = ["cursor", "ansi9", "ansi13"]
-ansi_source = "Duskfox"
 
 [palette.colors]
 background = "#1e151a"
@@ -60,7 +59,6 @@ ansi = [
 slug = "shinobu"
 subject = "monogatari/shinobu"
 signature = ["cursor", "ansi9", "ansi13"]
-ansi_source = "Mona Lisa + Oddity"
 
 [palette.colors]
 background = "#1c170c"
@@ -116,7 +114,6 @@ ansi = [
 slug = "tsubasa"
 subject = "monogatari/tsubasa"
 signature = ["cursor", "foreground", "ansi12"]
-ansi_source = "Kanso Ink"
 
 [palette.colors]
 background = "#201517"
@@ -172,7 +169,6 @@ ansi = [
 slug = "nadeko"
 subject = "monogatari/nadeko"
 signature = ["cursor", "ansi4", "ansi2"]
-ansi_source = "Tinacious Design Dark"
 
 [palette.colors]
 background = "#1f1518"

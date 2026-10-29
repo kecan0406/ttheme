@@ -44,7 +44,7 @@ export interface Violation {
   detail: string
 }
 
-export type Readable = Pick<Theme, 'name' | 'background' | 'foreground' | 'ansi' | 'waive'> &
+export type Readable = Pick<Theme, 'name' | 'background' | 'foreground' | 'ansi'> &
   Partial<Pick<Theme, 'selectionBackground'>>
 
 export type Gated = Readable & Pick<Theme, 'signatureSlots'>
@@ -323,8 +323,6 @@ const PAIR_CHECKS: Check<Gated>[] = [
 
 const CHECKS: Check<Gated>[] = [...READABILITY, ...ROLE_CHECKS, ...PAIR_CHECKS]
 
-export const RULES = CHECKS.map((c) => c.rule)
-
 export const GATE_RULES: GateRule[] = CHECKS.map(({ rule, label, unit, min, max }) => ({
   rule,
   label,
@@ -352,9 +350,7 @@ export function boundOf(rule: GateRule): string {
 }
 
 function run<T extends Readable>(checks: Check<T>[], theme: T): Violation[] {
-  return checks
-    .filter((c) => !theme.waive.includes(c.rule))
-    .flatMap((c) => c.check(theme).map((detail) => ({ theme: theme.name, rule: c.rule, detail })))
+  return checks.flatMap((c) => c.check(theme).map((detail) => ({ theme: theme.name, rule: c.rule, detail })))
 }
 
 export function check(theme: Gated): Violation[] {

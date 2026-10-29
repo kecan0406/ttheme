@@ -2,11 +2,11 @@ import type { Picture } from '@/lib/view-types'
 import { SITES } from '../../src/core/booru.ts'
 import type { SharedPicture } from '../../src/core/theme.ts'
 
-function framing({ size, position, opacity }: SharedPicture): string {
+function framing({ size, position, strength }: SharedPicture): string {
   return [
     size === undefined ? null : size === 'fill' ? 'fill' : `${size}%`,
     position ?? null,
-    opacity === undefined ? null : `${Math.round(opacity * 100)}% opacity`,
+    strength === undefined ? null : `${strength}× opacity`,
   ]
     .filter((part) => part !== null)
     .join(' · ')

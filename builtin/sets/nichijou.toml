@@ -4,7 +4,6 @@
 slug = "yukko"
 subject = "nichijou/yukko"
 signature = ["cursor", "selection", "ansi9"]
-ansi_source = "Graphite + Nichijou"
 
 [palette.colors]
 background = "#1f160e"
@@ -60,7 +59,6 @@ ansi = [
 slug = "naganohara"
 subject = "nichijou/naganohara"
 signature = ["cursor", "selection", "ansi3"]
-ansi_source = "Oceanic Next + Nichijou"
 
 [palette.colors]
 background = "#13181e"
@@ -116,7 +114,6 @@ ansi = [
 slug = "mai"
 subject = "nichijou/mai"
 signature = ["cursor", "selection", "ansi1"]
-ansi_source = "Spacegray Eighties + Nichijou"
 
 [palette.colors]
 background = "#1b1713"
@@ -172,7 +169,6 @@ ansi = [
 slug = "nano"
 subject = "nichijou/nano"
 signature = ["cursor", "ansi1", "selection"]
-ansi_source = "Tomorrow Night Eighties + Nichijou"
 
 [palette.colors]
 background = "#171819"
@@ -228,7 +224,6 @@ ansi = [
 slug = "hakase"
 subject = "nichijou/hakase"
 signature = ["cursor", "selection", "ansi1"]
-ansi_source = "GitHub Dark Default + Nichijou"
 
 [palette.colors]
 background = "#1f160d"
@@ -284,7 +279,6 @@ ansi = [
 slug = "sakamoto"
 subject = "nichijou/sakamoto"
 signature = ["selection", "cursor", "foreground"]
-ansi_source = "Red Sands + Nichijou"
 
 [palette.colors]
 background = "#171818"

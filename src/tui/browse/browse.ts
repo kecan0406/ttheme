@@ -774,7 +774,7 @@ export class BrowsePanel {
   private focus(entry: PaletteEntry): void {
     if (this.paint && this.state !== 'submit' && this.state !== 'cancel') {
       this.paint(entry)
-      this.inks = marksOf(entry.background, entry.foreground, entry.signature)
+      this.inks = marksOf(entry.background, entry.foreground, entry.cursor, entry.selection)
     }
   }
 
@@ -920,8 +920,8 @@ export class BrowsePanel {
   }
 
   private update(source: string): void {
-    this.network.refresh(source, ({ marketplace, refreshed, updates }) => {
-      this.staged.refresh(source, marketplace, refreshed, updates)
+    this.network.refresh(source, ({ marketplace, updates }) => {
+      this.staged.refresh(source, marketplace, updates)
       this.reload()
     })
   }
@@ -952,8 +952,8 @@ export class BrowsePanel {
     const dropping = members.filter((e) => this.staged.installed.has(e.name) && !this.staged.picked.has(e.name)).length
 
     const counts = [
-      ...(m && matching !== undefined ? [`${matching} of ${m.entries.filter((e) => !e.default).length} match`] : []),
-      ...(m && matching === undefined ? [`${m.entries.filter((e) => !e.default).length} available`] : []),
+      ...(m && matching !== undefined ? [`${matching} of ${m.entries.length} match`] : []),
+      ...(m && matching === undefined ? [`${m.entries.length} available`] : []),
       ...(installed > 0 || !m ? [`${installed} installed`] : []),
       ...(adding > 0 ? [`${adding} to install`] : []),
       ...(dropping > 0 ? [`${dropping} to remove`] : []),

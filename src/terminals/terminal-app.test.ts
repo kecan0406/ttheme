@@ -13,7 +13,6 @@ import { TERMINAL_JS, terminalScript } from './terminal-app.ts'
 function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -31,7 +30,7 @@ const manifest: Manifest = {
   version: '0.1.0',
   gate: [],
   works: [],
-  palettes: [entry('neutral', { default: true }), entry('orla', { background: '#101010' }), entry('juno')],
+  palettes: [entry('neutral'), entry('orla', { background: '#101010' }), entry('juno')],
 }
 
 interface Terminal {

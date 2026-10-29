@@ -4,7 +4,6 @@
 slug = "battler"
 subject = "umineko/battler"
 signature = ["cursor", "ansi4", "ansi11"]
-ansi_source = "Deep"
 
 [palette.colors]
 background = "#201513"
@@ -60,7 +59,6 @@ ansi = [
 slug = "beatrice"
 subject = "umineko/beatrice"
 signature = ["cursor", "foreground", "ansi9"]
-ansi_source = "Batman + Truth"
 
 [palette.colors]
 background = "#19180d"
@@ -116,7 +114,6 @@ ansi = [
 slug = "bernkastel"
 subject = "umineko/bernkastel"
 signature = ["cursor", "ansi5", "ansi1"]
-ansi_source = "Challenger Deep"
 
 [palette.colors]
 background = "#13181e"
@@ -172,7 +169,6 @@ ansi = [
 slug = "lambdadelta"
 subject = "umineko/lambdadelta"
 signature = ["cursor", "ansi3", "ansi4"]
-ansi_source = "Neon Purple + Truth"
 
 [palette.colors]
 background = "#1f1519"
@@ -228,7 +224,6 @@ ansi = [
 slug = "rokkenjima"
 subject = "umineko/rokkenjima"
 signature = ["cursor", "ansi3", "ansi4"]
-ansi_source = "Sequoia Retro Dark + Truth"
 
 [palette.colors]
 background = "#1d170c"

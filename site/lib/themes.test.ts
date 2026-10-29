@@ -8,7 +8,6 @@ function shade(background: string, foreground: string): Shade {
     foreground,
     cursor: foreground,
     selectionBackground: background,
-    signature: [foreground, background, '#808080'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
     gate: [1, 2, 3],
   }
@@ -28,7 +27,6 @@ function theme(mode: 'dark' | 'light'): Theme {
     also: [],
     character: null,
     from: null,
-    ansiSource: 'test',
     signatureSlots: ['cursor', 'foreground', 'ansi1'],
     mode,
     other,

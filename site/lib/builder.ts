@@ -21,9 +21,6 @@ export const BLANK_SIGNATURE = ['cursor', 'ansi5', 'ansi4']
 export interface Meta {
   subject?: string
   from?: string
-  ansiSource?: string
-  waive?: string[]
-  reason?: string
   pictures?: SharedPicture[]
 }
 
@@ -85,8 +82,6 @@ export function metaOf(draft: Draft): Meta {
   return {
     ...(draft.subject ? { subject: draft.subject } : {}),
     ...(draft.from ? { from: draft.from } : {}),
-    ...(draft.ansiSource ? { ansiSource: draft.ansiSource } : {}),
-    ...(draft.waive && draft.waive.length > 0 ? { waive: draft.waive, reason: draft.reason ?? '' } : {}),
     ...(draft.pictures && draft.pictures.length > 0 ? { pictures: draft.pictures } : {}),
   }
 }
@@ -97,9 +92,7 @@ export function editOf(draft: Draft, source: string | null, own: boolean, id: st
   const meta = metaOf(draft)
   const copy = !own && source !== null
 
-  const kept: Meta = copy
-    ? { ...meta, from: meta.from ?? source, ...(meta.waive ? { reason: `kept from ${source}` } : {}) }
-    : meta
+  const kept: Meta = copy ? { ...meta, from: meta.from ?? source } : meta
 
   return started({
     id,
@@ -145,7 +138,7 @@ export function modeOfView(edit: Pick<Edit, 'made'>, view: View): Mode {
 const mirrors = new Map<string, Hex[]>()
 
 export function mirrored(edit: Pick<Edit, 'made' | 'signature' | 'meta' | 'name'>): Hex[] {
-  const key = JSON.stringify([edit.made, edit.signature, edit.meta.waive ?? []])
+  const key = JSON.stringify([edit.made, edit.signature])
   const known = mirrors.get(key)
 
   if (known) return known
@@ -159,7 +152,6 @@ export function mirrored(edit: Pick<Edit, 'made' | 'signature' | 'meta' | 'name'
     selectionBackground: c.selection,
     ansi: c.ansi,
     signatureSlots: edit.signature,
-    waive: edit.meta.waive ?? [],
   })
 
   const list = listOf({ ...shade, selection: shade.selectionBackground })
@@ -243,11 +235,9 @@ export function draftFrom(edit: Body): Draft {
     name: edit.name,
     ...(meta.subject ? { subject: meta.subject } : {}),
     ...(meta.from ? { from: meta.from } : {}),
-    ...(meta.ansiSource ? { ansiSource: meta.ansiSource } : {}),
     signature: [...edit.signature],
     ...made,
     ...(writesOther(edit) ? { other: colorsOf(otherList(edit)) } : {}),
-    ...(meta.waive && meta.waive.length > 0 ? { waive: meta.waive, reason: meta.reason ?? '' } : {}),
     ...(pictures.length > 0 ? { pictures } : {}),
   }
 }

@@ -4,7 +4,6 @@
 slug = "nazuna"
 subject = "call-of-the-night/nazuna"
 signature = ["cursor", "ansi1", "ansi13"]
-ansi_source = "Purplepeter"
 
 [palette.colors]
 background = "#1e151a"
@@ -60,7 +59,6 @@ ansi = [
 slug = "kou"
 subject = "call-of-the-night/kou"
 signature = ["cursor", "ansi5", "ansi9"]
-ansi_source = "Under The Sea"
 
 [palette.colors]
 background = "#211513"
@@ -116,7 +114,6 @@ ansi = [
 slug = "seri"
 subject = "call-of-the-night/seri"
 signature = ["cursor", "ansi12", "ansi9"]
-ansi_source = "Birds Of Paradise"
 
 [palette.colors]
 background = "#1e160d"
@@ -172,7 +169,6 @@ ansi = [
 slug = "anko"
 subject = "call-of-the-night/anko"
 signature = ["cursor", "ansi4", "ansi2"]
-ansi_source = "Arthur"
 
 [palette.colors]
 background = "#201511"
@@ -228,7 +224,6 @@ ansi = [
 slug = "yofukashi"
 subject = "call-of-the-night/yofukashi"
 signature = ["cursor", "ansi5", "ansi4"]
-ansi_source = "Bright Lights"
 
 [palette.colors]
 background = "#1d170c"

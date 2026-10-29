@@ -7,7 +7,6 @@ import { PaletteList } from './palette-prompt.ts'
 function entry(name: string): PaletteEntry {
   return {
     name,
-    ansiSource: 'Test',
     background: '#000000',
     foreground: '#eeeeee',
     cursor: '#ffffff',

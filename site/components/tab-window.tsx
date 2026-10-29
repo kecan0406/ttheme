@@ -73,10 +73,6 @@ export function TabSession({ theme }: { theme: Theme }) {
         <span class="bg-(--cu) font-bold text-(--bg)" safe>
           {` ${theme.name} `}
         </span>
-        {'  '}
-        <span class="term-c8" safe>
-          {`ANSI ${theme.ansiSource}`}
-        </span>
       </Line>
       <Line>
         {' '}

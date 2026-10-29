@@ -64,16 +64,9 @@ description = "Soft palettes for long nights"
 
 [owner]
 name = "alice"   # your GitHub handle
-
-[renames]
-dawn = "dusk"    # old name to new name; installs follow it
-sunset = false   # gone: installs drop it
 ```
 
-`force_remove_deleted_palettes = true` drops a palette from everyone's install
-when it disappears from every set, instead of keeping their copy. `[owner]` also takes
-`email` and `url`, and `[metadata]` holds anything of your own, which ttheme
-does not read. The `$schema` line gives your editor completion and checks.
+The `$schema` line gives your editor completion and checks.
 
 ## A set
 
@@ -84,8 +77,7 @@ does not read. The `$schema` line gives your editor completion and checks.
 slug = "rei"                               # its name in the marketplace
 subject = "evangelion/rei"                 # what it is of: a work, or a work's character
 from = "ttheme/rei"                        # the palette it was copied from, if any
-signature = ["cursor", "ansi1", "ansi12"]  # the three colors that identify it
-ansi_source = "Idle Toes"                  # where its ANSI colors came from
+signature = ["cursor", "ansi1", "ansi12"]  # the three colors the character is made from
 
 [palette.colors]
 background = "#201516"
@@ -108,7 +100,7 @@ a `slug`, a `signature` and its `[palette.colors]`.
 shelve it under that work, beside every other marketplace's palettes of it. A
 palette without one is an original, which lists under your marketplace.
 `from` names the palette it was first copied from, and a copy of a copy keeps
-it. `ansi_source` reads `original` when you leave it out.
+it.
 
 `[palette.colors.light]` (or `[palette.colors.dark]`) may hold the palette in
 its other mode; without it, ttheme mirrors one. `[[palette.picture]]` tables
@@ -150,15 +142,7 @@ ttheme marketplace check ./ttheme-pastel
 It reads the folder as an install would and lists every problem: a set or a
 palette that does not parse, a set in a folder under `sets/`, which no install
 reads, a slug two palettes share, a subject neither the commons nor your `works/` holds, a character you
-propose that the commons already holds under another name, a subject the
-commons has renamed, a work you propose that the commons already holds, a key
-ttheme does not know, a rename that loops, and the
+propose that the commons already holds under another name, a work you propose that the commons already holds, a key
+ttheme does not know, and the
 [contrast checks](../reference/contrast-gate.md) for each palette. It writes
 nothing.
-
-## Rename or retire a palette
-
-Keep a palette's name once people have it. When you must change it, change its
-`slug` and add the old one to `[renames]`: installs follow the new name and keep
-their tuning, pictures and pins. `false` retires a palette. Moving a palette to
-another set changes nothing for the people who have it.

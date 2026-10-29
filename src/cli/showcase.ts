@@ -1,5 +1,5 @@
 import type { Work } from '../core/commons.ts'
-import { listed, type PaletteEntry } from '../core/manifest.ts'
+import type { PaletteEntry } from '../core/manifest.ts'
 import { inert } from '../core/text.ts'
 import { slugOf } from '../core/theme.ts'
 import { reach } from '../store/available.ts'
@@ -55,7 +55,7 @@ async function shown(r: Found): Promise<Shown[]> {
     }
 
     const { id, entries, works, info } = fromArchive(source, archive)
-    const palettes = listed(entries).map((e) => ({ ...e, name: slugOf(e.name) }))
+    const palettes = entries.map((e) => ({ ...e, name: slugOf(e.name) }))
 
     return palettes.length === 0
       ? []

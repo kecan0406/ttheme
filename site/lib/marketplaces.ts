@@ -2,7 +2,7 @@ import { commons, shelves } from '@/lib/builtin'
 import { type Shelves, toTheme } from '@/lib/theme-entry'
 import type { Marketplace } from '@/lib/themes'
 import snapshot from '@/marketplaces.json' with { type: 'json' }
-import { followSubject, mergeWorks, type Work, worldOrder } from '../../src/core/commons.ts'
+import { mergeWorks, type Work, worldOrder } from '../../src/core/commons.ts'
 import type { PaletteEntry } from '../../src/core/manifest.ts'
 import { slugOf } from '../../src/core/theme.ts'
 import type { ListedWork, Shown } from '../../src/store/marketplace-index.ts'
@@ -21,11 +21,7 @@ function stockOf({ palettes, works, ...shown }: Shown): Stock {
   const known: Shelves = { works: mergeWorks(commons.works, works.map(proposed)), commons: shelves.commons }
 
   const entries = worldOrder(
-    palettes.map((entry) => ({
-      ...entry,
-      name: `${shown.id}/${slugOf(entry.name)}`,
-      ...(entry.subject ? { subject: followSubject(commons.renames, entry.subject) } : {}),
-    })),
+    palettes.map((entry) => ({ ...entry, name: `${shown.id}/${slugOf(entry.name)}` })),
     known.works,
   )
 

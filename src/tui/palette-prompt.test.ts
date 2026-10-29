@@ -16,7 +16,6 @@ import {
 
 function entry(partial: Partial<PaletteEntry> & { name: string }): PaletteEntry {
   return {
-    ansiSource: 'Test',
     background: '#000000',
     foreground: '#eeeeee',
     cursor: '#ffffff',
@@ -52,7 +51,6 @@ const works: Work[] = [
 
 const entries: PaletteEntry[] = worldOrder(
   [
-    entry({ name: 'ttheme/neutral', default: true }),
     entry({ name: 'ttheme/pip', subject: 'starfall/pip' }),
     entry({ name: 'ttheme/quill', subject: 'starfall/quill' }),
     entry({ name: 'ttheme/wren', subject: 'harbor-lights/wren' }),
@@ -133,7 +131,7 @@ test('matchesPalette ignores spaces and symbols on both sides, since a typed spa
   assert.ok(!matchesPalette(wren, works, 'wrenquill'))
 })
 
-test('folded rows show the works by name only, without the fallback palette', () => {
+test('folded rows show the works by name only', () => {
   const rows = pickerRows(entries, works, new Set(), '')
   assert.deepEqual(rows.map(shown), ['top Harbor Lights (2)', 'top Starfall (2)'])
   assert.equal(firstPalette(rows), 0)
@@ -156,10 +154,6 @@ test('a filter overrides folds and hides the works it does not match', () => {
 
 test('a name filter narrows inside the matching work', () => {
   assert.deepEqual(pickerRows(entries, works, new Set(), 'ju').map(shown), ['top Harbor Lights (1)', 'ttheme/juno'])
-})
-
-test('the fallback palette is never offered, even by filter', () => {
-  assert.deepEqual(pickerRows(entries, works, new Set(), 'neu'), [])
 })
 
 test('work rows are folded headers matched through any member, each led by its lead character’s palette', () => {
@@ -367,10 +361,11 @@ test('the cursor snaps to the first match when the focused palette is filtered o
   assert.deepEqual(picked, ['ttheme/juno'])
 })
 
-test('color rows carry the swatch squares and drop the ANSI source', async () => {
+test('color rows carry the swatch squares: foreground, cursor and selection, then the accents', async () => {
   const { frames } = await drive(['p', 'i', 'p', '\r'], { color: true })
-  assert.ok(frames.includes('\x1b[38;2;238;238;238m■ \x1b[38;2;255;255;255m■ \x1b[38;2;128;128;128m■'))
-  assert.doesNotMatch(frames, /Test/)
+  assert.ok(
+    frames.includes('\x1b[38;2;238;238;238m■ \x1b[38;2;255;255;255m■ \x1b[38;2;34;34;34m■ \x1b[38;2;128;128;128m■'),
+  )
 })
 
 test('a small window counts the rows below it, and the rows above it once scrolled', async () => {

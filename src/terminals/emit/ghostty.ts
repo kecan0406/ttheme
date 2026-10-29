@@ -7,12 +7,7 @@ export const ghostty: Emitter = {
   id: 'ghostty',
 
   emit(theme: Theme): Output[] {
-    const others = inOther(theme).map((shade) => ({
-      ...shade,
-      ghostty: { iconGhost: shade.cursor, iconScreen: [shade.cursor, shade.selectionBackground, shade.background] },
-    }))
-
-    return [theme, ...others].map((shade) => ({
+    return [theme, ...inOther(theme)].map((shade) => ({
       path: `ghostty/themes/${owned(theme.name)}.${modeOf(shade)}`,
       content: colors(shade),
     }))
@@ -28,11 +23,6 @@ function colors(theme: Theme): string {
     `selection-background = ${theme.selectionBackground}`,
     `selection-foreground = ${theme.foreground}`,
     ...theme.ansi.map((c, i) => `palette = ${i}=${c}`),
-    '',
-    'macos-icon = custom-style',
-    `macos-icon-ghost-color = ${theme.ghostty.iconGhost}`,
-    `macos-icon-screen-color = ${theme.ghostty.iconScreen.join(',')}`,
-    'macos-icon-frame = chrome',
     '',
   ].join('\n')
 }

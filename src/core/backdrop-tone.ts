@@ -1,5 +1,6 @@
 import { type Hex, luminance, mix, rgb } from './color.ts'
 import { checkReadability, isLight } from './contrast.ts'
+import { FACE } from './slots.ts'
 
 const FAINT = 0.1
 
@@ -14,7 +15,6 @@ export interface Colors {
   cursor: Hex
   selection?: Hex
   ansi: Hex[]
-  waived?: string[]
 }
 
 export interface Tone {
@@ -77,7 +77,6 @@ function fade(colors: Colors, color: Hex) {
       background: mix(colors.background, color, o),
       foreground: colors.foreground,
       ansi: colors.ansi,
-      waive: colors.waived ?? [],
     }).map((miss) => miss.rule)
 
   const already = new Set(misses(0))
@@ -104,14 +103,14 @@ export function originalOpacity(colors: Colors, peak: Hex): number {
   return fade(colors, peak).opacity
 }
 
-export function backdropTone(colors: Colors, signature: string[]): Tone {
+export function backdropTone(colors: Colors): Tone {
   const cursor = toneFor(colors, 'cursor')
 
   if (cursor.opacity >= FAINT) {
     return cursor
   }
 
-  return signature
-    .flatMap((slot) => (slot === 'cursor' || slot === 'background' ? [] : [toneFor(colors, slot)]))
-    .reduce((best, tone) => (tone.reach > best.reach ? tone : best), cursor)
+  return FACE.flatMap((slot) =>
+    slot === 'cursor' || (slot === 'selection' && !colors.selection) ? [] : [toneFor(colors, slot)],
+  ).reduce((best, tone) => (tone.reach > best.reach ? tone : best), cursor)
 }

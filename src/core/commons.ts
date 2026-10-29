@@ -35,11 +35,8 @@ export interface Work {
   characters: Character[]
 }
 
-export type Renames = Record<string, string>
-
 export interface Commons {
   works: Work[]
-  renames: Renames
 }
 
 export interface About {
@@ -52,7 +49,6 @@ export interface About {
 export type Sort = 'abc' | 'cast'
 
 export const WORKS_DIR = 'works'
-export const RENAMES_FILE = 'renames.toml'
 export const WORK_KEYS = ['$schema', 'name', 'native', 'lead', 'character']
 export const CHARACTER_KEYS = ['id', 'native', 'danbooru', 'also', 'sites']
 
@@ -270,28 +266,12 @@ export function workToml(work: Work): string {
   return `${lines.join('\n')}\n`
 }
 
-export function readRenames(file: string, source: string): Renames {
-  return Object.fromEntries(
-    Object.entries(toml(file, source)).flatMap(([from, to]): [string, string][] => {
-      if (from === '$schema') {
-        return []
-      }
-
-      if (subjectProblem(from) || typeof to !== 'string' || subjectProblem(to)) {
-        fail(file, `${escaped(from)} must map an old work or character to its new one, as "<work>/<character>"`)
-      }
-
-      return [[from, to]]
-    }),
-  )
-}
-
 export function parseCommons(source: string): Commons {
   return memo('commons', source, () => readCommonsJson(source))
 }
 
 function readCommonsJson(source: string): Commons {
-  let doc: { works?: unknown; renames?: unknown } | null
+  let doc: { works?: unknown } | null
 
   try {
     doc = JSON.parse(source)
@@ -299,8 +279,8 @@ function readCommonsJson(source: string): Commons {
     throw new Error('the commons is not valid JSON')
   }
 
-  if (!Array.isArray(doc?.works) || !doc.renames || typeof doc.renames !== 'object') {
-    throw new Error('the commons has no works or renames')
+  if (!Array.isArray(doc?.works)) {
+    throw new Error('the commons has no works')
   }
 
   const works = doc.works.map((raw) => {
@@ -314,14 +294,7 @@ function readCommonsJson(source: string): Commons {
     return readWork(`commons/${id}`, workToml(work), id)
   })
 
-  const renames = Object.fromEntries(
-    Object.entries(doc.renames).filter(
-      (pair): pair is [string, string] =>
-        typeof pair[1] === 'string' && !subjectProblem(pair[0]) && !subjectProblem(pair[1]),
-    ),
-  )
-
-  return { works, renames }
+  return { works }
 }
 
 export function commonsProblems(works: readonly Work[]): string[] {
@@ -372,31 +345,6 @@ export function mergeWorks(commons: readonly Work[], proposals: readonly Work[])
   }
 
   return [...byId.values()]
-}
-
-export function followSubject(renames: Readonly<Renames>, subject: string): string {
-  let at = subject
-  const seen = new Set<string>()
-
-  while (!seen.has(at)) {
-    seen.add(at)
-
-    if (Object.hasOwn(renames, at)) {
-      at = renames[at] as string
-      continue
-    }
-
-    const work = workIdOf(at)
-    const character = characterIdOf(at)
-
-    if (character === undefined || !Object.hasOwn(renames, work)) {
-      break
-    }
-
-    at = `${renames[work]}/${character}`
-  }
-
-  return at
 }
 
 const INDEXES = new WeakMap<readonly Work[], Map<string, Work>>()

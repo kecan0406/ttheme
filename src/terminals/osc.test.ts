@@ -6,7 +6,6 @@ import { answered, colorQuery, paletteOsc, parseOscColors, restoreOsc, specColor
 
 const orla: PaletteEntry = {
   name: 'orla',
-  ansiSource: 'Test',
   background: '#0e2124',
   foreground: '#e0f4f2',
   cursor: '#39c5bb',

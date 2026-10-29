@@ -307,13 +307,7 @@ export function SeedsPanel({ seeds, list, gate }: { seeds: SeedRow[]; list: stri
 
 export function GateSummary({ gate }: { gate: Gate }) {
   return (
-    <GateButton
-      passed={gate.passed}
-      total={gate.lines.length}
-      waived={gate.waived}
-      popovertarget="builder-gate"
-      aria-haspopup="dialog"
-    />
+    <GateButton passed={gate.passed} total={gate.lines.length} popovertarget="builder-gate" aria-haspopup="dialog" />
   )
 }
 
@@ -910,18 +904,6 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
       </div>
       <div class="grid gap-3 border-b border-border p-4">
         <SectionLabel icon={<Icon node={List} />}>Sources</SectionLabel>
-        <label for="builder-ansi-source" class="grid gap-1.5 text-sm">
-          <span class="text-muted-foreground">ansi source</span>
-          <Input
-            id="builder-ansi-source"
-            data-meta="ansiSource"
-            value={about.ansiSource}
-            placeholder="where the ANSI colors came from"
-            maxlength="80"
-            autocomplete="off"
-            class="h-9 text-sm"
-          />
-        </label>
         <label for="builder-subject" class="grid gap-1.5 text-sm">
           <span class="text-muted-foreground">subject</span>
           <Input

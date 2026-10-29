@@ -3,7 +3,7 @@ import { Check } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { luminance, passes } from '@/lib/gate'
 import { Icon } from '@/lib/icons'
-import { type GateRule, paint, type Theme } from '@/lib/themes'
+import { faceOf, type GateRule, paint, type Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 
 export function ChecksHead({ summary }: { summary: string }) {
@@ -39,11 +39,11 @@ export function SectionHead({ title, id, children }: PropsWithChildren<{ title: 
 
 export function Signature({ theme }: { theme: Theme }) {
   return (
-    <span class="flex flex-none gap-1" role="img" aria-label={`signature ${theme.signature.join(' ')}`}>
-      {theme.signature.map((_, index) => (
+    <span class="flex flex-none gap-1" role="img" aria-label={`signature ${faceOf(theme).join(' ')}`}>
+      {faceOf(theme).map((_, index) => (
         <i
           class="size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none"
-          style={`background:${paint(theme, (shade) => shade.signature[index] as string)}`}
+          style={`background:${paint(theme, (shade) => faceOf(shade)[index] as string)}`}
         />
       ))}
     </span>

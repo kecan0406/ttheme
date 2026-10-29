@@ -130,7 +130,6 @@ export interface EditorOptions {
   tone?: true
   original?: Colors
   signature: string[]
-  waive?: string[]
   palettes?: Choice[]
   pictures?: number
   exports?: Exports
@@ -174,23 +173,21 @@ interface GateRow {
   slots: number[]
 }
 
-export function gateRows(list: Hex[], signature: string[], waive: string[]): GateRow[] {
-  const theme = gatedOf(list, signature, waive)
+export function gateRows(list: Hex[], signature: string[]): GateRow[] {
+  const theme = gatedOf(list, signature)
   const values = measure(theme)
   const missed = new Set(missedRules(theme).map((rule) => rule.rule))
 
   return GATE_RULES.map((rule, i) => {
     const value = values[i] as number
-    const waived = waive.includes(rule.rule)
-
-    const ok = waived || Number.isNaN(value) ? undefined : !missed.has(rule.rule)
+    const ok = Number.isNaN(value) ? undefined : !missed.has(rule.rule)
 
     return {
       ok,
       label: rule.label,
       value: shownOf(value),
-      bound: waived ? 'waived' : boundOf(rule),
-      slots: ok === false ? ruleSlots(list, signature, waive, rule.rule) : [],
+      bound: boundOf(rule),
+      slots: ok === false ? ruleSlots(list, signature, rule.rule) : [],
     }
   })
 }
@@ -364,10 +361,6 @@ export class PaletteEditor {
     this.noticeTone = tone
   }
 
-  get waive(): string[] {
-    return this.options.waive ?? []
-  }
-
   get held(): number | undefined {
     return this.holds.get(this.slot())
   }
@@ -402,7 +395,7 @@ export class PaletteEditor {
   }
 
   misses(): Set<number> {
-    return misses(this.list, this.signature, this.waive)
+    return misses(this.list, this.signature)
   }
 
   choices(): Choice[] {
@@ -1572,7 +1565,7 @@ export class PaletteEditor {
   }
 
   partner(): Partner {
-    return partnerOf(this.list, this.slot(), this.waive)
+    return partnerOf(this.list, this.slot())
   }
 
   ratio(): number {
@@ -1836,7 +1829,7 @@ export class PaletteEditor {
   }
 
   private fix(): void {
-    const theme = gatedOf(this.list, this.signature, this.waive)
+    const theme = gatedOf(this.list, this.signature)
 
     const {
       theme: fixed,

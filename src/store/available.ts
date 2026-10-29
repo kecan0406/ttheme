@@ -1,15 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import {
-  aboutOf,
-  type Commons,
-  followSubject,
-  mergeWorks,
-  parseCommons,
-  shelfOf,
-  type Work,
-  wordsOf,
-} from '../core/commons.ts'
+import { aboutOf, type Commons, mergeWorks, parseCommons, shelfOf, type Work, wordsOf } from '../core/commons.ts'
 import { boundOf, GATE_RULES, measure, missedRules, shownOf } from '../core/contrast.ts'
 import {
   type Bundle,
@@ -84,18 +75,6 @@ export interface Archive {
   files: Record<string, string>
 }
 
-function followed(entries: PaletteEntry[], renames: Readonly<Record<string, string>>): PaletteEntry[] {
-  if (Object.keys(renames).length === 0) {
-    return entries
-  }
-
-  return entries.map((e) => {
-    const subject = e.subject === undefined ? undefined : followSubject(renames, e.subject)
-
-    return subject === e.subject ? e : { ...e, subject }
-  })
-}
-
 export function readMarketplaces(configHome: string, warn = true, bundled?: Bundled): Manifest {
   const sources = marketplaceSources(configHome)
   const { builtin, commons } = bundled ?? readBundled(configHome)
@@ -105,12 +84,11 @@ export function readMarketplaces(configHome: string, warn = true, bundled?: Bund
   return {
     version: builtin.version,
     gate: builtin.gate,
-    palettes: followed(palettes, commons.renames),
+    palettes,
     works: mergeWorks(
       commons.works,
       remote.flatMap((m) => m.works),
     ),
-    renames: commons.renames,
   }
 }
 
@@ -260,31 +238,21 @@ export function untuned(configHome: string, manifest: Manifest, warn = true): Ma
   const kept = readKept(configHome)
   const pinned = new Map(kept.filter((p) => !isBuiltin(p.name)).map((p) => [p.name, p]))
   const local = readLocal(configHome, warn)
-  const renames = manifest.renames ?? {}
 
-  const palettes = followed(
-    [
-      ...manifest.palettes.map((p) => {
-        const was = pinned.get(p.name)
+  const palettes = [
+    ...manifest.palettes.map((p) => {
+      const was = pinned.get(p.name)
 
-        return was ? withSubject(was, p.subject) : p
-      }),
-      ...local.entries,
-    ],
-    renames,
-  )
+      return was ? withSubject(was, p.subject) : p
+    }),
+    ...local.entries,
+  ]
 
   const known = new Set(palettes.map((p) => p.name))
 
   return {
     ...manifest,
-    palettes: [
-      ...palettes,
-      ...followed(
-        kept.filter((p) => !known.has(p.name)),
-        renames,
-      ),
-    ],
+    palettes: [...palettes, ...kept.filter((p) => !known.has(p.name))],
     works: mergeWorks(manifest.works, local.works),
   }
 }
@@ -392,7 +360,7 @@ export function search(palettes: PaletteEntry[], works: readonly Work[], query: 
   return palettes.filter((p) => {
     const about = aboutOf(works, p.subject)
 
-    return containsText([p.name, shelfOf(p, works), p.ansiSource, ...wordsOf(about)], query)
+    return containsText([p.name, shelfOf(p, works), ...wordsOf(about)], query)
   })
 }
 

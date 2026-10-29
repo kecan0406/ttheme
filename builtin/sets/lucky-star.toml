@@ -4,7 +4,6 @@
 slug = "konata"
 subject = "lucky-star/konata"
 signature = ["cursor", "ansi2", "ansi12"]
-ansi_source = "Dark Modern + Ryouou"
 
 [palette.colors]
 background = "#13181e"
@@ -60,7 +59,6 @@ ansi = [
 slug = "kagami"
 subject = "lucky-star/kagami"
 signature = ["cursor", "ansi4", "selection"]
-ansi_source = "Nightfox + Ryouou"
 
 [palette.colors]
 background = "#19161e"
@@ -116,7 +114,6 @@ ansi = [
 slug = "tsukasa"
 subject = "lucky-star/tsukasa"
 signature = ["cursor", "ansi11", "selection"]
-ansi_source = "Sublette + Ryouou"
 
 [palette.colors]
 background = "#1b161d"
@@ -172,7 +169,6 @@ ansi = [
 slug = "miyuki"
 subject = "lucky-star/miyuki"
 signature = ["cursor", "selection", "ansi1"]
-ansi_source = "Tinacious Design Dark + Ryouou"
 
 [palette.colors]
 background = "#201517"

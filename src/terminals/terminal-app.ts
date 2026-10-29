@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto'
 import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Hex } from '../core/color.ts'
-import { listed } from '../core/manifest.ts'
 import { type Canvas, decodePng, encodeRgb, flatten, pngHead, type Rgba } from '../core/png.ts'
 import type { Theme } from '../core/theme.ts'
 import { owned, POSITIONS, stem } from '../core/theme.ts'
@@ -238,12 +237,6 @@ function slots(theme: Theme): string[] {
   return [theme.background, theme.foreground, theme.cursor, theme.selectionBackground, ...theme.ansi]
 }
 
-function profiled(ctx: Ctx): Theme[] {
-  const shown = new Set(listed(ctx.entries).map((entry) => entry.name))
-
-  return ctx.themes.filter((theme) => shown.has(theme.name) || theme.name === ctx.startup)
-}
-
 function baseOf(state: Moment['state'], host: Host): string {
   const now = current(host)
 
@@ -338,7 +331,7 @@ function lay(ctx: Ctx): Map<string, string> {
     }
   }
 
-  for (const theme of profiled(ctx)) {
+  for (const theme of ctx.themes) {
     const files = held.get(stem(theme.name)) ?? []
     held.delete(stem(theme.name))
     const picture = readBackdrop(backgroundsDir(ctx.configHome), theme.name, ctx.home)
@@ -429,7 +422,7 @@ function write(ctx: Ctx, laid: ReadonlyMap<string, string>): void {
   script(ctx.host, ctx.configHome, [
     'write',
     baseOf(ctx.state, ctx.host),
-    ...profiled(ctx).flatMap((theme) => [terminalProfile(theme.name), ...slots(theme), laid.get(theme.name) ?? '-']),
+    ...ctx.themes.flatMap((theme) => [terminalProfile(theme.name), ...slots(theme), laid.get(theme.name) ?? '-']),
   ])
 }
 

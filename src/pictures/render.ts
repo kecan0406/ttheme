@@ -64,7 +64,7 @@ interface Show {
   tone: Tone
   blur: number
   coloring: Coloring
-  tune?: Partial<Framing>
+  tune?: Partial<Framing> & { scale?: number }
 }
 
 interface Backdrop {

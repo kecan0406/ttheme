@@ -23,7 +23,6 @@ function entry(name: string): PaletteEntry {
   return {
     name,
     subject: `tidewater/${name.slice(name.indexOf('/') + 1)}`,
-    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',

@@ -19,8 +19,7 @@ shows the checks under its mock terminal.
 
 **Every rule is a recommendation.** The checks tell a palette's author what it
 fails; they never refuse a palette. The built-in marketplace holds its own
-palettes to every rule, and even there a palette can be let off one with a
-written reason.
+palettes to every rule.
 
 **Measure what programs draw.** A terminal palette is not read as a swatch on a
 background. Programs draw text on colored grounds, dim their secondary text,
@@ -173,20 +172,6 @@ drawn in it would disappear.
   does not brighten bold, a comment is ANSI 0 on the background, which no palette
   can make readable without giving up what ANSI 0 is for. It is the plugin's
   setting to change.
-
-## Letting a palette off a rule
-
-A marketplace palette can waive a rule, with a reason that ships beside it:
-
-```toml title="sets/evangelion.toml"
-[[palette]]
-slug = "rei"
-...
-
-[palette.contrast]
-waive = ["bright-follows"]
-reason = "why this palette is the exception"
-```
 
 ## Limits
 

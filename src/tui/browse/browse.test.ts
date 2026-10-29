@@ -12,7 +12,6 @@ function entry(name: string, subject?: string): PaletteEntry {
   return {
     name,
     ...(subject ? { subject } : {}),
-    ansiSource: 'Test',
     background: '#000000',
     foreground: '#eeeeee',
     cursor: '#ffffff',
@@ -369,19 +368,11 @@ test('esc in the form goes back to the marketplaces keeping what was typed, and 
 test('a marketplace due at open refreshes in the background and its new palettes appear', async () => {
   const fresh = marketplace('alice/ttheme-pastel', 'alice@pastel', ['dusk', 'dawn', 'noon'], true)
 
-  const { panel, frames } = await drive([20, '\x1b'], {
+  const { frames } = await drive([20, '\x1b'], {
     due: ['alice/ttheme-pastel'],
-    io: io({
-      refresh: (source) =>
-        Promise.resolve({
-          marketplace: fresh,
-          refreshed: { source, id: 'alice@pastel', count: 3, change: { added: ['noon'], changed: [], gone: [] } },
-          updates: [],
-        }),
-    }),
+    io: io({ refresh: () => Promise.resolve({ marketplace: fresh, updates: [] }) }),
   })
 
-  assert.equal(panel.refreshed.length, 1)
   assert.match(frames, /Updating… · /)
   assert.match(frames, /5\/5 · 2 picked/)
 })

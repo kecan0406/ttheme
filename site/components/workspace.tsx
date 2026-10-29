@@ -11,7 +11,7 @@ import { BUILTIN_URL, INIT, palettePath, REPO, repoUrl, searchText } from '@/lib
 import { gatePassed } from '@/lib/gate'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import { type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes'
+import { faceOf, type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 import { byWork, leadOf, leadsOf } from '@/lib/works'
@@ -51,7 +51,7 @@ function installOf(where: Where): string {
 }
 
 function signs(theme: Theme): string[] {
-  return [0, 1, 2].map((index) => `--sg${index}:${paint(theme, (shade) => shade.signature[index] as string)}`)
+  return [0, 1, 2].map((index) => `--sg${index}:${paint(theme, (shade) => faceOf(shade)[index] as string)}`)
 }
 
 function Dots({ theme }: { theme: Theme }) {
@@ -82,7 +82,7 @@ function WorkTile({ theme }: { theme: Theme }) {
 
 export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: string }) {
   const name = 'truncate font-display text-display-sm font-black'
-  const dots = [0, 1, 2].map((index) => paint(theme, (shade) => shade.signature[index] as string))
+  const dots = [0, 1, 2].map((index) => paint(theme, (shade) => faceOf(shade)[index] as string))
 
   return (
     <>
@@ -187,9 +187,11 @@ export function SlotsPanel({ theme }: { theme: Theme }) {
         <p class="text-xs text-muted-foreground">click a color to copy it</p>
       </div>
       <ByMode theme={theme} render={(shown) => <SwatchGrid theme={shown} />} />
-      <p class="text-xs text-muted-foreground" safe>
-        {`ansi from ${theme.ansiSource}${theme.from ? ` · from ${theme.from}` : ''}`}
-      </p>
+      {theme.from && (
+        <p class="text-xs text-muted-foreground" safe>
+          {`from ${theme.from}`}
+        </p>
+      )}
     </>
   )
 }

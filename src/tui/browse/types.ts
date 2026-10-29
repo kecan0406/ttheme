@@ -3,7 +3,6 @@ import type { Hex } from '../../core/color.ts'
 import type { Sort, Work } from '../../core/commons.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
 import type { Listed, Listing } from '../../store/marketplace-index.ts'
-import type { Refreshed } from '../../store/sources.ts'
 import type { HelpSpot } from '../help.ts'
 import type { HubSpot, HubTab } from '../hub.ts'
 import type { ReleaseLine } from '../notice.ts'
@@ -27,7 +26,7 @@ export interface Report {
 }
 
 export interface BrowseIo {
-  refresh(source: string): Promise<{ marketplace: Marketplace; refreshed: Refreshed; updates: string[] }>
+  refresh(source: string): Promise<{ marketplace: Marketplace; updates: string[] }>
   fetch(source: string): Promise<Marketplace>
   index(): Promise<Listing>
   apply(result: BrowseResult, report: Report): Promise<void>
@@ -62,7 +61,6 @@ export interface BrowseResult {
   removes: string[]
   auto: Record<string, boolean>
   renew: string[]
-  refreshed: Refreshed[]
 }
 
 export type Found =

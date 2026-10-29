@@ -47,7 +47,7 @@ function reach(x: number, y: number, points: Point[]): number {
 
 function drawn(theme: Theme, size: number, scale: number): Buffer {
   const canvas = ground(theme, size)
-  const inks = marksOf(theme.background, theme.foreground, theme.signature).map(rgb)
+  const inks = marksOf(theme.background, theme.foreground, theme.cursor, theme.selectionBackground).map(rgb)
   const unit = (size / 64) * scale
 
   for (const { stroke, points } of LINES) {
@@ -75,7 +75,7 @@ function drawn(theme: Theme, size: number, scale: number): Buffer {
 
 function pixels(theme: Theme): Buffer {
   const canvas = ground(theme, 16)
-  const inks = marksOf(theme.background, theme.foreground, theme.signature).map(rgb)
+  const inks = marksOf(theme.background, theme.foreground, theme.cursor, theme.selectionBackground).map(rgb)
 
   for (const [x, y, tone, alpha] of PIXELS) blend(canvas, x, y, inks[tone] as number[], alpha)
 

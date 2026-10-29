@@ -4,7 +4,6 @@
 slug = "lain"
 subject = "lain/lain"
 signature = ["cursor", "ansi2", "ansi12"]
-ansi_source = "IR Black"
 
 [palette.colors]
 background = "#211513"

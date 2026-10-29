@@ -22,7 +22,6 @@ export const wezterm: Emitter = {
         content: [
           '[metadata]',
           `name = "${scheme}"`,
-          `origin_url = "${shade.ansiSource}"`,
           '',
           '[colors]',
           `foreground = "${shade.foreground}"`,

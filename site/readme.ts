@@ -20,7 +20,7 @@ function lockup(theme: Theme, size: number, middle: number, baseline: number) {
   const width = (INK.width * size) / 1000
   const left = middle - (GLYPH.width * scale + gap + width) / 2
   const top = baseline - size * 0.3 - height / 2
-  const inks = marksOf(theme.background, theme.foreground, theme.signature)
+  const inks = marksOf(theme.background, theme.foreground, theme.cursor, theme.selectionBackground)
   const glyph = glyphSvg(inks, `translate(${left} ${top}) scale(${scale}) translate(${-GLYPH.x} ${-GLYPH.y})`)
 
   return `${glyph}${wordmarkSvg(left + GLYPH.width * scale + gap, baseline, size, theme.foreground)}`
@@ -42,7 +42,7 @@ function social(kit: Raster, theme: Theme, leads: Theme[]) {
   const row = leads.length * 64 + (leads.length - 1) * 16
 
   const tiles = leads.map((lead, index) => {
-    const inks = marksOf(lead.background, lead.foreground, lead.signature)
+    const inks = marksOf(lead.background, lead.foreground, lead.cursor, lead.selectionBackground)
     const hair = mixOk(lead.background, lead.foreground, 0.22)
 
     return `<g transform="translate(${640 - row / 2 + index * 80} 436)">${tileBody(lead.background, hair, inks, 1)}</g>`

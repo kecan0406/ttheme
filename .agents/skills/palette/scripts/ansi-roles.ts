@@ -10,7 +10,6 @@ interface ThemeDoc {
   subject?: string
   signature: string[]
   colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
-  contrast?: { waive?: string[] }
 }
 
 const workOf = (doc: ThemeDoc) => (doc.subject ? workIdOf(doc.subject) : 'original')
@@ -23,7 +22,6 @@ function gated(name: string, doc: ThemeDoc, ansi: string[]): Theme {
     selectionBackground: doc.colors.selection_background,
     ansi,
     signatureSlots: doc.signature,
-    waive: doc.contrast?.waive ?? [],
   } as unknown as Theme
 }
 

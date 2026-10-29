@@ -4,7 +4,6 @@
 slug = "sayori"
 subject = "doki-doki-literature-club/sayori"
 signature = ["cursor", "ansi9", "ansi4"]
-ansi_source = "0x96f"
 
 [palette.colors]
 background = "#211512"
@@ -60,7 +59,6 @@ ansi = [
 slug = "natsuki"
 subject = "doki-doki-literature-club/natsuki"
 signature = ["cursor", "ansi9", "ansi3"]
-ansi_source = "Fairyfloss"
 
 [palette.colors]
 background = "#1f1518"
@@ -116,7 +114,6 @@ ansi = [
 slug = "yuri"
 subject = "doki-doki-literature-club/yuri"
 signature = ["cursor", "ansi11", "ansi9"]
-ansi_source = "Purple Portal + DDLC"
 
 [palette.colors]
 background = "#1b161d"
@@ -172,7 +169,6 @@ ansi = [
 slug = "monika"
 subject = "doki-doki-literature-club/monika"
 signature = ["cursor", "foreground", "ansi3"]
-ansi_source = "Hipster Green + DDLC"
 
 [palette.colors]
 background = "#141911"
@@ -228,7 +224,6 @@ ansi = [
 slug = "glitch"
 subject = "doki-doki-literature-club/glitch"
 signature = ["cursor", "ansi10", "ansi12"]
-ansi_source = "Neon + DDLC"
 
 [palette.colors]
 background = "#1d151b"

@@ -17,7 +17,7 @@ a picture in Ghostty, kitty, iTerm2, WezTerm and Konsole outside tmux, and text
 elsewhere.
 
 ```text
-https://ttheme.dev/builder/tt5:…
+https://ttheme.dev/builder/tt6:…
 ```
 
 One link can carry several palettes. Everything after `/builder/` is the code:
@@ -38,8 +38,8 @@ exports as a [set](publish.md#a-set).
 ## Install a link
 
 ```sh
-ttheme add https://ttheme.dev/builder/tt5:…
-ttheme add tt5:…              # the bare code works too
+ttheme add https://ttheme.dev/builder/tt6:…
+ttheme add tt6:…              # the bare code works too
 ttheme add ~/Downloads/evangelion.toml   # a set the builder exported
 ```
 

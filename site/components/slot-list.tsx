@@ -68,15 +68,13 @@ export function GateRows({ lines, names }: { lines: GateLine[]; names: string[] 
       {lines.map(({ rule, value, ok, slots }) => {
         const floor = Number.isNaN(value)
           ? 'n/a'
-          : ok === null
-            ? 'waived'
-            : rule.min !== undefined
-              ? ok
-                ? `≥ ${rule.min}`
-                : `under ${rule.min}`
-              : ok
-                ? `≤ ${rule.max}`
-                : `over ${rule.max}`
+          : rule.min !== undefined
+            ? ok
+              ? `≥ ${rule.min}`
+              : `under ${rule.min}`
+            : ok
+              ? `≤ ${rule.max}`
+              : `over ${rule.max}`
 
         const named = [...new Set(slots)].map((slot) => names[slot] ?? '').join(', ')
 
@@ -90,9 +88,7 @@ export function GateRows({ lines, names }: { lines: GateLine[]; names: string[] 
               <code class="font-mono text-xs tabular-nums" safe>
                 {Number.isNaN(value) ? '—' : reading(value, rule.unit)}
               </code>
-              <Badge variant={ok === null || Number.isNaN(value) ? 'outline' : ok ? 'success' : 'warning'}>
-                {escapeHtml(floor)}
-              </Badge>
+              <Badge variant={Number.isNaN(value) ? 'outline' : ok ? 'success' : 'warning'}>{escapeHtml(floor)}</Badge>
             </span>
             {slots.length > 0 ? (
               <button

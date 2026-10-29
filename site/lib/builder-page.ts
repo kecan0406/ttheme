@@ -4,7 +4,7 @@ import { searchText } from '@/lib/gallery'
 import { stocks } from '@/lib/marketplaces'
 import { scenePanes } from '@/lib/scene-panes'
 import type { Shared } from '@/lib/share'
-import type { Theme } from '@/lib/themes'
+import { faceOf, type Theme } from '@/lib/themes'
 import type { Pane } from '@/lib/view-types'
 import { byWork, leadOf } from '@/lib/works'
 import { type Draft, draftOf } from '../../src/core/draft.ts'
@@ -33,7 +33,7 @@ export function starts(): Start[] {
         publisher: theme.marketplace,
         lead: work !== null && theme === lead,
         words: searchText(theme),
-        dots: theme.signature,
+        dots: faceOf(theme),
       }),
     )
   })

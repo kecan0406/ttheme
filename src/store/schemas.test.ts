@@ -4,7 +4,6 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { SITES } from '../core/booru.ts'
 import { CHARACTER_KEYS, WORK_KEYS } from '../core/commons.ts'
-import { RULES } from '../core/contrast.ts'
 import { MODES } from '../core/mode.ts'
 import { SET_KEYS, SET_SCHEMA_URL } from '../core/sets.ts'
 import {
@@ -93,7 +92,7 @@ test('the set schema describes the keys, sites, positions, slots and gate rules 
   const palette = set.properties?.palette?.items
   assert.deepEqual(keys(palette), [...(PALETTE_KEYS.get('') ?? [])].sort())
 
-  for (const table of ['colors', 'contrast', 'ghostty']) {
+  for (const table of ['colors', 'contrast']) {
     assert.deepEqual(keys(palette?.properties?.[table]), [...(PALETTE_KEYS.get(table) ?? [])].sort(), table)
   }
 
@@ -107,7 +106,6 @@ test('the set schema describes the keys, sites, positions, slots and gate rules 
 
   grows(defs.site, SITE_KEYS, 'the find sites')
   grows(palette?.properties?.picture?.items?.properties?.position, POSITIONS, 'the positions')
-  grows(palette?.properties?.contrast?.properties?.waive?.items, RULES, 'the gate rules')
   assert.deepEqual(defs.slot?.enum, [
     'background',
     'foreground',

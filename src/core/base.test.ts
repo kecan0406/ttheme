@@ -50,7 +50,7 @@ test('bestBase keeps a base the role fixer brings through the gate and hands bac
   const { best } = bestBase(theme, [['probe', scheme]])
 
   assert.ok(best)
-  assert.deepEqual(check({ ...best.shade, name: theme.name, signatureSlots: theme.signatureSlots, waive: [] }), [])
+  assert.deepEqual(check({ ...best.shade, name: theme.name, signatureSlots: theme.signatureSlots }), [])
   assert.ok(best.moves.length > 0)
 })
 

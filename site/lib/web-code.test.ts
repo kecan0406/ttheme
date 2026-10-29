@@ -28,7 +28,6 @@ const draft: Draft = {
   name: 'orla-tuned',
   subject: 'starfall/orla',
   from: 'ttheme/orla',
-  ansiSource: 'alice',
   signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
   foreground: '#ede2c6',
@@ -42,12 +41,10 @@ const draft: Draft = {
     selection: '#e0d8f0',
     ansi: ansi.map((_, i) => `#${(0x30 + i * 4).toString(16).padStart(2, '0').repeat(3)}`),
   },
-  waive: ['distinct'],
-  reason: 'two greens stand for the character',
-  pictures: [{ site: 'danbooru', id: 1234567, size: 'fill', position: 'center-right', opacity: 0.6 }],
+  pictures: [{ site: 'danbooru', id: 1234567, size: 'fill', position: 'center-right', strength: 2.25 }],
 }
 
-test('a link the builder makes in a browser is one the CLI reads, both modes, waiver and pictures included', async () => {
+test('a link the builder makes in a browser is one the CLI reads, both modes and pictures included', async () => {
   const code = await webCode([draft])
   expect(code).toMatch(new RegExp(`^${CODE}[A-Za-z0-9_-]+$`))
   expect(fromCode(code)).toEqual([draft])

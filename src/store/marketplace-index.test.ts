@@ -8,7 +8,6 @@ function palette(name: string): PaletteEntry {
   return {
     name,
     subject: 'neon/glow',
-    ansiSource: 'Test',
     background: '#000000',
     foreground: '#eeeeee',
     cursor: '#ffffff',

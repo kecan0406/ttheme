@@ -4,7 +4,6 @@
 slug = "hachiman"
 subject = "oregairu/hachiman"
 signature = ["cursor", "ansi3", "ansi4"]
-ansi_source = "Smyck + Service Club"
 
 [palette.colors]
 background = "#17171f"
@@ -60,7 +59,6 @@ ansi = [
 slug = "yukino"
 subject = "oregairu/yukino"
 signature = ["cursor", "ansi1", "foreground"]
-ansi_source = "Mariana + Service Club"
 
 [palette.colors]
 background = "#12181d"
@@ -116,7 +114,6 @@ ansi = [
 slug = "yuigahama"
 subject = "oregairu/yuigahama"
 signature = ["cursor", "ansi13", "ansi1"]
-ansi_source = "Snazzy Soft + Service Club"
 
 [palette.colors]
 background = "#201511"
@@ -172,7 +169,6 @@ ansi = [
 slug = "iroha"
 subject = "oregairu/iroha"
 signature = ["cursor", "ansi1", "foreground"]
-ansi_source = "Andromeda + Service Club"
 
 [palette.colors]
 background = "#1e160d"
@@ -228,7 +224,6 @@ ansi = [
 slug = "komachi"
 subject = "oregairu/komachi"
 signature = ["cursor", "ansi13", "ansi11"]
-ansi_source = "Catppuccin Frappe + Service Club"
 
 [palette.colors]
 background = "#16171f"
@@ -284,7 +279,6 @@ ansi = [
 slug = "haruno"
 subject = "oregairu/haruno"
 signature = ["cursor", "foreground", "ansi13"]
-ansi_source = "Whimsy + Service Club"
 
 [palette.colors]
 background = "#201516"

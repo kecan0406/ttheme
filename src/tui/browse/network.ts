@@ -1,10 +1,8 @@
 import { inert } from '../../core/text.ts'
-import type { Refreshed } from '../../store/sources.ts'
 import type { BrowseIo, Marketplace } from './types.ts'
 
 export interface Fresh {
   marketplace: Marketplace
-  refreshed: Refreshed
   updates: string[]
 }
 

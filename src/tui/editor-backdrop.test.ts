@@ -12,7 +12,6 @@ import { backgroundsDir } from '../pictures/backdrop.ts'
 import { Backdrop } from './editor-backdrop.ts'
 
 const NAME = 'kai@dust/rei'
-const SIGNATURE = ['background', 'foreground', 'cursor']
 const colors = grow(SEEDS)
 
 function home() {
@@ -20,7 +19,7 @@ function home() {
   const dir = backgroundsDir(at)
   mkdirSync(dir, { recursive: true })
   const image = join(dir, 'kai--dust--rei.a1.png')
-  const tone = backdropTone({ name: NAME, ...colors }, SIGNATURE).color
+  const tone = backdropTone({ name: NAME, ...colors }).color
   writeFileSync(image, encodeMask({ width: 40, height: 20, data: new Uint8Array(800).fill(200) }, tone))
   const picture = { key: 'a', stem: 'kai--dust--rei.a1', fill: 'kai--dust--rei.a1.png', opacity: 0.3, tone }
   writeFileSync(
@@ -43,16 +42,16 @@ test('the editor lays the draft background under its picture, and tints a copy a
   assert.ok(backdrop)
   backdrop.load()
   const list = listOf(colors)
-  assert.equal(backdrop.draw(list, SIGNATURE, [], 80, 24), '')
+  assert.equal(backdrop.draw(list, 80, 24), '')
   backdrop.measured({ w: 10, h: 20 })
-  const first = backdrop.draw(list, SIGNATURE, [], 80, 24)
+  const first = backdrop.draw(list, 80, 24)
   assert.ok(first.includes(Buffer.from(rgb(colors.background)).toString('base64')))
   assert.ok(first.includes(b64(image)))
-  assert.equal(backdrop.draw(list, SIGNATURE, [], 80, 24), '')
+  assert.equal(backdrop.draw(list, 80, 24), '')
   const lighter = ['#30343c', ...list.slice(1)]
-  assert.ok(backdrop.draw(lighter, SIGNATURE, [], 80, 24).includes(Buffer.from(rgb('#30343c')).toString('base64')))
+  assert.ok(backdrop.draw(lighter, 80, 24).includes(Buffer.from(rgb('#30343c')).toString('base64')))
   const tuned = [...list.slice(0, 2), '#ff8800', ...list.slice(3)]
-  const moved = backdrop.draw(tuned, SIGNATURE, [], 80, 24)
+  const moved = backdrop.draw(tuned, 80, 24)
   assert.match(moved, /a=t,t=f/)
   assert.ok(!moved.includes(b64(image)))
   backdrop.close()
@@ -66,11 +65,11 @@ test('the builder frames the picture in its preview and keeps it off the slot li
   backdrop.measured({ w: 10, h: 20 })
   const list = listOf(colors)
   const area = { col: 30, row: 2, cols: 50, rows: 21 }
-  const framed = backdrop.draw(list, SIGNATURE, [], 80, 24, area)
+  const framed = backdrop.draw(list, 80, 24, area)
   assert.ok(framed.includes('\x1b[3;31H\x1b_Ga=p,'))
   assert.match(framed, /,x=16,y=0,w=23,h=20,c=50,r=21,/)
   backdrop.resized()
-  const whole = backdrop.draw(list, SIGNATURE, [], 80, 24)
+  const whole = backdrop.draw(list, 80, 24)
   assert.ok(whole.includes('\x1b[1;1H\x1b_Ga=p,'))
   assert.match(whole, /,c=80,r=24,/)
   backdrop.close()
@@ -78,7 +77,7 @@ test('the builder frames the picture in its preview and keeps it off the slot li
   assert.ok(wez)
   wez.load()
   wez.measured({ w: 10, h: 20 })
-  const view = /ttheme_view=([A-Za-z0-9+/=]+)/.exec(wez.draw(list, SIGNATURE, [], 80, 24, area))?.[1] ?? ''
+  const view = /ttheme_view=([A-Za-z0-9+/=]+)/.exec(wez.draw(list, 80, 24, area))?.[1] ?? ''
   assert.match(Buffer.from(view, 'base64').toString(), /\|800\|480\|500\|250\|300\|40\|3$/)
   wez.close()
 })
@@ -89,7 +88,7 @@ test('WezTerm gets the draft as its view, and Warp is left to its own picture', 
   assert.ok(backdrop)
   backdrop.load()
   backdrop.measured({ w: 10, h: 20 })
-  const out = backdrop.draw(listOf(colors), SIGNATURE, [], 80, 24)
+  const out = backdrop.draw(listOf(colors), 80, 24)
   const view = Buffer.from(/ttheme_view=([A-Za-z0-9+/=]+)/.exec(out)?.[1] ?? '', 'base64').toString()
   assert.ok(view.startsWith(`${colors.background}|${image}|`))
   assert.equal(Backdrop.of({ TERM_PROGRAM: 'WarpTerminal' }, at, NAME, ['warp']), undefined)

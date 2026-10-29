@@ -26,6 +26,8 @@ export const SLOT_NAMES = [
   ...Array.from({ length: 16 }, (_, i) => `ansi${i}`),
 ]
 
+export const FACE = ['cursor', 'selection', 'foreground'] as const
+
 export function listOf(c: Colors): Hex[] {
   return [c.background, c.foreground, c.cursor, c.selection, ...c.ansi]
 }
@@ -53,8 +55,8 @@ export function slotUse(slot: number): string {
   return USES[slot] as string
 }
 
-export function ruleSlots(list: Hex[], signature: string[], waive: string[], rule: string): number[] {
-  const theme = gatedOf(list, signature, waive)
+export function ruleSlots(list: Hex[], signature: string[], rule: string): number[] {
+  const theme = gatedOf(list, signature)
   const { background: bg, foreground: fg, selection, ansi } = colorsOf(list)
   const under = (slot: number, color: Hex, against: Hex) => (contrast(color, against) < bound(rule) ? [slot] : [])
 
@@ -113,17 +115,15 @@ export function ruleSlots(list: Hex[], signature: string[], waive: string[], rul
   return []
 }
 
-export function misses(list: Hex[], signature: string[], waive: string[]): Set<number> {
+export function misses(list: Hex[], signature: string[]): Set<number> {
   return new Set(
-    [...SLOT_NAMES.keys()].filter((slot) =>
-      slotChecks(list, signature, waive, slot).some((check) => check.ok === false),
-    ),
+    [...SLOT_NAMES.keys()].filter((slot) => slotChecks(list, signature, slot).some((check) => check.ok === false)),
   )
 }
 
-export function slotChecks(list: Hex[], signature: string[], waive: string[], slot: number): Check[] {
+export function slotChecks(list: Hex[], signature: string[], slot: number): Check[] {
   const c = colorsOf(list)
-  const theme = gatedOf(list, signature, waive)
+  const theme = gatedOf(list, signature)
 
   if (slot === 0) {
     const weakest = ACCENT_SLOTS.reduce((a, b) =>
@@ -131,16 +131,16 @@ export function slotChecks(list: Hex[], signature: string[], waive: string[], sl
     )
 
     return [
-      ratioCheck(c.foreground, c.background, 'foreground', 'Foreground on it', waive),
-      ratioCheck(c.ansi[weakest] as Hex, c.background, 'accents', `Weakest, ANSI ${weakest},`, waive),
-      ratioCheck(c.ansi[8] as Hex, c.background, 'ansi8-visible', 'ANSI 8 on it', waive),
+      ratioCheck(c.foreground, c.background, 'foreground', 'Foreground on it'),
+      ratioCheck(c.ansi[weakest] as Hex, c.background, 'accents', `Weakest, ANSI ${weakest},`),
+      ratioCheck(c.ansi[8] as Hex, c.background, 'ansi8-visible', 'ANSI 8 on it'),
     ]
   }
 
   if (slot === 1) {
     return [
-      ratioCheck(c.foreground, c.background, 'foreground', 'On background', waive),
-      ratioCheck(c.foreground, c.selection, 'selection', 'On the selection', waive),
+      ratioCheck(c.foreground, c.background, 'foreground', 'On background'),
+      ratioCheck(c.foreground, c.selection, 'selection', 'On the selection'),
     ]
   }
 
@@ -149,7 +149,7 @@ export function slotChecks(list: Hex[], signature: string[], waive: string[], sl
   }
 
   if (slot === 3) {
-    return [ratioCheck(c.foreground, c.selection, 'selection', 'Foreground on it', waive)]
+    return [ratioCheck(c.foreground, c.selection, 'selection', 'Foreground on it')]
   }
 
   const ansi = slot - BASE.length
@@ -159,40 +159,35 @@ export function slotChecks(list: Hex[], signature: string[], waive: string[], sl
     const lum = luminance(color)
     const max = bound('ansi0-dark')
     const weakest = weakestUnder(list)
-    const under = ratioCheck(color, c.ansi[weakest] as Hex, 'ansi0-on-accents', `On ANSI ${weakest}`, waive)
+    const under = ratioCheck(color, c.ansi[weakest] as Hex, 'ansi0-on-accents', `On ANSI ${weakest}`)
 
     if (isLight(theme)) return [under]
 
-    return [
-      waive.includes('ansi0-dark')
-        ? { ok: undefined, text: `Luminance ${lum.toFixed(3)} · waived` }
-        : { ok: lum <= max, text: `Luminance ${lum.toFixed(3)} · ≤ ${max}` },
-      under,
-    ]
+    return [{ ok: lum <= max, text: `Luminance ${lum.toFixed(3)} · ≤ ${max}` }, under]
   }
 
   if (ansi === 7) {
     return [
-      ratioCheck(color, c.background, 'light-ansi', 'On background', waive),
-      ratioCheck(color, c.ansi[8] as Hex, 'ansi7-on-ansi8', 'On ANSI 8', waive),
+      ratioCheck(color, c.background, 'light-ansi', 'On background'),
+      ratioCheck(color, c.ansi[8] as Hex, 'ansi7-on-ansi8', 'On ANSI 8'),
     ]
   }
 
   if (ansi === 15) {
-    return [ratioCheck(color, c.background, 'light-ansi', 'On background', waive)]
+    return [ratioCheck(color, c.background, 'light-ansi', 'On background')]
   }
 
   if (ansi === 8) {
     return [
-      ratioCheck(color, c.background, 'ansi8-visible', 'On background', waive),
-      ratioCheck(c.ansi[7] as Hex, color, 'ansi7-on-ansi8', 'ANSI 7 on it', waive),
+      ratioCheck(color, c.background, 'ansi8-visible', 'On background'),
+      ratioCheck(c.ansi[7] as Hex, color, 'ansi7-on-ansi8', 'ANSI 7 on it'),
     ]
   }
 
-  const checks = [ratioCheck(color, c.background, 'accents', 'On background', waive)]
+  const checks = [ratioCheck(color, c.background, 'accents', 'On background')]
 
   if (ROLES.includes(ansi)) {
-    checks.push(ratioCheck(c.ansi[0] as Hex, color, 'ansi0-on-accents', 'ANSI 0 on it', waive))
+    checks.push(ratioCheck(c.ansi[0] as Hex, color, 'ansi0-on-accents', 'ANSI 0 on it'))
   }
 
   const here = oklch(color)
@@ -204,8 +199,6 @@ export function slotChecks(list: Hex[], signature: string[], waive: string[], sl
     checks.push({ ok: undefined, text: 'Too grey to have a hue' })
   } else if (exemptSlots(theme).has(ansi)) {
     checks.push({ ok: undefined, text: `Hue ${here.h.toFixed(0)}° · a signature, free of ${range}` })
-  } else if (waive.includes('ansi-role')) {
-    checks.push({ ok: undefined, text: `Hue ${here.h.toFixed(0)}° · ${range} waived` })
   } else {
     const over = hueGap(here.h, band.center) - band.width
     checks.push(
@@ -219,22 +212,18 @@ export function slotChecks(list: Hex[], signature: string[], waive: string[], sl
   const drift = brightDrift(theme).find((d) => d.normal === role)
 
   if (drift) {
-    checks.push(
-      waive.includes('bright-follows')
-        ? { ok: undefined, text: `${drift.gap.toFixed(0)}° from ANSI ${twin} · waived` }
-        : { ok: drift.gap <= BRIGHT_GAP, text: `${drift.gap.toFixed(0)}° from ANSI ${twin} · ≤ ${BRIGHT_GAP}°` },
-    )
+    checks.push({ ok: drift.gap <= BRIGHT_GAP, text: `${drift.gap.toFixed(0)}° from ANSI ${twin} · ≤ ${BRIGHT_GAP}°` })
   }
 
   const alike = lookalikes(theme).flatMap(([a, b]) => (a === ansi ? [b] : b === ansi ? [a] : []))
 
-  if (alike.length > 0 && !waive.includes('distinct')) {
+  if (alike.length > 0) {
     checks.push({ ok: false, text: `Reads as ANSI ${alike.join(', ')} at text size` })
   }
 
   const mixed = confusions(theme).flatMap(([red, green]) => (red === ansi ? [green] : green === ansi ? [red] : []))
 
-  if (mixed.length > 0 && !waive.includes('cvd-red-green')) {
+  if (mixed.length > 0) {
     checks.push({ ok: false, text: `Reads as ANSI ${mixed.join(', ')} to a deuteranope` })
   }
 
@@ -285,13 +274,9 @@ export function grey(hex: Hex): boolean {
   return r === g && g === b
 }
 
-function ratioCheck(color: Hex, against: Hex, rule: string, what: string, waive: string[]): Check {
+function ratioCheck(color: Hex, against: Hex, rule: string, what: string): Check {
   const ratio = contrast(color, against)
   const min = bound(rule)
-
-  if (waive.includes(rule)) {
-    return { ok: undefined, text: `${what} ${ratio.toFixed(2)}:1 · waived` }
-  }
 
   return { ok: ratio >= min, text: `${what} ${ratio.toFixed(2)}:1 · ≥ ${min}` }
 }
@@ -335,7 +320,7 @@ export function colorsOf(list: Hex[]): Colors {
 
 export type Format = 'hex' | 'rgb' | 'oklch'
 
-export function gatedOf(list: Hex[], signature: string[], waive: string[]): Gated {
+export function gatedOf(list: Hex[], signature: string[]): Gated {
   const c = colorsOf(list)
 
   return {
@@ -344,7 +329,6 @@ export function gatedOf(list: Hex[], signature: string[], waive: string[]): Gate
     foreground: c.foreground,
     selectionBackground: c.selection,
     ansi: c.ansi,
-    waive,
     signatureSlots: signature,
   }
 }

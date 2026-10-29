@@ -174,8 +174,8 @@ export function pointsOf({ start, steps }: Stroke): Point[] {
   return points
 }
 
-export function marksOf(background: Hex, foreground: Hex, signature: readonly Hex[]): Hex[] {
-  return signature.slice(0, 3).map((color) => {
+export function marksOf(background: Hex, foreground: Hex, cursor: Hex, selection: Hex): Hex[] {
+  return [cursor, selection, foreground].map((color) => {
     let mark = color
 
     for (let step = 1; step <= 20 && contrast(mark, background) < 3; step++) mark = mixOk(color, foreground, step / 20)

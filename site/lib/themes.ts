@@ -16,7 +16,6 @@ export interface Shade {
   foreground: string
   cursor: string
   selectionBackground: string
-  signature: string[]
   ansi: string[]
   gate: number[]
 }
@@ -43,7 +42,6 @@ export interface Theme extends Shade {
   also: WorkRef[]
   character: CharacterRef | null
   from: string | null
-  ansiSource: string
   signatureSlots: string[]
   mode: Mode
   other: Shade
@@ -68,13 +66,16 @@ export function shortName(name: string): string {
   return name.startsWith(`${BUILTIN}/`) ? name.slice(BUILTIN.length + 1) : name
 }
 
+export function faceOf(shade: Pick<Shade, 'cursor' | 'selectionBackground' | 'foreground'>): string[] {
+  return [shade.cursor, shade.selectionBackground, shade.foreground]
+}
+
 export function shadeOf(theme: Shade): Shade {
   return {
     background: theme.background,
     foreground: theme.foreground,
     cursor: theme.cursor,
     selectionBackground: theme.selectionBackground,
-    signature: theme.signature,
     ansi: theme.ansi,
     gate: theme.gate,
   }

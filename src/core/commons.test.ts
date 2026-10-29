@@ -4,7 +4,6 @@ import { test } from 'node:test'
 import {
   aboutOf,
   commonsProblems,
-  followSubject,
   leadOf,
   mergeWorks,
   parseCommons,
@@ -130,15 +129,6 @@ test('a proposal adds the works and characters the commons lacks and changes not
   assert.equal(merged.length, 2)
 })
 
-test('a renamed work or character is followed to where it went, and a loop ends', () => {
-  const renames = { 'star/wren': 'starfall/wren', neon: 'starfall', 'a/x': 'b/x', 'b/x': 'a/x' }
-  assert.equal(followSubject(renames, 'star/wren'), 'starfall/wren')
-  assert.equal(followSubject(renames, 'neon/orla'), 'starfall/orla')
-  assert.equal(followSubject(renames, 'neon'), 'starfall')
-  assert.equal(followSubject(renames, 'tidewater'), 'tidewater')
-  assert.ok(['a/x', 'b/x'].includes(followSubject(renames, 'a/x')))
-})
-
 test('a subject the works do not hold reads as its id, unknown', () => {
   const works = [starfall]
   assert.deepEqual(aboutOf(works, 'starfall/wren'), {
@@ -167,7 +157,7 @@ test('palettes sit by work name, then cast or character, built-in first, and ori
 
   const items = [
     { name: 'kai@dust/glow' },
-    { name: 'ttheme/neutral' },
+    { name: 'ttheme/ember' },
     { name: 'kai@dust/wren', subject: 'starfall/wren' },
     { name: 'ttheme/pip', subject: 'starfall/pip' },
     { name: 'ttheme/wren', subject: 'starfall/wren' },
@@ -185,7 +175,7 @@ test('palettes sit by work name, then cast or character, built-in first, and ori
       'ttheme/pip',
       'ttheme/comet',
       'ttheme/quill',
-      'ttheme/neutral',
+      'ttheme/ember',
       'kai@dust/glow',
     ],
   )
@@ -198,7 +188,7 @@ test('palettes sit by work name, then cast or character, built-in first, and ori
       'kai@dust/wren',
       'ttheme/comet',
       'ttheme/quill',
-      'ttheme/neutral',
+      'ttheme/ember',
       'kai@dust/glow',
     ],
   )
@@ -243,8 +233,8 @@ test('the commons holds together: also names another work, and one danbooru tag 
 })
 
 test('the commons reads back from the JSON init writes, and refuses another shape', () => {
-  const commons = { works: [starfall], renames: { 'star/wren': 'starfall/wren' } }
+  const commons = { works: [starfall] }
   assert.deepEqual(parseCommons(JSON.stringify(commons)), commons)
-  assert.throws(() => parseCommons('{"works": "x"}'), /no works or renames/)
+  assert.throws(() => parseCommons('{"works": "x"}'), /no works/)
   assert.throws(() => parseCommons('<html>'), /not valid JSON/)
 })

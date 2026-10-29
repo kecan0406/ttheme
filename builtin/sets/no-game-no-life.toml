@@ -4,7 +4,6 @@
 slug = "sora"
 subject = "no-game-no-life/sora"
 signature = ["cursor", "ansi1", "selection"]
-ansi_source = "Citruszest + Blank"
 
 [palette.colors]
 background = "#1a180d"
@@ -60,7 +59,6 @@ ansi = [
 slug = "shiro"
 subject = "no-game-no-life/shiro"
 signature = ["cursor", "ansi1", "selection"]
-ansi_source = "Duskfox + Blank"
 
 [palette.colors]
 background = "#11191c"
@@ -116,7 +114,6 @@ ansi = [
 slug = "steph"
 subject = "no-game-no-life/steph"
 signature = ["cursor", "ansi4", "ansi12"]
-ansi_source = "Catppuccin Mocha + Blank"
 
 [palette.colors]
 background = "#201516"
@@ -172,7 +169,6 @@ ansi = [
 slug = "jibril"
 subject = "no-game-no-life/jibril"
 signature = ["cursor", "ansi3", "ansi12"]
-ansi_source = "Andromeda + Blank"
 
 [palette.colors]
 background = "#1e151a"
@@ -228,7 +224,6 @@ ansi = [
 slug = "izuna"
 subject = "no-game-no-life/izuna"
 signature = ["cursor", "ansi1", "ansi3"]
-ansi_source = "Kanagawa Wave + Blank"
 
 [palette.colors]
 background = "#19161e"
@@ -284,7 +279,6 @@ ansi = [
 slug = "tet"
 subject = "no-game-no-life/tet"
 signature = ["cursor", "ansi1", "ansi12"]
-ansi_source = "Peppermint + Blank"
 
 [palette.colors]
 background = "#131913"

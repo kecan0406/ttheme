@@ -290,13 +290,12 @@ export function gateLines(entry: PaletteEntry): string[] {
   const theme = toTheme(entry)
   const values = measure(theme)
   const missed = new Set(missedRules(theme).map((rule) => rule.rule))
-  const waived = new Set(entry.waived ?? [])
   const pad = Math.max(...GATE_RULES.map((r) => r.label.length))
 
   return GATE_RULES.map((rule, i) => {
     const value = values[i] as number
-    const ok = waived.has(rule.rule) || Number.isNaN(value) || !missed.has(rule.rule)
+    const ok = Number.isNaN(value) || !missed.has(rule.rule)
 
-    return `  ${ok ? '✓' : '✗'} ${rule.label.padEnd(pad)}  ${shownOf(value).padStart(6)} ${boundOf(rule)}${waived.has(rule.rule) ? '  waived' : ''}`
+    return `  ${ok ? '✓' : '✗'} ${rule.label.padEnd(pad)}  ${shownOf(value).padStart(6)} ${boundOf(rule)}`
   })
 }

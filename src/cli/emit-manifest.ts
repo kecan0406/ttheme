@@ -4,7 +4,7 @@ import { GATE_RULES } from '../core/contrast.ts'
 import { type Bundle, paletteEntry } from '../core/manifest.ts'
 import type { Theme } from '../core/theme.ts'
 
-export function bundleOf(themes: Theme[], fallback: string): Bundle {
+export function bundleOf(themes: Theme[]): Bundle {
   if (themes.length === 0) {
     throw new Error('the built-in palettes need at least one palette')
   }
@@ -12,7 +12,7 @@ export function bundleOf(themes: Theme[], fallback: string): Bundle {
   return {
     version: pkg.version,
     gate: GATE_RULES,
-    palettes: themes.map((t) => ({ ...paletteEntry(t), ...(t.name === fallback ? { default: true } : {}) })),
+    palettes: themes.map((t) => paletteEntry(t)),
   }
 }
 

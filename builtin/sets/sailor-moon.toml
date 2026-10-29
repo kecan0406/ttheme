@@ -4,7 +4,6 @@
 slug = "moon"
 subject = "sailor-moon/moon"
 signature = ["cursor", "ansi3", "ansi12"]
-ansi_source = "Starlight"
 
 [palette.colors]
 background = "#1f1518"
@@ -60,7 +59,6 @@ ansi = [
 slug = "mercury"
 subject = "sailor-moon/mercury"
 signature = ["cursor", "ansi12", "ansi2"]
-ansi_source = "Glacier + Senshi"
 
 [palette.colors]
 background = "#12181d"
@@ -116,7 +114,6 @@ ansi = [
 slug = "mars"
 subject = "sailor-moon/mars"
 signature = ["cursor", "ansi9", "foreground"]
-ansi_source = "Red Planet + Senshi"
 
 [palette.colors]
 background = "#201514"
@@ -172,7 +169,6 @@ ansi = [
 slug = "jupiter"
 subject = "sailor-moon/jupiter"
 signature = ["cursor", "ansi1", "ansi11"]
-ansi_source = "Everforest Dark Hard + Senshi"
 
 [palette.colors]
 background = "#131913"
@@ -228,7 +224,6 @@ ansi = [
 slug = "venus"
 subject = "sailor-moon/venus"
 signature = ["cursor", "ansi3", "ansi12"]
-ansi_source = "Earthsong"
 
 [palette.colors]
 background = "#1e160d"

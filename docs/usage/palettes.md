@@ -111,6 +111,11 @@ update. `ttheme update` names the palettes that have one, and Browse marks them
 `⇡`: `ctrl+r` there stages one, or every one under a work, for `enter` to
 apply. Your tuning stays on top of the update.
 
+An update also brings the palette's pictures along: the ones it gained are
+fetched, and the ones it dropped come off and the ones it reframed move, unless
+you changed that picture's framing, which keeps it as you left it. A picture
+you removed stays removed.
+
 ## Updates on their own
 
 Once a day, in the background of any command, ttheme checks whether npm has a
@@ -121,12 +126,10 @@ a repository, and its **Auto-update** row in Browse switches it later.
 `TTHEME_AUTO_UPDATE=off` in `ttheme config` stops both checks. A prompt never
 fetches a marketplace.
 
-## Renamed and removed palettes
+## Palettes a marketplace drops
 
-A marketplace can rename a palette. An update follows the rename and keeps your
-tuning, pictures, pins and default under the new name. A palette the
-marketplace marks as removed comes off. One that simply disappears from it stays
-installed from your copy, and Browse marks it.
+A palette that disappears from its marketplace stays installed from your copy,
+and Browse keeps listing it.
 
 When the commons moves a work or a character to a new name, every palette of it
 follows on its own, whichever marketplace it comes from.

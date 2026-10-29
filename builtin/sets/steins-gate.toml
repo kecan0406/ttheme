@@ -4,7 +4,6 @@
 slug = "kurisu"
 subject = "steins-gate/kurisu"
 signature = ["cursor", "ansi1", "ansi6"]
-ansi_source = "Duotone Dark"
 
 [palette.colors]
 background = "#1f160d"
@@ -60,7 +59,6 @@ ansi = [
 slug = "mayuri"
 subject = "steins-gate/mayuri"
 signature = ["cursor", "foreground", "ansi13"]
-ansi_source = "Iceberg Dark"
 
 [palette.colors]
 background = "#11191c"
@@ -116,7 +114,6 @@ ansi = [
 slug = "suzuha"
 subject = "steins-gate/suzuha"
 signature = ["cursor", "ansi9", "ansi4"]
-ansi_source = "Gruvbox Dark + Lab"
 
 [palette.colors]
 background = "#1f160d"

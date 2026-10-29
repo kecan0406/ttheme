@@ -22,7 +22,6 @@ const colors: Colors = {
 const entry: PaletteEntry = {
   name: 'ttheme/orla',
   subject: 'tidewater/orla',
-  ansiSource: 'Horizon',
   background: '#11191c',
   foreground: '#e3e2e7',
   cursor: '#7cc1d6',

@@ -4,7 +4,6 @@
 slug = "maou"
 subject = "the-devil-is-a-part-timer/maou"
 signature = ["cursor", "selection", "ansi3"]
-ansi_source = "Electron Highlighter + Ente Isla"
 
 [palette.colors]
 background = "#211512"
@@ -60,7 +59,6 @@ ansi = [
 slug = "emi"
 subject = "the-devil-is-a-part-timer/emi"
 signature = ["cursor", "ansi10", "ansi5"]
-ansi_source = "Paraiso Dark + Ente Isla"
 
 [palette.colors]
 background = "#201516"
@@ -116,7 +114,6 @@ ansi = [
 slug = "chiho"
 subject = "the-devil-is-a-part-timer/chiho"
 signature = ["cursor", "ansi6", "ansi3"]
-ansi_source = "Pencil Dark + Ente Isla"
 
 [palette.colors]
 background = "#211512"
@@ -172,7 +169,6 @@ ansi = [
 slug = "ashiya"
 subject = "the-devil-is-a-part-timer/ashiya"
 signature = ["cursor", "foreground", "ansi2"]
-ansi_source = "Apple System Colors + Ente Isla"
 
 [palette.colors]
 background = "#1d170c"
@@ -228,7 +224,6 @@ ansi = [
 slug = "urushihara"
 subject = "the-devil-is-a-part-timer/urushihara"
 signature = ["cursor", "ansi5", "ansi12"]
-ansi_source = "Abernathy + Ente Isla"
 
 [palette.colors]
 background = "#1a161e"
@@ -284,7 +279,6 @@ ansi = [
 slug = "suzuno"
 subject = "the-devil-is-a-part-timer/suzuno"
 signature = ["cursor", "ansi3", "ansi1"]
-ansi_source = "owl + Ente Isla"
 
 [palette.colors]
 background = "#12181d"

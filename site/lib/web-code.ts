@@ -51,5 +51,5 @@ export function textDraft(file: string, text: string): Draft {
   const { slug, doc } = readSet(file, text)[0] as SetPalette
   const theme = themeOf(slug, doc, { name: slug, foreign: true })
 
-  return draftOf(paletteEntry(theme), theme.name, theme.waiveReason)
+  return draftOf(paletteEntry(theme))
 }

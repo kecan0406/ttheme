@@ -39,8 +39,8 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean,
   const p = painter(color)
   const list = listOf(colorsOfEntry(worn))
   const given = slotColors(base).map((hex) => hex.toLowerCase())
-  const bad = misses(list, worn.signatureSlots, worn.waived ?? [])
-  const failing = missedRules(gatedOf(list, worn.signatureSlots, worn.waived ?? [])).length
+  const bad = misses(list, worn.signatureSlots)
+  const failing = missedRules(gatedOf(list, worn.signatureSlots)).length
   const off = (slot: number) => list[slot]?.toLowerCase() !== given[slot]
   const tuned = list.filter((_, slot) => off(slot)).length
 

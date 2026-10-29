@@ -15,7 +15,6 @@ import type { Shade } from '../../../../src/core/theme.ts'
 interface ThemeDoc {
   signature: string[]
   colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
-  contrast?: { waive?: string[] }
 }
 
 export interface Palette {
@@ -38,7 +37,6 @@ interface Member {
   source: string
   name: string
   signature: string[]
-  waive: string[]
   to: Mode
   shade: Shade
   moves: Move[]
@@ -60,15 +58,13 @@ function member({ file, slug, text }: Palette): Member {
     selectionBackground: c.selection_background,
     ansi: c.ansi,
   }
-  const waive = doc.contrast?.waive ?? []
-  const { shade, moves } = mirrored({ ...own, name: slug, signatureSlots: doc.signature, waive })
+  const { shade, moves } = mirrored({ ...own, name: slug, signatureSlots: doc.signature })
 
   return {
     file,
     source: text,
     name: slug,
     signature: doc.signature,
-    waive,
     to: otherOf(modeOf(own)),
     shade,
     moves,
@@ -121,7 +117,6 @@ if (import.meta.main) {
       ...m.shade,
       name: m.name,
       signatureSlots: doc.signature,
-      waive: doc.contrast?.waive ?? [],
     })
     console.log(`${m.name}: ${m.to}`)
     for (const v of m.moves)

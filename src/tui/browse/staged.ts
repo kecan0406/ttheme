@@ -1,7 +1,7 @@
 import { mergeWorks, type Sort, type Work, worldOrder } from '../../core/commons.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
 import { publisherOf } from '../../core/theme.ts'
-import { type Refreshed, sameMarketplace } from '../../store/sources.ts'
+import { sameMarketplace } from '../../store/sources.ts'
 import type { BrowseResult, Marketplace } from './types.ts'
 
 export class Staged {
@@ -10,7 +10,6 @@ export class Staged {
   readonly removes = new Set<string>()
   readonly want = new Map<string, boolean>()
   readonly renew = new Set<string>()
-  readonly refreshed: Refreshed[] = []
   readonly installed: ReadonlySet<string>
   marketplaces: Marketplace[]
   private updates: Set<string>
@@ -115,12 +114,11 @@ export class Staged {
       removes: [...this.removes],
       auto: Object.fromEntries(this.want),
       renew: [...this.renew].filter((name) => this.updates.has(name) && this.picked.has(name) && names.has(name)),
-      refreshed: this.refreshed,
     }
   }
 
   pending() {
-    const entries = this.entries().filter((e) => !e.default)
+    const entries = this.entries()
 
     return {
       names: entries.filter((e) => this.picked.has(e.name) && !this.installed.has(e.name)),
@@ -156,10 +154,9 @@ export class Staged {
     return this.removes.delete(source)
   }
 
-  refresh(source: string, marketplace: Marketplace, refreshed: Refreshed, updates: string[]): void {
+  refresh(source: string, marketplace: Marketplace, updates: string[]): void {
     this.updates = new Set(updates)
     this.marketplaces = this.marketplaces.map((m) => (m.source === source ? marketplace : m))
-    this.refreshed.push(refreshed)
   }
 
   toggleRenew(names: string[]): void {

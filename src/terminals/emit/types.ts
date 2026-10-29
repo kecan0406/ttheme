@@ -13,5 +13,5 @@ export interface Emitter {
 }
 
 export function banner(theme: Theme): string[] {
-  return [`# ${theme.name}${theme.subject ? ` — ${theme.subject}` : ''}`, `# ANSI: ${theme.ansiSource}`]
+  return [`# ${theme.name}${theme.subject ? ` — ${theme.subject}` : ''}`]
 }

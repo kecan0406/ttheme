@@ -4,7 +4,6 @@
 slug = "jill"
 subject = "va-11-hall-a/jill"
 signature = ["cursor", "ansi1", "ansi5"]
-ansi_source = "TokyoNight"
 
 [palette.colors]
 background = "#15181e"
@@ -60,7 +59,6 @@ ansi = [
 slug = "dorothy"
 subject = "va-11-hall-a/dorothy"
 signature = ["cursor", "ansi4", "ansi5"]
-ansi_source = "Cyberpunk + Glitch City"
 
 [palette.colors]
 background = "#201515"
@@ -116,7 +114,6 @@ ansi = [
 slug = "alma"
 subject = "va-11-hall-a/alma"
 signature = ["cursor", "ansi12", "ansi9"]
-ansi_source = "Belafonte Night + Glitch City"
 
 [palette.colors]
 background = "#1e160d"
@@ -172,7 +169,6 @@ ansi = [
 slug = "stella"
 subject = "va-11-hall-a/stella"
 signature = ["cursor", "ansi2", "ansi13"]
-ansi_source = "Scarlet Protocol + Glitch City"
 
 [palette.colors]
 background = "#201515"
@@ -228,7 +224,6 @@ ansi = [
 slug = "sei"
 subject = "va-11-hall-a/sei"
 signature = ["cursor", "ansi12", "ansi9"]
-ansi_source = "Blue Matrix"
 
 [palette.colors]
 background = "#101916"
@@ -284,7 +279,6 @@ ansi = [
 slug = "valhalla"
 subject = "va-11-hall-a/valhalla"
 signature = ["cursor", "ansi6", "ansi3"]
-ansi_source = "Synthwave + Glitch City"
 
 [palette.colors]
 background = "#1f1518"

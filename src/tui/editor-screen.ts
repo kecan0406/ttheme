@@ -442,7 +442,7 @@ function hueChart(shown: Hex[], ink: Hex, row: number): Chart {
 }
 
 function relationNotes(p: Paint, e: PaletteEditor, shown: Hex[]): string[] {
-  const theme = gatedOf(shown, e.signature, e.waive)
+  const theme = gatedOf(shown, e.signature)
   const name = (ansi: number) => slotLabel(BASE.length + ansi).name
   const hue = (ansi: number) => oklch(shown[BASE.length + ansi] as Hex).h.toFixed(0)
 
@@ -1063,8 +1063,6 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
               (editor.pic
                 ? backdrop?.draw(
                     editor.shown(),
-                    editor.signature,
-                    editor.waive,
                     terminal.cols,
                     terminal.rows,
                     pictureArea(terminal.cols, terminal.rows),

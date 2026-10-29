@@ -70,7 +70,7 @@ export interface Pane {
 export interface GateLine {
   rule: GateRule
   value: number
-  ok: boolean | null
+  ok: boolean
   slots: number[]
 }
 

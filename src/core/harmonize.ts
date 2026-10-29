@@ -132,7 +132,7 @@ export function harmonized(theme: Anchored): Shade {
     base,
   )
 
-  return separated({ name: theme.name, signatureSlots: theme.signatureSlots, waive: [] }, signed)
+  return separated({ name: theme.name, signatureSlots: theme.signatureSlots }, signed)
 }
 
 function hueShift(from: Hex, to: Hex): number | undefined {

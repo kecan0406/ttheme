@@ -4,7 +4,6 @@
 slug = "rikka"
 subject = "chuunibyou/rikka"
 signature = ["cursor", "ansi12", "ansi1"]
-ansi_source = "Challenger Deep + Delusion"
 
 [palette.colors]
 background = "#1b170c"
@@ -60,7 +59,6 @@ ansi = [
 slug = "yuuta"
 subject = "chuunibyou/yuuta"
 signature = ["cursor", "ansi11", "ansi6"]
-ansi_source = "Srcery + Delusion"
 
 [palette.colors]
 background = "#211512"
@@ -116,7 +114,6 @@ ansi = [
 slug = "shinka"
 subject = "chuunibyou/shinka"
 signature = ["cursor", "ansi11", "ansi12"]
-ansi_source = "Everforest Dark Hard + Delusion"
 
 [palette.colors]
 background = "#1f1519"
@@ -172,7 +169,6 @@ ansi = [
 slug = "dekomori"
 subject = "chuunibyou/dekomori"
 signature = ["cursor", "ansi12", "ansi5"]
-ansi_source = "Cobalt2 + Delusion"
 
 [palette.colors]
 background = "#1a180d"
@@ -228,7 +224,6 @@ ansi = [
 slug = "kumin"
 subject = "chuunibyou/kumin"
 signature = ["cursor", "ansi4", "ansi1"]
-ansi_source = "Rose Pine + Delusion"
 
 [palette.colors]
 background = "#1a161e"

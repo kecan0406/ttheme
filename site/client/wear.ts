@@ -45,7 +45,6 @@ function isShade(value: unknown): value is Shade {
     Array.isArray(shade.ansi) &&
     shade.ansi.length === 16 &&
     shade.ansi.every((color) => COLOR.test(color)) &&
-    Array.isArray(shade.signature) &&
     Array.isArray(shade.gate) &&
     [shade.background, shade.foreground, shade.cursor, shade.selectionBackground].every((color) =>
       COLOR.test(String(color)),

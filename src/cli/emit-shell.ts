@@ -1,7 +1,7 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { SITES } from '../core/booru.ts'
 import { aboutOf, spoken, type Work, workOf, worksFor, worldOrder } from '../core/commons.ts'
-import { listed, type PaletteEntry, swatch } from '../core/manifest.ts'
+import { type PaletteEntry, swatch } from '../core/manifest.ts'
 import { marksOf } from '../core/mark.ts'
 import type { Mode, Setting } from '../core/mode.ts'
 import { SCENES } from '../core/scenes.ts'
@@ -53,7 +53,6 @@ export function palettesZsh(palettes: PaletteEntry[], works: readonly Work[], co
       about?.work.name ?? '',
       about?.work.native ?? '',
       ...(about?.character?.native ?? []),
-      p.ansiSource,
     ]) {
       if (UNQUOTABLE.test(field)) {
         throw new Error(`${p.name}: "${field}" contains a character that breaks zsh quoting`)
@@ -64,13 +63,12 @@ export function palettesZsh(palettes: PaletteEntry[], works: readonly Work[], co
   const pad = Math.max(0, ...palettes.map((p) => p.name.length))
   const entry = (p: PaletteEntry, value: string) => `  ${p.name.padEnd(pad)} "${value}"`
   const names = (list: PaletteEntry[]) => list.map((p) => p.name).join(' ')
-  const rotation = listed(palettes)
   const quote = (text: string) => `'${text.replaceAll("'", "'\\''")}'`
   const verbs = VERB_SPECS.filter((v) => v.section !== 'setup' && !v.hidden)
 
   const shelved = [
     ...new Set(
-      rotation.flatMap((p) => {
+      palettes.flatMap((p) => {
         const about = abouts.get(p.name)
 
         return about ? worksFor(about) : []
@@ -169,19 +167,19 @@ export function palettesZsh(palettes: PaletteEntry[], works: readonly Work[], co
     ),
     ')',
     '',
-    "# each palette's mark, `>ω` (src/core/mark.ts): its signature colors, each lifted until it reads 3:1 on the palette's background — the hub draws the eye in the second and the mouth in the first",
+    "# each palette's mark, `>ω` (src/core/mark.ts): its cursor, selection and foreground, each lifted until it reads 3:1 on the palette's background — the hub draws the eye in the second and the mouth in the first",
     'typeset -gA TTHEME_MARK_INKS=(',
-    ...palettes.map((p) => entry(p, marksOf(p.background, p.foreground, p.signature).join(' '))),
+    ...palettes.map((p) => entry(p, marksOf(p.background, p.foreground, p.cursor, p.selection).join(' '))),
     ')',
     '',
     "# the palettes whose colors your tuning moves off their marketplace's (tone.json): lists mark them, and preview's panel offers to reset them",
     `typeset -ga TTHEME_TUNED=(${palettes.flatMap((p) => (tuned.includes(p.name) ? [p.name] : [])).join(' ')})`,
     '',
-    '# every listed palette by work, each work by name and its characters in the order the commons lists them, the palettes of no work after: new tabs cycle through it and TTHEME_SORT=cast lists it — the fallback palette stays applyable but unlisted',
-    `typeset -ga TTHEME_ORDER=(${names(worldOrder(rotation, works, 'cast'))})`,
+    '# every palette by work, each work by name and its characters in the order the commons lists them, the palettes of no work after: new tabs cycle through it and TTHEME_SORT=cast lists it',
+    `typeset -ga TTHEME_ORDER=(${names(worldOrder(palettes, works, 'cast'))})`,
     '',
     "# the same palettes with each work's characters by name: TTHEME_SORT=abc lists them this way",
-    `typeset -ga TTHEME_ABC=(${names(worldOrder(rotation, works, 'abc'))})`,
+    `typeset -ga TTHEME_ABC=(${names(worldOrder(palettes, works, 'abc'))})`,
     '',
     '# what each palette is of: a work, or a work and its character (commons/works/<work>.toml) — a palette of neither is an original, listed under its marketplace',
     'typeset -gA TTHEME_SUBJECT=(',
@@ -243,14 +241,9 @@ export function palettesZsh(palettes: PaletteEntry[], works: readonly Work[], co
       .flatMap(([terminal, traits]) => (traits.links ? [terminal] : []))
       .join(' ')})`,
     '',
-    '# the six colors a list row shows: foreground, the signature, then red and green',
+    '# the six colors a list row shows: foreground, cursor and selection, then red, green and blue',
     'typeset -gA TTHEME_SWATCH=(',
     ...palettes.map((p) => entry(p, swatch(p).join(' '))),
-    ')',
-    '',
-    "# where each palette's 16 ANSI colors came from",
-    'typeset -gA TTHEME_SRC=(',
-    ...palettes.map((p) => entry(p, p.ansiSource)),
     ')',
     '',
   ].join('\n')

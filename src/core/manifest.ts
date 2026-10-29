@@ -7,15 +7,14 @@ import { memo } from './memo.ts'
 import { mirror } from './mirror.ts'
 import { type Mode, modeOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
+import { FACE } from './slots.ts'
 import type { Shade, SharedPicture, Theme } from './theme.ts'
-import { nameProblem, subjectProblem, textProblem } from './theme.ts'
+import { nameProblem, subjectProblem } from './theme.ts'
 
 export interface PaletteEntry {
   name: string
   subject?: string
   from?: string
-  ansiSource: string
-  default?: boolean
   background: string
   foreground: string
   cursor: string
@@ -25,7 +24,6 @@ export interface PaletteEntry {
   ansi: string[]
   other?: Colors
   gate: number[]
-  waived?: string[]
   backdrop: { slot: string; color: string; opacity: number }
   pictures?: SharedPicture[]
 }
@@ -38,7 +36,6 @@ export interface Bundle {
 
 export interface Manifest extends Bundle {
   works: Work[]
-  renames?: Record<string, string>
 }
 
 export function colorsOfTheme(theme: Shade): Colors {
@@ -75,10 +72,7 @@ export function withColors(entry: PaletteEntry, colors: Colors): PaletteEntry {
   const patched = { ...entry, ...colors, signature: entry.signatureSlots.map((slot) => slotColor(colors, slot)) }
   const theme = toTheme(patched)
 
-  const { slot, color, opacity } = backdropTone(
-    { name: patched.name, ...colors, waived: theme.waive },
-    patched.signatureSlots,
-  )
+  const { slot, color, opacity } = backdropTone({ name: patched.name, ...colors })
 
   return { ...patched, gate: measure(theme), backdrop: { slot, color, opacity } }
 }
@@ -118,24 +112,19 @@ export function inMode(entry: PaletteEntry, mode: Mode): PaletteEntry {
 }
 
 export function paletteEntry(t: Theme): PaletteEntry {
-  const { slot, color, opacity } = backdropTone(
-    {
-      name: t.name,
-      background: t.background,
-      foreground: t.foreground,
-      cursor: t.cursor,
-      selection: t.selectionBackground,
-      ansi: t.ansi,
-      waived: t.waive,
-    },
-    t.signatureSlots,
-  )
+  const { slot, color, opacity } = backdropTone({
+    name: t.name,
+    background: t.background,
+    foreground: t.foreground,
+    cursor: t.cursor,
+    selection: t.selectionBackground,
+    ansi: t.ansi,
+  })
 
   return {
     name: t.name,
     ...(t.subject ? { subject: t.subject } : {}),
     ...(t.from ? { from: t.from } : {}),
-    ansiSource: t.ansiSource,
     background: t.background,
     foreground: t.foreground,
     cursor: t.cursor,
@@ -145,7 +134,6 @@ export function paletteEntry(t: Theme): PaletteEntry {
     ansi: t.ansi,
     ...(t.other ? { other: colorsOfTheme(t.other) } : {}),
     gate: measure(t),
-    ...(t.waive.length > 0 ? { waived: t.waive } : {}),
     backdrop: { slot, color, opacity },
     ...(t.pictures ? { pictures: t.pictures } : {}),
   }
@@ -156,7 +144,6 @@ export function toTheme(entry: PaletteEntry): Theme {
     name: entry.name,
     ...(entry.subject ? { subject: entry.subject } : {}),
     ...(entry.from ? { from: entry.from } : {}),
-    ansiSource: entry.ansiSource,
     background: entry.background,
     foreground: entry.foreground,
     cursor: entry.cursor,
@@ -165,11 +152,6 @@ export function toTheme(entry: PaletteEntry): Theme {
     ...(entry.other ? { other: shadeOf(entry.other) } : {}),
     signature: entry.signature,
     signatureSlots: entry.signatureSlots,
-    ghostty: {
-      iconGhost: entry.cursor,
-      iconScreen: [entry.cursor, entry.selection, entry.background],
-    },
-    waive: entry.waived ?? [],
     ...(entry.pictures ? { pictures: entry.pictures } : {}),
   }
 }
@@ -177,7 +159,7 @@ export function toTheme(entry: PaletteEntry): Theme {
 const SWATCH_SIZE = 6
 const SWATCH_FILL = ['ansi1', 'ansi2', 'ansi4', 'ansi3', 'ansi5', 'ansi6']
 
-type Swatched = Pick<PaletteEntry, 'foreground' | 'cursor' | 'selection' | 'ansi' | 'signatureSlots'>
+type Swatched = Pick<PaletteEntry, 'foreground' | 'cursor' | 'selection' | 'ansi'>
 
 export function swatch(entry: Swatched): string[] {
   const color = (slot: string) =>
@@ -195,7 +177,7 @@ export function swatch(entry: Swatched): string[] {
   const roles = new Set<string>()
   const colors: string[] = []
 
-  for (const slot of ['foreground', ...entry.signatureSlots, ...SWATCH_FILL]) {
+  for (const slot of ['foreground', ...FACE, ...SWATCH_FILL]) {
     const hex = color(slot)
 
     if (colors.length === SWATCH_SIZE || !hex || roles.has(role(slot)) || colors.includes(hex)) {
@@ -207,10 +189,6 @@ export function swatch(entry: Swatched): string[] {
   }
 
   return colors
-}
-
-export function listed(palettes: PaletteEntry[]): PaletteEntry[] {
-  return palettes.filter((p) => p.default !== true)
 }
 
 export function emptyManifest(): Manifest {
@@ -277,5 +255,5 @@ export function entryProblem(p: PaletteEntry): string | undefined {
     return 'holds an other mode that is not 20 "#rrggbb" colors'
   }
 
-  return typeof p.ansiSource === 'string' ? textProblem(p.ansiSource) : 'has a field that is not text'
+  return undefined
 }

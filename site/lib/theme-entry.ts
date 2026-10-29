@@ -15,7 +15,6 @@ function shadeOf(entry: PaletteEntry): Shade {
     foreground: entry.foreground,
     cursor: entry.cursor,
     selectionBackground: entry.selection,
-    signature: entry.signature,
     ansi: entry.ansi,
     gate: entry.gate,
   }
@@ -62,7 +61,6 @@ export function toTheme(entry: PaletteEntry, shelves: Shelves): Theme {
     also,
     character,
     from: entry.from ?? null,
-    ansiSource: entry.ansiSource,
     signatureSlots: entry.signatureSlots,
     ...shadeOf(entry),
     mode,

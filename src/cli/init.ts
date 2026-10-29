@@ -98,7 +98,7 @@ function copyDir(from: string, to: string): InitPlan['copies'] {
 }
 
 function manifestOf({ builtin, commons }: Bundled): Manifest {
-  return { ...builtin, works: commons.works, renames: commons.renames }
+  return { ...builtin, works: commons.works }
 }
 
 export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {

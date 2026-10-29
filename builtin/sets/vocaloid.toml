@@ -4,7 +4,6 @@
 slug = "miku"
 subject = "vocaloid/miku"
 signature = ["cursor", "ansi1", "ansi12"]
-ansi_source = "vauxe Miku"
 
 [palette.colors]
 background = "#101918"
@@ -60,7 +59,6 @@ ansi = [
 slug = "kumori"
 subject = "vocaloid/kumori"
 signature = ["cursor", "ansi12", "ansi14"]
-ansi_source = "Everblush + Crypton"
 
 [palette.colors]
 background = "#201516"
@@ -116,7 +114,6 @@ ansi = [
 slug = "rin"
 subject = "vocaloid/rin"
 signature = ["cursor", "ansi4", "ansi1"]
-ansi_source = "Citruszest"
 
 [palette.colors]
 background = "#1b170c"
@@ -172,7 +169,6 @@ ansi = [
 slug = "len"
 subject = "vocaloid/len"
 signature = ["cursor", "ansi6", "ansi9"]
-ansi_source = "Srcery"
 
 [palette.colors]
 background = "#19180d"
@@ -228,7 +224,6 @@ ansi = [
 slug = "luka"
 subject = "vocaloid/luka"
 signature = ["cursor", "ansi3", "ansi2"]
-ansi_source = "Rose Pine"
 
 [palette.colors]
 background = "#1f1517"
@@ -284,7 +279,6 @@ ansi = [
 slug = "kaito"
 subject = "vocaloid/kaito"
 signature = ["cursor", "ansi4", "ansi3"]
-ansi_source = "Aardvark Blue + Crypton"
 
 [palette.colors]
 background = "#15171e"
@@ -340,7 +334,6 @@ ansi = [
 slug = "meiko"
 subject = "vocaloid/meiko"
 signature = ["cursor", "ansi11", "ansi14"]
-ansi_source = "Sundried + Crypton"
 
 [palette.colors]
 background = "#201514"

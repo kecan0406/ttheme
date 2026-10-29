@@ -146,7 +146,7 @@ test('the older screen counts the rules the gate misses, as its Gate box and the
   const e = editor({ colors: dim })
   const count = Number(/✗ Fails (\d+) contrast checks?/.exec(screen(e))?.[1])
   assert.equal(count, gateMisses(e))
-  assert.ok(count < check(gatedOf(e.list, e.signature, e.waive)).length)
+  assert.ok(count < check(gatedOf(e.list, e.signature)).length)
 })
 
 test('a ratio just under its floor misses the gate in the count as on the slots, though it reads as the floor', () => {
@@ -545,8 +545,8 @@ test('a paste into the palette picker keeps only what a typed key could add, so 
 })
 
 test('a share code pasted into the editor takes its colors, and a plain paste is still a color', () => {
-  const e = editor({ decode: (text) => (text === 'tt5:dawn' ? other : undefined) })
-  e.paste('tt5:dawn')
+  const e = editor({ decode: (text) => (text === 'tt6:dawn' ? other : undefined) })
+  e.paste('tt6:dawn')
   assert.deepEqual(e.colors(), other)
   press(e, 'u')
   assert.deepEqual(e.colors(), start)

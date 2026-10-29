@@ -22,7 +22,7 @@ import { PLANE_BOTTOM, PLANE_TOP, shareOf } from '../../src/core/plane.ts'
 import { repoFor } from '../../src/core/scaffold.ts'
 import { SEED_FIELDS, type Seeds } from '../../src/core/seeds.ts'
 import { readSet, setNameOf, setText } from '../../src/core/sets.ts'
-import { lchIn, lchTight, PAIRS, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
+import { FACE, lchIn, lchTight, PAIRS, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
 import { ago } from '../../src/core/text.ts'
 import { nameProblem, themeOf } from '../../src/core/theme.ts'
 import { partnerOf } from '../../src/core/tune.ts'
@@ -58,7 +58,6 @@ export interface Rows {
 export interface Gate {
   lines: GateLine[]
   passed: number
-  waived: number
 }
 
 export interface Tick {
@@ -152,18 +151,17 @@ export function rowsOf(
   return { base, pairs, empty: base.length === 0 && pairs.length === 0 }
 }
 
-export function gateOf(list: Hex[], signature: string[], waive: string[]): Gate {
-  const lines = gateLinesOf(list, signature, waive)
+export function gateOf(list: Hex[], signature: string[]): Gate {
+  const lines = gateLinesOf(list, signature)
 
   return {
     lines,
-    passed: lines.filter((line) => line.ok !== false).length,
-    waived: lines.filter((line) => line.ok === null).length,
+    passed: lines.filter((line) => line.ok).length,
   }
 }
 
-export function partnered(list: Hex[], slot: number, waive: string[]): Partnered {
-  const partner = partnerOf(list, slot, waive)
+export function partnered(list: Hex[], slot: number): Partnered {
+  const partner = partnerOf(list, slot)
   const ratio = contrast(list[slot] as Hex, list[partner.against] as Hex)
 
   return {
@@ -182,7 +180,6 @@ export function pickerOf(
   origin: Hex[],
   slot: number,
   signature: string[],
-  waive: string[],
   missed: ReadonlySet<number>,
   uses: number[],
   link: Link | null,
@@ -194,8 +191,8 @@ export function pickerOf(
 
   return {
     slot,
-    s: slotViewOf(list, signature, waive, missed, slot, uses),
-    partner: partnered(list, slot, waive),
+    s: slotViewOf(list, signature, missed, slot, uses),
+    partner: partnered(list, slot),
     origin: at
       ? {
           hex: from,
@@ -230,7 +227,6 @@ export interface AboutView {
   marks: string[]
   background: string
   trouble: boolean
-  ansiSource: string
   subject: string
   unread: boolean
   pictures: Picture[]
@@ -345,7 +341,7 @@ export function draftListOf(
       id: draft.id,
       name: draft.name,
       when: ago(draft.at, now),
-      dots: dotsOf(draft.made, draft.signature),
+      dots: dotsOf(draft.made, FACE),
       current: draft.id === current,
     })),
   }))
@@ -353,7 +349,7 @@ export function draftListOf(
   return { count: drafts.length, most: MOST_DRAFTS, query, groups, deleted }
 }
 
-export function dotsOf(list: Hex[], signature: string[]): Hex[] {
+export function dotsOf(list: Hex[], signature: readonly string[]): Hex[] {
   return signature.map((slot) => list[SLOT_NAMES.indexOf(slot)] ?? (list[0] as Hex))
 }
 
@@ -390,10 +386,9 @@ export function aboutOf(edit: Edit, view: View): AboutView {
     signature: edit.signature,
     slots: SLOT_NAMES,
     colors,
-    marks: marksOf(list[0] as Hex, list[1] as Hex, colors),
+    marks: marksOf(list[0] as Hex, list[1] as Hex, list[2] as Hex, list[3] as Hex),
     background: list[0] as Hex,
     trouble: signatureTrouble(edit) !== undefined,
-    ansiSource: edit.meta.ansiSource ?? '',
     subject: edit.meta.subject ?? '',
     unread: subjectTrouble(edit.meta.subject) !== undefined,
     pictures: (edit.meta.pictures ?? []).map(pictureOf),

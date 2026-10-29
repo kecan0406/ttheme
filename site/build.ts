@@ -236,7 +236,6 @@ async function drawn(): Promise<string> {
   const text = [
     ...palettes.flatMap((theme) => [
       theme.name,
-      theme.ansiSource,
       ...[theme.work, ...theme.also].flatMap((work) => (work ? [work.name, work.native ?? ''] : [])),
     ]),
     ...marketplaces.flatMap((marketplace) => [marketplace.id, marketplace.about]),

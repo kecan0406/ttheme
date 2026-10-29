@@ -4,7 +4,6 @@
 slug = "kirito"
 subject = "sword-art-online/kirito"
 signature = ["cursor", "ansi2", "selection"]
-ansi_source = "Karasu Night + Aincrad"
 
 [palette.colors]
 background = "#16171f"
@@ -60,7 +59,6 @@ ansi = [
 slug = "asuna"
 subject = "sword-art-online/asuna"
 signature = ["cursor", "ansi1", "foreground"]
-ansi_source = "Melange Dark + Aincrad"
 
 [palette.colors]
 background = "#1f160d"
@@ -116,7 +114,6 @@ ansi = [
 slug = "sinon"
 subject = "sword-art-online/sinon"
 signature = ["cursor", "ansi3", "ansi4"]
-ansi_source = "Catppuccin Macchiato + Aincrad"
 
 [palette.colors]
 background = "#111916"
@@ -172,7 +169,6 @@ ansi = [
 slug = "leafa"
 subject = "sword-art-online/leafa"
 signature = ["cursor", "ansi11", "selection"]
-ansi_source = "Kanagawa Wave + Aincrad"
 
 [palette.colors]
 background = "#141911"
@@ -228,7 +224,6 @@ ansi = [
 slug = "alice"
 subject = "sword-art-online/alice"
 signature = ["cursor", "selection", "ansi5"]
-ansi_source = "Cobalt Next Dark + Aincrad"
 
 [palette.colors]
 background = "#1b170c"
@@ -284,7 +279,6 @@ ansi = [
 slug = "yuuki"
 subject = "sword-art-online/yuuki"
 signature = ["cursor", "selection", "ansi13"]
-ansi_source = "Catppuccin Mocha + Aincrad"
 
 [palette.colors]
 background = "#1b161d"

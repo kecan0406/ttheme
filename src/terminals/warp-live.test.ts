@@ -29,7 +29,6 @@ const settled = () => new Promise((resolve) => setTimeout(resolve, WARP_SETTLE +
 function palette(name: string, background: string): PaletteEntry {
   return {
     name,
-    ansiSource: 'Test',
     background,
     foreground: '#e0f4f2',
     cursor: '#39c5bb',

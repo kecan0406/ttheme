@@ -87,7 +87,7 @@ import { codeOf, type Draft, shareLink } from '../../src/core/draft.ts'
 import { PLANE_BOTTOM, PLANE_TOP, reach } from '../../src/core/plane.ts'
 import { marketplaceToml, readmeOf, repoFor } from '../../src/core/scaffold.ts'
 import { grow, SEED_FIELDS, SEEDS, type Seeds } from '../../src/core/seeds.ts'
-import { lchIn, listOf, misses, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
+import { FACE, lchIn, listOf, misses, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
 import {
   brightLinks,
   following,
@@ -452,10 +452,9 @@ class PaletteBuilder extends HTMLElement {
   #render() {
     const edit = this.#state
     const list = this.#list()
-    const waive = edit.meta.waive ?? []
-    const missed = misses(list, edit.signature, waive)
+    const missed = misses(list, edit.signature)
     const changed = changedIn(edit, this.#view)
-    const gate = gateOf(list, edit.signature, waive)
+    const gate = gateOf(list, edit.signature)
     const mock = this.querySelector<HTMLElement>('[data-mock]')
 
     for (const part of slotVars(list).split(';')) {
@@ -463,7 +462,7 @@ class PaletteBuilder extends HTMLElement {
       mock?.style.setProperty(name, value)
     }
 
-    this.#fill(this.querySelector('[data-bar-dots]'), html(<TitleDots dots={dotsOf(list, edit.signature)} />))
+    this.#fill(this.querySelector('[data-bar-dots]'), html(<TitleDots dots={dotsOf(list, FACE)} />))
     const edits = changes(edit)
     const shown = this.querySelector<HTMLElement>('[data-changed]')
     this.#fill(this.querySelector('[data-changed-label]'), html(<ChangedLabel count={edits} />))
@@ -595,12 +594,9 @@ class PaletteBuilder extends HTMLElement {
       this.#fill(pictures, html(<PicturesBox about={about} />))
 
     for (const input of this.querySelectorAll<HTMLInputElement>('[data-meta]')) {
-      const subject = input.dataset.meta === 'subject'
-      const value = subject ? about.subject : about.ansiSource
+      if (input.value !== about.subject && document.activeElement !== input) input.value = about.subject
 
-      if (input.value !== value && document.activeElement !== input) input.value = value
-
-      if (subject) input.setAttribute('aria-invalid', String(about.unread))
+      input.setAttribute('aria-invalid', String(about.unread))
     }
   }
 
@@ -637,7 +633,7 @@ class PaletteBuilder extends HTMLElement {
     }
 
     this.#fill(this.querySelector('[data-seed-strip]'), html(<SeedStrip list={this.#state.made} />))
-    const gate = gateOf(this.#state.made, this.#state.signature, [])
+    const gate = gateOf(this.#state.made, this.#state.signature)
     const passed = this.querySelector('[data-seed-gate]')
 
     if (passed) passed.textContent = `${gate.passed} / ${gate.lines.length} pass`
@@ -650,7 +646,6 @@ class PaletteBuilder extends HTMLElement {
   #pickerView(slot: number): PickerView {
     const edit = this.#state
     const list = this.#list()
-    const waive = edit.meta.waive ?? []
     const link = slot >= 4 ? (this.#linked().has(slot >= 12 ? slot : slot + 8) ? 'on' : 'off') : null
 
     return pickerOf(
@@ -658,8 +653,7 @@ class PaletteBuilder extends HTMLElement {
       originIn(edit, this.#view),
       slot,
       edit.signature,
-      waive,
-      misses(list, edit.signature, waive),
+      misses(list, edit.signature),
       this.#data?.uses[slot] ?? [],
       link,
       this.#format,
@@ -1258,7 +1252,7 @@ class PaletteBuilder extends HTMLElement {
     const now = lchIn(list, list[slot] as Hex)
 
     if (kind === 'contrast') {
-      const partner = partnerOf(list, slot, this.#state.meta.waive ?? [])
+      const partner = partnerOf(list, slot)
       const against = list[partner.against] as Hex
       const solved = solveLightness(list[slot] as Hex, now, this.#keep, against, ratioAt(value / 1000))
       this.#set(slot, solved.hex, `contrast:${slot}`)
@@ -1487,14 +1481,12 @@ class PaletteBuilder extends HTMLElement {
     const seed = input.dataset.seed
 
     if (seed) return this.#schedule(() => this.#seed(seed, Number(input.value)))
-    const meta = input.dataset.meta
 
-    if (meta === 'ansiSource' || meta === 'subject') {
+    if (input.dataset.meta === 'subject') {
       const value = input.value.trim()
-      const { [meta]: _, ...rest } = this.#state.meta
-      this.#edit = { ...this.#state, meta: value ? { ...rest, [meta]: value } : rest, at: Date.now() }
-
-      if (meta === 'subject') this.#renderAbout()
+      const { subject: _, ...rest } = this.#state.meta
+      this.#edit = { ...this.#state, meta: value ? { ...rest, subject: value } : rest, at: Date.now() }
+      this.#renderAbout()
       this.#renderExport()
       this.#renderShared()
       this.#save()

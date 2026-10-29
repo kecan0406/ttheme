@@ -37,7 +37,7 @@ import {
 } from '@/lib/gallery'
 import { BrandIcon, GitHubStar, Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import { BUILTIN, paint, type Theme } from '@/lib/themes'
+import { BUILTIN, faceOf, paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { byWork, leadOf, leadsOf } from '@/lib/works'
 import { TerminalFrame } from './terminal-frame'
@@ -87,7 +87,7 @@ function peeksIn(shelf: Shelf, stacks: Stack[]): Stack[] {
 function WorkSwatch({ theme }: { theme: Theme }) {
   const style = [
     `--bg:${paint(theme, (shade) => shade.background)}`,
-    ...theme.signature.map((_, index) => `--sg${index}:${paint(theme, (shade) => shade.signature[index] as string)}`),
+    ...faceOf(theme).map((_, index) => `--sg${index}:${paint(theme, (shade) => faceOf(shade)[index] as string)}`),
   ].join(';')
 
   return <span aria-hidden="true" data-slot="work-swatch" style={style} />
@@ -96,7 +96,7 @@ function WorkSwatch({ theme }: { theme: Theme }) {
 function PaletteDots({ themes }: { themes: Theme[] }) {
   const style = themes
     .slice(0, DOTS)
-    .map((theme, index) => `--dot${index}:${paint(theme, (shade) => shade.signature[0] as string)}`)
+    .map((theme, index) => `--dot${index}:${paint(theme, (shade) => shade.cursor)}`)
     .join(';')
 
   return <span aria-hidden="true" data-slot="palette-dots" style={style} />

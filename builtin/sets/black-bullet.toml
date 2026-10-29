@@ -4,7 +4,6 @@
 slug = "rentaro"
 subject = "black-bullet/rentaro"
 signature = ["cursor", "selection", "foreground"]
-ansi_source = "Tomorrow Night + Varanium"
 
 [palette.colors]
 background = "#14181e"
@@ -60,7 +59,6 @@ ansi = [
 slug = "enju"
 subject = "black-bullet/enju"
 signature = ["cursor", "ansi11", "ansi3"]
-ansi_source = "Dogxi Misty + Varanium"
 
 [palette.colors]
 background = "#201512"
@@ -116,7 +114,6 @@ ansi = [
 slug = "kisara"
 subject = "black-bullet/kisara"
 signature = ["cursor", "selection", "ansi4"]
-ansi_source = "London Soho Night + Varanium"
 
 [palette.colors]
 background = "#1c151c"
@@ -172,7 +169,6 @@ ansi = [
 slug = "tina"
 subject = "black-bullet/tina"
 signature = ["cursor", "ansi6", "selection"]
-ansi_source = "Galizur + Varanium"
 
 [palette.colors]
 background = "#1b170c"
@@ -228,7 +224,6 @@ ansi = [
 slug = "kohina"
 subject = "black-bullet/kohina"
 signature = ["cursor", "selection", "ansi9"]
-ansi_source = "Spacegray Bright + Varanium"
 
 [palette.colors]
 background = "#12181d"
@@ -284,7 +279,6 @@ ansi = [
 slug = "kagetane"
 subject = "black-bullet/kagetane"
 signature = ["cursor", "foreground", "selection"]
-ansi_source = "Patina Dark + Varanium"
 
 [palette.colors]
 background = "#201515"

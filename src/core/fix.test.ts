@@ -28,7 +28,6 @@ const failing = {
     '#f9edd0',
   ],
   signatureSlots: ['foreground', 'ansi5', 'selection'],
-  waive: [],
 }
 
 test('fixGate lifts every color that reads too faint until the palette passes', () => {
@@ -41,12 +40,4 @@ test('fixGate lifts every color that reads too faint until the palette passes', 
     ['ansi0', 'ansi1', 'ansi7', 'ansi8', 'ansi10', 'foreground', 'selection'].sort(),
   )
   assert.equal(theme.ansi[2], failing.ansi[2])
-})
-
-test('fixGate leaves a waived rule alone', () => {
-  const { moves } = fixGate({ ...failing, waive: ['foreground', 'selection'] })
-  assert.equal(
-    moves.some((m) => m.slot === 'foreground'),
-    false,
-  )
 })

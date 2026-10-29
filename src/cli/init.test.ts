@@ -25,8 +25,7 @@ import { applyUninstall, planUninstall } from './uninstall.ts'
 function bundleFixture() {
   const palette = (name: string, subject?: string) => ({
     name,
-    ...(subject ? { subject } : { default: true }),
-    ansiSource: 'Fixture',
+    ...(subject ? { subject } : {}),
     background: '#101010',
     foreground: '#f0f0f0',
     cursor: '#ff8800',
@@ -41,13 +40,12 @@ function bundleFixture() {
   return {
     version: '0.0.0',
     gate: [],
-    palettes: [palette('ttheme/neutral'), palette('ttheme/juno', 'starfall/juno')],
+    palettes: [palette('ttheme/ember'), palette('ttheme/juno', 'starfall/juno')],
   }
 }
 
 const commonsFixture = {
   works: [{ id: 'starfall', name: 'Starfall', characters: [{ id: 'juno', native: ['ジュノ'] }] }],
-  renames: {},
 }
 
 function paletteText(): string {
@@ -97,11 +95,11 @@ function makeFixture(): InitPaths {
     'shell/launch-tab.zsh': '#!/bin/zsh -f',
     'shell/adapters/_osc.zsh': 'osc',
     'shell/adapters/kitty.zsh': 'kitty adapter',
-    'dist/ghostty/themes/neutral': 'neutral theme',
+    'dist/ghostty/themes/ember': 'ember theme',
     'dist/ghostty/themes/juno': 'juno theme',
-    'dist/kitty/themes/neutral.conf': 'neutral kitty',
+    'dist/kitty/themes/ember.conf': 'ember kitty',
     'dist/kitty/themes/juno.conf': 'juno kitty',
-    'dist/alacritty/themes/neutral.toml': 'neutral alacritty',
+    'dist/alacritty/themes/ember.toml': 'ember alacritty',
     'dist/alacritty/themes/juno.toml': 'juno alacritty',
     'dist/builtin.json': JSON.stringify(bundleFixture()),
     'dist/commons.json': JSON.stringify(commonsFixture),
@@ -163,7 +161,7 @@ test('applyInit leaves a fresh install with an empty table and no terminal theme
   const bundled = readBundled(paths.configHome)
   assert.deepEqual(
     bundled.builtin.palettes.map((e) => e.name),
-    ['ttheme/neutral', 'ttheme/juno'],
+    ['ttheme/ember', 'ttheme/juno'],
   )
   assert.deepEqual(
     bundled.commons.works.map((w) => w.id),
@@ -207,10 +205,10 @@ test('applyInit seeds config.zsh once and keeps user edits on rerun', () => {
 test('init wears the first palette and leaves the new-tab setting at its default', () => {
   const paths = makeFixture()
   const tab = /^(?:# )?: \$\{TTHEME_TAB_PALETTE:=(\w+)\}$/m
-  applyInit(planInit(options({ palettes: ['ttheme/neutral', 'ttheme/juno'] }), paths))
+  applyInit(planInit(options({ palettes: ['ttheme/ember', 'ttheme/juno'] }), paths))
   assert.match(
     readFileSync(join(paths.configHome, 'ttheme', 'ghostty.conf'), 'utf8'),
-    /^theme = ttheme-ttheme--neutral\.dark$/m,
+    /^theme = ttheme-ttheme--ember\.dark$/m,
   )
   assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8').match(tab)?.[1], 'off')
 })
@@ -221,17 +219,17 @@ test('init writes the mode it was given, and every palette is worn in it from th
 
   const worn = () => {
     const [, background, foreground] =
-      /^ {2}ttheme\/neutral +"(#[0-9a-f]{6}) (#[0-9a-f]{6})/m.exec(
+      /^ {2}ttheme\/ember +"(#[0-9a-f]{6}) (#[0-9a-f]{6})/m.exec(
         readFileSync(join(paths.configHome, 'ttheme', 'palettes.zsh'), 'utf8'),
       ) ?? []
 
     return modeOf({ background: background as string, foreground: foreground as string })
   }
 
-  applyInit(planInit(options({ palettes: ['ttheme/neutral'] }), paths))
+  applyInit(planInit(options({ palettes: ['ttheme/ember'] }), paths))
   assert.match(readFileSync(config, 'utf8'), /^# : \$\{TTHEME_MODE:=dark\}$/m)
   assert.equal(worn(), 'dark')
-  applyInit(planInit(options({ palettes: ['ttheme/neutral'], mode: 'light' }), paths))
+  applyInit(planInit(options({ palettes: ['ttheme/ember'], mode: 'light' }), paths))
   assert.match(readFileSync(config, 'utf8'), /^: \$\{TTHEME_MODE:=light\}$/m)
   assert.equal(worn(), 'light')
   applyInit(planUpgrade(installedState(paths.configHome) as Installed, paths))
@@ -337,7 +335,7 @@ test('init writes its own alacritty block but never edits an alacritty.toml that
 
 test('an upgrade keeps what is installed and only replaces the layer', () => {
   const paths = makeFixture()
-  applyInit(planInit(options({ palettes: ['ttheme/neutral', 'ttheme/juno'] }), paths))
+  applyInit(planInit(options({ palettes: ['ttheme/ember', 'ttheme/juno'] }), paths))
   const installedPath = join(paths.configHome, 'ttheme', 'installed.json')
   const state = { ...JSON.parse(readFileSync(installedPath, 'utf8')), startup: 'ttheme/juno', off: true }
   writeFileSync(installedPath, JSON.stringify(state))
@@ -354,7 +352,7 @@ test('an upgrade keeps what is installed and only replaces the layer', () => {
     terminals: ['ghostty'],
     startup: 'ttheme/juno',
     off: true,
-    palettes: ['ttheme/neutral', 'ttheme/juno'],
+    palettes: ['ttheme/ember', 'ttheme/juno'],
   })
   assert.match(readFileSync(configPath, 'utf8'), /^: \$\{TTHEME_FX:=glitch\}$/m)
   assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'ttheme.zsh'), 'utf8'), 'ttheme layer, next version')
@@ -412,10 +410,8 @@ test('setting it up again keeps the marketplaces, their auto-update, the handle 
   const state = installedState(paths.configHome)
   assert.ok(state)
   assert.deepEqual(
-    againManifest(state, paths)
-      .palettes.filter((e) => !e.default)
-      .map((e) => e.name),
-    palettes,
+    againManifest(state, paths).palettes.map((e) => e.name),
+    ['ttheme/ember', ...palettes],
   )
   applyInit(planAgain(state, options({ terminals: ['ghostty', 'kitty'], palettes }), paths))
   assert.deepEqual(installedState(paths.configHome), {
@@ -484,7 +480,7 @@ test('setting it up again carries every setting it does not ask about again', ()
     palettes: ['ttheme/juno'],
   }
 
-  const { installed } = planAgain(state, options({ terminals: ['kitty'], palettes: ['ttheme/neutral'] }), paths)
+  const { installed } = planAgain(state, options({ terminals: ['kitty'], palettes: ['ttheme/ember'] }), paths)
   const asked: (keyof Installed)[] = ['terminals', 'palettes', 'off', 'startup', 'skills', 'wtHome', 'wtProfile']
 
   for (const key of Object.keys(state) as (keyof Installed)[]) {

@@ -29,7 +29,6 @@ const mami = {
     '#f9edd0',
   ],
   signatureSlots: ['cursor', 'foreground', 'ansi11'],
-  waive: [],
 }
 
 const hct = (hex: string) => Hct.fromInt(argbFromHex(hex))
@@ -95,7 +94,6 @@ test('the mirror steps a bright white that lands a hair off the foreground towar
       '#49234e',
     ],
     signatureSlots: ['ansi3', 'foreground', 'ansi15'],
-    waive: [],
   }
 
   const shade = mirror(near)

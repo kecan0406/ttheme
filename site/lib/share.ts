@@ -1,10 +1,8 @@
-import { commons } from '@/lib/builtin'
 import { shelvesFor } from '@/lib/marketplaces'
 import { pictureOf } from '@/lib/pictures'
 import { toTheme } from '@/lib/theme-entry'
 import type { Theme } from '@/lib/themes'
 import type { Picture } from '@/lib/view-types'
-import { followSubject } from '../../src/core/commons.ts'
 import { type Draft, shareLink } from '../../src/core/draft.ts'
 import type { PaletteEntry } from '../../src/core/manifest.ts'
 import { fromCode, readCodes } from '../../src/core/own.ts'
@@ -22,9 +20,7 @@ export interface Shared {
 }
 
 function themeOf(entry: PaletteEntry): Theme {
-  const subject = entry.subject ? { subject: followSubject(commons.renames, entry.subject) } : {}
-
-  return toTheme({ ...entry, ...subject }, shelvesFor(publisherOf(entry.name)))
+  return toTheme(entry, shelvesFor(publisherOf(entry.name)))
 }
 
 export function readShared(code: string, index = 0): Shared {

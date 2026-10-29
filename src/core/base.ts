@@ -90,7 +90,7 @@ export function seeded(theme: Anchored, scheme: Shade): Anchored {
 }
 
 export function gateOf(theme: Anchored, shade: Shade): string[] {
-  return check({ ...shade, name: theme.name, signatureSlots: theme.signatureSlots, waive: [] }).map(
+  return check({ ...shade, name: theme.name, signatureSlots: theme.signatureSlots }).map(
     (v) => `${v.rule} — ${v.detail}`,
   )
 }
@@ -134,7 +134,6 @@ export function finished(theme: Anchored, shade: Shade) {
     ...shade,
     name: theme.name,
     signatureSlots: theme.signatureSlots,
-    waive: [],
   })
 
   return { shade: { ...shade, ansi: fixed.ansi }, moves }

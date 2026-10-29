@@ -17,7 +17,7 @@ import {
 import { tmpdir } from 'node:os'
 import { dirname, join, relative } from 'node:path'
 import { test } from 'node:test'
-import { inMode, type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
+import { inMode, type Manifest, type PaletteEntry } from '../core/manifest.ts'
 import { decodePng, encodeRgba } from '../core/png.ts'
 import { owned } from '../core/theme.ts'
 import { ROOT } from '../root.ts'
@@ -26,7 +26,6 @@ import type { Host } from '../store/host.ts'
 import { type Installed, readInstalled, startupPalette, writeInstalled } from '../store/installed.ts'
 import { upsertAlacrittyImport } from '../terminals/alacritty.ts'
 import { removeContourDefault } from '../terminals/contour.ts'
-import { ghostty } from '../terminals/emit/ghostty.ts'
 import { warpPictureFile } from '../terminals/emit/warp.ts'
 import { itermProfilesPath } from '../terminals/iterm2.ts'
 import {
@@ -48,7 +47,6 @@ import { forget, pointDefaults, refreshPictures, resolve, sync, wiringNotes, wit
 function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -65,30 +63,13 @@ function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry 
 const manifest: Manifest = {
   version: '0.1.0',
   gate: [],
-  palettes: [entry('ttheme/neutral', { default: true }), entry('ttheme/orla'), entry('ttheme/juno')],
+  palettes: [entry('ttheme/ember'), entry('ttheme/orla'), entry('ttheme/juno')],
   works: [],
 }
 
 function fixture(): string {
   return mkdtempSync(join(tmpdir(), 'ttheme-palettes-'))
 }
-
-test('toTheme derives the ghostty icon colors from the palette', () => {
-  const theme = toTheme(entry('ttheme/orla'))
-  assert.equal(theme.ghostty.iconGhost, '#7cc1d6')
-  assert.deepEqual(theme.ghostty.iconScreen, ['#7cc1d6', '#383b5b', '#11191c'])
-  assert.equal(theme.selectionBackground, '#383b5b')
-})
-
-test("each of a palette's Ghostty themes carries the dock icon colors of its own mode", () => {
-  const light = inMode(entry('ttheme/orla'), 'light')
-  const files = ghostty.emit?.(toTheme(inMode(entry('ttheme/orla'), 'dark')))
-  const content = files?.find((file) => file.path.endsWith('.light'))?.content ?? ''
-  assert.match(
-    content,
-    new RegExp(`^macos-icon-screen-color = ${light.cursor},${light.selection},${light.background}$`, 'm'),
-  )
-})
 
 test('resolve rejects a name no marketplace carries, and names the marketplace to add when none of its palettes is there', () => {
   assert.throws(() => resolve(manifest, ['ttheme/orla', 'nobody']), /not in any marketplace: nobody/)
@@ -108,7 +89,7 @@ test('sync writes a theme file per terminal and the zsh table', () => {
 
   const written = sync(home, manifest, {
     terminals: ['ghostty', 'kitty'],
-    palettes: ['ttheme/neutral', 'ttheme/orla'],
+    palettes: ['ttheme/ember', 'ttheme/orla'],
   })
 
   assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-ttheme--orla.dark')))
@@ -119,7 +100,7 @@ test('sync writes a theme file per terminal and the zsh table', () => {
   assert.ok(written.includes(join(home, 'kitty', 'kitty.conf')))
 
   const table = readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8')
-  assert.match(table, /TTHEME_ORDER=\(ttheme\/orla\)/)
+  assert.match(table, /TTHEME_ORDER=\(ttheme\/ember ttheme\/orla\)/)
   assert.match(table, /^typeset -ga TTHEME_TERMINALS=\(ghostty kitty\)$/m)
   assert.match(table, /^typeset -ga TTHEME_MARKETPLACES=\('ttheme'\)$/m)
   assert.doesNotMatch(table, /juno/)
@@ -834,7 +815,7 @@ test('a picture changed anywhere moves Warp to the new pictured theme only while
   const home = fixture()
   pictured(configHome, 0.2)
   const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'] }
-  writeBundled(configHome, { builtin: manifest, commons: { works: [], renames: {} } })
+  writeBundled(configHome, { builtin: manifest, commons: { works: [] } })
   writeInstalled(configHome, state)
   sync(configHome, manifest, state, home)
   const settings = warpSettings(home, configHome)
@@ -901,7 +882,7 @@ test('the shell names a laid Warp picture as the CLI does, so preview draws stra
   )
 })
 
-test('sync writes an iTerm2 profile per listed palette, in P3 with one color set for both modes', () => {
+test('sync writes an iTerm2 profile per installed palette, in P3 with one color set for both modes', () => {
   const configHome = fixture()
   const home = fixture()
   const profiles = itermProfilesPath(home)
@@ -913,7 +894,7 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
       terminals: ['iterm2'],
       startup: 'ttheme/juno',
       itermBase: 'BASE',
-      palettes: ['ttheme/neutral', 'ttheme/orla', 'ttheme/juno'],
+      palettes: ['ttheme/orla', 'ttheme/juno'],
     },
     home,
   )
@@ -1036,7 +1017,7 @@ test('startupPalette keeps an explicit choice and falls to the first otherwise',
 
 test('forget removes only the named palettes', () => {
   const home = fixture()
-  sync(home, manifest, { terminals: ['ghostty'], palettes: ['ttheme/neutral', 'ttheme/orla', 'ttheme/juno'] })
+  sync(home, manifest, { terminals: ['ghostty'], palettes: ['ttheme/ember', 'ttheme/orla', 'ttheme/juno'] })
   const removed = forget(home, manifest, ['ghostty'], ['ttheme/juno'])
   assert.deepEqual(removed, [
     join(home, 'ghostty', 'themes', 'ttheme-ttheme--juno.dark'),

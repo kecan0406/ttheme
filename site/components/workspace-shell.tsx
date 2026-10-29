@@ -106,21 +106,15 @@ export function WorkspaceStage({ class: className, children, ...props }: Props) 
 export function GateButton({
   passed,
   total,
-  waived = 0,
   ...props
-}: Omit<JSX.HtmlButtonTag, 'class'> & { passed: number; total: number; waived?: number }) {
+}: Omit<JSX.HtmlButtonTag, 'class'> & { passed: number; total: number }) {
   const clear = passed === total
-  const label = `contrast checks, ${passed} of ${total} pass${waived > 0 ? `, ${waived} waived` : ''}`
+  const label = `contrast checks, ${passed} of ${total} pass`
 
   return (
     <Button variant="muted" size="chip" aria-label={label} {...props}>
       <Icon node={clear ? Check : TriangleAlert} class={clear ? 'text-success' : 'text-warning'} />
       <span safe>{`contrast ${passed}/${total}`}</span>
-      {waived > 0 ? (
-        <span class="font-medium text-muted-foreground" safe>
-          {`· ${waived} waived`}
-        </span>
-      ) : null}
     </Button>
   )
 }

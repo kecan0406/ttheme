@@ -8,7 +8,6 @@ function entry(name: string, subject?: string, partial: Partial<PaletteEntry> = 
   return {
     name,
     ...(subject ? { subject } : {}),
-    ansiSource: 'Test',
     background: '#101010',
     foreground: '#f0f0f0',
     cursor: '#e0c060',
@@ -35,7 +34,7 @@ const WORKS: Work[] = [
 test('palettes.zsh tells the shell what each palette is of, which works hold them, and which palettes a bare name means', () => {
   const text = palettesZsh(
     [
-      entry('ttheme/neutral', undefined, { default: true }),
+      entry('ttheme/ember'),
       entry('kai@dust/glow'),
       entry('kai@dust/orla', 'starfall/orla'),
       entry('ttheme/lumi', 'glass-arcade/lumi'),
@@ -47,15 +46,18 @@ test('palettes.zsh tells the shell what each palette is of, which works hold the
   const line = (name: string) => text.split('\n').find((l) => l.startsWith(`typeset -ga ${name}=`))
   const table = (name: string) => text.slice(text.indexOf(`typeset -gA ${name}=(`)).split('\n)')[0] ?? ''
 
-  assert.equal(line('TTHEME_ORDER'), 'typeset -ga TTHEME_ORDER=(ttheme/lumi ttheme/orla kai@dust/orla kai@dust/glow)')
+  assert.equal(
+    line('TTHEME_ORDER'),
+    'typeset -ga TTHEME_ORDER=(ttheme/lumi ttheme/orla kai@dust/orla ttheme/ember kai@dust/glow)',
+  )
   assert.equal(line('TTHEME_WORKS'), 'typeset -ga TTHEME_WORKS=(glass-arcade night-parade starfall)')
   assert.match(table('TTHEME_SUBJECT'), /^ {2}ttheme\/lumi +"glass-arcade\/lumi"$/m)
-  assert.doesNotMatch(table('TTHEME_SUBJECT'), /glow|neutral/)
+  assert.doesNotMatch(table('TTHEME_SUBJECT'), /glow|ember/)
   assert.match(table('TTHEME_ALSO'), /^ {2}ttheme\/lumi +"night-parade"$/m)
   assert.match(table('TTHEME_WORK_NAME'), /^ {2}night-parade +"Night Parade's Eve"$/m)
   assert.match(table('TTHEME_WORK_NATIVE'), /^ {2}starfall +"スターフォール"$/m)
   assert.match(table('TTHEME_SHORT'), /^ {2}orla +"kai@dust\/orla ttheme\/orla"$/m)
-  assert.match(table('TTHEME_SHORT'), /^ {2}neutral +"ttheme\/neutral"$/m)
+  assert.match(table('TTHEME_SHORT'), /^ {2}ember +"ttheme\/ember"$/m)
   assert.match(table('TTHEME_NATIVE_NAMES'), /^ {2}ttheme\/lumi +"ルミ"$/m)
   assert.match(table('TTHEME_CHARACTER'), /^ {2}ttheme\/lumi +"lumi"$/m)
 })

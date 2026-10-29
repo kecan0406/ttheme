@@ -4,7 +4,6 @@
 slug = "gojo"
 subject = "jujutsu-kaisen/gojo"
 signature = ["cursor", "foreground", "ansi13"]
-ansi_source = "Horizon + Jujutsu"
 
 [palette.colors]
 background = "#11191c"
@@ -60,7 +59,6 @@ ansi = [
 slug = "yuji"
 subject = "jujutsu-kaisen/yuji"
 signature = ["cursor", "ansi3", "ansi1"]
-ansi_source = "Rose Pine Moon + Jujutsu"
 
 [palette.colors]
 background = "#211513"
@@ -116,7 +114,6 @@ ansi = [
 slug = "megumi"
 subject = "jujutsu-kaisen/megumi"
 signature = ["cursor", "ansi11", "ansi3"]
-ansi_source = "Night Owl + Jujutsu"
 
 [palette.colors]
 background = "#13181e"
@@ -172,7 +169,6 @@ ansi = [
 slug = "nobara"
 subject = "jujutsu-kaisen/nobara"
 signature = ["cursor", "ansi4", "ansi3"]
-ansi_source = "Spacedust + Jujutsu"
 
 [palette.colors]
 background = "#20160e"
@@ -228,7 +224,6 @@ ansi = [
 slug = "nanami"
 subject = "jujutsu-kaisen/nanami"
 signature = ["cursor", "ansi2", "ansi4"]
-ansi_source = "Pnevma + Jujutsu"
 
 [palette.colors]
 background = "#18180e"
@@ -284,7 +279,6 @@ ansi = [
 slug = "geto"
 subject = "jujutsu-kaisen/geto"
 signature = ["cursor", "ansi3", "ansi2"]
-ansi_source = "Royal + Jujutsu"
 
 [palette.colors]
 background = "#16171f"
@@ -340,7 +334,6 @@ ansi = [
 slug = "sukuna"
 subject = "jujutsu-kaisen/sukuna"
 signature = ["cursor", "foreground", "ansi9"]
-ansi_source = "Hurtado + Jujutsu"
 
 [palette.colors]
 background = "#211513"

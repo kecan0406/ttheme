@@ -62,7 +62,7 @@ export function parseColor(text: string): Hex | undefined {
   return undefined
 }
 
-export function partnerOf(list: Hex[], slot: number, waive: string[]): Partner {
+export function partnerOf(list: Hex[], slot: number): Partner {
   const ansi = slot - BASE.length
 
   const rule =
@@ -82,7 +82,7 @@ export function partnerOf(list: Hex[], slot: number, waive: string[]): Partner {
 
   return {
     against: ansi === 0 ? BASE.length + weakestUnder(list) : slot === 0 || slot === 3 ? 1 : 0,
-    floor: rule === undefined || waive.includes(rule) ? undefined : bound(rule),
+    floor: rule === undefined ? undefined : bound(rule),
   }
 }
 

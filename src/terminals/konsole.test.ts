@@ -15,7 +15,6 @@ import { baseLook, iniValue, konsole, konsoleData, konsoleProfile, konsolerc, wi
 function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    ansiSource: 'Horizon',
     background: '#11191c',
     foreground: '#e3e2e7',
     cursor: '#7cc1d6',
@@ -33,12 +32,7 @@ const manifest: Manifest = {
   version: '0.1.0',
   gate: [],
   works: [],
-  palettes: [
-    entry('neutral', { default: true }),
-    entry('orla', { cursor: '#ff0000' }),
-    entry('juno'),
-    entry('kai@dust/fern'),
-  ],
+  palettes: [entry('neutral'), entry('orla', { cursor: '#ff0000' }), entry('juno'), entry('kai@dust/fern')],
 }
 
 function fixture() {
@@ -133,7 +127,7 @@ test('a color scheme carries all thirty of Konsole entries: normal, intense from
   assert.equal(iniValue(hidden, 'General', 'Wallpaper'), '')
 })
 
-test('sync gives every listed palette and the default a profile on top of the user’s own, and drops the rest', () => {
+test('sync gives every installed palette a profile on top of the user’s own, and drops the rest', () => {
   const { configHome, home } = fixture()
 
   const state: Installed = {

@@ -4,7 +4,7 @@ import { leadsOf } from '@/lib/works'
 import bundled from '../../dist/builtin.json' with { type: 'json' }
 import published from '../../dist/commons.json' with { type: 'json' }
 import { parseCommons, worldOrder } from '../../src/core/commons.ts'
-import { listed, parseBuiltin } from '../../src/core/manifest.ts'
+import { parseBuiltin } from '../../src/core/manifest.ts'
 
 const bundle = parseBuiltin(JSON.stringify(bundled))
 
@@ -14,7 +14,7 @@ export const shelves: Shelves = { works: commons.works, commons: new Set(commons
 
 export const gate = bundle.gate
 
-export const entries = worldOrder(listed(bundle.palettes), commons.works)
+export const entries = worldOrder(bundle.palettes, commons.works)
 
 export const themes: Theme[] = entries.map((entry) => toTheme(entry, shelves))
 
