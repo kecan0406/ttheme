@@ -1686,7 +1686,30 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   color: var(--primary);
 }
 
-[data-slot='shell'] [data-comment] {
+:is([data-doc-body], [data-highlight]) [data-t='cmd'] {
+  color: var(--a2);
+}
+
+:is([data-doc-body], [data-highlight]) [data-t='opt'],
+:is([data-doc-body], [data-highlight]) [data-t='table'] {
+  color: var(--a6);
+}
+
+:is([data-doc-body], [data-highlight]) [data-t='str'] {
+  color: var(--a3);
+}
+
+:is([data-doc-body], [data-highlight]) [data-t='path'],
+:is([data-doc-body], [data-highlight]) [data-t='key'] {
+  color: var(--a4);
+}
+
+:is([data-doc-body], [data-highlight]) [data-t='var'],
+:is([data-doc-body], [data-highlight]) [data-t='num'] {
+  color: var(--a5);
+}
+
+:is([data-doc-body], [data-highlight]) [data-t='comment'] {
   color: var(--muted-foreground);
 }
 

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { FileView, LinkView, MarketView } from '@/lib/builder-view'
 import { INIT } from '@/lib/gallery'
+import { highlightHtml } from '@/lib/highlight'
 import { Icon, NewTab } from '@/lib/icons'
 import { CommandRow } from './command-row'
 
@@ -24,15 +25,16 @@ function Problem({ text }: { text: string }) {
 
 export function FilePanel({ view }: { view: FileView }) {
   if (view.problem) return <Problem text={view.problem} />
+  const safeText = highlightHtml('toml', view.text)
 
   return (
     <>
       <pre
         translate="no"
+        data-highlight
         class="max-h-64 overflow-auto rounded-xl border border-border bg-muted/65 px-3.5 py-3 font-mono text-xs leading-relaxed text-soft-foreground"
-        safe
       >
-        {view.text}
+        {safeText}
       </pre>
       {view.others.length > 0 ? (
         <p class={NOTE}>

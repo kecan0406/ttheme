@@ -3,6 +3,7 @@ import { Check, ChevronDown, Copy } from 'lucide'
 import { Marked, Renderer, type Token, type Tokens } from 'marked'
 import { buttonVariants } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { highlightHtml } from '@/lib/highlight'
 import { Icon } from '@/lib/icons'
 import { html } from '@/lib/render'
 import { cells, graphemes } from '../../src/core/text.ts'
@@ -56,9 +57,9 @@ const TONES = {
 const KEY =
   /^(?:(?:ctrl|alt|shift)\+|⇧)?(?:enter|esc|tab|space|bksp|del|home|end|pgup|pgdn|[↑↓←→]+|[a-zA-Z0-9?,.=+])$|^⇧$/
 
-const OPEN = /^<details>\s*<summary>([^<]+)<\/summary>$/
 const VERSION = /^(?:(?:[<>~^]=?|=)\d+(?:\.\d+)*|\d+(?:\.\d+)+)$/
 
+const OPEN = /^<details>\s*<summary>([^<]+)<\/summary>$/
 
 const CLOSE = /^<\/details>$/
 
@@ -116,10 +117,10 @@ function shell(text: string): string {
       const prompt = line.command ? '<span data-prompt aria-hidden="true">❯ </span>' : ''
 
       const note = line.comment
-        ? `${line.command ? '  ' : ''}<span data-comment>${escapeHtml(line.comment)}</span>`
+        ? `${line.command ? '  ' : ''}<span data-t="comment">${escapeHtml(line.comment)}</span>`
         : ''
 
-      return `${prompt}${escapeHtml(line.command)}${note}`
+      return `${prompt}${highlightHtml('sh', line.command)}${note}`
     })
     .join('\n')
 
@@ -128,8 +129,12 @@ function shell(text: string): string {
   return `<div data-slot="shell"><pre translate="no"><code>${rows}</code></pre>${copyButton(commands.join('\n'), label)}</div>\n`
 }
 
-function file(text: string, title: string): string {
-  return `<figure data-slot="file"><figcaption><span translate="no">${escapeHtml(title)}</span>${copyButton(text, `copy ${title}`)}</figcaption><pre translate="no"><code>${escapeHtml(text)}</code></pre></figure>\n`
+function body(kind: string | undefined, text: string): string {
+  return kind === 'toml' ? highlightHtml('toml', text) : escapeHtml(text)
+}
+
+function file(text: string, title: string, kind: string | undefined): string {
+  return `<figure data-slot="file"><figcaption><span translate="no">${escapeHtml(title)}</span>${copyButton(text, `copy ${title}`)}</figcaption><pre translate="no"><code>${body(kind, text)}</code></pre></figure>\n`
 }
 
 function screen(text: string, title: string | undefined): string {
@@ -288,9 +293,9 @@ function markdown(doc: Doc, place: Place): Marked {
 
         if (kind === 'screen') return screen(text, title)
 
-        if (title) return file(text, title)
+        if (title) return file(text, title, kind)
 
-        return `<pre data-slot="output" translate="no"><code>${escapeHtml(text)}</code></pre>\n`
+        return `<pre data-slot="output" translate="no"><code>${body(kind, text)}</code></pre>\n`
       },
       codespan({ text }) {
         if (KEY.test(text)) return `<kbd translate="no">${escapeHtml(text)}</kbd>`
