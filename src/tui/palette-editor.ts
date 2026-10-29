@@ -129,6 +129,8 @@ export interface EditorOptions {
   colors?: Colors
   tone?: true
   original?: Colors
+  against?: string
+  notice?: string
   signature: string[]
   palettes?: Choice[]
   pictures?: number
@@ -293,6 +295,10 @@ export class PaletteEditor {
     this.pictures = options.pictures ?? 0
     this.startPictures = this.pictures
     this.chain(this.original)
+
+    if (options.notice) {
+      this.say(options.notice)
+    }
   }
 
   private chain(list: Hex[]): void {
@@ -328,7 +334,11 @@ export class PaletteEditor {
   }
 
   based(): string {
-    return this.tone ? 'as the marketplace gives it' : 'as it opened'
+    return this.tone
+      ? 'as the marketplace gives it'
+      : this.options.against
+        ? `as ${this.options.against} has it`
+        : 'as it opened'
   }
 
   visible(slot: number): boolean {
@@ -384,6 +394,7 @@ export class PaletteEditor {
   dirty(): boolean {
     return (
       this.seeded ||
+      this.options.against !== undefined ||
       this.pictures !== this.startPictures ||
       this.list.some((c, i) => c !== this.start[i]) ||
       this.signature.join() !== this.startSignature.join()

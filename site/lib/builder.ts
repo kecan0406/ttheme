@@ -1,6 +1,7 @@
 import type { WorkRef } from '@/lib/themes'
 import type { Hex } from '../../src/core/color.ts'
 import type { Draft } from '../../src/core/draft.ts'
+import type { UpstreamEntry } from '../../src/core/manifest.ts'
 import { mirror } from '../../src/core/mirror.ts'
 import { type Mode, modeOf, otherOf } from '../../src/core/mode.ts'
 import { colorsOf, listOf, SLOT_NAMES } from '../../src/core/slots.ts'
@@ -20,7 +21,7 @@ export const BLANK_SIGNATURE = ['cursor', 'ansi5', 'ansi4']
 
 export interface Meta {
   subject?: string
-  from?: string
+  upstream?: UpstreamEntry
   pictures?: SharedPicture[]
 }
 
@@ -81,7 +82,7 @@ function copied(side: Side): Side {
 export function metaOf(draft: Draft): Meta {
   return {
     ...(draft.subject ? { subject: draft.subject } : {}),
-    ...(draft.from ? { from: draft.from } : {}),
+    ...(draft.upstream ? { upstream: draft.upstream } : {}),
     ...(draft.pictures && draft.pictures.length > 0 ? { pictures: draft.pictures } : {}),
   }
 }
@@ -92,7 +93,16 @@ export function editOf(draft: Draft, source: string | null, own: boolean, id: st
   const meta = metaOf(draft)
   const copy = !own && source !== null
 
-  const kept: Meta = copy ? { ...meta, from: meta.from ?? source } : meta
+  const kept: Meta = copy
+    ? {
+        ...meta,
+        upstream: {
+          palette: source,
+          colors: colorsOf(made),
+          ...(other.base ? { other: colorsOf(other.base) } : {}),
+        },
+      }
+    : meta
 
   return started({
     id,
@@ -234,7 +244,7 @@ export function draftFrom(edit: Body): Draft {
   return {
     name: edit.name,
     ...(meta.subject ? { subject: meta.subject } : {}),
-    ...(meta.from ? { from: meta.from } : {}),
+    ...(meta.upstream ? { upstream: meta.upstream } : {}),
     signature: [...edit.signature],
     ...made,
     ...(writesOther(edit) ? { other: colorsOf(otherList(edit)) } : {}),

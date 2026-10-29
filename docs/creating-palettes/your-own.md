@@ -59,10 +59,19 @@ palette there is named `<you>@<marketplace>/<palette>` and kept in a set under
 `sets/`: its work's, `<work>.toml`, or `original.toml` for a palette of no work.
 
 A palette made `--from` another keeps the work or character that one is of, so
-lists shelve it beside it, and names the palette it first came from — a copy
-of a copy names the original. One made from
+lists shelve it beside it, and names that palette as its upstream. One made from
 blank is an original until its table names a `subject`
 ([a set](publish.md#a-set)).
+
+## When its upstream changes
+
+A palette copied from another follows it. When the upstream palette changes,
+Browse marks yours `⇡` and `ttheme update` names it; `ctrl+r` there takes the
+upstream's change into every color you left as it was, and keeps every color
+you changed. A color you both changed stays yours, and `ttheme update` names
+it: `ttheme edit` then opens on it, `r` takes the upstream's color and `s`
+saves what you pick. A copy whose upstream is gone keeps working; it only
+stops taking updates.
 
 ## A picture for it
 

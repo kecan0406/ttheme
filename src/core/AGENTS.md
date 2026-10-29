@@ -7,6 +7,7 @@ The pure model. It does no I/O: no `process`, `fetch` or `Bun`, and of node only
 - A palette's full name is `<publisher>/<slug>` (`nameProblem`, `publisherOf`, `slugOf`, `isBuiltin` in `theme.ts`): `ttheme/<slug>` for a built-in one, `<owner>@<name>/<slug>` for a marketplace's. The slug is its `[[palette]]` table's `slug` key (`sets.ts`) and is used once in a marketplace, across all its sets.
 - Where a name becomes a file it goes through `stem`. `STEM_RULES` is the one rule, rendered into Python, Lua and zsh by `src/terminals/emit/stem.ts`.
 - A subject is `<work>` or `<work>/<character>` (`subjectProblem`); one character has one subject.
+- A copy's `upstream.palette` names the palette it was copied from, its parent and never the first original, and `[upstream.colors]` holds that parent's colors as last taken: the base `following` (`upstream.ts`) compares both sides against, color by color. Only colors merge; a color both sides changed keeps the copy's and its old base until `ttheme edit` settles it.
 
 ## Colors and the gate
 
@@ -23,7 +24,7 @@ The pure model. It does no I/O: no `process`, `fetch` or `Bun`, and of node only
 
 ## Share codes
 
-- A share code is `tt6:`. A change to its layout goes under another prefix, and an older prefix is refused, never read.
+- A share code is `tt7:`. A change to its layout goes under another prefix, and an older prefix is refused, never read.
 - The format is `draft.ts`, pure, with the hash and the packing handed in: `own.ts` packs with `node:zlib` and hashes with `node:crypto`; the site's builder uses `CompressionStream` and WebCrypto, never brotli.
 
 ## Decoders

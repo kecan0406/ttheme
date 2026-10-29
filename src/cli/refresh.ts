@@ -40,6 +40,7 @@ import { cap } from '../tui/keycaps.ts'
 import { pending } from '../tui/pending.ts'
 import { MARKS } from '../tui/style.ts'
 import { autoWanted, UPDATE_COMMAND } from './release.ts'
+import { behindOf, conflictLine, updatable } from './upstreams.ts'
 
 export const REFRESH_AFTER = 24 * 60 * 60 * 1000
 export const RETRY_AFTER = 60 * 60 * 1000
@@ -310,13 +311,19 @@ export function cachedMarketplace(home: string, source: string): ReadMarketplace
 }
 
 export function updatesLine(home: string): string | undefined {
-  const names = updatesOf(home, readMarketplaces(home, false)).map((e) => e.name)
+  const manifest = readMarketplaces(home, false)
+  const names = [...updatesOf(home, manifest).map((e) => e.name), ...updatable(home, manifest)]
 
-  if (names.length === 0) {
-    return undefined
-  }
+  const lines = [
+    ...(names.length > 0
+      ? [
+          `${names.join(', ')} ${names.length === 1 ? 'has an update' : 'have updates'} — ${cap('ctrl+r')} on a palette marked ${MARKS.update} in Browse (\`ttheme\`) takes it`,
+        ]
+      : []),
+    ...behindOf(home, manifest).flatMap((behind) => conflictLine(behind) ?? []),
+  ]
 
-  return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its marketplace' : 'their marketplaces'} — ${cap('ctrl+r')} on a palette marked ${MARKS.update} in Browse (\`ttheme\`) takes it`
+  return lines.length > 0 ? lines.join('\n') : undefined
 }
 
 export async function autoRefresh(home = configHome()): Promise<void> {

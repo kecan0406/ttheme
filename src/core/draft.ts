@@ -1,11 +1,11 @@
 import { SITES } from './booru.ts'
 import { isHex } from './color.ts'
-import type { PaletteEntry } from './manifest.ts'
+import type { PaletteEntry, UpstreamEntry } from './manifest.ts'
 import { modeOf, otherOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
 import { POSITIONS, readTheme, type SharedPicture, slugOf, type Theme } from './theme.ts'
 
-export const CODE = 'tt6:'
+export const CODE = 'tt7:'
 export const SHARE_URL = 'https://ttheme.dev/builder/'
 export const SUM = 4
 export const UNPACKED = 64 * 1024
@@ -17,7 +17,7 @@ const BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_
 export interface Draft {
   name: string
   subject?: string
-  from?: string
+  upstream?: UpstreamEntry
   signature: string[]
   background: string
   foreground: string
@@ -35,6 +35,8 @@ export interface Sealed {
 
 const q = (value: string) => JSON.stringify(value)
 
+const UPSTREAM_TABLE = /^\[upstream\.colors[\].]/m
+
 function pictureToml(p: SharedPicture): string[] {
   return [
     '[[picture]]',
@@ -47,9 +49,16 @@ function pictureToml(p: SharedPicture): string[] {
 }
 
 export function withPictures(text: string, pictures: readonly SharedPicture[]): string {
-  return pictures.length === 0
-    ? text
-    : `${text.replace(/\n*$/, '\n')}${pictures.map((p) => `\n${pictureToml(p).join('\n')}\n`).join('')}`
+  if (pictures.length === 0) {
+    return text
+  }
+
+  const added = pictures.map((p) => `\n${pictureToml(p).join('\n')}\n`).join('')
+  const at = text.search(UPSTREAM_TABLE)
+
+  return at < 0
+    ? `${text.replace(/\n*$/, '\n')}${added}`
+    : `${text.slice(0, at).replace(/\n*$/, '\n')}${added}\n${text.slice(at)}`
 }
 
 export function colorsToml(c: Colors, table: string): string[] {
@@ -70,12 +79,16 @@ export function colorsToml(c: Colors, table: string): string[] {
 export function paletteToml(d: Draft): string {
   const lines = [
     ...(d.subject ? [`subject = ${q(d.subject)}`] : []),
-    ...(d.from ? [`from = ${q(d.from)}`] : []),
+    ...(d.upstream ? [`upstream.palette = ${q(d.upstream.palette)}`] : []),
     `signature = [${d.signature.map(q).join(', ')}]`,
     '',
     ...colorsToml(d, 'colors'),
     ...(d.other ? ['', ...colorsToml(d.other, `colors.${otherOf(modeOf(d))}`)] : []),
     ...(d.pictures ?? []).flatMap((p) => ['', ...pictureToml(p)]),
+    ...(d.upstream?.colors ? ['', ...colorsToml(d.upstream.colors, 'upstream.colors')] : []),
+    ...(d.upstream?.colors && d.upstream.other
+      ? ['', ...colorsToml(d.upstream.other, `upstream.colors.${otherOf(modeOf(d.upstream.colors))}`)]
+      : []),
   ]
 
   return `${lines.join('\n')}\n`
@@ -85,7 +98,7 @@ export function draftOf(entry: PaletteEntry, name = entry.name): Draft {
   return {
     name,
     ...(entry.subject ? { subject: entry.subject } : {}),
-    ...(entry.from ? { from: entry.from } : {}),
+    ...(entry.upstream ? { upstream: entry.upstream } : {}),
     signature: entry.signatureSlots,
     background: entry.background,
     foreground: entry.foreground,
@@ -242,7 +255,7 @@ function writeDraft(w: Writer, d: Draft): void {
   }
 
   w.str(d.subject)
-  w.str(d.from)
+  w.str(d.upstream?.palette)
   const pictures = d.pictures ?? []
 
   if (pictures.length > 255) {
@@ -263,6 +276,21 @@ function writeDraft(w: Writer, d: Draft): void {
 
   for (const c of d.other ? colorList(d.other) : []) {
     w.color(c)
+  }
+
+  const made = colorList(d)
+  const bases = d.upstream?.colors ? [d.upstream.colors, ...(d.upstream.other ? [d.upstream.other] : [])] : []
+  w.u8(bases.length)
+
+  for (const [at, base] of bases.entries()) {
+    const against = at === 1 && d.other ? colorList(d.other) : made
+    const moved = colorList(base).flatMap((c, slot) => (c.toLowerCase() === against[slot]?.toLowerCase() ? [] : [slot]))
+    w.u8(moved.length)
+
+    for (const slot of moved) {
+      w.u8(slot)
+      w.color(colorList(base)[slot] as string)
+    }
   }
 }
 
@@ -359,13 +387,23 @@ function readColors(r: Reader): Colors {
   return { background, foreground, cursor, selection, ansi }
 }
 
+function colorsFromList([background, foreground, cursor, selection, ...ansi]: string[]): Colors {
+  return {
+    background: background as string,
+    foreground: foreground as string,
+    cursor: cursor as string,
+    selection: selection as string,
+    ansi,
+  }
+}
+
 function readDraft(r: Reader): Draft {
   const name = r.str()
   const { background, foreground, cursor, selection, ansi } = readColors(r)
 
   const signature = [r.u8(), r.u8(), r.u8()].map((i) => SLOTS[i] ?? `slot${i}`)
   const subject = r.str()
-  const from = r.str()
+  const upstream = r.str()
 
   const pictures = Array.from({ length: r.u8() }, (): SharedPicture => {
     const site = SITES[r.u8()]?.key ?? 'unknown'
@@ -390,11 +428,43 @@ function readDraft(r: Reader): Draft {
   }
 
   const other = carries === 1 ? readColors(r) : undefined
+  const made = [background, foreground, cursor, selection, ...ansi]
+
+  const bases = Array.from({ length: r.u8() }, (_, at) => {
+    const list = [...(at === 1 && other ? colorList(other) : made)]
+
+    for (let left = r.u8(); left > 0; left--) {
+      const slot = r.u8()
+      const color = r.color()
+
+      if (slot >= list.length || !isHex(color)) {
+        throw new Error('the share code holds an upstream color it cannot place')
+      }
+
+      list[slot] = color
+    }
+
+    return colorsFromList(list)
+  })
+
+  if (bases.length > 2 || (bases.length > 0 && !upstream)) {
+    throw new Error('the share code holds a palette it cannot read — was it copied whole?')
+  }
+
+  const [base, baseOther] = bases
 
   return {
     name,
     ...(subject ? { subject } : {}),
-    ...(from ? { from } : {}),
+    ...(upstream
+      ? {
+          upstream: {
+            palette: upstream,
+            ...(base ? { colors: base } : {}),
+            ...(baseOther ? { other: baseOther } : {}),
+          },
+        }
+      : {}),
     signature,
     background,
     foreground,

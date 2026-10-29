@@ -97,11 +97,65 @@
             },
             "maxLength": 81
           },
-          "from": {
-            "description": "The palette this one was copied from, by its full name: ttheme/<palette> for a built-in one, or <owner>@<marketplace>/<palette>, so a copy keeps saying whose it was",
-            "type": "string",
-            "pattern": "^(?:ttheme|[a-z0-9]+(?:-[a-z0-9]+)*@[a-z0-9]+(?:-[a-z0-9]+)*)/[a-z0-9]+(?:-[a-z0-9]+)*$",
-            "maxLength": 121
+          "upstream": {
+            "description": "The palette this one was copied from, which it can take updates from: ttheme/<palette> for a built-in one, or <owner>@<marketplace>/<palette>",
+            "type": "object",
+            "properties": {
+              "palette": {
+                "description": "The upstream palette's full name",
+                "type": "string",
+                "pattern": "^(?:ttheme|[a-z0-9]+(?:-[a-z0-9]+)*@[a-z0-9]+(?:-[a-z0-9]+)*)/[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "maxLength": 121
+              },
+              "colors": {
+                "description": "The upstream palette's colors when they were last taken, in the mode it was made in: the base an update compares both sides against",
+                "type": "object",
+                "properties": {
+                  "background": {
+                    "$ref": "#/definitions/color",
+                    "description": "The terminal's background"
+                  },
+                  "foreground": {
+                    "$ref": "#/definitions/color",
+                    "description": "The text color"
+                  },
+                  "cursor": {
+                    "$ref": "#/definitions/color",
+                    "description": "The cursor's color"
+                  },
+                  "selection_background": {
+                    "$ref": "#/definitions/color",
+                    "description": "The background of selected text"
+                  },
+                  "ansi": {
+                    "description": "The sixteen ANSI colors, black to bright white",
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/color"
+                    },
+                    "minItems": 16,
+                    "maxItems": 16
+                  },
+                  "light": {
+                    "description": "The palette in light mode, for a palette made dark. A built-in palette carries its other mode; without one, ttheme mirrors it",
+                    "$ref": "#/definitions/shade"
+                  },
+                  "dark": {
+                    "description": "The palette in dark mode, for a palette made light. A built-in palette carries its other mode; without one, ttheme mirrors it",
+                    "$ref": "#/definitions/shade"
+                  }
+                },
+                "required": ["background", "foreground", "cursor", "selection_background", "ansi"],
+                "not": {
+                  "properties": {
+                    "light": {},
+                    "dark": {}
+                  },
+                  "required": ["light", "dark"]
+                }
+              }
+            },
+            "required": ["palette"]
           },
           "signature": {
             "description": "The three colors the character is made from, which must differ: the first is the seed the other mode and the harmonizer lean toward, and these ANSI colors are let off their usual roles",

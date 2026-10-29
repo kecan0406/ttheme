@@ -55,7 +55,12 @@ async function shown(r: Found): Promise<Shown[]> {
     }
 
     const { id, entries, works, info } = fromArchive(source, archive)
-    const palettes = entries.map((e) => ({ ...e, name: slugOf(e.name) }))
+
+    const palettes = entries.map(({ upstream, ...e }) => ({
+      ...e,
+      name: slugOf(e.name),
+      ...(upstream ? { upstream: { palette: upstream.palette } } : {}),
+    }))
 
     return palettes.length === 0
       ? []

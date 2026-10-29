@@ -8,13 +8,19 @@ import { mirror } from './mirror.ts'
 import { type Mode, modeOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
 import { FACE } from './slots.ts'
-import type { Shade, SharedPicture, Theme } from './theme.ts'
+import type { Shade, SharedPicture, Theme, Upstream } from './theme.ts'
 import { nameProblem, subjectProblem } from './theme.ts'
+
+export interface UpstreamEntry {
+  palette: string
+  colors?: Colors
+  other?: Colors
+}
 
 export interface PaletteEntry {
   name: string
   subject?: string
-  from?: string
+  upstream?: UpstreamEntry
   background: string
   foreground: string
   cursor: string
@@ -56,6 +62,18 @@ export function shadeOf(colors: Colors): Shade {
     selectionBackground: colors.selection,
     ansi: colors.ansi,
   }
+}
+
+export function upstreamEntry({ palette, colors, other }: Upstream): UpstreamEntry {
+  return {
+    palette,
+    ...(colors ? { colors: colorsOfTheme(colors) } : {}),
+    ...(other ? { other: colorsOfTheme(other) } : {}),
+  }
+}
+
+function upstreamOf({ palette, colors, other }: UpstreamEntry): Upstream {
+  return { palette, ...(colors ? { colors: shadeOf(colors) } : {}), ...(other ? { other: shadeOf(other) } : {}) }
 }
 
 type Painted = Pick<PaletteEntry, 'background' | 'foreground' | 'cursor' | 'selection' | 'ansi'>
@@ -124,7 +142,7 @@ export function paletteEntry(t: Theme): PaletteEntry {
   return {
     name: t.name,
     ...(t.subject ? { subject: t.subject } : {}),
-    ...(t.from ? { from: t.from } : {}),
+    ...(t.upstream ? { upstream: upstreamEntry(t.upstream) } : {}),
     background: t.background,
     foreground: t.foreground,
     cursor: t.cursor,
@@ -143,7 +161,7 @@ export function toTheme(entry: PaletteEntry): Theme {
   return {
     name: entry.name,
     ...(entry.subject ? { subject: entry.subject } : {}),
-    ...(entry.from ? { from: entry.from } : {}),
+    ...(entry.upstream ? { upstream: upstreamOf(entry.upstream) } : {}),
     background: entry.background,
     foreground: entry.foreground,
     cursor: entry.cursor,
@@ -221,12 +239,31 @@ export function parseBuiltin(source: string): Bundle {
   return { version: bundle.version, gate: bundle.gate, palettes: bundle.palettes }
 }
 
+function twenty(colors: Colors | undefined): boolean {
+  return (
+    colors === undefined ||
+    (Array.isArray(colors?.ansi) &&
+      colors.ansi.length === 16 &&
+      [colors.background, colors.foreground, colors.cursor, colors.selection, ...colors.ansi].every(
+        (c) => typeof c === 'string' && isHex(c),
+      ))
+  )
+}
+
 export function entryProblem(p: PaletteEntry): string | undefined {
   if (typeof p?.name !== 'string' || !Array.isArray(p.ansi) || p.ansi.length !== 16) {
     return 'is missing name or its 16 ANSI colors'
   }
 
-  const named = [p.name, p.from].map((name) => (name === undefined ? undefined : nameProblem(name))).find(Boolean)
+  const named = [p.name, p.upstream?.palette]
+    .map((name) =>
+      name === undefined
+        ? undefined
+        : typeof name === 'string'
+          ? nameProblem(name)
+          : 'names an upstream that is not a palette',
+    )
+    .find(Boolean)
 
   if (named) {
     return named
@@ -240,19 +277,12 @@ export function entryProblem(p: PaletteEntry): string | undefined {
     return 'holds a color that is not "#rrggbb"'
   }
 
-  const other = p.other
-
-  if (
-    other !== undefined &&
-    !(
-      Array.isArray(other?.ansi) &&
-      other.ansi.length === 16 &&
-      [other.background, other.foreground, other.cursor, other.selection, ...other.ansi].every(
-        (c) => typeof c === 'string' && isHex(c),
-      )
-    )
-  ) {
+  if (!twenty(p.other)) {
     return 'holds an other mode that is not 20 "#rrggbb" colors'
+  }
+
+  if (!twenty(p.upstream?.colors) || !twenty(p.upstream?.other)) {
+    return 'holds upstream colors that are not 20 "#rrggbb" colors'
   }
 
   return undefined

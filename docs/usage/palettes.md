@@ -111,6 +111,10 @@ update. `ttheme update` names the palettes that have one, and Browse marks them
 `⇡`: `ctrl+r` there stages one, or every one under a work, for `enter` to
 apply. Your tuning stays on top of the update.
 
+A palette of your own that was copied from another takes that palette's
+updates the same way, into the colors you did not change
+([your own palette](../creating-palettes/your-own.md#when-its-upstream-changes)).
+
 An update also brings the palette's pictures along: the ones it gained are
 fetched, and the ones it dropped come off and the ones it reframed move, unless
 you changed that picture's framing, which keeps it as you left it. A picture

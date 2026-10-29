@@ -22,6 +22,7 @@ import { type Colors, grow, SEEDS } from '../core/seeds.ts'
 import { type Block, setBlocks, setText } from '../core/sets.ts'
 import { listOf } from '../core/slots.ts'
 import { isBuiltin, nameProblem, publisherOf, type SharedPicture, slugOf, type Theme } from '../core/theme.ts'
+import { upstreamFrom } from '../core/upstream.ts'
 import { dropImage, imageKey, rackOf, showImage } from '../pictures/backdrop.ts'
 import {
   available,
@@ -51,6 +52,7 @@ import { ensureLocal } from './marketplaces.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
 import { type Proposal, writeProposals } from './publish.ts'
 import { commit, refreshPictures, sync } from './sync.ts'
+import { behindOf, clashNote, clashOf, settled } from './upstreams.ts'
 
 export async function thisTab(): Promise<string | undefined> {
   const worn = process.env.TTHEME_WORN
@@ -365,7 +367,12 @@ export async function runNew(name: string, from: string | undefined, into: strin
     throw new Error('new opens the palette editor — run it in a terminal')
   }
 
-  const kept: Draft | undefined = source ? { ...draftOf(source, full), from: source.from ?? source.name } : undefined
+  const plain = source
+    ? (shown(home, manifest, false).palettes.find((e) => e.name === source.name) ?? source)
+    : undefined
+
+  const kept: Draft | undefined =
+    source && plain ? { ...draftOf(source, full), upstream: upstreamFrom(plain) } : undefined
 
   const held = source ? (heldPictures(home, source.name) ?? source.pictures) : undefined
   const blank: Draft = { name: full, signature: SIGNATURE, ...grow(SEEDS) }
@@ -456,16 +463,25 @@ export async function runEdit(name: string): Promise<void> {
   const table = mode === modeOf(theme) ? 'colors' : `colors.${mode}`
   const shade = table === 'colors' ? theme : (theme.other ?? mirror(theme))
 
-  const rewrite = ({ colors, signature }: Edited) =>
-    withPictures(
+  const clash = clashOf(
+    behindOf(home, manifest).find((b) => b.entry.name === full),
+    colorsOfTheme(shade),
+  )
+
+  const rewrite = ({ colors, signature }: Edited) => {
+    const text = withPictures(
       resign(withShade(before, colors, table), signature),
       shelf.fresh().filter((picture) => !listed.has(imageKey(picture))),
     )
+
+    return clash ? settled(text, clash) : text
+  }
 
   const edited = await editColors({
     title: 'Edit palette',
     name: full,
     colors: colorsOfTheme(shade),
+    ...(clash ? { original: clash.original, against: clash.against, notice: clashNote(clash) } : {}),
     signature: theme.signatureSlots,
     palettes: choicesOf(home, manifest, full),
     pictures: shelf.count(),

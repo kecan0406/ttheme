@@ -24,10 +24,16 @@ export interface SharedPicture {
   strength?: number
 }
 
+export interface Upstream {
+  palette: string
+  colors?: Shade
+  other?: Shade
+}
+
 export interface Theme {
   name: string
   subject?: string
-  from?: string
+  upstream?: Upstream
   background: Hex
   foreground: Hex
   cursor: Hex
@@ -332,13 +338,19 @@ export function toml(file: string, source: string): Record<string, unknown> {
 }
 
 export const PALETTE_KEYS = new Map([
-  ['', ['slug', 'subject', 'from', 'signature', 'colors', 'picture']],
+  ['', ['slug', 'subject', 'upstream', 'signature', 'colors', 'picture']],
   ['colors', ['background', 'foreground', 'cursor', 'selection_background', 'ansi', ...MODES]],
   ...MODES.map((mode): [string, string[]] => [
     `colors.${mode}`,
     ['background', 'foreground', 'cursor', 'selection_background', 'ansi'],
   ]),
   ['picture', ['site', 'id', 'size', 'position', 'strength']],
+  ['upstream', ['palette', 'colors']],
+  ['upstream.colors', ['background', 'foreground', 'cursor', 'selection_background', 'ansi', ...MODES]],
+  ...MODES.map((mode): [string, string[]] => [
+    `upstream.colors.${mode}`,
+    ['background', 'foreground', 'cursor', 'selection_background', 'ansi'],
+  ]),
 ])
 
 export function oddKeys(path: string, value: unknown, known: readonly string[] = []): string[] {
@@ -356,6 +368,15 @@ export function paletteOddKeys(doc: Record<string, unknown>): string[] {
     ...MODES.flatMap((mode) => oddKeys(`colors.${mode}`, table(doc.colors)[mode], PALETTE_KEYS.get(`colors.${mode}`))),
     ...(Array.isArray(doc.picture) ? doc.picture : []).flatMap((p, i) =>
       oddKeys(`picture[${i}]`, p, PALETTE_KEYS.get('picture')),
+    ),
+    ...oddKeys('upstream', doc.upstream, PALETTE_KEYS.get('upstream')),
+    ...oddKeys('upstream.colors', table(doc.upstream).colors, PALETTE_KEYS.get('upstream.colors')),
+    ...MODES.flatMap((mode) =>
+      oddKeys(
+        `upstream.colors.${mode}`,
+        table(table(doc.upstream).colors)[mode],
+        PALETTE_KEYS.get(`upstream.colors.${mode}`),
+      ),
     ),
   ]
 }
@@ -406,6 +427,51 @@ function readOther(file: string, colors: Record<string, unknown>, own: Shade, si
   return other
 }
 
+function readUpstream(file: string, raw: unknown, name: string): Upstream | undefined {
+  if (raw === undefined) {
+    return undefined
+  }
+
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    fail(file, 'upstream is a table — upstream.palette = "<marketplace>/<palette>"')
+  }
+
+  const up = raw as Record<string, unknown>
+  const palette = paletteName(file, 'upstream.palette', up.palette)
+
+  if (palette === name) {
+    fail(file, `upstream.palette names ${name} itself`)
+  }
+
+  if (up.colors === undefined) {
+    return { palette }
+  }
+
+  const colors = table(up.colors)
+  const base = readShade(file, 'upstream.colors', colors)
+  const mode = modeOf(base)
+  const want = otherOf(mode)
+
+  if (colors[mode] !== undefined) {
+    fail(
+      file,
+      `[palette.upstream.colors] is already ${mode} — its other mode goes in [palette.upstream.colors.${want}]`,
+    )
+  }
+
+  if (colors[want] === undefined) {
+    return { palette, colors: base }
+  }
+
+  const other = readShade(file, `upstream.colors.${want}`, table(colors[want]))
+
+  if (modeOf(other) !== want) {
+    fail(file, `[palette.upstream.colors.${want}] must be ${want}`)
+  }
+
+  return { palette, colors: base, other }
+}
+
 export function readTheme(file: string, source: string, place: Place): Theme {
   return themeOf(file, toml(file, source), place)
 }
@@ -414,7 +480,7 @@ export function themeOf(file: string, doc: Record<string, unknown>, place: Place
   const colors = table(doc.colors)
   const builtin = place.builtin === true
   const subject = subjectOf(file, doc.subject)
-  const origin = doc.from === undefined ? undefined : paletteName(file, 'from', doc.from)
+  const upstream = readUpstream(file, doc.upstream, place.name)
   const own = readShade(file, 'colors', colors)
   const { background, foreground, cursor, selectionBackground, ansi } = own
 
@@ -440,7 +506,7 @@ export function themeOf(file: string, doc: Record<string, unknown>, place: Place
   return {
     name: place.name,
     ...(subject ? { subject } : {}),
-    ...(origin ? { from: origin } : {}),
+    ...(upstream ? { upstream } : {}),
     background,
     foreground,
     cursor,

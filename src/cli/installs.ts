@@ -29,6 +29,7 @@ import { redrawPictures } from './redraw.ts'
 import { attempt, failureLine, updatesLine } from './refresh.ts'
 import { newerRelease, upgradeTo } from './release.ts'
 import { commit, sync } from './sync.ts'
+import { behindOf, conflictLine, takes, takeUpstream } from './upstreams.ts'
 
 export function reload(count: number): void {
   say(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
@@ -299,7 +300,7 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   return stuck ? 1 : 0
 }
 
-export async function takeUpdates(home: string, names: string[]): Promise<void> {
+export async function takeUpdates(home: string, names: string[]): Promise<string[]> {
   const manifest = readMarketplaces(home, false)
 
   const fresh = new Map(
@@ -308,15 +309,25 @@ export async function takeUpdates(home: string, names: string[]): Promise<void> 
       .map((e) => [e.name, e]),
   )
 
-  if (fresh.size === 0) {
-    return
+  const behind = behindOf(home, manifest).filter((b) => names.includes(b.entry.name) && takes(b))
+
+  if (fresh.size === 0 && behind.length === 0) {
+    return []
+  }
+
+  for (const b of behind) {
+    takeUpstream(home, b)
   }
 
   const was = readKept(home)
-  writeKept(
-    home,
-    was.map((e) => fresh.get(e.name) ?? e),
-  )
+
+  if (fresh.size > 0) {
+    writeKept(
+      home,
+      was.map((e) => fresh.get(e.name) ?? e),
+    )
+  }
+
   const state = readInstalled(home)
   sync(home, manifest, state)
   await followPictures(
@@ -325,6 +336,8 @@ export async function takeUpdates(home: string, names: string[]): Promise<void> 
     new Map(was.map((e) => [e.name, e.pictures])),
     state.terminals,
   )
+
+  return behind.flatMap((b) => conflictLine(b) ?? [])
 }
 
 export async function pickPalettes(

@@ -217,7 +217,7 @@ test('a tuned palette travels by its name alone, made from the original, and joi
   const link = await sharedLink(sender, ['juno', 'orla'])
 
   assert.deepEqual(
-    fromCode(codeOf(link) as string).map((d) => [d.name, d.subject, d.from, d.cursor]),
+    fromCode(codeOf(link) as string).map((d) => [d.name, d.subject, d.upstream?.palette, d.cursor]),
     [
       ['juno-tuned', 'tidewater/juno', 'ttheme/juno', '#ff8800'],
       ['ttheme/orla', 'tidewater/orla', undefined, '#7cc1d6'],
@@ -231,7 +231,8 @@ test('a tuned palette travels by its name alone, made from the original, and joi
   assert.deepEqual(readInstalled(receiver).palettes, ['ttheme/juno', 'kai@mine/juno-tuned', 'ttheme/orla'])
   const filed = readFileSync(join(receiver, 'ttheme', 'marketplace', 'mine', 'sets', 'tidewater.toml'), 'utf8')
   assert.match(filed, /^subject = "tidewater\/juno"$/m)
-  assert.match(filed, /^from = "ttheme\/juno"$/m)
+  assert.match(filed, /^upstream\.palette = "ttheme\/juno"$/m)
+  assert.match(filed, /^\[palette\.upstream\.colors\]$/m)
   assert.match(filed, /^cursor = "#ff8800"$/m)
   writeFileSync(
     join(receiver, 'ttheme', 'marketplace', 'mine', 'sets', 'tidewater.toml'),
@@ -247,7 +248,11 @@ test('adding a set file, or a link with a tuned palette, before you have a local
   const juno = manifest.palettes[1] as PaletteEntry
   const file = join(mkdtempSync(join(tmpdir(), 'ttheme-file-')), 'pip.toml')
   writeFileSync(file, setText([{ slug: 'pip', text: paletteToml(draftOf(juno)) }]))
-  const link = shareLink(shareCode([{ ...draftOf(juno), name: 'juno-tuned', from: 'ttheme/juno', cursor: '#ff8800' }]))
+
+  const link = shareLink(
+    shareCode([{ ...draftOf(juno), name: 'juno-tuned', upstream: { palette: 'ttheme/juno' }, cursor: '#ff8800' }]),
+  )
+
   const named = spyOn(p, 'text').mockImplementation(async () => 'mine')
   const asking = spyOn(terminal, 'interactive').mockReturnValue(true)
 
@@ -298,7 +303,7 @@ test('two tuned palettes of one name each travel under a name of their own, and 
   const link = await sharedLink(sender, ['ttheme/juno', 'kai@mine/juno', 'ttheme/juno'])
 
   assert.deepEqual(
-    fromCode(codeOf(link) as string).map((d) => [d.name, d.from, d.cursor]),
+    fromCode(codeOf(link) as string).map((d) => [d.name, d.upstream?.palette, d.cursor]),
     [
       ['juno-tuned', 'ttheme/juno', '#ff8800'],
       ['juno-tuned-2', 'kai@mine/juno', '#88ff00'],

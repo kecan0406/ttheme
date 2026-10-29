@@ -60,7 +60,7 @@ export function toTheme(entry: PaletteEntry, shelves: Shelves): Theme {
     work: about ? refOf(about.work, shelves) : null,
     also,
     character,
-    from: entry.from ?? null,
+    from: entry.upstream?.palette ?? null,
     signatureSlots: entry.signatureSlots,
     ...shadeOf(entry),
     mode,

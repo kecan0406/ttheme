@@ -35,6 +35,7 @@ import {
 } from './refresh.ts'
 import { autoWanted, releaseLine } from './release.ts'
 import { commit, forget } from './sync.ts'
+import { updatable } from './upstreams.ts'
 
 function inWear(home: string, entries: readonly PaletteEntry[]): PaletteEntry[] {
   const mode = modeFor(home)
@@ -69,7 +70,9 @@ function marketplaceState(home: string, state: Installed, source: string, tries:
 }
 
 function updateNames(home: string): string[] {
-  return updatesOf(home, readMarketplaces(home, false)).map((e) => e.name)
+  const manifest = readMarketplaces(home, false)
+
+  return [...updatesOf(home, manifest).map((e) => e.name), ...updatable(home, manifest)]
 }
 
 function browseIo(
@@ -227,10 +230,14 @@ async function applyBrowse(
   )
 
   if (renew.length > 0) {
-    await takeUpdates(home, renew)
+    const notes = await takeUpdates(home, renew)
 
     for (const name of renew) {
       say(`  ↑ ${name}`)
+    }
+
+    for (const note of notes) {
+      say(note)
     }
   }
 

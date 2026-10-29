@@ -382,7 +382,7 @@ export function aboutOf(edit: Edit, view: View): AboutView {
   return {
     name: edit.name,
     file: setFileOf(edit),
-    from: edit.meta.from ?? null,
+    from: edit.meta.upstream?.palette ?? null,
     signature: edit.signature,
     slots: SLOT_NAMES,
     colors,

@@ -9,7 +9,8 @@ import type { Manifest, PaletteEntry } from '../core/manifest.ts'
 import { shareCode } from '../core/own.ts'
 import { readmeOf, repoFor } from '../core/scaffold.ts'
 import { MARKETPLACE_FILE, publisherOf, slugOf, slugProblem } from '../core/theme.ts'
-import { available, find, readBundled, readMarketplaces, untuned } from '../store/available.ts'
+import { upstreamFrom } from '../core/upstream.ts'
+import { available, find, readBundled, readMarketplaces, shown, untuned } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { readInstalled } from '../store/installed.ts'
 import { dropOwnIn, type LocalMarketplace, localMarketplaces, ownIn, writeOwnIn } from '../store/local.ts'
@@ -44,6 +45,7 @@ export type Tone = 'tuned' | 'original'
 
 interface Toned {
   entry: PaletteEntry
+  original: PaletteEntry
   tuned: boolean
 }
 
@@ -116,7 +118,9 @@ async function toned(
     tunable.length === 0 ? 'original' : (tone ?? (interactive() ? await askTone(tunable, renamed) : 'tuned'))
 
   return pairs.map(({ original, tuned }) =>
-    which === 'tuned' && tuned !== original ? { entry: tuned, tuned: true } : { entry: original, tuned: false },
+    which === 'tuned' && tuned !== original
+      ? { entry: tuned, original, tuned: true }
+      : { entry: original, original, tuned: false },
   )
 }
 
@@ -164,7 +168,7 @@ export async function runShare(names: readonly string[], tone?: Tone): Promise<v
   const shared = [...new Map((await toned(home, manifest, names, tone, true)).map((s) => [s.entry.name, s])).values()]
   const used = new Set<string>()
 
-  const drafts: Draft[] = shared.map(({ entry, tuned }) => {
+  const drafts: Draft[] = shared.map(({ entry, original, tuned }) => {
     const draft = draftFor(home, entry)
     const name = tuned ? freeName(tunedName(entry.name), used) : draft.name
     const problem = tuned ? slugProblem(name) : undefined
@@ -175,7 +179,7 @@ export async function runShare(names: readonly string[], tone?: Tone): Promise<v
 
     used.add(name)
 
-    return tuned ? { ...draft, name, from: entry.name } : draft
+    return tuned ? { ...draft, name, upstream: upstreamFrom(original) } : draft
   })
 
   const [first] = drafts
@@ -304,10 +308,6 @@ async function settle(
   )
 }
 
-function fromOf(entry: PaletteEntry): string {
-  return entry.from ?? entry.name
-}
-
 async function copiesFor(
   home: string,
   manifest: Manifest,
@@ -323,6 +323,7 @@ async function copiesFor(
   const copies: Copy[] = []
   const used = new Set<string>()
   const taken = (slug: string) => used.has(slug) || keptBy.has(slug) || (files.has(slug) && !leaving.has(slug))
+  const plain = new Map(shown(home, manifest, false).palettes.map((e) => [e.name, e]))
 
   const shared = await toned(
     home,
@@ -334,7 +335,7 @@ async function copiesFor(
 
   for (const { entry } of shared) {
     let slug: string | undefined = slugOf(entry.name)
-    let kind: Copy['kind'] = keptBy.get(slug)?.from === fromOf(entry) && !used.has(slug) ? 'update' : 'add'
+    let kind: Copy['kind'] = keptBy.get(slug)?.upstream?.palette === entry.name && !used.has(slug) ? 'update' : 'add'
 
     if (kind === 'add' && taken(slug)) {
       const answer = await settle(marketplace, slug, !used.has(slug), taken)
@@ -353,7 +354,7 @@ async function copiesFor(
     used.add(slug)
     keptBy.delete(slug)
     const full = `${marketplace.id}/${slug}`
-    const copy: Draft = { ...draftFor(home, entry), name: full, from: fromOf(entry) }
+    const copy: Draft = { ...draftFor(home, entry), name: full, upstream: upstreamFrom(plain.get(entry.name) ?? entry) }
     readOwnText(full, paletteToml(copy))
     copies.push({ entry, slug, draft: copy, kind })
   }
@@ -497,7 +498,9 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
   ]
 
   const named = (kind: Copy['kind']) =>
-    copies.filter((c) => c.kind === kind).map((c) => (kind === 'update' ? c.slug : `${c.slug} (from ${c.draft.from})`))
+    copies
+      .filter((c) => c.kind === kind)
+      .map((c) => (kind === 'update' ? c.slug : `${c.slug} (from ${c.draft.upstream?.palette})`))
 
   const added = named('add')
   const updated = named('update')

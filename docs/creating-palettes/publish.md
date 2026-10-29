@@ -76,7 +76,7 @@ The `$schema` line gives your editor completion and checks.
 [[palette]]
 slug = "rei"                               # its name in the marketplace
 subject = "evangelion/rei"                 # what it is of: a work, or a work's character
-from = "ttheme/rei"                        # the palette it was copied from, if any
+upstream.palette = "ttheme/rei"            # the palette it was copied from, if any
 signature = ["cursor", "ansi1", "ansi12"]  # the three colors the character is made from
 
 [palette.colors]
@@ -99,8 +99,10 @@ a `slug`, a `signature` and its `[palette.colors]`.
 `undertale`, or one of its characters, such as `evangelion/rei`. ttheme's lists
 shelve it under that work, beside every other marketplace's palettes of it. A
 palette without one is an original, which lists under your marketplace.
-`from` names the palette it was first copied from, and a copy of a copy keeps
-it.
+`upstream.palette` names the palette it was copied from, and
+`[palette.upstream.colors]` (its other mode in `[palette.upstream.colors.light]`)
+holds that palette's colors as they were when it was copied or last updated.
+ttheme writes both: [your own palette](your-own.md) says what they do.
 
 `[palette.colors.light]` (or `[palette.colors.dark]`) may hold the palette in
 its other mode; without it, ttheme mirrors one. `[[palette.picture]]` tables

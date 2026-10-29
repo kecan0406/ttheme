@@ -545,8 +545,8 @@ test('a paste into the palette picker keeps only what a typed key could add, so 
 })
 
 test('a share code pasted into the editor takes its colors, and a plain paste is still a color', () => {
-  const e = editor({ decode: (text) => (text === 'tt6:dawn' ? other : undefined) })
-  e.paste('tt6:dawn')
+  const e = editor({ decode: (text) => (text === 'tt7:dawn' ? other : undefined) })
+  e.paste('tt7:dawn')
   assert.deepEqual(e.colors(), other)
   press(e, 'u')
   assert.deepEqual(e.colors(), start)

@@ -79,14 +79,14 @@ ansi = [${Array.from({ length: 16 }, () => '"#808080"').join(', ')}]
 
 const place = { name: 'kai@dust/dusk' }
 
-test('a palette names its subject and where it was copied from at the top', () => {
-  const theme = readTheme('dusk', palette('subject = "neon/dusk"\nfrom = "ttheme/orla"'), place)
+test('a palette names its subject and the palette it was copied from at the top', () => {
+  const theme = readTheme('dusk', palette('subject = "neon/dusk"\nupstream.palette = "ttheme/orla"'), place)
   assert.equal(theme.name, 'kai@dust/dusk')
   assert.equal(theme.subject, 'neon/dusk')
-  assert.equal(theme.from, 'ttheme/orla')
+  assert.deepEqual(theme.upstream, { palette: 'ttheme/orla' })
   assert.equal(readTheme('d', palette(''), place).subject, undefined)
   assert.throws(() => readTheme('d', palette('subject = "Neon"'), place), /names a work/)
-  assert.throws(() => readTheme('d', palette('from = "orla"'), place), /lowercase letters/)
+  assert.throws(() => readTheme('d', palette('upstream.palette = "orla"'), place), /lowercase letters/)
   assert.throws(
     () => readTheme('d', palette('subject = "neon\\u001b]52;c;aGk=\\u0007"'), place),
     (error: Error) => !error.message.includes('\x1b') && !error.message.includes('\x07'),

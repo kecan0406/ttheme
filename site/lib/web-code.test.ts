@@ -27,7 +27,7 @@ const ansi = [
 const draft: Draft = {
   name: 'orla-tuned',
   subject: 'starfall/orla',
-  from: 'ttheme/orla',
+  upstream: { palette: 'ttheme/orla' },
   signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
   foreground: '#ede2c6',
@@ -48,8 +48,8 @@ test('a link the builder makes in a browser is one the CLI reads, both modes and
   const code = await webCode([draft])
   expect(code).toMatch(new RegExp(`^${CODE}[A-Za-z0-9_-]+$`))
   expect(fromCode(code)).toEqual([draft])
-  expect(readCodes(code).map((entry) => [entry.name, entry.subject, entry.from])).toEqual([
-    [draft.name, draft.subject, draft.from],
+  expect(readCodes(code).map((entry) => [entry.name, entry.subject, entry.upstream?.palette])).toEqual([
+    [draft.name, draft.subject, draft.upstream?.palette],
   ])
 })
 

@@ -1091,7 +1091,7 @@ test("a marketplace's palette gets theme files and a startup line with -- for th
 
   const shared: Manifest = {
     ...manifest,
-    palettes: [...manifest.palettes, entry('kai@dust/pip', { from: 'ttheme/orla' })],
+    palettes: [...manifest.palettes, entry('kai@dust/pip', { upstream: { palette: 'ttheme/orla' } })],
   }
 
   sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['kai@dust/pip'] })

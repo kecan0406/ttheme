@@ -16,7 +16,6 @@ import { publisherOf } from './theme.ts'
 const draft: Draft = {
   name: 'kumquat09@dust/wren',
   subject: 'starfall/orla',
-  from: 'ttheme/orla',
   signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
   foreground: '#ede2c6',
@@ -46,6 +45,17 @@ const draft: Draft = {
   ],
 }
 
+draft.upstream = {
+  palette: 'ttheme/orla',
+  colors: {
+    background: draft.background,
+    foreground: draft.foreground,
+    cursor: '#f0a050',
+    selection: draft.selection,
+    ansi: draft.ansi.map((color, i) => (i === 3 ? '#a08040' : color)),
+  },
+}
+
 const lit = {
   background: '#fbf8ff',
   foreground: '#1d1a24',
@@ -56,9 +66,11 @@ const lit = {
 
 test('a share code carries the whole palette, its pictures and its other mode', () => {
   const code = shareCode([draft])
-  assert.match(code, /^tt6:[A-Za-z0-9_-]+$/)
+  assert.match(code, /^tt7:[A-Za-z0-9_-]+$/)
   assert.deepEqual(fromCode(code), [draft])
   assert.deepEqual(fromCode(shareCode([{ ...draft, other: lit }])), [{ ...draft, other: lit }])
+  const both = { ...draft, other: lit, upstream: { ...draft.upstream, other: { ...lit, cursor: '#123456' } } } as Draft
+  assert.deepEqual(fromCode(shareCode([both])), [both])
 })
 
 test('a share code refuses more pictures than its count can carry instead of dropping them all', () => {
@@ -74,7 +86,7 @@ test('a share link reads as the code it carries, however it was pasted', () => {
   assert.equal(codeOf(link), code)
   assert.equal(codeOf(`  ${link}/\n`), code)
   assert.equal(codeOf(`${link}?utm_source=chat`), code)
-  assert.equal(codeOf(link.replace('tt6:', 'tt6%3A')), code)
+  assert.equal(codeOf(link.replace('tt7:', 'tt7%3A')), code)
   assert.equal(codeOf(code), code)
   assert.equal(codeOf('https://ttheme.dev/marketplace'), undefined)
   assert.equal(codeOf('https://ttheme.dev/builder/pip'), undefined)
@@ -91,7 +103,7 @@ const bodyOf = (code: string): Buffer => {
 }
 
 const signed = (payload: Buffer): string =>
-  `tt6:${Buffer.concat([payload, createHash('sha256').update(payload).digest().subarray(0, 4)]).toString('base64url')}`
+  `tt7:${Buffer.concat([payload, createHash('sha256').update(payload).digest().subarray(0, 4)]).toString('base64url')}`
 
 const raw = (body: Buffer): string => signed(Buffer.concat([Buffer.from([0]), body]))
 
@@ -99,9 +111,9 @@ test('a share code that was cut, padded or retyped is refused, and so is one fro
   const code = shareCode([draft])
   assert.throws(() => fromCode(code.slice(0, -6)), /does not add up/)
   assert.throws(() => fromCode(`${code}AAAA`), /does not add up/)
-  assert.throws(() => fromCode('tt6:AAA'), /cut short/)
-  assert.throws(() => fromCode(code.replace('tt6:', 'tt2:')), /reads tt6: share codes, not tt2:/)
-  assert.throws(() => fromCode(code.replace('tt6:', 'xx:')), /starts with tt6:/)
+  assert.throws(() => fromCode('tt7:AAA'), /cut short/)
+  assert.throws(() => fromCode(code.replace('tt7:', 'tt2:')), /reads tt7: share codes, not tt2:/)
+  assert.throws(() => fromCode(code.replace('tt7:', 'xx:')), /starts with tt7:/)
   assert.throws(() => fromCode(`${code}!`), /characters it never uses/)
   const body = bodyOf(code)
   assert.deepEqual(fromCode(raw(body)), [draft])
@@ -112,15 +124,20 @@ test('a share code that was cut, padded or retyped is refused, and so is one fro
   assert.throws(() => fromCode(raw(bad)), { name: 'Error', message: /text it cannot read/ })
 })
 
-const juno: Draft = { ...draft, name: 'kumquat09@dust/juno', from: 'kumquat09@tide/juno', pictures: [] }
+const juno: Draft = {
+  ...draft,
+  name: 'kumquat09@dust/juno',
+  upstream: { palette: 'kumquat09@tide/juno' },
+  pictures: [],
+}
 
 test('a share link carries several palettes, where each one came from and the other modes they keep', () => {
   const { pictures: _, ...bare } = juno
   const code = shareCode([draft, { ...bare, other: lit }])
-  assert.match(code, /^tt6:[A-Za-z0-9_-]+$/)
+  assert.match(code, /^tt7:[A-Za-z0-9_-]+$/)
   assert.deepEqual(fromCode(code), [draft, { ...bare, other: lit }])
   assert.equal(codeOf(shareLink(code)), code)
-  const { subject: _subject, from: _from, ...plain } = draft
+  const { subject: _subject, upstream: _upstream, ...plain } = draft
   assert.deepEqual(fromCode(shareCode([plain])), [plain])
   assert.throws(() => shareCode([]), /1 to 255 palettes/)
 })
@@ -130,10 +147,14 @@ test('a share code that packs too much, names a palette twice or marks an other 
   const flood = Buffer.concat([Buffer.from([1]), deflateRawSync(Buffer.alloc(200_000, 1))])
   assert.throws(() => fromCode(signed(flood)), { name: 'Error', message: /does not unpack/ })
   assert.throws(() => fromCode(shareCode([draft, draft])), /holds kumquat09@dust\/wren twice/)
-  const one = bodyOf(shareCode([draft]))
+  const { upstream: _, ...plain } = draft
+  const one = bodyOf(shareCode([plain]))
   const marked = Buffer.from(one)
-  marked[one.length - 1] = 2
+  marked[one.length - 2] = 2
   assert.throws(() => fromCode(raw(marked)), /palette it cannot read/)
+  const based = Buffer.from(one)
+  based[one.length - 1] = 1
+  assert.throws(() => fromCode(raw(based)), /palette it cannot read|cut short/)
 })
 
 test('a share code with any one character changed is refused', () => {
@@ -171,15 +192,18 @@ test('a share code whose subject or palette name breaks the rules is refused, so
 test('a share code may carry a palette no marketplace holds yet, named by its slug alone', () => {
   const [unplaced] = readCodes(shareCode([{ ...draft, name: 'wren-tuned' }]))
   assert.equal(unplaced?.name, 'wren-tuned')
-  assert.equal(unplaced?.from, 'ttheme/orla')
+  assert.equal(unplaced?.upstream?.palette, 'ttheme/orla')
+  assert.equal(unplaced?.upstream?.colors?.cursor, '#f0a050')
 })
 
 test('the TOML a draft writes reads back as the same palette', () => {
   const theme = readOwnText(draft.name, paletteToml(draft))
   assert.equal(theme.name, 'kumquat09@dust/wren')
   assert.equal(theme.subject, 'starfall/orla')
-  assert.equal(theme.from, 'ttheme/orla')
-  assert.equal(readOwnText(juno.name, paletteToml(juno)).from, 'kumquat09@tide/juno')
+  assert.equal(theme.upstream?.palette, 'ttheme/orla')
+  assert.equal(theme.upstream?.colors?.cursor, '#f0a050')
+  assert.equal(theme.upstream?.colors?.ansi[3], '#a08040')
+  assert.deepEqual(readOwnText(juno.name, paletteToml(juno)).upstream, { palette: 'kumquat09@tide/juno' })
   assert.deepEqual(theme.pictures, draft.pictures)
   assert.deepEqual(theme.ansi, draft.ansi)
 })

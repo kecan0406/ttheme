@@ -286,7 +286,7 @@ export class Panel {
 
     const extras = [
       ...(pictures > 0 ? [`${pictures} picture${pictures === 1 ? '' : 's'}`] : []),
-      ...(e.from ? [`From ${e.from}`] : []),
+      ...(e.upstream ? [`From ${e.upstream.palette}`] : []),
     ].join(SEP)
 
     const others = fails.length > 1 ? `${SEP}+${fails.length - 1}` : ''

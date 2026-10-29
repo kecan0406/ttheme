@@ -127,7 +127,7 @@ test('the set schema takes the slugs, subjects and full names the set and palett
   }
 
   for (const name of NAMES) {
-    assert.equal(takes(props.from, name), nameProblem(name) === undefined, `from ${name}`)
+    assert.equal(takes(props.upstream?.properties?.palette, name), nameProblem(name) === undefined, `upstream ${name}`)
   }
 })
 
