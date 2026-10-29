@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.79
+
 - An ssh pin takes in Ghostty under the alias Ghostty 1.4 suggests, `alias ssh='ghostty +ssh --'`, and when you run `ghostty +ssh` yourself.
 - After `reset` in Ghostty 1.4 or Alacritty, which put back only the default palette's 16 ANSI colors, a tab shows its own palette again at the next prompt.
 
