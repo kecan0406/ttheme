@@ -25,7 +25,7 @@ test('an answer keeps the works that have palettes and says what a character was
   const hits = [hit('character', 'ネル', ['nell_(moonlit_harbor)']), hit('work', 'Tidewater', ['tidewater'])]
   const answer = answerOf('넬', hits, works, new Set(['moonlit-harbor']))
 
-  expect(answer.works).toEqual([{ id: 'moonlit-harbor', read: 'ネル' }])
+  expect(answer.works).toEqual([{ id: 'moonlit-harbor', read: 'ネル', by: 'character', characters: ['nell'] }])
   expect([answer.label, asked(answer.request), answer.name]).toEqual(['ネル', 'ネル', 'nell'])
 })
 

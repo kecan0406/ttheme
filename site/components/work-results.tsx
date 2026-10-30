@@ -5,13 +5,14 @@ import type { WorkRow } from '@/lib/works'
 export interface FoundWork {
   row: WorkRow
   read: string | null
+  picked: string[]
 }
 
 export function WorkSwatch({ style }: { style: string }) {
   return <span aria-hidden="true" data-slot="work-swatch" style={style} />
 }
 
-function FoundRow({ found: { row, read }, query }: { found: FoundWork; query: string }) {
+function FoundRow({ found: { row, read, picked }, query }: { found: FoundWork; query: string }) {
   const marketplaces = new Set(row.palettes.map((palette) => palette.marketplace)).size
 
   return (
@@ -47,7 +48,12 @@ function FoundRow({ found: { row, read }, query }: { found: FoundWork; query: st
       )}
       <span class="flex flex-wrap gap-1.5">
         {row.palettes.map((palette) => (
-          <LinkButton variant="outline" size="chip" href={palette.path} class="max-w-full min-w-0">
+          <LinkButton
+            variant={picked.includes(palette.path) ? 'raised' : 'outline'}
+            size="chip"
+            href={palette.path}
+            class="max-w-full min-w-0"
+          >
             <span aria-hidden="true" data-slot="work-tile" style={palette.swatch} />
             <span translate="no" class="truncate font-mono font-normal" safe>
               {palette.name}
@@ -59,12 +65,13 @@ function FoundRow({ found: { row, read }, query }: { found: FoundWork; query: st
   )
 }
 
-export function WorkResults({ found, query }: { found: FoundWork[]; query: string }) {
+export function WorkResults({ found, query, pending }: { found: FoundWork[]; query: string; pending: boolean }) {
   return (
     <>
       <h2 class="text-sm text-soft-foreground">
         <b class="font-mono font-normal text-foreground tabular-nums">{found.length}</b>{' '}
         {found.length === 1 ? 'work' : 'works'}
+        {pending ? <span class="text-muted-foreground"> · looking up names…</span> : null}
       </h2>
       <ul class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,22rem),1fr))] gap-2.5">
         {found.map((one) => (

@@ -17,13 +17,18 @@ import {
 import { makePath, NAME_PAUSE, NAMES_PATH, type NamesAnswer, namesPath } from '@/lib/names'
 import { html } from '@/lib/render'
 import { isBuiltin } from '@/lib/themes'
+import { plural } from '@/lib/utils'
 import type { RowPalette, WorkRow } from '@/lib/works'
-import { fill, readJson, reducedMotion, tally } from './dom'
+import { announce, fill, readJson, reducedMotion } from './dom'
 import { composing, letter, typing } from './keys'
 import { afterPaint } from './palettes'
 import type { OpenChange } from './ui/change'
 
 const TURN_MS = 2000
+
+const STALL_MS = 300
+
+const SAY_MS = 500
 
 function palettesOf(card: HTMLElement): Searchable[] {
   const builtin = card.hasAttribute('data-builtin')
@@ -77,6 +82,10 @@ class MarketplaceBoard extends HTMLElement {
   #shown = ''
   #primed = false
   #request = ''
+  #stall = 0
+  #stalled = false
+  #saying = 0
+  #count = { works: 0, palettes: 0 }
 
   #input = (event: Event) => {
     const target = event.target as HTMLInputElement
@@ -84,7 +93,8 @@ class MarketplaceBoard extends HTMLElement {
     if (target.name !== 'query') return
     this.#filters = { ...this.#filters, query: target.value, named: this.#namedFor(target.value) }
     this.#later()
-    tally(this.#render())
+    this.#render()
+    this.#say()
   }
 
   #enter = (event: KeyboardEvent) => {
@@ -112,7 +122,8 @@ class MarketplaceBoard extends HTMLElement {
 
     if (name !== 'source') return
     this.#filters = { ...this.#filters, source: value as Source }
-    tally(this.#render())
+    this.#render()
+    this.#say()
   }
 
   #toggle = (event: CustomEvent<OpenChange>) => {
@@ -239,7 +250,9 @@ class MarketplaceBoard extends HTMLElement {
         (rows) => {
           this.#rows = rows
 
-          if (this.#filtering()) tally(this.#render())
+          if (!this.#filtering()) return
+          this.#render()
+          this.#say()
         },
         () => {
           this.#loading = false
@@ -251,7 +264,12 @@ class MarketplaceBoard extends HTMLElement {
     window.clearTimeout(this.#pause)
     const query = this.#filters.query.trim()
 
-    if (this.#asked && this.#asked !== query) this.#asking?.abort()
+    if (this.#asked && this.#asked !== query) {
+      this.#asking?.abort()
+      window.clearTimeout(this.#stall)
+      this.#stalled = false
+    }
+
     this.#naming = query && !this.#answers.has(query) ? query : ''
 
     if (!this.#naming || this.#asked === query) return
@@ -268,6 +286,12 @@ class MarketplaceBoard extends HTMLElement {
     this.#asking = asking
     this.#asked = query
     this.#naming = query
+    window.clearTimeout(this.#stall)
+    this.#stalled = false
+    this.#stall = window.setTimeout(() => {
+      this.#stalled = true
+      this.#render()
+    }, STALL_MS)
     fetch(namesPath(query), { signal: asking.signal })
       .then((response) => {
         if (!response.ok) throw new Error(String(response.status))
@@ -287,13 +311,38 @@ class MarketplaceBoard extends HTMLElement {
     if (this.#asking === asking) {
       this.#asking = null
       this.#asked = ''
+      window.clearTimeout(this.#stall)
+      this.#stalled = false
     }
 
     if (asking.signal.aborted || this.#filters.query.trim() !== query) return
     this.#naming = ''
     this.#failed = failed
     this.#filters = { ...this.#filters, named: this.#namedFor(query) }
-    tally(this.#render())
+    this.#render()
+    this.#say(true)
+  }
+
+  #say(now = false) {
+    window.clearTimeout(this.#saying)
+    const query = this.#filters.query.trim()
+
+    if (query && this.#naming === query) return
+
+    const speak = () => {
+      const { works, palettes } = this.#count
+
+      announce(
+        works > 0
+          ? `${plural(works, 'work')}, ${plural(palettes, 'palette')}`
+          : palettes > 0
+            ? plural(palettes, 'palette')
+            : (this.querySelector('[data-empty-title]')?.textContent ?? 'no palette matches'),
+      )
+    }
+
+    if (now) speak()
+    else this.#saying = window.setTimeout(speak, SAY_MS)
   }
 
   #found(source: Source): FoundWork[] {
@@ -302,15 +351,33 @@ class MarketplaceBoard extends HTMLElement {
     if (!query || !this.#rows) return []
     const text = query.toLowerCase()
     const answer = this.#answers.get(query)
-    const reads = new Map((answer?.works ?? []).map((work) => [work.id, work.read]))
+    const named = new Map((answer?.works ?? []).map((work) => [work.id, work]))
     const byId = new Map(this.#rows.map((row) => [row.id, row]))
-    const named = (answer?.works ?? []).flatMap((work) => byId.get(work.id) ?? [])
     const local = this.#rows.filter((row) => row.palettes.some((palette) => palette.search.includes(text)))
+    const seen = new Set(local.map((row) => row.id))
+    const added = (answer?.works ?? []).flatMap((work) => (seen.has(work.id) ? [] : (byId.get(work.id) ?? [])))
 
-    return [...new Set([...named, ...local])].flatMap((row) => {
+    return [...local, ...added].flatMap((row) => {
+      const hit = named.get(row.id)
+      const own = `${row.name} ${row.native ?? ''}`.toLowerCase()
+      const characters = new Set(hit?.characters ?? [])
       const palettes = row.palettes.filter((palette) => inSource(palette, source))
 
-      return palettes.length > 0 ? [{ row: { ...row, palettes }, read: reads.get(row.id) ?? null }] : []
+      const picks = palettes.filter(
+        (palette) => palette.own.includes(text) || (palette.character !== null && characters.has(palette.character)),
+      )
+
+      const picked = picks.length < palettes.length ? picks : []
+
+      return palettes.length > 0
+        ? [
+            {
+              row: { ...row, palettes: [...picked, ...palettes.filter((palette) => !picked.includes(palette))] },
+              read: hit && (hit.by === 'character' || !own.includes(text)) ? hit.read : null,
+              picked: picked.map((palette) => palette.path),
+            },
+          ]
+        : []
     })
   }
 
@@ -318,7 +385,10 @@ class MarketplaceBoard extends HTMLElement {
     const section = this.querySelector<HTMLElement>('[data-works]')
 
     if (!section) return
-    const markup = found.length > 0 ? html(<WorkResults found={found} query={this.#filters.query.trim()} />) : ''
+    const query = this.#filters.query.trim()
+    const pending = this.#stalled && this.#naming === query
+
+    const markup = found.length > 0 ? html(<WorkResults found={found} query={query} pending={pending} />) : ''
 
     section.hidden = found.length === 0
 
@@ -389,7 +459,7 @@ class MarketplaceBoard extends HTMLElement {
     if (use) use.textContent = next.use
   }
 
-  #render(): number {
+  #render() {
     const shelves = [...this.querySelectorAll<HTMLElement>('[data-shelf]')]
     const cards = shelves.map((shelf) => [...shelf.querySelectorAll<HTMLElement>('[data-stack]')])
     const members = cards.map((group) => group.map(palettesOf))
@@ -423,16 +493,26 @@ class MarketplaceBoard extends HTMLElement {
 
     const rows = this.#found(this.#filters.source)
     this.#works(rows)
-    const nothing = shown === 0 && rows.length === 0
-    this.querySelector('[data-empty]')?.toggleAttribute('hidden', !nothing)
+    this.#count = { works: rows.length, palettes: shown }
+    const empty = this.querySelector('[data-empty]')
 
-    if (nothing) {
-      const all = { ...this.#filters, source: 'all' as const }
+    if (shown > 0 || rows.length > 0) {
+      empty?.toggleAttribute('hidden', true)
 
-      this.#empty(this.#filters.source !== 'all' && (shelvesMatching(found, all) > 0 || this.#found('all').length > 0))
+      return
     }
 
-    return shown
+    const query = this.#filters.query.trim()
+    const all = { ...this.#filters, source: 'all' as const }
+
+    const elsewhere =
+      this.#filters.source !== 'all' && (shelvesMatching(found, all) > 0 || this.#found('all').length > 0)
+
+    const waiting = !elsewhere && query !== '' && this.#naming === query && !this.#stalled
+
+    empty?.toggleAttribute('hidden', waiting)
+
+    if (!waiting) this.#empty(elsewhere)
   }
 }
 

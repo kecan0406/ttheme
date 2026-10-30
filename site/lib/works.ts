@@ -14,7 +14,9 @@ export interface RowPalette {
   name: string
   path: string
   marketplace: string
+  character: string | null
   search: string
+  own: string
   swatch: string
 }
 
@@ -92,7 +94,9 @@ export function workRows(themes: readonly Theme[]): WorkRow[] {
           name: shortName(theme.id),
           path: palettePath(theme),
           marketplace: theme.marketplace,
+          character: theme.character?.id ?? null,
           search: searchText(theme),
+          own: [theme.id, theme.character?.id ?? '', ...(theme.character?.native ?? [])].join(' ').toLowerCase(),
           swatch: swatchStyle(theme),
         })),
       },

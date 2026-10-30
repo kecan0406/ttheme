@@ -8,7 +8,9 @@ export const NAME_PAUSE = 300
 
 export interface NamedRow {
   id: string
-  read: string | null
+  read: string
+  by: 'work' | 'character'
+  characters: string[]
 }
 
 export interface NamesAnswer {
