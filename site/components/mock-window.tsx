@@ -1,5 +1,5 @@
 import { escapeHtml } from '@kitajs/html'
-import { TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
 import type { Pane, Run } from '@/lib/view-types'
 import { TerminalFrame } from './terminal-frame'
 
@@ -44,16 +44,15 @@ export function PaneBody({ pane }: { pane: Pane }) {
 
 function PaneView({ pane, first, prefix }: { pane: Pane; first: boolean; prefix: string }) {
   return (
-    <div
-      role="tabpanel"
+    <TabsPanel
       id={`${prefix}-pane-${pane.name}`}
       aria-labelledby={`${prefix}-tab-${pane.name}`}
       data-pane-panel={pane.name}
-      hidden={!first}
+      selected={first}
       class="mock-pane"
     >
       <PaneBody pane={pane} />
-    </div>
+    </TabsPanel>
   )
 }
 
@@ -76,14 +75,14 @@ export function MockWindow({
       raised
       controls={controls}
       tabs={
-        <TabsList label="terminal tabs" variant="track" class="flex-1">
+        <TabsList label="terminal tabs" variant="track" class="flex-1" data-panes>
           {panes.map((pane, i) => (
             <TabsTrigger
               variant="track"
+              value={pane.name}
               selected={i === 0}
               id={`${prefix}-tab-${pane.name}`}
               aria-controls={`${prefix}-pane-${pane.name}`}
-              data-pane={pane.name}
             >
               <span data-mark aria-hidden="true">
                 ❯

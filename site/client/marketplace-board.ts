@@ -14,6 +14,7 @@ import {
 } from '@/lib/gallery'
 import { readJson, reducedMotion, tally } from './dom'
 import { composing, letter, typing } from './keys'
+import type { OpenChange } from './ui/change'
 
 const TURN_MS = 2000
 
@@ -60,13 +61,13 @@ class MarketplaceBoard extends HTMLElement {
     tally(this.#render())
   }
 
-  #toggle = (event: Event) => {
+  #toggle = (event: CustomEvent<OpenChange>) => {
     const details = event.target
 
-    if (!(details instanceof HTMLDetailsElement) || this.#filtering()) return
+    if (!(details instanceof HTMLDetailsElement) || event.detail.reason !== 'trigger-press' || this.#filtering()) return
     const key = shelfOf(details)
 
-    if (details.open) this.#open.add(key)
+    if (event.detail.open) this.#open.add(key)
     else this.#open.delete(key)
   }
 
@@ -107,7 +108,7 @@ class MarketplaceBoard extends HTMLElement {
   connectedCallback() {
     this.addEventListener('input', this.#input)
     this.addEventListener('change', this.#change)
-    this.addEventListener('toggle', this.#toggle, true)
+    this.addEventListener('openchange', this.#toggle)
     this.addEventListener('click', this.#click)
     window.addEventListener('keydown', this.#find)
 

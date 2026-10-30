@@ -2,8 +2,10 @@ import type { PropsWithChildren } from '@kitajs/html'
 import { ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Menu, Search } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
+import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { DOCS, DOCS_PATH, type DocLink, REPOSITORY } from '@/lib/docs'
 import type { Facts } from '@/lib/facts'
 import { BrandIcon, Icon } from '@/lib/icons'
@@ -19,11 +21,15 @@ function termsOf(title: string, label: string, toc: Heading[]): string {
 
 function DocsNav({ path }: { path: string }) {
   return (
-    <nav
+    <Popover
       id="docs-menu"
-      popover="auto"
-      aria-label="docs"
-      class={`${GLASS} top-34 left-5 m-0 max-h-[calc(100dvh-10rem)] w-72 max-w-[calc(100vw-2.5rem)] content-start gap-1 overflow-y-auto rounded-xl p-3 text-foreground shadow-lg inset-auto open:grid docs-side:sticky docs-side:top-(--clearance) docs-side:grid docs-side:max-h-[min(100dvh_-_var(--clearance)_-_--spacing(3),var(--docs-room,100dvh))] docs-side:w-auto docs-side:self-start docs-side:shadow-none`}
+      render={(props) => (
+        <nav
+          {...props}
+          aria-label="docs"
+          class={`${GLASS} top-34 left-5 m-0 max-h-[calc(100dvh-10rem)] w-72 max-w-[calc(100vw-2.5rem)] content-start gap-1 overflow-y-auto rounded-xl p-3 text-foreground shadow-lg inset-auto open:grid docs-side:sticky docs-side:top-(--clearance) docs-side:grid docs-side:max-h-[min(100dvh_-_var(--clearance)_-_--spacing(3),var(--docs-room,100dvh))] docs-side:w-auto docs-side:self-start docs-side:shadow-none`}
+        />
+      )}
     >
       <search data-docs-search>
         <InputGroup>
@@ -78,7 +84,7 @@ function DocsNav({ path }: { path: string }) {
       <p data-none hidden class="px-2.5 py-3 text-sm text-muted-foreground">
         No page matches ( ˘ω˘ )
       </p>
-    </nav>
+    </Popover>
   )
 }
 
@@ -119,15 +125,17 @@ function DocsToc({ toc }: { toc: Heading[] }) {
 
 export function TocDetails({ toc }: { toc: Heading[] }) {
   return toc.length === 0 ? null : (
-    <details class="group/toc rounded-xl border border-border bg-muted/65 docs-toc:hidden">
-      <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-sm font-medium text-soft-foreground [&::-webkit-details-marker]:hidden">
+    <Collapsible class="group/toc rounded-xl border border-border bg-muted/65 docs-toc:hidden">
+      <CollapsibleTrigger class="flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-medium text-soft-foreground">
         On this page
-        <Icon node={ChevronDown} class="size-4 transition-transform group-open/toc:rotate-180" />
-      </summary>
-      <div class="px-4 pb-3">
-        <TocList toc={toc} />
-      </div>
-    </details>
+        <Icon node={ChevronDown} class="size-4 transition-transform group-data-open/toc:rotate-180" />
+      </CollapsibleTrigger>
+      <CollapsiblePanel>
+        <div class="px-4 pb-3">
+          <TocList toc={toc} />
+        </div>
+      </CollapsiblePanel>
+    </Collapsible>
   )
 }
 
@@ -176,10 +184,16 @@ export function DocsFrame({
       <SiteHeader current={DOCS_PATH} facts={facts} />
       <div data-docs class="mx-auto w-[min(1280px,calc(100%-40px))] pt-3 pb-12">
         <docs-page class="grid grid-cols-[minmax(0,1fr)] items-start gap-3 docs-side:grid-cols-[15.5rem_minmax(0,1fr)] docs-toc:grid-cols-[15.5rem_minmax(0,1fr)_13.5rem]">
-          <Button variant="outline" size="sm" popovertarget="docs-menu" class="justify-self-start docs-side:hidden">
-            <Icon node={Menu} />
-            Pages
-          </Button>
+          <PopoverTrigger
+            popover="docs-menu"
+            dialog={false}
+            render={(props) => (
+              <Button {...props} variant="outline" size="sm" class="justify-self-start docs-side:hidden">
+                <Icon node={Menu} />
+                Pages
+              </Button>
+            )}
+          />
           <DocsNav path={path} />
           <main
             id="content"

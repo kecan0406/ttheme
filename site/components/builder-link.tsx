@@ -1,5 +1,7 @@
 import { Check, Copy, Link } from 'lucide'
 import { Button, LinkButton } from '@/components/ui/button'
+import { DialogTrigger } from '@/components/ui/dialog'
+import { Popover } from '@/components/ui/popover'
 import { Icon } from '@/lib/icons'
 import type { Shared } from '@/lib/share'
 import { pinned } from '@/lib/themes'
@@ -58,24 +60,24 @@ export function LinkStrip({ shared }: { shared: Shared }) {
 
 export function AddPopover({ shared }: { shared: Shared }) {
   return (
-    <div
-      id="builder-add"
-      popover="auto"
-      class="m-0 hidden w-[min(440px,calc(100vw-32px))] gap-2.5 rounded-3xl border border-border bg-popover p-4 text-popover-foreground shadow-lg inset-auto open:grid"
-    >
+    <Popover id="builder-add" label="add to ttheme" variant="card" align="end">
       <Installs shared={shared} />
       <p class="text-xs text-muted-foreground">
         Or{' '}
-        <button
-          type="button"
-          data-export-open
-          class="font-medium text-foreground underline underline-offset-4 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          export it
-        </button>{' '}
+        <DialogTrigger
+          dialog="builder-export"
+          render={(props) => (
+            <button
+              {...props}
+              class="font-medium text-foreground underline underline-offset-4 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              export it
+            </button>
+          )}
+        />{' '}
         as a file.
       </p>
-    </div>
+    </Popover>
   )
 }
 

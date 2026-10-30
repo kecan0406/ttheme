@@ -20,6 +20,14 @@
   },
   "linter": {
     "rules": {
+      "a11y": {
+        "noLabelWithoutControl": {
+          "level": "error",
+          "options": {
+            "inputComponents": ["ComboboxInput"]
+          }
+        }
+      },
       "style": {
         "noCommonJs": "error",
         "useNodejsImportProtocol": "error"

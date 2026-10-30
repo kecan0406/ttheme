@@ -1,5 +1,5 @@
 import { History, Info, Palette } from 'lucide'
-import { TabsCount, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TabsCount, TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
 import { type BuilderData, editOf, madeMode, nameTrouble } from '@/lib/builder'
 import {
   aboutOf,
@@ -65,33 +65,33 @@ export function BuilderPage({
         <WorkspaceSide
           aria-label="palette"
           head={
-            <TabsList label="sidebar" variant="track" class="w-full">
+            <TabsList label="sidebar" variant="track" class="w-full" data-panels>
               <TabsTrigger
                 variant="track"
+                value="colors"
                 selected
                 id="builder-tab-colors"
                 aria-controls="builder-colors"
-                data-panel="colors"
               >
                 <Icon node={Palette} class="size-3.5" />
                 <span data-first-tab>colors</span>
               </TabsTrigger>
               <TabsTrigger
                 variant="track"
+                value="about"
                 selected={false}
                 id="builder-tab-about"
                 aria-controls="builder-about"
-                data-panel="about"
               >
                 <Icon node={Info} class="size-3.5" />
                 about
               </TabsTrigger>
               <TabsTrigger
                 variant="track"
+                value="drafts"
                 selected={false}
                 id="builder-tab-drafts"
                 aria-controls="builder-drafts"
-                data-panel="drafts"
               >
                 <Icon node={History} class="size-3.5" />
                 drafts
@@ -104,8 +104,10 @@ export function BuilderPage({
             data-side
             class="app:min-h-0 app:flex-1 app:overflow-y-auto app:overscroll-contain app:[scrollbar-color:var(--border)_transparent] app:[scrollbar-width:thin]"
           >
-            <SeedsPanel seeds={seedRowsOf(SEEDS)} list={seeded} gate={gateOf(seeded)} />
-            <ColorsPanel rows={rows} format="hex" />
+            <TabsPanel id="builder-colors" aria-labelledby="builder-tab-colors" selected>
+              <SeedsPanel seeds={seedRowsOf(SEEDS)} list={seeded} gate={gateOf(seeded)} />
+              <ColorsPanel rows={rows} format="hex" />
+            </TabsPanel>
             <AboutPanel
               about={about}
               modes={modesOf(edit)}

@@ -15,6 +15,7 @@ import {
 import { siGithub } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants, LinkButton } from '@/components/ui/button'
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
 import { ToggleGroup, ToggleGroupCount, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -271,27 +272,29 @@ function MarketplaceCard({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
           </span>
         </div>
       </div>
-      <details data-slot="marketplace-works" class="group/works">
-        <summary class="group/toggle flex cursor-pointer list-none items-center gap-3 px-5 pt-0.5 pb-4 outline-none before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border [&::-webkit-details-marker]:hidden">
+      <Collapsible class="group/works">
+        <CollapsibleTrigger class="group/toggle flex items-center gap-3 px-5 pt-0.5 pb-4 outline-none before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
           <span
             class={cn(
               buttonVariants({ variant: 'outline', size: 'sm' }),
-              'pr-2.5 pl-3.5 group-hover/toggle:border-input group-hover/toggle:bg-secondary group-hover/toggle:text-foreground group-focus-visible/toggle:ring-2 group-focus-visible/toggle:ring-ring group-focus-visible/toggle:ring-offset-2 group-focus-visible/toggle:ring-offset-background group-active/toggle:scale-96 group-open/works:border-input group-open/works:text-foreground',
+              'pr-2.5 pl-3.5 group-hover/toggle:border-input group-hover/toggle:bg-secondary group-hover/toggle:text-foreground group-focus-visible/toggle:ring-2 group-focus-visible/toggle:ring-ring group-focus-visible/toggle:ring-offset-2 group-focus-visible/toggle:ring-offset-background group-active/toggle:scale-96 group-data-open/works:border-input group-data-open/works:text-foreground',
             )}
           >
             <b class="font-mono font-normal text-foreground tabular-nums">{works}</b> {works === 1 ? 'work' : 'works'}
             <Icon
               node={ChevronDown}
-              class="transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-open/works:rotate-180"
+              class="transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-data-open/works:rotate-180"
             />
           </span>
-        </summary>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,14rem),1fr))] gap-2.5 border-t bg-muted/65 px-5 pt-4.5 pb-5">
-          {stacks.map((stack) => (
-            <StackCard stack={stack} builtin={builtin} />
-          ))}
-        </div>
-      </details>
+        </CollapsibleTrigger>
+        <CollapsiblePanel>
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,14rem),1fr))] gap-2.5 border-t bg-muted/65 px-5 pt-4.5 pb-5">
+            {stacks.map((stack) => (
+              <StackCard stack={stack} builtin={builtin} />
+            ))}
+          </div>
+        </CollapsiblePanel>
+      </Collapsible>
     </article>
   )
 }

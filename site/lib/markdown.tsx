@@ -69,6 +69,8 @@ const OPEN = /^<details>\s*<summary>([^<]+)<\/summary>$/
 
 const CLOSE = /^<\/details>$/
 
+const FOLD = '<details data-slot="collapsible" data-closed data-fold>'
+
 const TAB = /\btab="([^"]+)"/
 
 const SITE_ORIGIN = 'https://ttheme.dev'
@@ -304,14 +306,14 @@ function markdown(doc: Doc, place: Place): Marked {
           folded = true
           const chevron = html(<Icon node={ChevronDown} />)
 
-          return `<details data-slot="fold"><summary><span>${escapeHtml((opened[1] as string).trim())}</span>${chevron}</summary><div data-fold-body>\n`
+          return `${FOLD}<summary data-slot="collapsible-trigger"><span>${escapeHtml((opened[1] as string).trim())}</span>${chevron}</summary><div data-slot="collapsible-panel"><div data-fold-body>\n`
         }
 
         if (CLOSE.test(block)) {
           if (!folded) throw new Error(`${doc.title}: a </details> closes nothing`)
           folded = false
 
-          return '</div></details>\n'
+          return '</div></div></details>\n'
         }
 
         return escapeHtml(text)
@@ -430,7 +432,7 @@ export function renderDoc(source: string, place: Place): Doc {
   doc.safeLede = marked.parseInline(lede.text) as string
   doc.safeBody = marked.parser(grouped(body))
 
-  if (doc.safeBody.split('<details data-slot="fold">').length !== doc.safeBody.split('</details>').length) {
+  if (doc.safeBody.split(FOLD).length !== doc.safeBody.split('</details>').length) {
     throw new Error(`${doc.title}: a <details> is never closed`)
   }
 

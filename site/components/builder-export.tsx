@@ -2,7 +2,7 @@ import { Check, Copy, Download, FileCode, Link, Package } from 'lucide'
 import { Button, LinkButton } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
 import type { FileView, LinkView, MarketView } from '@/lib/builder-view'
 import { highlightHtml } from '@/lib/highlight'
 import { Icon, NewTab } from '@/lib/icons'
@@ -226,30 +226,30 @@ export function ExportDialog({
         </DialogHeader>
         <TabsList label="export as" class="border-b border-border">
           <TabsTrigger
+            value="toml"
             selected
             id="builder-export-tab-toml"
             aria-controls="builder-export-toml"
-            data-export-tab="toml"
             class="h-10"
           >
             <Icon node={FileCode} class="size-4" />
             toml
           </TabsTrigger>
           <TabsTrigger
+            value="link"
             selected={false}
             id="builder-export-tab-link"
             aria-controls="builder-export-link"
-            data-export-tab="link"
             class="h-10"
           >
             <Icon node={Link} class="size-4" />
             link
           </TabsTrigger>
           <TabsTrigger
+            value="market"
             selected={false}
             id="builder-export-tab-market"
             aria-controls="builder-export-market"
-            data-export-tab="market"
             class="h-10"
           >
             <Icon node={Package} class="size-4" />
@@ -257,35 +257,33 @@ export function ExportDialog({
           </TabsTrigger>
         </TabsList>
         <div class="-mx-1 min-h-0 overflow-y-auto overscroll-contain px-1">
-          <section
+          <TabsPanel
             id="builder-export-toml"
-            role="tabpanel"
             aria-labelledby="builder-export-tab-toml"
             data-export-panel="toml"
+            selected
             class={PANEL}
           >
             <FilePanel view={file} />
-          </section>
-          <section
+          </TabsPanel>
+          <TabsPanel
             id="builder-export-link"
-            role="tabpanel"
             aria-labelledby="builder-export-tab-link"
             data-export-panel="link"
-            hidden
+            selected={false}
             class={PANEL}
           >
             <LinkPanel view={link} />
-          </section>
-          <section
+          </TabsPanel>
+          <TabsPanel
             id="builder-export-market"
-            role="tabpanel"
             aria-labelledby="builder-export-tab-market"
             data-export-panel="market"
-            hidden
+            selected={false}
             class={PANEL}
           >
             <MarketPanel view={market} description={description} />
-          </section>
+          </TabsPanel>
         </div>
       </div>
     </Dialog>

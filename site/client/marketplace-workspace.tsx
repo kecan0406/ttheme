@@ -8,7 +8,7 @@ import { nameAt, neighbors, type WorkspaceData } from '@/lib/workspace'
 import { announce, fill, readJson, tally } from './dom'
 import { bare, composing, letter, typing } from './keys'
 import { afterPaint, palettes } from './palettes'
-import { placeUnder } from './place'
+import type { OpenChange } from './ui/change'
 
 const STEPS = new Map([
   ['ArrowRight', 1],
@@ -38,13 +38,16 @@ class MarketplaceWorkspace extends HTMLElement {
     if (pick && plain(event) && this.#palettes.length > 0) {
       event.preventDefault()
       this.#select(this.#named(pick.dataset.pick ?? ''), true)
-
-      return
     }
+  }
 
-    const toggle = target.closest<HTMLElement>('[data-toggle]')
+  #toggled = (event: CustomEvent<OpenChange>) => {
+    const group = event.target as Element
 
-    if (toggle) this.#flip(toggle)
+    if (!group.matches('[data-group]') || event.detail.reason !== 'trigger-press' || this.#query.trim()) return
+
+    if (event.detail.open) this.#open.add(group)
+    else this.#open.delete(group)
   }
 
   #input = (event: Event) => {
@@ -79,23 +82,13 @@ class MarketplaceWorkspace extends HTMLElement {
     this.#when(() => this.#select(this.#named(nameAt(location.pathname) ?? this.#data.start), false))
   }
 
-  #place = (event: Event) => {
-    if ((event as ToggleEvent).newState !== 'open') return
-    const panel = event.target as HTMLElement
-    const trigger = this.querySelector<HTMLElement>(`[popovertarget="${panel.id}"]`)
-
-    if (trigger) placeUnder(panel, trigger, 'left')
-  }
-
   connectedCallback() {
     this.#data = readJson<WorkspaceData>(this, 'script[data-workspace]')
 
-    for (const group of this.querySelectorAll('[data-group]'))
-      if (group.querySelector('[data-toggle]')?.getAttribute('aria-expanded') === 'true') this.#open.add(group)
+    for (const group of this.querySelectorAll('details[data-group][open]')) this.#open.add(group)
     this.addEventListener('click', this.#click)
+    this.addEventListener('openchange', this.#toggled)
     this.addEventListener('input', this.#input)
-
-    for (const panel of this.querySelectorAll('[popover]')) panel.addEventListener('beforetoggle', this.#place)
     window.addEventListener('keydown', this.#keydown)
     window.addEventListener('popstate', this.#popstate)
     const query = this.querySelector<HTMLInputElement>('input[name="query"]')?.value ?? ''
@@ -111,9 +104,8 @@ class MarketplaceWorkspace extends HTMLElement {
 
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
+    this.removeEventListener('openchange', this.#toggled)
     this.removeEventListener('input', this.#input)
-
-    for (const panel of this.querySelectorAll('[popover]')) panel.removeEventListener('beforetoggle', this.#place)
     window.removeEventListener('keydown', this.#keydown)
     window.removeEventListener('popstate', this.#popstate)
   }
@@ -156,22 +148,8 @@ class MarketplaceWorkspace extends HTMLElement {
     this.#select(delta < 0 ? prev : next, true)
   }
 
-  #flip(toggle: HTMLElement) {
-    const group = toggle.closest('[data-group]')
-
-    if (!group) return
-    const open = toggle.getAttribute('aria-expanded') !== 'true'
-    this.#show(group, open)
-
-    if (this.#query.trim()) return
-
-    if (open) this.#open.add(group)
-    else this.#open.delete(group)
-  }
-
   #show(group: Element, open: boolean) {
-    group.querySelector('[data-toggle]')?.setAttribute('aria-expanded', String(open))
-    group.querySelector('ul')?.toggleAttribute('hidden', !open)
+    if (group instanceof HTMLDetailsElement) group.open = open
   }
 
   #filter(): number {
@@ -207,7 +185,7 @@ class MarketplaceWorkspace extends HTMLElement {
     const tree = this.querySelector<HTMLElement>('[data-tree]')
     const link = this.querySelector<HTMLElement>('a[data-pick][aria-current="page"]')
 
-    if (!tree || !link || link.closest('[hidden]')) return
+    if (!tree || !link || link.closest('[hidden], details:not([open])')) return
     const from = tree.getBoundingClientRect()
     const to = link.getBoundingClientRect()
 

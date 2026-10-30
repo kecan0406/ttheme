@@ -1,6 +1,7 @@
 import { escapeHtml } from '@kitajs/html'
 import { Search, Trash2, Undo2 } from 'lucide'
 import { Button } from '@/components/ui/button'
+import { TabsPanel } from '@/components/ui/tabs'
 import type { DraftList } from '@/lib/builder-view'
 import { Icon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
@@ -84,12 +85,11 @@ export function DraftEntries({ list }: { list: DraftList }) {
 
 export function DraftsPanel({ list }: { list: DraftList }) {
   return (
-    <section
+    <TabsPanel
       id="builder-drafts"
-      role="tabpanel"
       aria-labelledby="builder-tab-drafts"
       data-panel-body="drafts"
-      hidden
+      selected={false}
       class="pb-6"
     >
       <div class="flex h-11 items-center justify-between gap-2 border-b border-border pr-3 pl-4">
@@ -118,6 +118,6 @@ export function DraftsPanel({ list }: { list: DraftList }) {
       <div data-drafts-list class="px-2">
         <DraftEntries list={list} />
       </div>
-    </section>
+    </TabsPanel>
   )
 }

@@ -880,7 +880,7 @@ route-progress[data-state='done'],
     outline-offset: 2px;
   }
 
-  :root palette-picker:has([data-search]:focus) [role='option'][data-active] {
+  :root [data-slot='combobox']:has([data-slot='combobox-input']:focus) [data-slot='combobox-item'][data-highlighted] {
     outline-color: Highlight;
   }
 
@@ -965,7 +965,7 @@ route-progress[data-state='done'],
   }
 }
 
-palette-picker:has([data-search]:focus) [role='option'][data-active] {
+[data-slot='combobox']:has([data-slot='combobox-input']:focus) [data-slot='combobox-item'][data-highlighted] {
   outline: 2px solid var(--ring);
   outline-offset: -2px;
 }
@@ -1153,46 +1153,59 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   }
 }
 
-[data-slot='marketplace-works'] {
-  interpolate-size: allow-keywords;
-}
-
-[data-slot='marketplace-works']::details-content {
-  height: 0;
-  overflow: clip;
+[data-slot='collapsible-panel'] {
+  height: var(--collapsible-panel-height, auto);
   transition:
     height 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
-    content-visibility 0.22s allow-discrete;
+    opacity 0.16s ease-out;
 }
 
-[data-slot='marketplace-works'][open]::details-content {
-  height: auto;
-}
-
-[data-slot='marketplace-works'] > :not(summary) {
+[data-slot='collapsible-panel']:is([data-starting-style], [data-ending-style]) {
+  height: 0;
   opacity: 0;
-  translate: 0 -6px;
-  transition:
-    opacity 0.16s ease-out,
-    translate 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-[data-slot='marketplace-works'][open] > :not(summary) {
-  opacity: 1;
-  translate: 0;
-}
-
-@starting-style {
-  [data-slot='marketplace-works'][open] > :not(summary) {
-    opacity: 0;
-    translate: 0 -6px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-slot='marketplace-works']::details-content,
-  [data-slot='marketplace-works'] > :not(summary) {
+  [data-slot='collapsible-panel'] {
     transition: none;
+  }
+}
+
+[data-slot='popover'] {
+  transform-origin: var(--transform-origin, top);
+  transition:
+    opacity 0.15s ease-out,
+    scale 0.15s ease-out,
+    translate 0.15s ease-out;
+}
+
+[data-slot='popover'][data-starting-style] {
+  opacity: 0;
+  scale: 0.96;
+  translate: 0 -4px;
+}
+
+[data-slot='dialog-content'],
+[data-slot='dialog-content']::backdrop {
+  transition:
+    opacity 0.15s ease-out,
+    scale 0.15s ease-out;
+}
+
+[data-slot='dialog-content']:is([data-starting-style], [data-ending-style]) {
+  opacity: 0;
+  scale: 0.96;
+}
+
+[data-slot='dialog-content']:is([data-starting-style], [data-ending-style])::backdrop {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='popover'][data-starting-style],
+  [data-slot='dialog-content']:is([data-starting-style], [data-ending-style]) {
+    scale: none;
+    translate: none;
   }
 }
 
@@ -1891,17 +1904,17 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   background: var(--border);
 }
 
-[data-slot='fold'] {
+[data-fold] {
   border: 1px solid var(--border);
   border-radius: --theme(--radius-xl inline);
   background: var(--card);
 }
 
-[data-slot='fold'] + [data-slot='fold'] {
+[data-fold] + [data-fold] {
   margin-top: calc(var(--spacing) * -2);
 }
 
-[data-slot='fold'] > summary {
+[data-fold] > summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1912,11 +1925,11 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   font-weight: 600;
 }
 
-[data-slot='fold'] > summary::-webkit-details-marker {
+[data-fold] > summary::-webkit-details-marker {
   display: none;
 }
 
-[data-slot='fold'] > summary > svg {
+[data-fold] > summary > svg {
   flex: none;
   width: calc(var(--spacing) * 4);
   height: calc(var(--spacing) * 4);
@@ -1924,15 +1937,15 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   transition: rotate 0.2s ease;
 }
 
-[data-slot='fold'][open] > summary > svg {
+[data-fold][data-open] > summary > svg {
   rotate: 180deg;
 }
 
-[data-slot='fold'] > summary:hover {
+[data-fold] > summary:hover {
   color: var(--primary);
 }
 
-[data-slot='fold'] > summary:focus-visible {
+[data-fold] > summary:focus-visible {
   border-radius: --theme(--radius-xl inline);
   outline: 2px solid var(--ring);
   outline-offset: 2px;

@@ -266,6 +266,7 @@ export interface MarketView {
 export interface StartItem {
   name: string
   label: string
+  words: string
   publisher: string | null
   dots: string[]
   lead: boolean
@@ -299,10 +300,7 @@ export interface DraftList {
   deleted: string | null
 }
 
-export type StartList =
-  | { state: 'loading' }
-  | { state: 'failed' }
-  | { state: 'ready'; groups: StartGroup[]; query: string }
+export type StartList = { state: 'loading' } | { state: 'failed' } | { state: 'ready'; groups: StartGroup[] }
 
 const DAY = 86_400_000
 

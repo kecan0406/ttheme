@@ -2,9 +2,10 @@ import { escapeHtml } from '@kitajs/html'
 import { ChevronRight, Search, Star } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
-import { Popover } from '@/components/ui/popover'
+import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { Facts, Repo } from '@/lib/facts'
 import { BUILTIN_URL, palettePath, REPO, repoUrl, searchText } from '@/lib/gallery'
@@ -149,18 +150,26 @@ export function ScenePanes({ theme }: { theme: Theme }) {
 export function PaletteFacts({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
   return (
     <>
-      <Button variant="muted" size="chip" popovertarget="workspace-slots" aria-label="colors, copy one">
-        <span
-          aria-hidden="true"
-          class="h-1.75 w-11 rounded-full forced-color-adjust-none"
-          style={`background:${ribbon(theme)}`}
-        />
-        colors
-      </Button>
+      <PopoverTrigger
+        popover="workspace-slots"
+        render={(props) => (
+          <Button {...props} variant="muted" size="chip" aria-label="colors, copy one">
+            <span
+              aria-hidden="true"
+              class="h-1.75 w-11 rounded-full forced-color-adjust-none"
+              style={`background:${ribbon(theme)}`}
+            />
+            colors
+          </Button>
+        )}
+      />
       <ByMode
         theme={theme}
         render={(shown) => (
-          <GateButton passed={gatePassed(shown, gate)} total={gate.length} popovertarget="workspace-gate" />
+          <PopoverTrigger
+            popover="workspace-gate"
+            render={(props) => <GateButton {...props} passed={gatePassed(shown, gate)} total={gate.length} />}
+          />
         )}
       />
     </>
@@ -207,25 +216,23 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
       data-tree
       class="grid max-h-80 min-h-0 content-start gap-px overflow-y-auto overscroll-contain px-3 pt-3 pb-2 app:max-h-none app:flex-1"
     >
-      {byWork(palettes).map((shelf, index) => {
+      {byWork(palettes).map((shelf) => {
         const { work, themes } = shelf
         const lead = leadOf(shelf)
         const open = themes.includes(current)
-        const list = `workspace-work-${index}`
         const title = work?.name ?? 'originals'
 
         return (
-          <div data-group data-name={`${title} ${work?.native ?? ''}`.toLowerCase()} class="grid">
-            <button
-              type="button"
-              data-toggle
-              aria-expanded={String(open)}
-              aria-controls={list}
-              class="group/toggle flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 text-left text-sm font-semibold text-soft-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-expanded:text-foreground"
-            >
+          <Collapsible
+            open={open}
+            data-group
+            data-name={`${title} ${work?.native ?? ''}`.toLowerCase()}
+            class="group/work"
+          >
+            <CollapsibleTrigger class="flex h-9 w-full items-center gap-2.5 rounded-lg px-2 text-left text-sm font-semibold text-soft-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring group-data-open/work:text-foreground">
               <Icon
                 node={ChevronRight}
-                class="size-3.5 flex-none text-faint-foreground transition-transform duration-150 group-aria-expanded/toggle:rotate-90 motion-reduce:transition-none"
+                class="size-3.5 flex-none text-faint-foreground transition-transform duration-150 group-data-open/work:rotate-90 motion-reduce:transition-none"
               />
               <WorkTile theme={lead} />
               <span class="min-w-0 flex-1 truncate" safe>
@@ -234,36 +241,38 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
               <span data-count class="flex-none font-mono text-xs font-normal text-muted-foreground tabular-nums">
                 {escapeHtml(String(themes.length))}
               </span>
-            </button>
-            <ul id={list} hidden={!open} class="grid gap-px pt-0.5 pb-2 pl-7.5">
-              {work?.native ? (
-                <li class="px-2.5 pb-1 text-xs text-muted-foreground" lang={work.lang ?? undefined} safe>
-                  {work.native}
-                </li>
-              ) : null}
-              {themes.map((theme) => (
-                <li data-search={searchText(theme)}>
-                  <a
-                    href={palettePath(theme)}
-                    data-pick={theme.name}
-                    aria-current={theme === current ? 'page' : undefined}
-                    class="flex h-8 items-center gap-2.5 rounded-md px-2.5 font-display text-sm font-extrabold text-soft-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-accent aria-[current=page]:text-foreground"
-                  >
-                    <Dots theme={theme} />
-                    <span class="min-w-0 flex-1 truncate" translate="no" safe>
-                      {theme.name}
-                    </span>
-                    {work && theme === lead ? (
-                      <>
-                        <Icon node={Star} class="size-3 flex-none text-soft-foreground" />
-                        <span class="sr-only">, lead</span>
-                      </>
-                    ) : null}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+            </CollapsibleTrigger>
+            <CollapsiblePanel>
+              <ul class="grid gap-px pt-0.5 pb-2 pl-7.5">
+                {work?.native ? (
+                  <li class="px-2.5 pb-1 text-xs text-muted-foreground" lang={work.lang ?? undefined} safe>
+                    {work.native}
+                  </li>
+                ) : null}
+                {themes.map((theme) => (
+                  <li data-search={searchText(theme)}>
+                    <a
+                      href={palettePath(theme)}
+                      data-pick={theme.name}
+                      aria-current={theme === current ? 'page' : undefined}
+                      class="flex h-8 items-center gap-2.5 rounded-md px-2.5 font-display text-sm font-extrabold text-soft-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-accent aria-[current=page]:text-foreground"
+                    >
+                      <Dots theme={theme} />
+                      <span class="min-w-0 flex-1 truncate" translate="no" safe>
+                        {theme.name}
+                      </span>
+                      {work && theme === lead ? (
+                        <>
+                          <Icon node={Star} class="size-3 flex-none text-soft-foreground" />
+                          <span class="sr-only">, lead</span>
+                        </>
+                      ) : null}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </CollapsiblePanel>
+          </Collapsible>
         )
       })}
       <p data-empty hidden class="px-2 py-3 text-sm text-muted-foreground">
@@ -409,10 +418,10 @@ export function MarketplaceWorkspace({
               </div>
             </TerminalFrame>
           </WorkspaceStage>
-          <Popover id="workspace-gate" label="contrast checks" inset="padded" data-gate-panel>
+          <Popover id="workspace-gate" label="contrast checks" inset="padded" align="start" data-gate-panel>
             <GatePanel theme={theme} gate={gate} where={where} />
           </Popover>
-          <Popover id="workspace-slots" label="slots" inset="padded" data-slots-panel>
+          <Popover id="workspace-slots" label="slots" inset="padded" align="start" data-slots-panel>
             <SlotsPanel theme={theme} />
           </Popover>
         </main>

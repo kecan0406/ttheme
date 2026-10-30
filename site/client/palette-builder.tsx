@@ -101,8 +101,7 @@ import { zip } from '../../src/core/zip.ts'
 import { announce, fill, readJson, reducedMotion } from './dom'
 import { Inspector } from './inspector'
 import { composing, typing } from './keys'
-import { placeUnder } from './place'
-import { tabKey } from './tabs'
+import type { OpenChange, ValueChange } from './ui/change'
 
 interface Snapshot {
   made: Hex[]
@@ -147,11 +146,8 @@ function tabDraft(stored: Stored | null): Edit | undefined {
   }
 }
 
-function groupsOf(starts: Start[], query: string): StartGroup[] {
-  const q = query.trim().toLowerCase()
-  const hits = starts.filter((start) => !q || start.words.includes(q))
-
-  return [...Map.groupBy(hits, (start) => start.shelf)].map(([, palettes]) => {
+function groupsOf(starts: Start[]): StartGroup[] {
+  return [...Map.groupBy(starts, (start) => start.shelf)].map(([, palettes]) => {
     const { work, publisher } = palettes[0] as Start
 
     return {
@@ -161,6 +157,7 @@ function groupsOf(starts: Start[], query: string): StartGroup[] {
       palettes: palettes.map((start) => ({
         name: start.name,
         label: start.name.slice(start.name.indexOf('/') + 1),
+        words: start.words,
         publisher: work && start.publisher !== BUILTIN ? start.publisher : null,
         dots: start.dots,
         lead: start.lead,
@@ -189,7 +186,6 @@ class PaletteBuilder extends HTMLElement {
   #starts: Start[] | null = null
   #loading: Promise<void> | null = null
   #startFailed = false
-  #query = ''
   #draftQuery = ''
   #deleted: { edit: Edit; at: number } | null = null
   #stored: Stored | null = null
@@ -206,6 +202,7 @@ class PaletteBuilder extends HTMLElement {
   #grid = ''
   #sizer: ResizeObserver | undefined
   #sizing = 0
+  #follow = new ResizeObserver(() => this.#placePicker())
   #inspector = new Inspector(
     this,
     () => this.#named(),
@@ -231,10 +228,8 @@ class PaletteBuilder extends HTMLElement {
     this.addEventListener('change', this.#change)
     this.addEventListener('keydown', this.#key)
     this.addEventListener('pointerdown', this.#press)
-    this.addEventListener('toggle', this.#toggled, true)
-    this.querySelector('#builder-start')?.addEventListener('beforetoggle', this.#placeStart)
-    this.querySelector('#builder-add')?.addEventListener('beforetoggle', this.#placeAdd)
-    this.querySelector('#builder-gate')?.addEventListener('beforetoggle', this.#placeGate)
+    this.addEventListener('openchange', this.#opened)
+    this.addEventListener('valuechange', this.#changed)
     addEventListener('pagehide', this.#flush)
     addEventListener('storage', this.#synced)
     const term = this.querySelector<HTMLElement>('[data-term]')
@@ -249,6 +244,9 @@ class PaletteBuilder extends HTMLElement {
       this.#sizer.observe(term)
     }
 
+    const colors = this.querySelector('[data-panel-body="colors"]')
+
+    if (colors) this.#follow.observe(colors)
     this.#fit()
     this.#render()
     this.#renderDrafts()
@@ -264,10 +262,12 @@ class PaletteBuilder extends HTMLElement {
     this.removeEventListener('change', this.#change)
     this.removeEventListener('keydown', this.#key)
     this.removeEventListener('pointerdown', this.#press)
-    this.removeEventListener('toggle', this.#toggled, true)
+    this.removeEventListener('openchange', this.#opened)
+    this.removeEventListener('valuechange', this.#changed)
     removeEventListener('pagehide', this.#flush)
     removeEventListener('storage', this.#synced)
     this.#sizer?.disconnect()
+    this.#follow.disconnect()
     cancelAnimationFrame(this.#sizing)
     this.#flush()
 
@@ -599,19 +599,11 @@ class PaletteBuilder extends HTMLElement {
 
     if (first) first.textContent = seeds ? 'seeds' : 'colors'
 
-    if (!seeds) {
-      if (body && !body.hidden) {
-        body.hidden = true
+    if (body) body.hidden = !seeds
 
-        if (colors && this.#panel() === 'colors') colors.hidden = false
-      }
+    if (colors) colors.hidden = seeds !== null
 
-      return
-    }
-
-    if (body) body.hidden = this.#panel() !== 'colors'
-
-    if (colors) colors.hidden = true
+    if (!seeds) return
 
     for (const row of seedRowsOf(seeds)) {
       const shown = this.querySelector(`[data-seed-value="${row.key}"]`)
@@ -628,10 +620,6 @@ class PaletteBuilder extends HTMLElement {
     const passed = this.querySelector('[data-seed-gate]')
 
     if (passed) passed.textContent = `${gate.passed} / ${gate.lines.length} pass`
-  }
-
-  #panel(): string {
-    return this.querySelector<HTMLElement>('[data-panel][aria-selected="true"]')?.dataset.panel ?? 'colors'
   }
 
   #pickerView(slot: number): PickerView {
@@ -727,7 +715,7 @@ class PaletteBuilder extends HTMLElement {
     const box = this.querySelector<HTMLElement>('[data-picker]')
 
     if (!data || !box) return
-    this.#showPanel('colors')
+    this.#select('colors')
 
     if (this.#seeds) this.#keepSeeds()
     const row = this.querySelector<HTMLElement>(`[data-row="${slot}"]`)
@@ -824,44 +812,57 @@ class PaletteBuilder extends HTMLElement {
     this.#renderPicker()
   }
 
-  #showPanel(name: string) {
-    for (const tab of this.querySelectorAll<HTMLElement>('[data-panel]')) {
-      const on = tab.dataset.panel === name
-      tab.setAttribute('aria-selected', String(on))
-      tab.tabIndex = on ? 0 : -1
-    }
-
-    const colors = this.querySelector<HTMLElement>('[data-panel-body="colors"]')
-    const seeds = this.querySelector<HTMLElement>('[data-panel-body="seeds"]')
-    const about = this.querySelector<HTMLElement>('[data-panel-body="about"]')
-    const drafts = this.querySelector<HTMLElement>('[data-panel-body="drafts"]')
-
-    if (about) about.hidden = name !== 'about'
-
-    if (drafts) drafts.hidden = name !== 'drafts'
-
-    if (name === 'drafts') this.#renderDrafts()
-
-    if (colors) colors.hidden = name !== 'colors' || this.#seeds !== null
-
-    if (seeds) seeds.hidden = name !== 'colors' || this.#seeds === null
-
-    if (name !== 'colors' && this.#open !== null) this.#close(false)
+  #select(panel: string) {
+    this.querySelector<HTMLElement>(`[data-panels] [data-value="${panel}"]`)?.click()
   }
 
-  #showPane(name: string) {
-    for (const tab of this.querySelectorAll<HTMLElement>('[data-pane]')) {
-      const on = tab.dataset.pane === name
-      tab.setAttribute('aria-selected', String(on))
-      tab.tabIndex = on ? 0 : -1
+  #changed = (event: CustomEvent<ValueChange>) => {
+    const list = event.target as Element
+    const { value } = event.detail
+
+    if (list.matches('[data-slot="combobox"]')) {
+      const start = this.#starts?.find((one) => one.name === value)
+
+      if (start) this.#startFrom(start, false)
+      else event.preventDefault()
+
+      return
     }
 
-    for (const panel of this.querySelectorAll<HTMLElement>('[data-pane-panel]')) {
-      panel.hidden = panel.dataset.panePanel !== name
+    if (list.matches('[data-panes]')) {
+      this.#inspector.release()
+      requestAnimationFrame(() => this.#tail())
+
+      return
     }
 
-    this.#inspector.release()
-    this.#tail()
+    if (!list.matches('[data-panels]')) return
+
+    if (value === 'drafts') this.#renderDrafts()
+
+    if (value !== 'colors' && this.#open !== null) this.#close(false)
+  }
+
+  #opened = (event: CustomEvent<OpenChange>) => {
+    const popup = event.target as Element
+    const { open, reason } = event.detail
+
+    if (!open) {
+      const row = this.#open === null ? null : this.querySelector(`[data-row="${this.#open}"]`)
+
+      if (row && popup.contains(row)) this.#close(false)
+
+      return
+    }
+
+    if (popup.matches('[data-open-box]') && reason === 'trigger-press')
+      requestAnimationFrame(() => this.querySelector<HTMLElement>('[data-open-text]')?.focus({ preventScroll: true }))
+
+    if (popup.matches('[data-export]')) this.#renderExport(true)
+
+    if (popup.id !== 'builder-start') return
+    void this.#loadStarts()
+    this.#renderStart()
   }
 
   #setView(mode: Mode) {
@@ -932,13 +933,13 @@ class PaletteBuilder extends HTMLElement {
     this.#relink()
     this.#close(false)
     this.#mark()
-    this.#showPanel(panel)
+    this.#select(panel)
     this.#render()
     this.#renderDrafts()
   }
 
   #startDraft(id: string) {
-    if (id === this.#state.id) return this.#showPanel('colors')
+    if (id === this.#state.id) return this.#select('colors')
     this.#flush()
     const draft = this.#stored?.drafts.find((stored) => stored.id === id)
 
@@ -977,7 +978,7 @@ class PaletteBuilder extends HTMLElement {
     this.#seeds = null
     this.#before = null
     this.#relink()
-    this.#showPanel('colors')
+    this.#select('colors')
     this.#render()
     this.#save()
   }
@@ -992,30 +993,6 @@ class PaletteBuilder extends HTMLElement {
 
   #closeStart() {
     this.querySelector<HTMLElement>('#builder-start')?.hidePopover()
-  }
-
-  #placeAdd = (event: Event) => {
-    const pop = event.target as HTMLElement
-    const button = this.querySelector('[data-add]')
-
-    if ((event as ToggleEvent).newState === 'open' && button) placeUnder(pop, button, 'right')
-  }
-
-  #placeGate = (event: Event) => {
-    const pop = event.target as HTMLElement
-    const button = this.querySelector('[popovertarget="builder-gate"]')
-
-    if ((event as ToggleEvent).newState === 'open' && button) placeUnder(pop, button, 'left')
-  }
-
-  #placeStart = (event: Event) => {
-    const pop = event.target as HTMLElement
-    const button = this.querySelector('[data-start]')
-
-    if ((event as ToggleEvent).newState !== 'open' || !button) return
-    placeUnder(pop, button, 'left')
-    void this.#loadStarts()
-    this.#renderStart()
   }
 
   async #loadStarts() {
@@ -1044,7 +1021,7 @@ class PaletteBuilder extends HTMLElement {
       ? { state: 'failed' }
       : !this.#starts
         ? { state: 'loading' }
-        : { state: 'ready', query: this.#query, groups: groupsOf(this.#starts, this.#query) }
+        : { state: 'ready', groups: groupsOf(this.#starts) }
 
     this.#fill(target, html(<StartEntries list={list} />))
   }
@@ -1075,17 +1052,6 @@ class PaletteBuilder extends HTMLElement {
     } catch (failure) {
       say(`${file ?? (codeOf(text) ? 'the link' : 'the text')} does not open — ${(failure as Error).message}`)
     }
-  }
-
-  #openExport() {
-    const dialog = this.querySelector<HTMLDialogElement>('[data-export]')
-
-    if (!dialog) return
-    const add = this.querySelector<HTMLElement>('#builder-add')
-
-    if (add?.matches(':popover-open')) add.hidePopover()
-    this.#renderExport(true)
-    dialog.showModal()
   }
 
   #url(key: string, blob: Blob): string {
@@ -1177,18 +1143,6 @@ class PaletteBuilder extends HTMLElement {
 
     download.href = this.#url('zip', new Blob([bytes.slice()], { type: 'application/zip' }))
     download.download = view.zip
-  }
-
-  #showExportTab(name: string) {
-    for (const tab of this.querySelectorAll<HTMLElement>('[data-export-tab]')) {
-      const on = tab.dataset.exportTab === name
-      tab.setAttribute('aria-selected', String(on))
-      tab.tabIndex = on ? 0 : -1
-    }
-
-    for (const panel of this.querySelectorAll<HTMLElement>('[data-export-panel]')) {
-      panel.hidden = panel.dataset.exportPanel !== name
-    }
   }
 
   #planeAt(event: PointerEvent) {
@@ -1304,12 +1258,6 @@ class PaletteBuilder extends HTMLElement {
     const target = event.target as Element | null
 
     if (!target) return
-    const panel = target.closest<HTMLElement>('[data-panel]')?.dataset.panel
-
-    if (panel) return this.#showPanel(panel)
-    const pane = target.closest<HTMLElement>('[data-pane]')?.dataset.pane
-
-    if (pane) return this.#showPane(pane)
     const mode = target.closest<HTMLElement>('[data-edit-mode]')?.dataset.editMode
 
     if (mode === 'dark' || mode === 'light') return this.#setView(mode)
@@ -1348,7 +1296,7 @@ class PaletteBuilder extends HTMLElement {
 
       if (checks) {
         checks.hidePopover()
-        this.#showPanel('colors')
+        this.#select('colors')
       }
 
       if (this.#open === slot && !opener.closest('[data-inspector]')) return this.#close(true)
@@ -1392,11 +1340,6 @@ class PaletteBuilder extends HTMLElement {
       return
     }
 
-    if (target.closest('[data-export-open]')) return this.#openExport()
-    const tab = target.closest<HTMLElement>('[data-export-tab]')?.dataset.exportTab
-
-    if (tab) return this.#showExportTab(tab)
-
     if (target.closest('[data-seeds-keep]')) return this.#keepSeeds()
 
     if (target.closest('[data-seeds-cancel]')) {
@@ -1407,10 +1350,6 @@ class PaletteBuilder extends HTMLElement {
     }
 
     if (target.closest('[data-start-blank]')) return this.#startBlank()
-    const from = target.closest<HTMLElement>('[data-start-from]')?.dataset.startFrom
-    const start = from ? this.#starts?.find((one) => one.name === from) : undefined
-
-    if (start) return this.#startFrom(start, false)
     const gone = target.closest<HTMLElement>('[data-draft-delete]')?.dataset.draftDelete
 
     if (gone) return this.#deleteDraft(gone)
@@ -1424,21 +1363,6 @@ class PaletteBuilder extends HTMLElement {
       this.#startFailed = false
       this.#renderStart()
       void this.#loadStarts()
-
-      return
-    }
-
-    const opening = target.closest<HTMLElement>('[data-start-open]')
-
-    if (opening) {
-      const box = this.querySelector<HTMLElement>('[data-open-box]')
-
-      if (box) {
-        box.hidden = !box.hidden
-        opening.setAttribute('aria-expanded', String(!box.hidden))
-
-        if (!box.hidden) this.querySelector<HTMLElement>('[data-open-text]')?.focus()
-      }
 
       return
     }
@@ -1496,13 +1420,6 @@ class PaletteBuilder extends HTMLElement {
       return
     }
 
-    if (input.matches('[data-start-search]')) {
-      this.#query = input.value
-      this.#renderStart()
-
-      return
-    }
-
     if (input.matches('[data-draft-search]')) {
       this.#draftQuery = input.value
       this.#renderDrafts()
@@ -1546,16 +1463,6 @@ class PaletteBuilder extends HTMLElement {
     }
   }
 
-  #toggled = (event: Event) => {
-    const group = event.target
-
-    if (!(group instanceof HTMLDetailsElement) || this.#open === null) return
-    const row = this.querySelector(`[data-row="${this.#open}"]`)
-
-    if (!group.open && row && group.contains(row)) this.#close(false)
-    else this.#placePicker()
-  }
-
   #key = (event: KeyboardEvent) => {
     if (composing(event)) return
 
@@ -1593,14 +1500,7 @@ class PaletteBuilder extends HTMLElement {
 
     if (event.key === 'Enter' && (event.target as Element | null)?.matches('[data-name], [data-about-name]')) {
       ;(event.target as HTMLInputElement).blur()
-
-      return
     }
-
-    tabKey(event, (tab) => {
-      tab.focus()
-      tab.click()
-    })
   }
 }
 

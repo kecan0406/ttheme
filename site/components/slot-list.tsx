@@ -1,6 +1,7 @@
 import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
 import { Check, ChevronDown, Minus, X } from 'lucide'
 import { Badge } from '@/components/ui/badge'
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Icon } from '@/lib/icons'
 import type { GateLine } from '@/lib/view-types'
 import { reading } from './palette-parts'
@@ -27,8 +28,8 @@ export function Verdict({ ok }: { ok: boolean | null }) {
 
 export function Group({ name, count, children }: PropsWithChildren<{ name: string; count: string }>) {
   return (
-    <details open data-group={name} class="group/group border-b border-border">
-      <summary class="flex h-10 cursor-pointer list-none items-center gap-2 px-4 text-2xs font-bold tracking-caps text-muted-foreground uppercase outline-none select-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
+    <Collapsible open data-group={name} class="group/group border-b border-border">
+      <CollapsibleTrigger class="flex h-10 items-center gap-2 px-4 text-2xs font-bold tracking-caps text-muted-foreground uppercase outline-none select-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
         <span safe>{name}</span>
         <span
           class="inline-flex h-4.5 items-center rounded-sm border border-border px-1.5 font-mono font-medium tracking-normal normal-case"
@@ -36,10 +37,13 @@ export function Group({ name, count, children }: PropsWithChildren<{ name: strin
         >
           {count}
         </span>
-        <Icon node={ChevronDown} class="ml-auto size-3.5 -rotate-90 transition-transform group-open/group:rotate-0" />
-      </summary>
-      {children}
-    </details>
+        <Icon
+          node={ChevronDown}
+          class="ml-auto size-3.5 -rotate-90 transition-transform group-data-open/group:rotate-0"
+        />
+      </CollapsibleTrigger>
+      <CollapsiblePanel>{children}</CollapsiblePanel>
+    </Collapsible>
   )
 }
 

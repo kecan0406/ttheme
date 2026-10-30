@@ -1,6 +1,7 @@
 import { BookOpen, Menu, Paintbrush, Store } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
+import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import type { Facts } from '@/lib/facts'
 import { REPO_URL, starCount } from '@/lib/gallery'
 import { BrandIcon, GitHubStar, Icon, NewTab } from '@/lib/icons'
@@ -61,19 +62,29 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
             ))}
           </nav>
         </div>
-        <Button
-          variant="outline"
-          size="icon-sm"
-          aria-label="menu"
-          popovertarget="site-menu"
-          class="ml-auto hidden self-center header-menu:inline-flex"
-        >
-          <Icon node={Menu} />
-        </Button>
-        <div
+        <PopoverTrigger
+          popover="site-menu"
+          dialog={false}
+          render={(props) => (
+            <Button
+              {...props}
+              variant="outline"
+              size="icon-sm"
+              aria-label="menu"
+              class="ml-auto hidden self-center header-menu:inline-flex"
+            >
+              <Icon node={Menu} />
+            </Button>
+          )}
+        />
+        <Popover
           id="site-menu"
-          popover="auto"
-          class="top-15 right-5 m-0 w-64 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid header-wide:static header-wide:my-2.5 header-wide:ml-auto header-wide:flex header-wide:w-auto header-wide:flex-wrap header-wide:items-center header-wide:justify-end header-wide:self-center header-wide:gap-2.5 header-wide:overflow-visible header-wide:border-0 header-wide:bg-transparent header-wide:p-0 header-wide:text-inherit header-wide:shadow-none"
+          render={(props) => (
+            <div
+              {...props}
+              class="top-15 right-5 m-0 w-64 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid header-wide:static header-wide:my-2.5 header-wide:ml-auto header-wide:flex header-wide:w-auto header-wide:flex-wrap header-wide:items-center header-wide:justify-end header-wide:self-center header-wide:gap-2.5 header-wide:overflow-visible header-wide:border-0 header-wide:bg-transparent header-wide:p-0 header-wide:text-inherit header-wide:shadow-none"
+            />
+          )}
         >
           <HeaderBar />
           <LinkButton
@@ -105,7 +116,7 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
               <span class="sr-only">, opens in a new tab</span>
             )}
           </LinkButton>
-        </div>
+        </Popover>
       </div>
     </header>
   )

@@ -21,8 +21,10 @@ import {
   X,
 } from 'lucide'
 import { Button } from '@/components/ui/button'
+import { DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Popover } from '@/components/ui/popover'
+import { Popover, PopoverTrigger } from '@/components/ui/popover'
+import { TabsPanel } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type {
   AboutView,
@@ -163,19 +165,17 @@ export function BuilderBar({
           </span>
         </TitleLine>
         <TitleFacts>
-          <Button
-            variant="muted"
-            size="chip"
-            popovertarget="builder-start"
-            aria-haspopup="dialog"
-            data-start
-            class="min-w-0 font-normal"
-          >
-            <span data-start-label class="flex min-w-0 items-center gap-1.5">
-              <StartLabel source={source} />
-            </span>
-            <Icon node={ChevronDown} class="size-3 flex-none opacity-70" />
-          </Button>
+          <PopoverTrigger
+            popover="builder-start"
+            render={(props) => (
+              <Button {...props} variant="muted" size="chip" data-start class="min-w-0 font-normal">
+                <span data-start-label class="flex min-w-0 items-center gap-1.5">
+                  <StartLabel source={source} />
+                </span>
+                <Icon node={ChevronDown} class="size-3 flex-none opacity-70" />
+              </Button>
+            )}
+          />
           <span data-draft data-gate-summary class="flex flex-none">
             <GateSummary gate={gate} />
           </span>
@@ -213,18 +213,28 @@ export function BuilderBar({
               <Icon node={Link} class="group-data-copied/copy:hidden" />
               <Icon node={Check} class="hidden group-data-copied/copy:block" />
             </Button>
-            <Button size="sm" popovertarget="builder-add" data-add>
-              <Icon node={Plus} />
-              <span>
-                add<span class="max-[560px]:sr-only bar-squeezed:sr-only"> to ttheme</span>
-              </span>
-            </Button>
+            <PopoverTrigger
+              popover="builder-add"
+              render={(props) => (
+                <Button {...props} size="sm" data-add>
+                  <Icon node={Plus} />
+                  <span>
+                    add<span class="max-[560px]:sr-only bar-squeezed:sr-only"> to ttheme</span>
+                  </span>
+                </Button>
+              )}
+            />
           </>
         ) : null}
-        <Button size="sm" data-export-open aria-haspopup="dialog" hidden={link !== null}>
-          <Icon node={Download} />
-          <span class="max-[360px]:sr-only bar-squeezed:sr-only">export</span>
-        </Button>
+        <DialogTrigger
+          dialog="builder-export"
+          render={(props) => (
+            <Button {...props} size="sm" data-export-open hidden={link !== null}>
+              <Icon node={Download} />
+              <span class="max-[360px]:sr-only bar-squeezed:sr-only">export</span>
+            </Button>
+          )}
+        />
       </div>
     </WorkspaceBar>
   )
@@ -270,14 +280,7 @@ export function SeedStrip({ list }: { list: string[] }) {
 
 export function SeedsPanel({ seeds, list, gate }: { seeds: SeedRow[]; list: string[]; gate: Gate }) {
   return (
-    <section
-      id="builder-seeds"
-      role="tabpanel"
-      aria-labelledby="builder-tab-colors"
-      data-panel-body="seeds"
-      hidden
-      class="grid content-start gap-4 pb-6"
-    >
+    <section data-panel-body="seeds" hidden class="grid content-start gap-4 pb-6">
       <div class="flex h-13 items-center gap-2 border-b border-border pr-3 pl-4 text-sm font-semibold">
         <Verdict ok={gate.passed === gate.lines.length} />
         <span data-seed-gate safe>{`${gate.passed} / ${gate.lines.length} pass`}</span>
@@ -307,7 +310,10 @@ export function SeedsPanel({ seeds, list, gate }: { seeds: SeedRow[]; list: stri
 
 export function GateSummary({ gate }: { gate: Gate }) {
   return (
-    <GateButton passed={gate.passed} total={gate.lines.length} popovertarget="builder-gate" aria-haspopup="dialog" />
+    <PopoverTrigger
+      popover="builder-gate"
+      render={(props) => <GateButton {...props} passed={gate.passed} total={gate.lines.length} />}
+    />
   )
 }
 
@@ -324,7 +330,7 @@ export function GateChecks({ gate, names }: { gate: Gate; names: string[] }) {
 
 export function GatePopover({ gate, names }: { gate: Gate; names: string[] }) {
   return (
-    <Popover id="builder-gate" label="contrast checks">
+    <Popover id="builder-gate" label="contrast checks" align="start">
       <div data-draft data-gate-checks class="contents">
         <GateChecks gate={gate} names={names} />
       </div>
@@ -421,13 +427,7 @@ export function PairRows({ pairs }: { pairs: PairView[] }) {
 
 export function ColorsPanel({ rows, format }: { rows: Rows; format: RowFormat }) {
   return (
-    <section
-      id="builder-colors"
-      role="tabpanel"
-      aria-labelledby="builder-tab-colors"
-      data-panel-body="colors"
-      class="relative pb-6"
-    >
+    <section data-panel-body="colors" class="relative pb-6">
       <div class="flex h-11 items-center justify-between gap-2 border-b border-border pr-3 pl-4">
         <span class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">values</span>
         <ToggleGroup label="values in the list">
@@ -835,7 +835,7 @@ export function PicturesBox({ about }: { about: AboutView }) {
 
 export function AboutPanel({ about, modes, link }: { about: AboutView; modes: ModesView; link?: JSX.Element }) {
   return (
-    <section id="builder-about" role="tabpanel" aria-labelledby="builder-tab-about" data-panel-body="about" hidden>
+    <TabsPanel id="builder-about" aria-labelledby="builder-tab-about" data-panel-body="about" selected={false}>
       {link ? link : null}
       <div class="grid gap-3 border-b border-border p-4">
         <SectionLabel icon={<Icon node={FileCode} />}>File</SectionLabel>
@@ -896,7 +896,7 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
           <PicturesBox about={about} />
         </div>
       </div>
-    </section>
+    </TabsPanel>
   )
 }
 
