@@ -24,8 +24,10 @@ import { Button } from '@/components/ui/button'
 import { DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { TabsPanel } from '@/components/ui/tabs'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Toggle } from '@/components/ui/toggle'
+import { ToggleGroup } from '@/components/ui/toggle-group'
 import type {
   AboutView,
   Gate,
@@ -182,11 +184,15 @@ export function BuilderBar({
         </TitleFacts>
       </WorkspaceTitle>
       <div class="flex flex-none items-center gap-2 max-[760px]:w-full max-[760px]:flex-wrap">
-        <Button variant="outline" size="sm" data-changed aria-pressed="false" hidden={changed === 0}>
-          <span data-changed-label class="flex items-center gap-1.5">
-            <ChangedLabel count={changed} />
-          </span>
-        </Button>
+        <Toggle
+          render={(props) => (
+            <Button {...props} variant="outline" size="sm" data-changed hidden={changed === 0}>
+              <span data-changed-label class="flex items-center gap-1.5">
+                <ChangedLabel count={changed} />
+              </span>
+            </Button>
+          )}
+        />
         <span class="flex flex-none">
           <Button variant="ghost" size="icon-sm" data-undo aria-label="undo" title="undo" disabled>
             <Icon node={Undo2} />
@@ -395,16 +401,15 @@ function LinkButton({ pair }: { pair: PairView }) {
   const label = on ? `unlink ${names}` : `link ${names}`
 
   return (
-    <button
-      type="button"
+    <Toggle
+      pressed={on}
       data-link={String(pair.bright.slot)}
-      aria-pressed={String(on)}
       aria-label={label}
       title={on ? `${pair.bright.name} follows ${pair.normal.name.toLowerCase()}` : label}
-      class="grid size-6 place-items-center rounded-full text-faint-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-pressed:text-primary"
+      class="grid size-6 place-items-center rounded-full text-faint-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-pressed:text-primary"
     >
       <Icon node={on ? Link2 : Unlink} class="size-3.5" />
-    </button>
+    </Toggle>
   )
 }
 
@@ -430,13 +435,13 @@ export function ColorsPanel({ rows, format }: { rows: Rows; format: RowFormat })
     <section data-panel-body="colors" class="relative pb-6">
       <div class="flex h-11 items-center justify-between gap-2 border-b border-border pr-3 pl-4">
         <span class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">values</span>
-        <ToggleGroup label="values in the list">
+        <RadioGroup label="values in the list">
           {(['oklch', 'hex'] as const).map((value) => (
-            <ToggleGroupItem name="row-format" value={value} checked={value === format} class="min-h-7 px-2.5 text-xs">
+            <RadioGroupItem name="row-format" value={value} checked={value === format} class="min-h-7 px-2.5 text-xs">
               {value}
-            </ToggleGroupItem>
+            </RadioGroupItem>
           ))}
-        </ToggleGroup>
+        </RadioGroup>
       </div>
       <Group name="base" count="4">
         <div data-draft data-base-rows>
@@ -544,10 +549,15 @@ export function PickerActions({ p }: { p: PickerView }) {
   return (
     <>
       {p.link === null ? null : (
-        <Button variant="outline" size="sm" data-picker-link aria-pressed={String(p.link === 'on')}>
-          <Icon node={p.link === 'on' ? Link2 : Unlink} class="size-3.5" />
-          {p.link === 'on' ? 'follows its normal' : 'moves alone'}
-        </Button>
+        <Toggle
+          pressed={p.link === 'on'}
+          render={(props) => (
+            <Button {...props} variant="outline" size="sm" data-picker-link>
+              <Icon node={p.link === 'on' ? Link2 : Unlink} class="size-3.5" />
+              {p.link === 'on' ? 'follows its normal' : 'moves alone'}
+            </Button>
+          )}
+        />
       )}
       {p.origin ? (
         <Button variant="outline" size="sm" data-picker-back>
@@ -704,13 +714,13 @@ export function Picker({ p, track, panes }: { p: PickerView; track: string; pane
           ))}
         </div>
       </div>
-      <ToggleGroup label="value format" class="grid w-full grid-cols-3">
+      <RadioGroup label="value format" class="grid w-full grid-cols-3">
         {FORMATS.map((name) => (
-          <ToggleGroupItem name="slot-format" value={name} checked={name === p.format}>
+          <RadioGroupItem name="slot-format" value={name} checked={name === p.format}>
             {name}
-          </ToggleGroupItem>
+          </RadioGroupItem>
         ))}
-      </ToggleGroup>
+      </RadioGroup>
       <div class="flex h-10 items-center gap-2 rounded-lg border border-input pr-1 pl-3 has-aria-invalid:border-destructive">
         <input
           data-value
@@ -744,9 +754,8 @@ export function Picker({ p, track, panes }: { p: PickerView; track: string; pane
       <div data-use class="grid gap-1">
         <Use s={s} panes={panes} />
       </div>
-      <button
-        type="button"
-        aria-pressed={String(p.where)}
+      <Toggle
+        pressed={p.where}
         data-where
         class="group/where flex h-10 items-center gap-2.5 rounded-lg border border-border px-3 text-left text-sm font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
       >
@@ -754,9 +763,9 @@ export function Picker({ p, track, panes }: { p: PickerView; track: string; pane
         show where it's used
         <span
           aria-hidden="true"
-          class="relative ml-auto h-4.5 w-7.5 flex-none rounded-full bg-input transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-3.5 after:rounded-full after:bg-card after:shadow-sm after:transition-transform group-aria-pressed/where:bg-primary group-aria-pressed/where:after:translate-x-3"
+          class="relative ml-auto h-4.5 w-7.5 flex-none rounded-full bg-input transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-3.5 after:rounded-full after:bg-card after:shadow-sm after:transition-transform group-data-pressed/where:bg-primary group-data-pressed/where:after:translate-x-3"
         />
-      </button>
+      </Toggle>
       <div data-picker-actions class="flex flex-wrap gap-1.5 empty:hidden">
         <PickerActions p={p} />
       </div>
@@ -902,18 +911,18 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
 
 export function EditMode({ made, editing }: { made: Mode; editing: Mode }) {
   return (
-    <fieldset
-      aria-label="mode to edit"
+    <ToggleGroup
+      label="mode to edit"
+      data-edit-modes
       class="flex h-7.5 min-w-0 flex-none items-center gap-0.5 rounded-full bg-(--fg)/8 p-0.5"
     >
       {(['dark', 'light'] as const).map((mode) => (
-        <button
-          type="button"
-          data-edit-mode={mode}
-          aria-pressed={String(mode === editing)}
+        <Toggle
+          value={mode}
+          pressed={mode === editing}
           aria-label={`edit the ${mode} colors${mode === made ? ', the mode it was made in' : ''}`}
           title={mode === made ? `${mode}, the mode it was made in` : mode}
-          class="relative flex h-full w-8 cursor-pointer items-center justify-center rounded-full text-(--fg)/62 transition-colors duration-150 outline-none hover:text-(--fg) focus-visible:inset-ring-2 focus-visible:inset-ring-ring aria-pressed:bg-(--cu) aria-pressed:text-(--bg)"
+          class="relative flex h-full w-8 cursor-pointer items-center justify-center rounded-full text-(--fg)/62 transition-colors duration-150 outline-none hover:text-(--fg) focus-visible:inset-ring-2 focus-visible:inset-ring-ring data-pressed:bg-(--cu) data-pressed:text-(--bg)"
         >
           <Icon node={mode === 'dark' ? Moon : Sun} class="size-3.5" />
           <i
@@ -921,9 +930,9 @@ export function EditMode({ made, editing }: { made: Mode; editing: Mode }) {
             hidden={mode !== made}
             class="absolute top-0.5 right-1 size-1 rounded-full bg-current opacity-70"
           />
-        </button>
+        </Toggle>
       ))}
-    </fieldset>
+    </ToggleGroup>
   )
 }
 

@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from '@kitajs/html'
 import { Plus } from 'lucide'
 import { Button } from '@/components/ui/button'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Icon } from '@/lib/icons'
 import { paint, type Theme } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
@@ -119,9 +119,9 @@ export function TabSession({ theme }: { theme: Theme }) {
 
 export function WindowTabs({ tabs, active }: { tabs: WindowTab[]; active: number }) {
   return (
-    <ToggleGroup variant="tab" label="terminal tabs">
+    <RadioGroup variant="tab" label="terminal tabs">
       {tabs.map((tab) => (
-        <ToggleGroupItem variant="tab" name="terminal-tab" value={String(tab.id)} checked={tab.id === active}>
+        <RadioGroupItem variant="tab" name="terminal-tab" value={String(tab.id)} checked={tab.id === active}>
           <i
             aria-hidden="true"
             class="size-2 flex-none rounded-full forced-color-adjust-none"
@@ -130,9 +130,9 @@ export function WindowTabs({ tabs, active }: { tabs: WindowTab[]; active: number
           <span class="min-w-0 truncate" translate="no" safe>
             {tab.theme.name}
           </span>
-        </ToggleGroupItem>
+        </RadioGroupItem>
       ))}
-    </ToggleGroup>
+    </RadioGroup>
   )
 }
 

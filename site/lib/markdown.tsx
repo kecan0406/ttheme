@@ -4,7 +4,7 @@ import { Marked, Renderer, type Token, type Tokens } from 'marked'
 import { CommandRow, RunnerRow } from '@/components/command-row'
 import { PinsPlayer } from '@/components/pins-player'
 import { buttonVariants } from '@/components/ui/button'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { highlightHtml } from '@/lib/highlight'
 import { Icon } from '@/lib/icons'
 import { idsOf, playPins, readPins, swatchOf } from '@/lib/pins-play'
@@ -201,13 +201,13 @@ function tabOf(token: Token): string | undefined {
 
 function tabs(labels: string[], safePanes: string[], group: string): string {
   const picker = html(
-    <ToggleGroup label={labels.join(', ')}>
+    <RadioGroup label={labels.join(', ')}>
       {labels.map((label, at) => (
-        <ToggleGroupItem name={group} value={String(at)} checked={at === 0}>
+        <RadioGroupItem name={group} value={String(at)} checked={at === 0}>
           <span safe>{label}</span>
-        </ToggleGroupItem>
+        </RadioGroupItem>
       ))}
-    </ToggleGroup>,
+    </RadioGroup>,
   )
 
   const panes = safePanes.map((pane, at) => `<div data-pane="${at}">${pane}</div>`).join('')

@@ -1,6 +1,8 @@
 import { Check, Copy } from 'lucide'
 import { type SimpleIcon, siBun, siNpm } from 'simple-icons'
 import { Button } from '@/components/ui/button'
+import { Toggle } from '@/components/ui/toggle'
+import { ToggleGroup } from '@/components/ui/toggle-group'
 import { initOf } from '@/lib/gallery'
 import { highlightHtml } from '@/lib/highlight'
 import { BrandIcon, Icon } from '@/lib/icons'
@@ -81,19 +83,14 @@ export function RunnerRow({
 }) {
   return (
     <div data-slot="command-row" data-highlight class={cn(BOX, className)}>
-      <fieldset aria-label="run with" class="flex h-8 min-w-0 items-stretch gap-1 border-b px-2.5">
+      <ToggleGroup label="run with" data-runners class="flex h-8 min-w-0 items-stretch gap-1 border-b px-2.5">
         {RUNNERS.map((runner) => (
-          <button
-            type="button"
-            data-runner-to={runner}
-            aria-pressed={String(runner === 'npx')}
-            class={cn(TAB, TAB_ON[runner])}
-          >
+          <Toggle value={runner} pressed={runner === 'npx'} class={cn(TAB, TAB_ON[runner])}>
             <BrandIcon icon={MARKS[runner]} class="size-3" />
             <span>{runner}</span>
-          </button>
+          </Toggle>
         ))}
-      </fieldset>
+      </ToggleGroup>
       <div class={BAR}>
         {RUNNERS.map((runner) => (
           <Line command={commands[runner]} class={LINE_SHOWN[runner]} />

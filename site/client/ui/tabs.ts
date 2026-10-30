@@ -1,12 +1,6 @@
 import { bare } from '../keys'
 import { emit } from './change'
-
-const MOVES = new Map<string, (index: number, count: number) => number>([
-  ['ArrowRight', (index) => index + 1],
-  ['ArrowLeft', (index) => index - 1],
-  ['Home', () => 0],
-  ['End', (_, count) => count - 1],
-])
+import { stepTo } from './roving'
 
 function tabOf(target: EventTarget | null): HTMLElement | null {
   return (target as Element | null)?.closest<HTMLElement>('[data-slot="tabs-trigger"]') ?? null
@@ -42,15 +36,13 @@ document.addEventListener('click', (event) => {
 
 document.addEventListener('keydown', (event) => {
   const tab = tabOf(event.target)
-  const move = MOVES.get(event.key)
   const list = tab?.closest('[data-slot="tabs-list"]')
 
-  if (!tab || !move || !list || !bare(event)) return
-  event.preventDefault()
-  const tabs = tabsIn(list)
-  const next = tabs[(move(tabs.indexOf(tab), tabs.length) + tabs.length) % tabs.length]
+  if (!tab || !list || !bare(event)) return
+  const next = stepTo(event.key, tabsIn(list), tab)
 
   if (!next) return
+  event.preventDefault()
   next.focus()
   select(next)
 })

@@ -1,5 +1,6 @@
 import { RUNNER_KEY } from '@/lib/runner'
 import { respeculate } from './speculation'
+import { pressIn } from './ui/pressed'
 
 const root = document.documentElement
 
@@ -17,17 +18,12 @@ function show(runner: string | null) {
   if (shown === 'bunx') root.dataset.runner = shown
   else delete root.dataset.runner
 
-  for (const cell of document.querySelectorAll<HTMLElement>('[data-runner-to]'))
-    cell.setAttribute('aria-pressed', String(cell.dataset.runnerTo === shown))
+  for (const group of document.querySelectorAll('[data-runners]')) pressIn(group, shown)
 }
 
-document.addEventListener('click', (event) => {
-  const runner =
-    event.target instanceof Element
-      ? event.target.closest<HTMLElement>('[data-runner-to]')?.dataset.runnerTo
-      : undefined
-
-  if (!runner) return
+document.addEventListener('valuechange', (event) => {
+  if (!(event.target instanceof Element) || !event.target.matches('[data-runners]')) return
+  const runner = event.detail.value
   show(runner)
 
   try {

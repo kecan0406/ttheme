@@ -889,7 +889,7 @@ route-progress[data-state='done'],
     text-underline-offset: 4px;
   }
 
-  [data-slot='window-mode'] [aria-pressed='true'] {
+  [data-window-modes] [data-pressed] {
     background: Highlight;
     color: HighlightText;
   }

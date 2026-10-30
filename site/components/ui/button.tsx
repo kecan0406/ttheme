@@ -9,14 +9,14 @@ const buttonVariants = cva(
       variant: {
         default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/88 hover:shadow-md',
         outline:
-          'border-border bg-card text-soft-foreground hover:border-input hover:bg-secondary hover:text-foreground aria-expanded:bg-secondary data-popup-open:bg-secondary aria-pressed:border-primary aria-pressed:text-foreground',
+          'border-border bg-card text-soft-foreground hover:border-input hover:bg-secondary hover:text-foreground aria-expanded:bg-secondary data-popup-open:bg-secondary data-pressed:border-primary data-pressed:text-foreground',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-muted',
         muted:
           'bg-muted text-soft-foreground hover:bg-secondary hover:text-foreground aria-expanded:bg-secondary aria-expanded:text-foreground data-popup-open:bg-secondary data-popup-open:text-foreground',
         raised:
           'border-raised-edge bg-linear-to-b from-raised to-raised-low text-soft-foreground shadow-[inset_0_1px_0_var(--raised-shine),var(--elevation-sm)] hover:border-input hover:text-foreground',
         ghost:
-          'text-soft-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted data-popup-open:bg-muted aria-pressed:bg-accent aria-pressed:text-primary aria-pressed:inset-ring aria-pressed:inset-ring-primary/45 aria-[current=page]:bg-accent aria-[current=page]:text-primary aria-[current=page]:inset-ring aria-[current=page]:inset-ring-primary/45',
+          'text-soft-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted data-popup-open:bg-muted data-pressed:bg-accent data-pressed:text-primary data-pressed:inset-ring data-pressed:inset-ring-primary/45 aria-[current=page]:bg-accent aria-[current=page]:text-primary aria-[current=page]:inset-ring aria-[current=page]:inset-ring-primary/45',
         scene: 'text-(--fg)/65 hover:bg-(--fg)/12 hover:text-(--fg)',
         destructive: 'bg-destructive/16 text-destructive hover:bg-destructive/24',
         link: 'font-medium text-primary underline-offset-4 hover:underline',

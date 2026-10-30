@@ -101,7 +101,8 @@ import { zip } from '../../src/core/zip.ts'
 import { announce, fill, readJson, reducedMotion } from './dom'
 import { Inspector } from './inspector'
 import { composing, typing } from './keys'
-import type { OpenChange, ValueChange } from './ui/change'
+import type { OpenChange, PressedChange, ValueChange } from './ui/change'
+import { press } from './ui/pressed'
 
 interface Snapshot {
   made: Hex[]
@@ -230,6 +231,7 @@ class PaletteBuilder extends HTMLElement {
     this.addEventListener('pointerdown', this.#press)
     this.addEventListener('openchange', this.#opened)
     this.addEventListener('valuechange', this.#changed)
+    this.addEventListener('pressedchange', this.#pressed)
     addEventListener('pagehide', this.#flush)
     addEventListener('storage', this.#synced)
     const term = this.querySelector<HTMLElement>('[data-term]')
@@ -264,6 +266,7 @@ class PaletteBuilder extends HTMLElement {
     this.removeEventListener('pointerdown', this.#press)
     this.removeEventListener('openchange', this.#opened)
     this.removeEventListener('valuechange', this.#changed)
+    this.removeEventListener('pressedchange', this.#pressed)
     removeEventListener('pagehide', this.#flush)
     removeEventListener('storage', this.#synced)
     this.#sizer?.disconnect()
@@ -466,7 +469,7 @@ class PaletteBuilder extends HTMLElement {
 
     if (shown) {
       shown.hidden = edits === 0 && !this.#only
-      shown.setAttribute('aria-pressed', String(this.#only))
+      press(shown, this.#only)
     }
 
     this.#enable('[data-undo]', this.#history.length > 0)
@@ -486,11 +489,11 @@ class PaletteBuilder extends HTMLElement {
     const made = madeMode(edit)
     const editing = modeOfView(edit, this.#view)
 
-    for (const button of this.querySelectorAll<HTMLElement>('[data-edit-mode]')) {
-      button.setAttribute('aria-pressed', String(button.dataset.editMode === editing))
+    for (const button of this.querySelectorAll<HTMLElement>('[data-edit-modes] [data-slot="toggle"]')) {
+      press(button, button.dataset.value === editing)
       const dot = button.querySelector<HTMLElement>('[data-made-dot]')
 
-      if (dot) dot.hidden = button.dataset.editMode !== made
+      if (dot) dot.hidden = button.dataset.value !== made
     }
 
     this.#renderPicker()
@@ -692,7 +695,9 @@ class PaletteBuilder extends HTMLElement {
     if (copy) copy.dataset.copy = text
     this.#fill(this.querySelector('[data-checks]'), html(<Checks s={s} />))
     this.#fill(this.querySelector('[data-use]'), html(<Use s={s} panes={this.#data?.panes ?? []} />))
-    this.querySelector('[data-picker-card] [data-where]')?.setAttribute('aria-pressed', String(this.#where))
+    const where = this.querySelector('[data-picker-card] [data-where]')
+
+    if (where) press(where, this.#where)
     this.#fill(this.querySelector('[data-picker-actions]'), html(<PickerActions p={p} />))
   }
 
@@ -820,6 +825,12 @@ class PaletteBuilder extends HTMLElement {
     const list = event.target as Element
     const { value } = event.detail
 
+    if (list.matches('[data-edit-modes]')) {
+      if (value === 'dark' || value === 'light') this.#setView(value)
+
+      return
+    }
+
     if (list.matches('[data-slot="combobox"]')) {
       const start = this.#starts?.find((one) => one.name === value)
 
@@ -841,6 +852,25 @@ class PaletteBuilder extends HTMLElement {
     if (value === 'drafts') this.#renderDrafts()
 
     if (value !== 'colors' && this.#open !== null) this.#close(false)
+  }
+
+  #pressed = (event: CustomEvent<PressedChange>) => {
+    const toggle = event.target as HTMLElement
+    const link = toggle.dataset.link
+
+    if (link) return this.#toggleLink(Number(link))
+
+    if (toggle.matches('[data-picker-link]')) {
+      if (this.#open === null || this.#open < 4) return event.preventDefault()
+
+      return this.#toggleLink(this.#open >= 12 ? this.#open : this.#open + 8)
+    }
+
+    if (toggle.matches('[data-where]')) this.#where = event.detail.pressed
+    else if (toggle.matches('[data-changed]')) this.#only = event.detail.pressed
+    else return
+
+    this.#render()
   }
 
   #opened = (event: CustomEvent<OpenChange>) => {
@@ -1258,26 +1288,8 @@ class PaletteBuilder extends HTMLElement {
     const target = event.target as Element | null
 
     if (!target) return
-    const mode = target.closest<HTMLElement>('[data-edit-mode]')?.dataset.editMode
-
-    if (mode === 'dark' || mode === 'light') return this.#setView(mode)
 
     if (target.closest('[data-picker-close]')) return this.#close(true)
-
-    if (target.closest('[data-where]')) {
-      this.#where = !this.#where
-      this.#render()
-
-      return
-    }
-
-    const link = target.closest<HTMLElement>('[data-link]')?.dataset.link
-
-    if (link) return this.#toggleLink(Number(link))
-
-    if (target.closest('[data-picker-link]') && this.#open !== null && this.#open >= 4) {
-      return this.#toggleLink(this.#open >= 12 ? this.#open : this.#open + 8)
-    }
 
     if (target.closest('[data-picker-back]') && this.#open !== null) {
       const origin = originIn(this.#state, this.#view)
@@ -1309,13 +1321,6 @@ class PaletteBuilder extends HTMLElement {
     if (run) return this.#inspector.pin(run)
 
     if (target.closest('[data-term]') && !target.closest('[data-inspector]')) return this.#inspector.release()
-
-    if (target.closest('[data-changed]')) {
-      this.#only = !this.#only
-      this.#render()
-
-      return
-    }
 
     if (target.closest('[data-undo]')) return this.#undo(true)
 

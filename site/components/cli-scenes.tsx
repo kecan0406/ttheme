@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from '@kitajs/html'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import type { Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { paneLines, paneTiles } from '../../src/core/builder-layout.ts'
@@ -104,16 +104,16 @@ function Pane({ view, children }: PropsWithChildren<{ view: View }>) {
 function SceneTabs() {
   return (
     <div class="flex items-center px-3 pb-2">
-      <ToggleGroup variant="tab" label="preview scene">
+      <RadioGroup variant="tab" label="preview scene">
         {VIEWS.map((view) => (
-          <ToggleGroupItem variant="tab" name="scene" value={view} checked={view === 'zsh'} class="max-[480px]:px-1.5">
+          <RadioGroupItem variant="tab" name="scene" value={view} checked={view === 'zsh'} class="max-[480px]:px-1.5">
             <span data-mark aria-hidden="true">
               ❯
             </span>
             {view}
-          </ToggleGroupItem>
+          </RadioGroupItem>
         ))}
-      </ToggleGroup>
+      </RadioGroup>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { nextSetting, setting, watch } from './mode'
+import { pressIn } from './ui/pressed'
 import { choosing } from './wear'
 
 class ModeSwitch extends HTMLElement {
@@ -36,25 +37,27 @@ function shown(scope: HTMLElement | null | undefined): string | undefined {
 }
 
 function pressed() {
-  for (const cell of document.querySelectorAll<HTMLElement>('[data-mode-to]'))
-    cell.setAttribute(
-      'aria-pressed',
-      String(cell.dataset.modeTo === shown(cell.closest<HTMLElement>('[data-mode-scope]'))),
-    )
+  for (const group of document.querySelectorAll('[data-window-modes]'))
+    pressIn(group, shown(group.closest<HTMLElement>('[data-mode-scope]')))
 }
 
 document.addEventListener('click', (event) => {
-  const button =
-    event.target instanceof Element ? event.target.closest<HTMLElement>('[data-mode-to], [data-mode-reset]') : null
+  const reset = event.target instanceof Element ? event.target.closest('[data-mode-reset]') : null
+  const scope = reset?.closest<HTMLElement>('[data-mode-scope]')
 
-  const scope = button?.closest<HTMLElement>('[data-mode-scope]')
+  if (!scope) return
+  delete scope.dataset.windowMode
+  pressed()
+})
 
-  if (!button || !scope) return
-  const next = button.dataset.modeTo
+document.addEventListener('valuechange', (event) => {
+  const group = event.target
 
-  if (next === undefined) delete scope.dataset.windowMode
-  else if (next !== shown(scope)) scope.dataset.windowMode = next
+  if (!(group instanceof Element) || !group.matches('[data-window-modes]')) return
+  const scope = group.closest<HTMLElement>('[data-mode-scope]')
 
+  if (!scope) return event.preventDefault()
+  scope.dataset.windowMode = event.detail.value
   pressed()
 })
 

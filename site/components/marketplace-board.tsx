@@ -18,7 +18,7 @@ import { Button, buttonVariants, LinkButton } from '@/components/ui/button'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
-import { ToggleGroup, ToggleGroupCount, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { RadioGroup, RadioGroupCount, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   FIRST_SORT,
   marketplacePath,
@@ -343,30 +343,30 @@ export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shel
         </search>
       </div>
       <div class="flex flex-wrap items-end">
-        <ToggleGroup variant="underline" label="source" class="w-auto flex-[1_1_auto]">
+        <RadioGroup variant="underline" label="source" class="w-auto flex-[1_1_auto]">
           {SOURCES.map((source) => {
             const icon = SOURCE_ICONS[source]
 
             return (
-              <ToggleGroupItem variant="underline" name="source" value={source} checked={source === START.source}>
+              <RadioGroupItem variant="underline" name="source" value={source} checked={source === START.source}>
                 {icon ? <Icon node={icon} /> : null}
                 {SOURCE_LABELS[source]}
-                <ToggleGroupCount data-count={source}>{count(source)}</ToggleGroupCount>
-              </ToggleGroupItem>
+                <RadioGroupCount data-count={source}>{count(source)}</RadioGroupCount>
+              </RadioGroupItem>
             )
           })}
-        </ToggleGroup>
-        <ToggleGroup variant="underline" label="sort" class="w-auto flex-[1_1_auto] justify-end gap-5">
+        </RadioGroup>
+        <RadioGroup variant="underline" label="sort" class="w-auto flex-[1_1_auto] justify-end gap-5">
           <span aria-hidden="true" class="pb-3 text-sm text-muted-foreground">
             sort
           </span>
           {SORTS.map((sort) => (
-            <ToggleGroupItem variant="underline" name="sort" value={sort} checked={sort === FIRST_SORT}>
+            <RadioGroupItem variant="underline" name="sort" value={sort} checked={sort === FIRST_SORT}>
               <Icon node={SORT_LABELS[sort].icon} />
               {SORT_LABELS[sort].label}
-            </ToggleGroupItem>
+            </RadioGroupItem>
           ))}
-        </ToggleGroup>
+        </RadioGroup>
       </div>
       <div data-shelves class="grid grid-cols-[minmax(0,1fr)] gap-4 pt-2">
         {shelves.map((shelf, index) => (

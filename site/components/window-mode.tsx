@@ -1,4 +1,6 @@
 import { Moon, RotateCcw, Sun } from 'lucide'
+import { Toggle } from '@/components/ui/toggle'
+import { ToggleGroup } from '@/components/ui/toggle-group'
 import { Icon } from '@/lib/icons'
 import type { Mode } from '@/lib/mode'
 import { cn } from '@/lib/utils'
@@ -21,9 +23,9 @@ const CELL =
 
 export function WindowMode({ class: className }: { class?: string }) {
   return (
-    <fieldset
-      aria-label="terminal mode"
-      data-slot="window-mode"
+    <ToggleGroup
+      label="terminal mode"
+      data-window-modes
       class={cn('flex h-7.5 min-w-0 flex-none items-center gap-0.5 rounded-full bg-(--fg)/8 p-0.5', className)}
     >
       <button
@@ -36,17 +38,10 @@ export function WindowMode({ class: className }: { class?: string }) {
         <Icon node={RotateCcw} class="size-3.5" />
       </button>
       {CELLS.map((cell) => (
-        <button
-          type="button"
-          data-mode-to={cell.mode}
-          aria-label={cell.mode}
-          aria-pressed="false"
-          title={cell.mode}
-          class={cn(CELL, 'flex', cell.on)}
-        >
+        <Toggle value={cell.mode} aria-label={cell.mode} title={cell.mode} class={cn(CELL, 'flex', cell.on)}>
           <Icon node={cell.icon} class="size-3.5" />
-        </button>
+        </Toggle>
       ))}
-    </fieldset>
+    </ToggleGroup>
   )
 }

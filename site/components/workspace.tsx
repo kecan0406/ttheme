@@ -6,7 +6,7 @@ import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import type { Facts, Repo } from '@/lib/facts'
 import { BUILTIN_URL, palettePath, REPO, repoUrl, searchText } from '@/lib/gallery'
 import { gatePassed } from '@/lib/gate'
@@ -391,13 +391,13 @@ export function MarketplaceWorkspace({
               raised
               class="group/preview flex min-h-96 flex-col app:min-h-0 app:flex-1"
               tabs={
-                <ToggleGroup
+                <RadioGroup
                   variant="tab"
                   label="view"
                   class="max-[560px]:overflow-x-auto max-[560px]:[scrollbar-width:none]"
                 >
                   {VIEWS.map((view) => (
-                    <ToggleGroupItem
+                    <RadioGroupItem
                       variant="tab"
                       name="scene"
                       value={view}
@@ -408,9 +408,9 @@ export function MarketplaceWorkspace({
                         ❯
                       </span>
                       {view}
-                    </ToggleGroupItem>
+                    </RadioGroupItem>
                   ))}
-                </ToggleGroup>
+                </RadioGroup>
               }
             >
               <div data-scenes class="min-h-0 flex-1 overflow-auto">

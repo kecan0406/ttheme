@@ -20,19 +20,27 @@ export interface ValueChange {
   trigger: Element
 }
 
+export interface PressedChange {
+  pressed: boolean
+  reason: Reason
+  trigger: Element
+}
+
 declare global {
   interface HTMLElementEventMap {
     openchange: CustomEvent<OpenChange>
     valuechange: CustomEvent<ValueChange>
+    pressedchange: CustomEvent<PressedChange>
   }
 
   interface DocumentEventMap {
     openchange: CustomEvent<OpenChange>
     valuechange: CustomEvent<ValueChange>
+    pressedchange: CustomEvent<PressedChange>
   }
 }
 
-export function emit<K extends 'openchange' | 'valuechange'>(
+export function emit<K extends 'openchange' | 'valuechange' | 'pressedchange'>(
   target: Element,
   type: K,
   detail: HTMLElementEventMap[K]['detail'],
