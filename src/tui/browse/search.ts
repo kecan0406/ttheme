@@ -1,6 +1,6 @@
 import { aboutOf, mergeWorks, spoken, type Work, workOf, workOfListed, worksFor } from '../../core/commons.ts'
 import { swatch } from '../../core/manifest.ts'
-import { askedOf, MAKE_URL, NAME_PAUSE, type NameHit, namedWorks, requestUrl } from '../../core/names.ts'
+import { askedOf, MAKE_URL, type NameHit, namedWorks, requestUrl } from '../../core/names.ts'
 import { ago, cells, containsText, counted, inert } from '../../core/text.ts'
 import { slugOf } from '../../core/theme.ts'
 import { type Listed, type Listing, listedMatches } from '../../store/marketplace-index.ts'
@@ -17,6 +17,8 @@ import type { Network } from './network.ts'
 import type { Staged } from './staged.ts'
 import type { Detail, Found, Marketplace, Offer, Row } from './types.ts'
 
+export const PAUSE = 600
+
 export interface SearchHost {
   readonly staged: Staged
   readonly network: Network
@@ -25,7 +27,7 @@ export interface SearchHost {
   readonly maxItems: number
   redraw(): void
   index(): Promise<Listing>
-  names?: (query: string, signal: AbortSignal) => Promise<NameHit[]>
+  names?: (query: string, signal: AbortSignal, works: readonly Work[]) => Promise<NameHit[]>
   visit(url: string): void
 }
 
@@ -187,7 +189,7 @@ export class Search {
       return
     }
 
-    this.timer = setTimeout(() => this.ask(query), NAME_PAUSE)
+    this.timer = setTimeout(() => this.ask(query), PAUSE)
     this.timer.unref?.()
   }
 
@@ -205,7 +207,7 @@ export class Search {
     this.naming = query
     this.nameError = undefined
     this.host.redraw()
-    names(query, asking.signal).then(
+    names(query, asking.signal, this.works()).then(
       (hits) => {
         if (asking.signal.aborted) {
           return

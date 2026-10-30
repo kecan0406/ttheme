@@ -1,11 +1,10 @@
-import type { Work } from '../../src/core/commons.ts'
-import { askedOf, type NameHit, namedWorks, paletteNameOf } from '../../src/core/names.ts'
-
 export const NAMES_PATH = '/names.json'
 
 export const NEW_KEY = 'new'
 
 export const MOST_ASKED = 100
+
+export const NAME_PAUSE = 300
 
 export interface NamedRow {
   id: string
@@ -15,32 +14,12 @@ export interface NamedRow {
 export interface NamesAnswer {
   works: NamedRow[]
   label: string
-  asked: string
+  request: string
   name: string | null
 }
 
-export function answerOf(
-  query: string,
-  hits: readonly NameHit[],
-  works: readonly Work[],
-  shelved: ReadonlySet<string>,
-): NamesAnswer {
-  return {
-    works: namedWorks(hits, works)
-      .works.filter((work) => shelved.has(work.id))
-      .map(({ id, hit }) => ({ id, read: hit.kind === 'character' ? hit.label : null })),
-    label: hits[0]?.label ?? query,
-    asked: askedOf(query, hits[0]),
-    name: paletteNameOf(query, hits[0]) ?? null,
-  }
-}
-
-export function plainAnswer(query: string): NamesAnswer {
-  return answerOf(query, [], [], new Set())
-}
-
 export function namesPath(query: string): string {
-  return `${NAMES_PATH}?${new URLSearchParams({ q: query })}`
+  return `${NAMES_PATH}?${new URLSearchParams({ q: query.normalize('NFKC').replace(/\s+/g, ' ').trim() })}`
 }
 
 export function makePath(name: string | null): string {

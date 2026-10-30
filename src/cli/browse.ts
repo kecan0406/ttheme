@@ -130,7 +130,7 @@ function browseIo(
       }
     },
     index: () => readIndex(lookups),
-    ...(names ? { names: (query, signal) => names(query, AbortSignal.any([signal, lookups])) } : {}),
+    ...(names ? { names: (query, signal, works) => names(query, AbortSignal.any([signal, lookups]), works) } : {}),
     visit,
     apply,
   }

@@ -1,11 +1,8 @@
 import pkg from '../../package.json' with { type: 'json' }
 import type { Work } from './commons.ts'
 import { searchKey } from './text.ts'
-import { slugProblem } from './theme.ts'
 
 export const MAKE_URL = 'https://ttheme.dev/docs/guide/make'
-
-export const NAME_PAUSE = 600
 
 const QUALIFIER = /_\([^)]*\)$/
 
@@ -115,6 +112,10 @@ export function namedWorks(hits: readonly NameHit[], works: readonly Work[]): Na
   return named
 }
 
+export function knowsCharacter(works: readonly Work[], tag: string): boolean {
+  return keysOf(works).characters.has(tag)
+}
+
 export function askedOf(query: string, hit: NameHit | undefined): string {
   const work = hit?.kind === 'character' ? hit.works[0] : undefined
 
@@ -134,7 +135,7 @@ function slugFrom(text: string): string | undefined {
     .slice(0, 40)
     .replace(/^-+|-+$/g, '')
 
-  return slug && !slugProblem(slug) ? slug : undefined
+  return slug || undefined
 }
 
 export function paletteNameOf(query: string, hit: NameHit | undefined): string | undefined {

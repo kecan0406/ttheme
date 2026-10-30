@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Search marketplace in Browse answers a character's name sooner: it no longer looks up the works of a character ttheme already knows, and a file names.ttheme.dev fails to send is asked for again on its own instead of the whole search starting over.
+
 ## 1.2.81
 
 - Search marketplace in Browse finds a work or a character typed in any language you know it by, such as 치이카와 or ぼざろ, and lists the work with every marketplace that has palettes of it. It asks names.ttheme.dev once you stop typing; `TTHEME_NAME_LOOKUP=off` keeps it to the text alone. When no marketplace has it yet, Request a palette opens the request form on GitHub with the name filled in.

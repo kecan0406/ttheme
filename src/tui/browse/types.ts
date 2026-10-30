@@ -30,7 +30,7 @@ export interface BrowseIo {
   refresh(source: string): Promise<{ marketplace: Marketplace; updates: string[] }>
   fetch(source: string): Promise<Marketplace>
   index(): Promise<Listing>
-  names?(query: string, signal: AbortSignal): Promise<NameHit[]>
+  names?(query: string, signal: AbortSignal, works: readonly Work[]): Promise<NameHit[]>
   visit(url: string): void
   apply(result: BrowseResult, report: Report): Promise<void>
 }

@@ -14,13 +14,13 @@ import {
   shelvesMatching,
   WORKS_PATH,
 } from '@/lib/gallery'
-import { makePath, type NamesAnswer, namesPath, plainAnswer } from '@/lib/names'
+import { makePath, NAME_PAUSE, NAMES_PATH, type NamesAnswer, namesPath } from '@/lib/names'
 import { html } from '@/lib/render'
 import { isBuiltin } from '@/lib/themes'
 import type { RowPalette, WorkRow } from '@/lib/works'
-import { NAME_PAUSE, requestUrl } from '../../src/core/names.ts'
 import { fill, readJson, reducedMotion, tally } from './dom'
 import { composing, letter, typing } from './keys'
+import { afterPaint } from './palettes'
 import type { OpenChange } from './ui/change'
 
 const TURN_MS = 2000
@@ -75,6 +75,8 @@ class MarketplaceBoard extends HTMLElement {
   #failed = ''
   #pause = 0
   #shown = ''
+  #primed = false
+  #request = ''
 
   #input = (event: Event) => {
     const target = event.target as HTMLInputElement
@@ -92,7 +94,15 @@ class MarketplaceBoard extends HTMLElement {
   }
 
   #focus = (event: FocusEvent) => {
-    if ((event.target as HTMLInputElement).name === 'query') this.#loadRows()
+    if ((event.target as HTMLInputElement).name === 'query') this.#warm()
+  }
+
+  #warm = () => {
+    this.#loadRows()
+
+    if (this.#primed) return
+    this.#primed = true
+    fetch(NAMES_PATH, { priority: 'low' }).catch(() => undefined)
   }
 
   #change = (event: Event) => {
@@ -172,11 +182,13 @@ class MarketplaceBoard extends HTMLElement {
 
     if (order) order.checked = true
     this.#filters = { ...START, query }
+    this.#request = this.querySelector('[data-request]')?.getAttribute('href') ?? ''
 
     if (query.trim()) {
+      this.#primed = true
       this.#loadRows()
       this.#ask(query.trim())
-    }
+    } else afterPaint(this.#warm)
 
     this.#render()
     this.#peeks = readJson<Record<string, Peek[]>>(this, 'script[data-peeks]')
@@ -217,7 +229,7 @@ class MarketplaceBoard extends HTMLElement {
   #loadRows() {
     if (this.#rows || this.#loading) return
     this.#loading = true
-    fetch(WORKS_PATH)
+    fetch(WORKS_PATH, { priority: 'low' })
       .then((response) => {
         if (!response.ok) throw new Error(String(response.status))
 
@@ -317,7 +329,7 @@ class MarketplaceBoard extends HTMLElement {
 
   #empty(elsewhere: boolean) {
     const query = this.#filters.query.trim()
-    const answer = this.#answers.get(query) ?? plainAnswer(query)
+    const answer = this.#answers.get(query)
     const state = !query || elsewhere ? 'filters' : this.#naming === query ? 'naming' : 'none'
     const title = this.querySelector('[data-empty-title]')
     const text = this.querySelector<HTMLElement>('[data-empty-text]')
@@ -329,7 +341,7 @@ class MarketplaceBoard extends HTMLElement {
         state === 'naming'
           ? `looking up “${query}”…`
           : state === 'none'
-            ? `no palettes of “${answer.label}” yet`
+            ? `no palettes of “${answer?.label ?? query}” yet`
             : `no palette matches${query ? ` “${query}”` : ' these filters'}`
 
     if (text) {
@@ -345,8 +357,8 @@ class MarketplaceBoard extends HTMLElement {
     if (face) face.hidden = state === 'naming'
 
     if (ask) ask.hidden = state !== 'none'
-    this.querySelector('[data-request]')?.setAttribute('href', requestUrl(answer.asked))
-    this.querySelector('[data-make]')?.setAttribute('href', makePath(answer.name))
+    this.querySelector('[data-request]')?.setAttribute('href', answer?.request ?? this.#request)
+    this.querySelector('[data-make]')?.setAttribute('href', makePath(answer?.name ?? null))
   }
 
   #sort(sort: Sort) {

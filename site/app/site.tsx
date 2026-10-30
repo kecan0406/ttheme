@@ -15,7 +15,7 @@ import { creditsOf } from '@/lib/credits'
 import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
 import { marketplacePath, palettePath, palettesPath, WORKS_PATH } from '@/lib/gallery'
-import { lookUp } from '@/lib/lookup'
+import { lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
 import { MOST_ASKED, NAMES_PATH, type NamesAnswer } from '@/lib/names'
 import { crumbs, ROBOTS, siteGraph, sitemapXml } from '@/lib/seo'
@@ -45,6 +45,7 @@ const facts: Facts = {
 const FIXED = 'public, max-age=0, s-maxage=31536000'
 const RETRY = 'public, max-age=0, s-maxage=60'
 const DAILY = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800'
+const WEEKLY = 'public, max-age=600, s-maxage=604800, stale-while-revalidate=604800'
 
 const LOOKUP_MS = 8000
 
@@ -96,12 +97,18 @@ async function named(asked: string, signal: AbortSignal): Promise<Response> {
   if (!query) return answer({ error: 'no name to look up' }, RETRY, 400)
 
   try {
-    return answer(await lookUp(query, AbortSignal.any([signal, AbortSignal.timeout(LOOKUP_MS)])), DAILY)
+    return answer(await lookUp(query, AbortSignal.any([signal, AbortSignal.timeout(LOOKUP_MS)])), WEEKLY)
   } catch (error) {
     process.stderr.write(`site: names: ${error instanceof Error ? error.message : String(error)}\n`)
 
     return answer({ error: 'the name index did not answer' }, 'no-store', 502)
   }
+}
+
+async function primed(signal: AbortSignal): Promise<Response> {
+  await prime(AbortSignal.any([signal, AbortSignal.timeout(LOOKUP_MS)])).catch(() => undefined)
+
+  return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } })
 }
 
 const everyTheme = [...themes, ...marketplaces.flatMap((marketplace) => marketplace.palettes)]
@@ -356,7 +363,9 @@ export const site = new Elysia({ name: 'site' })
       }),
   )
   .get(WORKS_PATH, { fixed: true }, () => text(JSON.stringify(workRows(everyTheme)), 'application/json'))
-  .get(NAMES_PATH, ({ query, request }) => named(String(query.q ?? ''), request.signal))
+  .get(NAMES_PATH, ({ query, request }) =>
+    query.q === undefined ? primed(request.signal) : named(String(query.q), request.signal),
+  )
   .group('/marketplace/:id', (scope) =>
     scope
       .derive(({ params, status }) => stockOf(params.id) ?? status(404, noMarketplace(params.id)))
