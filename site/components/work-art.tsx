@@ -1,6 +1,4 @@
-import { type SimpleIcon, siAnilist, siThemoviedatabase } from 'simple-icons'
-import { ANILIST_HOME, type ArtSource, type KeyArt, TMDB_HOME } from '@/lib/art'
-import { BrandIcon, NewTab } from '@/lib/icons'
+import type { KeyArt } from '@/lib/art'
 import { cn } from '@/lib/utils'
 
 const FACETS: [points: string, tone: number, opacity?: number][] = [
@@ -39,11 +37,6 @@ const SLOT_FACETS: [points: string, tint: string][] = [
   ['30,110 90,105 70,160 0,160 0,115', 'fill-foreground/3'],
   ['90,105 120,120 120,160 70,160', 'fill-foreground/5'],
 ]
-
-const CREDITS: Record<ArtSource, { name: string; home: string; icon: SimpleIcon; what: string }> = {
-  tmdb: { name: 'TMDB', home: TMDB_HOME, icon: siThemoviedatabase, what: 'Key art' },
-  anilist: { name: 'AniList', home: ANILIST_HOME, icon: siAnilist, what: 'Pictures' },
-}
 
 function FacetArt({ style }: { style: string }) {
   return (
@@ -112,38 +105,5 @@ export function SlotArt({ picture }: { picture: string | null }) {
         <polygon points={points} class={tint} />
       ))}
     </svg>
-  )
-}
-
-export function ArtCredit({ from, class: className }: { from: ArtSource[]; class?: string }) {
-  if (from.length === 0) return null
-
-  return (
-    <p class={cn('flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground', className)}>
-      {from.map((source) => {
-        const { name, home, icon, what } = CREDITS[source]
-
-        return (
-          <span class="inline-flex items-center gap-1.5">
-            <span safe>{`${what} from`}</span>
-            <a
-              href={home}
-              target="_blank"
-              rel="noopener"
-              class="inline-flex items-center gap-1 text-soft-foreground transition-colors hover:text-foreground"
-            >
-              <BrandIcon icon={icon} class="size-3.5 flex-none" />
-              <span safe>{name}</span>
-              <NewTab class="size-3" />
-            </a>
-          </span>
-        )
-      })}
-      {from.includes('tmdb') ? (
-        <span>
-          This site uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.
-        </span>
-      ) : null}
-    </p>
   )
 }

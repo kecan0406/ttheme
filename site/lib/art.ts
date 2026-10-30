@@ -14,6 +14,8 @@ export interface KeyArt {
   from: ArtSource
 }
 
+export const CREDITS_PATH = '/credits'
+
 export const TMDB_HOME = 'https://www.themoviedb.org'
 
 export const ANILIST_HOME = 'https://anilist.co'

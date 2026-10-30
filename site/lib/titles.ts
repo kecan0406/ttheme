@@ -37,6 +37,13 @@ export function docMeta(title: string, group: string, description: string): Meta
   }
 }
 
+export function creditsMeta(): Meta {
+  return {
+    title: 'credits — where the pictures come from · ttheme',
+    description: 'Where the key art and the character pictures on ttheme.dev come from: TMDB and AniList.',
+  }
+}
+
 export function marketplacesMeta(): Meta {
   return {
     title: 'marketplace — built-in and community terminal themes · ttheme',

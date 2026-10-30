@@ -1,6 +1,5 @@
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Plus, Star } from 'lucide'
 import { Button } from '@/components/ui/button'
-import type { ArtSource } from '@/lib/art'
 import type { Facts } from '@/lib/facts'
 import { marketplacePath, palettePath } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
@@ -17,7 +16,7 @@ import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { TerminalScreen } from './terminal'
 import { TerminalFrame } from './terminal-frame'
-import { ArtCredit, SlotArt, WorkArt } from './work-art'
+import { SlotArt, WorkArt } from './work-art'
 import { LeadStar, MarketBadge, WorkSwatch } from './work-results'
 
 const FOLDS_PAST = 3
@@ -224,11 +223,6 @@ function MarketCard({ market, work, leadSubject }: { market: WorkMarket; work: s
 
 export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; path: string }) {
   const { work, cast, markets } = page
-  const pictured = cast.some((slot) => slot.picture !== null)
-
-  const from = (['tmdb', 'anilist'] as const).filter(
-    (source: ArtSource) => page.art?.from === source || (source === 'anilist' && pictured),
-  )
 
   const data: WorkData = {
     markets: Object.fromEntries(
@@ -315,7 +309,6 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
             {json(data)}
           </script>
         </work-page>
-        <ArtCredit from={from} />
       </main>
       <SiteFooter facts={facts} current={path} />
     </div>

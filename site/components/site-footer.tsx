@@ -1,4 +1,5 @@
 import { type SimpleIcon, siGithub, siNpm } from 'simple-icons'
+import { CREDITS_PATH } from '@/lib/art'
 import type { Facts } from '@/lib/facts'
 import { marketplacePath, NPM_URL, REPO_URL } from '@/lib/gallery'
 import { BrandIcon, NewTab } from '@/lib/icons'
@@ -30,6 +31,7 @@ const COLUMNS: { title: string; links: { label: string; href: string; brand?: Si
       { label: 'github', href: REPO_URL, brand: siGithub },
       { label: 'npm', href: NPM_URL, brand: siNpm },
       { label: 'report a bug', href: `${REPO_URL}/issues/new/choose` },
+      { label: 'credits', href: CREDITS_PATH },
     ],
   },
 ]

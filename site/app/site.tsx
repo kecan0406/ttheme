@@ -1,6 +1,7 @@
 import { Elysia, NotFound } from 'elysia'
 import assets from '@/assets.json' with { type: 'json' }
 import { BuilderPage } from '@/components/builder-page'
+import { Credits } from '@/components/credits'
 import { DocsIndex, DocsPage } from '@/components/docs'
 import { Home } from '@/components/home'
 import { NoSuchMarketplace, NoSuchPalette } from '@/components/marketplace-frame'
@@ -8,6 +9,7 @@ import { MarketplacePage } from '@/components/marketplace-page'
 import { Missing } from '@/components/missing'
 import { HERO_SIZES, WorkView } from '@/components/work-page'
 import { MarketplaceWorkspace } from '@/components/workspace'
+import { CREDITS_PATH } from '@/lib/art'
 import { RESTORE_SCRIPT } from '@/lib/builder'
 import { builderData, starts } from '@/lib/builder-page'
 import { fallback, gate, themes } from '@/lib/builtin'
@@ -26,6 +28,7 @@ import { faviconIco, touchIconPng } from '@/lib/tab-icon'
 import { BUILTIN, type Marketplace, type Theme } from '@/lib/themes'
 import {
   builderMeta,
+  creditsMeta,
   docMeta,
   docsMeta,
   marketplaceMeta,
@@ -137,6 +140,7 @@ export const PRERENDERED: string[] = [
   '/',
   '/marketplace',
   '/builder',
+  CREDITS_PATH,
   DOCS_PATH,
   ...DOC_PAGES.map((doc) => doc.path),
   marketplacePath(BUILTIN),
@@ -299,6 +303,23 @@ export const site = new Elysia({ name: 'site' })
       cache: FIXED,
       head: RESTORE_SCRIPT,
     }),
+  )
+  .get(CREDITS_PATH, () =>
+    page(
+      {
+        ...creditsMeta(),
+        path: CREDITS_PATH,
+        ...CARD,
+        ld: [
+          crumbs([
+            { name: 'ttheme', path: '/' },
+            { name: 'credits', path: CREDITS_PATH },
+          ]),
+        ],
+        cache: FIXED,
+      },
+      <Credits facts={facts} />,
+    ),
   )
   .get(DOCS_PATH, () =>
     page(

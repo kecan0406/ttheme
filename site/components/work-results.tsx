@@ -1,12 +1,11 @@
 import { ArrowRight, Layers, Star, Store } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { LinkButton } from '@/components/ui/button'
-import type { ArtSource } from '@/lib/art'
 import { starCount } from '@/lib/gallery'
 import { GitHubStar, Icon } from '@/lib/icons'
 import { plural } from '@/lib/utils'
 import type { RowMarket, RowPalette, WorkRow } from '@/lib/works'
-import { ArtCredit, WorkArt } from './work-art'
+import { WorkArt } from './work-art'
 
 const CHIPS = 10
 
@@ -225,10 +224,6 @@ function FoundCard({
 }
 
 export function WorkResults({ found, query, pending }: { found: FoundWork[]; query: string; pending: boolean }) {
-  const from = (['tmdb', 'anilist'] as const).filter((source: ArtSource) =>
-    found.some((one) => one.row.art?.from === source),
-  )
-
   return (
     <>
       <h2 class="text-sm text-soft-foreground">
@@ -241,7 +236,6 @@ export function WorkResults({ found, query, pending }: { found: FoundWork[]; que
           <FoundCard found={one} query={query} first={index === 0} />
         ))}
       </ul>
-      <ArtCredit from={from} />
     </>
   )
 }
