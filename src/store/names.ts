@@ -84,11 +84,23 @@ export function nameSearch(provider: string | undefined, base = NAMES_URL): Name
     cachedSource(httpSource(base, { headers: { 'user-agent': AGENT } }), join(cacheRoot(), 'names')),
   )
 
-  return async (query, signal) => {
+  const ask = async (query: string, signal: AbortSignal) => {
     const found: unknown = await names.search(query, { limit: LIMIT, adult: false, signal })
     const ids = worksOf(found)
     const works: unknown = ids.length > 0 ? await names.lookup(ids, signal) : []
 
     return hitsOf(found, works)
+  }
+
+  return async (query, signal) => {
+    try {
+      return await ask(query, signal)
+    } catch (error) {
+      if (signal.aborted) {
+        throw error
+      }
+
+      return ask(query, signal)
+    }
   }
 }
