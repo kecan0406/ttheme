@@ -150,8 +150,16 @@ export class BrowsePanel {
       maxItems: this.maxItems,
       redraw: () => this.redraw(),
       index: () => this.network.track(this.io.index()),
+      ...(this.io.names ? { names: this.io.names.bind(this.io) } : {}),
+      visit: (url) => this.io.visit(url),
     })
     this.follow()
+
+    if (opts.search?.trim()) {
+      this.showing = 'search'
+      this.search.open(opts.search.trim(), this.live)
+    }
+
     this.hint = new SearchHint(
       opts.fx ?? 'typewriter',
       () => paletteExample(this.list),
@@ -233,6 +241,7 @@ export class BrowsePanel {
         screen.stop()
         this.screen = undefined
         this.hint.stop()
+        this.search.close()
       }
     })
   }
@@ -498,7 +507,12 @@ export class BrowsePanel {
       return
     }
 
-    const source = found?.kind === 'listed' ? found.listed.source : undefined
+    if (back && this.search.visitFocused()) {
+      return
+    }
+
+    const source =
+      found?.kind === 'listed' ? found.listed.source : found?.kind === 'offer' ? found.offer.source : undefined
 
     if (source === undefined) {
       return
@@ -1047,7 +1061,7 @@ export class BrowsePanel {
     }
 
     if (this.showing === 'search') {
-      return this.p.dim('Search… a marketplace or a palette')
+      return this.p.dim('Search… a work, a character or a marketplace')
     }
 
     const example = this.hint.text()
@@ -1332,7 +1346,13 @@ export class BrowsePanel {
       return [
         ...moving,
         { group: 'Move', keys: '←  esc', does: 'Back to Browse', run: () => this.closeSearch() },
-        ...filtering,
+        {
+          group: 'Filter',
+          keys: 'type',
+          does: 'Find a work, a character or a marketplace',
+          more: 'Once you stop typing, the name is looked up in any language, unless TTHEME_NAME_LOOKUP is off.',
+        },
+        filtering[1] as Topic,
         {
           group: 'Add',
           keys: 'space',
@@ -1341,6 +1361,13 @@ export class BrowsePanel {
           run: () => this.take(false),
         },
         { group: 'Add', keys: 'enter', does: 'Add it and go to its card', run: () => this.take(true) },
+        {
+          group: 'Add',
+          keys: 'enter on ⧉',
+          does: 'Ask for a palette or read how to make one',
+          more: 'Request a palette and Make one show when no marketplace has what you typed.',
+          run: () => this.take(true),
+        },
         {
           group: 'Add',
           keys: 'ctrl+r',

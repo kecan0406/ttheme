@@ -101,6 +101,10 @@ export const CONFIG_SETTINGS = {
     doc: '# GitHub lookups in browse: on downloads the list of marketplaces carrying the ttheme-marketplace topic when Search marketplace opens; off waits for space (default on)',
     default: 'on',
   },
+  TTHEME_NAME_LOOKUP: {
+    doc: "# names in browse's Search marketplace: aninames reads a work or a character typed in any language from names.ttheme.dev once you stop typing and finds the works it means; off matches the text alone (default aninames)",
+    default: 'aninames',
+  },
   TTHEME_FIND_RATING: {
     doc: '# the ratings find lists, any of safe, questionable and explicit, each booru read in its own rating vocabulary (default safe)',
     default: 'safe',

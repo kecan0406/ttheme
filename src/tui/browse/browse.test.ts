@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import cells from 'fast-string-width'
 import type { Work } from '../../core/commons.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
+import type { NameHit } from '../../core/names.ts'
 import type { Listed, ListedPalette, ListedWork, Listing } from '../../store/marketplace-index.ts'
 import { BrowsePanel } from './browse.ts'
 import type { BrowseIo, Marketplace } from './types.ts'
@@ -23,7 +24,11 @@ function entry(name: string, subject?: string): PaletteEntry {
 }
 
 const works: Work[] = [
-  { id: 'starfall', name: 'Starfall', characters: [{ id: 'orla' }, { id: 'pip' }, { id: 'quill' }] },
+  {
+    id: 'starfall',
+    name: 'Starfall',
+    characters: [{ id: 'orla' }, { id: 'pip', danbooru: 'pip_(starfall)' }, { id: 'quill' }],
+  },
 ]
 
 function marketplace(source: string, id: string, names: string[], auto = false): Marketplace {
@@ -176,6 +181,7 @@ function io(overrides: Partial<BrowseIo> = {}): BrowseIo {
     fetch: () => Promise.reject(new Error('offline')),
     index: () => Promise.resolve(listing()),
     apply: () => Promise.resolve(),
+    visit: () => {},
     ...overrides,
   }
 }
@@ -193,6 +199,7 @@ async function drive(
     due?: string[]
     io?: BrowseIo
     hub?: 'browse'
+    search?: string
   } = {},
 ) {
   const input = new PassThrough()
@@ -212,6 +219,7 @@ async function drive(
     io: opts.io ?? io(),
     color: false,
     ...(opts.hub ? { hub: opts.hub } : {}),
+    ...(opts.search ? { search: opts.search } : {}),
     input,
     output,
   })
@@ -509,6 +517,78 @@ test('typing in the search filters the list at once, palette names included, and
   const seeded = await drive([...'zzz', '\r', 20, '\x1b', '\x1b', '\x1b', '\x1b'], { io: io({ index }) })
   assert.match(seeded.frames, /│ ⌕ zzz_ +│/)
   assert.match(seeded.frames, /⌕ No marketplaces match 'zzz'/)
+})
+
+test('a work typed in the search lists the marketplaces that have palettes of it under it, the ones added first', async () => {
+  const index = () =>
+    Promise.resolve(
+      listing(
+        listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow', 'haze'], {
+          subjects: { glow: 'starfall/pip' },
+        }),
+      ),
+    )
+
+  const { frames } = await drive([...SEARCH, 20, ...'starfall', 20, '\x1b', '\x1b', '\x1b'], { io: io({ index }) })
+  assert.match(frames, / Search marketplace \(1 work · 2 marketplaces\)$/m)
+  assert.match(frames, /^ ▌ {2}Starfall {2}2 marketplaces · 3 palettes +│/m)
+  assert.match(frames, /^ {6}● ttheme {2}Built in · 2 palettes +│/m)
+  assert.match(frames, /^ {6}○ bob@neon {2}★12 · 1 palette +│/m)
+})
+
+test('a name the provider reads finds its work once typing stops, asking once for the whole word', async () => {
+  const asked: string[] = []
+
+  const names = (query: string) => {
+    asked.push(query)
+
+    return new Promise<NameHit[]>((resolve) =>
+      setTimeout(
+        () =>
+          resolve([
+            { id: 'c/1', kind: 'character', label: 'Pip', names: ['ピップ'], tags: ['pip_(starfall)'], works: [] },
+          ]),
+        60,
+      ),
+    )
+  }
+
+  const { frames } = await drive([...SEARCH, 20, ...'ピップ', 800, '\x1b', '\x1b', '\x1b'], { io: io({ names }) })
+  assert.deepEqual(asked, ['ピップ'])
+  assert.match(frames, /Looking up names…/)
+  assert.match(frames, /^ ▌ {2}Starfall {2}1 marketplace · 2 palettes/m)
+})
+
+test('a search nothing answers offers a request and the guide, and enter on the request opens the form with what was asked', async () => {
+  const visited: string[] = []
+
+  const names = () =>
+    Promise.resolve([{ id: 'w/9', kind: 'work' as const, label: 'Moonlit Harbor', names: [], tags: [], works: [] }])
+
+  const { frames } = await drive([...SEARCH, 20, ...'moonlit', 800, '\r', 20, '\x1b', '\x1b', '\x1b'], {
+    io: io({ names, visit: (url) => visited.push(url) }),
+  })
+
+  assert.match(frames, /⌕ No marketplace has Moonlit Harbor yet/)
+  assert.match(frames, /Request a palette\]? +ask for one on GitHub/)
+  assert.match(frames, /Make one\]? +make it and publish it yourself/)
+  assert.equal(visited.length, 1)
+  assert.equal(new URL(visited[0] ?? '').searchParams.get('character'), 'Moonlit Harbor')
+})
+
+test('a search handed in by preview opens Search marketplace on it and asks at once', async () => {
+  const asked: string[] = []
+
+  const names = (query: string) => {
+    asked.push(query)
+
+    return Promise.resolve([])
+  }
+
+  const { frames } = await drive([20, '\x1b', '\x1b', '\x1b'], { io: io({ names }), search: 'starfall' })
+  assert.deepEqual(asked, ['starfall'])
+  assert.match(frames, /│ ⌕ starfall_ +│/)
+  assert.match(frames, /^ ▌ {2}Starfall {2}/m)
 })
 
 test('a list that did not load says so and space loads it again, and a copy from before shows while offline', async () => {

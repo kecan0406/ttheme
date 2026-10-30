@@ -67,6 +67,7 @@
         "src/store/derived.ts",
         "src/store/installed.ts",
         "src/store/marketplace-index.ts",
+        "src/store/names.ts",
         "src/store/sources.ts",
         "src/store/tone.ts",
         "tests/parity/looks.ts"

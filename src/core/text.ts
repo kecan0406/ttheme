@@ -72,7 +72,7 @@ const KATAKANA = /[ァ-ヶ]/g
 
 const SPACE = /[\s\p{P}\p{S}]+/gu
 
-function searchKey(text: string): string {
+export function searchKey(text: string): string {
   return text
     .normalize('NFKC')
     .toLowerCase()

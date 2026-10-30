@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Search marketplace in Browse finds a work or a character typed in any language you know it by, such as 치이카와 or ぼざろ, and lists the work with every marketplace that has palettes of it. It asks names.ttheme.dev once you stop typing; `TTHEME_NAME_LOOKUP=off` keeps it to the text alone. When no marketplace has it yet, Request a palette opens the request form on GitHub with the name filled in.
+- A Preview filter that finds nothing offers ⌕ Search marketplace for it, and `enter` or a click takes the filter to Browse.
+
 ## 1.2.80
 
 - ttheme installs with Bun too: `bunx @kecan0406/ttheme@latest init`. `init` remembers whether npx or bunx ran it, and `ttheme update` checks for and installs a new release the same way, so a Bun setup needs no npm. ttheme still runs on Node.js 22 or newer.

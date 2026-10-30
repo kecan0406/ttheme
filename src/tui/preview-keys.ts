@@ -13,6 +13,7 @@ export const PREVIEW_KEYS: readonly PreviewKey[] = [
   { where: 'list', group: 'Move', keys: '←→  space', does: 'Close or open a shelf' },
   { where: 'list', group: 'Filter', keys: 'type', does: 'Filter by name or title, in Japanese too' },
   { where: 'list', group: 'Filter', keys: 'ctrl+u', does: 'Clear the filter' },
+  { where: 'hub', group: 'Filter', keys: 'enter', does: 'Search marketplaces when nothing matches' },
   { where: 'list', group: 'Palette', keys: '⇧←→', does: 'Switch the sample' },
   { where: 'list', group: 'Palette', keys: 'enter', does: 'Use it, choosing where' },
   { where: 'list', group: 'Palette', keys: 'tab  →  ctrl+e', does: 'Edit its colors and picture' },

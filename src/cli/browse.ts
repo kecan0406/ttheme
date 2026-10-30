@@ -7,6 +7,7 @@ import { available, idOf, readKept, readMarketplaces, shown, updatesOf } from '.
 import { type Installed, readInstalled, worn, writeInstalled } from '../store/installed.ts'
 import { readMarketplaceDir, warning } from '../store/local.ts'
 import { readIndex } from '../store/marketplace-index.ts'
+import { nameSearch } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
 import { autoUpdates, isLocal, isRemote, localIdentity, marketplacesOf, repoOf, shownSource } from '../store/sources.ts'
 import { readTone, tunedNames } from '../store/tone.ts'
@@ -36,6 +37,7 @@ import {
 import { autoWanted, releaseLine } from './release.ts'
 import { commit, forget } from './sync.ts'
 import { updatable } from './upstreams.ts'
+import { visit } from './visit.ts'
 
 function inWear(home: string, entries: readonly PaletteEntry[]): PaletteEntry[] {
   const mode = modeFor(home)
@@ -82,6 +84,8 @@ function browseIo(
   lookups: AbortSignal,
   apply: BrowseIo['apply'],
 ): BrowseIo {
+  const names = nameSearch(process.env.TTHEME_NAME_LOOKUP)
+
   return {
     refresh: async (source) => {
       if (!isLocal(source)) {
@@ -126,6 +130,8 @@ function browseIo(
       }
     },
     index: () => readIndex(lookups),
+    ...(names ? { names: (query, signal) => names(query, AbortSignal.any([signal, lookups])) } : {}),
+    visit,
     apply,
   }
 }
@@ -294,6 +300,7 @@ export async function runBrowse(): Promise<number> {
     ),
     color: !colorless(),
     lookups: process.env.TTHEME_MARKETPLACE_LOOKUP !== 'off',
+    ...(hub && process.env.TTHEME_HUB_SEARCH ? { search: process.env.TTHEME_HUB_SEARCH } : {}),
     fx: promptFx(process.env.TTHEME_FX),
     owns: tty && !hub,
     ...(live ? { onFocus: (entry: PaletteEntry) => process.stdout.write(live.paint(entry)) } : {}),

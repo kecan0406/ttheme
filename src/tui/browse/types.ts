@@ -2,7 +2,8 @@ import type { Readable, Writable } from 'node:stream'
 import type { Hex } from '../../core/color.ts'
 import type { Sort, Work } from '../../core/commons.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
-import type { Listed, Listing } from '../../store/marketplace-index.ts'
+import type { NameHit } from '../../core/names.ts'
+import type { Listed, ListedPalette, Listing } from '../../store/marketplace-index.ts'
 import type { HelpSpot } from '../help.ts'
 import type { HubSpot, HubTab } from '../hub.ts'
 import type { ReleaseLine } from '../notice.ts'
@@ -29,6 +30,8 @@ export interface BrowseIo {
   refresh(source: string): Promise<{ marketplace: Marketplace; updates: string[] }>
   fetch(source: string): Promise<Marketplace>
   index(): Promise<Listing>
+  names?(query: string, signal: AbortSignal): Promise<NameHit[]>
+  visit(url: string): void
   apply(result: BrowseResult, report: Report): Promise<void>
 }
 
@@ -47,6 +50,7 @@ export interface BrowseOptions {
   mark?: readonly Hex[]
   release?: () => ReleaseLine
   lookups?: boolean
+  search?: string
   color?: boolean
   fx?: PromptFx
   owns?: boolean
@@ -63,12 +67,24 @@ export interface BrowseResult {
   renew: string[]
 }
 
+export interface Offer {
+  source: string
+  id: string
+  palettes: Pick<ListedPalette, 'name' | 'foreground' | 'cursor' | 'selection' | 'ansi'>[]
+  listed?: Listed
+  known?: Marketplace
+}
+
 export type Found =
   | { kind: 'new' }
   | { kind: 'search' }
   | { kind: 'back' }
   | { kind: 'state' }
   | { kind: 'listed'; listed: Listed }
+  | { kind: 'work'; work: Work; offers: Offer[] }
+  | { kind: 'offer'; offer: Offer }
+  | { kind: 'request'; asked: string }
+  | { kind: 'make' }
 
 export type Action = 'update' | 'auto' | 'remove'
 

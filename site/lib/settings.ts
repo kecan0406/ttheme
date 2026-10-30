@@ -14,7 +14,7 @@ export interface SettingGroup {
   settings: Setting[]
 }
 
-const ONLINE = new Set(['TTHEME_AUTO_UPDATE', 'TTHEME_MARKETPLACE_LOOKUP'])
+const ONLINE = new Set(['TTHEME_AUTO_UPDATE', 'TTHEME_MARKETPLACE_LOOKUP', 'TTHEME_NAME_LOOKUP'])
 
 const GROUPS = ['Palettes and screens', 'Pictures', 'Downloads and updates', 'find'] as const
 

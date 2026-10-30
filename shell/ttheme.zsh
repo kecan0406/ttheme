@@ -214,6 +214,8 @@ __tt_pins_load
 
 : ${TTHEME_MARKETPLACE_LOOKUP:=on}
 
+: ${TTHEME_NAME_LOOKUP:=aninames}
+
 : ${TTHEME_AUTO_UPDATE:=on}
 
 typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme

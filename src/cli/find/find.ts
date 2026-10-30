@@ -1,4 +1,3 @@
-import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
@@ -128,6 +127,7 @@ import {
 } from '../../tui/terminal.ts'
 import type { Hit } from '../../tui/zones.ts'
 import { aligns as alignsFor, refreshPictures } from '../sync.ts'
+import { visit } from '../visit.ts'
 import { Kept } from './kept.ts'
 
 const SETTINGS: Setting[] = [
@@ -269,22 +269,6 @@ const STEPS = new Map([
   ['shift-left', -10],
   ['shift-right', 10],
 ])
-
-function visit(url: string): void {
-  if (process.env.SSH_CONNECTION || !/^(?:https?|file):/i.test(url)) {
-    return
-  }
-
-  try {
-    const opener = spawn(process.platform === 'darwin' ? 'open' : 'xdg-open', [url], {
-      stdio: 'ignore',
-      detached: true,
-    })
-
-    opener.on('error', () => {})
-    opener.unref()
-  } catch {}
-}
 
 function resized(size: Tuning['size'], step: number, fill: number): Tuning['size'] {
   if (step < 0) {

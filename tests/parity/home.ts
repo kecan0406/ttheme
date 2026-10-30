@@ -201,6 +201,7 @@ export function placeFor(work: string, term: Term, bin: string, slot: string): P
     TTHEME_ITERM_SUITE: ITERM_SUITE,
     TTHEME_AUTO_UPDATE: 'off',
     TTHEME_MARKETPLACE_LOOKUP: 'off',
+    TTHEME_NAME_LOOKUP: 'off',
     TTHEME_KEYS: 'text',
   }
 

@@ -599,6 +599,7 @@ __tt_pv_foot() {
     [[ -n $flt ]] && badge='PREVIEW (FILTER)'
     if (( ! ${#rval} )); then
       kk=(bksp) kl=(edit)
+      (( hub && ${TTHEME_HUB_TABS[(Ie)browse]} )) && [[ -n $flt ]] && kk=(enter bksp) kl=(search edit)
     elif [[ ${rtype[cur]} == (hdr|cat) ]]; then
       if [[ -z $flt && -n ${exp[${rval[cur]}]} ]]; then
         kk=(←) kl=(close)
@@ -1496,6 +1497,16 @@ __tt_pv_draw() {
     if (( k < h )); then
       if (( ! N )); then
         (( k == 0 )) && { __tt_clip "   ${dd}No palettes match '$flt'$zz" $lw; line=$REPLY }
+        if (( k == 2 && hub && ${TTHEME_HUB_TABS[(Ie)browse]} )) && [[ -n $flt ]]; then
+          if (( color )); then
+            line="  "$ac$TTHEME_MARKS[gutter]$zz" "$pl" $TTHEME_MARKS[search] Search marketplace for '$flt' "$zz
+          else
+            line="  $TTHEME_MARKS[gutter] [$TTHEME_MARKS[search] Search marketplace for '$flt']"
+          fi
+          __tt_clip "$line" $lw
+          line=$REPLY
+          pvz+=("$(( hd + 2 + k )) 1 $lw tosearch")
+        fi
       elif (( i <= N )); then
         __tt_pv_row $i
         line=$REPLY
@@ -1917,6 +1928,10 @@ __tt_pv_release() {
       return
       ;;
     fold) __tt_pv_free && [[ ${rtype[cur]} == (hdr|cat) ]] && __tt_pv_toggle ;;
+    tosearch)
+      __tt_pv_free || return 0
+      __tt_pv_to_search || return 1
+      ;;
     more)
       __tt_pv_free || return 0
       key=pgdn
@@ -2034,15 +2049,15 @@ __tt_pv_back() {
 }
 
 __tt_pv_screen() {
-  local err REPLY
+  local err REPLY q=$2
   local -i at=${TTHEME_HUB_TABS[(Ie)preview]} n=${#TTHEME_HUB_TABS} rc
   local -i to=$(( (at - 1 + $1 + n) % n + 1 ))
   __tt_pv_leave
   while (( to != at )); do
     hubwas="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
     __tt_name_of "$orig"
-    err=$(TTHEME_HUB=${TTHEME_HUB_TABS[to]} TTHEME_HUB_LOOK=${TTHEME_PAINTED:+$orig} TTHEME_HUB_MARK=${TTHEME_PAINTED:+$TTHEME_MARK_INKS[$REPLY]} __tt_cli ${TTHEME_HUB_TABS[to]} 2>&1 >/dev/tty)
-    rc=$?
+    err=$(TTHEME_HUB_SEARCH=$q TTHEME_HUB=${TTHEME_HUB_TABS[to]} TTHEME_HUB_LOOK=${TTHEME_PAINTED:+$orig} TTHEME_HUB_MARK=${TTHEME_PAINTED:+$TTHEME_MARK_INKS[$REPLY]} __tt_cli ${TTHEME_HUB_TABS[to]} 2>&1 >/dev/tty)
+    rc=$? q=""
     if (( rc == TTHEME_HUB_CLOSED || rc == TTHEME_HUB_UPDATE )); then
       hubleft=1
       (( rc == TTHEME_HUB_UPDATE )) && pvupdate=1
@@ -2058,6 +2073,12 @@ __tt_pv_screen() {
   done
   __tt_pv_back
   return 0
+}
+
+__tt_pv_to_search() {
+  local -i at=${TTHEME_HUB_TABS[(Ie)preview]} to=${TTHEME_HUB_TABS[(Ie)browse]}
+  (( hub && to && ! ${#rval} )) && [[ -n $flt ]] || return 0
+  __tt_pv_screen $(( to - at )) "$flt"
 }
 
 __tt_te_unsaved() {
@@ -2659,7 +2680,9 @@ __tt_pv_handle() {
       fi
       ;;
     $'\r'|senter)
-      if [[ ${rtype[cur]} == thm ]]; then
+      if (( ! ${#rval} )); then
+        __tt_pv_to_search || return 1
+      elif [[ ${rtype[cur]} == thm ]]; then
         if (( canpick )); then
           pick=${rval[cur]} pk=$pkdef
         else

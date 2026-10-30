@@ -167,7 +167,13 @@ ttheme marketplace remove alice@pastel      # installed palettes keep working
 ```
 
 In Browse, `+ Add marketplace` takes the same sources, and `⌕ Search marketplace`
-lists every public marketplace on GitHub. A palette is colors in a TOML file,
+lists every public marketplace on GitHub. Type a work or a character there, in
+any language you know it by, and it lists the works it means, each with the
+marketplaces that have palettes of it; once you stop typing it asks
+names.ttheme.dev what the name means, which `TTHEME_NAME_LOOKUP=off` stops. When
+no marketplace has one yet, `Request a palette` opens a request on GitHub. In
+Preview, a filter that finds nothing offers the same search, and `enter` takes
+it there. A palette is colors in a TOML file,
 never code. Nobody reviews a marketplace, and only the built-in palettes must
 pass every contrast check before they ship; Browse shows the numbers of the
 rest.
