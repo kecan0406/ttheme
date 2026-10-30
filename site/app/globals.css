@@ -1619,14 +1619,16 @@ route-progress[data-state='done'],
 }
 
 [data-doc-body] a {
-  color: var(--primary);
+  color: var(--foreground);
+  font-weight: 600;
   text-decoration-line: underline;
-  text-decoration-color: color-mix(in oklab, var(--primary) 45%, transparent);
-  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in oklab, var(--primary) 75%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
 }
 
 [data-doc-body] a:hover {
-  text-decoration-color: currentColor;
+  text-decoration-color: var(--primary);
 }
 
 [data-doc-body] strong {
@@ -1652,29 +1654,27 @@ route-progress[data-state='done'],
 }
 
 :is([data-doc-body] :not(pre), [data-lede]) > code {
-  border: 1px solid var(--border);
   border-radius: --theme(--radius-sm inline);
   background: var(--muted);
-  padding: 0 calc(var(--spacing) * 1.25);
+  padding: 0.125em calc(var(--spacing) * 1.75);
+  color: var(--soft-foreground);
   font-family: --theme(--font-mono inline);
   font-size: --theme(--text-code inline);
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 
 :is([data-doc-body] :not(pre), [data-lede]) > code[data-version] {
-  border: 0;
-  border-radius: --theme(--radius-md inline);
   background: color-mix(in oklab, var(--primary) 14%, var(--bg));
-  padding: 0.125em calc(var(--spacing) * 2);
-  color: color-mix(in oklab, var(--primary) 80%, var(--fg));
-  font-weight: 500;
+  color: color-mix(in oklab, var(--primary) 70%, var(--fg));
 }
 
 [data-doc-body] :is(h2, h3) code {
-  border: 0;
   background: none;
   padding: 0;
+  color: inherit;
   font-size: inherit;
+  font-weight: inherit;
 }
 
 [data-doc-body] pre {
@@ -1687,12 +1687,14 @@ route-progress[data-state='done'],
 [data-slot='shell'] {
   position: relative;
   border: 1px solid var(--border);
-  border-radius: --theme(--radius-lg inline);
-  background: color-mix(in oklab, var(--muted) 65%, transparent);
+  border-radius: --theme(--radius-xl inline);
+  background: var(--sidebar);
 }
 
 [data-slot='shell'] pre {
-  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 13) calc(var(--spacing) * 3) calc(var(--spacing) * 4);
+  padding: calc(var(--spacing) * 4) calc(var(--spacing) * 15) calc(var(--spacing) * 4) calc(var(--spacing) * 4.5);
+  font-size: --theme(--text-sm inline);
+  line-height: 1.75;
 }
 
 :is([data-doc-body], [data-highlight]) [data-t='cmd'] {
@@ -1724,8 +1726,8 @@ route-progress[data-state='done'],
 
 [data-slot='shell'] > button {
   position: absolute;
-  top: calc(var(--spacing) * 1.5);
-  right: calc(var(--spacing) * 1.5);
+  top: calc(var(--spacing) * 2);
+  right: calc(var(--spacing) * 2);
 }
 
 [data-slot='command-row'] pre {
@@ -1755,6 +1757,7 @@ route-progress[data-state='done'],
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: --theme(--radius-xl inline);
+  background: var(--sidebar);
 }
 
 [data-slot='file'] figcaption {
@@ -1762,21 +1765,25 @@ route-progress[data-state='done'],
   align-items: center;
   justify-content: space-between;
   gap: calc(var(--spacing) * 2);
+  border-bottom: 1px solid var(--border);
   background: var(--muted);
-  padding: calc(var(--spacing) * 1) calc(var(--spacing) * 1.5) calc(var(--spacing) * 1) calc(var(--spacing) * 3.5);
-  color: var(--muted-foreground);
+  padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2) calc(var(--spacing) * 1) calc(var(--spacing) * 4.5);
+  color: var(--soft-foreground);
   font-family: --theme(--font-mono inline);
   font-size: --theme(--text-xs inline);
 }
 
 [data-slot='file'] pre,
 [data-slot='output'] {
-  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 3.5);
+  padding: calc(var(--spacing) * 4) calc(var(--spacing) * 4.5);
+  font-size: --theme(--text-sm inline);
+  line-height: 1.75;
 }
 
 [data-slot='output'] {
-  border: 1px solid var(--border);
+  border: 1px dashed var(--input);
   border-radius: --theme(--radius-xl inline);
+  color: var(--soft-foreground);
 }
 
 [data-slot='usage'] {
@@ -1787,8 +1794,6 @@ route-progress[data-state='done'],
 
 [data-slot='table'] {
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: --theme(--radius-xl inline);
 }
 
 [data-slot='table'] table {
@@ -1798,44 +1803,62 @@ route-progress[data-state='done'],
 }
 
 [data-slot='table'] th {
-  background: var(--muted);
-  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3.5);
-  color: var(--muted-foreground);
-  font-size: --theme(--text-2xs inline);
-  font-weight: 700;
-  letter-spacing: --theme(--tracking-caps inline);
+  border-bottom: 1px solid var(--input);
+  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 5) calc(var(--spacing) * 2) 0;
+  color: var(--foreground);
+  font-weight: 600;
   text-align: left;
-  text-transform: uppercase;
 }
 
 [data-slot='table'] td {
-  border-top: 1px solid var(--border);
-  padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3.5);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 5) calc(var(--spacing) * 3) 0;
   vertical-align: top;
+  color: var(--soft-foreground);
+}
+
+[data-slot='table'] tr:last-child td {
+  border-bottom: 0;
 }
 
 [data-slot='table'] td:first-child {
+  color: var(--foreground);
   font-weight: 600;
 }
 
 [data-slot='callout'] {
+  --tone: var(--primary);
   display: grid;
   gap: calc(var(--spacing) * 1.5);
+  border: 1px solid color-mix(in oklab, var(--tone) 38%, var(--bg));
   border-radius: --theme(--radius-xl inline);
-  background: var(--muted);
+  background: color-mix(in oklab, var(--tone) 10%, var(--bg));
   padding: calc(var(--spacing) * 3.5) calc(var(--spacing) * 4.5);
 }
 
+[data-slot='callout'][data-tone='tip'] {
+  --tone: var(--success);
+}
+
+[data-slot='callout'][data-tone='warning'] {
+  --tone: var(--warning);
+}
+
 [data-slot='callout'] [data-label] {
-  color: var(--muted-foreground);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing) * 2);
+  color: color-mix(in oklab, var(--tone) 78%, var(--fg));
   font-size: --theme(--text-2xs inline);
   font-weight: 700;
   letter-spacing: --theme(--tracking-caps inline);
+  line-height: calc(var(--spacing) * 5);
   text-transform: uppercase;
 }
 
-[data-slot='callout'][data-tone='warning'] [data-label] {
-  color: var(--warning);
+[data-slot='callout'] [data-label] svg {
+  width: calc(var(--spacing) * 4);
+  height: calc(var(--spacing) * 4);
 }
 
 [data-doc-body] blockquote {
@@ -1846,23 +1869,24 @@ route-progress[data-state='done'],
 
 :is([data-doc-body], [data-lede]) kbd {
   display: inline-block;
-  min-width: calc(var(--spacing) * 5);
+  min-width: calc(var(--spacing) * 5.5);
+  border: 1px solid var(--border);
+  border-bottom: 2px solid var(--input);
   border-radius: --theme(--radius-sm inline);
   background: var(--muted);
-  box-shadow: inset 0 0 0 1px var(--border);
-  padding: 0 calc(var(--spacing) * 1.25);
+  padding: 0 calc(var(--spacing) * 1.5);
   color: var(--soft-foreground);
-  font-family: --theme(--font-sans inline);
+  font-family: --theme(--font-mono inline);
   font-size: --theme(--text-xs inline);
   font-weight: 500;
-  line-height: calc(var(--spacing) * 5);
+  line-height: calc(var(--spacing) * 4.75);
   text-align: center;
   white-space: nowrap;
 }
 
 [data-doc-body] ol[data-slot='steps'] {
   counter-reset: step;
-  gap: calc(var(--spacing) * 4);
+  gap: calc(var(--spacing) * 7.5);
   padding-left: 0;
   list-style: none;
 }
@@ -1871,23 +1895,28 @@ route-progress[data-state='done'],
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: calc(var(--spacing) * 2.5);
+  gap: calc(var(--spacing) * 3);
   counter-increment: step;
-  padding-left: calc(var(--spacing) * 10);
+  padding-left: calc(var(--spacing) * 12);
+}
+
+[data-slot='steps'] > li > p:first-child {
+  font-size: --theme(--text-base inline);
+  line-height: calc(var(--spacing) * 7);
 }
 
 [data-slot='steps'] > li::before {
   content: counter(step);
   position: absolute;
-  top: 0;
+  top: -1px;
   left: 0;
   display: grid;
   place-items: center;
-  width: calc(var(--spacing) * 6.5);
-  height: calc(var(--spacing) * 6.5);
+  width: calc(var(--spacing) * 7.5);
+  height: calc(var(--spacing) * 7.5);
   border-radius: calc(infinity * 1px);
-  background: var(--muted);
-  box-shadow: inset 0 0 0 1px var(--border);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 45%, transparent);
   color: var(--foreground);
   font-family: --theme(--font-mono inline);
   font-size: --theme(--text-xs inline);
@@ -1897,31 +1926,45 @@ route-progress[data-state='done'],
 [data-slot='steps'] > li:not(:last-child)::after {
   content: '';
   position: absolute;
-  top: calc(var(--spacing) * 8);
-  bottom: calc(var(--spacing) * -2.5);
-  left: calc(var(--spacing) * 3.25 - 0.5px);
-  width: 1px;
+  top: calc(var(--spacing) * 9);
+  bottom: calc(var(--spacing) * -6);
+  left: calc(var(--spacing) * 3.5);
+  width: 2px;
+  border-radius: 2px;
   background: var(--border);
 }
 
 [data-fold] {
+  overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: --theme(--radius-xl inline);
   background: var(--card);
 }
 
 [data-fold] + [data-fold] {
-  margin-top: calc(var(--spacing) * -2);
+  margin-top: -1px;
+}
+
+[data-fold]:not([data-fold] + [data-fold]) {
+  border-top-left-radius: --theme(--radius-xl inline);
+  border-top-right-radius: --theme(--radius-xl inline);
+}
+
+[data-fold]:not(:has(+ [data-fold])) {
+  border-bottom-left-radius: --theme(--radius-xl inline);
+  border-bottom-right-radius: --theme(--radius-xl inline);
 }
 
 [data-fold] > summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: calc(var(--spacing) * 3);
   cursor: pointer;
   list-style: none;
-  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4);
+  padding: calc(var(--spacing) * 3.5) calc(var(--spacing) * 4);
+  font-weight: 500;
+}
+
+[data-fold][data-open] > summary {
   font-weight: 600;
 }
 
@@ -1938,30 +1981,46 @@ route-progress[data-state='done'],
 }
 
 [data-fold][data-open] > summary > svg {
-  rotate: 180deg;
+  rotate: 90deg;
 }
 
 [data-fold] > summary:hover {
-  color: var(--primary);
+  background: color-mix(in oklab, var(--muted) 60%, transparent);
 }
 
 [data-fold] > summary:focus-visible {
-  border-radius: --theme(--radius-xl inline);
   outline: 2px solid var(--ring);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
 [data-fold-body] {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: calc(var(--spacing) * 3);
-  padding: 0 calc(var(--spacing) * 4) calc(var(--spacing) * 4);
+  border-top: 1px solid var(--border);
+  background: var(--sidebar);
+  padding: calc(var(--spacing) * 3.5) calc(var(--spacing) * 4) calc(var(--spacing) * 4.5) calc(var(--spacing) * 11);
 }
 
 [data-slot='tabs'] {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: calc(var(--spacing) * 2);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: --theme(--radius-xl inline);
+  background: var(--sidebar);
+}
+
+[data-slot='tabs'] > [data-bar] {
+  border-bottom: 1px solid var(--border);
+  background: var(--muted);
+  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2.5);
+}
+
+[data-slot='tabs'] :is([data-slot='shell'], [data-slot='command-row']) {
+  border: 0;
+  border-radius: 0;
+  background: none;
 }
 
 [data-slot='tabs'] > [data-pane] {

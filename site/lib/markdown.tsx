@@ -1,5 +1,5 @@
 import { escapeHtml } from '@kitajs/html'
-import { Check, ChevronDown, Copy } from 'lucide'
+import { Check, ChevronRight, Copy, type IconNode, Info, Lightbulb, TriangleAlert } from 'lucide'
 import { Marked, Renderer, type Token, type Tokens } from 'marked'
 import { CommandRow, RunnerRow } from '@/components/command-row'
 import { PinsPlayer } from '@/components/pins-player'
@@ -59,6 +59,8 @@ const TONES = {
   WARNING: 'warning',
   CAUTION: 'warning',
 } satisfies Record<string, Tone>
+
+const CALLOUT_ICONS: Record<Tone, IconNode> = { note: Info, tip: Lightbulb, warning: TriangleAlert }
 
 const KEY =
   /^(?:(?:ctrl|alt|shift)\+|⇧)?(?:enter|esc|tab|space|bksp|del|home|end|pgup|pgdn|[↑↓←→]+|[a-zA-Z0-9?,.=+])$|^⇧$/
@@ -212,7 +214,7 @@ function tabs(labels: string[], safePanes: string[], group: string): string {
 
   const panes = safePanes.map((pane, at) => `<div data-pane="${at}">${pane}</div>`).join('')
 
-  return `<div data-slot="tabs">${picker}${panes}</div>\n`
+  return `<div data-slot="tabs"><div data-bar>${picker}</div>${panes}</div>\n`
 }
 
 function grouped(tokens: Token[]): Token[] {
@@ -304,9 +306,9 @@ function markdown(doc: Doc, place: Place): Marked {
         if (opened) {
           if (folded) throw new Error(`${doc.title}: a <details> sits inside another`)
           folded = true
-          const chevron = html(<Icon node={ChevronDown} />)
+          const chevron = html(<Icon node={ChevronRight} />)
 
-          return `${FOLD}<summary data-slot="collapsible-trigger"><span>${escapeHtml((opened[1] as string).trim())}</span>${chevron}</summary><div data-slot="collapsible-panel"><div data-fold-body>\n`
+          return `${FOLD}<summary data-slot="collapsible-trigger">${chevron}<span>${escapeHtml((opened[1] as string).trim())}</span></summary><div data-slot="collapsible-panel"><div data-fold-body>\n`
         }
 
         if (CLOSE.test(block)) {
@@ -365,7 +367,7 @@ function markdown(doc: Doc, place: Place): Marked {
         const body = this.parser.parse(quote.tokens)
 
         return quote.alert
-          ? `<aside data-slot="callout" data-tone="${quote.alert}"><p data-label>${quote.alert}</p>${body}</aside>\n`
+          ? `<aside data-slot="callout" data-tone="${quote.alert}"><p data-label>${html(<Icon node={CALLOUT_ICONS[quote.alert]} />)}${quote.alert}</p>${body}</aside>\n`
           : `<blockquote>${body}</blockquote>\n`
       },
       table(token) {
