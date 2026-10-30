@@ -1,6 +1,7 @@
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "Persona 5"
 native = "ペルソナ5"
+danbooru = "persona_5"
 lead = "persona-5/joker"
 
 [[character]]

@@ -1,5 +1,6 @@
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "pop'n music"
+danbooru = "pop'n_music"
 
 [[character]]
 id = "milk"

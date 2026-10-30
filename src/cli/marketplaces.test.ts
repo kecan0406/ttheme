@@ -90,14 +90,24 @@ test('marketplace check holds the palettes and the works they propose to the com
 
   put('sets/nowhere.toml', setText([{ slug: 'dawn', text: paletteToml({ ...palette, subject: 'nowhere/dawn' }) }]))
   put('sets/Lantern Row!/wren.toml', setText([{ slug: 'wren', text: paletteToml(palette) }]))
-  put('works/lantern-row.toml', 'name = "Lantern Row!"\n\n[[character]]\nid = "pip"\ndanbooru = "pip_(lantern_row)"\n')
+  put(
+    'works/lantern-row.toml',
+    'name = "Lantern Row!"\ndanbooru = "starfall"\n\n[[character]]\nid = "pip"\ndanbooru = "pip_(lantern_row)"\n',
+  )
   put(
     'works/starfall.toml',
     'name = "Starfall"\nlogo = "starfall.png"\n\n[[character]]\nid = "orla"\n\n[[character]]\nid = "orla2"\ndanbooru = "orla_(starfall)"\nalso = ["lantern-row", "lost"]\n',
   )
 
   const commons = {
-    works: [{ id: 'starfall', name: 'Starfall', characters: [{ id: 'orla', danbooru: 'orla_(starfall)' }] }],
+    works: [
+      {
+        id: 'starfall',
+        name: 'Starfall',
+        danbooru: 'starfall',
+        characters: [{ id: 'orla', danbooru: 'orla_(starfall)' }],
+      },
+    ],
   }
 
   const { result, said } = heard(() => checkMarketplace(dir, commons))
@@ -108,6 +118,7 @@ test('marketplace check holds the palettes and the works they propose to the com
     [
       '  ✗ sets/Lantern Row!/wren.toml: ttheme reads sets/ alone, not the folders in it — move it up',
       '  ✗ sets/nowhere.toml: dawn: nowhere/dawn is in neither the commons nor works/ — propose it in works/nowhere.toml',
+      '  ✗ works/lantern-row.toml: lantern-row is "starfall" on danbooru, which is starfall already — name starfall instead',
       '  ✗ works/starfall.toml: starfall/orla2 is "orla_(starfall)" on danbooru, which is starfall/orla already — name starfall/orla instead',
       '  ✗ works/starfall.toml: starfall/orla2 lists "lost" in also, which is not another work',
       '  ! works/starfall.toml: unknown key logo — ttheme ignores it',

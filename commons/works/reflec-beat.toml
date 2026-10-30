@@ -1,5 +1,6 @@
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "REFLEC BEAT"
+danbooru = "reflec_beat"
 
 [[character]]
 id = "pastel-kun"

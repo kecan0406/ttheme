@@ -1,5 +1,6 @@
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "SOUND VOLTEX"
+danbooru = "sound_voltex"
 
 [[character]]
 id = "grace"

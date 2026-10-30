@@ -65,6 +65,7 @@ it:
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "Madoka Magica"                     # as lists show it; they sort the works by it
 native = "魔法少女まどか☆マギカ"              # its title in the original language, shown dim beside it
+danbooru = "mahou_shoujo_madoka_magica"    # its danbooru copyright tag: what the work is
 lead = "madoka-magica/madoka"              # optional: who stands for the work, the first character by default
 
 [[character]]                              # in cast order
@@ -95,8 +96,10 @@ sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakur
 - `danbooru` is who the character is: its danbooru tag (`kaname_madoka`,
   `lucy_(cyberpunk)`), checked on danbooru first — a character tag with posts.
   No two characters in the commons share one, so a character is never added
-  twice under two works. `find` searches it for pictures. A work's own subject
-  has none.
+  twice under two works. `find` searches it for pictures. A work's own
+  `danbooru` is what the work is: its copyright tag, the whole franchise's
+  rather than one season's (`mahou_shoujo_madoka_magica`), which no other work
+  holds and `find` does not search.
 - `native` lists the character's names in its original language (or the Japanese
   release's), which search matches alongside the palette's name: the full name
   first, then any other it goes by — a code name, an avatar name, a civilian one

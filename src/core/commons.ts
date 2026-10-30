@@ -31,6 +31,7 @@ export interface Work {
   id: string
   name: string
   native?: string
+  danbooru?: string
   lead?: string
   characters: Character[]
 }
@@ -49,10 +50,14 @@ export interface About {
 export type Sort = 'abc' | 'cast'
 
 export const WORKS_DIR = 'works'
-export const WORK_KEYS = ['$schema', 'name', 'native', 'lead', 'character']
+export const WORK_KEYS = ['$schema', 'name', 'native', 'danbooru', 'lead', 'character']
 export const CHARACTER_KEYS = ['id', 'native', 'danbooru', 'also', 'sites']
 
 const TAG = /[\s\p{Cc}\p{Bidi_Control}]/u
+
+export function isTag(value: unknown): value is string {
+  return typeof value === 'string' && value !== '' && !TAG.test(value)
+}
 
 function tagOf(file: string, field: string, value: unknown): string {
   const tag = str(file, field, value)
@@ -104,7 +109,7 @@ export function readSites(
 
     const names = typeof value === 'string' ? [value] : Array.isArray(value) ? value : undefined
 
-    if (!names || names.some((name) => typeof name !== 'string' || name === '' || TAG.test(name))) {
+    if (!names?.every(isTag)) {
       fail(file, `${field}.${key} must be one tag or a list of tags, got ${echo(value)}`)
     }
 
@@ -200,6 +205,7 @@ export function readWork(file: string, source: string, id: string, foreign = fal
     fail(file, `the character ${quoted(twice.id)} is listed twice`)
   }
 
+  const danbooru = doc.danbooru === undefined ? undefined : tagOf(file, 'danbooru', doc.danbooru)
   const lead = doc.lead === undefined ? undefined : str(file, 'lead', doc.lead)
 
   if (lead !== undefined) {
@@ -220,6 +226,7 @@ export function readWork(file: string, source: string, id: string, foreign = fal
     id,
     name: text(file, 'name', doc.name),
     ...(doc.native === undefined ? {} : { native: text(file, 'native', doc.native) }),
+    ...(danbooru ? { danbooru } : {}),
     ...(lead === undefined ? {} : { lead }),
     characters,
   }
@@ -251,6 +258,7 @@ export function workToml(work: Work): string {
     `"$schema" = ${q(WORK_SCHEMA_URL)}`,
     `name = ${q(work.name)}`,
     ...(work.native ? [`native = ${q(work.native)}`] : []),
+    ...(work.danbooru ? [`danbooru = ${q(work.danbooru)}`] : []),
     ...(work.lead ? [`lead = ${q(work.lead)}`] : []),
     ...work.characters.flatMap((c) => [
       '',
@@ -303,6 +311,14 @@ export function commonsProblems(works: readonly Work[]): string[] {
   const problems: string[] = []
 
   for (const work of works) {
+    const held = work.danbooru === undefined ? undefined : tags.get(work.danbooru)
+
+    if (work.danbooru !== undefined && held !== undefined) {
+      problems.push(`${work.id}: danbooru ${quoted(work.danbooru)} is ${held} already — one work, one subject`)
+    } else if (work.danbooru !== undefined) {
+      tags.set(work.danbooru, work.id)
+    }
+
     for (const c of work.characters) {
       const subject = `${work.id}/${c.id}`
 

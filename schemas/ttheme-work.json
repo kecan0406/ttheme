@@ -45,6 +45,10 @@
       "$ref": "#/definitions/title",
       "description": "The work's title in its original language, shown dim beside its name"
     },
+    "danbooru": {
+      "$ref": "#/definitions/tag",
+      "description": "The work's danbooru copyright tag, which says what the work is: one work has one tag across the commons, and it names the work in every language"
+    },
     "lead": {
       "description": "Whose colors stand for the work: one of its characters, as <work>/<character>, or the work itself; without it, its first character",
       "type": "string",

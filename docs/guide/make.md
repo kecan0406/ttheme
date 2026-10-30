@@ -212,6 +212,7 @@ lacks, describe it in `works/<work>.toml`, and name a character of it as
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "Starfall Academy"
 native = "スターフォール学園"   # its title in the original language
+danbooru = "starfall_academy"   # its danbooru copyright tag, what the work is
 
 [[character]]
 id = "mira"

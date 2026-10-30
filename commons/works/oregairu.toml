@@ -1,6 +1,7 @@
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "Oregairu"
 native = "やはり俺の青春ラブコメはまちがっている。"
+danbooru = "yahari_ore_no_seishun_lovecome_wa_machigatteiru."
 lead = "oregairu/iroha"
 
 [[character]]

@@ -1,6 +1,7 @@
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "K-On!"
 native = "けいおん!"
+danbooru = "k-on!"
 lead = "k-on/yui"
 
 [[character]]

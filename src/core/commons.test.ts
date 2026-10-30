@@ -20,6 +20,7 @@ const RLO = String.fromCodePoint(0x202e)
 
 const STARFALL = `name = "Starfall"
 native = "スターフォール"
+danbooru = "starfall"
 lead = "starfall/pip"
 
 [[character]]
@@ -42,6 +43,7 @@ const starfall = readWork('works/starfall.toml', STARFALL, 'starfall')
 test('a work holds its name, native title, lead and characters in cast order, and writes back as it was read', () => {
   assert.equal(starfall.name, 'Starfall')
   assert.equal(starfall.native, 'スターフォール')
+  assert.equal(starfall.danbooru, 'starfall')
   assert.deepEqual(
     starfall.characters.map((c) => c.id),
     ['orla', 'wren', 'pip'],
@@ -77,6 +79,7 @@ test('a work that names a lead, a tag or a name with characters that steer a ter
   for (const source of [
     'name = "E"\nlead = "x\\u001b]52;c;aGk=\\u0007"',
     'name = "E"\n[[character]]\nid = "wren"\ndanbooru = "wren\\u001b[2J"',
+    'name = "E"\ndanbooru = "e\\u001b[2J"',
     `name = "E"\n[[character]]\nid = "wren"\nnative = ["潮${RLO}レン"]`,
   ]) {
     assert.throws(
@@ -109,6 +112,7 @@ test('a proposal adds the works and characters the commons lacks and changes not
   const proposal: Work = {
     id: 'starfall',
     name: 'Falling Star',
+    danbooru: 'falling_star',
     characters: [{ id: 'wren', danbooru: 'other' }, { id: 'tamsin' }],
   }
 
@@ -116,6 +120,7 @@ test('a proposal adds the works and characters the commons lacks and changes not
   const merged = mergeWorks([starfall], [proposal, tidewater, { ...tidewater, name: 'Later' }])
   const [first, second] = merged
   assert.equal(first?.name, 'Starfall')
+  assert.equal(first?.danbooru, 'starfall')
   assert.deepEqual(
     first?.characters.map((c) => [c.id, c.danbooru]),
     [
@@ -230,6 +235,10 @@ test('the commons holds together: also names another work, and one danbooru tag 
   assert.deepEqual(commonsProblems([starfall]), [])
   assert.equal(commonsProblems([glassArcade]).length, 1)
   assert.match(commonsProblems([glassArcade, nightParade]).join('\n'), /one character, one subject/)
+  const tidewater: Work = { id: 'tidewater', name: 'Tidewater', danbooru: 'starfall', characters: [] }
+  assert.deepEqual(commonsProblems([starfall, tidewater]), [
+    'tidewater: danbooru "starfall" is starfall already — one work, one subject',
+  ])
 })
 
 test('the commons reads back from the JSON init writes, and refuses another shape', () => {

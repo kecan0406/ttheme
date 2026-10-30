@@ -235,8 +235,8 @@ export interface Proposal {
   path: string
 }
 
-function bare({ id, name, native }: Work): Work {
-  return { id, name, ...(native ? { native } : {}), characters: [] }
+function bare({ id, name, native, danbooru }: Work): Work {
+  return { id, name, ...(native ? { native } : {}), ...(danbooru ? { danbooru } : {}), characters: [] }
 }
 
 export function proposalsFor(

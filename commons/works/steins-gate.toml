@@ -1,6 +1,7 @@
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "Steins;Gate"
 native = "シュタインズ・ゲート"
+danbooru = "steins;gate"
 lead = "steins-gate/kurisu"
 
 [[character]]

@@ -1,5 +1,6 @@
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "jubeat"
+danbooru = "jubeat"
 
 [[character]]
 id = "knit"

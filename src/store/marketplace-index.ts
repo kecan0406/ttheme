@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { isTag } from '../core/commons.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { containsText, inert } from '../core/text.ts'
-import { nameProblem, subjectProblem, textProblem } from '../core/theme.ts'
+import { nameProblem, slugProblem, subjectProblem, textProblem } from '../core/theme.ts'
 import { reach } from './available.ts'
 import { writeAtomic } from './edits.ts'
 import { cacheRoot } from './paths.ts'
@@ -37,6 +38,13 @@ export interface ListedWork {
   id: string
   name: string
   native?: string
+  danbooru?: string
+  characters?: ListedCharacter[]
+}
+
+export interface ListedCharacter {
+  id: string
+  danbooru?: string
 }
 
 export interface Listing {
@@ -95,6 +103,20 @@ function readPalette(id: string, value: unknown): ListedPalette | undefined {
   }
 }
 
+function readListedCharacter(value: unknown): ListedCharacter | undefined {
+  if (typeof value !== 'object' || value === null) {
+    return undefined
+  }
+
+  const v = value as Record<string, unknown>
+
+  if (typeof v.id !== 'string' || slugProblem(v.id)) {
+    return undefined
+  }
+
+  return { id: v.id, ...(isTag(v.danbooru) ? { danbooru: v.danbooru } : {}) }
+}
+
 function readListedWork(value: unknown): ListedWork | undefined {
   if (typeof value !== 'object' || value === null) {
     return undefined
@@ -108,7 +130,15 @@ function readListedWork(value: unknown): ListedWork | undefined {
     return undefined
   }
 
-  return { id: v.id, name, ...(native && !textProblem(native) ? { native } : {}) }
+  const characters = (Array.isArray(v.characters) ? v.characters : []).flatMap((c) => readListedCharacter(c) ?? [])
+
+  return {
+    id: v.id,
+    name,
+    ...(native && !textProblem(native) ? { native } : {}),
+    ...(isTag(v.danbooru) ? { danbooru: v.danbooru } : {}),
+    ...(characters.length > 0 ? { characters } : {}),
+  }
 }
 
 function readListed(value: unknown): Listed | undefined {

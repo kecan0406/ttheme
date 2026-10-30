@@ -41,8 +41,16 @@ export async function repoFacts(repo: string, token?: string): Promise<RepoFacts
   return { stars: r.stargazers_count, pushedAt: r.pushed_at.slice(0, 10) }
 }
 
-function listedWork({ id, name, native }: Work): ListedWork {
-  return { id, name, ...(native ? { native } : {}) }
+function listedWork({ id, name, native, danbooru, characters }: Work): ListedWork {
+  return {
+    id,
+    name,
+    ...(native ? { native } : {}),
+    ...(danbooru ? { danbooru } : {}),
+    ...(characters.length > 0
+      ? { characters: characters.map((c) => ({ id: c.id, ...(c.danbooru ? { danbooru: c.danbooru } : {}) })) }
+      : {}),
+  }
 }
 
 async function shown(r: Found): Promise<Shown[]> {

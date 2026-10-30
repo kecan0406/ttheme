@@ -1,6 +1,7 @@
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "Doki Doki Literature Club"
 native = "ドキドキ文芸部!"
+danbooru = "doki_doki_literature_club"
 lead = "doki-doki-literature-club/monika"
 
 [[character]]

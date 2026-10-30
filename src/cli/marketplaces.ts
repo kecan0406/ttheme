@@ -490,7 +490,10 @@ function againstCommons(
   }
 
   const owners = new Map(
-    commons.works.flatMap((w) => w.characters.flatMap((c) => (c.danbooru ? [[c.danbooru, `${w.id}/${c.id}`]] : []))),
+    commons.works.flatMap((w) => [
+      ...(w.danbooru ? [[w.danbooru, w.id] as const] : []),
+      ...w.characters.flatMap((c) => (c.danbooru ? [[c.danbooru, `${w.id}/${c.id}`] as const] : [])),
+    ]),
   )
 
   for (const work of works) {
@@ -508,6 +511,16 @@ function againstCommons(
           .filter((c) => !fresh.includes(c))
           .map((c) => `${file}: the commons holds ${work.id}/${c.id} — its entry there wins`),
       )
+    }
+
+    const owner = work.danbooru === undefined ? undefined : owners.get(work.danbooru)
+
+    if (!held && work.danbooru !== undefined && owner !== undefined) {
+      findings.errors.push(
+        `${file}: ${work.id} is ${quoted(work.danbooru)} on danbooru, which is ${owner} already — name ${owner} instead`,
+      )
+    } else if (!held && work.danbooru !== undefined) {
+      owners.set(work.danbooru, work.id)
     }
 
     for (const c of fresh) {

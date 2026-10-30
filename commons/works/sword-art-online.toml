@@ -1,6 +1,7 @@
 "$schema" = "https://www.schemastore.org/ttheme-work.json"
 name = "Sword Art Online"
 native = "ソードアート・オンライン"
+danbooru = "sword_art_online"
 lead = "sword-art-online/sinon"
 
 [[character]]
