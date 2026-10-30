@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.83
+
 - The ttheme-palette agent skill is about 30% shorter with the same steps, so an agent following it spends less of its context.
 
 ## 1.2.82
