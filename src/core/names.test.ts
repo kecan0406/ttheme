@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Work } from './commons.ts'
-import { type NameHit, namedWorks, requestUrl } from './names.ts'
+import { askedOf, type NameHit, namedWorks, paletteNameOf, requestUrl } from './names.ts'
 
 const works: Work[] = [
   {
@@ -68,4 +68,22 @@ test('a request names what was asked for in the palette form', () => {
   assert.equal(url.searchParams.get('template'), 'palette.yml')
   assert.equal(url.searchParams.get('character'), 'Moonlit Harbor')
   assert.match(url.pathname, /\/issues\/new$/)
+})
+
+test('a request asks for a character with its work, a work by its name, and else for what was typed', () => {
+  const harbor = hit('work', 'Moonlit Harbor')
+  assert.equal(askedOf('mh', harbor), 'Moonlit Harbor')
+  assert.equal(askedOf('nell', hit('character', 'Nell', [], { works: [harbor] })), 'Nell, Moonlit Harbor')
+  assert.equal(askedOf('달빛 항구', undefined), '달빛 항구')
+})
+
+test("a palette's name comes from a danbooru tag without its qualifier, then a Latin name, then what was typed", () => {
+  assert.equal(paletteNameOf('넬', hit('character', 'ネル', ['nell_(moonlit_harbor)'])), 'nell')
+  assert.equal(
+    paletteNameOf('항구', hit('work', '月明かりの港', [], { names: ['月明かりの港', 'Moonlit Harbor'] })),
+    'moonlit-harbor',
+  )
+  assert.equal(paletteNameOf('Café Nell!', undefined), 'cafe-nell')
+  assert.equal(paletteNameOf('a'.repeat(50), undefined), 'a'.repeat(40))
+  assert.equal(paletteNameOf('달빛 항구', undefined), undefined)
 })

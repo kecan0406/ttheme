@@ -1,8 +1,13 @@
 import pkg from '../../package.json' with { type: 'json' }
 import type { Work } from './commons.ts'
 import { searchKey } from './text.ts'
+import { slugProblem } from './theme.ts'
 
 export const MAKE_URL = 'https://ttheme.dev/docs/guide/make'
+
+export const NAME_PAUSE = 600
+
+const QUALIFIER = /_\([^)]*\)$/
 
 export function requestUrl(asked: string): string {
   return `${pkg.bugs}/new?${new URLSearchParams({ template: 'palette.yml', character: asked })}`
@@ -108,4 +113,32 @@ export function namedWorks(hits: readonly NameHit[], works: readonly Work[]): Na
   }
 
   return named
+}
+
+export function askedOf(query: string, hit: NameHit | undefined): string {
+  const work = hit?.kind === 'character' ? hit.works[0] : undefined
+
+  return hit ? (work ? `${hit.label}, ${work.label}` : hit.label) : query
+}
+
+function slugFrom(text: string): string | undefined {
+  const plain = text.normalize('NFKD').replace(/\p{M}/gu, '')
+
+  if (!/^[\x20-\x7e]+$/.test(plain)) {
+    return undefined
+  }
+
+  const slug = plain
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .slice(0, 40)
+    .replace(/^-+|-+$/g, '')
+
+  return slug && !slugProblem(slug) ? slug : undefined
+}
+
+export function paletteNameOf(query: string, hit: NameHit | undefined): string | undefined {
+  const tags = (hit?.tags ?? []).map((tag) => tag.replace(QUALIFIER, ''))
+
+  return [...tags, ...(hit ? [hit.label, ...hit.names] : []), query].map(slugFrom).find((slug) => slug !== undefined)
 }

@@ -173,7 +173,8 @@ marketplaces that have palettes of it; once you stop typing it asks
 names.ttheme.dev what the name means, which `TTHEME_NAME_LOOKUP=off` stops. When
 no marketplace has one yet, `Request a palette` opens a request on GitHub. In
 Preview, a filter that finds nothing offers the same search, and `enter` takes
-it there. A palette is colors in a TOML file,
+it there. [ttheme.dev/marketplace](https://ttheme.dev/marketplace) searches the
+same way. A palette is colors in a TOML file,
 never code. Nobody reviews a marketplace, and only the built-in palettes must
 pass every contrast check before they ship; Browse shows the numbers of the
 rest.

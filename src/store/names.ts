@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { cachedSource, httpSource, Names } from '@kecan0406/aninames'
+import { cachedSource, httpSource, Names, type Source } from '@kecan0406/aninames'
 import { AGENT } from '../core/booru.ts'
 import type { NameHit } from '../core/names.ts'
 import { inert } from '../core/text.ts'
@@ -75,14 +75,16 @@ function worksOf(found: unknown): string[] {
   return [...new Set(ids)]
 }
 
-export function nameSearch(provider: string | undefined, base = NAMES_URL): NameSearch | undefined {
-  if (provider === 'off') {
-    return undefined
-  }
+export function liveSource(base = NAMES_URL): Source {
+  return httpSource(base, { headers: { 'user-agent': AGENT } })
+}
 
-  const names = new Names(
-    cachedSource(httpSource(base, { headers: { 'user-agent': AGENT } }), join(cacheRoot(), 'names')),
-  )
+export function nameSearch(provider: string | undefined, base = NAMES_URL): NameSearch | undefined {
+  return provider === 'off' ? undefined : searchIn(cachedSource(liveSource(base), join(cacheRoot(), 'names')))
+}
+
+export function searchIn(source: Source): NameSearch {
+  const names = new Names(source)
 
   const ask = async (query: string, signal: AbortSignal) => {
     const found: unknown = await names.search(query, { limit: LIMIT, adult: false, signal })

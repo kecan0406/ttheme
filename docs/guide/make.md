@@ -120,6 +120,10 @@ the palette open with every draft of the same work as one set: a `.toml` that
 `ttheme add <file>.toml` installs into your own marketplace, a share link, or a
 marketplace ready to push.
 
+When a search on [ttheme.dev/marketplace](https://ttheme.dev/marketplace) finds
+no palette of a work or a character, **make one** opens the builder on blank
+seeds under its name, and **request a palette** asks for one on GitHub.
+
 ## Share a link
 
 A share link carries the palette itself, so nothing is uploaded or stored. It

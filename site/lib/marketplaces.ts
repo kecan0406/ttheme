@@ -34,6 +34,8 @@ export const stocks: Stock[] = (snapshot as Shown[]).map(stockOf)
 
 export const marketplaces: Marketplace[] = stocks.map((stock) => stock.marketplace)
 
+export const listedWorks: ListedWork[] = (snapshot as Shown[]).flatMap((shown) => shown.works)
+
 export function shelvesFor(publisher: string): Shelves {
   return stocks.find((stock) => stock.marketplace.id === publisher)?.shelves ?? shelves
 }

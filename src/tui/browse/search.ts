@@ -1,9 +1,9 @@
-import { aboutOf, mergeWorks, spoken, type Work, workOf, worksFor } from '../../core/commons.ts'
+import { aboutOf, mergeWorks, spoken, type Work, workOf, workOfListed, worksFor } from '../../core/commons.ts'
 import { swatch } from '../../core/manifest.ts'
-import { MAKE_URL, type NameHit, namedWorks, requestUrl } from '../../core/names.ts'
+import { askedOf, MAKE_URL, NAME_PAUSE, type NameHit, namedWorks, requestUrl } from '../../core/names.ts'
 import { ago, cells, containsText, counted, inert } from '../../core/text.ts'
 import { slugOf } from '../../core/theme.ts'
-import { type Listed, type ListedWork, type Listing, listedMatches } from '../../store/marketplace-index.ts'
+import { type Listed, type Listing, listedMatches } from '../../store/marketplace-index.ts'
 import { sameMarketplace, TOPIC } from '../../store/sources.ts'
 import { fit, wrapText } from '../ansi.ts'
 import type { Bar, Hint } from '../bar.ts'
@@ -16,8 +16,6 @@ import { button, EMPTY, lit, whereOf } from './draw.ts'
 import type { Network } from './network.ts'
 import type { Staged } from './staged.ts'
 import type { Detail, Found, Marketplace, Offer, Row } from './types.ts'
-
-export const PAUSE = 600
 
 export interface SearchHost {
   readonly staged: Staged
@@ -38,16 +36,6 @@ interface Named {
 
 function plural(n: number, one: string): string {
   return `${n} ${one}${n === 1 ? '' : 's'}`
-}
-
-function workOfListed(w: ListedWork): Work {
-  return {
-    id: w.id,
-    name: w.name,
-    ...(w.native ? { native: w.native } : {}),
-    ...(w.danbooru ? { danbooru: w.danbooru } : {}),
-    characters: (w.characters ?? []).map((c) => ({ id: c.id, ...(c.danbooru ? { danbooru: c.danbooru } : {}) })),
-  }
 }
 
 function wordsOfWork(w: Work): string[] {
@@ -199,7 +187,7 @@ export class Search {
       return
     }
 
-    this.timer = setTimeout(() => this.ask(query), PAUSE)
+    this.timer = setTimeout(() => this.ask(query), NAME_PAUSE)
     this.timer.unref?.()
   }
 
@@ -361,9 +349,8 @@ export class Search {
     }
 
     const hit = this.named?.query === query ? this.named.hits[0] : undefined
-    const work = hit?.kind === 'character' ? hit.works[0] : undefined
 
-    return hit ? (work ? `${inert(hit.label)}, ${inert(work.label)}` : inert(hit.label)) : query
+    return hit ? inert(askedOf(query, hit)) : query
   }
 
   private found(): Row[] {

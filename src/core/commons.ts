@@ -363,6 +363,18 @@ export function mergeWorks(commons: readonly Work[], proposals: readonly Work[])
   return [...byId.values()]
 }
 
+export function workOfListed(
+  w: Pick<Work, 'id' | 'name' | 'native' | 'danbooru'> & { characters?: Pick<Character, 'id' | 'danbooru'>[] },
+): Work {
+  return {
+    id: w.id,
+    name: w.name,
+    ...(w.native ? { native: w.native } : {}),
+    ...(w.danbooru ? { danbooru: w.danbooru } : {}),
+    characters: (w.characters ?? []).map((c) => ({ id: c.id, ...(c.danbooru ? { danbooru: c.danbooru } : {}) })),
+  }
+}
+
 const INDEXES = new WeakMap<readonly Work[], Map<string, Work>>()
 
 function indexOf(works: readonly Work[]): Map<string, Work> {

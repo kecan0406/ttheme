@@ -15,13 +15,15 @@ export const SOURCE_LABELS = {
 export interface Filters {
   query: string
   source: Source
+  named: readonly string[]
 }
 
-export const START: Filters = { query: '', source: 'all' }
+export const START: Filters = { query: '', source: 'all', named: [] }
 
 export interface Searchable {
   text: string
   builtin: boolean
+  works: string[]
 }
 
 export function searchText(theme: Theme): string {
@@ -34,16 +36,20 @@ export function searchText(theme: Theme): string {
 }
 
 export function searchable(theme: Theme): Searchable {
-  return { text: searchText(theme), builtin: isBuiltin(theme) }
+  return {
+    text: searchText(theme),
+    builtin: isBuiltin(theme),
+    works: [theme.work, ...theme.also].flatMap((work) => (work ? [work.id] : [])),
+  }
 }
 
-export function matches({ text, builtin }: Searchable, { query, source }: Filters): boolean {
+export function matches({ text, builtin, works }: Searchable, { query, source, named }: Filters): boolean {
   if (source === 'builtin' && !builtin) return false
 
   if (source === 'community' && builtin) return false
   const q = query.trim().toLowerCase()
 
-  return !q || text.includes(q)
+  return !q || text.includes(q) || works.some((work) => named.includes(work))
 }
 
 export function shelvesMatching(shelves: Searchable[][], filters: Filters): number {
@@ -127,6 +133,8 @@ export function palettePath(theme: Pick<Theme, 'marketplace' | 'name'>): string 
 export function palettesPath(id: string): string {
   return `${marketplacePath(id)}/palettes.json`
 }
+
+export const WORKS_PATH = '/marketplace/works.json'
 
 export interface Peek {
   title: string

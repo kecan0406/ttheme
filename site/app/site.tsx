@@ -14,8 +14,10 @@ import { type Card, cardAlt, cardPng } from '@/lib/card'
 import { creditsOf } from '@/lib/credits'
 import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
-import { marketplacePath, palettePath, palettesPath } from '@/lib/gallery'
+import { marketplacePath, palettePath, palettesPath, WORKS_PATH } from '@/lib/gallery'
+import { lookUp } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
+import { MOST_ASKED, NAMES_PATH, type NamesAnswer } from '@/lib/names'
 import { crumbs, ROBOTS, siteGraph, sitemapXml } from '@/lib/seo'
 import { readShared, type Shared } from '@/lib/share'
 import { faviconIco, touchIconPng } from '@/lib/tab-icon'
@@ -30,7 +32,7 @@ import {
   sharedMeta,
   siteMeta,
 } from '@/lib/titles'
-import { leadsOf } from '@/lib/works'
+import { leadsOf, workRows } from '@/lib/works'
 import repo from '@/repo.json' with { type: 'json' }
 import pkg from '../../package.json' with { type: 'json' }
 import { type Page, page } from './document'
@@ -42,7 +44,9 @@ const facts: Facts = {
 
 const FIXED = 'public, max-age=0, s-maxage=31536000'
 const RETRY = 'public, max-age=0, s-maxage=60'
-const CREDITS = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800'
+const DAILY = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800'
+
+const LOOKUP_MS = 8000
 
 const STORE = 'One ttheme marketplace: its repository, its palettes and how they do on the contrast checks'
 
@@ -79,6 +83,29 @@ function gone(reason: string): Response {
   return new Response(reason, { status: 404, headers: { 'cache-control': RETRY } })
 }
 
+function answer(body: NamesAnswer | { error: string }, cache: string, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cache },
+  })
+}
+
+async function named(asked: string, signal: AbortSignal): Promise<Response> {
+  const query = Array.from(asked.trim()).slice(0, MOST_ASKED).join('')
+
+  if (!query) return answer({ error: 'no name to look up' }, RETRY, 400)
+
+  try {
+    return answer(await lookUp(query, AbortSignal.any([signal, AbortSignal.timeout(LOOKUP_MS)])), DAILY)
+  } catch (error) {
+    process.stderr.write(`site: names: ${error instanceof Error ? error.message : String(error)}\n`)
+
+    return answer({ error: 'the name index did not answer' }, 'no-store', 502)
+  }
+}
+
+const everyTheme = [...themes, ...marketplaces.flatMap((marketplace) => marketplace.palettes)]
+
 type Stock = {
   marketplace: Marketplace | null
   palettes: Theme[]
@@ -104,6 +131,7 @@ export const PRERENDERED: string[] = [
 
 export const DATA: string[] = [
   palettesPath(BUILTIN),
+  WORKS_PATH,
   '/builder/palettes.json',
   ...marketplaces.map((marketplace) => palettesPath(marketplace.id)),
 ]
@@ -323,10 +351,12 @@ export const site = new Elysia({ name: 'site' })
         const { pictures, complete } = await creditsOf(found)
 
         return new Response(JSON.stringify(pictures), {
-          headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': complete ? CREDITS : RETRY },
+          headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': complete ? DAILY : RETRY },
         })
       }),
   )
+  .get(WORKS_PATH, { fixed: true }, () => text(JSON.stringify(workRows(everyTheme)), 'application/json'))
+  .get(NAMES_PATH, ({ query, request }) => named(String(query.q ?? ''), request.signal))
   .group('/marketplace/:id', (scope) =>
     scope
       .derive(({ params, status }) => stockOf(params.id) ?? status(404, noMarketplace(params.id)))

@@ -1,4 +1,5 @@
-import { BUILTIN, type Theme, type WorkRef } from '@/lib/themes'
+import { palettePath, searchText } from '@/lib/gallery'
+import { BUILTIN, faceOf, paint, shortName, type Theme, type WorkRef } from '@/lib/themes'
 
 export const FIRST = 'ttheme/miku'
 
@@ -7,6 +8,22 @@ export interface WorkShelf {
   work: WorkRef | null
   publisher: string | null
   themes: Theme[]
+}
+
+export interface RowPalette {
+  name: string
+  path: string
+  marketplace: string
+  search: string
+  swatch: string
+}
+
+export interface WorkRow {
+  id: string
+  name: string
+  native: string | null
+  lang: string | null
+  palettes: RowPalette[]
 }
 
 function cmp(a: string, b: string): number {
@@ -51,6 +68,36 @@ export function byWork(themes: readonly Theme[]): WorkShelf[] {
 
 export function leadOf(shelf: WorkShelf): Theme {
   return shelf.themes.find((theme) => theme.subject === shelf.work?.lead) ?? (shelf.themes[0] as Theme)
+}
+
+export function swatchStyle(theme: Theme): string {
+  return [
+    `--bg:${paint(theme, (shade) => shade.background)}`,
+    ...faceOf(theme).map((_, index) => `--sg${index}:${paint(theme, (shade) => faceOf(shade)[index] as string)}`),
+  ].join(';')
+}
+
+export function workRows(themes: readonly Theme[]): WorkRow[] {
+  return byWork(themes).flatMap((shelf) => {
+    if (!shelf.work) return []
+    const lead = leadOf(shelf)
+
+    return [
+      {
+        id: shelf.work.id,
+        name: shelf.work.name,
+        native: shelf.work.native,
+        lang: shelf.work.lang,
+        palettes: [lead, ...shelf.themes.filter((theme) => theme !== lead)].map((theme) => ({
+          name: shortName(theme.id),
+          path: palettePath(theme),
+          marketplace: theme.marketplace,
+          search: searchText(theme),
+          swatch: swatchStyle(theme),
+        })),
+      },
+    ]
+  })
 }
 
 export function leadsOf(themes: readonly Theme[]): Theme[] {

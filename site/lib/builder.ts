@@ -1,3 +1,4 @@
+import { NEW_KEY } from '@/lib/names'
 import type { WorkRef } from '@/lib/themes'
 import type { Hex } from '../../src/core/color.ts'
 import type { Draft } from '../../src/core/draft.ts'
@@ -114,10 +115,16 @@ export function editOf(draft: Draft, source: string | null, own: boolean, id: st
   })
 }
 
-export function blankEdit(colors: Hex[], id: string, at: number): Edit {
+export function newName(search: string): string | null {
+  const name = new URLSearchParams(search).get(NEW_KEY)
+
+  return name === null ? null : name && !slugProblem(name) ? name : BLANK_NAME
+}
+
+export function blankEdit(colors: Hex[], id: string, at: number, name = BLANK_NAME): Edit {
   return started({
     id,
-    name: BLANK_NAME,
+    name,
     made: [...colors],
     other: { base: null, tuned: {} },
     meta: {},
@@ -279,4 +286,4 @@ export function restored(stored: Stored, at: number, edit: Edit): Stored {
 
 const RETURNING = RETURNS.map((type) => `n.type==='${type}'`).join('||')
 
-export const RESTORE_SCRIPT = `(()=>{try{const n=performance.getEntriesByType('navigation')[0],i=sessionStorage.getItem('${TAB_KEY}'),s=JSON.parse(localStorage.getItem('${STORE}')||'null');if(n&&(${RETURNING})&&i&&s&&Array.isArray(s.drafts)&&s.drafts.some((d)=>d&&d.id===i))document.documentElement.dataset.restoring=''}catch{}})()`
+export const RESTORE_SCRIPT = `(()=>{try{const n=performance.getEntriesByType('navigation')[0],i=sessionStorage.getItem('${TAB_KEY}'),s=JSON.parse(localStorage.getItem('${STORE}')||'null');if(n&&(${RETURNING})&&i&&s&&Array.isArray(s.drafts)&&s.drafts.some((d)=>d&&d.id===i)||new URLSearchParams(location.search).has('${NEW_KEY}'))document.documentElement.dataset.restoring=''}catch{}})()`

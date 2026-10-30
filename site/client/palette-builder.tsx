@@ -40,6 +40,7 @@ import {
   madeMode,
   modeOfView,
   nameTrouble,
+  newName,
   originIn,
   RETURNS,
   resetAll,
@@ -220,7 +221,14 @@ class PaletteBuilder extends HTMLElement {
     this.#stored = readStore()
     const link = this.#data.link !== null
     const back = link ? undefined : tabDraft(this.#stored)
+    const fresh = link || back ? null : newName(location.search)
     this.#edit = back ?? editOf(this.#data.first.draft, this.#data.first.name, link, freshId(), Date.now())
+
+    if (fresh !== null) {
+      this.#before = this.#edit
+      this.#seeds = { ...SEEDS }
+      this.#edit = blankEdit(listOf(grow(this.#seeds)), freshId(), Date.now(), fresh)
+    }
 
     if (link) this.#linkId = this.#edit.id
     this.#mark()

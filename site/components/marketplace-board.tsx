@@ -36,14 +36,17 @@ import {
   shelvesMatching,
   starCount,
 } from '@/lib/gallery'
-import { BrandIcon, GitHubStar, Icon } from '@/lib/icons'
+import { BrandIcon, GitHubStar, Icon, NewTab } from '@/lib/icons'
+import { makePath } from '@/lib/names'
 import { json } from '@/lib/render'
 import { sceneLines, useOf } from '@/lib/sessions'
-import { BUILTIN, faceOf, paint, type Theme } from '@/lib/themes'
+import { BUILTIN, paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
-import { byWork, leadOf, leadsOf } from '@/lib/works'
+import { byWork, leadOf, leadsOf, swatchStyle } from '@/lib/works'
+import { requestUrl } from '../../src/core/names.ts'
 import { TerminalScreen } from './terminal'
 import { TerminalFrame } from './terminal-frame'
+import { WorkSwatch } from './work-results'
 
 const DOTS = 9
 
@@ -56,6 +59,7 @@ const SORT_LABELS = {
 } as const satisfies Record<Sort, { label: string; icon: IconNode }>
 
 interface Stack {
+  id: string | null
   work: string | null
   name: string
   note: string | null
@@ -70,6 +74,7 @@ function stacksIn(shelf: Shelf): Stack[] {
     const lead = leadOf(group)
 
     return {
+      id: work?.id ?? null,
       work: work?.name ?? null,
       name: work?.name ?? 'originals',
       note: work ? (work.native ?? `led by ${lead.name}`) : null,
@@ -86,15 +91,6 @@ function peeksIn(shelf: Shelf, stacks: Stack[]): Stack[] {
   return [...stacks.filter((stack) => stack.lead === first), ...stacks.filter((stack) => stack.lead !== first)]
 }
 
-function WorkSwatch({ theme }: { theme: Theme }) {
-  const style = [
-    `--bg:${paint(theme, (shade) => shade.background)}`,
-    ...faceOf(theme).map((_, index) => `--sg${index}:${paint(theme, (shade) => faceOf(shade)[index] as string)}`),
-  ].join(';')
-
-  return <span aria-hidden="true" data-slot="work-swatch" style={style} />
-}
-
 function PaletteDots({ themes }: { themes: Theme[] }) {
   const style = themes
     .slice(0, DOTS)
@@ -109,12 +105,13 @@ function StackCard({ stack, builtin }: { stack: Stack; builtin: boolean }) {
     <a
       href={palettePath(stack.lead)}
       data-stack
+      data-work={stack.id ?? undefined}
       data-search={stack.themes.map((theme) => searchable(theme).text).join('\n')}
       data-builtin={builtin}
       class="grid gap-3 rounded-xl border bg-card px-3.5 py-3 shadow-sm transition-[translate,border-color,box-shadow] duration-200 outline-none hover:border-input hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring motion-safe:hover:-translate-y-0.5"
     >
       <span class="flex min-w-0 items-center gap-2.5">
-        <WorkSwatch theme={stack.lead} />
+        <WorkSwatch style={swatchStyle(stack.lead)} />
         <span class="grid min-w-0">
           <span class="truncate font-display text-base leading-snug font-extrabold" safe>
             {stack.name}
@@ -373,16 +370,29 @@ export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shel
           ))}
         </RadioGroup>
       </div>
+      <section data-works hidden aria-label="works" class="grid grid-cols-[minmax(0,1fr)] gap-3 pt-2"></section>
       <div data-shelves class="grid grid-cols-[minmax(0,1fr)] gap-4 pt-2">
         {shelves.map((shelf, index) => (
           <MarketplaceCard shelf={shelf} stacks={stacks[index] ?? []} />
         ))}
       </div>
-      <div data-empty hidden class="py-15 text-center text-muted-foreground">
+      <div data-empty hidden class="grid justify-items-center gap-1 py-15 text-center text-muted-foreground">
         <strong class="block font-semibold text-foreground">
-          <span data-empty-title>no palette matches these filters</span> <span aria-hidden="true">( ˘ω˘ )</span>
+          <span data-empty-title>no palette matches these filters</span>{' '}
+          <span data-empty-face aria-hidden="true">
+            ( ˘ω˘ )
+          </span>
         </strong>
-        clear a filter, or search for a work instead.
+        <span data-empty-text>clear a filter, or search for a work instead.</span>
+        <span data-empty-ask hidden class="mt-3 flex flex-wrap justify-center gap-2">
+          <LinkButton variant="outline" size="sm" href={requestUrl('')} target="_blank" rel="noopener" data-request>
+            request a palette
+            <NewTab />
+          </LinkButton>
+          <LinkButton size="sm" href={makePath(null)} data-make>
+            make one
+          </LinkButton>
+        </span>
       </div>
       <script type="application/json" data-peeks>
         {json(peeks)}
