@@ -5,6 +5,7 @@ on:
     branches: [main]
   schedule:
     - cron: '17,47 * * * *'
+    - cron: '5 4 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -79,7 +80,7 @@ jobs:
 
   site:
     needs: build
-    if: github.event_name == 'schedule' && (needs.build.outputs.index == 'changed' || needs.build.outputs.stars == 'changed')
+    if: github.event_name == 'schedule' && (github.event.schedule == '5 4 * * 1' || needs.build.outputs.index == 'changed' || needs.build.outputs.stars == 'changed')
     runs-on: ubuntu-26.04
     permissions: {}
     steps:
