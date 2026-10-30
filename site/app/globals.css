@@ -1715,7 +1715,7 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   right: calc(var(--spacing) * 1.5);
 }
 
-[data-slot='command-row'] > pre {
+[data-slot='command-row'] pre {
   mask-image: linear-gradient(to right, #000 calc(100% - var(--spacing) * 6), transparent);
 }
 

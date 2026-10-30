@@ -80,7 +80,7 @@ function Step({ number, title, text, children }: PropsWithChildren<{ number: num
 }
 
 export function LeadUse({ theme }: { theme: Theme }) {
-  return <CommandRow command={`ttheme use ${theme.name}`} class="bg-card" />
+  return <CommandRow command={`ttheme use ${theme.name}`} class="self-end bg-card" />
 }
 
 function PerTab({ leads }: { leads: Theme[] }) {
@@ -142,7 +142,7 @@ export function Home({
               </p>
               <p class="text-xs text-muted-foreground">Waifu, husbando, best girl: all welcome.</p>
             </div>
-            <div class="flex w-full flex-wrap items-center gap-3">
+            <div class="flex w-full flex-wrap items-end gap-3">
               <LinkButton variant="pop" size="lg" href={marketplacePath(BUILTIN)}>
                 browse the palettes
                 <Icon node={ArrowRight} />
@@ -230,7 +230,11 @@ export function Home({
           <ol class="grid grid-cols-3 gap-4 max-[1080px]:grid-cols-1">
             {STEPS.map((step, index) => (
               <Step number={index + 1} title={step.title} text={step.text}>
-                {step.command ? <CommandRow command={step.command} class="bg-card" /> : <InitRow class="bg-card" />}
+                {step.command ? (
+                  <CommandRow command={step.command} class="self-end bg-card" />
+                ) : (
+                  <InitRow class="bg-card" />
+                )}
               </Step>
             ))}
             <Step number={3} title="use" text="This tab only. Every other tab keeps its own.">

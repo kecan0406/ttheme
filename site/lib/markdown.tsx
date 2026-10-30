@@ -95,7 +95,6 @@ function copyButton(text: string, label: string): string {
       type="button"
       class={buttonVariants({ variant: 'ghost', size: 'icon-sm', class: 'group/copy' })}
       aria-label={label}
-      data-tip="copy"
       data-copy={text}
       data-copy-hold="1400"
       data-copy-status="copied (・ω・)"
