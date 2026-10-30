@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The ttheme-palette agent skill is about 30% shorter with the same steps, so an agent following it spends less of its context.
+
 ## 1.2.82
 
 - Search marketplace in Browse answers a character's name sooner: it no longer looks up the works of a character ttheme already knows, and a file names.ttheme.dev fails to send is asked for again on its own instead of the whole search starting over.
