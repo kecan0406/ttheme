@@ -6,7 +6,8 @@ import subsetFont from 'subset-font'
 import { EXIT_CODES } from '../src/cli/answer.ts'
 import { repoFacts, showcase } from '../src/cli/showcase.ts'
 import { DOCS_URL, docsOf, flagRows, headOf, SECTIONS, usageOf, VERB_SPECS } from '../src/cli/verbs.ts'
-import { themes } from './lib/builtin'
+import { artProblems, fetchArt } from './lib/art-source'
+import { commons, themes } from './lib/builtin'
 import type { Commands } from './lib/commands'
 import { REPO } from './lib/gallery'
 
@@ -29,6 +30,8 @@ const HTML = 'text/html; charset=utf-8'
 const SNAPSHOT = join(SITE, 'marketplaces.json')
 
 const REPO_FILE = join(SITE, 'repo.json')
+
+const ART_FILE = join(SITE, 'art.json')
 
 const COMMANDS = join(SITE, 'commands.json')
 
@@ -384,6 +387,20 @@ export async function snapshot(fresh: boolean): Promise<void> {
 
   await fetched(SNAPSHOT, 'marketplaces', () => showcase(token), [], fresh)
   await fetched(REPO_FILE, `stars of ${REPO}`, () => repoFacts(REPO, token), null, fresh)
+  await fetched(
+    ART_FILE,
+    'key art',
+    () => fetchArt(process.env.TMDB_TOKEN, (message) => process.stderr.write(`site: ${message}\n`)),
+    {},
+    fresh,
+  )
+}
+
+function artChecked(): void {
+  const problems = artProblems(commons.works)
+
+  if (problems.length > 0)
+    throw new Error(`site/lib/art-source.ts names what the commons lacks:\n  ${problems.join('\n  ')}`)
 }
 
 async function prerender(bundle: string): Promise<Record<string, { path: string; contentType: string }>> {
@@ -475,6 +492,7 @@ async function docsChecked(): Promise<void> {
 }
 
 if (import.meta.main) {
+  artChecked()
   await snapshot(true)
   commands()
   await docsChecked()

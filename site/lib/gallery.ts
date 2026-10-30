@@ -1,4 +1,5 @@
-import { BUILTIN, isBuiltin, shortName, type Theme } from '@/lib/themes'
+import type { Facts } from '@/lib/facts'
+import { BUILTIN, isBuiltin, type Marketplace, shortName, type Theme } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
 import type { Runner } from '../../src/core/runner.ts'
 
@@ -60,7 +61,6 @@ export interface Shelf {
   id: string
   repo: string
   url: string
-  commits: string
   about: string
   stars: number | null
   pushedAt: string | null
@@ -108,8 +108,6 @@ export const REPO_URL = `https://github.com/${REPO}`
 
 export const BUILTIN_URL = `${REPO_URL}/tree/main/builtin`
 
-export const BUILTIN_COMMITS_URL = `${REPO_URL}/commits/main/builtin`
-
 export function repoUrl(repo: string): string {
   return `https://github.com/${repo}`
 }
@@ -121,6 +119,33 @@ export function initOf(runner: Runner): string {
 }
 
 export const BUILTIN_ABOUT = "The palettes that come with ttheme, each measured from the character's official art."
+
+export function shelvesOf(themes: Theme[], marketplaces: readonly Marketplace[], facts: Facts): Shelf[] {
+  const shelves: Shelf[] = [
+    {
+      id: BUILTIN,
+      repo: REPO,
+      url: BUILTIN_URL,
+      about: BUILTIN_ABOUT,
+      stars: facts.repo?.stars ?? null,
+      pushedAt: facts.repo?.pushedAt ?? null,
+      version: facts.version,
+      palettes: themes,
+    },
+    ...marketplaces.map((marketplace) => ({
+      id: marketplace.id,
+      repo: marketplace.repo,
+      url: repoUrl(marketplace.repo),
+      about: marketplace.about,
+      stars: marketplace.stars,
+      pushedAt: marketplace.pushedAt,
+      version: null,
+      palettes: marketplace.palettes,
+    })),
+  ]
+
+  return shelves.toSorted((a, b) => ORDERS[FIRST_SORT](rankOf(a), rankOf(b)))
+}
 
 export function marketplacePath(id: string): string {
   return `/marketplace/${encodeURIComponent(id).replaceAll('%40', '@')}`

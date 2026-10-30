@@ -6,6 +6,7 @@ import { Home } from '@/components/home'
 import { NoSuchMarketplace, NoSuchPalette } from '@/components/marketplace-frame'
 import { MarketplacePage } from '@/components/marketplace-page'
 import { Missing } from '@/components/missing'
+import { HERO_SIZES, WorkView } from '@/components/work-page'
 import { MarketplaceWorkspace } from '@/components/workspace'
 import { RESTORE_SCRIPT } from '@/lib/builder'
 import { builderData, starts } from '@/lib/builder-page'
@@ -14,7 +15,8 @@ import { type Card, cardAlt, cardPng } from '@/lib/card'
 import { creditsOf } from '@/lib/credits'
 import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
-import { marketplacePath, palettePath, palettesPath, WORKS_PATH } from '@/lib/gallery'
+import { marketplacePath, palettePath, palettesPath, shelvesOf, WORKS_PATH } from '@/lib/gallery'
+import { artFor } from '@/lib/key-art'
 import { lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
 import { MOST_ASKED, NAMES_PATH, type NamesAnswer } from '@/lib/names'
@@ -31,8 +33,10 @@ import {
   paletteMeta,
   sharedMeta,
   siteMeta,
+  workMeta,
 } from '@/lib/titles'
-import { leadsOf, workRows } from '@/lib/works'
+import { workPages } from '@/lib/work-page'
+import { leadsOf, WORK_PATH, workPath, workRows } from '@/lib/works'
 import repo from '@/repo.json' with { type: 'json' }
 import pkg from '../../package.json' with { type: 'json' }
 import { type Page, page } from './document'
@@ -113,6 +117,10 @@ async function primed(signal: AbortSignal): Promise<Response> {
 
 const everyTheme = [...themes, ...marketplaces.flatMap((marketplace) => marketplace.palettes)]
 
+const listings = shelvesOf(themes, marketplaces, facts)
+
+const works = workPages(everyTheme, listings)
+
 type Stock = {
   marketplace: Marketplace | null
   palettes: Theme[]
@@ -134,6 +142,7 @@ export const PRERENDERED: string[] = [
   marketplacePath(BUILTIN),
   ...themes.map(palettePath),
   ...marketplaces.flatMap((marketplace) => [marketplacePath(marketplace.id), ...marketplace.palettes.map(palettePath)]),
+  ...[...works.keys()].map(workPath),
 ]
 
 export const DATA: string[] = [
@@ -185,6 +194,13 @@ function noMarketplace(id: string): Response {
   return page(
     { title: 'ttheme — no such marketplace', description: STORE, status: 404, cache: RETRY },
     <NoSuchMarketplace id={id} facts={facts} />,
+  )
+}
+
+function noWork(): Response {
+  return page(
+    { title: 'ttheme — no such work', description: STORE, status: 404, cache: RETRY },
+    <Missing title="no such work" text="No marketplace has a palette of this work yet." facts={facts} />,
   )
 }
 
@@ -362,7 +378,37 @@ export const site = new Elysia({ name: 'site' })
         })
       }),
   )
-  .get(WORKS_PATH, { fixed: true }, () => text(JSON.stringify(workRows(everyTheme)), 'application/json'))
+  .get(WORKS_PATH, { fixed: true }, () =>
+    text(JSON.stringify(workRows(everyTheme, listings, artFor)), 'application/json'),
+  )
+  .get(`${WORK_PATH}/:id`, ({ params }) => {
+    const found = works.get(params.id)
+
+    if (!found) return noWork()
+    const path = workPath(found.work.id)
+
+    return page(
+      {
+        ...workMeta(
+          found.work,
+          found.markets.flatMap((market) => market.palettes),
+          found.markets.length,
+        ),
+        path,
+        ...cardOf(found.lead),
+        ...(found.art ? { preload: { src: found.art.src, srcset: found.art.srcset, sizes: HERO_SIZES } } : {}),
+        ld: [
+          crumbs([
+            { name: 'ttheme', path: '/' },
+            { name: 'marketplace', path: '/marketplace' },
+            { name: found.work.name, path },
+          ]),
+        ],
+        cache: FIXED,
+      },
+      <WorkView page={found} facts={facts} path={path} />,
+    )
+  })
   .get(NAMES_PATH, ({ query, request }) =>
     query.q === undefined ? primed(request.signal) : named(String(query.q), request.signal),
   )

@@ -20,7 +20,7 @@ function shadeOf(entry: PaletteEntry): Shade {
   }
 }
 
-function langOf(native: string, commons: boolean): string | null {
+export function langOf(native: string, commons: boolean): string | null {
   if (/[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(native)) return 'ja'
 
   if (/\p{Script=Hangul}/u.test(native)) return 'ko'

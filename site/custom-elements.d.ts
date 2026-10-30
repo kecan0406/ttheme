@@ -1,6 +1,12 @@
 declare namespace JSX {
   interface HtmlLinkTag {
     onload?: undefined | string
+    imagesrcset?: undefined | string
+    imagesizes?: undefined | string
+  }
+
+  interface HtmlImageTag {
+    sizes?: undefined | string
   }
 
   interface IntrinsicElements {
@@ -17,5 +23,6 @@ declare namespace JSX {
     'route-progress': HtmlTag
     'sparkle-burst': HtmlTag
     'tab-showcase': HtmlTag
+    'work-page': HtmlTag
   }
 }

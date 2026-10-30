@@ -133,6 +133,51 @@ function StackCard({ stack, builtin }: { stack: Stack; builtin: boolean }) {
   )
 }
 
+export function RepoButton({ shelf }: { shelf: Shelf }) {
+  return (
+    <LinkButton
+      variant="raised"
+      size="xs"
+      href={shelf.url}
+      target="_blank"
+      rel="noopener"
+      class="relative z-1 max-w-full min-w-0 shrink"
+    >
+      <BrandIcon icon={siGithub} class="size-3.5 flex-none" />
+      <span class="truncate font-mono font-normal" safe>
+        {shelf.repo}
+      </span>
+      {shelf.stars === null ? null : (
+        <>
+          <span
+            aria-hidden="true"
+            class="inline-flex flex-none items-center gap-1.5 font-bold text-foreground tabular-nums"
+          >
+            <GitHubStar />
+            <span safe>{starCount(shelf.stars)}</span>
+          </span>
+          <span class="sr-only" safe>
+            {`, ${plural(shelf.stars, 'GitHub star')}`}
+          </span>
+        </>
+      )}
+      <span class="sr-only">, opens in a new tab</span>
+    </LinkButton>
+  )
+}
+
+export function Updated({ at }: { at: string | null }) {
+  return at === null ? null : (
+    <span class="inline-flex h-7 items-center gap-1.5 px-1 text-xs text-muted-foreground">
+      <Icon node={Clock} class="size-3.5" />
+      updated
+      <b class="font-mono font-normal text-soft-foreground" safe>
+        {at}
+      </b>
+    </span>
+  )
+}
+
 function PeekWindow({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
   const first = stacks[0]
 
@@ -218,52 +263,9 @@ function MarketplaceCard({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
                 </>
               )}
             </p>
-            <span class="mt-1 flex flex-wrap gap-1.5">
-              <LinkButton
-                variant="raised"
-                size="xs"
-                href={shelf.url}
-                target="_blank"
-                rel="noopener"
-                class="relative z-1 max-w-full min-w-0 shrink"
-              >
-                <BrandIcon icon={siGithub} class="size-3.5 flex-none" />
-                <span class="truncate font-mono font-normal" safe>
-                  {shelf.repo}
-                </span>
-                {shelf.stars === null ? null : (
-                  <>
-                    <span
-                      aria-hidden="true"
-                      class="inline-flex flex-none items-center gap-1.5 font-bold text-foreground tabular-nums"
-                    >
-                      <GitHubStar />
-                      <span safe>{starCount(shelf.stars)}</span>
-                    </span>
-                    <span class="sr-only" safe>
-                      {`, ${plural(shelf.stars, 'GitHub star')}`}
-                    </span>
-                  </>
-                )}
-                <span class="sr-only">, opens in a new tab</span>
-              </LinkButton>
-              {shelf.pushedAt === null ? null : (
-                <LinkButton
-                  variant="outline"
-                  size="xs"
-                  href={shelf.commits}
-                  target="_blank"
-                  rel="noopener"
-                  class="relative z-1"
-                >
-                  <Icon node={Clock} class="size-3.5" />
-                  updated
-                  <b class="font-mono font-normal text-foreground" safe>
-                    {shelf.pushedAt}
-                  </b>
-                  <span class="sr-only">, opens in a new tab</span>
-                </LinkButton>
-              )}
+            <span class="mt-1 flex flex-wrap items-center gap-1.5">
+              <RepoButton shelf={shelf} />
+              <Updated at={shelf.pushedAt} />
             </span>
           </div>
           <span

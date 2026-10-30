@@ -1227,6 +1227,36 @@ route-progress[data-state='done'],
     calc(var(--spacing) * 4.5) 0 var(--sg2);
 }
 
+[data-slot='work-art-shade'] {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to top,
+      var(--background),
+      color-mix(in oklab, var(--background) 86%, transparent) 28%,
+      transparent 72%
+    ),
+    linear-gradient(to right, color-mix(in oklab, var(--background) 78%, transparent), transparent 58%);
+}
+
+[data-slot='work-art-shade'][data-shade='hero'] {
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--background) 55%, transparent),
+      transparent 22% 40%,
+      color-mix(in oklab, var(--background) 90%, transparent) 78%,
+      var(--background)
+    ),
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--background) 85%, transparent),
+      color-mix(in oklab, var(--background) 35%, transparent) 45%,
+      transparent 70%
+    );
+}
+
 [data-recolor],
 [data-recolor] :not([data-slot='button'], [data-slot='button'] *) {
   transition:

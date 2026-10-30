@@ -1,5 +1,6 @@
-import { palettePath, searchText } from '@/lib/gallery'
-import { BUILTIN, faceOf, paint, shortName, type Theme, type WorkRef } from '@/lib/themes'
+import { type KeyArt, keyArtOf, type WorkArt } from '@/lib/art'
+import { marketplacePath, type Peek, palettePath, type Shelf, searchText } from '@/lib/gallery'
+import { BUILTIN, faceOf, paint, type Shade, shortName, type Theme, type WorkRef } from '@/lib/themes'
 
 export const FIRST = 'ttheme/miku'
 
@@ -15,9 +16,18 @@ export interface RowPalette {
   path: string
   marketplace: string
   character: string | null
+  lead: boolean
   search: string
   own: string
   swatch: string
+}
+
+export interface RowMarket {
+  id: string
+  path: string
+  builtin: boolean
+  repo: string
+  stars: number | null
 }
 
 export interface WorkRow {
@@ -25,8 +35,19 @@ export interface WorkRow {
   name: string
   native: string | null
   lang: string | null
+  path: string
+  lead: { name: string; path: string }
+  art: KeyArt | null
+  facets: string
+  markets: RowMarket[]
   palettes: RowPalette[]
 }
+
+export interface WorkData {
+  markets: Record<string, { peeks: Peek[]; who: (string | null)[] }>
+}
+
+export const WORK_PATH = '/works'
 
 function cmp(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0
@@ -72,6 +93,23 @@ export function leadOf(shelf: WorkShelf): Theme {
   return shelf.themes.find((theme) => theme.subject === shelf.work?.lead) ?? (shelf.themes[0] as Theme)
 }
 
+export function workPath(id: string): string {
+  return `${WORK_PATH}/${encodeURIComponent(id)}`
+}
+
+export function facetStyle(theme: Theme): string {
+  const tones = [
+    (shade: Shade) => shade.background,
+    (shade: Shade) => shade.ansi[0] ?? shade.background,
+    (shade: Shade) => shade.selectionBackground,
+    (shade: Shade) => shade.cursor,
+    (shade: Shade) => shade.ansi[1] ?? shade.cursor,
+    (shade: Shade) => shade.ansi[5] ?? shade.selectionBackground,
+  ]
+
+  return tones.map((tone, index) => `--k${index}:${paint(theme, tone)}`).join(';')
+}
+
 export function swatchStyle(theme: Theme): string {
   return [
     `--bg:${paint(theme, (shade) => shade.background)}`,
@@ -79,10 +117,30 @@ export function swatchStyle(theme: Theme): string {
   ].join(';')
 }
 
-export function workRows(themes: readonly Theme[]): WorkRow[] {
+function marketOf(id: string, shelves: readonly Shelf[]): RowMarket {
+  const shelf = shelves.find((entry) => entry.id === id)
+
+  return {
+    id,
+    path: marketplacePath(id),
+    builtin: id === BUILTIN,
+    repo: shelf?.repo ?? id,
+    stars: shelf?.stars ?? null,
+  }
+}
+
+export function workRows(
+  themes: readonly Theme[],
+  shelves: readonly Shelf[],
+  artOf: (work: string) => WorkArt | undefined,
+): WorkRow[] {
+  const order = shelves.map((shelf) => shelf.id)
+  const rank = (id: string) => (id === BUILTIN ? -1 : order.includes(id) ? order.indexOf(id) : order.length)
+
   return byWork(themes).flatMap((shelf) => {
     if (!shelf.work) return []
     const lead = leadOf(shelf)
+    const ids = [...new Set(shelf.themes.map((theme) => theme.marketplace))].sort((a, b) => rank(a) - rank(b))
 
     return [
       {
@@ -90,11 +148,17 @@ export function workRows(themes: readonly Theme[]): WorkRow[] {
         name: shelf.work.name,
         native: shelf.work.native,
         lang: shelf.work.lang,
+        path: workPath(shelf.work.id),
+        lead: { name: shortName(lead.id), path: palettePath(lead) },
+        art: keyArtOf(artOf(shelf.work.id)),
+        facets: facetStyle(lead),
+        markets: ids.map((id) => marketOf(id, shelves)),
         palettes: [lead, ...shelf.themes.filter((theme) => theme !== lead)].map((theme) => ({
-          name: shortName(theme.id),
+          name: theme.name,
           path: palettePath(theme),
           marketplace: theme.marketplace,
           character: theme.character?.id ?? null,
+          lead: theme.subject === shelf.work?.lead,
           search: searchText(theme),
           own: [theme.id, theme.character?.id ?? '', ...(theme.character?.native ?? [])].join(' ').toLowerCase(),
           swatch: swatchStyle(theme),

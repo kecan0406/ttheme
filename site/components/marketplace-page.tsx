@@ -1,52 +1,13 @@
 import { Store } from 'lucide'
 import type { Facts } from '@/lib/facts'
-import {
-  BUILTIN_ABOUT,
-  BUILTIN_COMMITS_URL,
-  BUILTIN_URL,
-  FIRST_SORT,
-  ORDERS,
-  REPO,
-  rankOf,
-  repoUrl,
-  type Shelf,
-} from '@/lib/gallery'
+import { shelvesOf } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
-import { BUILTIN, type Marketplace, type Theme } from '@/lib/themes'
+import type { Marketplace, Theme } from '@/lib/themes'
 import { CommandRow } from './command-row'
 import { MarketplaceBoard } from './marketplace-board'
 import { MarketplaceFrame } from './marketplace-frame'
 
 const PUBLISH = ['ttheme marketplace init', 'ttheme marketplace check']
-
-function listingsOf(themes: Theme[], marketplaces: Marketplace[], facts: Facts): Shelf[] {
-  const shelves: Shelf[] = [
-    {
-      id: BUILTIN,
-      repo: REPO,
-      url: BUILTIN_URL,
-      commits: BUILTIN_COMMITS_URL,
-      about: BUILTIN_ABOUT,
-      stars: facts.repo?.stars ?? null,
-      pushedAt: facts.repo?.pushedAt ?? null,
-      version: facts.version,
-      palettes: themes,
-    },
-    ...marketplaces.map((marketplace) => ({
-      id: marketplace.id,
-      repo: marketplace.repo,
-      url: repoUrl(marketplace.repo),
-      commits: `${repoUrl(marketplace.repo)}/commits`,
-      about: marketplace.about,
-      stars: marketplace.stars,
-      pushedAt: marketplace.pushedAt,
-      version: null,
-      palettes: marketplace.palettes,
-    })),
-  ]
-
-  return shelves.toSorted((a, b) => ORDERS[FIRST_SORT](rankOf(a), rankOf(b)))
-}
 
 export function MarketplacePage({
   themes,
@@ -57,7 +18,7 @@ export function MarketplacePage({
   marketplaces: Marketplace[]
   facts: Facts
 }) {
-  const shelves = listingsOf(themes, marketplaces, facts)
+  const shelves = shelvesOf(themes, marketplaces, facts)
 
   return (
     <MarketplaceFrame facts={facts} current="/marketplace">

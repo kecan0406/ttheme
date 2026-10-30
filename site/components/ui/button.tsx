@@ -11,6 +11,8 @@ const buttonVariants = cva(
         outline:
           'border-border bg-card text-soft-foreground hover:border-input hover:bg-secondary hover:text-foreground aria-expanded:bg-secondary data-popup-open:bg-secondary data-pressed:border-primary data-pressed:text-foreground',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-muted',
+        glass:
+          'border-border bg-glass text-foreground backdrop-blur-[14px] backdrop-saturate-130 hover:border-input hover:bg-secondary',
         muted:
           'bg-muted text-soft-foreground hover:bg-secondary hover:text-foreground aria-expanded:bg-secondary aria-expanded:text-foreground data-popup-open:bg-secondary data-popup-open:text-foreground',
         raised:

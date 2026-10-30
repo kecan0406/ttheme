@@ -1,4 +1,4 @@
-import { type Marketplace, shortName, type Theme } from '@/lib/themes'
+import { type Marketplace, shortName, type Theme, type WorkRef } from '@/lib/themes'
 
 export interface Meta {
   title: string
@@ -55,6 +55,15 @@ export function marketplaceMeta(marketplace: Marketplace | null): Meta {
   return {
     title: `${marketplace.id} — terminal themes · ttheme`,
     description: `${marketplace.about} — color schemes for your terminal. Add it with ttheme marketplace add ${marketplace.add}.`,
+  }
+}
+
+export function workMeta(work: WorkRef, palettes: readonly Theme[], marketplaces: number): Meta {
+  const names = [...new Set(palettes.map((theme) => theme.name))]
+
+  return {
+    title: `${work.name} terminal themes · ttheme`,
+    description: `${work.name}${work.native ? ` (${work.native})` : ''} color schemes for your terminal: ${some(names, 6)} — ${palettes.length} ${palettes.length === 1 ? 'palette' : 'palettes'} from ${marketplaces} ${marketplaces === 1 ? 'marketplace' : 'marketplaces'}.`,
   }
 }
 

@@ -34,6 +34,13 @@ export interface Page {
   cache: string
   head?: string
   module?: string
+  preload?: Preload
+}
+
+export interface Preload {
+  src: string
+  srcset: string | null
+  sizes: string
 }
 
 function Document({
@@ -46,6 +53,7 @@ function Document({
   ld = [],
   head,
   module,
+  preload,
   children,
 }: PropsWithChildren<{
   title: string
@@ -57,6 +65,7 @@ function Document({
   ld?: object[]
   head?: string
   module?: string
+  preload?: Preload
 }>) {
   return (
     <html lang="en" data-mode="dark" data-setting="auto" style={rootStyle(fallback)}>
@@ -98,6 +107,16 @@ function Document({
           <meta name="twitter:card" content="summary" />
         )}
         <link rel="stylesheet" href={assets.css} />
+        {preload ? (
+          <link
+            rel="preload"
+            as="image"
+            href={preload.src}
+            imagesrcset={preload.srcset ?? undefined}
+            imagesizes={preload.srcset ? preload.sizes : undefined}
+            fetchpriority="high"
+          />
+        ) : null}
         {FONTS.map((font) => (
           <link rel="preload" href={font} as="font" type="font/woff2" crossorigin="" />
         ))}
@@ -135,7 +154,7 @@ function Document({
 }
 
 export function page(
-  { title, description, path, image, imageAlt, robots, ld, status = 200, cache, head, module }: Page,
+  { title, description, path, image, imageAlt, robots, ld, status = 200, cache, head, module, preload }: Page,
   body: JSX.Element,
 ): Response {
   const text = `<!doctype html>${html(
@@ -149,6 +168,7 @@ export function page(
       ld={ld}
       head={head}
       module={module}
+      preload={preload}
     >
       {body}
     </Document>,

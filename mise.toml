@@ -242,7 +242,7 @@ dir = "{{config_root}}/site"
 run = "bun install --frozen-lockfile"
 
 [tasks."site:check"]
-description = "typecheck the showcase site's server and browser code and run xss-scan over both as site:build does, without building it: the files its build writes, assets.json, marketplaces.json, commands.json and repo.json, are typed from stand-ins in a temp dir, so it needs no network and writes nothing into site/; it reads dist/builtin.json and dist/commons.json, so build writes them first"
+description = "typecheck the showcase site's server and browser code and run xss-scan over both as site:build does, without building it: the files its build writes, assets.json, marketplaces.json, commands.json, repo.json and art.json, are typed from stand-ins in a temp dir, so it needs no network and writes nothing into site/; it reads dist/builtin.json and dist/commons.json, so build writes them first"
 dir = "{{config_root}}/site"
 depends = ["site:install", "build"]
 run = "bun check.ts && ./node_modules/.bin/xss-scan && ./node_modules/.bin/xss-scan --cwd client -p tsconfig.json"
