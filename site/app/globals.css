@@ -1679,11 +1679,7 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 }
 
 [data-slot='shell'] pre {
-  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 13) calc(var(--spacing) * 3) calc(var(--spacing) * 3.5);
-}
-
-[data-slot='shell'] [data-prompt] {
-  color: var(--primary);
+  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 13) calc(var(--spacing) * 3) calc(var(--spacing) * 4);
 }
 
 :is([data-doc-body], [data-highlight]) [data-t='cmd'] {
@@ -1717,6 +1713,28 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   position: absolute;
   top: calc(var(--spacing) * 1.5);
   right: calc(var(--spacing) * 1.5);
+}
+
+[data-slot='command-row'] > pre {
+  mask-image: linear-gradient(to right, #000 calc(100% - var(--spacing) * 6), transparent);
+}
+
+[data-slot='tip'] {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: --theme(--radius-md inline);
+  background: var(--popover);
+  padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2);
+  overflow: visible;
+  color: var(--popover-foreground);
+  font-size: --theme(--text-xs inline);
+  font-weight: 500;
+  line-height: --theme(--text-xs--line-height inline);
+  white-space: nowrap;
+  box-shadow: var(--elevation-md);
+  pointer-events: none;
 }
 
 [data-slot='file'] {

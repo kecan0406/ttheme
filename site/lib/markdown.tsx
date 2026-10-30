@@ -1,6 +1,7 @@
 import { escapeHtml } from '@kitajs/html'
 import { Check, ChevronDown, Copy } from 'lucide'
 import { Marked, Renderer, type Token, type Tokens } from 'marked'
+import { CommandRow, RunnerRow } from '@/components/command-row'
 import { PinsPlayer } from '@/components/pins-player'
 import { buttonVariants } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -9,6 +10,7 @@ import { Icon } from '@/lib/icons'
 import { idsOf, playPins, readPins, swatchOf } from '@/lib/pins-play'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
+import type { Runner } from '../../src/core/runner.ts'
 import { cells, graphemes } from '../../src/core/text.ts'
 
 export interface Heading {
@@ -91,20 +93,21 @@ function copyButton(text: string, label: string): string {
   return html(
     <button
       type="button"
-      class={buttonVariants({ variant: 'outline', size: 'icon-sm', class: 'group/copy' })}
+      class={buttonVariants({ variant: 'ghost', size: 'icon-sm', class: 'group/copy' })}
       aria-label={label}
+      data-tip="copy"
       data-copy={text}
       data-copy-hold="1400"
       data-copy-status="copied (・ω・)"
     >
       <Icon node={Copy} class="group-data-copied/copy:hidden" />
-      <Icon node={Check} class="hidden group-data-copied/copy:block" />
+      <Icon node={Check} class="hidden text-success group-data-copied/copy:block" />
     </button>,
   )
 }
 
-function shell(text: string): string {
-  const lines = text.split('\n').map((line) => {
+function linesOf(text: string) {
+  return text.split('\n').map((line) => {
     const at = line.search(/\s#\s/)
 
     return line.startsWith('#')
@@ -113,18 +116,41 @@ function shell(text: string): string {
         ? { command: line, comment: '' }
         : { command: line.slice(0, at).trimEnd(), comment: line.slice(at).trim() }
   })
+}
+
+function commandOf(text: string): string | undefined {
+  const [line, ...rest] = linesOf(text)
+
+  return line?.command && !line.comment && rest.length === 0 ? line.command : undefined
+}
+
+function runnerCommand(pane: Tokens.Code | undefined, runner: Runner): string | undefined {
+  return pane && tabOf(pane) === runner && pane.lang?.split(/\s+/)[0] === 'sh' ? commandOf(pane.text) : undefined
+}
+
+function byRunner(panes: readonly Tokens.Code[]): Record<Runner, string> | undefined {
+  const [first, second, ...rest] = panes
+  const npx = runnerCommand(first, 'npx')
+  const bunx = runnerCommand(second, 'bunx')
+
+  return npx && bunx && rest.length === 0 ? { npx, bunx } : undefined
+}
+
+function shell(text: string): string {
+  const only = commandOf(text)
+
+  if (only) return `${html(<CommandRow command={only} />)}\n`
+  const lines = linesOf(text)
 
   const commands = lines.flatMap((line) => (line.command ? [line.command] : []))
 
   const rows = lines
     .map((line) => {
-      const prompt = line.command ? '<span data-prompt aria-hidden="true">❯ </span>' : ''
-
       const note = line.comment
         ? `${line.command ? '  ' : ''}<span data-t="comment">${escapeHtml(line.comment)}</span>`
         : ''
 
-      return `${prompt}${highlightHtml('sh', line.command)}${note}`
+      return `${highlightHtml('sh', line.command)}${note}`
     })
     .join('\n')
 
@@ -256,6 +282,9 @@ function markdown(doc: Doc, place: Place): Marked {
         name: 'tabs',
         renderer(token) {
           const { panes } = token as Tabs
+          const runners = byRunner(panes)
+
+          if (runners) return `${html(<RunnerRow commands={runners} />)}\n`
           groups += 1
 
           return tabs(

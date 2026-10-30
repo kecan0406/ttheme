@@ -1,104 +1,109 @@
-import { Check, Copy, Terminal } from 'lucide'
+import { Check, Copy } from 'lucide'
+import { type SimpleIcon, siBun, siNpm } from 'simple-icons'
 import { Button } from '@/components/ui/button'
 import { initOf } from '@/lib/gallery'
-import { Icon } from '@/lib/icons'
+import { highlightHtml } from '@/lib/highlight'
+import { BrandIcon, Icon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { RUNNERS, type Runner } from '../../src/core/runner.ts'
 
-const ROW = 'flex min-w-0 items-center gap-2.5 rounded-lg border bg-muted/65 py-1.5 pr-1.5 pl-3'
+const ROW = 'flex h-11 min-w-0 items-center gap-0.5 rounded-lg border bg-muted/65 pr-1.5 pl-4'
 
-const CODE = 'min-w-0 flex-1 overflow-x-auto font-mono text-code leading-snug whitespace-nowrap select-all'
+const LINE =
+  'min-w-0 flex-1 overflow-x-auto pr-6 font-mono text-code leading-snug whitespace-nowrap [scrollbar-width:none]'
 
-const CODE_SHOWN: Record<Runner, string> = {
+const LINE_SHOWN: Record<Runner, string> = {
   npx: 'in-data-[runner=bunx]:hidden',
   bunx: 'hidden in-data-[runner=bunx]:block',
 }
 
-const COPY_SHOWN: Record<Runner, string> = {
+const BUTTON_SHOWN: Record<Runner, string> = {
   npx: 'in-data-[runner=bunx]:hidden',
   bunx: 'hidden in-data-[runner=bunx]:inline-flex',
 }
 
-const RUNNER_CELL =
-  'flex h-6 cursor-pointer items-center rounded-full px-2 font-mono text-xs text-soft-foreground transition-colors duration-150 outline-none hover:text-foreground focus-visible:inset-ring-2 focus-visible:inset-ring-ring'
+const OTHER: Record<Runner, Runner> = { npx: 'bunx', bunx: 'npx' }
 
-const RUNNER_ON: Record<Runner, string> = {
-  npx: 'not-in-data-[runner=bunx]:bg-card not-in-data-[runner=bunx]:text-foreground not-in-data-[runner=bunx]:shadow-sm not-in-data-[runner=bunx]:ring-1 not-in-data-[runner=bunx]:ring-border',
-  bunx: 'in-data-[runner=bunx]:bg-card in-data-[runner=bunx]:text-foreground in-data-[runner=bunx]:shadow-sm in-data-[runner=bunx]:ring-1 in-data-[runner=bunx]:ring-border',
+const MARKS: Record<Runner, SimpleIcon> = { npx: siNpm, bunx: siBun }
+
+const INITS: Record<Runner, string> = { npx: initOf('npx'), bunx: initOf('bunx') }
+
+function Line({ command, class: className }: { command: string; class?: string }) {
+  const safeCommand = highlightHtml('sh', command)
+
+  return (
+    <pre translate="no" class={cn(LINE, className)}>
+      <code class="select-all">{safeCommand}</code>
+    </pre>
+  )
 }
 
 function CopyButton({ command, class: className }: { command: string; class?: string }) {
   return (
     <Button
-      variant="outline"
+      variant="ghost"
       size="icon-sm"
       class={cn('group/copy', className)}
       aria-label={`copy ${command}`}
+      data-tip="copy"
       data-copy={command}
       data-copy-hold="1400"
       data-copy-status="copied (・ω・)"
     >
       <Icon node={Copy} class="group-data-copied/copy:hidden" />
-      <Icon node={Check} class="hidden group-data-copied/copy:block" />
+      <Icon node={Check} class="hidden text-success group-data-copied/copy:block" />
     </Button>
   )
 }
 
-export function CommandRow({
-  command,
-  text,
-  class: className,
-}: {
-  command: string
-  text?: JSX.Element
-  class?: string
-}) {
+function RunnerButton({ runner, class: className }: { runner: Runner; class?: string }) {
+  const other = OTHER[runner]
+
   return (
-    <div data-slot="command-row" class={cn(ROW, className)}>
-      <Icon node={Terminal} class="size-4 flex-none text-muted-foreground" />
-      {text ? (
-        <code translate="no" class={CODE}>
-          {text}
-        </code>
-      ) : (
-        <code translate="no" class={CODE} safe>
-          {command}
-        </code>
-      )}
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      class={className}
+      aria-label={`run with ${runner}, switch to ${other}`}
+      data-tip={`switch to ${other}`}
+      data-runner-to={other}
+    >
+      <BrandIcon icon={MARKS[runner]} class="size-3.5" />
+    </Button>
+  )
+}
+
+export function CommandRow({ command, class: className }: { command: string; class?: string }) {
+  return (
+    <div data-slot="command-row" data-highlight class={cn(ROW, className)}>
+      <Line command={command} />
       <CopyButton command={command} />
     </div>
   )
 }
 
-export function InitRow({ class: className }: { class?: string }) {
+export function RunnerRow({
+  commands,
+  class: className,
+}: {
+  commands: Readonly<Record<Runner, string>>
+  class?: string
+}) {
   return (
-    <div data-slot="command-row" class={cn(ROW, className)}>
-      <Icon node={Terminal} class="size-4 flex-none text-muted-foreground" />
+    <div data-slot="command-row" data-highlight class={cn(ROW, className)}>
       {RUNNERS.map((runner) => (
-        <code translate="no" class={cn(CODE, CODE_SHOWN[runner])} safe>
-          {initOf(runner)}
-        </code>
+        <Line command={commands[runner]} class={LINE_SHOWN[runner]} />
       ))}
-      <fieldset
-        aria-label="run with"
-        data-slot="runner-switch"
-        class="flex h-7.5 flex-none items-center gap-0.5 rounded-full border border-border bg-muted p-0.5"
-      >
-        {RUNNERS.map((runner) => (
-          <button
-            type="button"
-            data-runner-to={runner}
-            aria-pressed={String(runner === 'npx')}
-            title={`run with ${runner}`}
-            class={cn(RUNNER_CELL, RUNNER_ON[runner])}
-          >
-            {runner}
-          </button>
-        ))}
-      </fieldset>
       {RUNNERS.map((runner) => (
-        <CopyButton command={initOf(runner)} class={COPY_SHOWN[runner]} />
+        <RunnerButton runner={runner} class={BUTTON_SHOWN[runner]} />
+      ))}
+      {RUNNERS.map((runner) => (
+        <CopyButton command={commands[runner]} class={BUTTON_SHOWN[runner]} />
       ))}
     </div>
   )
+}
+
+export function InitRow({ class: className }: { class?: string }) {
+  return <RunnerRow commands={INITS} class={className} />
 }
