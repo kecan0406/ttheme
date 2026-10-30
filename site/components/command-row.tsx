@@ -81,7 +81,7 @@ export function RunnerRow({
 }) {
   return (
     <div data-slot="command-row" data-highlight class={cn(BOX, className)}>
-      <div role="group" aria-label="run with" class="flex h-8 items-stretch gap-1 border-b px-2.5">
+      <fieldset aria-label="run with" class="flex h-8 min-w-0 items-stretch gap-1 border-b px-2.5">
         {RUNNERS.map((runner) => (
           <button
             type="button"
@@ -90,10 +90,10 @@ export function RunnerRow({
             class={cn(TAB, TAB_ON[runner])}
           >
             <BrandIcon icon={MARKS[runner]} class="size-3" />
-            <span safe>{runner}</span>
+            <span>{runner}</span>
           </button>
         ))}
-      </div>
+      </fieldset>
       <div class={BAR}>
         {RUNNERS.map((runner) => (
           <Line command={commands[runner]} class={LINE_SHOWN[runner]} />
