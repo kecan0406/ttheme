@@ -10,8 +10,7 @@ paths:
 
 # Writing the text
 
-How every screen, CLI message and docs page is worded. CONTRIBUTING.md and
-HACKING.md point here; the screens' colors, keys and mouse are HACKING.md's.
+How every screen, CLI message and docs page is worded.
 
 Every screen and message is written in sentence case: the first word and proper
 nouns take a capital, everything else is lowercase. Never all lowercase as a
@@ -32,16 +31,9 @@ look, and never Title Case.
   GitHub; acronyms in capitals (PNG, URL, OSC, ANSI).
 - **Keys as one name, drawn for the keyboard**: the source spells a key one
   way — `enter`, `esc`, `tab`, `bksp`, `pgup`, `home`, `ctrl+r`, `alt+u`,
-  `shift+tab`, `⇧enter` — and a screen draws it through `cap` (a key hint,
-  which `hintOf` and find's foot do for it) or `capped` (a line that names
-  keys: Help's topics, a note), `src/tui/keycaps.ts`, and the shell layer
-  through `__tt_cap` and `__tt_capped`. On a Mac outside ssh they draw
-  Apple's symbols — ⌃ ⌥ ⇧ in Control, Option, Shift order, ↩ ⎋ ⇥ ⌫ ⌦ ⇞ ⇟ ↖ ↘, a
-  chord's letter in capitals (`⌃R`) — and elsewhere the name as written
-  (`TTHEME_KEYS`). A named key turns into its symbol only where a key stands —
-  a line's start, after `·`, `—`, two spaces or a word ending in `,` `:` `.`
-  `?` `!` — so prose that uses the word (`another tab`) keeps it, and a chord
-  turns anywhere. There is no ⌘: a terminal keeps Command for itself. A click
+  `shift+tab`, `⇧enter`. On a Mac outside ssh a screen draws Apple's symbols —
+  ⌃ ⌥ ⇧ in Control, Option, Shift order, ↩ ⎋ ⇥ ⌫ ⌦ ⇞ ⇟ ↖ ↘, a chord's letter in
+  capitals (`⌃R`) — and elsewhere the name as written. There is no ⌘. A click
   zone always names the key as written.
 - **Lowercase**: key hints in footers and key bars (`↑↓ move   enter save`), and
   error messages, which read the same after the `ttheme:` prefix
@@ -124,11 +116,4 @@ something the person can change (`The builder needs a window of at least 96×28`
 Text someone else wrote — a marketplace's files and the names of its files and
 folders, the marketplace index, a booru's answer, an error message built from
 any of them — has every control and direction character dropped or spelled out
-before a screen or a message shows it, so no escape sequence reaches the
-terminal and no direction mark reorders what it touches: through
-`src/core/text.ts` in Browse, the editor's notices, the readers and the CLI's
-errors (`inert` for one line, `inertLines` for a message that keeps its line
-breaks, and `quoted` or `escaped` for a value an error echoes), through
-`Line.put` and `linked` in find, and through the picture's conf lines for
-preview; a reader refuses such a character where a value has no use for one
-(`textProblem`).
+before a screen or a message shows it (`src/core/text.ts`).

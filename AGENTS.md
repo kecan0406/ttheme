@@ -44,7 +44,7 @@ While a change goes back and forth with the person you work for, run no check un
 - A change to a verb, a setting or a terminal's support updates its page in `docs/` in the same commit.
 - Shell code works with both GNU and BSD tools; CI runs GNU's.
 - Never add a `CLAUDE.md` or a `CLAUDE.local.md`: Claude Code reads `AGENTS.md` by itself only while neither is beside it or above it, nested files included.
-- A `.claude/rules` file stays under 40,000 characters, the most Claude Code loads of a rule on a 200K window; `mise run test` fails above that.
+- A `.claude/rules` file stays under 200 lines and 25 KB; `mise run test` fails above that.
 
 ## Traps
 
@@ -63,11 +63,11 @@ While a change goes back and forth with the person you work for, run no check un
 |---|---|
 | `src/core/`, `src/store/`, `src/pictures/` | the `AGENTS.md` in that folder |
 | `src/cli/`: verbs, init, update, marketplaces | `src/cli/AGENTS.md` |
-| `src/terminals/`, `shell/`: wiring, emitters, the shell layer | `src/terminals/AGENTS.md`, then `.claude/rules/terminals.md` (large: search it for your terminal) and the terminal's own file beside it |
+| `src/terminals/`, `shell/`: wiring, emitters, the shell layer | `src/terminals/AGENTS.md`, then `.claude/rules/terminals.md` |
 | `src/tui/`, `shell/preview.zsh`: screens, keys, mouse | `src/tui/AGENTS.md`, the `tui` skill (`.agents/skills/tui/SKILL.md`), `HACKING.md` ("Working on the TUIs"), `.claude/rules/tui.md` |
 | find, the picture search | `.claude/rules/find.md` |
 | `tests/`, the parity, compat and cost harnesses | `tests/AGENTS.md`, `HACKING.md` |
-| `site/`, `docs/` | `site/AGENTS.md`, `.claude/rules/site.md` (large) |
+| `site/`, `docs/` | `site/AGENTS.md`, `.claude/rules/site.md` |
 | `builtin/`, `commons/`: palettes, works, characters | the `AGENTS.md` in that folder, `CONTRIBUTING.md` ("Works and characters"), the `palette` skill (`.agents/skills/palette/SKILL.md`) |
 | the wording of a screen, a message or a docs page | `.claude/rules/text.md` |
 

@@ -1,6 +1,6 @@
 # site
 
-The showcase site (Elysia 2 on Bun, deployed to Vercel). `.claude/rules/site.md` is its reference.
+The showcase site (Elysia 2 on Bun, deployed to Vercel). `.claude/rules/site.md` holds its rules.
 
 - The site renders from `src/core`, `src/store` and `src/pictures` alone, and builds from `dist/builtin.json` and `dist/commons.json`.
 - `site:dev` and `site:build` share `site/public` and `site/assets.json`: stop the dev server before a build. `site:check` typechecks the server and browser code and runs `xss-scan` over both, without building and without the network.

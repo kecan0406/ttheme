@@ -6,6 +6,7 @@ paths:
   - "src/store/{wiring,edits,installed,host}*.ts"
   - "src/pictures/{backdrop,drawn,redrawing}*.ts"
   - "src/cli/{sync,images,redraw,init,uninstall}*.ts"
+  - "tests/terminal-prefs.zsh"
   - "tests/{compat,sandbox,tui}*"
   - "tests/compat/**"
   - "tests/parity/**"
@@ -15,84 +16,169 @@ paths:
 
 # Terminals, pictures and the shell layer
 
-What only one terminal does is in that terminal's own file beside this one (`ghostty.md`, `iterm2.md`, `kitty.md`, `alacritty.md`, `wezterm.md`, `windows-terminal.md`, `warp.md`, `terminal-app.md`, `konsole.md`, `rio.md`, `contour.md`). The wiring and emitter rules are in `src/terminals/AGENTS.md`.
+## Pictures
 
-## The picture store
+- A picture's files are never moved, and a changed picture always gets a new file name.
+- Bump `DRAWING` whenever `draw`, `made` or the encoders change what they produce.
+- The drawing cache is never keyed by the tone color, and a drawing that writes a cut-out is never cached.
+- No adapter names a picture's coloring, and a coloring change is a redraw, never staged or undone with esc.
+- The CLI reads `TTHEME_BG_BLUR` from `config.zsh`, never from the environment.
+- Every file a terminal or another shell reads is written to a temp file and renamed over (`writeAtomic`, `__tt_put`).
+- `backgrounds/shown.conf` names the one picture up: always the palette the front tab claimed, picture or not.
+- Only a tab the terminal said is in front takes the picture, and a verb typed in the tab claims with `force`.
+- A verb that changes a tab's colors and picture together goes through `__tt_wear`.
 
-- `backgrounds/images.json` (`Store`, `src/pictures/backdrop.ts`, versioned) is the one record of a palette's pictures, in install order, and of which one is `active`. Only the CLI writes it (`installBackdrop`; the hidden `ttheme image <palette> show|drop [<picture>]`, `src/cli/images.ts`), and every write regenerates that palette's `backgrounds/<palette>.conf` from it, a view for the terminals. `sync` rewrites every conf whose text differs from what the store makes (`freshenConfs`). Every value a conf line carries is written through `inert` and kept to its line (`fromOf`), since the kitty watcher splits lines as Python's `splitlines`, which breaks at U+2028 too.
-- A picture's files are `<palette>.<hash>.png`, `@fill-N.png` and `@thumb.png` (`THUMB`), the bakes preview makes on the same stem and its tuning, all beside each other and never moved: switching only changes `active` and the conf, and `drop` deletes the stem's files and the original. The hash is of the key and the images' content, because terminals reload a background only when its path changes: two pictures never share a file name.
-- Every picture file is an 8-bit indexed PNG whose 256 palette entries are all the tone and whose tRNS ramp makes the index the alpha (the ink, lifted at most ×2 by `liftOf` and blurred by `TTHEME_BG_BLUR`), so the terminal's own straight-alpha blend draws the tint and no pixel carries the background. The bakes preview saves keep that format (`ttheme bake`, `runBake`, `layMask`); an original-coloring picture is RGBA.
-- A palette whose `backdrop` tone changes is repainted by `sync` (`retint`): the files' PLTE is swapped, they move to a new stem and the tuning moves with them. The opacity never follows the palette.
-- A picture is drawn again from its original by `redrawPictures` (`src/cli/redraw.ts`, render workers running `redrawOne`), or laid from the drawing cache, when its `blur` no longer matches the setting, it has no `tone`, a cut-out's `matte` is not `MATTING`, or a tone picture's palette changed mode (`inkDue`). It runs at every `init` after it applies, in `ttheme sync` before it writes a terminal's file (`runSync`, which `ttheme dark`, `light`, `auto`, `ttheme config`, preview's Mode row and `auto`'s remode all run through `__tt_resync`, so the pictures and the files that name them are written once) and through the hidden `ttheme redraw`. The CLI reads `TTHEME_BG_BLUR` from `config.zsh` itself (`blurOf`), never from the environment `__tt_cli` hands it.
-- The drawing cache (`src/pictures/drawn.ts`, `$XDG_CACHE_HOME/ttheme/drawn/<key>`) is keyed by `drawnFor` on `DRAWING` (bump it whenever `draw`, `made` or the encoders change what they produce), the palette's file stem, the picture's key, the original's and the cut's size and modification time, `MATTING`, the window, the blur, the coloring and whether the palette's ink is the light one, never the tone color (a hit swaps it for the tone the palette has now: `toned`, `retone`). A drawing that writes a cut-out (`cut`) is never cached. `redrawPictures` also draws the other ink of every tone picture whose original starts as a PNG or a JPEG (`decodable`) into the cache at every `init` and `sync`, so a mode switch finds it ready.
-- A picture can keep its own colors instead of the tone (`Picture.coloring`, `'tone'` when absent; `Coloring` in `src/core/backdrop-tone.ts`): an 8-bit RGBA PNG with its own alpha and no `tone`. Every terminal lays it as it lays a tone's ramp, so no adapter names the coloring. The shell code that does is the `# colors <key> original` conf line (`confText`; `bgcolors`, `__tt_bg_coloring`) and the tuning panel's Colors row and `c` key, which call the hidden `ttheme image <palette> original|tone [<picture>]` (`redrawColoring`): the coloring is a redraw from the original, so it is never staged or undone with esc, and `__tt_pv_bg_recolor` and `__tt_pv_redraw` draw their note first and take nothing off the screen while the CLI runs. `TTHEME_BG_COLORS` (`coloringFor`, read from `config.zsh`) names what `find` and `add` install from now on and never redraws. A default opacity comes from the picture's `peak` (`peakOf`, `originalOpacity`, `fade`). A tuned opacity is a multiple of that default: a redraw in the other coloring or ink scales it (`rescaled`), and a palette file carries it as `strength`.
-- Tuning belongs to the picture, not the palette; the shell layer takes the file names from the conf's includes (`bgtunef`, `bgofff` in `__tt_bg_load`), falling back to `<palette>.tune.conf` for a conf the user wrote. In preview a picture's state is keyed by the palette for the active one and `<palette>:<key>` for the others; esc puts back every picture's state from when the panel opened (`tsnaps`); `f` and `D` change what the palette holds, so they write its kept tuning first and read it again after (`__tt_pv_bg_commit`, `__tt_pv_bg_reset`).
-- A missing `images.json` is built once from the layout before it (`migrate`), and reading the store is what builds it (`readStore`), so no writer can save a store over the old layout; the conversion writes the store before it removes the old folders (`backdrop.test.ts`).
-- Every file a terminal or another shell reads (the store, the confs, `palettes.zsh`, `installed.json`, the iTerm2 profiles) is written to a temp file and renamed over (`writeAtomic`, `src/store/edits.ts`; `__tt_put` in `ttheme.zsh`, which writes through a symlink to its target, ignores `noclobber` and renames with zsh/files' `zf_mv`; `config.zsh`, the pins file and the remembered colors go through it too), so a reload never reads half a file.
+## Wirings and adapters
 
-## One picture at a time
-
-- There is no rotation and no per-tab picture: Ghostty's `background-image` is one app-wide setting and no escape sequence reaches a single surface, and kitty placements scroll with the text. The one picture up is the one `backgrounds/shown.conf` names in its single `config-file = ?<palette>.conf` line, which `~/.config/ttheme/ghostty.conf` always includes. Wearing a palette (`ttheme use`, preview's enter, `ttheme default`, a directory pin) points that line at it through `__tt_shown` (ghostty adapter) and reloads Ghostty, and the same sync runs whenever a tab takes focus: focus reporting (mode 1004) is on at every prompt and off during each command (`__tt_preexec`), Ghostty's `\e[I` lands on the `__tt_focus` ZLE widget (`__tt_bind_focus`), which sets `TTHEME_FRONT`, and `\e[O` on `__tt_blur`, which clears it.
-- Only a tab the terminal has said is in front takes the picture: `__tt_shown` writes nothing unforced while `TTHEME_FRONT` is 0, every prompt a command ended in sets it to 0 (`__tt_prompt`, while `TTHEME_RAN`) until the answer to the reporting `line-init` turns on says otherwise, and a verb typed in the tab (`ttheme use`, preview's enter, `on`) claims with `force`. A shell that never heard a focus answer (`TTHEME_FRONT` stays -1) claims at every prompt.
-- A verb that changes this tab's colors and picture together goes through `__tt_wear` (spec, palette, `force`): the ghostty adapter's claims first and paints after. It writes `shown.conf`, reloads, and waits for Ghostty to read the new file (`__tt_ghostty_took`), so the colors land while the renderer decodes the picture and both change in one frame. The wait runs only when `__tt_reload_ghostty` signaled a Ghostty (`TTHEME_GHOSTTY_SENT`); every other adapter paints first. Preview's enter does the same before it closes (`__tt_pv_claim`), unless the panel changed a picture, whose save reloads again.
-- A tab switch shows the previous tab's picture for a moment in Ghostty, which no layer can prevent (`kecan0406/ttheme#13`): the picture is one app-wide setting while the colors belong to each surface.
-- A palette with no conf shows none, and a tab whose colors are not a palette leaves the picture alone, but while ttheme is off the ghostty adapter's `__tt_unworn` claims no picture for a tab with no spec. Nothing is reloaded when neither the old nor the new palette has a picture, yet `shown.conf` always names the palette the tab in front claimed, picture or not (`shell/check.zsh` holds it).
-
-## Wirings, adapters and traits
-
-- One setup can wire several terminals, and a change made from any reaches all of them. `palettes.zsh` carries the wired terminals as `TTHEME_TERMINALS`; preview's saved pictures go through `__tt_bg_saved` (`_bg.zsh`) to `__tt_pictured` (`_wired.zsh`), which rewrites `ttheme.json` when iTerm2 is wired and reloads Ghostty when `shown.conf` names one of them; `ttheme default` and an install change that moves the startup palette (`__tt_installs`) reload Ghostty too. `__tt_reload` reloads only the wired terminals that have a `__tt_reload_<id>`. Tuning is written for every wired terminal: with iTerm2 wired, a picture that is not centered is baked at the window size even when it is tuned in Ghostty (`__tt_bg_aligns`; `aligns` on the CLI's side, from the wirings' `bakes`).
-- Every terminal ttheme wires is one module in `src/terminals/` (`WIRINGS` in `index.ts`, ids in `WIRED`) implementing `Wiring` (`types.ts`), and `src/cli/sync.ts` only orchestrates, naming none: `sync` builds one `Ctx` and runs every wired terminal's `sync` through one `Out` (`write` content-compared and atomic, `wire` through `editUserFile`, `themes` for the emitter's files under its `shelf`, `remove`, and `repaint` when open tabs must repaint), then rewrites `palettes.zsh` with each wiring's `layer` values. `wiringPlan`, `wiringNotes` and `wiringNext` are init's lines, `forget` drops removed palettes' theme files, `refreshPictures` follows a picture change, and `unwire` gives uninstall its edits, removals and touches for every wiring, whatever `installed.json` says.
-- A terminal whose default is a profile (iTerm2, Konsole, Terminal.app) has `defaults`: `base` keeps the user's own in `installed.json` (`itermBase`, `konsoleBase`, `terminalBase`), and `point` moves new tabs to ttheme's profile or gives the user's back, returning whether a running app needs a restart. `commit` runs them (`withBases`, `pointDefaults`) when a startup palette appears or vanishes, when `default`, `on` or init ask (`take`), or when the startup palette changes; without `take`, a terminal whose current default is not ttheme's keeps it.
-- Every external command a wiring runs (`defaults`, `pgrep`, `dbus-send`, `cmd.exe`, `wslpath`) goes through `Host.run` (`systemHost`), which the tests fake. A new terminal is a module, an emitter, a `TRAITS` row and an adapter, and `src/terminals/index.test.ts` holds them together and to the support tables.
-- The shell layer names a terminal only in `ttheme.zsh`'s detection block: `preview.zsh`, `_osc.zsh` and `_bg.zsh` name none, and an adapter names only itself (`terminal.test.ts`). Everything a terminal does differently is an adapter hook overriding `_osc.zsh`'s default: the paint and reset (`__tt_osc_apply`, `__tt_osc_reset`, `__tt_pv_paint`, `__tt_reset_reloaded`), what it hears at start (`__tt_hear`, `__tt_heard`), pictures (`__tt_shown`, `__tt_unshown`, `__tt_unworn`, `__tt_bg_*`, `__tt_cell`), `__tt_reloaded`, `__tt_worn`, `__tt_keepable`, `__tt_follows_focus`, `__tt_takes_default`, `__tt_followed`, `__tt_reverts`, `__tt_links`, `__tt_follows_prompt`, `__tt_ssh_wrapped` and `__tt_paints` / `__tt_unpainted`. What a wired terminal needs when another tab changes the state they share lives in `_wired.zsh`, one `__tt_<event>_<id>` per terminal behind `__tt_reload` and `__tt_pictured`.
-- In a terminal the layer cannot paint (a Warp that is unwired or has no settings file, an editor's built-in terminal) the layer stays inactive and refuses the tab verbs (`TTHEME_TAB_VERBS`, from `src/cli/verbs.ts`) and the bare menu with that terminal's own message, unless its `__tt_unpainted` makes it paint: an interactive Warp with a `settings.toml` that init did not wire runs `ttheme wire warp` (`src/cli/wire.ts`, a hidden setup verb), reloads `palettes.zsh`, registers the layer's hooks (`__tt_hook`) and goes on with the verb.
-- The CLI talks to a terminal through `src/terminals/terminal.ts`: `detectTerminal` (the shell's order; `terminal.test.ts` runs the shell's detection block against it) and `TRAITS`, one row per terminal (`linkable`, `showsPictures`, `cropsInBands`, `readsFiles`, `movesPlacements`, `layersUnderCells`, whether it paints the background an OSC sets, which colors a live repaint sends at once). A new terminal gets its `TRAITS` row with its adapter; the tests hold the adapters' files to the table.
-- `livePaint` is the one way a TUI repaints the tab while it browses (Browse and init's picker; the palette editor paints only its own mock): nothing without a TTY, under `NO_COLOR`, inside tmux or in Warp, where `warpLive` (`src/terminals/warp-live.ts`) takes its place. `CLEAR` is the only screen clear, never ED 2 or `CSI H CSI J`, which iTerm2 answers in the alternate screen by pushing the screen into its scrollback; `terminal.test.ts` fails on either anywhere in `src/` or `shell/`.
+- `src/cli/sync.ts` names no terminal: a new terminal is a module implementing `Wiring`, an emitter, a `TRAITS` row and an adapter.
+- A new terminal also needs a `TERMS` entry, a `BEHAVIOR` row, an `identity`, a `Kind`, a compat column, and its facts and gaps.
+- Every external command a wiring runs goes through `Host.run`.
+- A config ttheme cannot edit safely is left alone, and init says so.
+- Everything a terminal does differently is an adapter hook over `_osc.zsh`'s default.
+- The detection block names Rio and Contour ahead of Ghostty.
+- `livePaint` is the one way a TUI repaints the tab while it browses.
 
 ## What a tab shows
 
-- A tab that never painted (`TTHEME_PAINTED` unset: a new tab in `off`, or one reset since) shows what its terminal shows new tabs. When `palettes.zsh` names another startup palette, `__tt_follow` moves the shell's belief to it and syncs its picture wherever the adapter's `__tt_takes_default` says the tab shows it. Such a tab stays one when something only passes over it (leaving a pin it entered unpainted, an ssh session it started that way, preview's esc, Default and pin, the hub handing the tab to Browse): they give it back with the adapter's reset (`__tt_osc_reset`, through `__tt_unwear`) rather than painting. A palette picked (`ttheme use`, preview's This tab) and `ttheme on` paint it. `ttheme default` changes the default alone: the tab that ran it keeps its own palette and picture (`__tt_keep`). `ttheme()` runs `__tt_fresh` before any verb (`__tt_verb`).
-- Preview shows one palette at a time, its subject, and draws both halves of it on every frame: `applied` is its colors and `__tt_pv_want` names its picture, while `painted` and the layers' `bgname`, `bgshown`, `bganchor`, `bgsent` and `bgthumb` only say what the terminal is believed to hold. Whatever deletes the layers forgets them in the same breath (`__tt_pv_bg_lost`, an adapter hook), so no caller resets them by hand; a change to the shown picture's tuning only marks it to be shown again (`bgname=""`).
-- Every screen preview hands the terminal to goes through one contract: `__tt_pv_leave` puts the tab's own look back first (the layers down and `__tt_pv_unpaint`, in one synchronized update), and `__tt_pv_back` takes it back assuming nothing (`__tt_pv_lost` sets `painted=?`, the adapter forgets its own beliefs through `__tt_pv_forget`, a `resized` frame is asked for, then the subject is painted again). Find, which tries pictures on the palette it was opened for, is handed that palette painted instead. The hub hands Browse the look it left as `TTHEME_HUB_LOOK`, which the live painters take through `Live.saved` instead of asking the terminal, and Browse's `restore` puts exactly that look back when the hub closes from it.
-- In `off`, a new tab never waits on the terminal to learn what it shows. The answer its shell needs at start is kept per adapter in `$XDG_STATE_HOME/ttheme/colors.<adapter>` beside the startup palette it was heard under and that palette's background (`__tt_heard_as`, `__tt_recall`, `__tt_remember`, `__tt_listen`); a tab whose heard background is a palette's in its other mode (`TTHEME_PALETTE_OTHER`) wears that palette in the mode worn now and repaints (`__tt_stale`). A shell uses it before its first prompt and asks again from its first `line-init` (`__tt_line_init` → `__tt_recheck`), where zle already holds the tty raw so no `stty` runs. Only a tab's own colors may be kept, so every paint exports `TTHEME_PAINTED` (`__tt_osc_apply`; a reset unsets it): a shell that inherits it (`exec zsh`, a nested shell) or paints before its first prompt (a pinned directory) neither keeps nor rechecks.
-- `line-init` is one widget (`__tt_line_init`: the recheck, `__tt_mend` after a command, `__tt_typed`, `__tt_focus_on` where focus is bound and no typed key waits), since each `add-zle-hook-widget` costs part of every start.
-
-## Hot paths
-
-- Preview's key loop never waits on a process for a picture: whatever takes one (Warp's view theme, Terminal.app's laid view, iTerm2's band) is asked of one background runner in `_bg.zsh` (`__tt_bg_ask <key> <command…>`: one job at a time, a newer ask replacing one not started yet, one for the key already running dropped; `__tt_bg_start`, `__tt_bg_reap`), which `__tt_pv_getch` polls every 0.05 s while it is busy instead of 0.2 s (`__tt_pv_bg_busy`, `__tt_pv_bg_poll`), and which redraws when one ends, after the adapter's `__tt_bg_done`. Whatever must see the work done first (closing the layers, Warp's settings writes, find, a save) waits for it (`__tt_bg_settle`, at most 3 s). A job that ran and left nothing behind is not asked for again (`TTHEME_BG_FAILED`).
-- The layer's hot paths start no process: a new tab in `off` and `seq` (all but Terminal.app's `seq`, which asks its 20 colors at start), every prompt's hooks, preexec, `line-init`, a focus-in, a `cd`, and a paint or picture change during preview (`__tt_apply`, `__tt_pv_paint`, `__tt_shown`, `__tt_bg_send`, `__tt_bg_dim`) — save Warp's follower, which a prompt starts once per Warp session when none runs, and Terminal.app's profile switch, an `osascript` paid where a tab changes what it wears and never by a prompt that changes nothing. Preview's hovers go through its coprocess. Reach for `$(<file)`, `zstat`, `sysread -t`, `__tt_b64s` and parameter expansion, never `$(…)`, a pipe or an external command.
-- `tests/forks.tsv` is the ratchet `shell:check` holds every journey to (`mise run forks`), and `shell/check.zsh`'s `forks_of` holds the paint helpers and the appearance widget's functions to zero. A zle widget's own processes never reach the ratchet's trace, so the focus and mend rows guard only the hooks around the widgets they walk. A change that removes a fork lowers the file with `mise run forks --update`. `__tt_cli` hands node `NODE_COMPILE_CACHE` under the ttheme cache dir.
-
-## Mode and appearance
-
-- Under `TTHEME_MODE=auto` the mode follows the system's appearance as a wired terminal passes it on (`TRAITS.appears`). Ghostty answers DSR 996 with the system's; iTerm2 answers with its palette's darkness; kitty and WezTerm run a script of ttheme's that hears the change, writes the `appearance` file and wakes every shell (`hooks`). Terminal.app, Alacritty, Warp, Konsole and Windows Terminal neither answer with it nor run such a script, so `auto` is offered only beside one that does.
-- Where a terminal reports, the adapter's `__tt_reports_appearance` has the layer bind `\e[?997;1n` and `\e[?997;2n` to the `__tt_appearance_heard` widget (`__tt_bind_appearance`), and while `palettes.zsh` says `TTHEME_MODE_AUTO`, `line-init` turns mode 2031 on and asks DSR 996 once (`__tt_appearance_on`) and preexec turns it off with focus reporting. The widget reads each report through the adapter's `__tt_appearance_of` and always returns 0, since zle beeps at a widget that returns non-zero. Every shell under `auto` also reads the `appearance` file in `__tt_fresh` (`__tt_appeared`: one `zstat` at each prompt, focus, wake and verb).
-- The widget's `__tt_appearance` writes `$XDG_STATE_HOME/ttheme/appearance` and, when it differs from the mode `palettes.zsh` holds (`TTHEME_MODE_WORN`), starts `__tt_remode` in a background subshell (`&!`, the one process this path starts), which takes `mode.lock` itself with `zsystem flock -t 0` (an fcntl lock, which a fork does not inherit): of the tabs that hear one change the first runs it and the others leave at once. A failed sync leaves `remode.failed`, after which no tab starts another for an hour. It runs `__tt_resync` and the wake, again while the appearance moved meanwhile, with `$XDG_STATE_HOME/ttheme/remode` naming its pid while it runs. `__tt_resync` passes `here` for `ttheme dark`, `light`, `auto` and `config`, which run `__tt_fresh` before it.
-- Under `auto` a tab of a terminal that reports the appearance, which shows a palette's other mode, wears that palette (`__tt_wearing` falls back to `__tt_stale` there), while a terminal that opens a tab on what it read before (Terminal.app's profiles) still repaints it.
-
-## The test models
-
-- Parity holds every terminal to one spec (`tests/AGENTS.md`). The model claims nothing compat has not measured: `BEHAVIOR` (`tests/parity/terms.ts`) says what a terminal does and `MEASURED` maps each field to the compat case that decides it, the Mac's result (`expect.tsv`) where it is a pass or a fail, else the Linux build's (`expect-linux.tsv`, `readCompat`). A field both leave `?` or `skip` is the model's assumption, listed at the end of every parity run (`unmeasured`); Windows Terminal, which compat cannot open, is modeled from its source alone.
-- How a terminal turns files into looks is its `Kind` in `model.ts`. Every kind reads the files it watches before every chunk of output a tab writes (`poll`), and a kind whose terminal acts some time after a file moves (`delay`) counts it from the file's modification time. A new journey is one entry in `journeys.ts`; a new terminal needs a `TERMS` entry, a `BEHAVIOR` row, an `identity`, a `Kind`, a compat column, and its facts and gaps.
-- `tests/costs.ts` (`mise run costs`, part of `ci`) holds each action's cost in each terminal's model to `tests/costs.tsv`; a temp file put where a terminal watches (iTerm2's `DynamicProfiles`) fails it with no window open.
+- A tab that never painted stays that way when something only passes over it: give it back with the adapter's reset, never a paint.
+- Preview's `painted` and the layers' `bg*` say only what the terminal is believed to hold, and whatever deletes the layers forgets them (`__tt_pv_bg_lost`).
+- Every screen preview hands the terminal to goes through `__tt_pv_leave` and `__tt_pv_back`; the hub hands Browse its look as `TTHEME_HUB_LOOK`, and Browse's `restore` puts exactly that back.
+- Every paint exports `TTHEME_PAINTED` and a reset unsets it; only a tab's own colors are kept.
+- `line-init` is one widget, `__tt_line_init`: never add another `add-zle-hook-widget`.
+- Preview's key loop never waits on a process for a picture: ask `_bg.zsh`'s runner (`__tt_bg_ask`).
+- On a hot path use `$(<file)`, `zstat`, `sysread -t`, `__tt_b64s` and parameter expansion, never `$(…)`, a pipe or an external command.
+- A zle widget's own processes never reach the fork ratchet's trace.
+- `auto` is offered only beside a terminal that passes the appearance on (`TRAITS.appears`).
+- `__tt_appearance_heard` always returns 0.
 
 ## Traps
 
-- The layer runs inside the user's shell under whatever options their `.zshrc` set, while every test runs it under zsh's defaults, and `no_clobber`, `ksh_arrays`, `sh_word_split` and `no_unset` each broke it. So every function the shell calls on its own (`ttheme`, each hook, zle widget and the completion) and each block that runs while the layer is sourced starts with `emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}`. `terminal.test.ts` holds every function the layer registers to it, and `latency.zsh check` sources the layer under such a `.zshrc`.
-- Every question the layer asks the terminal goes through `__tt_ask` (`_osc.zsh`). It opens the tty as `{ exec {fd}<>/dev/tty } 2>/dev/null`, since a plain `exec {fd}<>/dev/tty 2>/dev/null` sends every later command's stderr to /dev/null. It sets the tty up in one `stty` subshell only while the tty is still cooked, never inside zle (which holds it raw) nor inside preview (which holds it `-echo -icanon` for its whole session, `TTHEME_RAW`). It appends a DSR (`\e[5n`), reads chunks with `sysread -t 0.3` until its `\e[0n`, and splits the bytes with one pattern: a byte outside an escape sequence is a key typed ahead, which goes to `TTHEME_TYPED` for the `__tt_typed` line-init widget to hand back (`zle -U`). Preview drops them (`__tt_pv_bg_open`).
-- zsh's `read -k` given `-t` puts back the tty modes zsh last saved when it times out, and zsh saves them only after a foreground command: preview runs its `stty -echo -icanon` in the foreground, never from `$(…)`.
-- Inside double quotes zsh 5.9 takes a `$'…'` in the replacement of `${var//pattern/replacement}` as its own text: spell the escape through a variable (`local e=$'\e'`, `"${1//$e/$e$e}"`), as `__tt_out` does; `shell/check.zsh` holds its output byte for byte.
-- Ghostty, Alacritty and Warp leave OSC 17 (selection) queries unanswered, so a query that waits for every color it asked stalls until its deadline: `queryTerminalColors` (`src/terminals/osc.ts`) ends at a DSR answer instead.
-- Ghostty answers focus reporting (`\e[?1004h`) with the current focus the moment it goes on, and the kernel echoes that answer as `^[[I` until zle takes the tty raw. So the layer turns it on from zle's `line-init` (`__tt_focus_on`), never from precmd; preexec still turns it off. A line that starts with keys already waiting leaves it off, and the next prompt turns it on. That answer is also how a prompt learns whether its tab is in front (`TTHEME_FRONT`), and only Ghostty gives one (compat's `focus-answer`), which is why the claim gate lives in the ghostty adapter.
-- Ghostty applies a SIGUSR2 reload asynchronously, an OSC reset returns a surface to the defaults Ghostty holds at that moment, and a reload does not repaint a surface's current colors, so a reset sent right after the config changes brings back the old `theme =`. `ttheme off` therefore writes everything first, reloads once, and `__tt_reset_reloaded` (ghostty adapter) resets again every 50 ms while the tab still shows the palette's background, for at most a second. Every other open tab turns itself off too (`__tt_off_here`) when `__tt_fresh` sees `TTHEME_STARTUP` go empty. The tab that ran `off` first empties Ghostty's `shown.conf` where Ghostty is wired (`__tt_unpictured`, `_wired.zsh`, from `__tt_switch`), and a tab running a program is reset by Ghostty's follower through its tty when it comes to the front (`__tt_ghostty_unpaint`, `ghostty.md`). A pin paints nothing while `TTHEME_STARTUP` is empty (`__tt_dir_sync` and `__tt_ran` return at once), nor does a rotating new tab (the layer's start and `launch-tab.zsh` check it too). `ttheme on` paints the tab that ran it with its directory's pin, else the default (`__tt_resume`), and every tab that went off takes the default back from the reloaded config at its next prompt or focus (`__tt_follow`).
-- A change one tab makes reaches every other tab idle at its prompt at once. Every interactive shell whose layer is active records itself as an empty file `$XDG_STATE_HOME/ttheme/shells/<pid>` (`__tt_enlist`, from `__tt_hook`; `__tt_bye` on `zshexit` and `__tt_gone` remove it), and `ttheme()` compares the modification times of `palettes.zsh` and the pins file before and after the verb it runs (`__tt_stamp`, around `__tt_verb`) and, when either moved, sends SIGURG to every recorded shell but itself (`__tt_wake`). The layer's `TRAPURG` is defined at the top level (a function under `emulate -L zsh` has `local_traps`), never over a `.zshrc`'s own, and runs only where `zsh_eval_context` holds the trap alone, a shell idle at its prompt: the adapter's `__tt_poked` (`__tt_fresh woke`, which Warp wraps in `TTHEME_WARP_HOLD`). A key a woken tab's query reads meanwhile waits in `TTHEME_TYPED` for the next `line-init`, and what a woken tab has to say (`__tt_note`) waits in `TTHEME_NOTES` until its work is done and goes out after `zle -I` on a line of its own. Inside tmux only the pane tmux last reported in front acts on a wake (`__tt_woken`, `TTHEME_FRONT` 1); the others catch up when tmux reports their focus (`__tt_rewear`). The parity model ignores SIGURG where `promptTrap` is false.
-- A program may reset what a tab wears (Neovim's OSC 112, a background sync's OSC 111, `reset`'s RIS, which in Ghostty 1.4 and Alacritty puts back the config's 16 ANSI colors alone: compat's `ris-worn`). Every command sets `TTHEME_RAN` (`__tt_ran`) and a painted tab's next `line-init` asks its background, cursor and 16 ANSI colors in one question (`__tt_mend`) and repaints when any differs; `__tt_reverts` is false where a reset does not land there (Terminal.app, Konsole, Warp, an iTerm2 tab on its palette's own profile). A reset the mend cannot see, in a tab painted with the startup palette, leaves those slots following the config, so when the startup palette changes a tab painted with the old one paints it again (`__tt_hold`, from `__tt_fresh`, `__tt_keep` and `__tt_installs_done`, only where `__tt_reverts` and `__tt_holds`, never in an inactive layer and never inside tmux). The latency harness answers a query with the color an OSC set (`SHOWN`).
-- An editor's built-in terminal inherits every variable that names the terminal around it, so the detection block tests for one first (`$NVIM`, `$VIM_TERMINAL`, `$INSIDE_EMACS`, `TERM_PROGRAM=vscode`) and makes it the `editor` adapter (`editorOf`, `detectTerminal`), which paints nothing; `ttheme info` names it (`editor (nvim)`).
-- An ssh pin (`ssh:<host>` in the pins file, kept in `TTHEME_PINS` under that key) is worn from preexec, never from the remote side. `__tt_ran` reads the typed command through `${(z)}` (`__tt_ssh_host`) and skips one that opens no session, after the words of a terminal's own ssh wrapper where its adapter's `__tt_ssh_wrapped` names them (Ghostty's `ghostty +ssh`, `ghostty.md`); `__tt_ssh_rule` takes the host's own pin over a pattern and a longer pattern over a shorter; the next prompt gives the tab back (`__tt_ssh_back`, from `__tt_prompt` after `TTHEME_FRONT` is cleared and before `__tt_fresh`). Every reader of `TTHEME_PINS` as paths skips a key that does not start with `/`. Inside tmux `__tt_ran` is not hooked, so a pane's ssh repaints nothing.
-- `shell/ttheme.zsh` only runs from an installed layer, with `preview.zsh` and `palettes.zsh` beside it; `shell/check.zsh` assembles such a layer in a temp dir. The installed layer `zcompile`s the files it sources into `.zwc`, and zsh's `source` takes a `.zwc` stamped in the same second as a newer source, so whatever rewrites one of those files deletes its `.zwc` (`applyInit`, `sync`).
-- tmux keeps an OSC 11 as the pane's own background and paints every cell with an explicit `48;2;…`, which Ghostty draws opaque over `background-image`, so inside tmux the layer never tells tmux its colors. `__tt_tmux` (once, at shell start) turns the pane's `allow-passthrough` on when it is off and the server's `focus-events` on, and sets `TTHEME_TMUX` unless the client is control mode (`tmux -CC`); `__tt_out` wraps every color OSC and iTerm2's `SetProfile` in `\ePtmux;…\e\\`. The colors belong to the terminal tab, not the pane: a pane re-wears its palette when tmux reports focus (`__tt_rewear`), the tab's current background is kept in the session option `@ttheme_bg` (`__tt_query_bg` reads it first) and iTerm2's shown profile in `@ttheme_shown`, a pane ignores the `TTHEME_SPEC` inherited from the tmux server's environment, a shell outside tmux re-wears itself after a `tmux` command (`__tt_ran`, `__tt_unmux`, which also forgets what it believed of the tab: `__tt_pv_forget`), and `__tt_reload_ghostty` walks up from the tmux client (`#{client_pid}`). Preview skips its picture layers, tuning and find inside tmux (`__tt_pv_bg_open` leaves `bgcw` 0). Where the variables a pane inherits name no terminal, the layer reads the `TERM_PROGRAM` of the tmux server's global environment and detects again. Inside tmux Terminal.app's adapter switches no profile.
-- Ghostty on macOS starts shells through `login -flp`, which resets `HOME` but keeps the rest of the environment: steer a Ghostty-launched shell with `ZDOTDIR` and `XDG_*`, never `HOME`. `open` hands the caller's environment to the app, which keeps it in every tab until it quits, so the sandbox opens the user's own Warp and Terminal.app from `env -i`. A second Ghostty instance needs `--config-default-files=false` and creates its first window only once the app is active, so `open -g` leaves a windowless instance.
-- Preview's search box is Browse's, and its hint animates on a timer whose ticks redraw the search row alone (`tick`, `__tt_pv_draw hint`, `pvsr`). The row starts with ECH over the list's columns, never `\e[K`, which would take the right panel on the same row with it.
-- `tests/tui.zsh` unsets the terminal-identity variables before each capture and starts its tmux server without `TERM_PROGRAM`, so the screens do not depend on the terminal that runs it.
-- The parity harness answers every query synchronously from the PTY data callback (`App.scan`), never from xterm's parser, whose writes run asynchronously: xterm only draws the screen. `settle` waits for 250 ms (Warp 450) with no output, no pending reload and no detached `node -e` process (the harness's `node` shim records them in `.parity/running`), and in Warp from the moment the follower has written the tab into `warp/.active` (the kind's `owes`, at most 5 s). A look at a prompt asks the shell what it wears through a key bound to a widget (`\e[5555~`), asked again once after 1.5 s. `quit` sends its next esc only once the TUI has taken the last. `__tt_reload_ghostty` must never reach the user's Ghostty: in the harness `ps` answers nothing and `pkill` is a shim that records the reload.
-- A Terminal.app window's first shell and a Warp tab's are the user's own login shell; the sandbox shell is the one `sandbox.command` execs (`sandbox_shell`) after dropping every `TTHEME_*` the user's shell exported. The Warp sandbox needs a `settings.toml` in its own `~/.warp`, so compat skips every case that needs Warp to take a palette instead of recording the sandbox's limit as Warp's. `kitty-shown` guards compat's kitty layer cases and the `drawn` control guards every screenshot case: a window that does not draw while covered skips instead of failing, and `--update` never writes a skip over a pass or a fail. The image cases accept a color within 64 of the one sent while cell colors stay within 24. `__cc_mode` tells a DECRQM `0` (fail) from no DECRQM answer (skip). The sandbox makes its own iTerm2 profile the default before `init`, and compat opens it with `--trust`. A compat case that runs a layer verb lets its output reach the terminal, and one that stands for another tab's focus calls `__tt_focus` only where the layer bound focus (`TTHEME_FOCUS`).
+- Every function the shell calls on its own, and every block that runs while the layer is sourced, starts with `emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}`.
+- Every question to the terminal goes through `__tt_ask`.
+- Open the tty as `{ exec {fd}<>/dev/tty } 2>/dev/null`, never `exec {fd}<>/dev/tty 2>/dev/null`.
+- Never run `stty` inside zle or preview, and run preview's `stty -echo -icanon` in the foreground, never from `$(…)`.
+- Inside double quotes spell an escape in `${var//pattern/replacement}` through a variable (`local e=$'\e'`), never `$'…'`.
+- Ghostty, Alacritty and Warp leave OSC 17 unanswered: a color query ends at a DSR answer.
+- Turn focus reporting on from zle's `line-init`, never from precmd.
+- Ghostty applies a reload asynchronously: `ttheme off` writes everything first and reloads once.
+- `TRAPURG` is defined at the top level, never over a `.zshrc`'s own, and acts only at an idle prompt.
+- Inside tmux only the pane tmux last reported in front acts on a wake.
+- Inside tmux the layer never tells tmux its colors, and `__tt_out` wraps every color OSC in `\ePtmux;…\e\\`.
+- An ssh pin is worn from preexec, never from the remote side.
+- Every reader of `TTHEME_PINS` as paths skips a key that does not start with `/`.
+- Whatever rewrites a file the layer sources deletes its `.zwc`.
+- Steer a Ghostty-launched shell with `ZDOTDIR` and `XDG_*`, never `HOME`.
+- Preview's search row starts with ECH, never `\e[K`.
+- The parity harness answers every query from the PTY data callback, never from xterm's parser.
+
+## Ghostty
+
+- The follower asks Ghostty through raw Apple Events addressed to the owning Ghostty's pid, never JXA's `Application(pid)`.
+- A shell records nothing and starts no follower where none can run: Linux Ghostty, tmux, the latency harness.
+- Preview lays its picture on the window's surface, padding included, balanced as Ghostty 1.4's `Size.balancePadding` does.
+- Ghostty 1.3.1 and before pins the default a reset found, which `__tt_followed` covers; the parity model keeps 1.4's reset.
+- cmux is wired as Ghostty: under `TTHEME_GHOSTTY_EMBEDDED`, `__tt_reload_ghostty` signals nothing and the follower stays off.
+- BSD `pkill` skips its own ancestors: `__tt_reload_ghostty` walks up to the owning Ghostty and signals only it.
+
+## iTerm2
+
+- `sync` owns `DynamicProfiles/ttheme.json` whole, and its temp file is made beside the folder, never inside it.
+- A dynamic profile keeps a key its file drops: write `""` for a palette without a picture.
+- A new tab is created wearing `ttheme · default` and never switches profile after it opens.
+- `Default Bookmark Guid` moves only on `init`, `ttheme default`, and a change that makes a startup palette appear or vanish.
+- While off, `ttheme · default` stays as a bare child of `itermBase`: never drop it from the file.
+- Profiles and `.itermcolors` are written in Display P3, and set `Use Separate Colors for Light and Dark Mode` false outside `auto`.
+- A profile sets no key bindings.
+- An OSC color divorces a session from its profile until the next `SetProfile`: track it in `TTHEME_ITERM_DYED`, and reset the dyed slots before a switch.
+- iTerm2 ignores a switch to a profile it has not read yet: `__tt_profiled` paints OSC colors for a second after `ttheme.json` moves.
+- Never use a color preset (`SetColors=preset=`) as a shortcut.
+- iTerm2 shares kitty placement ids across images: every placement takes its own image's id.
+- `a=d,d=i` frees the image's data too: take a picture down with `d=i,i=N,p=N`.
+- iTerm2 answers no `CSI 16t`: the cell size comes from `OSC 1337;ReportCellSize`.
+- iTerm2 keeps its default profile in memory and undoes an outside write while that default is dynamic.
+- The Metal renderer flips a kitty source rectangle's `y` and draws no placement that leaves the grid: a crop is a band cut first.
+- Preview and find clear with `\e[K\e[2H\e[J` and delete images with `a=d,d=A`, never ED 2.
+- iTerm2 keeps its sessions across a quit and saves dynamic profiles into its prefs, so a test run can come back on an old session or profile.
+
+## kitty
+
+- The adapter sends `ttheme_worn` ahead of the colors, base64'd in zsh (`__tt_b64s`), so a paint forks nothing.
+- A config reload resets every OSC color: the watcher puts each window's `ttheme_worn` palette back after it.
+- Every solid layer is a 3×3 of one color placed through its middle pixel (`solid`, `SOLID`).
+- The appearance hook wraps `boss.on_system_color_scheme_change` and leaves kitty alone where it has none; never use kitty's `dark-theme.auto.conf` or `light-theme.auto.conf`.
+- The block names its include from `$HOME`, never `~`.
+- A kitty screenshot needs the window in front on an unlocked screen.
+
+## Alacritty
+
+- No `alacritty.toml` is made where Alacritty already reads one, and none is wired while it reads an `alacritty.yml`.
+- `sync` writes the import before the themes whenever the file it names is already there.
+- Every OSC 4 carries one color.
+
+## WezTerm
+
+- The block goes just before the user config's last `return config`.
+- A window `background` covers an OSC 11, so the module lays the palette's background under the picture.
+- A painted tab never sets `ttheme_reload`.
+- The appearance handler lives in `window-config-reloaded`, never in the config's body, and writes only when the shade differs from the file.
+- Kaku is wired as WezTerm: the block goes into `kaku.lua` only once Kaku wrote it, and no `wezterm.lua` is made where only `kaku.lua` exists.
+- WezTerm draws no layer under the cells: find places again every image whose rows a frame rewrote, and its cover and try-on go through `ttheme_view`.
+- WezTerm holds every query answer until a synchronized update ends: ask before beginning one.
+
+## Windows Terminal
+
+- `sync` touches `settings.json` only when the fragment changed.
+- `__tt_reloaded` repaints a painted tab once the reload's reset has reached it, and leaves a tab that never painted to the reset.
+
+## Warp
+
+- ttheme edits only the `theme` key of `[appearance.themes]`, keeps the value it replaced in `warp.base` and writes it back while off, `"dark"` where there was none.
+- A theme picked in Warp's own picker while ttheme wore a palette is the one `ttheme off` gives back.
+- Every write that names a ttheme theme fills both slots of `selected_system_themes` too.
+- Only the CLI's `sync` touches `enforce_minimum_contrast`: `never` where the file sets nothing while ttheme wears a palette, then exactly what it added taken back; a value the user set stays.
+- init only notes Warp's Settings sync; turning it off is the user's.
+- Write the settings through `__tt_put`, and put an identical link back over a linked one (`__tt_warp_relink`, `relink`).
+- Every change to a theme is a new file name: never rewrite or rename over a theme file Warp has read.
+- Never name a new theme file in the settings before it is ready (`warpReady`, `__tt_warp_ripe`).
+- Warp finds a theme by its `name` and path together: every write reads the name from the file it names.
+- A picture goes out laid opaque on the palette's background, and the opacity stays Warp's.
+- Never add a warming loop that rewrites the settings on a timer.
+- A new tab hears the default palette instead of asking Warp.
+- A tab behind another writes nothing itself; the follower puts on the front tab's look.
+- One follower per user, kept single by a `zsystem flock`, keeps one `sqlite3` open as a coprocess.
+- Preview ignores SIGURG while it is open.
+- Warp refuses `t=f`: a picture goes out as chunked base64 written with one `printf`.
+- Warp ignores a source rectangle, draws every negative `z` above cell backgrounds, and adds a placement where another terminal moves it, so find deletes one before placing it again.
+- After an OSC 112 Warp answers `#000000` for the cursor while it draws the theme's.
+
+## Terminal.app
+
+- Terminal.app ignores the OSC resets: a tab's startup answer is all 20 colors, the base `__tt_osc_reset` puts back.
+- A ttheme profile is a copy of the user's own profile (`terminalBase`) with the palette's 20 colors as device RGB and the base's background alpha kept.
+- AppleScript never writes a color.
+- A picture goes out laid opaque on the palette's background at its opacity, on a canvas of the window's shape.
+- A changed picture is written into the palette's existing file and renamed (`rewrite`), never given a new file.
+- A running Terminal takes a new default only from one of its own tabs (`__tt_terminal_tell`), and only to a profile it has loaded.
+- A one-shot `osascript` is paid by verbs, pins and a follow, never by a prompt that changes nothing; preview runs the script as a coprocess.
+- A run that wires the user's real Terminal settings saves them first (`tests/terminal-prefs.zsh save`) and restores them when it ends.
+
+## Konsole
+
+- Konsole never draws an OSC 4, 12 or 17, and its bare OSC resets do nothing: a palette reaches a tab only through a color scheme.
+- An OSC 10/11 color is restored in `#rrggbb`, never `rgb:`.
+- Each palette's scheme is written twice: under the stable name its profile names, and under a versioned name that changes with its content.
+- A palette is worn with one `OSC 50 ColorScheme=…` and never an OSC 11 in the same burst, with `customCursorColor` spelled lowercase.
+- ttheme never sets `AllowEscapedLinks`: a post is a link only where the default profile allows escaped links.
+
+## Rio
+
+- `sync` puts `theme = "ttheme"` at the top of the config once and then rewrites only `themes/ttheme.toml`, which holds a copy of the config's own `[colors]` while there is no startup palette.
+- Whenever `themes/ttheme.toml` changes, `sync` touches `config.toml`'s times, and after Rio's reload `__tt_reloaded` paints a painted tab again.
+
+## Contour
+
+- The wiring owns `profiles/ttheme.yml` and `colorschemes/ttheme.dark.yml` and `ttheme.light.yml`, and edits only `settings.yml`, once.
+- Never send `DCS $p <name> ST`.
+- `sync` touches `contour.yml`'s times whenever one of its files changed.
+- The layer sends OSC 11 in Contour as everywhere, though Contour draws the background it started with; once it draws an OSC 11, run `mise run compat --linux --update contour`.
+- The compat image is amd64 and takes Ubuntu's `nodejs`, never a Node tarball.

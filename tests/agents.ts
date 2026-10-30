@@ -19,7 +19,11 @@ export const SKILL: Budget = {
   why: 'about the 5,000 tokens of a skill Claude Code keeps after compaction',
 }
 
-export const RULE: Budget = { chars: 40_000, why: 'the most Claude Code loads of a rule on a 200K window' }
+export const RULE: Budget = {
+  lines: 200,
+  bytes: 25 * KB,
+  why: 'the length Claude Code recommends for an instruction file',
+}
 
 const lineCount = (text: string) => text.split('\n').length - (text.endsWith('\n') ? 1 : 0)
 
