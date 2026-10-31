@@ -1,14 +1,29 @@
 import { answerOf } from '@/lib/answer'
-import { keyArtOf } from '@/lib/art'
-import { type Live, liveBackdrop, liveMedia, type Media } from '@/lib/art-source'
+import { heroArtOf, igdbArtOf, keyArtOf } from '@/lib/art'
+import {
+  type Live,
+  liveArtwork,
+  liveBackdrop,
+  liveHero,
+  liveMedia,
+  livePictures,
+  type Media,
+  MOST_CAST,
+  type Twitch,
+} from '@/lib/art-source'
 import { commons, themes } from '@/lib/builtin'
 import {
+  anilistCharacterOf,
   anilistOf,
+  castFrom,
+  type FoundCast,
   type FoundPage,
   type FoundWork,
   foundSlugs,
+  igdbOf,
   membersOf,
   slugLike,
+  steamOf,
   titleOf,
   tmdbOf,
 } from '@/lib/found'
@@ -25,6 +40,13 @@ const MOST_KEPT = 500
 const FOUND_MS = 6000
 
 const TOKEN = process.env.TMDB_TOKEN
+
+const TWITCH: Twitch | undefined =
+  process.env.TWITCH_CLIENT_ID && process.env.TWITCH_CLIENT_SECRET
+    ? { id: process.env.TWITCH_CLIENT_ID, secret: process.env.TWITCH_CLIENT_SECRET }
+    : undefined
+
+const NONE: Live<string | null> = { value: null, settled: true }
 
 const index = nameIndex(liveSource())
 
@@ -52,6 +74,8 @@ interface Resolved {
 const resolved = new Map<string, Kept<Resolved | null>>()
 
 const media = new Map<number, Kept<Live<Media>>>()
+
+const casts = new Map<string, Kept<Live<FoundCast[]>>>()
 
 function kept<K, T>(store: Map<K, Kept<T>>, key: K, make: () => Promise<T>, settled: (value: T) => boolean) {
   const now = Date.now()
@@ -94,14 +118,23 @@ function resolve(slug: string): Promise<Resolved | null> {
       if (members.length === 0) return null
       const tmdb = tmdbOf(members)
       const anilist = anilistOf(members)
-      const backdrop = tmdb && TOKEN ? await liveBackdrop(tmdb, TOKEN) : { value: null, settled: true }
+      const steam = steamOf(members)
+      const igdb = igdbOf(members)
+      const backdrop = tmdb && TOKEN ? await liveBackdrop(tmdb, TOKEN) : NONE
       const banner = !backdrop.value && anilist ? await mediaOf(anilist) : undefined
-      const art = keyArtOf({ backdrop: backdrop.value, banner: banner?.value.banner ?? null, cast: {} })
+      const found = backdrop.value ?? banner?.value.banner ?? null
+      const hero = !found && steam ? await liveHero(steam) : NONE
+      const artwork = !found && !hero.value && igdb && TWITCH ? await liveArtwork(igdb, TWITCH) : NONE
+
+      const art =
+        keyArtOf({ backdrop: backdrop.value, banner: banner?.value.banner ?? null, cast: {} }) ??
+        (hero.value ? heroArtOf(hero.value) : null) ??
+        (artwork.value ? igdbArtOf(artwork.value) : null)
 
       return {
         work: { id: slug, ...titleOf(members), art },
         anilist,
-        settled: backdrop.settled && (banner?.settled ?? true),
+        settled: backdrop.settled && (banner?.settled ?? true) && hero.settled && artwork.settled,
       }
     },
     (done) => done === null || done.settled,
@@ -121,16 +154,32 @@ export async function lookUp(query: string, signal: AbortSignal): Promise<{ answ
   }
 }
 
+function castOf(slug: string): Promise<Live<FoundCast[]>> {
+  return kept(
+    casts,
+    slug,
+    async () => {
+      const members = await index.cast(slug, AbortSignal.timeout(FOUND_MS), MOST_CAST)
+      const ids = members.flatMap((member) => anilistCharacterOf(member) ?? [])
+      const pictures = ids.length > 0 ? await livePictures(ids) : { value: new Map<number, string>(), settled: true }
+
+      return { value: castFrom(members, pictures.value), settled: pictures.settled }
+    },
+    (done) => done.settled,
+  )
+}
+
 export async function foundPage(slug: string): Promise<{ page: FoundPage; settled: boolean } | null> {
   if (!slugLike(slug) || taken.has(slug)) return null
   const found = await resolve(slug)
 
   if (!found) return null
-  const cast = found.anilist === null ? undefined : await mediaOf(found.anilist)
+  const shown = found.anilist === null ? undefined : await mediaOf(found.anilist)
+  const cast = shown && shown.value.cast.length > 0 ? { value: shown.value.cast, settled: true } : await castOf(slug)
 
   return {
-    page: { work: found.work, cast: cast?.value.cast ?? [] },
-    settled: found.settled && (cast?.settled ?? true),
+    page: { work: found.work, cast: cast.value },
+    settled: found.settled && (shown?.settled ?? true) && cast.settled,
   }
 }
 

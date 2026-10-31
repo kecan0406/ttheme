@@ -1,5 +1,5 @@
 import type { KeyArt } from '@/lib/art'
-import { type NameHit, type TaggedWork, type WorkName, workSlugOf } from '../../src/core/names.ts'
+import { type CastMember, type NameHit, type TaggedWork, type WorkName, workSlugOf } from '../../src/core/names.ts'
 
 export const MOST_FOUND = 4
 
@@ -10,6 +10,12 @@ const NATIVE_LANGS = ['ja', 'zh-Hant', 'zh-Hans', 'zh', 'ko']
 const ANIME = /^anilist:(\d+)$/
 
 const MANGA = /^anilist:manga\/(\d+)$/
+
+const STEAM = /^steam:(\d+)$/
+
+const IGDB = /^igdb:([a-z0-9-]+)$/
+
+const LATIN_LANGS = ['en', 'ja-Latn']
 
 export interface FoundWork {
   id: string
@@ -44,13 +50,10 @@ export function foundSlugs(unknown: readonly NameHit[], taken: ReadonlySet<strin
   const slugs: string[] = []
 
   for (const hit of unknown) {
-    const works = hit.kind === 'work' ? [hit] : hit.works.filter((work) => work.tags.length > 0).slice(0, 1)
+    const tag = hit.kind === 'work' ? hit.tags[0] : hit.home
+    const slug = tag === undefined ? undefined : workSlugOf(tag)
 
-    for (const work of works) {
-      const slug = work.tags[0] === undefined ? undefined : workSlugOf(work.tags[0])
-
-      if (slug && !taken.has(slug) && !slugs.includes(slug)) slugs.push(slug)
-    }
+    if (slug && !taken.has(slug) && !slugs.includes(slug)) slugs.push(slug)
   }
 
   return slugs.slice(0, MOST_FOUND)
@@ -97,8 +100,68 @@ export function tmdbOf(members: readonly TaggedWork[]): string | null {
 }
 
 export function anilistOf(members: readonly TaggedWork[]): number | null {
-  const refs = members.flatMap((member) => member.refs)
+  const series = (member: TaggedWork) => member.refs.some((ref) => ref.startsWith('tmdb:tv/'))
+  const refs = members.toSorted((a, b) => Number(series(b)) - Number(series(a))).flatMap((member) => member.refs)
   const found = refs.map((ref) => ANIME.exec(ref)).find(Boolean) ?? refs.map((ref) => MANGA.exec(ref)).find(Boolean)
 
   return found?.[1] ? Number(found[1]) : null
+}
+
+function first(members: readonly { refs: string[] }[], pattern: RegExp): string | null {
+  return (
+    members
+      .flatMap((member) => member.refs)
+      .map((ref) => pattern.exec(ref)?.[1])
+      .find(Boolean) ?? null
+  )
+}
+
+export function steamOf(members: readonly TaggedWork[]): string | null {
+  return first(members, STEAM)
+}
+
+export function igdbOf(members: readonly TaggedWork[]): string | null {
+  return first(members, IGDB)
+}
+
+export function anilistCharacterOf(member: CastMember): number | null {
+  const id = first([member], ANIME)
+
+  return id ? Number(id) : null
+}
+
+function shown(text: string): string {
+  const base = text.replace(/\s*\([^)]*\)$/, '')
+
+  return /^[\x20-\x7e]+$/.test(base) && base === base.toLowerCase()
+    ? base.replace(/\b[a-z]/g, (letter) => letter.toUpperCase())
+    : base
+}
+
+export function castFrom(members: readonly CastMember[], pictures: ReadonlyMap<number, string>): FoundCast[] {
+  const seen = new Set<string>()
+
+  return members.flatMap((member) => {
+    const latin = shortest(member.names, (name) => name.official && LATIN_LANGS.includes(name.lang ?? ''))
+    const plain = member.names.find((name) => name.official && name.lang === null)
+    const name = latin?.text ?? shown(plain?.text ?? member.label)
+
+    const native = NATIVE_LANGS.map((lang) =>
+      shortest(member.names, (each) => each.official && each.lang === lang),
+    ).find((each) => each !== undefined)?.text
+
+    const key = `${name}\u0000${native ?? ''}`
+
+    if (seen.has(key)) return []
+    seen.add(key)
+    const id = anilistCharacterOf(member)
+
+    return [
+      {
+        name,
+        native: native === undefined || native === name ? null : native,
+        picture: id === null ? null : (pictures.get(id) ?? null),
+      },
+    ]
+  })
 }

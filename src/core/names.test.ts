@@ -45,6 +45,19 @@ test('a character names its own work and every work its also lists, else the wor
   )
 })
 
+test("a character the index gives a home goes to that home's work, or to none, never to a work it guests in", () => {
+  const guest = { works: [hit('work', 'Tidewater')] }
+  const pupil = hit('character', 'Pip', ['pip'], { ...guest, home: 'starfall_academy' })
+  const visitor = hit('character', 'Wren', ['wren'], { ...guest, home: 'moonlit_harbor' })
+  const named = namedWorks([pupil, visitor], works)
+
+  assert.deepEqual(
+    named.works.map((w) => [w.id, w.hit.label]),
+    [['starfall', 'Pip']],
+  )
+  assert.deepEqual(named.unknown, [visitor])
+})
+
 test('a hit no work matches is kept apart, and a work found twice is listed once, by its first hit', () => {
   const lost = hit('work', 'Moonlit Harbor', ['moonlit_harbor'])
 
@@ -74,6 +87,10 @@ test('a request asks for a character with its work, a work by its name, and else
   const harbor = hit('work', 'Moonlit Harbor')
   assert.equal(askedOf('mh', harbor), 'Moonlit Harbor')
   assert.equal(askedOf('nell', hit('character', 'Nell', [], { works: [harbor] })), 'Nell, Moonlit Harbor')
+  assert.equal(
+    askedOf('nell', hit('character', 'Nell', [], { works: [harbor], home: 'tidewater_(series)' })),
+    'Nell, tidewater',
+  )
   assert.equal(askedOf('달빛 항구', undefined), '달빛 항구')
 })
 

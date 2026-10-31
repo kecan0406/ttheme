@@ -1,5 +1,5 @@
-import { type SimpleIcon, siAnilist, siThemoviedatabase } from 'simple-icons'
-import { ANILIST_HOME, CREDITS_PATH, TMDB_HOME } from '@/lib/art'
+import { type SimpleIcon, siAnilist, siIgdb, siSteam, siThemoviedatabase } from 'simple-icons'
+import { ANILIST_HOME, CREDITS_PATH, IGDB_HOME, STEAM_HOME, TMDB_HOME } from '@/lib/art'
 import type { Facts } from '@/lib/facts'
 import { BrandIcon, NewTab } from '@/lib/icons'
 import { SiteFooter } from './site-footer'
@@ -26,6 +26,20 @@ const SOURCES: Source[] = [
     home: ANILIST_HOME,
     icon: siAnilist,
     what: "The characters' pictures on a work's page, and a work's banner where TMDB has no key art.",
+    notice: null,
+  },
+  {
+    name: 'Steam',
+    home: STEAM_HOME,
+    icon: siSteam,
+    what: "A game's key art on its page, where neither TMDB nor AniList has a picture of it.",
+    notice: null,
+  },
+  {
+    name: 'IGDB',
+    home: IGDB_HOME,
+    icon: siIgdb,
+    what: "A game's key art where Steam has none either.",
     notice: null,
   },
 ]

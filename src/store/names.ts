@@ -2,7 +2,14 @@ import { join } from 'node:path'
 import { cachedSource, httpSource, Names, type Source } from '@kecan0406/aninames'
 import { AGENT } from '../core/booru.ts'
 import type { Work } from '../core/commons.ts'
-import { cutSlug, knowsCharacter, type NameHit, type TaggedWork, type WorkName } from '../core/names.ts'
+import {
+  type CastMember,
+  cutSlug,
+  knowsCharacter,
+  type NameHit,
+  type TaggedWork,
+  type WorkName,
+} from '../core/names.ts'
 import { inert } from '../core/text.ts'
 import { cacheRoot } from './paths.ts'
 
@@ -15,6 +22,7 @@ export type NameSearch = (query: string, signal: AbortSignal, works?: readonly W
 export interface NameIndex {
   search: NameSearch
   tagged(slug: string, signal: AbortSignal): Promise<TaggedWork[]>
+  cast(slug: string, signal: AbortSignal, limit: number): Promise<CastMember[]>
   open(signal: AbortSignal): Promise<void>
 }
 
@@ -56,6 +64,8 @@ function hitOf(value: unknown, works: ReadonlyMap<string, NameHit>): NameHit | u
     typeof n === 'object' && n !== null ? (text((n as Record<string, unknown>).text) ?? []) : [],
   )
 
+  const home = typeof v.home === 'string' && v.home !== '' && !ODD.test(v.home) ? v.home : undefined
+
   return {
     id,
     kind,
@@ -63,6 +73,7 @@ function hitOf(value: unknown, works: ReadonlyMap<string, NameHit>): NameHit | u
     names,
     tags: strings(v.danbooru, (t) => t !== '' && !ODD.test(t)),
     works: strings(v.works, Boolean).flatMap((w) => works.get(w) ?? []),
+    ...(home ? { home } : {}),
   }
 }
 
@@ -111,6 +122,26 @@ function taggedOf(value: unknown): TaggedWork | undefined {
 
 export function taggedWorks(found: unknown): TaggedWork[] {
   return (Array.isArray(found) ? found : []).flatMap((f: unknown) => taggedOf(f) ?? [])
+}
+
+function memberOf(value: unknown): CastMember | undefined {
+  if (typeof value !== 'object' || value === null) {
+    return undefined
+  }
+
+  const v = value as Record<string, unknown>
+  const id = typeof v.id === 'string' ? v.id : undefined
+  const label = text(v.label)
+
+  if (!id || !label || v.kind !== 'character') {
+    return undefined
+  }
+
+  return { id, label, names: workNamesOf(v.names), refs: strings(v.refs, (r) => REF.test(r)) }
+}
+
+export function castMembers(found: unknown): CastMember[] {
+  return (Array.isArray(found) ? found : []).flatMap((f: unknown) => memberOf(f) ?? [])
 }
 
 export function hitsOf(found: unknown, works: unknown): NameHit[] {
@@ -209,6 +240,11 @@ export function nameIndex(source: Source): NameIndex {
       const found: unknown = await names.tagged(slug, { kind: 'work', adult: false, prefix: cutSlug(slug), signal })
 
       return taggedWorks(found)
+    },
+    async cast(slug, signal, limit) {
+      const found: unknown = await names.cast(slug, { adult: false, limit, prefix: cutSlug(slug), signal })
+
+      return castMembers(found)
     },
     async open(signal) {
       await names.lookup([], signal)

@@ -121,7 +121,21 @@ const PAGE = 50
 
 const PAUSE_MS = 2000
 
-const MOST_CAST = 12
+export const MOST_CAST = 12
+
+const STEAM_ASSETS = 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps'
+
+const TWITCH_TOKEN = 'https://id.twitch.tv/oauth2/token'
+
+const IGDB_API = 'https://api.igdb.com/v4'
+
+const STEAM_APP = /^[1-9]\d*$/
+
+const IGDB_SLUG = /^[a-z0-9]+(?:-+[a-z0-9]+)*$/
+
+const IGDB_IMAGE = /^[a-z0-9]+$/
+
+const WIDE = 1.5
 
 interface Reach {
   tries: number
@@ -142,6 +156,11 @@ export interface Media {
   cast: FoundCast[]
 }
 
+export interface Twitch {
+  id: string
+  secret: string
+}
+
 class Refused extends Error {
   readonly status: number
 
@@ -149,6 +168,14 @@ class Refused extends Error {
     super(`${url} answered ${status}`)
     this.status = status
   }
+}
+
+interface Picture {
+  image_id?: unknown
+  width?: unknown
+  height?: unknown
+  alpha_channel?: unknown
+  animated?: unknown
 }
 
 interface Backdrop {
@@ -265,13 +292,14 @@ async function bannersOf(ids: number[]): Promise<Map<number, string>> {
   return banners
 }
 
-async function picturesOf(ids: number[]): Promise<Map<number, string>> {
+async function picturesOf(ids: number[], how: Reach = BUILD): Promise<Map<number, string>> {
   const pictures = new Map<number, string>()
 
   for (let at = 0; at < ids.length; at += PAGE) {
     const data = await anilist(
       'query ($ids: [Int]) { page: Page(perPage: 50) { characters(id_in: $ids) { id image { large } } } }',
       { ids: ids.slice(at, at + PAGE) },
+      how,
     )
 
     for (const character of nodes(data, 'characters')) {
@@ -339,6 +367,80 @@ export function liveMedia(id: number): Promise<Live<Media>> {
     },
     { banner: null, cast: [] },
   )
+}
+
+export function livePictures(ids: number[]): Promise<Live<Map<number, string>>> {
+  return settle(() => picturesOf(ids, LIVE), new Map())
+}
+
+export function liveHero(app: string): Promise<Live<string | null>> {
+  return settle(async () => {
+    if (!STEAM_APP.test(app)) return null
+    const url = `${STEAM_ASSETS}/${app}/library_hero.jpg`
+    const response = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(LIVE.timeout) })
+
+    if (response.status === 404) return null
+
+    if (!response.ok) throw new Refused(url, response.status)
+
+    return url
+  }, null)
+}
+
+let twitch: { token: string; until: number } | undefined
+
+async function tokenOf(app: Twitch): Promise<string> {
+  if (twitch && Date.now() < twitch.until) return twitch.token
+  const query = new URLSearchParams({ client_id: app.id, client_secret: app.secret, grant_type: 'client_credentials' })
+
+  const answer = (await reach(`${TWITCH_TOKEN}?${query}`, { method: 'POST' }, LIVE)) as {
+    access_token?: unknown
+    expires_in?: unknown
+  }
+
+  if (typeof answer?.access_token !== 'string') throw new Error('Twitch answered no token')
+  twitch = { token: answer.access_token, until: Date.now() + Math.max(0, count(answer.expires_in) - 60) * 1000 }
+
+  return twitch.token
+}
+
+function widest(pictures: unknown): string | null {
+  const usable = (Array.isArray(pictures) ? (pictures as Picture[]) : []).filter(
+    (picture): picture is Picture & { image_id: string } =>
+      typeof picture?.image_id === 'string' &&
+      IGDB_IMAGE.test(picture.image_id) &&
+      picture.alpha_channel !== true &&
+      picture.animated !== true &&
+      count(picture.width) >= WIDEST &&
+      count(picture.width) >= WIDE * count(picture.height),
+  )
+
+  return usable.toSorted((a, b) => count(b.width) - count(a.width))[0]?.image_id ?? null
+}
+
+export function liveArtwork(slug: string, app: Twitch): Promise<Live<string | null>> {
+  return settle(async () => {
+    if (!IGDB_SLUG.test(slug)) return null
+    const token = await tokenOf(app)
+    const fields = 'artworks.image_id,artworks.width,artworks.height,artworks.alpha_channel,artworks.animated'
+
+    const found = await reach(
+      `${IGDB_API}/games`,
+      {
+        method: 'POST',
+        headers: { 'client-id': app.id, authorization: `Bearer ${token}`, accept: 'application/json' },
+        body: `fields ${fields},screenshots.image_id,screenshots.width,screenshots.height; where slug = "${slug}"; limit 1;`,
+      },
+      LIVE,
+    ).catch((error: unknown) => {
+      if (error instanceof Refused && error.status === 401) twitch = undefined
+      throw error
+    })
+
+    const game = Array.isArray(found) ? (found[0] as Record<string, unknown> | undefined) : undefined
+
+    return widest(game?.artworks) ?? widest(game?.screenshots)
+  }, null)
 }
 
 export function artProblems(works: readonly Work[]): string[] {

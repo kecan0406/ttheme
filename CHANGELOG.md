@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Search marketplace in Browse places a character in the work it comes from, not in a game it only guests in, and Request a palette names that work: Ruby Kurosawa asks for Love Live! Sunshine!! rather than Love Live! School Idol Festival.
+
 ## 1.2.83
 
 - The ttheme-palette agent skill is about 30% shorter with the same steps, so an agent following it spends less of its context.

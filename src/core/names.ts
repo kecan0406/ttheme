@@ -21,6 +21,7 @@ export interface NameHit {
   names: string[]
   tags: string[]
   works: NameHit[]
+  home?: string
 }
 
 export interface WorkName {
@@ -34,6 +35,13 @@ export interface TaggedWork {
   label: string
   names: WorkName[]
   tags: string[]
+  refs: string[]
+}
+
+export interface CastMember {
+  id: string
+  label: string
+  names: WorkName[]
   refs: string[]
 }
 
@@ -102,7 +110,15 @@ function workFor(hit: NameHit, keys: Keys): string[] {
 function characterFor(hit: NameHit, keys: Keys): string[] {
   const tagged = hit.tags.map((tag) => keys.characters.get(tag)).find((ids) => ids !== undefined)
 
-  return tagged ?? hit.works.flatMap((work) => workFor(work, keys))
+  if (tagged) {
+    return tagged
+  }
+
+  if (hit.home !== undefined) {
+    return keys.works.has(hit.home) ? [keys.works.get(hit.home) ?? ''] : []
+  }
+
+  return hit.works.flatMap((work) => workFor(work, keys))
 }
 
 export function namedWorks(hits: readonly NameHit[], works: readonly Work[]): Named {
@@ -133,9 +149,10 @@ export function knowsCharacter(works: readonly Work[], tag: string): boolean {
 }
 
 export function askedOf(query: string, hit: NameHit | undefined): string {
-  const work = hit?.kind === 'character' ? hit.works[0] : undefined
+  const home = hit?.home === undefined ? undefined : hit.home.replace(QUALIFIER, '').replaceAll('_', ' ')
+  const work = hit?.kind === 'character' ? (home ?? hit.works[0]?.label) : undefined
 
-  return hit ? (work ? `${hit.label}, ${work.label}` : hit.label) : query
+  return hit ? (work ? `${hit.label}, ${work}` : hit.label) : query
 }
 
 function slugFrom(text: string): string | undefined {
