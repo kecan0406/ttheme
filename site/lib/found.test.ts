@@ -104,7 +104,7 @@ test('a game takes its Steam app and IGDB slug from whichever member has them', 
   expect([steamOf([]), igdbOf([])]).toEqual([null, null])
 })
 
-test('a cast member shows a Latin name and its native one, a Danbooru name without its qualifier, and once', () => {
+test("a cast member shows a Latin name and its name in the work's language, a Danbooru name without its qualifier, and once", () => {
   const member = (id: string, label: string, names: CastMember['names'], refs: string[] = []): CastMember => ({
     id,
     label,
@@ -130,12 +130,18 @@ test('a cast member shows a Latin name and its native one, a Danbooru name witho
         { text: 'ネル', lang: 'ja', official: true },
       ]),
       member('c/3', 'k.ra (starfall arena)', [{ text: 'k.ra (starfall arena)', lang: null, official: true }]),
+      member('c/4', 'Wren', [
+        { text: 'Wren', lang: 'en', official: true },
+        { text: '雷恩', lang: 'zh-Hans', official: true },
+      ]),
     ],
     pictures,
+    'ja',
   )
 
   expect(cast).toEqual([
     { name: 'Nell Moonlit', native: 'ネル', picture: 'https://s4.anilist.co/file/anilistcdn/character/large/b31.png' },
     { name: 'K.Ra', native: null, picture: null },
+    { name: 'Wren', native: null, picture: null },
   ])
 })

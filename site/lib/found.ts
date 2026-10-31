@@ -138,7 +138,11 @@ function shown(text: string): string {
     : base
 }
 
-export function castFrom(members: readonly CastMember[], pictures: ReadonlyMap<number, string>): FoundCast[] {
+export function castFrom(
+  members: readonly CastMember[],
+  pictures: ReadonlyMap<number, string>,
+  lang: string | null,
+): FoundCast[] {
   const seen = new Set<string>()
 
   return members.flatMap((member) => {
@@ -146,9 +150,8 @@ export function castFrom(members: readonly CastMember[], pictures: ReadonlyMap<n
     const plain = member.names.find((name) => name.official && name.lang === null)
     const name = latin?.text ?? shown(plain?.text ?? member.label)
 
-    const native = NATIVE_LANGS.map((lang) =>
-      shortest(member.names, (each) => each.official && each.lang === lang),
-    ).find((each) => each !== undefined)?.text
+    const native =
+      lang === null ? undefined : shortest(member.names, (each) => each.official && each.lang === lang)?.text
 
     const key = `${name}\u0000${native ?? ''}`
 

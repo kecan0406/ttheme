@@ -154,7 +154,7 @@ export async function lookUp(query: string, signal: AbortSignal): Promise<{ answ
   }
 }
 
-function castOf(slug: string): Promise<Live<FoundCast[]>> {
+function castOf(slug: string, lang: string | null): Promise<Live<FoundCast[]>> {
   return kept(
     casts,
     slug,
@@ -163,7 +163,7 @@ function castOf(slug: string): Promise<Live<FoundCast[]>> {
       const ids = members.flatMap((member) => anilistCharacterOf(member) ?? [])
       const pictures = ids.length > 0 ? await livePictures(ids) : { value: new Map<number, string>(), settled: true }
 
-      return { value: castFrom(members, pictures.value), settled: pictures.settled }
+      return { value: castFrom(members, pictures.value, lang), settled: pictures.settled }
     },
     (done) => done.settled,
   )
@@ -175,7 +175,11 @@ export async function foundPage(slug: string): Promise<{ page: FoundPage; settle
 
   if (!found) return null
   const shown = found.anilist === null ? undefined : await mediaOf(found.anilist)
-  const cast = shown && shown.value.cast.length > 0 ? { value: shown.value.cast, settled: true } : await castOf(slug)
+
+  const cast =
+    shown && shown.value.cast.length > 0
+      ? { value: shown.value.cast, settled: true }
+      : await castOf(slug, found.work.lang)
 
   return {
     page: { work: found.work, cast: cast.value },
