@@ -1,7 +1,9 @@
 import type { Art, WorkArt } from '@/lib/art'
-import type { FoundCast } from '@/lib/found'
+import { anilistIdsOf, type Casts, type CastWork, castFrom, MOST_CAST } from '@/lib/found'
+import { langOf } from '@/lib/theme-entry'
 import type { Work } from '../../src/core/commons.ts'
-import { inert } from '../../src/core/text.ts'
+import { type CastMember, workSlugOf } from '../../src/core/names.ts'
+import { liveSource, nameIndex } from '../../src/store/names.ts'
 
 export interface ArtIds {
   tmdb: string
@@ -121,8 +123,6 @@ const PAGE = 50
 
 const PAUSE_MS = 2000
 
-export const MOST_CAST = 12
-
 const STEAM_ASSETS = 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps'
 
 const TWITCH_TOKEN = 'https://id.twitch.tv/oauth2/token'
@@ -153,7 +153,6 @@ export interface Live<T> {
 
 export interface Media {
   banner: string | null
-  cast: FoundCast[]
 }
 
 export interface Twitch {
@@ -320,34 +319,6 @@ async function settle<T>(run: () => Promise<T>, none: T): Promise<Live<T>> {
   }
 }
 
-function said(value: unknown): string | null {
-  const shown = typeof value === 'string' ? inert(value).trim() : ''
-
-  return shown || null
-}
-
-function castOf(media: Record<string, unknown> | undefined): FoundCast[] {
-  const characters = media?.characters as { edges?: unknown } | undefined
-  const edges = Array.isArray(characters?.edges) ? (characters.edges as Record<string, unknown>[]) : []
-
-  return edges.flatMap((edge) => {
-    const node = edge?.node as Record<string, unknown> | undefined
-    const names = node?.name as Record<string, unknown> | undefined
-    const name = said(names?.full)
-    const native = said(names?.native)
-
-    if (!name) return []
-
-    return [
-      {
-        name,
-        native: native === name ? null : native,
-        picture: file((node?.image as Record<string, unknown> | undefined)?.large),
-      },
-    ]
-  })
-}
-
 export function liveBackdrop(tmdb: string, token: string): Promise<Live<string | null>> {
   return settle(() => backdropOf(tmdb, token, LIVE), null)
 }
@@ -355,17 +326,12 @@ export function liveBackdrop(tmdb: string, token: string): Promise<Live<string |
 export function liveMedia(id: number): Promise<Live<Media>> {
   return settle(
     async () => {
-      const data = await anilist(
-        `query ($id: Int) { media: Media(id: $id) { bannerImage characters(sort: [ROLE, RELEVANCE, ID], perPage: ${MOST_CAST}) { edges { node { name { full native } image { large } } } } } }`,
-        { id },
-        LIVE,
-      )
-
+      const data = await anilist('query ($id: Int) { media: Media(id: $id) { bannerImage } }', { id }, LIVE)
       const media = data.media as Record<string, unknown> | undefined
 
-      return { banner: file(media?.bannerImage), cast: castOf(media) }
+      return { banner: file(media?.bannerImage) }
     },
-    { banner: null, cast: [] },
+    { banner: null },
   )
 }
 
@@ -483,4 +449,64 @@ export async function fetchArt(token: string | undefined, warn: (message: string
   }
 
   return art
+}
+
+export async function fetchCasts(works: readonly CastWork[], warn: (message: string) => void): Promise<Casts> {
+  const index = nameIndex(liveSource())
+  const found = new Map<string, CastMember[]>()
+
+  for (const work of works) {
+    const slug = workSlugOf(work.tag)
+
+    if (!slug) continue
+    const taken = new Set(work.taken)
+
+    try {
+      const members = await index.cast(slug, AbortSignal.timeout(BUILD.timeout), MOST_CAST)
+
+      found.set(
+        work.id,
+        members.filter(
+          (member) => !member.tags.some((tag) => taken.has(tag)) && !member.names.some((name) => taken.has(name.text)),
+        ),
+      )
+    } catch (error) {
+      warn(`no cast of ${work.id} — ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
+  const pictures = await picturesOf(anilistIdsOf([...found.values()].flat())).catch((error: unknown) => {
+    warn(`no AniList pictures for the casts — ${error instanceof Error ? error.message : String(error)}`)
+
+    return new Map<number, string>()
+  })
+
+  const casts: Casts = {}
+
+  for (const work of works) {
+    const members = found.get(work.id) ?? []
+
+    if (members.length > 0) casts[work.id] = castFrom(members, pictures, work.lang)
+  }
+
+  return casts
+}
+
+export function castWorks(works: readonly Work[]): CastWork[] {
+  return works.flatMap((work) =>
+    work.danbooru
+      ? [
+          {
+            id: work.id,
+            tag: work.danbooru,
+            lang: work.native ? langOf(work.native, true) : null,
+            taken: work.characters.flatMap((character) => [
+              ...(character.danbooru ? [character.danbooru] : []),
+              ...Object.values(character.sites ?? {}).flat(),
+              ...(character.native ?? []),
+            ]),
+          },
+        ]
+      : [],
+  )
 }

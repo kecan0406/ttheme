@@ -43,7 +43,7 @@
     "@biomejs/biome": "^2.6.3",
     "@clack/prompts": "^1.8.1",
     "@jsquash/jpeg": "^1.6.0",
-    "@kecan0406/aninames": "^0.3.1",
+    "@kecan0406/aninames": "^0.3.2",
     "@material/material-color-utilities": "^0.4.0",
     "@oxlint/plugins": "1.90.0",
     "@types/bun": "^1.4.4",

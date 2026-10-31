@@ -8,19 +8,21 @@ import {
   liveMedia,
   livePictures,
   type Media,
-  MOST_CAST,
   type Twitch,
 } from '@/lib/art-source'
 import { commons, themes } from '@/lib/builtin'
 import {
-  anilistCharacterOf,
+  anilistIdsOf,
   anilistOf,
   castFrom,
+  type FamilyWork,
   type FoundCast,
   type FoundPage,
   type FoundWork,
+  familyOf,
   foundSlugs,
   igdbOf,
+  MOST_CAST,
   membersOf,
   slugLike,
   steamOf,
@@ -67,7 +69,7 @@ interface Kept<T> {
 
 interface Resolved {
   work: FoundWork
-  anilist: number | null
+  family: FamilyWork[]
   settled: boolean
 }
 
@@ -133,7 +135,7 @@ function resolve(slug: string): Promise<Resolved | null> {
 
       return {
         work: { id: slug, ...titleOf(members), art },
-        anilist,
+        family: familyOf(members),
         settled: backdrop.settled && (banner?.settled ?? true) && hero.settled && artwork.settled,
       }
     },
@@ -160,7 +162,7 @@ function castOf(slug: string, lang: string | null): Promise<Live<FoundCast[]>> {
     slug,
     async () => {
       const members = await index.cast(slug, AbortSignal.timeout(FOUND_MS), MOST_CAST)
-      const ids = members.flatMap((member) => anilistCharacterOf(member) ?? [])
+      const ids = anilistIdsOf(members)
       const pictures = ids.length > 0 ? await livePictures(ids) : { value: new Map<number, string>(), settled: true }
 
       return { value: castFrom(members, pictures.value, lang), settled: pictures.settled }
@@ -174,16 +176,11 @@ export async function foundPage(slug: string): Promise<{ page: FoundPage; settle
   const found = await resolve(slug)
 
   if (!found) return null
-  const shown = found.anilist === null ? undefined : await mediaOf(found.anilist)
-
-  const cast =
-    shown && shown.value.cast.length > 0
-      ? { value: shown.value.cast, settled: true }
-      : await castOf(slug, found.work.lang)
+  const cast = await castOf(slug, found.work.lang)
 
   return {
-    page: { work: found.work, cast: cast.value },
-    settled: found.settled && (shown?.settled ?? true) && cast.settled,
+    page: { work: found.work, cast: cast.value, family: found.family },
+    settled: found.settled && cast.settled,
   }
 }
 

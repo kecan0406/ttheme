@@ -20,6 +20,8 @@ export const TMDB_HOME = 'https://www.themoviedb.org'
 
 export const ANILIST_HOME = 'https://anilist.co'
 
+export const BANGUMI_HOME = 'https://bgm.tv'
+
 export const STEAM_HOME = 'https://store.steampowered.com'
 
 export const IGDB_HOME = 'https://www.igdb.com'

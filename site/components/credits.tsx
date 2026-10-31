@@ -1,5 +1,5 @@
 import { type SimpleIcon, siAnilist, siIgdb, siSteam, siThemoviedatabase } from 'simple-icons'
-import { ANILIST_HOME, CREDITS_PATH, IGDB_HOME, STEAM_HOME, TMDB_HOME } from '@/lib/art'
+import { ANILIST_HOME, BANGUMI_HOME, CREDITS_PATH, IGDB_HOME, STEAM_HOME, TMDB_HOME } from '@/lib/art'
 import type { Facts } from '@/lib/facts'
 import { BrandIcon, NewTab } from '@/lib/icons'
 import { SiteFooter } from './site-footer'
@@ -8,7 +8,7 @@ import { SiteHeader } from './site-header'
 interface Source {
   name: string
   home: string
-  icon: SimpleIcon
+  icon: SimpleIcon | null
   what: string
   notice: string | null
 }
@@ -25,7 +25,14 @@ const SOURCES: Source[] = [
     name: 'AniList',
     home: ANILIST_HOME,
     icon: siAnilist,
-    what: "The characters' pictures on a work's page, and a work's banner where TMDB has no key art.",
+    what: "A character's picture on a work's page where Bangumi has none, and a work's banner where TMDB has no key art.",
+    notice: null,
+  },
+  {
+    name: 'Bangumi',
+    home: BANGUMI_HOME,
+    icon: null,
+    what: "The characters' pictures on a work's page.",
     notice: null,
   },
   {
@@ -68,7 +75,7 @@ export function Credits({ facts }: { facts: Facts }) {
                 rel="noopener"
                 class="inline-flex items-center gap-2 justify-self-start rounded-sm font-display text-display-sm font-black transition-colors outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <BrandIcon icon={source.icon} class="size-5 flex-none" />
+                {source.icon === null ? null : <BrandIcon icon={source.icon} class="size-5 flex-none" />}
                 <span safe>{source.name}</span>
                 <NewTab class="size-4" />
               </a>

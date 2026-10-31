@@ -6,7 +6,7 @@ import subsetFont from 'subset-font'
 import { EXIT_CODES } from '../src/cli/answer.ts'
 import { repoFacts, showcase } from '../src/cli/showcase.ts'
 import { DOCS_URL, docsOf, flagRows, headOf, SECTIONS, usageOf, VERB_SPECS } from '../src/cli/verbs.ts'
-import { artProblems, fetchArt } from './lib/art-source'
+import { artProblems, castWorks, fetchArt, fetchCasts } from './lib/art-source'
 import { commons, themes } from './lib/builtin'
 import type { Commands } from './lib/commands'
 import { REPO } from './lib/gallery'
@@ -32,6 +32,8 @@ const SNAPSHOT = join(SITE, 'marketplaces.json')
 const REPO_FILE = join(SITE, 'repo.json')
 
 const ART_FILE = join(SITE, 'art.json')
+
+const CAST_FILE = join(SITE, 'cast.json')
 
 const COMMANDS = join(SITE, 'commands.json')
 
@@ -391,6 +393,13 @@ export async function snapshot(fresh: boolean): Promise<void> {
     ART_FILE,
     'key art',
     () => fetchArt(process.env.TMDB_TOKEN, (message) => process.stderr.write(`site: ${message}\n`)),
+    {},
+    fresh,
+  )
+  await fetched(
+    CAST_FILE,
+    'casts',
+    () => fetchCasts(castWorks(commons.works), (message) => process.stderr.write(`site: ${message}\n`)),
     {},
     fresh,
   )

@@ -3,6 +3,10 @@ import { type CastMember, type NameHit, type TaggedWork, type WorkName, workSlug
 
 export const MOST_FOUND = 4
 
+export const SHOWN_CAST = 24
+
+export const MOST_CAST = 400
+
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 const ORIGIN_LANGS = new Map<string, readonly string[]>([
@@ -21,6 +25,10 @@ const MANGA = /^anilist:manga\/(\d+)$/
 const STEAM = /^steam:(\d+)$/
 
 const IGDB = /^igdb:([a-z0-9-]+)$/
+
+const BANGUMI = /^bangumi:(\d+)$/
+
+const BANGUMI_IMAGES = 'https://api.bgm.tv/v0/characters'
 
 const LATIN_LANGS = ['en', 'ja-Latn']
 
@@ -44,9 +52,25 @@ export interface FoundCast {
   picture: string | null
 }
 
+export interface CastWork {
+  id: string
+  tag: string
+  lang: string | null
+  taken: string[]
+}
+
+export type Casts = Record<string, FoundCast[]>
+
+export interface FamilyWork {
+  name: string
+  year: number | null
+  medium: string | null
+}
+
 export interface FoundPage {
   work: FoundWork
   cast: FoundCast[]
+  family: FamilyWork[]
 }
 
 export interface Title {
@@ -81,6 +105,38 @@ function shortest(names: readonly WorkName[], keep: (name: WorkName) => boolean)
 
   for (const name of names) {
     if (keep(name) && (!best || [...name.text].length < [...best.text].length)) best = name
+  }
+
+  return best
+}
+
+function latinKey(text: string): string {
+  return text
+    .normalize('NFKD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/ou|oo/g, 'o')
+    .replace(/(a|i|u|e)\1/g, '$1')
+    .split(/[^a-z]+/)
+    .filter(Boolean)
+    .toSorted()
+    .join(' ')
+}
+
+function agreed(names: readonly WorkName[]): WorkName | undefined {
+  const keys = names.map((name) => latinKey(name.text))
+  let best: WorkName | undefined
+  let most = 0
+
+  for (const name of names) {
+    if (!name.official || !LATIN_LANGS.includes(name.lang ?? '')) continue
+    const key = latinKey(name.text)
+    const support = keys.filter((each) => each === key).length
+
+    if (support > most || (support === most && best && [...name.text].length < [...best.text].length)) {
+      best = name
+      most = support
+    }
   }
 
   return best
@@ -157,6 +213,32 @@ export function anilistCharacterOf(member: CastMember): number | null {
   return id ? Number(id) : null
 }
 
+function bangumiPictureOf(member: CastMember): string | null {
+  const id = first([member], BANGUMI)
+
+  return id ? `${BANGUMI_IMAGES}/${id}/image?type=medium` : null
+}
+
+export function anilistIdsOf(members: readonly CastMember[]): number[] {
+  return members.flatMap((member) => (bangumiPictureOf(member) === null ? (anilistCharacterOf(member) ?? []) : []))
+}
+
+export function familyOf(members: readonly TaggedWork[]): FamilyWork[] {
+  const seen = new Set<string>()
+
+  return members
+    .flatMap((member) => {
+      const name = shortest(member.names, (each) => each.official && each.lang === 'en')?.text ?? member.label
+      const key = `${name}\u0000${member.year ?? ''}\u0000${member.medium ?? ''}`
+
+      if (seen.has(key)) return []
+      seen.add(key)
+
+      return [{ name, year: member.year, medium: member.medium }]
+    })
+    .toSorted((a, b) => Number(a.year === null) - Number(b.year === null) || (a.year ?? 0) - (b.year ?? 0))
+}
+
 function shown(text: string): string {
   const base = text.replace(/\s*\([^)]*\)$/, '')
 
@@ -173,7 +255,7 @@ export function castFrom(
   const seen = new Set<string>()
 
   return members.flatMap((member) => {
-    const latin = shortest(member.names, (name) => name.official && LATIN_LANGS.includes(name.lang ?? ''))
+    const latin = agreed(member.names)
     const plain = member.names.find((name) => name.official && name.lang === null)
     const name = latin?.text ?? shown(plain?.text ?? member.label)
 
@@ -190,7 +272,7 @@ export function castFrom(
       {
         name,
         native: native === undefined || native === name ? null : native,
-        picture: id === null ? null : (pictures.get(id) ?? null),
+        picture: bangumiPictureOf(member) ?? (id === null ? null : (pictures.get(id) ?? null)),
       },
     ]
   })

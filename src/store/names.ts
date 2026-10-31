@@ -38,6 +38,8 @@ const REF = /^[a-z]+:[\w./-]+$/
 
 const COUNTRY = /^[A-Z]{2}$/
 
+const MEDIUM = /^[a-z]{2,8}$/
+
 function text(value: unknown): string | undefined {
   const shown = typeof value === 'string' ? inert(value).trim() : ''
 
@@ -120,6 +122,8 @@ function taggedOf(value: unknown): TaggedWork | undefined {
     tags: strings(v.danbooru, (t) => t !== '' && !ODD.test(t)),
     refs: strings(v.refs, (r) => REF.test(r)),
     origin: strings(v.origin, (c) => COUNTRY.test(c)),
+    year: Number.isSafeInteger(v.year) && (v.year as number) > 0 ? (v.year as number) : null,
+    medium: typeof v.medium === 'string' && MEDIUM.test(v.medium) ? v.medium : null,
   }
 }
 
@@ -140,7 +144,13 @@ function memberOf(value: unknown): CastMember | undefined {
     return undefined
   }
 
-  return { id, label, names: workNamesOf(v.names), refs: strings(v.refs, (r) => REF.test(r)) }
+  return {
+    id,
+    label,
+    names: workNamesOf(v.names),
+    tags: strings(v.danbooru, (t) => t !== '' && !ODD.test(t)),
+    refs: strings(v.refs, (r) => REF.test(r)),
+  }
 }
 
 export function castMembers(found: unknown): CastMember[] {

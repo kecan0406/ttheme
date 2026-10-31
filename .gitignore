@@ -8,6 +8,7 @@ site/assets.json
 site/marketplaces.json
 site/repo.json
 site/art.json
+site/cast.json
 site/commands.json
 pages/
 .vercel/

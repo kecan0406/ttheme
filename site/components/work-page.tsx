@@ -1,7 +1,8 @@
 import { ArrowRight, Plus } from 'lucide'
 import { LinkButton } from '@/components/ui/button'
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { Facts } from '@/lib/facts'
-import { type FoundCast, type FoundPage, type FoundWork, nativeLang } from '@/lib/found'
+import { type FamilyWork, type FoundCast, type FoundPage, type FoundWork, nativeLang, SHOWN_CAST } from '@/lib/found'
 import { BROWSE_PATH, marketplacePath, palettePath } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
 import { makePath } from '@/lib/names'
@@ -32,6 +33,14 @@ const MAIN = 'relative mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[m
 const SECTIONS = 'grid grid-cols-[minmax(0,1fr)] gap-16 max-sm:gap-11'
 
 const SECTION = 'grid grid-cols-[minmax(0,1fr)] gap-4.5'
+
+const MEDIA = new Map([
+  ['anime', 'anime'],
+  ['vn', 'visual novel'],
+  ['game', 'game'],
+  ['manga', 'manga'],
+  ['novel', 'novel'],
+])
 
 function Who({ slot }: { slot: CastSlot }) {
   return (
@@ -227,28 +236,90 @@ function WorkHead({ name, native, lang }: { name: string; native: string | null;
   )
 }
 
-function Member({ member, lang }: { member: FoundCast; lang: string | null }) {
+function Member({ member, lang, work }: { member: FoundCast; lang: string | null; work: string }) {
   return (
-    <li class="grid w-27 flex-none content-start justify-items-center gap-2 text-center max-sm:w-21 max-sm:snap-start">
-      <span class={cn(CIRCLE, 'bg-muted')}>
-        <SlotArt picture={member.picture} />
-      </span>
-      <span class="grid w-full min-w-0 justify-items-center gap-px">
-        <b translate="no" class="max-w-full truncate font-display text-base leading-snug font-extrabold" safe>
-          {member.name}
-        </b>
-        {member.native === null ? null : (
-          <small
-            translate="no"
-            lang={nativeLang(member.native, lang) ?? undefined}
-            class="max-w-full truncate font-display text-xs font-extrabold text-muted-foreground"
-            safe
-          >
-            {member.native}
-          </small>
-        )}
-      </span>
+    <li class="grid w-27 flex-none max-sm:w-21 max-sm:snap-start">
+      <a
+        href={requestUrl(`${member.name}, ${work}`)}
+        target="_blank"
+        rel="noopener"
+        class="group/who grid content-start justify-items-center gap-2 text-center outline-none"
+      >
+        <span
+          class={cn(
+            CIRCLE,
+            'bg-muted transition-[translate,box-shadow] duration-200 group-focus-visible/who:ring-2 group-focus-visible/who:ring-ring group-focus-visible/who:ring-offset-2 group-focus-visible/who:ring-offset-background motion-safe:group-hover/who:-translate-y-0.5',
+          )}
+        >
+          <SlotArt picture={member.picture} />
+        </span>
+        <span class="grid w-full min-w-0 justify-items-center gap-px">
+          <b class="flex max-w-full min-w-0 items-center gap-1 font-display text-base leading-snug font-extrabold transition-colors group-hover/who:text-primary">
+            <span translate="no" class="truncate" safe>
+              {member.name}
+            </span>
+            <NewTab class="size-3 flex-none opacity-0 transition-opacity group-hover/who:opacity-100 group-focus-visible/who:opacity-100" />
+          </b>
+          {member.native === null ? null : (
+            <small
+              translate="no"
+              lang={nativeLang(member.native, lang) ?? undefined}
+              class="max-w-full truncate font-display text-xs font-extrabold text-muted-foreground"
+              safe
+            >
+              {member.native}
+            </small>
+          )}
+        </span>
+      </a>
     </li>
+  )
+}
+
+function Members({ cast, lang, work }: { cast: FoundCast[]; lang: string | null; work: string }) {
+  const rest = cast.slice(SHOWN_CAST)
+
+  return (
+    <>
+      <ul class={CAST}>
+        {cast.slice(0, SHOWN_CAST).map((member) => (
+          <Member member={member} lang={lang} work={work} />
+        ))}
+      </ul>
+      {rest.length === 0 ? null : (
+        <Collapsible class="group/more grid grid-cols-[minmax(0,1fr)] gap-5">
+          <CollapsibleTrigger class="justify-self-start rounded-sm text-sm font-medium text-primary outline-none group-open/more:hidden hover:underline focus-visible:ring-2 focus-visible:ring-ring">
+            show all {cast.length}
+          </CollapsibleTrigger>
+          <CollapsiblePanel>
+            <ul class={CAST}>
+              {rest.map((member) => (
+                <Member member={member} lang={lang} work={work} />
+              ))}
+            </ul>
+          </CollapsiblePanel>
+        </Collapsible>
+      )}
+    </>
+  )
+}
+
+function Family({ works }: { works: FamilyWork[] }) {
+  return (
+    <ol class="grid max-w-[68ch] gap-2">
+      {works.map((work) => (
+        <li class="flex min-w-0 items-baseline gap-3">
+          <span translate="no" class="min-w-0 truncate font-display text-base font-extrabold" safe>
+            {work.name}
+          </span>
+          <span class="flex-none font-mono text-xs text-muted-foreground" safe>
+            {[work.medium === null ? null : (MEDIA.get(work.medium) ?? work.medium), work.year]
+              .filter((part) => part !== null)
+              .join(' · ')}
+          </span>
+        </li>
+      ))}
+    </ol>
   )
 }
 
@@ -276,7 +347,7 @@ function NoPalettes({ work }: { work: FoundWork }) {
 }
 
 export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts; path: string }) {
-  const { work, cast } = page
+  const { work, cast, family } = page
 
   return (
     <div class="ground relative isolate flex min-h-dvh flex-col">
@@ -290,11 +361,15 @@ export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts
               <h2 id="characters" class={HEADING}>
                 characters <span class={COUNT}>{cast.length}</span>
               </h2>
-              <ul class={CAST}>
-                {cast.map((member) => (
-                  <Member member={member} lang={work.lang} />
-                ))}
-              </ul>
+              <Members cast={cast} lang={work.lang} work={work.name} />
+            </section>
+          )}
+          {family.length < 2 ? null : (
+            <section aria-labelledby="works" class={SECTION}>
+              <h2 id="works" class={HEADING}>
+                works <span class={COUNT}>{family.length}</span>
+              </h2>
+              <Family works={family} />
             </section>
           )}
           <section aria-labelledby="palettes" class={SECTION}>
@@ -311,7 +386,7 @@ export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts
 }
 
 export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; path: string }) {
-  const { work, cast, markets } = page
+  const { work, cast, more, markets } = page
   const count = markets.reduce((sum, market) => sum + market.palettes.length, 0)
   const langs = new Map(cast.map((slot) => [slot.id, slot.lang]))
 
@@ -342,6 +417,14 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
               ))}
               <Request work={work.name} />
             </div>
+            {more.length === 0 ? null : (
+              <div class="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4.5">
+                <h3 class="flex items-baseline gap-2.5 font-display text-display-sm font-black">
+                  no palette yet <span class={COUNT}>{more.length}</span>
+                </h3>
+                <Members cast={more} lang={work.lang} work={work.name} />
+              </div>
+            )}
           </section>
           <section aria-labelledby="palettes" class={SECTION}>
             <h2 id="palettes" class={HEADING}>

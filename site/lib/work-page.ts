@@ -1,5 +1,7 @@
 import { type KeyArt, keyArtOf, pictureOf } from '@/lib/art'
 import { commons } from '@/lib/builtin'
+import { castFor } from '@/lib/cast'
+import type { FoundCast } from '@/lib/found'
 import type { Shelf } from '@/lib/gallery'
 import { artFor } from '@/lib/key-art'
 import { listedWorks } from '@/lib/marketplaces'
@@ -27,6 +29,7 @@ export interface WorkPage {
   art: KeyArt | null
   facets: string
   cast: CastSlot[]
+  more: FoundCast[]
   markets: WorkMarket[]
 }
 
@@ -100,6 +103,7 @@ export function workPages(themes: readonly Theme[], shelves: readonly Shelf[]): 
       art: keyArtOf(artFor(ref.id)),
       facets: facetStyle(lead),
       cast,
+      more: castFor(ref.id),
       markets,
     })
   }

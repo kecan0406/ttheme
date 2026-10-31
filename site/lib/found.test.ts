@@ -1,7 +1,9 @@
 import { expect, test } from 'bun:test'
 import {
+  anilistIdsOf,
   anilistOf,
   castFrom,
+  familyOf,
   foundSlugs,
   igdbOf,
   MOST_FOUND,
@@ -18,7 +20,7 @@ function hit(kind: NameHit['kind'], label: string, tags: string[], works: NameHi
 }
 
 function tagged(id: string, tags: string[], more: Partial<TaggedWork> = {}): TaggedWork {
-  return { id, label: id, names: [], tags, refs: [], origin: [], ...more }
+  return { id, label: id, names: [], tags, refs: [], origin: [], year: null, medium: null, ...more }
 }
 
 test('a work hit gives the slug of its main tag, and a character the one of its home, never a work it guests in', () => {
@@ -148,11 +150,12 @@ test('a game takes its Steam app and IGDB slug from whichever member has them', 
   expect([steamOf([]), igdbOf([])]).toEqual([null, null])
 })
 
-test("a cast member shows a Latin name and its name in the work's language, a Danbooru name without its qualifier, and once", () => {
+test("a cast member shows a Latin name and its name in the work's language, a Danbooru name without its qualifier, and once, pictured by Bangumi before AniList, named as most of its names agree", () => {
   const member = (id: string, label: string, names: CastMember['names'], refs: string[] = []): CastMember => ({
     id,
     label,
     names,
+    tags: [],
     refs,
   })
 
@@ -178,6 +181,13 @@ test("a cast member shows a Latin name and its name in the work's language, a Da
         { text: 'Wren', lang: 'en', official: true },
         { text: '雷恩', lang: 'zh-Hans', official: true },
       ]),
+      member('c/5', 'ピップ', [{ text: 'Pip', lang: 'en', official: true }], ['anilist:44', 'bangumi:9001']),
+      member('c/6', 'ルフ', [
+        { text: 'Ruff Tidewell', lang: 'en', official: true },
+        { text: 'Tidewell Ruff', lang: 'en', official: false },
+        { text: 'Tidewell Ruuff', lang: 'ja-Latn', official: false },
+        { text: 'Ruf T', lang: 'en', official: true },
+      ]),
     ],
     pictures,
     'ja',
@@ -187,5 +197,31 @@ test("a cast member shows a Latin name and its name in the work's language, a Da
     { name: 'Nell Moonlit', native: 'ネル', picture: 'https://s4.anilist.co/file/anilistcdn/character/large/b31.png' },
     { name: 'K.Ra', native: null, picture: null },
     { name: 'Wren', native: null, picture: null },
+    { name: 'Pip', native: null, picture: 'https://api.bgm.tv/v0/characters/9001/image?type=medium' },
+    { name: 'Ruff Tidewell', native: null, picture: null },
+  ])
+
+  expect(
+    anilistIdsOf([
+      member('c/1', 'ネル', [], ['anilist:31']),
+      member('c/5', 'ピップ', [], ['anilist:44', 'bangumi:9001']),
+    ]),
+  ).toEqual([31])
+})
+
+test("a found work's family lists each work once by its English name, the oldest first and the undated last", () => {
+  const named = (text: string) => [{ text, lang: 'en', official: true }]
+
+  expect(
+    familyOf([
+      tagged('w/3', [], { label: '月明かりの港 劇場版', year: null, medium: 'anime' }),
+      tagged('w/2', [], { names: named('Moonlit Harbor'), year: 2019, medium: 'anime' }),
+      tagged('w/1', [], { names: named('Moonlit Harbor'), year: 2016, medium: 'manga' }),
+      tagged('w/4', [], { names: named('Moonlit Harbor'), year: 2019, medium: 'anime' }),
+    ]),
+  ).toEqual([
+    { name: 'Moonlit Harbor', year: 2016, medium: 'manga' },
+    { name: 'Moonlit Harbor', year: 2019, medium: 'anime' },
+    { name: '月明かりの港 劇場版', year: null, medium: 'anime' },
   ])
 })

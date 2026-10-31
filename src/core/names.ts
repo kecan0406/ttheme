@@ -37,12 +37,15 @@ export interface TaggedWork {
   tags: string[]
   refs: string[]
   origin: string[]
+  year: number | null
+  medium: string | null
 }
 
 export interface CastMember {
   id: string
   label: string
   names: WorkName[]
+  tags: string[]
   refs: string[]
 }
 
