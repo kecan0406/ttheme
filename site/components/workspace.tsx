@@ -8,7 +8,7 @@ import { Kbd } from '@/components/ui/kbd'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import type { Facts, Repo } from '@/lib/facts'
-import { BUILTIN_URL, palettePath, REPO, repoUrl, searchText } from '@/lib/gallery'
+import { BROWSE_PATH, BUILTIN_URL, palettePath, REPO, repoUrl, searchText } from '@/lib/gallery'
 import { gatePassed } from '@/lib/gate'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
@@ -16,7 +16,7 @@ import { SCENES, type Scene, sceneLines, useOf } from '@/lib/sessions'
 import { faceOf, type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
-import { byWork, leadOf, leadsOf } from '@/lib/works'
+import { byWork, leadOf, leadsOf, ribbon } from '@/lib/works'
 import type { Where, WorkspaceData } from '@/lib/workspace'
 import { ByMode } from './by-mode'
 import { CommandRow, InitRow } from './command-row'
@@ -61,18 +61,6 @@ function signs(theme: Theme): string[] {
 
 function Dots({ theme }: { theme: Theme }) {
   return <span aria-hidden="true" data-slot="signature-dots" style={signs(theme).join(';')} />
-}
-
-function ribbon(theme: Theme): string {
-  const step = 100 / theme.ansi.length
-
-  const stops = theme.ansi.map((_, index) => {
-    const color = paint(theme, (shade) => shade.ansi[index] as string)
-
-    return `${color} ${index * step}% ${(index + 1) * step}%`
-  })
-
-  return `linear-gradient(90deg,${stops.join(',')})`
 }
 
 function WorkTile({ theme }: { theme: Theme }) {
@@ -330,7 +318,7 @@ export function MarketplaceWorkspace({
 
   return (
     <WorkspacePage
-      current="/marketplace"
+      current={BROWSE_PATH}
       facts={facts}
       status={<MarketplaceFacts marketplace={marketplace} count={palettes.length} repo={facts.repo} />}
     >

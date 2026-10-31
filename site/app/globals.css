@@ -902,8 +902,7 @@ route-progress[data-state='done'],
 
   [data-slot='signature-dots'],
   [data-slot='work-tile'],
-  [data-slot='work-swatch'],
-  [data-slot='palette-dots'] {
+  [data-slot='work-swatch'] {
     forced-color-adjust: none;
   }
 }
@@ -1227,34 +1226,62 @@ route-progress[data-state='done'],
     calc(var(--spacing) * 4.5) 0 var(--sg2);
 }
 
-[data-slot='work-art-shade'] {
+[data-slot='rail'] {
+  --fade-end: calc(var(--spacing) * 16);
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 calc(var(--spacing) * 5),
+    #000 calc(100% - var(--fade-end)),
+    transparent
+  );
+}
+
+[data-slot='rail'][data-at-end] {
+  --fade-end: 0px;
+}
+
+[data-slot='work-hero'] {
+  mask-image: linear-gradient(to bottom, #000 46%, rgb(0 0 0 / 55%) 72%, rgb(0 0 0 / 16%) 89%, transparent);
+}
+
+[data-slot='work-hero']::after {
+  content: '';
   position: absolute;
   inset: 0;
   background:
     linear-gradient(
-      to top,
-      var(--background),
-      color-mix(in oklab, var(--background) 86%, transparent) 28%,
-      transparent 72%
+      to bottom,
+      color-mix(in oklab, var(--background) 50%, transparent),
+      transparent calc(var(--spacing) * 32)
     ),
-    linear-gradient(to right, color-mix(in oklab, var(--background) 78%, transparent), transparent 58%);
+    radial-gradient(58% 46% at 16% 80%, color-mix(in oklab, var(--background) 66%, transparent), transparent 75%);
 }
 
-[data-slot='work-art-shade'][data-shade='hero'] {
-  background:
-    linear-gradient(
-      to bottom,
-      color-mix(in oklab, var(--background) 55%, transparent),
-      transparent 22% 40%,
-      color-mix(in oklab, var(--background) 90%, transparent) 78%,
-      var(--background)
-    ),
-    linear-gradient(
-      to right,
-      color-mix(in oklab, var(--background) 85%, transparent),
-      color-mix(in oklab, var(--background) 35%, transparent) 45%,
-      transparent 70%
-    );
+[data-slot='work-glow'] {
+  opacity: 0.42;
+  mask-image: linear-gradient(to bottom, #000 25%, transparent);
+}
+
+[data-mode='light'] [data-slot='work-glow'] {
+  opacity: 0.3;
+}
+
+[data-slot='work-glow'] img {
+  filter: blur(90px) saturate(1.5);
+  scale: 1.2;
+}
+
+@media (width < 40rem) {
+  [data-slot='work-hero']::after {
+    background:
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--background) 55%, transparent),
+        transparent calc(var(--spacing) * 27.5)
+      ),
+      radial-gradient(90% 40% at 20% 84%, color-mix(in oklab, var(--background) 70%, transparent), transparent 78%);
+  }
 }
 
 [data-recolor],
@@ -1326,33 +1353,6 @@ route-progress[data-state='done'],
     scale: none;
     translate: none;
   }
-}
-
-[data-slot='palette-dots'] {
-  --dot: calc(var(--spacing) * 2.5);
-  --dot-step: calc(var(--spacing) * 3.5);
-  display: flex;
-  flex: none;
-  width: calc(var(--dot-step) * 8 + var(--dot));
-  height: var(--dot);
-}
-
-[data-slot='palette-dots']::before {
-  content: '';
-  flex: none;
-  width: var(--dot);
-  height: var(--dot);
-  border-radius: calc(infinity * 1px);
-  background: var(--dot0);
-  box-shadow:
-    var(--dot-step) 0 var(--dot1, transparent),
-    calc(var(--dot-step) * 2) 0 var(--dot2, transparent),
-    calc(var(--dot-step) * 3) 0 var(--dot3, transparent),
-    calc(var(--dot-step) * 4) 0 var(--dot4, transparent),
-    calc(var(--dot-step) * 5) 0 var(--dot5, transparent),
-    calc(var(--dot-step) * 6) 0 var(--dot6, transparent),
-    calc(var(--dot-step) * 7) 0 var(--dot7, transparent),
-    calc(var(--dot-step) * 8) 0 var(--dot8, transparent);
 }
 
 .mock {

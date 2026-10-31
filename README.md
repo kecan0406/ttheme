@@ -18,7 +18,7 @@
 <p align="center">
   <a href="https://ttheme.dev/">Site</a> ·
   <a href="https://ttheme.dev/docs">Docs</a> ·
-  <a href="https://ttheme.dev/marketplace">Marketplace</a> ·
+  <a href="https://ttheme.dev/browse">Browse</a> ·
   <a href="https://ttheme.dev/docs/reference/terminals">Terminals</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>

@@ -1,58 +1,54 @@
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Plus, Star } from 'lucide'
-import { Button } from '@/components/ui/button'
+import { ArrowRight, Plus } from 'lucide'
 import type { Facts } from '@/lib/facts'
-import { marketplacePath, palettePath } from '@/lib/gallery'
+import { BROWSE_PATH, marketplacePath, palettePath } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
-import { json } from '@/lib/render'
-import { sceneLines, useOf } from '@/lib/sessions'
 import { BUILTIN, type Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import type { CastSlot, WorkMarket, WorkPage } from '@/lib/work-page'
-import { swatchStyle, type WorkData } from '@/lib/works'
+import { ribbon, swatchStyle } from '@/lib/works'
 import { requestUrl } from '../../src/core/names.ts'
-import { RepoButton, Updated } from './marketplace-board'
 import { Crumbs } from './marketplace-frame'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
-import { TerminalScreen } from './terminal'
-import { TerminalFrame } from './terminal-frame'
-import { SlotArt, WorkArt } from './work-art'
-import { LeadStar, MarketBadge, WorkSwatch } from './work-results'
-
-const FOLDS_PAST = 3
+import { SlotArt, WorkHero } from './work-art'
+import { LeadStar, MarketBadge, RepoLine, Updated, updatedAt, WorkSwatch } from './work-parts'
 
 export const HERO_SIZES = '100vw'
 
-const LABEL = 'text-2xs font-bold tracking-caps text-muted-foreground uppercase'
+const HEADING = 'flex items-baseline gap-2.5 font-display text-display-md font-black'
 
-function Slot({ slot }: { slot: CastSlot }) {
+const COUNT = 'font-mono text-sm font-normal tracking-normal text-muted-foreground'
+
+const CIRCLE = 'relative grid size-24 place-items-center overflow-hidden rounded-full max-sm:size-19'
+
+function Who({ slot }: { slot: CastSlot }) {
   return (
     <button
       type="button"
       data-who={slot.id}
       aria-pressed="false"
-      class="group/slot relative aspect-3/4 overflow-hidden rounded-xl border bg-muted text-left shadow-sm transition-[opacity,border-color,box-shadow] duration-200 outline-none hover:border-input hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring aria-pressed:border-primary aria-pressed:ring-2 aria-pressed:ring-primary/45 data-dim:opacity-45"
+      class="group/who grid w-27 flex-none content-start justify-items-center gap-2 text-center outline-none transition-opacity duration-200 data-dim:opacity-45 max-sm:w-21 max-sm:snap-start"
     >
-      <SlotArt picture={slot.picture} />
       <span
-        aria-hidden="true"
-        class="absolute inset-0 bg-linear-to-t from-background via-background/35 via-45% to-transparent"
-      />
-      {slot.lead ? (
-        <span class="absolute top-2.5 right-2.5 grid size-6 place-items-center rounded-full bg-glass">
-          <Icon node={Star} class="size-3.5 fill-current text-primary" />
-          <span class="sr-only">lead</span>
-        </span>
-      ) : null}
-      <span class="absolute inset-x-3 bottom-3 grid min-w-0 gap-0.5">
-        <b translate="no" class="truncate font-display text-base leading-snug font-extrabold" safe>
-          {slot.id}
+        class={cn(
+          CIRCLE,
+          'bg-muted transition-[translate,box-shadow] duration-200 group-focus-visible/who:ring-2 group-focus-visible/who:ring-ring group-focus-visible/who:ring-offset-2 group-focus-visible/who:ring-offset-background group-aria-pressed/who:ring-2 group-aria-pressed/who:ring-primary group-aria-pressed/who:ring-offset-2 group-aria-pressed/who:ring-offset-background motion-safe:group-hover/who:-translate-y-0.5',
+        )}
+      >
+        <SlotArt picture={slot.picture} />
+      </span>
+      <span class="grid w-full min-w-0 justify-items-center gap-px">
+        <b class="flex max-w-full min-w-0 items-center gap-1.5 font-display text-base leading-snug font-extrabold transition-colors group-hover/who:text-primary">
+          <span translate="no" class="truncate" safe>
+            {slot.id}
+          </span>
+          {slot.lead ? <LeadStar /> : null}
         </b>
         {slot.native === null ? null : (
           <small
             translate="no"
             lang={slot.lang ?? undefined}
-            class="truncate font-display text-xs font-extrabold text-soft-foreground"
+            class="max-w-full truncate font-display text-xs font-extrabold text-muted-foreground"
             safe
           >
             {slot.native}
@@ -63,189 +59,152 @@ function Slot({ slot }: { slot: CastSlot }) {
   )
 }
 
-function PaletteCard({ theme, lead }: { theme: Theme; lead: boolean }) {
-  const native = theme.character?.native[0]
-
+function Request({ work }: { work: string }) {
   return (
     <a
-      href={palettePath(theme)}
-      data-who={theme.character?.id ?? ''}
-      class="flex min-w-0 items-center gap-3 rounded-xl border bg-card px-3.5 py-3 shadow-sm transition-[translate,border-color,box-shadow,opacity] duration-200 outline-none hover:border-input hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring data-dim:opacity-40 data-picked:border-primary motion-safe:hover:-translate-y-0.5"
+      href={requestUrl(work)}
+      target="_blank"
+      rel="noopener"
+      class="group/who grid w-27 flex-none content-start justify-items-center gap-2 text-center outline-none max-sm:w-21 max-sm:snap-start"
     >
-      <WorkSwatch style={swatchStyle(theme)} />
-      <span class="grid min-w-0">
-        <span class="flex min-w-0 items-center gap-1.5">
-          <span translate="no" class="truncate font-display text-base leading-snug font-extrabold" safe>
-            {theme.name}
-          </span>
-          {lead ? <LeadStar /> : null}
-        </span>
-        {native ? (
-          <span translate="no" class="truncate font-display text-xs font-extrabold text-muted-foreground" safe>
-            {native}
-          </span>
-        ) : null}
+      <span
+        class={cn(
+          CIRCLE,
+          'bg-muted/65 text-soft-foreground inset-ring inset-ring-border transition-[color,box-shadow,translate] duration-200 group-hover/who:text-foreground group-hover/who:inset-ring-input group-focus-visible/who:ring-2 group-focus-visible/who:ring-ring group-focus-visible/who:ring-offset-2 group-focus-visible/who:ring-offset-background motion-safe:group-hover/who:-translate-y-0.5',
+        )}
+      >
+        <Icon node={Plus} class="size-5.5" />
+      </span>
+      <span class="grid w-full justify-items-center gap-px">
+        <b class="font-display text-base leading-snug font-extrabold text-soft-foreground transition-colors group-hover/who:text-foreground">
+          request
+        </b>
+        <small class="inline-flex items-center gap-1 font-display text-xs font-extrabold text-muted-foreground">
+          a character
+          <NewTab class="size-3" />
+        </small>
       </span>
     </a>
   )
 }
 
-function MarketCard({ market, work, leadSubject }: { market: WorkMarket; work: string; leadSubject: string }) {
-  const { shelf, palettes, peeks } = market
-  const first = palettes[0] as Theme
-  const peek = peeks[0]
-  const foldable = palettes.length > FOLDS_PAST
-  const list = `palettes-${shelf.id.replace(/[^\w-]/g, '-')}`
+function Track({ theme, number, lead, lang }: { theme: Theme; number: number; lead: boolean; lang: string | null }) {
+  const native = theme.character?.native[0]
 
   return (
-    <article
-      data-market={shelf.id}
-      class="group/market overflow-hidden rounded-3xl border bg-card shadow-sm transition-[border-color,box-shadow,opacity] duration-200 has-[a[data-open]:hover]:border-input has-[a[data-open]:hover]:shadow-md has-[a[data-open]:focus-visible]:ring-2 has-[a[data-open]:focus-visible]:ring-ring data-missing:opacity-40"
-    >
-      <div class="relative flex flex-wrap items-center gap-x-6 gap-y-4 p-3.5">
-        <TerminalFrame
-          data-peek
-          style={peek?.style}
-          title={peek?.title}
-          recolor
-          class="min-w-0 flex-[0_1_440px]"
-          controls={
-            palettes.length > 1 ? (
-              <>
-                <Button
-                  variant="scene"
-                  size="icon-sm"
-                  aria-label="previous palette"
-                  data-peek-step="-1"
-                  class="relative z-1"
-                >
-                  <Icon node={ChevronLeft} />
-                </Button>
-                <Button
-                  variant="scene"
-                  size="icon-sm"
-                  aria-label="next palette"
-                  data-peek-step="1"
-                  class="relative z-1"
-                >
-                  <Icon node={ChevronRight} />
-                </Button>
-              </>
-            ) : undefined
-          }
-        >
-          <TerminalScreen
-            lines={sceneLines('shell', useOf(first))}
-            decorative
-            class="overflow-hidden px-4 pt-3 pb-3.5 text-code"
-          />
-        </TerminalFrame>
-        <div class="flex min-w-0 flex-[1_1_22rem] items-center gap-4 px-2">
-          <div class="grid min-w-0 flex-1 gap-2">
-            <span class="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-              <h3 class="font-display text-display-sm font-black [overflow-wrap:anywhere]">
-                <a
-                  href={marketplacePath(shelf.id)}
-                  data-open
-                  translate="no"
-                  class="outline-none transition-colors after:absolute after:inset-0 hover:text-primary"
-                  safe
-                >
-                  {shelf.id}
-                </a>
-              </h3>
-              <MarketBadge builtin={shelf.id === BUILTIN} />
-            </span>
-            <p class="text-sm text-soft-foreground" safe>
-              {shelf.about}
-            </p>
-            <p data-missing-note hidden class="text-sm text-muted-foreground">
-              no <span data-missing-who translate="no"></span> palette here yet
-            </p>
-            <span class="mt-1 flex flex-wrap items-center gap-1.5">
-              <RepoButton shelf={shelf} />
-              <Updated at={shelf.version === null ? shelf.pushedAt : `v${shelf.version}`} />
-            </span>
-          </div>
-          <span
-            aria-hidden="true"
-            class="grid size-10 flex-none place-items-center rounded-full border bg-card text-soft-foreground transition-[background-color,border-color,color,translate] duration-200 group-has-[a[data-open]:hover]/market:border-primary group-has-[a[data-open]:hover]/market:bg-primary group-has-[a[data-open]:hover]/market:text-primary-foreground motion-safe:group-has-[a[data-open]:hover]/market:translate-x-0.5"
-          >
-            <Icon node={ArrowRight} class="size-4.5" />
-          </span>
-        </div>
-      </div>
-      <div
-        data-fold={foldable ? '' : undefined}
-        class="group/area relative overflow-hidden transition-[max-height] duration-460 ease-[cubic-bezier(0.2,0.8,0.2,1)] data-fold:max-h-30 motion-reduce:transition-none"
+    <li class="grid">
+      <a
+        href={palettePath(theme)}
+        data-who={theme.character?.id ?? ''}
+        class="group/track grid min-h-15 grid-cols-[1.375rem_2rem_minmax(0,1fr)_minmax(7.5rem,18.75rem)_1.75rem] items-center gap-4 rounded-lg px-3 py-2 outline-none transition-[background-color,opacity] duration-150 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-dim:opacity-40 data-picked:bg-accent max-sm:grid-cols-[2rem_minmax(0,1fr)_4.5rem] max-sm:gap-3 max-sm:px-1.5"
       >
-        <ul
-          id={list}
-          aria-label={`${work} palettes in ${shelf.id}`}
-          class={cn(
-            'grid grid-cols-[repeat(auto-fill,minmax(max(min(100%,14rem),calc((100%_-_1.25rem)/3)),1fr))] gap-2.5 px-4.5 pt-1',
-            foldable ? 'pb-14' : 'pb-4.5',
-          )}
-        >
-          {palettes.map((theme) => (
-            <li class="grid">
-              <PaletteCard theme={theme} lead={theme.subject === leadSubject} />
-            </li>
-          ))}
-        </ul>
-        {foldable ? (
-          <div class="pointer-events-none absolute inset-x-0 bottom-0 flex h-20 items-end justify-center pb-3">
+        <span class="text-right font-mono text-xs text-muted-foreground tabular-nums group-data-picked/track:text-soft-foreground max-sm:hidden">
+          {number}
+        </span>
+        <WorkSwatch style={swatchStyle(theme)} />
+        <span class="grid min-w-0 gap-px">
+          <span class="flex min-w-0 items-center gap-1.5">
             <span
-              data-fade
-              aria-hidden="true"
-              class="absolute inset-0 bg-linear-to-b from-transparent via-card/90 via-60% to-card transition-opacity duration-460 group-data-open/area:opacity-0"
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              data-fold-toggle
-              aria-expanded="false"
-              aria-controls={list}
-              class="group/fold pointer-events-auto relative"
+              translate="no"
+              class="truncate font-display text-base leading-snug font-extrabold transition-colors group-hover/track:text-primary"
+              safe
             >
-              <span data-fold-label>expand</span>
-              <Icon
-                node={ChevronDown}
-                class="transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-aria-expanded/fold:rotate-180"
-              />
-            </Button>
-          </div>
-        ) : null}
+              {theme.name}
+            </span>
+            {lead ? <LeadStar /> : null}
+          </span>
+          {native ? (
+            <span
+              translate="no"
+              lang={lang ?? undefined}
+              class="truncate font-display text-xs font-extrabold text-muted-foreground group-data-picked/track:text-soft-foreground"
+              safe
+            >
+              {native}
+            </span>
+          ) : null}
+        </span>
+        <span
+          aria-hidden="true"
+          class="block h-3 rounded-sm ring-1 ring-border forced-color-adjust-none"
+          style={`background:${ribbon(theme)}`}
+        />
+        <Icon
+          node={ArrowRight}
+          class="size-4 justify-self-center text-soft-foreground opacity-0 transition-opacity duration-150 group-hover/track:opacity-100 group-focus-visible/track:opacity-100 max-sm:hidden"
+        />
+      </a>
+    </li>
+  )
+}
+
+function Tracks({
+  market,
+  work,
+  leadSubject,
+  langs,
+}: {
+  market: WorkMarket
+  work: string
+  leadSubject: string
+  langs: Map<string, string | null>
+}) {
+  const { shelf, palettes } = market
+
+  return (
+    <div data-market={shelf.id} class="grid transition-opacity duration-200 data-missing:opacity-45">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-3 pb-3 max-sm:px-1.5">
+        <span class="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1.5">
+          <a
+            href={marketplacePath(shelf.id)}
+            translate="no"
+            class="font-display text-display-sm font-black transition-colors [overflow-wrap:anywhere] hover:text-primary"
+            safe
+          >
+            {shelf.id}
+          </a>
+          <MarketBadge builtin={shelf.id === BUILTIN} />
+        </span>
+        <span class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 max-sm:order-2 max-sm:w-full">
+          <RepoLine shelf={shelf} />
+          <Updated at={updatedAt(shelf)} />
+        </span>
+        <a
+          href={marketplacePath(shelf.id)}
+          aria-label={`open ${shelf.id}`}
+          class="ml-auto grid size-9 flex-none place-items-center rounded-full border text-soft-foreground transition-[background-color,border-color,color,translate] duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground max-sm:order-1 motion-safe:hover:translate-x-0.5"
+        >
+          <Icon node={ArrowRight} class="size-4" />
+        </a>
       </div>
-    </article>
+      <p data-missing-note hidden class="mx-3 mt-2.5 text-sm text-muted-foreground max-sm:mx-1.5">
+        no <span data-missing-who translate="no"></span> palette here yet
+      </p>
+      <ol aria-label={`${work} palettes in ${shelf.id}`} class="mt-1.5 grid">
+        {palettes.map((theme, index) => (
+          <Track
+            theme={theme}
+            number={index + 1}
+            lead={theme.subject === leadSubject}
+            lang={langs.get(theme.character?.id ?? '') ?? null}
+          />
+        ))}
+      </ol>
+    </div>
   )
 }
 
 export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; path: string }) {
   const { work, cast, markets } = page
-
-  const data: WorkData = {
-    markets: Object.fromEntries(
-      markets.map((market) => [
-        market.shelf.id,
-        { peeks: market.peeks, who: market.palettes.map((theme) => theme.character?.id ?? null) },
-      ]),
-    ),
-  }
+  const count = markets.reduce((sum, market) => sum + market.palettes.length, 0)
+  const langs = new Map(cast.map((slot) => [slot.id, slot.lang]))
 
   return (
-    <div class="ground relative flex min-h-dvh flex-col">
-      <WorkArt
-        art={page.art}
-        facets={page.facets}
-        sizes={HERO_SIZES}
-        eager
-        shade="hero"
-        class="absolute inset-x-0 top-0 h-150"
-      />
-      <SiteHeader current="/marketplace" facts={facts} />
-      <div class="relative mx-auto grid min-h-[34rem] w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] content-end gap-2 pt-15 pb-6">
-        <Crumbs trail={[{ label: 'marketplace', href: '/marketplace' }, { label: 'works' }]} />
+    <div class="ground relative isolate flex min-h-dvh flex-col">
+      <WorkHero art={page.art} facets={page.facets} sizes={HERO_SIZES} />
+      <SiteHeader current={BROWSE_PATH} facts={facts} />
+      <div class="relative mx-auto grid min-h-133 w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] content-end gap-1.5 pt-15 pb-8 max-sm:min-h-102">
+        <Crumbs trail={[{ label: 'browse', href: BROWSE_PATH }, { label: 'works' }]} />
         <h1 translate="no" class="font-display text-display-xl font-black text-balance" safe>
           {work.name}
         </h1>
@@ -260,54 +219,39 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
           </p>
         )}
       </div>
-      <main
-        id="content"
-        class="relative mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-13 pt-2 pb-24"
-      >
-        <work-page class="grid grid-cols-[minmax(0,1fr)] gap-13">
-          <section aria-labelledby="characters" class="grid gap-3.5">
-            <div class="flex items-baseline gap-3">
-              <h2 id="characters" class={cn('flex gap-2', LABEL)}>
-                characters <span class="font-mono font-normal tracking-normal">{cast.length}</span>
+      <main id="content" class="relative mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] pb-24">
+        <work-page class="grid grid-cols-[minmax(0,1fr)] gap-16 max-sm:gap-11">
+          <section aria-labelledby="characters" class="grid grid-cols-[minmax(0,1fr)] gap-4.5">
+            <div class="flex items-baseline gap-3.5">
+              <h2 id="characters" class={HEADING}>
+                characters <span class={COUNT}>{cast.length}</span>
               </h2>
               <button
                 type="button"
                 data-show-all
                 hidden
-                class="rounded-sm text-xs font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                class="rounded-sm text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
               >
                 show all
               </button>
             </div>
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9.25rem),1fr))] gap-3">
+            <div class="flex flex-wrap gap-x-5.5 gap-y-5 max-sm:-mx-5 max-sm:snap-x max-sm:snap-mandatory max-sm:scroll-px-5 max-sm:flex-nowrap max-sm:gap-x-3.5 max-sm:overflow-x-auto max-sm:px-5 max-sm:pt-1.5 max-sm:pb-1.5 max-sm:[scrollbar-width:none]">
               {cast.map((slot) => (
-                <Slot slot={slot} />
+                <Who slot={slot} />
               ))}
-              <a
-                href={requestUrl(work.name)}
-                target="_blank"
-                rel="noopener"
-                class="grid aspect-3/4 place-content-center justify-items-center gap-2 rounded-xl border border-dashed p-3 text-center text-sm text-muted-foreground transition-colors outline-none hover:border-input hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Icon node={Plus} class="size-5" />
-                <span class="inline-flex items-center gap-1">
-                  request a character
-                  <NewTab class="size-3.5" />
-                </span>
-              </a>
+              <Request work={work.name} />
             </div>
           </section>
-          <section aria-labelledby="marketplaces" class="grid gap-3.5">
-            <h2 id="marketplaces" class={cn('flex gap-2', LABEL)}>
-              marketplaces <span class="font-mono font-normal tracking-normal">{markets.length}</span>
+          <section aria-labelledby="palettes" class="grid grid-cols-[minmax(0,1fr)] gap-4.5">
+            <h2 id="palettes" class={HEADING}>
+              palettes <span class={COUNT}>{count}</span>
             </h2>
-            {markets.map((market) => (
-              <MarketCard market={market} work={work.name} leadSubject={work.lead} />
-            ))}
+            <div class="grid grid-cols-[minmax(0,1fr)] gap-8.5">
+              {markets.map((market) => (
+                <Tracks market={market} work={work.name} leadSubject={work.lead} langs={langs} />
+              ))}
+            </div>
           </section>
-          <script type="application/json" data-work>
-            {json(data)}
-          </script>
         </work-page>
       </main>
       <SiteFooter facts={facts} current={path} />

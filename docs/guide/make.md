@@ -120,7 +120,7 @@ the palette open with every draft of the same work as one set: a `.toml` that
 `ttheme add <file>.toml` installs into your own marketplace, a share link, or a
 marketplace ready to push.
 
-When a search on [ttheme.dev/marketplace](https://ttheme.dev/marketplace) finds
+When a search on [ttheme.dev/browse](https://ttheme.dev/browse) finds
 no palette of a work or a character, **make one** opens the builder on blank
 seeds under its name, and **request a palette** asks for one on GitHub.
 
@@ -161,7 +161,7 @@ deleted. It needs [GitHub CLI](https://cli.github.com) (`gh`) logged in, creates
 the repository, adds the `ttheme-marketplace` topic to a public one, shows what it
 will push and asks once more. Run it again to push changes. A public repository
 with the topic shows in Browse's `⌕ Search marketplace` and on
-[ttheme.dev/marketplace](https://ttheme.dev/marketplace) within the hour.
+[ttheme.dev/browse/marketplaces](https://ttheme.dev/browse/marketplaces) within the hour.
 
 ```text
 ttheme-marketplace.toml

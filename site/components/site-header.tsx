@@ -1,9 +1,9 @@
-import { BookOpen, Menu, Paintbrush, Store } from 'lucide'
+import { BookOpen, Compass, Menu, Paintbrush } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import type { Facts } from '@/lib/facts'
-import { REPO_URL, starCount } from '@/lib/gallery'
+import { BROWSE_PATH, REPO_URL, starCount } from '@/lib/gallery'
 import { BrandIcon, GitHubStar, Icon, NewTab } from '@/lib/icons'
 import { cn, plural } from '@/lib/utils'
 import { HeaderBar } from './header-bar'
@@ -11,7 +11,7 @@ import { Mark } from './mark'
 import { Wordmark } from './wordmark'
 
 const NAV = [
-  { href: '/marketplace', label: 'marketplace', icon: Store },
+  { href: BROWSE_PATH, label: 'browse', icon: Compass },
   { href: '/builder', label: 'builder', icon: Paintbrush },
   { href: '/docs', label: 'docs', icon: BookOpen },
 ] as const

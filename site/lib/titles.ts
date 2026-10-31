@@ -44,9 +44,16 @@ export function creditsMeta(): Meta {
   }
 }
 
+export function browseMeta(): Meta {
+  return {
+    title: 'browse works — terminal themes of your favorite characters · ttheme',
+    description: 'Every anime, game and series with a ttheme palette, built in or from a community marketplace.',
+  }
+}
+
 export function marketplacesMeta(): Meta {
   return {
-    title: 'marketplace — built-in and community terminal themes · ttheme',
+    title: 'browse marketplaces — built-in and community terminal themes · ttheme',
     description: 'The palettes built into ttheme and the marketplaces anyone publishes from a GitHub repository.',
   }
 }

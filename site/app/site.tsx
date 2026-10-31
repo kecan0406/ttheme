@@ -1,11 +1,11 @@
 import { Elysia, NotFound } from 'elysia'
 import assets from '@/assets.json' with { type: 'json' }
+import { BrowseMarketplaces, BrowseWorks } from '@/components/browse'
 import { BuilderPage } from '@/components/builder-page'
 import { Credits } from '@/components/credits'
 import { DocsIndex, DocsPage } from '@/components/docs'
 import { Home } from '@/components/home'
 import { NoSuchMarketplace, NoSuchPalette } from '@/components/marketplace-frame'
-import { MarketplacePage } from '@/components/marketplace-page'
 import { Missing } from '@/components/missing'
 import { HERO_SIZES, WorkView } from '@/components/work-page'
 import { MarketplaceWorkspace } from '@/components/workspace'
@@ -17,7 +17,7 @@ import { type Card, cardAlt, cardPng } from '@/lib/card'
 import { creditsOf } from '@/lib/credits'
 import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
-import { marketplacePath, palettePath, palettesPath, shelvesOf, WORKS_PATH } from '@/lib/gallery'
+import { BROWSE_PATH, MARKETPLACES_PATH, marketplacePath, palettePath, palettesPath, shelvesOf } from '@/lib/gallery'
 import { artFor } from '@/lib/key-art'
 import { lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
@@ -27,6 +27,7 @@ import { readShared, type Shared } from '@/lib/share'
 import { faviconIco, touchIconPng } from '@/lib/tab-icon'
 import { BUILTIN, type Marketplace, type Theme } from '@/lib/themes'
 import {
+  browseMeta,
   builderMeta,
   creditsMeta,
   docMeta,
@@ -39,7 +40,7 @@ import {
   workMeta,
 } from '@/lib/titles'
 import { workPages } from '@/lib/work-page'
-import { leadsOf, WORK_PATH, workPath, workRows } from '@/lib/works'
+import { leadsOf, WORK_PATH, workEntries, workPath } from '@/lib/works'
 import repo from '@/repo.json' with { type: 'json' }
 import pkg from '../../package.json' with { type: 'json' }
 import { type Page, page } from './document'
@@ -124,6 +125,8 @@ const listings = shelvesOf(themes, marketplaces, facts)
 
 const works = workPages(everyTheme, listings)
 
+const entries = workEntries(everyTheme, artFor)
+
 type Stock = {
   marketplace: Marketplace | null
   palettes: Theme[]
@@ -138,7 +141,8 @@ function stockOf(id: string): Stock | undefined {
 
 export const PRERENDERED: string[] = [
   '/',
-  '/marketplace',
+  BROWSE_PATH,
+  MARKETPLACES_PATH,
   '/builder',
   CREDITS_PATH,
   DOCS_PATH,
@@ -151,7 +155,6 @@ export const PRERENDERED: string[] = [
 
 export const DATA: string[] = [
   palettesPath(BUILTIN),
-  WORKS_PATH,
   '/builder/palettes.json',
   ...marketplaces.map((marketplace) => palettesPath(marketplace.id)),
 ]
@@ -162,7 +165,7 @@ function workspace(marketplace: Marketplace | null, palettes: Theme[], theme: Th
 
   const trail = [
     { name: 'ttheme', path: '/' },
-    { name: 'marketplace', path: '/marketplace' },
+    { name: 'browse', path: MARKETPLACES_PATH },
     { name: id, path: marketplacePath(id) },
   ]
 
@@ -272,21 +275,38 @@ export const site = new Elysia({ name: 'site' })
       <Home themes={themes} facts={facts} terminals={assets.terminals} />,
     ),
   )
-  .get('/marketplace', () =>
+  .get(BROWSE_PATH, () =>
     page(
       {
-        ...marketplacesMeta(),
-        path: '/marketplace',
+        ...browseMeta(),
+        path: BROWSE_PATH,
         ...CARD,
         ld: [
           crumbs([
             { name: 'ttheme', path: '/' },
-            { name: 'marketplace', path: '/marketplace' },
+            { name: 'browse', path: BROWSE_PATH },
           ]),
         ],
         cache: FIXED,
       },
-      <MarketplacePage themes={themes} marketplaces={marketplaces} facts={facts} />,
+      <BrowseWorks entries={entries} shelves={listings} facts={facts} />,
+    ),
+  )
+  .get(MARKETPLACES_PATH, () =>
+    page(
+      {
+        ...marketplacesMeta(),
+        path: MARKETPLACES_PATH,
+        ...CARD,
+        ld: [
+          crumbs([
+            { name: 'ttheme', path: '/' },
+            { name: 'browse', path: MARKETPLACES_PATH },
+          ]),
+        ],
+        cache: FIXED,
+      },
+      <BrowseMarketplaces shelves={listings} works={entries.length} facts={facts} />,
     ),
   )
   .get('/builder', () =>
@@ -399,9 +419,6 @@ export const site = new Elysia({ name: 'site' })
         })
       }),
   )
-  .get(WORKS_PATH, { fixed: true }, () =>
-    text(JSON.stringify(workRows(everyTheme, listings, artFor)), 'application/json'),
-  )
   .get(`${WORK_PATH}/:id`, ({ params }) => {
     const found = works.get(params.id)
 
@@ -421,7 +438,7 @@ export const site = new Elysia({ name: 'site' })
         ld: [
           crumbs([
             { name: 'ttheme', path: '/' },
-            { name: 'marketplace', path: '/marketplace' },
+            { name: 'browse', path: BROWSE_PATH },
             { name: found.work.name, path },
           ]),
         ],

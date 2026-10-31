@@ -1,6 +1,6 @@
 import { type KeyArt, keyArtOf, pictureOf } from '@/lib/art'
 import { commons } from '@/lib/builtin'
-import { type Peek, peekOf, type Shelf } from '@/lib/gallery'
+import type { Shelf } from '@/lib/gallery'
 import { artFor } from '@/lib/key-art'
 import { listedWorks } from '@/lib/marketplaces'
 import { langOf } from '@/lib/theme-entry'
@@ -19,7 +19,6 @@ export interface CastSlot {
 export interface WorkMarket {
   shelf: Shelf
   palettes: Theme[]
-  peeks: Peek[]
 }
 
 export interface WorkPage {
@@ -92,7 +91,7 @@ export function workPages(themes: readonly Theme[], shelves: readonly Shelf[]): 
           lead,
         )
 
-        return palettes.length > 0 ? [{ shelf, palettes, peeks: palettes.map((theme) => peekOf(theme, ref.name)) }] : []
+        return palettes.length > 0 ? [{ shelf, palettes }] : []
       })
 
     pages.set(ref.id, {

@@ -1,6 +1,5 @@
 import type { Facts } from '@/lib/facts'
-import { BUILTIN, isBuiltin, type Marketplace, shortName, type Theme } from '@/lib/themes'
-import { wearStyle } from '@/lib/wear'
+import { BUILTIN, isBuiltin, type Marketplace, type Theme } from '@/lib/themes'
 import type { Runner } from '../../src/core/runner.ts'
 
 export type Source = 'all' | 'builtin' | 'community'
@@ -159,18 +158,6 @@ export function palettesPath(id: string): string {
   return `${marketplacePath(id)}/palettes.json`
 }
 
-export const WORKS_PATH = '/marketplace/works.json'
+export const BROWSE_PATH = '/browse'
 
-export interface Peek {
-  title: string
-  use: string
-  style: string
-}
-
-export function peekOf(lead: Theme, work: string | null): Peek {
-  return {
-    title: [work, lead.name].filter(Boolean).join(' · '),
-    use: shortName(lead.id),
-    style: wearStyle(lead),
-  }
-}
+export const MARKETPLACES_PATH = '/browse/marketplaces'

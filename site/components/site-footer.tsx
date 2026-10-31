@@ -1,7 +1,7 @@
 import { type SimpleIcon, siGithub, siNpm } from 'simple-icons'
 import { CREDITS_PATH } from '@/lib/art'
 import type { Facts } from '@/lib/facts'
-import { marketplacePath, NPM_URL, REPO_URL } from '@/lib/gallery'
+import { BROWSE_PATH, MARKETPLACES_PATH, marketplacePath, NPM_URL, REPO_URL } from '@/lib/gallery'
 import { BrandIcon, NewTab } from '@/lib/icons'
 import { BUILTIN } from '@/lib/themes'
 import { cn } from '@/lib/utils'
@@ -12,7 +12,8 @@ const COLUMNS: { title: string; links: { label: string; href: string; brand?: Si
   {
     title: 'browse',
     links: [
-      { label: 'every palette', href: '/marketplace' },
+      { label: 'works', href: BROWSE_PATH },
+      { label: 'marketplaces', href: MARKETPLACES_PATH },
       { label: 'built-in', href: marketplacePath(BUILTIN) },
     ],
   },

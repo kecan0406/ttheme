@@ -55,45 +55,75 @@ function FacetArt({ style }: { style: string }) {
   )
 }
 
+function ArtImage({
+  art,
+  sizes,
+  eager,
+  class: className,
+}: {
+  art: KeyArt
+  sizes: string
+  eager: boolean
+  class?: string
+}) {
+  return (
+    <img
+      src={art.src}
+      srcset={art.srcset ?? undefined}
+      sizes={art.srcset ? sizes : undefined}
+      alt=""
+      loading={eager ? 'eager' : 'lazy'}
+      fetchpriority={eager ? 'high' : undefined}
+      decoding="async"
+      class={cn('absolute inset-0 size-full object-cover', className)}
+    />
+  )
+}
+
 export function WorkArt({
   art,
   facets,
   sizes,
   eager = false,
-  shade,
   class: className,
 }: {
   art: KeyArt | null
   facets: string
   sizes: string
   eager?: boolean
-  shade: 'card' | 'hero'
   class?: string
 }) {
   return (
     <div aria-hidden="true" data-slot="work-art" class={cn('overflow-hidden bg-muted', className)}>
+      {art ? <ArtImage art={art} sizes={sizes} eager={eager} /> : <FacetArt style={facets} />}
+    </div>
+  )
+}
+
+export function WorkHero({ art, facets, sizes }: { art: KeyArt | null; facets: string; sizes: string }) {
+  return (
+    <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 -z-10">
       {art ? (
-        <img
-          src={art.src}
-          srcset={art.srcset ?? undefined}
-          sizes={art.srcset ? sizes : undefined}
-          alt=""
-          loading={eager ? 'eager' : 'lazy'}
-          fetchpriority={eager ? 'high' : undefined}
-          decoding="async"
-          class="absolute inset-0 size-full object-cover"
-        />
-      ) : (
-        <FacetArt style={facets} />
-      )}
-      <span data-slot="work-art-shade" data-shade={shade} />
+        <div data-slot="work-glow" class="absolute inset-x-0 top-0 h-375 overflow-hidden max-sm:h-275">
+          <ArtImage art={art} sizes={sizes} eager />
+        </div>
+      ) : null}
+      <div data-slot="work-hero" class="absolute inset-x-0 top-0 h-175 overflow-hidden max-sm:h-135">
+        {art ? <ArtImage art={art} sizes={sizes} eager class="object-[50%_26%]" /> : <FacetArt style={facets} />}
+      </div>
     </div>
   )
 }
 
 export function SlotArt({ picture }: { picture: string | null }) {
   return picture ? (
-    <img src={picture} alt="" loading="lazy" decoding="async" class="absolute inset-0 size-full object-cover" />
+    <img
+      src={picture}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      class="absolute inset-0 size-full object-cover object-[50%_16%]"
+    />
   ) : (
     <svg
       viewBox="0 0 120 160"
