@@ -1,5 +1,16 @@
 import { expect, test } from 'bun:test'
-import { anilistOf, castFrom, foundSlugs, igdbOf, MOST_FOUND, membersOf, steamOf, titleOf, tmdbOf } from '@/lib/found'
+import {
+  anilistOf,
+  castFrom,
+  foundSlugs,
+  igdbOf,
+  MOST_FOUND,
+  membersOf,
+  nativeLang,
+  steamOf,
+  titleOf,
+  tmdbOf,
+} from '@/lib/found'
 import type { CastMember, NameHit, TaggedWork } from '../../src/core/names.ts'
 
 function hit(kind: NameHit['kind'], label: string, tags: string[], works: NameHit[] = []): NameHit {
@@ -104,6 +115,15 @@ test('a title falls back to the main title, then the label, and drops a native n
     native: null,
     lang: null,
   })
+})
+
+test("a cast member's native name is Korean by its Hangul, Japanese by its kana, and else its work's language if Japanese or Chinese", () => {
+  expect(nativeLang('한별', 'ja')).toBe('ko')
+  expect(nativeLang('ネル', 'ko')).toBe('ja')
+  expect(nativeLang('星野', 'zh-Hans')).toBe('zh-Hans')
+  expect(nativeLang('星野', 'ja')).toBe('ja')
+  expect(nativeLang('星野', 'ko')).toBeNull()
+  expect(nativeLang('星野', null)).toBeNull()
 })
 
 test('the picture ids prefer a series to a film and an anime to a manga', () => {

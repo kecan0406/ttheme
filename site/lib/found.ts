@@ -24,6 +24,12 @@ const IGDB = /^igdb:([a-z0-9-]+)$/
 
 const LATIN_LANGS = ['en', 'ja-Latn']
 
+const HANGUL = /\p{Script=Hangul}/u
+
+const KANA = /[\p{Script=Hiragana}\p{Script=Katakana}]/u
+
+const HAN_LANG = /^(?:ja|zh)(?:-|$)/
+
 export interface FoundWork {
   id: string
   name: string
@@ -103,6 +109,14 @@ export function titleOf(members: readonly TaggedWork[]): Title {
   return native && native.text !== name
     ? { name, native: native.text, lang: native.lang }
     : { name, native: null, lang: null }
+}
+
+export function nativeLang(text: string, work: string | null): string | null {
+  if (HANGUL.test(text)) return 'ko'
+
+  if (KANA.test(text)) return 'ja'
+
+  return work !== null && HAN_LANG.test(work) ? work : null
 }
 
 export function tmdbOf(members: readonly TaggedWork[]): string | null {

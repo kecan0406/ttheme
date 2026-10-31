@@ -1,7 +1,7 @@
 import { ArrowRight, Plus } from 'lucide'
 import { LinkButton } from '@/components/ui/button'
 import type { Facts } from '@/lib/facts'
-import type { FoundCast, FoundPage, FoundWork } from '@/lib/found'
+import { type FoundCast, type FoundPage, type FoundWork, nativeLang } from '@/lib/found'
 import { BROWSE_PATH, marketplacePath, palettePath } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
 import { makePath } from '@/lib/names'
@@ -240,7 +240,7 @@ function Member({ member, lang }: { member: FoundCast; lang: string | null }) {
         {member.native === null ? null : (
           <small
             translate="no"
-            lang={lang ?? undefined}
+            lang={nativeLang(member.native, lang) ?? undefined}
             class="max-w-full truncate font-display text-xs font-extrabold text-muted-foreground"
             safe
           >
