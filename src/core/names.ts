@@ -6,6 +6,8 @@ export const MAKE_URL = 'https://ttheme.dev/docs/guide/make'
 
 const QUALIFIER = /_\([^)]*\)$/
 
+const SLUG_MOST = 40
+
 export function requestUrl(asked: string): string {
   return `${pkg.bugs}/new?${new URLSearchParams({ template: 'palette.yml', character: asked })}`
 }
@@ -19,6 +21,20 @@ export interface NameHit {
   names: string[]
   tags: string[]
   works: NameHit[]
+}
+
+export interface WorkName {
+  text: string
+  lang: string | null
+  official: boolean
+}
+
+export interface TaggedWork {
+  id: string
+  label: string
+  names: WorkName[]
+  tags: string[]
+  refs: string[]
 }
 
 export interface NamedWork {
@@ -132,10 +148,18 @@ function slugFrom(text: string): string | undefined {
   const slug = plain
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .slice(0, 40)
+    .slice(0, SLUG_MOST)
     .replace(/^-+|-+$/g, '')
 
   return slug || undefined
+}
+
+export function workSlugOf(tag: string): string | undefined {
+  return slugFrom(tag.replace(QUALIFIER, ''))
+}
+
+export function cutSlug(slug: string): boolean {
+  return slug.length >= SLUG_MOST - 1
 }
 
 export function paletteNameOf(query: string, hit: NameHit | undefined): string | undefined {

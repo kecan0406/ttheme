@@ -7,7 +7,7 @@ import { DocsIndex, DocsPage } from '@/components/docs'
 import { Home } from '@/components/home'
 import { NoSuchMarketplace, NoSuchPalette } from '@/components/marketplace-frame'
 import { Missing } from '@/components/missing'
-import { HERO_SIZES, WorkView } from '@/components/work-page'
+import { FoundView, HERO_SIZES, WorkView } from '@/components/work-page'
 import { MarketplaceWorkspace } from '@/components/workspace'
 import { CREDITS_PATH } from '@/lib/art'
 import { RESTORE_SCRIPT } from '@/lib/builder'
@@ -19,7 +19,7 @@ import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
 import { BROWSE_PATH, MARKETPLACES_PATH, marketplacePath, palettePath, palettesPath, shelvesOf } from '@/lib/gallery'
 import { artFor } from '@/lib/key-art'
-import { lookUp, prime } from '@/lib/lookup'
+import { foundPage, lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
 import { MOST_ASKED, NAMES_PATH, type NamesAnswer } from '@/lib/names'
 import { crumbs, ROBOTS, siteGraph, sitemapXml } from '@/lib/seo'
@@ -32,6 +32,7 @@ import {
   creditsMeta,
   docMeta,
   docsMeta,
+  foundMeta,
   marketplaceMeta,
   marketplacesMeta,
   paletteMeta,
@@ -105,7 +106,9 @@ async function named(asked: string, signal: AbortSignal): Promise<Response> {
   if (!query) return answer({ error: 'no name to look up' }, RETRY, 400)
 
   try {
-    return answer(await lookUp(query, AbortSignal.any([signal, AbortSignal.timeout(LOOKUP_MS)])), WEEKLY)
+    const looked = await lookUp(query, AbortSignal.any([signal, AbortSignal.timeout(LOOKUP_MS)]))
+
+    return answer(looked.answer, looked.settled ? WEEKLY : RETRY)
   } catch (error) {
     process.stderr.write(`site: names: ${error instanceof Error ? error.message : String(error)}\n`)
 
@@ -208,6 +211,48 @@ function noWork(): Response {
   return page(
     { title: 'ttheme — no such work', description: STORE, status: 404, cache: RETRY },
     <Missing title="no such work" text="No marketplace has a palette of this work yet." facts={facts} />,
+  )
+}
+
+async function foundWork(id: string): Promise<Response> {
+  let looked: Awaited<ReturnType<typeof foundPage>>
+
+  try {
+    looked = await foundPage(id)
+  } catch (error) {
+    process.stderr.write(`site: works: ${error instanceof Error ? error.message : String(error)}\n`)
+
+    return page(
+      { title: 'ttheme — something went wrong', description: 'Try again in a moment.', status: 502, cache: 'no-store' },
+      <Missing
+        title="something went wrong"
+        text="The name index did not answer. Try again in a moment."
+        facts={facts}
+      />,
+    )
+  }
+
+  if (!looked) return noWork()
+  const { work } = looked.page
+  const path = workPath(work.id)
+
+  return page(
+    {
+      ...foundMeta(work),
+      path,
+      ...CARD,
+      robots: 'noindex',
+      ...(work.art ? { preload: { src: work.art.src, srcset: work.art.srcset, sizes: HERO_SIZES } } : {}),
+      ld: [
+        crumbs([
+          { name: 'ttheme', path: '/' },
+          { name: 'browse', path: BROWSE_PATH },
+          { name: work.name, path },
+        ]),
+      ],
+      cache: looked.settled ? WEEKLY : RETRY,
+    },
+    <FoundView page={looked.page} facts={facts} path={path} />,
   )
 }
 
@@ -422,7 +467,7 @@ export const site = new Elysia({ name: 'site' })
   .get(`${WORK_PATH}/:id`, ({ params }) => {
     const found = works.get(params.id)
 
-    if (!found) return noWork()
+    if (!found) return foundWork(params.id)
     const path = workPath(found.work.id)
 
     return page(

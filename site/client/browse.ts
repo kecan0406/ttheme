@@ -1,3 +1,5 @@
+import { THUMB_SIZES, WorkThumb } from '@/components/work-parts'
+import type { FoundWork } from '@/lib/found'
 import {
   type Filters,
   matches,
@@ -11,8 +13,10 @@ import {
   shelvesMatching,
 } from '@/lib/gallery'
 import { makePath, NAME_PAUSE, NAMES_PATH, type NamesAnswer, namesPath } from '@/lib/names'
+import { html } from '@/lib/render'
 import { plural } from '@/lib/utils'
-import { announce, readJson, reducedMotion } from './dom'
+import { WORN_FACETS, workPath } from '@/lib/works'
+import { announce, fill, readJson, reducedMotion } from './dom'
 import { composing, letter, typing } from './keys'
 import { afterPaint } from './palettes'
 
@@ -342,7 +346,50 @@ class BrowseWorks extends Browse {
   }
 
   #items(): HTMLElement[] {
-    return [...this.querySelectorAll<HTMLElement>('[data-tiles] > [data-work]')]
+    return [...this.querySelectorAll<HTMLElement>('[data-tiles] > [data-work]:not([data-found])')]
+  }
+
+  #place(found: readonly FoundWork[]) {
+    const list = this.querySelector('[data-tiles]')
+
+    if (!list) return
+    const shown = new Set(found.map((work) => work.id))
+
+    for (const tile of list.querySelectorAll<HTMLElement>(':scope > [data-found]'))
+      tile.hidden = !shown.has(tile.dataset.work ?? '')
+
+    const tiles = found.map((work) => {
+      const known = list.querySelector<HTMLElement>(`:scope > [data-found][data-work="${CSS.escape(work.id)}"]`)
+
+      if (known) return known
+      const tile = document.createElement('li')
+      tile.className = 'grid'
+      tile.dataset.work = work.id
+      tile.dataset.found = ''
+      fill(
+        tile,
+        html(
+          WorkThumb({
+            href: workPath(work.id),
+            name: work.name,
+            native: work.native,
+            lang: work.lang,
+            count: 0,
+            art: work.art,
+            facets: WORN_FACETS,
+            sizes: THUMB_SIZES,
+          }),
+        ),
+      )
+
+      return tile
+    })
+
+    const tail = [...list.children].slice(-tiles.length)
+
+    if (tiles.some((tile, at) => tail[at] !== tile)) list.append(...tiles)
+
+    for (const tile of tiles) tile.hidden = false
   }
 
   #said(item: HTMLElement): boolean {
@@ -413,7 +460,10 @@ class BrowseWorks extends Browse {
           : `${plural(markets.length, 'marketplace')} match “${query}”`,
     )
 
-    this.empty(shown > 0, source !== 'all' && items.some((item) => this.#hit(item, 'all')))
+    const elsewhere = items.some((item) => this.#hit(item, 'all'))
+
+    this.#place(shown === 0 && !elsewhere ? (answer?.found ?? []) : [])
+    this.empty(shown > 0, source !== 'all' && elsewhere)
   }
 
   protected order(sort: string) {
@@ -427,6 +477,7 @@ class BrowseWorks extends Browse {
       ...(sort === 'palettes'
         ? items.toSorted((a, b) => Number(b.dataset.palettes) - Number(a.dataset.palettes) || at(a) - at(b))
         : items.toSorted((a, b) => at(a) - at(b))),
+      ...list.querySelectorAll(':scope > [data-found]'),
     )
   }
 

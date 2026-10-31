@@ -19,7 +19,7 @@ The design system is the Design System artifact https://claude.ai/artifact/D3Ttw
 - A share link's page is `noindex`, and `robots.txt` never disallows `/builder/`.
 - Every page's title and description come from `lib/titles.ts`.
 - The server bundle reads no file at run time: wasm and fonts go in through the macros in `lib/embed.ts`.
-- The name lookup (`NAMES_PATH`, `lib/lookup.ts`) is the one route that asks outside at run time.
+- Only the name lookup (`NAMES_PATH`) and the page of a work no marketplace has a palette of ask outside at run time, both through `lib/lookup.ts`.
 
 ## CSS and markup
 

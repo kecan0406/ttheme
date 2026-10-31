@@ -7,6 +7,8 @@ import { plural } from '@/lib/utils'
 import { RepoLink } from './repo-link'
 import { WorkArt } from './work-art'
 
+export const THUMB_SIZES = '(min-width: 1320px) 240px, (min-width: 640px) 25vw, 50vw'
+
 export function WorkSwatch({ style }: { style: string }) {
   return <span aria-hidden="true" data-slot="work-swatch" style={style} />
 }
@@ -117,7 +119,7 @@ export function WorkThumb({
             {name}
           </span>
           <span class="ml-auto flex-none font-mono text-xs text-muted-foreground" safe>
-            {plural(count, 'palette')}
+            {count === 0 ? 'no palettes yet' : plural(count, 'palette')}
           </span>
         </span>
         {native ? (

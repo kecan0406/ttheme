@@ -1,11 +1,14 @@
 import { ArrowRight, Plus } from 'lucide'
+import { LinkButton } from '@/components/ui/button'
 import type { Facts } from '@/lib/facts'
+import type { FoundCast, FoundPage, FoundWork } from '@/lib/found'
 import { BROWSE_PATH, marketplacePath, palettePath } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
+import { makePath } from '@/lib/names'
 import { BUILTIN, type Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import type { CastSlot, WorkMarket, WorkPage } from '@/lib/work-page'
-import { ribbon, swatchStyle } from '@/lib/works'
+import { ribbon, swatchStyle, WORN_FACETS } from '@/lib/works'
 import { requestUrl } from '../../src/core/names.ts'
 import { Crumbs } from './marketplace-frame'
 import { SiteFooter } from './site-footer'
@@ -20,6 +23,15 @@ const HEADING = 'flex items-baseline gap-2.5 font-display text-display-md font-b
 const COUNT = 'font-mono text-sm font-normal tracking-normal text-muted-foreground'
 
 const CIRCLE = 'relative grid size-24 place-items-center overflow-hidden rounded-full max-sm:size-19'
+
+const CAST =
+  'flex flex-wrap gap-x-5.5 gap-y-5 max-sm:-mx-5 max-sm:snap-x max-sm:snap-mandatory max-sm:scroll-px-5 max-sm:flex-nowrap max-sm:gap-x-3.5 max-sm:overflow-x-auto max-sm:px-5 max-sm:pt-1.5 max-sm:pb-1.5 max-sm:[scrollbar-width:none]'
+
+const MAIN = 'relative mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] pb-24'
+
+const SECTIONS = 'grid grid-cols-[minmax(0,1fr)] gap-16 max-sm:gap-11'
+
+const SECTION = 'grid grid-cols-[minmax(0,1fr)] gap-4.5'
 
 function Who({ slot }: { slot: CastSlot }) {
   return (
@@ -194,6 +206,110 @@ function Tracks({
   )
 }
 
+function WorkHead({ name, native, lang }: { name: string; native: string | null; lang: string | null }) {
+  return (
+    <div class="relative mx-auto grid min-h-133 w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] content-end gap-1.5 pt-15 pb-8 max-sm:min-h-102">
+      <Crumbs trail={[{ label: 'browse', href: BROWSE_PATH }, { label: 'works' }]} />
+      <h1 translate="no" class="font-display text-display-xl font-black text-balance" safe>
+        {name}
+      </h1>
+      {native === null ? null : (
+        <p
+          translate="no"
+          lang={lang ?? undefined}
+          class="font-display text-base font-extrabold text-soft-foreground"
+          safe
+        >
+          {native}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function Member({ member, lang }: { member: FoundCast; lang: string | null }) {
+  return (
+    <li class="grid w-27 flex-none content-start justify-items-center gap-2 text-center max-sm:w-21 max-sm:snap-start">
+      <span class={cn(CIRCLE, 'bg-muted')}>
+        <SlotArt picture={member.picture} />
+      </span>
+      <span class="grid w-full min-w-0 justify-items-center gap-px">
+        <b translate="no" class="max-w-full truncate font-display text-base leading-snug font-extrabold" safe>
+          {member.name}
+        </b>
+        {member.native === null ? null : (
+          <small
+            translate="no"
+            lang={lang ?? undefined}
+            class="max-w-full truncate font-display text-xs font-extrabold text-muted-foreground"
+            safe
+          >
+            {member.native}
+          </small>
+        )}
+      </span>
+    </li>
+  )
+}
+
+function NoPalettes({ work }: { work: FoundWork }) {
+  return (
+    <div class="grid justify-items-start gap-3.5">
+      <p class="text-soft-foreground">
+        no palettes of{' '}
+        <span translate="no" class="font-semibold text-foreground" safe>
+          {work.name}
+        </span>{' '}
+        yet — ask for one, or make it yourself.
+      </p>
+      <span class="flex flex-wrap gap-2">
+        <LinkButton variant="outline" size="sm" href={requestUrl(work.name)} target="_blank" rel="noopener">
+          request a palette
+          <NewTab />
+        </LinkButton>
+        <LinkButton size="sm" href={makePath(work.id)}>
+          make one
+        </LinkButton>
+      </span>
+    </div>
+  )
+}
+
+export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts; path: string }) {
+  const { work, cast } = page
+
+  return (
+    <div class="ground relative isolate flex min-h-dvh flex-col">
+      <WorkHero art={work.art} facets={WORN_FACETS} sizes={HERO_SIZES} />
+      <SiteHeader current={BROWSE_PATH} facts={facts} />
+      <WorkHead name={work.name} native={work.native} lang={work.lang} />
+      <main id="content" class={MAIN}>
+        <div class={SECTIONS}>
+          {cast.length === 0 ? null : (
+            <section aria-labelledby="characters" class={SECTION}>
+              <h2 id="characters" class={HEADING}>
+                characters <span class={COUNT}>{cast.length}</span>
+              </h2>
+              <ul class={CAST}>
+                {cast.map((member) => (
+                  <Member member={member} lang={work.lang} />
+                ))}
+              </ul>
+            </section>
+          )}
+          <section aria-labelledby="palettes" class={SECTION}>
+            <h2 id="palettes" class={HEADING}>
+              palettes <span class={COUNT}>0</span>
+            </h2>
+            <NoPalettes work={work} />
+          </section>
+        </div>
+      </main>
+      <SiteFooter facts={facts} current={path} />
+    </div>
+  )
+}
+
 export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; path: string }) {
   const { work, cast, markets } = page
   const count = markets.reduce((sum, market) => sum + market.palettes.length, 0)
@@ -203,25 +319,10 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
     <div class="ground relative isolate flex min-h-dvh flex-col">
       <WorkHero art={page.art} facets={page.facets} sizes={HERO_SIZES} />
       <SiteHeader current={BROWSE_PATH} facts={facts} />
-      <div class="relative mx-auto grid min-h-133 w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] content-end gap-1.5 pt-15 pb-8 max-sm:min-h-102">
-        <Crumbs trail={[{ label: 'browse', href: BROWSE_PATH }, { label: 'works' }]} />
-        <h1 translate="no" class="font-display text-display-xl font-black text-balance" safe>
-          {work.name}
-        </h1>
-        {work.native === null ? null : (
-          <p
-            translate="no"
-            lang={work.lang ?? undefined}
-            class="font-display text-base font-extrabold text-soft-foreground"
-            safe
-          >
-            {work.native}
-          </p>
-        )}
-      </div>
-      <main id="content" class="relative mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] pb-24">
-        <work-page class="grid grid-cols-[minmax(0,1fr)] gap-16 max-sm:gap-11">
-          <section aria-labelledby="characters" class="grid grid-cols-[minmax(0,1fr)] gap-4.5">
+      <WorkHead name={work.name} native={work.native} lang={work.lang} />
+      <main id="content" class={MAIN}>
+        <work-page class={SECTIONS}>
+          <section aria-labelledby="characters" class={SECTION}>
             <div class="flex items-baseline gap-3.5">
               <h2 id="characters" class={HEADING}>
                 characters <span class={COUNT}>{cast.length}</span>
@@ -235,14 +336,14 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
                 show all
               </button>
             </div>
-            <div class="flex flex-wrap gap-x-5.5 gap-y-5 max-sm:-mx-5 max-sm:snap-x max-sm:snap-mandatory max-sm:scroll-px-5 max-sm:flex-nowrap max-sm:gap-x-3.5 max-sm:overflow-x-auto max-sm:px-5 max-sm:pt-1.5 max-sm:pb-1.5 max-sm:[scrollbar-width:none]">
+            <div class={CAST}>
               {cast.map((slot) => (
                 <Who slot={slot} />
               ))}
               <Request work={work.name} />
             </div>
           </section>
-          <section aria-labelledby="palettes" class="grid grid-cols-[minmax(0,1fr)] gap-4.5">
+          <section aria-labelledby="palettes" class={SECTION}>
             <h2 id="palettes" class={HEADING}>
               palettes <span class={COUNT}>{count}</span>
             </h2>

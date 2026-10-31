@@ -48,7 +48,7 @@ import { requestUrl } from '../../src/core/names.ts'
 import { CommandRow } from './command-row'
 import { MarketplaceFrame } from './marketplace-frame'
 import { WorkArt } from './work-art'
-import { MarketBadge, RepoLine, Stars, Updated, updatedAt, WorkThumb } from './work-parts'
+import { MarketBadge, RepoLine, Stars, THUMB_SIZES, Updated, updatedAt, WorkThumb } from './work-parts'
 
 type Lens = 'works' | 'marketplaces'
 
@@ -81,8 +81,6 @@ const VIEWS = {
 } satisfies Record<string, Option>
 
 const PUBLISH = ['ttheme marketplace init', 'ttheme marketplace check']
-
-const THUMB_SIZES = '(min-width: 1320px) 240px, (min-width: 640px) 25vw, 50vw'
 
 interface Stack {
   id: string | null

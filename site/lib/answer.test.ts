@@ -23,14 +23,14 @@ function asked(request: string): string | null {
 
 test('an answer keeps the works that have palettes and says what a character was read as', () => {
   const hits = [hit('character', 'ネル', ['nell_(moonlit_harbor)']), hit('work', 'Tidewater', ['tidewater'])]
-  const answer = answerOf('넬', hits, works, new Set(['moonlit-harbor']))
+  const answer = answerOf('넬', hits, works, new Set(['moonlit-harbor']), [])
 
   expect(answer.works).toEqual([{ id: 'moonlit-harbor', read: 'ネル', by: 'character', characters: ['nell'] }])
   expect([answer.label, asked(answer.request), answer.name]).toEqual(['ネル', 'ネル', 'nell'])
 })
 
 test('a name no index knows is asked for and made as it was typed', () => {
-  const answer = answerOf('Glass Orchard', [], works, new Set())
+  const answer = answerOf('Glass Orchard', [], works, new Set(), [])
 
   expect(answer.works).toEqual([])
   expect([answer.label, asked(answer.request), answer.name]).toEqual([

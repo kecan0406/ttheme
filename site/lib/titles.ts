@@ -1,3 +1,4 @@
+import type { FoundWork } from '@/lib/found'
 import { type Marketplace, shortName, type Theme, type WorkRef } from '@/lib/themes'
 
 export interface Meta {
@@ -78,6 +79,13 @@ export function workMeta(work: WorkRef, palettes: readonly Theme[], marketplaces
   return {
     title: `${work.name} terminal themes · ttheme`,
     description: `${work.name}${work.native ? ` (${work.native})` : ''} color schemes for your terminal: ${some(names, 6)} — ${palettes.length} ${palettes.length === 1 ? 'palette' : 'palettes'} from ${marketplaces} ${marketplaces === 1 ? 'marketplace' : 'marketplaces'}.`,
+  }
+}
+
+export function foundMeta(work: FoundWork): Meta {
+  return {
+    title: `${work.name} terminal themes · ttheme`,
+    description: `${work.name}${work.native ? ` (${work.native})` : ''} has no ttheme palettes yet: ask for one, or make it yourself.`,
   }
 }
 

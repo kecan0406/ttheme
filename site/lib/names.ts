@@ -1,3 +1,5 @@
+import type { FoundWork } from '@/lib/found'
+
 export const NAMES_PATH = '/names.json'
 
 export const NEW_KEY = 'new'
@@ -15,6 +17,7 @@ export interface NamedRow {
 
 export interface NamesAnswer {
   works: NamedRow[]
+  found: FoundWork[]
   label: string
   request: string
   name: string | null

@@ -4,6 +4,8 @@ import { BUILTIN, faceOf, isBuiltin, paint, type Shade, type Theme, type WorkRef
 
 export const FIRST = 'ttheme/miku'
 
+export const WORN_FACETS = '--k0:var(--bg);--k1:var(--a0);--k2:var(--se);--k3:var(--cu);--k4:var(--a1);--k5:var(--a5)'
+
 export interface WorkShelf {
   key: string
   work: WorkRef | null

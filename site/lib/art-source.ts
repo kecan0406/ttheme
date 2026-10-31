@@ -1,5 +1,7 @@
 import type { Art, WorkArt } from '@/lib/art'
+import type { FoundCast } from '@/lib/found'
 import type { Work } from '../../src/core/commons.ts'
+import { inert } from '../../src/core/text.ts'
 
 export interface ArtIds {
   tmdb: string
@@ -117,11 +119,37 @@ const WIDEST = 1280
 
 const PAGE = 50
 
-const TRIES = 3
-
 const PAUSE_MS = 2000
 
-const TIMEOUT_MS = 15000
+const MOST_CAST = 12
+
+interface Reach {
+  tries: number
+  timeout: number
+}
+
+const BUILD: Reach = { tries: 3, timeout: 15000 }
+
+const LIVE: Reach = { tries: 1, timeout: 3000 }
+
+export interface Live<T> {
+  value: T
+  settled: boolean
+}
+
+export interface Media {
+  banner: string | null
+  cast: FoundCast[]
+}
+
+class Refused extends Error {
+  readonly status: number
+
+  constructor(url: string, status: number) {
+    super(`${url} answered ${status}`)
+    this.status = status
+  }
+}
 
 interface Backdrop {
   file_path?: unknown
@@ -135,17 +163,17 @@ function pause(ms: number): Promise<void> {
   return new Promise((done) => setTimeout(done, ms))
 }
 
-async function reach(url: string, init: RequestInit = {}): Promise<unknown> {
+async function reach(url: string, init: RequestInit = {}, how: Reach = BUILD): Promise<unknown> {
   let failure = new Error('no answer')
 
-  for (let tried = 0; tried < TRIES; tried += 1) {
+  for (let tried = 0; tried < how.tries; tried += 1) {
     if (tried > 0) await pause(PAUSE_MS * tried)
 
     try {
-      const response = await fetch(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) })
+      const response = await fetch(url, { ...init, signal: AbortSignal.timeout(how.timeout) })
 
       if (response.ok) return await response.json()
-      failure = new Error(`${url} answered ${response.status}`)
+      failure = new Refused(url, response.status)
 
       if (response.status < 500 && response.status !== 429) break
     } catch (error) {
@@ -175,25 +203,33 @@ function bestOf(backdrops: Backdrop[]): string | null {
   return best?.file_path ?? null
 }
 
-async function backdropOf(tmdb: string, token: string): Promise<string | null> {
+async function backdropOf(tmdb: string, token: string, how: Reach = BUILD): Promise<string | null> {
   const init = { headers: { authorization: `Bearer ${token}`, accept: 'application/json' } }
-  const details = (await reach(`${TMDB_API}/${tmdb}`, init)) as { backdrop_path?: unknown }
+  const details = (await reach(`${TMDB_API}/${tmdb}`, init, how)) as { backdrop_path?: unknown }
 
   if (typeof details?.backdrop_path === 'string' && TMDB_FILE.test(details.backdrop_path)) return details.backdrop_path
 
-  const found = (await reach(`${TMDB_API}/${tmdb}/images?include_image_language=null,xx,en,ja`, init)) as {
+  const found = (await reach(`${TMDB_API}/${tmdb}/images?include_image_language=null,xx,en,ja`, init, how)) as {
     backdrops?: unknown
   }
 
   return Array.isArray(found?.backdrops) ? bestOf(found.backdrops as Backdrop[]) : null
 }
 
-async function anilist(query: string, variables: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const answer = (await reach(ANILIST_API, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', accept: 'application/json' },
-    body: JSON.stringify({ query, variables }),
-  })) as { data?: Record<string, unknown> }
+async function anilist(
+  query: string,
+  variables: Record<string, unknown>,
+  how: Reach = BUILD,
+): Promise<Record<string, unknown>> {
+  const answer = (await reach(
+    ANILIST_API,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ query, variables }),
+    },
+    how,
+  )) as { data?: Record<string, unknown> }
 
   if (!answer?.data) throw new Error('AniList answered no data')
 
@@ -246,6 +282,63 @@ async function picturesOf(ids: number[]): Promise<Map<number, string>> {
   }
 
   return pictures
+}
+
+async function settle<T>(run: () => Promise<T>, none: T): Promise<Live<T>> {
+  try {
+    return { value: await run(), settled: true }
+  } catch (error) {
+    return { value: none, settled: error instanceof Refused && error.status === 404 }
+  }
+}
+
+function said(value: unknown): string | null {
+  const shown = typeof value === 'string' ? inert(value).trim() : ''
+
+  return shown || null
+}
+
+function castOf(media: Record<string, unknown> | undefined): FoundCast[] {
+  const characters = media?.characters as { edges?: unknown } | undefined
+  const edges = Array.isArray(characters?.edges) ? (characters.edges as Record<string, unknown>[]) : []
+
+  return edges.flatMap((edge) => {
+    const node = edge?.node as Record<string, unknown> | undefined
+    const names = node?.name as Record<string, unknown> | undefined
+    const name = said(names?.full)
+    const native = said(names?.native)
+
+    if (!name) return []
+
+    return [
+      {
+        name,
+        native: native === name ? null : native,
+        picture: file((node?.image as Record<string, unknown> | undefined)?.large),
+      },
+    ]
+  })
+}
+
+export function liveBackdrop(tmdb: string, token: string): Promise<Live<string | null>> {
+  return settle(() => backdropOf(tmdb, token, LIVE), null)
+}
+
+export function liveMedia(id: number): Promise<Live<Media>> {
+  return settle(
+    async () => {
+      const data = await anilist(
+        `query ($id: Int) { media: Media(id: $id) { bannerImage characters(sort: [ROLE, RELEVANCE, ID], perPage: ${MOST_CAST}) { edges { node { name { full native } image { large } } } } } }`,
+        { id },
+        LIVE,
+      )
+
+      const media = data.media as Record<string, unknown> | undefined
+
+      return { banner: file(media?.bannerImage), cast: castOf(media) }
+    },
+    { banner: null, cast: [] },
+  )
 }
 
 export function artProblems(works: readonly Work[]): string[] {
