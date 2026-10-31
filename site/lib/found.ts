@@ -5,7 +5,14 @@ export const MOST_FOUND = 4
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
-const NATIVE_LANGS = ['ja', 'zh-Hant', 'zh-Hans', 'zh', 'ko']
+const ORIGIN_LANGS = new Map<string, readonly string[]>([
+  ['JP', ['ja']],
+  ['KR', ['ko']],
+  ['CN', ['zh-Hans', 'zh', 'zh-Hant']],
+  ['TW', ['zh-Hant', 'zh', 'zh-Hans']],
+  ['HK', ['zh-Hant', 'zh', 'zh-Hans']],
+  ['MO', ['zh-Hant', 'zh', 'zh-Hans']],
+])
 
 const ANIME = /^anilist:(\d+)$/
 
@@ -73,6 +80,12 @@ function shortest(names: readonly WorkName[], keep: (name: WorkName) => boolean)
   return best
 }
 
+function nativeLangs(members: readonly TaggedWork[]): string[] {
+  const origin = members.find((member) => member.origin.length > 0)?.origin ?? ['JP']
+
+  return origin.flatMap((country) => ORIGIN_LANGS.get(country) ?? [])
+}
+
 export function titleOf(members: readonly TaggedWork[]): Title {
   const names = members.flatMap((member) => member.names)
   const head = members[0]
@@ -83,9 +96,9 @@ export function titleOf(members: readonly TaggedWork[]): Title {
     head?.label ??
     ''
 
-  const native = NATIVE_LANGS.map((lang) => shortest(names, (each) => each.official && each.lang === lang)).find(
-    (each) => each !== undefined,
-  )
+  const native = nativeLangs(members)
+    .map((lang) => shortest(names, (each) => each.official && each.lang === lang))
+    .find((each) => each !== undefined)
 
   return native && native.text !== name
     ? { name, native: native.text, lang: native.lang }

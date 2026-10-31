@@ -36,6 +36,7 @@ export interface TaggedWork {
   names: WorkName[]
   tags: string[]
   refs: string[]
+  origin: string[]
 }
 
 export interface CastMember {

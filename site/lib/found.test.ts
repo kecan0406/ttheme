@@ -7,7 +7,7 @@ function hit(kind: NameHit['kind'], label: string, tags: string[], works: NameHi
 }
 
 function tagged(id: string, tags: string[], more: Partial<TaggedWork> = {}): TaggedWork {
-  return { id, label: id, names: [], tags, refs: [], ...more }
+  return { id, label: id, names: [], tags, refs: [], origin: [], ...more }
 }
 
 test('a work hit gives the slug of its main tag, and a character the one of its home, never a work it guests in', () => {
@@ -62,6 +62,30 @@ test('a title is the shortest official English and native names any member has',
   ]
 
   expect(titleOf(members)).toEqual({ name: 'Moonlit Harbor', native: '月明かりの港', lang: 'ja' })
+})
+
+test("a native title is in the language of the first member's country of origin, Japanese when none says, and none from elsewhere", () => {
+  const names = [
+    { text: 'Starfall Arena', lang: 'en', official: true },
+    { text: 'スターフォール・アリーナ', lang: 'ja', official: true },
+    { text: '星落竞技场', lang: 'zh-Hans', official: true },
+    { text: '星落競技場', lang: 'zh-Hant', official: true },
+  ]
+
+  const of = (...origins: string[][]) => titleOf(origins.map((origin, at) => tagged(`w/${at}`, [], { names, origin })))
+
+  expect(of(['US'])).toEqual({ name: 'Starfall Arena', native: null, lang: null })
+  expect(of(['US'], ['JP'])).toEqual({ name: 'Starfall Arena', native: null, lang: null })
+  expect(of([], ['US', 'JP'])).toEqual({ name: 'Starfall Arena', native: 'スターフォール・アリーナ', lang: 'ja' })
+  expect(of(['CN'])).toEqual({ name: 'Starfall Arena', native: '星落竞技场', lang: 'zh-Hans' })
+  expect(of(['TW'])).toEqual({ name: 'Starfall Arena', native: '星落競技場', lang: 'zh-Hant' })
+  expect(of([])).toEqual({ name: 'Starfall Arena', native: 'スターフォール・アリーナ', lang: 'ja' })
+
+  expect(titleOf([tagged('w/9', [], { names: names.filter((name) => name.lang !== 'ja') })])).toEqual({
+    name: 'Starfall Arena',
+    native: null,
+    lang: null,
+  })
 })
 
 test('a title falls back to the main title, then the label, and drops a native name that reads the same', () => {

@@ -36,6 +36,8 @@ const LANG = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/
 
 const REF = /^[a-z]+:[\w./-]+$/
 
+const COUNTRY = /^[A-Z]{2}$/
+
 function text(value: unknown): string | undefined {
   const shown = typeof value === 'string' ? inert(value).trim() : ''
 
@@ -117,6 +119,7 @@ function taggedOf(value: unknown): TaggedWork | undefined {
     names: workNamesOf(v.names),
     tags: strings(v.danbooru, (t) => t !== '' && !ODD.test(t)),
     refs: strings(v.refs, (r) => REF.test(r)),
+    origin: strings(v.origin, (c) => COUNTRY.test(c)),
   }
 }
 
