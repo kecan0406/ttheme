@@ -2,29 +2,29 @@
 name = "Chuunibyou"
 native = "中二病でも恋がしたい!"
 danbooru = "chuunibyou_demo_koi_ga_shitai!"
-lead = "chuunibyou/rikka"
+lead = "chuunibyou/takanashi-rikka"
 
 [[character]]
-id = "rikka"
+id = "takanashi-rikka"
 native = ["小鳥遊六花"]
 danbooru = "takanashi_rikka"
 
 [[character]]
-id = "yuuta"
+id = "togashi-yuuta"
 native = ["富樫勇太"]
 danbooru = "togashi_yuuta"
 
 [[character]]
-id = "shinka"
+id = "nibutani-shinka"
 native = ["丹生谷森夏"]
 danbooru = "nibutani_shinka"
 
 [[character]]
-id = "dekomori"
+id = "dekomori-sanae"
 native = ["凸守早苗"]
 danbooru = "dekomori_sanae"
 
 [[character]]
-id = "kumin"
+id = "tsuyuri-kumin"
 native = ["五月七日くみん"]
 danbooru = "tsuyuri_kumin"

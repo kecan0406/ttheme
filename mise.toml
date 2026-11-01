@@ -130,16 +130,16 @@ layer '(( ${#TTHEME_PALETTE} == 0 ))' ||
   { echo "bin:check failed: a fresh init should install no palettes"; exit 1; }
 grep -q '^theme = ' "$tmp/.config/ttheme/ghostty.conf" &&
   { echo "bin:check failed: a fresh init should not pin a terminal theme"; exit 1; }
-cli add gojo
-layer '(( ${#TTHEME_PALETTE} == 1 )) && [[ -n ${TTHEME_PALETTE[ttheme/gojo]} ]]' ||
+cli add gojo-satoru
+layer '(( ${#TTHEME_PALETTE} == 1 )) && [[ -n ${TTHEME_PALETTE[ttheme/gojo-satoru]} ]]' ||
   { echo "bin:check failed: add did not reach the installed layer"; exit 1; }
-grep -q '^theme = ttheme-ttheme--gojo\.dark$' "$tmp/.config/ttheme/ghostty.conf" ||
+grep -q '^theme = ttheme-ttheme--gojo-satoru\.dark$' "$tmp/.config/ttheme/ghostty.conf" ||
   { echo "bin:check failed: add did not point ghostty at the palette"; exit 1; }
-cli add geto
-layer '__tt_keep ttheme/geto > /dev/null' ||
+cli add geto-suguru
+layer '__tt_keep ttheme/geto-suguru > /dev/null' ||
   { echo "bin:check failed: keep could not save a default"; exit 1; }
-cli add sukuna
-grep -q '^theme = ttheme-ttheme--geto\.dark$' "$tmp/.config/ttheme/ghostty.conf" ||
+cli add ryoumen-sukuna
+grep -q '^theme = ttheme-ttheme--geto-suguru\.dark$' "$tmp/.config/ttheme/ghostty.conf" ||
   { echo "bin:check failed: an add undid the default keep saved"; exit 1; }
 printf 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' | base64 -d > "$tmp/dot.png"
 sandboxed node "$tmp/.config/ttheme/ttheme.js" palette measure "$tmp/dot.png" --preview --json | grep -q '"status": "done"' ||
@@ -164,7 +164,7 @@ cli palette make --anchors "$tmp/missing.json" --json 2> /dev/null || code=$?
 run_init
 layer '(( ${#TTHEME_PALETTE} == 3 ))' ||
   { echo "bin:check failed: init --yes over an install dropped its palettes"; exit 1; }
-grep -q '^theme = ttheme-ttheme--geto\.dark$' "$tmp/.config/ttheme/ghostty.conf" ||
+grep -q '^theme = ttheme-ttheme--geto-suguru\.dark$' "$tmp/.config/ttheme/ghostty.conf" ||
   { echo "bin:check failed: init --yes over an install lost its default"; exit 1; }
 run_init
 for f in "$tmp/.config/ghostty/config" "$tmp/.zshrc"; do

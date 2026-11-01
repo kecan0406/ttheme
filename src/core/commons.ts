@@ -1,5 +1,6 @@
 import { SITES } from './booru.ts'
 import { memo } from './memo.ts'
+import { slugOfTag } from './names.ts'
 import { escaped, quoted } from './text.ts'
 import {
   BUILTIN,
@@ -321,6 +322,11 @@ export function commonsProblems(works: readonly Work[]): string[] {
 
     for (const c of work.characters) {
       const subject = `${work.id}/${c.id}`
+      const full = c.danbooru === undefined ? c.id : slugOfTag(c.danbooru)
+
+      if (full !== c.id) {
+        problems.push(`${subject}: a character's id is its danbooru tag's full name, ${quoted(full ?? '')}`)
+      }
 
       for (const other of c.also ?? []) {
         if (other === work.id || !ids.has(other)) {

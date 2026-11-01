@@ -1,6 +1,7 @@
 import { ArrowRight, Plus } from 'lucide'
 import { LinkButton } from '@/components/ui/button'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { personOf } from '@/lib/cast'
 import type { Facts } from '@/lib/facts'
 import { type FamilyWork, type FoundCast, type FoundPage, type FoundWork, SHOWN_CAST } from '@/lib/found'
 import { BROWSE_PATH, marketplacePath, palettePath } from '@/lib/gallery'
@@ -110,7 +111,8 @@ function Request({ work }: { work: string }) {
 }
 
 function Track({ theme, number, lead, lang }: { theme: Theme; number: number; lead: boolean; lang: string | null }) {
-  const native = theme.character?.native[0]
+  const person = theme.work && theme.character ? personOf(theme.work.id, theme.character.id) : null
+  const native = person ?? theme.character?.native[0]
 
   return (
     <li class="grid">
@@ -137,7 +139,7 @@ function Track({ theme, number, lead, lang }: { theme: Theme; number: number; le
           {native ? (
             <span
               translate="no"
-              lang={lang ?? undefined}
+              lang={person ? undefined : (lang ?? undefined)}
               class="truncate font-display text-xs font-extrabold text-muted-foreground group-data-picked/track:text-soft-foreground"
               safe
             >

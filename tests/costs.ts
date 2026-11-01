@@ -23,13 +23,13 @@ interface Action {
 
 const ACTIONS: Action[] = [
   { id: 'empty', run: (p, tab) => p.type(tab, '') },
-  { id: 'use', run: (p, tab) => p.type(tab, 'ttheme use kita') },
-  { id: 'use-plain', run: (p, tab) => p.type(tab, 'ttheme use miku') },
-  { id: 'default', run: (p, tab) => p.type(tab, 'ttheme default rei') },
+  { id: 'use', run: (p, tab) => p.type(tab, 'ttheme use kita-ikuyo') },
+  { id: 'use-plain', run: (p, tab) => p.type(tab, 'ttheme use hatsune-miku') },
+  { id: 'default', run: (p, tab) => p.type(tab, 'ttheme default ayanami-rei') },
   {
     id: 'pin',
     async run(p, tab) {
-      p.pin('work', 'ttheme/kita')
+      p.pin('work', 'ttheme/kita-ikuyo')
       await p.type(tab, 'mkdir -p ~/work && cd ~/work')
     },
   },

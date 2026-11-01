@@ -8,9 +8,9 @@ import { installTestPicture } from '../picture.ts'
 import { COLS, ITERM_SUITE, lingering, type Place, ROWS, warpPaths } from './model.ts'
 import { BEHAVIOR, OWN, type Term, WIRING, WT_PROFILE } from './terms.ts'
 
-export const PALETTES = ['ttheme/konata', 'ttheme/kita', 'ttheme/miku', 'ttheme/rei']
-export const PICTURED = ['ttheme/konata', 'ttheme/kita']
-export const STARTUP = 'ttheme/konata'
+export const PALETTES = ['ttheme/izumi-konata', 'ttheme/kita-ikuyo', 'ttheme/hatsune-miku', 'ttheme/ayanami-rei']
+export const PICTURED = ['ttheme/izumi-konata', 'ttheme/kita-ikuyo']
+export const STARTUP = 'ttheme/izumi-konata'
 
 let removals = 0
 

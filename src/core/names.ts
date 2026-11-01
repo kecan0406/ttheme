@@ -12,16 +12,11 @@ export function requestUrl(asked: string): string {
   return `${pkg.bugs}/new?${new URLSearchParams({ template: 'palette.yml', character: asked })}`
 }
 
-export type NameKind = 'work' | 'character'
-
 export interface NameHit {
   id: string
-  kind: NameKind
   label: string
   names: string[]
   tags: string[]
-  works: NameHit[]
-  home?: string
 }
 
 export interface WorkName {
@@ -50,19 +45,13 @@ export interface CastMember {
   lead: boolean
 }
 
-export interface NamedWork {
-  id: string
-  hit: NameHit
-}
-
 export interface Named {
-  works: NamedWork[]
+  works: string[]
   unknown: NameHit[]
 }
 
 interface Keys {
   works: Map<string, string>
-  characters: Map<string, string[]>
   names: Map<string, string>
 }
 
@@ -75,7 +64,7 @@ function keysOf(works: readonly Work[]): Keys {
     return cached
   }
 
-  const keys: Keys = { works: new Map(), characters: new Map(), names: new Map() }
+  const keys: Keys = { works: new Map(), names: new Map() }
 
   for (const work of works) {
     if (work.danbooru && !keys.works.has(work.danbooru)) {
@@ -89,12 +78,6 @@ function keysOf(works: readonly Work[]): Keys {
         keys.names.set(key, work.id)
       }
     }
-
-    for (const character of work.characters) {
-      if (character.danbooru && !keys.characters.has(character.danbooru)) {
-        keys.characters.set(character.danbooru, [work.id, ...(character.also ?? [])])
-      }
-    }
   }
 
   KEYS.set(works, keys)
@@ -102,62 +85,27 @@ function keysOf(works: readonly Work[]): Keys {
   return keys
 }
 
-function workFor(hit: NameHit, keys: Keys): string[] {
-  const tagged = hit.tags.flatMap((tag) => keys.works.get(tag) ?? [])
+function workFor(hit: NameHit, keys: Keys): string | undefined {
+  const tagged = hit.tags.flatMap((tag) => keys.works.get(tag) ?? [])[0]
 
-  if (tagged.length > 0) {
-    return tagged.slice(0, 1)
-  }
-
-  return [hit.label, ...hit.names].flatMap((name) => keys.names.get(searchKey(name)) ?? []).slice(0, 1)
-}
-
-function characterFor(hit: NameHit, keys: Keys): string[] {
-  const tagged = hit.tags.map((tag) => keys.characters.get(tag)).find((ids) => ids !== undefined)
-
-  if (tagged) {
-    return tagged
-  }
-
-  if (hit.home !== undefined) {
-    return keys.works.has(hit.home) ? [keys.works.get(hit.home) ?? ''] : []
-  }
-
-  return hit.works.flatMap((work) => workFor(work, keys))
+  return tagged ?? [hit.label, ...hit.names].flatMap((name) => keys.names.get(searchKey(name)) ?? [])[0]
 }
 
 export function namedWorks(hits: readonly NameHit[], works: readonly Work[]): Named {
   const keys = keysOf(works)
-  const seen = new Set<string>()
   const named: Named = { works: [], unknown: [] }
 
   for (const hit of hits) {
-    const ids = hit.kind === 'work' ? workFor(hit, keys) : characterFor(hit, keys)
+    const id = workFor(hit, keys)
 
-    if (ids.length === 0) {
+    if (id === undefined) {
       named.unknown.push(hit)
-    }
-
-    for (const id of ids) {
-      if (!seen.has(id)) {
-        seen.add(id)
-        named.works.push({ id, hit })
-      }
+    } else if (!named.works.includes(id)) {
+      named.works.push(id)
     }
   }
 
   return named
-}
-
-export function knowsCharacter(works: readonly Work[], tag: string): boolean {
-  return keysOf(works).characters.has(tag)
-}
-
-export function askedOf(query: string, hit: NameHit | undefined): string {
-  const home = hit?.home === undefined ? undefined : hit.home.replace(QUALIFIER, '').replaceAll('_', ' ')
-  const work = hit?.kind === 'character' ? (home ?? hit.works[0]?.label) : undefined
-
-  return hit ? (work ? `${hit.label}, ${work}` : hit.label) : query
 }
 
 function slugFrom(text: string): string | undefined {
@@ -176,7 +124,7 @@ function slugFrom(text: string): string | undefined {
   return slug || undefined
 }
 
-export function workSlugOf(tag: string): string | undefined {
+export function slugOfTag(tag: string): string | undefined {
   return slugFrom(tag.replace(QUALIFIER, ''))
 }
 
@@ -184,8 +132,6 @@ export function cutSlug(slug: string): boolean {
   return slug.length >= SLUG_MOST - 1
 }
 
-export function paletteNameOf(query: string, hit: NameHit | undefined): string | undefined {
-  const tags = (hit?.tags ?? []).map((tag) => tag.replace(QUALIFIER, ''))
-
-  return [...tags, ...(hit ? [hit.label, ...hit.names] : []), query].map(slugFrom).find((slug) => slug !== undefined)
+export function paletteNameOf(query: string): string | undefined {
+  return slugFrom(query)
 }

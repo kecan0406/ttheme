@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "gojo"
-subject = "jujutsu-kaisen/gojo"
+slug = "gojo-satoru"
+subject = "jujutsu-kaisen/gojo-satoru"
 
 [palette.colors]
 background = "#11191c"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "yuji"
-subject = "jujutsu-kaisen/yuji"
+slug = "itadori-yuji"
+subject = "jujutsu-kaisen/itadori-yuji"
 
 [palette.colors]
 background = "#211513"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "megumi"
-subject = "jujutsu-kaisen/megumi"
+slug = "fushiguro-megumi"
+subject = "jujutsu-kaisen/fushiguro-megumi"
 
 [palette.colors]
 background = "#13181e"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "nobara"
-subject = "jujutsu-kaisen/nobara"
+slug = "kugisaki-nobara"
+subject = "jujutsu-kaisen/kugisaki-nobara"
 
 [palette.colors]
 background = "#20160e"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "nanami"
-subject = "jujutsu-kaisen/nanami"
+slug = "nanami-kento"
+subject = "jujutsu-kaisen/nanami-kento"
 
 [palette.colors]
 background = "#18180e"
@@ -271,8 +271,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "geto"
-subject = "jujutsu-kaisen/geto"
+slug = "geto-suguru"
+subject = "jujutsu-kaisen/geto-suguru"
 
 [palette.colors]
 background = "#16171f"
@@ -325,8 +325,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "sukuna"
-subject = "jujutsu-kaisen/sukuna"
+slug = "ryoumen-sukuna"
+subject = "jujutsu-kaisen/ryoumen-sukuna"
 
 [palette.colors]
 background = "#211513"

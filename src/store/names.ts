@@ -1,16 +1,7 @@
 import { join } from 'node:path'
 import { cachedSource, httpSource, Names, type Source } from '@kecan0406/aninames'
 import { AGENT } from '../core/booru.ts'
-import type { Work } from '../core/commons.ts'
-import {
-  type CastMember,
-  cutSlug,
-  knowsCharacter,
-  type NameHit,
-  type TaggedWork,
-  type WorkName,
-  workSlugOf,
-} from '../core/names.ts'
+import { type CastMember, cutSlug, type NameHit, slugOfTag, type TaggedWork, type WorkName } from '../core/names.ts'
 import { inert } from '../core/text.ts'
 import { cacheRoot } from './paths.ts'
 
@@ -18,13 +9,14 @@ export const NAMES_URL = 'https://names.ttheme.dev'
 
 export const PROVIDERS = ['aninames', 'off'] as const
 
-export type NameSearch = (query: string, signal: AbortSignal, works?: readonly Work[]) => Promise<NameHit[]>
+export type NameSearch = (query: string, signal: AbortSignal) => Promise<NameHit[]>
 
 export interface NameIndex {
   search: NameSearch
   tagged(slug: string, signal: AbortSignal): Promise<TaggedWork[]>
   cast(slug: string, signal: AbortSignal, limit: number): Promise<CastMember[]>
-  find(query: string, slug: string, signal: AbortSignal): Promise<CastMember[]>
+  find(query: string, slug: string, tags: readonly string[], signal: AbortSignal): Promise<CastMember[]>
+  person(tag: string, signal: AbortSignal): Promise<CastMember | undefined>
   open(signal: AbortSignal): Promise<void>
 }
 
@@ -54,7 +46,19 @@ function strings(value: unknown, keep: (s: string) => boolean): string[] {
   return Array.isArray(value) ? value.flatMap((v) => (typeof v === 'string' && keep(v) ? [v] : [])) : []
 }
 
-function hitOf(value: unknown, works: ReadonlyMap<string, NameHit>): NameHit | undefined {
+const LATIN_QUERY = /^[\x20-\x7e]+$/
+
+const SURE = new Set(['name', 'family', 'prefix'])
+
+function sureOf(match: unknown, query: string): boolean {
+  if (match === 'part') {
+    return [...query].length >= (LATIN_QUERY.test(query) ? 5 : 3)
+  }
+
+  return typeof match === 'string' && SURE.has(match)
+}
+
+function hitOf(value: unknown, query: string): NameHit | undefined {
   if (typeof value !== 'object' || value === null) {
     return undefined
   }
@@ -62,9 +66,8 @@ function hitOf(value: unknown, works: ReadonlyMap<string, NameHit>): NameHit | u
   const v = value as Record<string, unknown>
   const id = typeof v.id === 'string' ? v.id : undefined
   const label = text(v.label)
-  const kind = v.kind === 'work' || v.kind === 'character' ? v.kind : undefined
 
-  if (!id || !label || !kind) {
+  if (!id || !label || v.kind !== 'work' || !sureOf(v.match, query)) {
     return undefined
   }
 
@@ -72,17 +75,7 @@ function hitOf(value: unknown, works: ReadonlyMap<string, NameHit>): NameHit | u
     typeof n === 'object' && n !== null ? (text((n as Record<string, unknown>).text) ?? []) : [],
   )
 
-  const home = typeof v.home === 'string' && v.home !== '' && !ODD.test(v.home) ? v.home : undefined
-
-  return {
-    id,
-    kind,
-    label,
-    names,
-    tags: strings(v.danbooru, (t) => t !== '' && !ODD.test(t)),
-    works: strings(v.works, Boolean).flatMap((w) => works.get(w) ?? []),
-    ...(home ? { home } : {}),
-  }
+  return { id, label, names, tags: strings(v.danbooru, (t) => t !== '' && !ODD.test(t)) }
 }
 
 function workNamesOf(value: unknown): WorkName[] {
@@ -162,40 +155,14 @@ export function castMembers(found: unknown): CastMember[] {
   return (Array.isArray(found) ? found : []).flatMap((f: unknown) => memberOf(f) ?? [])
 }
 
-export function hitsOf(found: unknown, works: unknown): NameHit[] {
-  const cards = new Map(
-    (Array.isArray(works) ? works : []).flatMap((w: unknown) => {
-      const hit = hitOf(w, new Map())
-
-      return hit ? [[hit.id, hit] as const] : []
-    }),
-  )
-
-  return (Array.isArray(found) ? found : []).flatMap((f: unknown) => hitOf(f, cards) ?? [])
+export function hitsOf(found: unknown, query: string): NameHit[] {
+  return (Array.isArray(found) ? found : []).flatMap((f: unknown) => hitOf(f, query) ?? [])
 }
 
 function cardsOf(found: unknown): Record<string, unknown>[] {
   return (Array.isArray(found) ? found : []).flatMap((f: unknown) =>
     typeof f === 'object' && f !== null ? [f as Record<string, unknown>] : [],
   )
-}
-
-export function worksOf(found: unknown, known: readonly Work[] | undefined): string[] {
-  const cards = cardsOf(found)
-  const characters = cards.filter((card) => card.kind === 'character')
-
-  const settled = (card: Record<string, unknown>) =>
-    known !== undefined && strings(card.danbooru, Boolean).some((tag) => knowsCharacter(known, tag))
-
-  const placed = new Set(characters.filter(settled).flatMap((card) => strings(card.works, Boolean)))
-  const first = cards[0]
-  const lead = first?.kind === 'character' ? strings(first.works, Boolean).slice(0, 1) : []
-
-  const open = characters
-    .filter((card) => !settled(card))
-    .flatMap((card) => strings(card.works, Boolean).filter((id) => !placed.has(id)))
-
-  return [...new Set([...lead, ...open])]
 }
 
 function passing(error: unknown): boolean {
@@ -234,24 +201,22 @@ export function liveSource(base = NAMES_URL): Source {
 export function nameIndex(source: Source): NameIndex {
   const names = new Names(retrying(source))
 
-  const ask = async (query: string, signal: AbortSignal, known: readonly Work[] | undefined) => {
-    const found: unknown = await names.search(query, { limit: LIMIT, adult: false, signal })
-    const ids = worksOf(found, known)
-    const works: unknown = ids.length > 0 ? await names.lookup(ids, signal) : []
+  const ask = async (query: string, signal: AbortSignal) => {
+    const found: unknown = await names.search(query, { kind: 'work', limit: LIMIT, adult: false, signal })
 
-    return hitsOf(found, works)
+    return hitsOf(found, query)
   }
 
   return {
-    async search(query, signal, known) {
+    async search(query, signal) {
       try {
-        return await ask(query, signal, known)
+        return await ask(query, signal)
       } catch (error) {
         if (signal.aborted) {
           throw error
         }
 
-        return ask(query, signal, known)
+        return ask(query, signal)
       }
     },
     async tagged(slug, signal) {
@@ -264,7 +229,7 @@ export function nameIndex(source: Source): NameIndex {
 
       return castMembers(found)
     },
-    async find(query, slug, signal) {
+    async find(query, slug, tags, signal) {
       const [found, works]: unknown[] = await Promise.all([
         names.search(query, { kind: 'character', limit: FIND_LIMIT, adult: false, signal }),
         names.tagged(slug, { kind: 'work', adult: false, prefix: cutSlug(slug), signal }),
@@ -275,10 +240,16 @@ export function nameIndex(source: Source): NameIndex {
       return castMembers(
         cardsOf(found).filter(
           (card) =>
-            (typeof card.home === 'string' && workSlugOf(card.home) === slug) ||
-            strings(card.works, Boolean).some((id) => ids.has(id)),
+            (typeof card.home === 'string' && slugOfTag(card.home) === slug) ||
+            strings(card.works, Boolean).some((id) => ids.has(id)) ||
+            strings(card.danbooru, Boolean).some((tag) => tags.includes(tag)),
         ),
       )
+    },
+    async person(tag, signal) {
+      const found: unknown = await names.tagged(tag, { kind: 'character', adult: false, signal })
+
+      return castMembers(found).find((member) => member.tags.includes(tag))
     },
     async open(signal) {
       await names.lookup([], signal)

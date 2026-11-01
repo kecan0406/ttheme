@@ -2,43 +2,43 @@
 name = "Jujutsu Kaisen"
 native = "呪術廻戦"
 danbooru = "jujutsu_kaisen"
-lead = "jujutsu-kaisen/gojo"
+lead = "jujutsu-kaisen/gojo-satoru"
 
 [[character]]
-id = "gojo"
+id = "gojo-satoru"
 native = ["五条悟"]
 danbooru = "gojo_satoru"
 sites = { konachan = "gojou_satoru", yande = "gojou_satoru", zerochan = "gojou_satoru" }
 
 [[character]]
-id = "yuji"
+id = "itadori-yuji"
 native = ["虎杖悠仁"]
 danbooru = "itadori_yuji"
 sites = { konachan = "itadori_yuuji", yande = "itadori_yuuji", zerochan = "itadori_yuuji" }
 
 [[character]]
-id = "megumi"
+id = "fushiguro-megumi"
 native = ["伏黒恵"]
 danbooru = "fushiguro_megumi"
 
 [[character]]
-id = "nobara"
+id = "kugisaki-nobara"
 native = ["釘崎野薔薇"]
 danbooru = "kugisaki_nobara"
 
 [[character]]
-id = "nanami"
+id = "nanami-kento"
 native = ["七海建人"]
 danbooru = "nanami_kento"
 
 [[character]]
-id = "geto"
+id = "geto-suguru"
 native = ["夏油傑"]
 danbooru = "geto_suguru"
 sites = { konachan = [], yande = "getou_suguru", zerochan = "getou_suguru" }
 
 [[character]]
-id = "sukuna"
+id = "ryoumen-sukuna"
 native = ["両面宿儺"]
 danbooru = "ryoumen_sukuna_(jujutsu_kaisen)"
 sites = { konachan = [], yande = [], zerochan = "sukuna" }

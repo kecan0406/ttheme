@@ -2,9 +2,9 @@
 name = "Lain"
 native = "serial experiments lain"
 danbooru = "serial_experiments_lain"
-lead = "lain/lain"
+lead = "lain/iwakura-lain"
 
 [[character]]
-id = "lain"
+id = "iwakura-lain"
 native = ["岩倉玲音"]
 danbooru = "iwakura_lain"

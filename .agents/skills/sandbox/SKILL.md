@@ -37,7 +37,7 @@ Read `references/ghostty.md` before any window run: its commands and report are 
 
 ```zsh
 S=.agents/skills/sandbox/scripts/shell.zsh
-zsh $S start ttheme/gojo ttheme/konata   # build, wire, install these palettes, print the first screen
+zsh $S start ttheme/gojo-satoru ttheme/izumi-konata   # build, wire, install these palettes, print the first screen
                                         # no palettes installs all of them; --empty none; --mine the user's own install, copied
 zsh $S send 'ttheme pins' Enter         # tmux key names; prints the screen once it settles
 zsh $S send Down Right Enter

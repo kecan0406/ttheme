@@ -12,6 +12,7 @@ import {
   type Twitch,
 } from '@/lib/art-source'
 import { commons, themes } from '@/lib/builtin'
+import { personOf } from '@/lib/cast'
 import {
   anilistIdsOf,
   anilistOf,
@@ -24,6 +25,7 @@ import {
   type FoundWork,
   familyOf,
   foundSlugs,
+  heldNamed,
   igdbOf,
   MOST_CAST,
   membersFound,
@@ -36,7 +38,7 @@ import {
 import { listedWorks, marketplaces } from '@/lib/marketplaces'
 import type { NamesAnswer } from '@/lib/names'
 import { mergeWorks, workOfListed } from '../../src/core/commons.ts'
-import { namedWorks, workSlugOf } from '../../src/core/names.ts'
+import { namedWorks, slugOfTag } from '../../src/core/names.ts'
 import { liveSource, nameIndex } from '../../src/store/names.ts'
 
 const KEEP_MS = 6 * 60 * 60 * 1000
@@ -150,9 +152,9 @@ function resolve(slug: string): Promise<Resolved | null> {
 }
 
 export async function lookUp(query: string, signal: AbortSignal): Promise<{ answer: NamesAnswer; settled: boolean }> {
-  const hits = await index.search(query, signal, works)
+  const hits = await index.search(query, signal)
   const named = namedWorks(hits, works)
-  const slugs = named.works.some((work) => shelved.has(work.id)) ? [] : foundSlugs(named.unknown, taken)
+  const slugs = named.works.some((id) => shelved.has(id)) ? [] : foundSlugs(named.unknown, taken)
   const looked = await Promise.all(slugs.map((slug) => resolve(slug).catch(() => undefined)))
   const found = looked.flatMap((each) => (each ? [each.work] : []))
 
@@ -192,14 +194,28 @@ export async function foundPage(slug: string): Promise<{ page: FoundPage; settle
 
 export async function castNamed(id: string, query: string, signal: AbortSignal): Promise<FoundMember[] | null> {
   const listed = castable.get(id)
-  const slug = listed ? workSlugOf(listed.tag) : slugLike(id) && !taken.has(id) ? id : undefined
+  const slug = listed ? slugOfTag(listed.tag) : slugLike(id) && !taken.has(id) ? id : undefined
 
   if (!slug) return null
   const lang = listed ? listed.lang : (await resolve(slug))?.work.lang
 
   if (lang === undefined) return null
 
-  return membersFound(await index.find(query, slug, signal), listed?.held ?? [], lang)
+  const held = listed?.held ?? []
+  const tags = held.flatMap((holder) => holder.keys)
+  const found = membersFound(await index.find(query, slug, tags, signal), held, lang)
+
+  const holding = found.flatMap((member) =>
+    member.palette === null ? [] : [{ ...member, name: personOf(id, member.palette) ?? member.name }],
+  )
+
+  const palettes = new Set(holding.map((member) => member.palette))
+
+  const local = heldNamed(query, held)
+    .filter((holder) => !palettes.has(holder.id))
+    .map((holder) => ({ name: personOf(id, holder.id) ?? holder.id, native: null, picture: null, palette: holder.id }))
+
+  return [...holding, ...local, ...found.filter((member) => member.palette === null)]
 }
 
 export function prime(signal: AbortSignal): Promise<void> {

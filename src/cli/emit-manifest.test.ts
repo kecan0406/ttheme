@@ -25,7 +25,7 @@ test('every work that holds a built-in palette has its original-language title',
 test('the commons carries the danbooru tag find searches, and a palette of a place or a thing has none', () => {
   const byName = new Map(entries.map((e) => [e.name, e]))
   const tag = (name: string) => aboutOf(commons.works, byName.get(name)?.subject)?.character?.danbooru
-  assert.equal(tag('ttheme/kagami'), 'hiiragi_kagami')
+  assert.equal(tag('ttheme/hiiragi-kagami'), 'hiiragi_kagami')
   assert.equal(tag('ttheme/magi'), undefined)
 })
 

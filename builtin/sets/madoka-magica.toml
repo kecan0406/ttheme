@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "madoka"
-subject = "madoka-magica/madoka"
+slug = "kaname-madoka"
+subject = "madoka-magica/kaname-madoka"
 
 [palette.colors]
 background = "#201516"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "homura"
-subject = "madoka-magica/homura"
+slug = "akemi-homura"
+subject = "madoka-magica/akemi-homura"
 
 [palette.colors]
 background = "#19161e"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "sayaka"
-subject = "madoka-magica/sayaka"
+slug = "miki-sayaka"
+subject = "madoka-magica/miki-sayaka"
 
 [palette.colors]
 background = "#11191c"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "kyoko"
-subject = "madoka-magica/kyoko"
+slug = "sakura-kyoko"
+subject = "madoka-magica/sakura-kyoko"
 
 [palette.colors]
 background = "#201515"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "mami"
-subject = "madoka-magica/mami"
+slug = "tomoe-mami"
+subject = "madoka-magica/tomoe-mami"
 
 [palette.colors]
 background = "#1b170c"
@@ -271,8 +271,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "nagisa"
-subject = "madoka-magica/nagisa"
+slug = "momoe-nagisa"
+subject = "madoka-magica/momoe-nagisa"
 
 [palette.colors]
 background = "#1f160d"

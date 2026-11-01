@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "steph"
-subject = "no-game-no-life/steph"
+slug = "stephanie-dora"
+subject = "no-game-no-life/stephanie-dora"
 
 [palette.colors]
 background = "#201516"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "izuna"
-subject = "no-game-no-life/izuna"
+slug = "hatsuse-izuna"
+subject = "no-game-no-life/hatsuse-izuna"
 
 [palette.colors]
 background = "#19161e"
@@ -271,8 +271,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "tet"
-subject = "no-game-no-life/tet"
+slug = "teto"
+subject = "no-game-no-life/teto"
 
 [palette.colors]
 background = "#131913"

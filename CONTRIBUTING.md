@@ -37,7 +37,7 @@ lives in a marketplace of your own, and once you publish it, anyone can add it:
 
 ```sh
 ttheme marketplace init dust       # <you>@dust, in ~/.config/ttheme/marketplace/dust
-ttheme new rei --from ttheme/rei   # <you>@dust/rei: your own rei, starting from the built-in one's colors
+ttheme new rei --from ttheme/ayanami-rei   # <you>@dust/rei: your own rei, starting from the built-in one's colors
 ttheme new dusk                    # <you>@dust/dusk: an original, from the seeds in the palette editor
 ttheme edit dusk                   # the same editor; the contrast checks' numbers are shown, never enforced
 ttheme share                       # A marketplace on GitHub: creates the repository with gh and pushes, and again whenever it changes
@@ -66,15 +66,15 @@ it:
 name = "Madoka Magica"                     # as lists show it; they sort the works by it
 native = "魔法少女まどか☆マギカ"              # its title in the original language, shown dim beside it
 danbooru = "mahou_shoujo_madoka_magica"    # its danbooru copyright tag: what the work is
-lead = "madoka-magica/madoka"              # optional: who stands for the work, the first character by default
+lead = "madoka-magica/kaname-madoka"              # optional: who stands for the work, the first character by default
 
 [[character]]                              # in cast order
-id = "madoka"                              # her palettes' subject is madoka-magica/madoka
+id = "kaname-madoka"                       # her danbooru tag's full name; her palettes' subject is madoka-magica/kaname-madoka
 native = ["鹿目まどか"]                      # her names in the original language, the full name first
 danbooru = "kaname_madoka"                 # her danbooru tag: who she is
 
 [[character]]
-id = "kyoko"
+id = "sakura-kyoko"
 native = ["佐倉杏子"]
 danbooru = "sakura_kyoko"
 sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakura_kyouko" }
@@ -114,7 +114,11 @@ sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakur
   and `[]` for a site that has none, which `find` then skips. A site it leaves
   out is searched for the danbooru tag. It is a search term; posts go in a
   palette's `[[palette.picture]]`, by number.
-- An id never changes once it ships: other marketplaces' palettes name it.
+- A character with a `danbooru` tag takes that tag's full name for its `id`, without
+  a qualifier and in the tag's own order (`gotoh_hitori` is `gotoh-hitori`,
+  `lucy_(cyberpunk)` is `lucy`), and `mise run build` refuses another. One without a
+  tag, a place or an idea from the work, takes a name of its own. The `id` is told
+  apart inside its work: a subject is `<work>/<id>`, and two works may share one.
 
 ## What this project accepts
 
@@ -165,8 +169,8 @@ table in it — copy any of them:
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "madoka"                            # its name: ttheme/madoka
-subject = "madoka-magica/madoka"           # the work and character in the commons
+slug = "kaname-madoka"                     # its name: ttheme/kaname-madoka
+subject = "madoka-magica/kaname-madoka"           # the work and character in the commons
 
 [palette.colors]
 background = "#201516"
@@ -192,7 +196,8 @@ One palette per pull request. At most three open at a time.
 - A `[[palette]]` table in its subject's work's set, `builtin/sets/<work>.toml`
   (`original.toml` for a palette of no work), which `mise run build` holds it
   to. Its `slug` is lowercase letters, digits and single hyphens, at most 40
-  characters, and no other built-in palette has it.
+  characters, and no other built-in palette has it. A palette of a character takes
+  the character's `id` for its `slug`.
 - `subject` names a work or a character the commons holds: a new one comes
   with its record in `commons/works/` in the same pull request, and
   `mise run build` refuses a subject the commons lacks.

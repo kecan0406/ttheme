@@ -1,5 +1,6 @@
 import type { KeyArt } from '@/lib/art'
-import { type CastMember, type NameHit, type TaggedWork, type WorkName, workSlugOf } from '../../src/core/names.ts'
+import { type CastMember, type NameHit, slugOfTag, type TaggedWork, type WorkName } from '../../src/core/names.ts'
+import { containsText } from '../../src/core/text.ts'
 
 export const MOST_FOUND = 4
 
@@ -72,6 +73,8 @@ export interface CastWork {
 
 export type Casts = Record<string, FoundCast[]>
 
+export type People = Record<string, string>
+
 export interface FamilyWork {
   name: string
   year: number | null
@@ -98,8 +101,8 @@ export function foundSlugs(unknown: readonly NameHit[], taken: ReadonlySet<strin
   const slugs: string[] = []
 
   for (const hit of unknown) {
-    const tag = hit.kind === 'work' ? hit.tags[0] : hit.home
-    const slug = tag === undefined ? undefined : workSlugOf(tag)
+    const tag = hit.tags[0]
+    const slug = tag === undefined ? undefined : slugOfTag(tag)
 
     if (slug && !taken.has(slug) && !slugs.includes(slug)) slugs.push(slug)
   }
@@ -108,7 +111,7 @@ export function foundSlugs(unknown: readonly NameHit[], taken: ReadonlySet<strin
 }
 
 export function membersOf(slug: string, works: readonly TaggedWork[]): TaggedWork[] {
-  return works.filter((work) => work.tags.some((tag) => workSlugOf(tag) === slug))
+  return works.filter((work) => work.tags.some((tag) => slugOfTag(tag) === slug))
 }
 
 function shortest(names: readonly WorkName[], keep: (name: WorkName) => boolean): WorkName | undefined {
@@ -271,6 +274,10 @@ export function holderOf(member: CastMember, held: readonly Holder[]): string | 
   )
 
   return holder?.id ?? null
+}
+
+export function heldNamed(query: string, held: readonly Holder[]): Holder[] {
+  return held.filter((holder) => containsText([holder.id, ...holder.keys], query))
 }
 
 export function untaken(members: readonly CastMember[], held: readonly Holder[]): CastMember[] {

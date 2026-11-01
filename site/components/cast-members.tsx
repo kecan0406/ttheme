@@ -78,7 +78,15 @@ function Holding({ member, palette }: { member: FoundCast; palette: string }) {
               {palette}
             </span>
           </b>
-          <small class="font-display text-xs font-extrabold text-muted-foreground">has a palette</small>
+          {member.name === palette ? null : (
+            <small
+              translate="no"
+              class="max-w-full truncate font-display text-xs font-extrabold text-muted-foreground"
+              safe
+            >
+              {member.name}
+            </small>
+          )}
         </span>
       </button>
     </li>

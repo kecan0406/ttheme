@@ -1,6 +1,6 @@
 import { type KeyArt, keyArtOf, pictureOf } from '@/lib/art'
 import { commons } from '@/lib/builtin'
-import { castFor } from '@/lib/cast'
+import { castFor, personOf } from '@/lib/cast'
 import type { FoundCast } from '@/lib/found'
 import type { Shelf } from '@/lib/gallery'
 import { artFor } from '@/lib/key-art'
@@ -54,13 +54,17 @@ function castOf(work: Work | undefined, ref: WorkRef, themes: readonly Theme[]):
   const slots = [
     ...listed.map((character) => ({ id: character.id, native: character.native?.[0] ?? null })),
     ...strays.map((id) => ({ id, native: null })),
-  ].map(({ id, native }) => ({
-    id,
-    native,
-    lang: native ? langOf(native, known) : null,
-    picture: pictureOf(art, id),
-    lead: ref.lead === `${ref.id}/${id}`,
-  }))
+  ].map(({ id, native }) => {
+    const person = personOf(ref.id, id)
+
+    return {
+      id,
+      native: person ?? native,
+      lang: !person && native ? langOf(native, known) : null,
+      picture: pictureOf(art, id),
+      lead: ref.lead === `${ref.id}/${id}`,
+    }
+  })
 
   return slots.toSorted((a, b) => Number(b.lead) - Number(a.lead))
 }

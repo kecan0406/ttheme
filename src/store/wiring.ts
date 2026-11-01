@@ -102,7 +102,7 @@ export const CONFIG_SETTINGS = {
     default: 'on',
   },
   TTHEME_NAME_LOOKUP: {
-    doc: "# names in browse's Search marketplace: aninames reads a work or a character typed in any language from names.ttheme.dev once you stop typing and finds the works it means; off matches the text alone (default aninames)",
+    doc: "# names in browse's Search marketplace: aninames reads a work's title typed in any language from names.ttheme.dev once you stop typing and finds the works it means; off matches the text alone (default aninames)",
     default: 'aninames',
   },
   TTHEME_FIND_RATING: {

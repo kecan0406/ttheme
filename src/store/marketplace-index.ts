@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { isTag } from '../core/commons.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { containsText, inert } from '../core/text.ts'
-import { nameProblem, slugProblem, subjectProblem, textProblem } from '../core/theme.ts'
+import { nameProblem, slugOf, slugProblem, subjectProblem, textProblem } from '../core/theme.ts'
 import { reach } from './available.ts'
 import { writeAtomic } from './edits.ts'
 import { cacheRoot } from './paths.ts'
@@ -260,10 +260,16 @@ export async function readIndex(signal?: AbortSignal, path = indexCache(), url =
   }
 }
 
+export function namesPalette(name: string, query: string): boolean {
+  const asked = query.trim().toLowerCase()
+
+  return name === asked || slugOf(name) === asked
+}
+
 export function listedMatches(m: Listed, query: string): boolean {
-  return containsText(
-    [m.id, m.source, m.about, ...m.palettes.flatMap((e) => [e.name, e.subject ?? '']), ...m.works.map((w) => w.name)],
-    query,
+  return (
+    containsText([m.id, m.source, m.about, ...m.works.map((w) => w.name)], query) ||
+    m.palettes.some((e) => namesPalette(e.name, query))
   )
 }
 

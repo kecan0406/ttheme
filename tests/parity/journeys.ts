@@ -63,7 +63,7 @@ export const JOURNEYS: Journey[] = [
     about: 'a new tab opens wearing the default palette and its picture, and knows what it wears',
     async run(p) {
       await p.open()
-      await p.look('open', { want: 'ttheme/konata', repaints: 0, text: true })
+      await p.look('open', { want: 'ttheme/izumi-konata', repaints: 0, text: true })
     },
   },
   {
@@ -72,7 +72,7 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       p.config(': ${TTHEME_TAB_PALETTE:=seq}')
       await p.open()
-      await p.look('open', { want: 'ttheme/kita', text: true })
+      await p.look('open', { want: 'ttheme/kita-ikuyo', text: true })
     },
   },
   {
@@ -80,8 +80,8 @@ export const JOURNEYS: Journey[] = [
     about: 'ttheme use paints the tab whole and puts up the palette’s picture',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'clear; ttheme use kita')
-      await p.look('used', { want: 'ttheme/kita', text: true })
+      await p.type(a, 'clear; ttheme use kita-ikuyo')
+      await p.look('used', { want: 'ttheme/kita-ikuyo', text: true })
     },
   },
   {
@@ -89,8 +89,8 @@ export const JOURNEYS: Journey[] = [
     about: 'a palette without a picture takes the picture down',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use miku')
-      await p.look('used', { want: 'ttheme/miku' })
+      await p.type(a, 'ttheme use hatsune-miku')
+      await p.look('used', { want: 'ttheme/hatsune-miku' })
     },
   },
   {
@@ -99,16 +99,16 @@ export const JOURNEYS: Journey[] = [
       'the bare ttheme opens preview and browse as tabs: tab moves between them, each repaints the tab as its cursor moves, and esc puts the tab back',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use kita')
+      await p.type(a, 'ttheme use kita-ikuyo')
       await p.launch(a, 'ttheme', 'Browse')
       await p.keys(a, 'k', 'o', 'n')
-      await p.look('preview', { want: 'ttheme/konata', text: true, wears: false })
+      await p.look('preview', { want: 'ttheme/izumi-konata', text: true, wears: false })
       await p.keys(a, 'shift-tab', 'k', 'i', 't', 'a')
-      await p.look('browse', { want: 'ttheme/kita', text: true, wears: false })
+      await p.look('browse', { want: 'ttheme/kita-ikuyo', text: true, wears: false })
       await p.keys(a, 'tab')
-      await p.look('back', { want: 'ttheme/konata', text: true, wears: false })
+      await p.look('back', { want: 'ttheme/izumi-konata', text: true, wears: false })
       await p.quit(a)
-      await p.look('closed', { want: 'ttheme/kita' })
+      await p.look('closed', { want: 'ttheme/kita-ikuyo' })
     },
   },
   {
@@ -117,8 +117,8 @@ export const JOURNEYS: Journey[] = [
       'ttheme default in a tab that never painted: the tab shows what the terminal shows its new tabs, and knows it',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme default miku')
-      await p.look('here', { want: 'ttheme/miku', unpainted: true })
+      await p.type(a, 'ttheme default hatsune-miku')
+      await p.look('here', { want: 'ttheme/hatsune-miku', unpainted: true })
     },
   },
   {
@@ -126,9 +126,9 @@ export const JOURNEYS: Journey[] = [
     about: 'a tab painted with a palette that has no picture keeps it through ttheme default',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use rei')
-      await p.type(a, 'ttheme default miku')
-      await p.look('here', { want: 'ttheme/rei' })
+      await p.type(a, 'ttheme use ayanami-rei')
+      await p.type(a, 'ttheme default hatsune-miku')
+      await p.look('here', { want: 'ttheme/ayanami-rei' })
     },
   },
   {
@@ -137,13 +137,13 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       const b = await p.open()
-      await p.type(b, 'ttheme use kita')
-      await p.type(b, 'ttheme default miku')
-      await p.look('painted', { want: 'ttheme/kita' })
+      await p.type(b, 'ttheme use kita-ikuyo')
+      await p.type(b, 'ttheme default hatsune-miku')
+      await p.look('painted', { want: 'ttheme/kita-ikuyo' })
       await p.focus(a)
-      await p.look('unpainted', { want: 'ttheme/miku', unpainted: true })
+      await p.look('unpainted', { want: 'ttheme/hatsune-miku', unpainted: true })
       await p.open()
-      await p.look('new', { want: 'ttheme/miku', unpainted: true })
+      await p.look('new', { want: 'ttheme/hatsune-miku', unpainted: true })
     },
   },
   {
@@ -153,7 +153,7 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       const b = await p.open()
-      await p.type(b, 'ttheme use kita')
+      await p.type(b, 'ttheme use kita-ikuyo')
       await p.type(b, 'ttheme off')
       await p.look('here', { want: 'own' })
       await p.focus(a)
@@ -180,8 +180,8 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       await p.type(a, 'ttheme off')
-      await p.type(a, 'ttheme use kita')
-      await p.look('used', { want: 'ttheme/kita' })
+      await p.type(a, 'ttheme use kita-ikuyo')
+      await p.look('used', { want: 'ttheme/kita-ikuyo' })
       await p.open()
       await p.look('new', { want: 'own' })
     },
@@ -192,7 +192,7 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       const b = await p.open()
-      await p.type(b, 'ttheme use kita')
+      await p.type(b, 'ttheme use kita-ikuyo')
       await p.focus(a)
       await p.type(b, 'ttheme off')
       await p.focus(b)
@@ -205,7 +205,7 @@ export const JOURNEYS: Journey[] = [
       'ttheme off reaches a tab idle at its prompt behind the one that ran it at once, before it comes to the front',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use kita')
+      await p.type(a, 'ttheme use kita-ikuyo')
       const b = await p.open()
       await p.type(b, 'ttheme off')
       await p.look('behind', { want: 'own', at: a })
@@ -216,7 +216,7 @@ export const JOURNEYS: Journey[] = [
     about: 'ttheme off typed in another tab takes the colors off a tab running a program once it comes to the front',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use kita')
+      await p.type(a, 'ttheme use kita-ikuyo')
       await p.launch(a, BUSY, 'busy>')
       const b = await p.open()
       await p.type(b, 'ttheme off')
@@ -228,8 +228,8 @@ export const JOURNEYS: Journey[] = [
     id: 'off-pin',
     about: 'while ttheme is off, a pinned directory and a pinned host leave the tab in the terminal’s own colors',
     async run(p) {
-      p.pin('work', 'ttheme/kita')
-      p.pinHost('teal', 'ttheme/kita')
+      p.pin('work', 'ttheme/kita-ikuyo')
+      p.pinHost('teal', 'ttheme/kita-ikuyo')
       const a = await p.open()
       await p.type(a, 'ttheme off')
       await p.type(a, 'cd ~/work')
@@ -250,25 +250,25 @@ export const JOURNEYS: Journey[] = [
       await p.type(a, 'ttheme off')
       const b = await p.open()
       await p.type(b, 'ttheme on')
-      await p.look('here', { want: 'ttheme/konata' })
+      await p.look('here', { want: 'ttheme/izumi-konata' })
       await p.focus(a)
-      await p.look('other', { want: 'ttheme/konata', unpainted: true })
+      await p.look('other', { want: 'ttheme/izumi-konata', unpainted: true })
       await p.open()
-      await p.look('new', { want: 'ttheme/konata', unpainted: true })
+      await p.look('new', { want: 'ttheme/izumi-konata', unpainted: true })
     },
   },
   {
     id: 'on-pin',
     about: 'ttheme on in a pinned directory wears the pin and not the default, and leaving the pin wears the default',
     async run(p) {
-      p.pin('work', 'ttheme/kita')
+      p.pin('work', 'ttheme/kita-ikuyo')
       const a = await p.open()
       await p.type(a, 'cd ~/work')
       await p.type(a, 'ttheme off')
       await p.type(a, 'ttheme on')
-      await p.look('in', { want: 'ttheme/kita' })
+      await p.look('in', { want: 'ttheme/kita-ikuyo' })
       await p.type(a, 'cd ~')
-      await p.look('out', { want: 'ttheme/konata' })
+      await p.look('out', { want: 'ttheme/izumi-konata' })
     },
   },
   {
@@ -276,12 +276,12 @@ export const JOURNEYS: Journey[] = [
     about:
       'ttheme on in a directory pinned to a palette without a picture wears the pin with no picture, as a tab that never went off does',
     async run(p) {
-      p.pin('work', 'ttheme/miku')
+      p.pin('work', 'ttheme/hatsune-miku')
       const a = await p.open()
       await p.type(a, 'ttheme off')
       await p.type(a, 'cd ~/work')
       await p.type(a, 'ttheme on')
-      await p.look('in', { want: 'ttheme/miku' })
+      await p.look('in', { want: 'ttheme/hatsune-miku' })
     },
   },
   {
@@ -289,7 +289,7 @@ export const JOURNEYS: Journey[] = [
     about:
       'a tab in a pinned directory that went off with ttheme off wears the pin again, not the default, once ttheme on reaches it',
     async run(p) {
-      p.pin('work', 'ttheme/kita')
+      p.pin('work', 'ttheme/kita-ikuyo')
       const a = await p.open()
       const b = await p.open()
       await p.type(b, 'cd ~/work')
@@ -300,7 +300,7 @@ export const JOURNEYS: Journey[] = [
       await p.focus(a)
       await p.type(a, 'ttheme on')
       await p.focus(b)
-      await p.look('on', { want: 'ttheme/kita' })
+      await p.look('on', { want: 'ttheme/kita-ikuyo' })
     },
   },
   {
@@ -308,28 +308,28 @@ export const JOURNEYS: Journey[] = [
     about: 'the picture follows the tab in front',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use kita')
+      await p.type(a, 'ttheme use kita-ikuyo')
       const b = await p.open()
-      await p.type(b, 'ttheme use konata')
+      await p.type(b, 'ttheme use izumi-konata')
       await p.focus(a)
-      await p.look('a', { want: 'ttheme/kita' })
+      await p.look('a', { want: 'ttheme/kita-ikuyo' })
       await p.focus(b)
-      await p.look('b', { want: 'ttheme/konata' })
+      await p.look('b', { want: 'ttheme/izumi-konata' })
     },
   },
   {
     id: 'focus-busy',
     about: 'the picture follows the tab in front while a program that takes focus reports runs in it',
     async run(p) {
-      p.pin('work', 'ttheme/kita')
+      p.pin('work', 'ttheme/kita-ikuyo')
       const a = await p.open()
       await p.type(a, 'cd ~/work')
       await p.launch(a, BUSY, 'busy>')
       const b = await p.open()
       await p.focus(a)
-      await p.look('busy', { want: 'ttheme/kita', busy: true })
+      await p.look('busy', { want: 'ttheme/kita-ikuyo', busy: true })
       await p.focus(b)
-      await p.look('back', { want: 'ttheme/konata', unpainted: true })
+      await p.look('back', { want: 'ttheme/izumi-konata', unpainted: true })
     },
   },
   {
@@ -337,11 +337,11 @@ export const JOURNEYS: Journey[] = [
     about: 'a command that ends in a tab behind leaves the picture of the tab in front alone',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use kita')
+      await p.type(a, 'ttheme use kita-ikuyo')
       await p.launch(a, "printf 'wait>'; sleep 2", 'wait>')
       await p.open()
       await p.back(a)
-      await p.look('front', { want: 'ttheme/konata', unpainted: true })
+      await p.look('front', { want: 'ttheme/izumi-konata', unpainted: true })
     },
   },
   {
@@ -350,10 +350,10 @@ export const JOURNEYS: Journey[] = [
       'a program that resets the tab’s colors on its way out, as nvim does its cursor, leaves the tab in its palette at the next prompt',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use rei')
-      await p.type(a, 'ttheme use miku')
+      await p.type(a, 'ttheme use ayanami-rei')
+      await p.type(a, 'ttheme use hatsune-miku')
       await p.type(a, "print -n '\\e]112\\e\\\\\\e]111\\e\\\\'")
-      await p.look('after', { want: 'ttheme/miku' })
+      await p.look('after', { want: 'ttheme/hatsune-miku' })
     },
   },
   {
@@ -362,12 +362,12 @@ export const JOURNEYS: Journey[] = [
       'a tab painted with the default palette keeps all of it when another tab changes the default, after a program reset colors the tab could not tell from the default’s',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use konata')
+      await p.type(a, 'ttheme use izumi-konata')
       await p.type(a, "print -n '\\e]112\\e\\\\\\e]111\\e\\\\'")
       const b = await p.open()
-      await p.type(b, 'ttheme default rei')
+      await p.type(b, 'ttheme default ayanami-rei')
       await p.focus(a)
-      await p.look('kept', { want: 'ttheme/konata' })
+      await p.look('kept', { want: 'ttheme/izumi-konata' })
     },
   },
   {
@@ -376,9 +376,9 @@ export const JOURNEYS: Journey[] = [
       'a shell in an editor’s terminal leaves the tab and its picture alone, and says why ttheme use does nothing there',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use kita')
-      await p.type(a, 'clear; NVIM=/tmp/nvim.sock zsh -ic "ttheme use konata"')
-      await p.look('after', { want: 'ttheme/kita', text: true })
+      await p.type(a, 'ttheme use kita-ikuyo')
+      await p.type(a, 'clear; NVIM=/tmp/nvim.sock zsh -ic "ttheme use izumi-konata"')
+      await p.look('after', { want: 'ttheme/kita-ikuyo', text: true })
     },
   },
   {
@@ -387,12 +387,12 @@ export const JOURNEYS: Journey[] = [
       'inside a real tmux, ttheme use paints the terminal’s tab through tmux, and leaving tmux gives the tab back what its own shell wears',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use miku')
+      await p.type(a, 'ttheme use hatsune-miku')
       await p.launch(a, TMUX)
-      await p.type(a, 'ttheme use kita')
-      await p.look('in', { want: 'ttheme/kita' })
+      await p.type(a, 'ttheme use kita-ikuyo')
+      await p.look('in', { want: 'ttheme/kita-ikuyo' })
       await p.type(a, 'exit')
-      await p.look('out', { want: 'ttheme/miku' })
+      await p.look('out', { want: 'ttheme/hatsune-miku' })
     },
   },
   {
@@ -404,16 +404,16 @@ export const JOURNEYS: Journey[] = [
       await p.launch(a, TMUX)
       await p.type(a, 'mkdir -p ~/work && cd ~/work')
       await p.type(a, 'tmux split-window -c ~')
-      await p.type(a, 'ttheme use miku')
+      await p.type(a, 'ttheme use hatsune-miku')
       const b = await p.open()
       await p.type(b, 'cd ~/work')
       await p.launch(b, 'ttheme pin')
       await p.keys(b, 'r', 'e', 'i', 'enter', 'enter')
       await p.back(b)
-      await p.look('behind', { want: 'ttheme/miku', at: a })
+      await p.look('behind', { want: 'ttheme/hatsune-miku', at: a })
       await p.focus(a)
       await p.keys(a, '\x02', 'o')
-      await p.look('pane', { want: 'ttheme/rei' })
+      await p.look('pane', { want: 'ttheme/ayanami-rei' })
     },
   },
   {
@@ -423,9 +423,9 @@ export const JOURNEYS: Journey[] = [
       const a = await p.open()
       await p.launch(a, 'ttheme')
       await p.keys(a, 'k', 'i', 't', 'a')
-      await p.look('hover', { want: 'ttheme/kita', text: true, wears: false })
+      await p.look('hover', { want: 'ttheme/kita-ikuyo', text: true, wears: false })
       await p.quit(a)
-      await p.look('back', { want: 'ttheme/konata', unpainted: true })
+      await p.look('back', { want: 'ttheme/izumi-konata', unpainted: true })
     },
   },
   {
@@ -437,9 +437,9 @@ export const JOURNEYS: Journey[] = [
       await p.keys(a, 'k', 'i', 't', 'a')
       await p.quit(a)
       const b = await p.open()
-      await p.type(b, 'ttheme default rei')
+      await p.type(b, 'ttheme default ayanami-rei')
       await p.focus(a)
-      await p.look('followed', { want: 'ttheme/rei', unpainted: true })
+      await p.look('followed', { want: 'ttheme/ayanami-rei', unpainted: true })
     },
   },
   {
@@ -452,9 +452,9 @@ export const JOURNEYS: Journey[] = [
       await p.keys(a, 'k', 'i', 't', 'a', 'ctrl-u', 'k', 'o', 'n', 'a', 't', 'a', 'enter', 'enter')
       await p.back(a)
       const b = await p.open()
-      await p.type(b, 'ttheme default rei')
+      await p.type(b, 'ttheme default ayanami-rei')
       await p.focus(a)
-      await p.look('followed', { want: 'ttheme/rei', unpainted: true })
+      await p.look('followed', { want: 'ttheme/ayanami-rei', unpainted: true })
     },
   },
   {
@@ -464,10 +464,10 @@ export const JOURNEYS: Journey[] = [
       const a = await p.open()
       await p.launch(a, 'ttheme')
       await p.keys(a, 'k', 'i', 't', 'a', 'enter')
-      await p.look('pick', { want: 'ttheme/kita', text: true, wears: false })
+      await p.look('pick', { want: 'ttheme/kita-ikuyo', text: true, wears: false })
       await p.keys(a, 'right', 'enter')
       await p.back(a)
-      await p.look('kept', { want: 'ttheme/kita' })
+      await p.look('kept', { want: 'ttheme/kita-ikuyo' })
     },
   },
   {
@@ -480,8 +480,8 @@ export const JOURNEYS: Journey[] = [
       await p.keys(a, 'k', 'o', 'n', 'a', 't', 'a', 'enter')
       await p.keys(a, 'right', 'enter')
       await p.back(a)
-      await p.type(a, 'ttheme default miku')
-      await p.look('kept', { want: 'ttheme/konata' })
+      await p.type(a, 'ttheme default hatsune-miku')
+      await p.look('kept', { want: 'ttheme/izumi-konata' })
     },
   },
   {
@@ -492,9 +492,9 @@ export const JOURNEYS: Journey[] = [
       await p.launch(a, 'ttheme')
       await p.keys(a, 'm', 'i', 'k', 'u', 'enter', 'enter')
       await p.back(a)
-      await p.look('here', { want: 'ttheme/miku' })
+      await p.look('here', { want: 'ttheme/hatsune-miku' })
       await p.open()
-      await p.look('new', { want: 'ttheme/miku', unpainted: true })
+      await p.look('new', { want: 'ttheme/hatsune-miku', unpainted: true })
     },
   },
   {
@@ -506,9 +506,9 @@ export const JOURNEYS: Journey[] = [
       await p.launch(a, 'ttheme')
       await p.keys(a, 'k', 'i', 't', 'a', 'right')
       await p.expect(a, 'Palette')
-      await p.look('tune', { want: 'ttheme/kita', text: 'pictures', wears: false })
+      await p.look('tune', { want: 'ttheme/kita-ikuyo', text: 'pictures', wears: false })
       await p.quit(a)
-      await p.look('back', { want: 'ttheme/konata', unpainted: true })
+      await p.look('back', { want: 'ttheme/izumi-konata', unpainted: true })
     },
   },
   {
@@ -518,9 +518,9 @@ export const JOURNEYS: Journey[] = [
       const a = await p.open()
       await p.launch(a, 'ttheme')
       await p.keys(a, 'alt-c')
-      await p.look('panel', { want: 'ttheme/konata', unpainted: true, text: true, wears: false })
+      await p.look('panel', { want: 'ttheme/izumi-konata', unpainted: true, text: true, wears: false })
       await p.quit(a)
-      await p.look('back', { want: 'ttheme/konata', unpainted: true })
+      await p.look('back', { want: 'ttheme/izumi-konata', unpainted: true })
     },
   },
   {
@@ -528,16 +528,16 @@ export const JOURNEYS: Journey[] = [
     about: 'a picture dropped in one tab leaves every tab wearing that palette',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use kita')
+      await p.type(a, 'ttheme use kita-ikuyo')
       const b = await p.open()
       await p.launch(b, 'ttheme')
       await p.keys(b, 'k', 'i', 't', 'a', 'right')
       await p.expect(b, 'Palette')
       await p.keys(b, 'D', '1s')
       await p.quit(b)
-      await p.look('here', { want: 'ttheme/konata', unpainted: true })
+      await p.look('here', { want: 'ttheme/izumi-konata', unpainted: true })
       await p.focus(a)
-      await p.look('other', { want: 'ttheme/kita', picture: 'none' })
+      await p.look('other', { want: 'ttheme/kita-ikuyo', picture: 'none' })
     },
   },
   {
@@ -545,7 +545,7 @@ export const JOURNEYS: Journey[] = [
     about: 'a picture tuned in one tab reaches every tab wearing that palette',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use kita')
+      await p.type(a, 'ttheme use kita-ikuyo')
       const b = await p.open()
       await p.launch(b, 'ttheme')
       await p.keys(b, 'k', 'i', 't', 'a', 'right')
@@ -553,19 +553,19 @@ export const JOURNEYS: Journey[] = [
       await p.keys(b, 'down', 'down', 'down', 'down', 'right', 'right', 'right', 's', '1s')
       await p.quit(b)
       await p.focus(a)
-      await p.look('other', { want: 'ttheme/kita', opacity: '0.22' })
+      await p.look('other', { want: 'ttheme/kita-ikuyo', opacity: '0.22' })
     },
   },
   {
     id: 'pin',
     about: 'cd into a pinned directory repaints the tab, cd out puts the palette it wore back',
     async run(p) {
-      p.pin('work', 'ttheme/kita')
+      p.pin('work', 'ttheme/kita-ikuyo')
       const a = await p.open()
       await p.type(a, 'cd ~/work')
-      await p.look('in', { want: 'ttheme/kita' })
+      await p.look('in', { want: 'ttheme/kita-ikuyo' })
       await p.type(a, 'cd ~')
-      await p.look('out', { want: 'ttheme/konata', unpainted: true })
+      await p.look('out', { want: 'ttheme/izumi-konata', unpainted: true })
     },
   },
   {
@@ -573,11 +573,11 @@ export const JOURNEYS: Journey[] = [
     about:
       'ttheme default typed in a directory pinned to the old default keeps the pin on the tab, and the tab knows it',
     async run(p) {
-      p.pin('work', 'ttheme/konata')
+      p.pin('work', 'ttheme/izumi-konata')
       const a = await p.open()
       await p.type(a, 'cd ~/work')
-      await p.type(a, 'ttheme default rei')
-      await p.look('kept', { want: 'ttheme/konata' })
+      await p.type(a, 'ttheme default ayanami-rei')
+      await p.look('kept', { want: 'ttheme/izumi-konata' })
     },
   },
   {
@@ -590,12 +590,12 @@ export const JOURNEYS: Journey[] = [
       await p.launch(a, 'ttheme pin')
       await p.keys(a, 'k', 'i', 't', 'a', 'enter', 'enter')
       await p.back(a)
-      await p.look('pinned', { want: 'ttheme/kita' })
+      await p.look('pinned', { want: 'ttheme/kita-ikuyo' })
       await p.type(a, 'cd ~')
       const b = await p.open()
-      await p.type(b, 'ttheme default rei')
+      await p.type(b, 'ttheme default ayanami-rei')
       await p.focus(a)
-      await p.look('followed', { want: 'ttheme/rei', unpainted: true })
+      await p.look('followed', { want: 'ttheme/ayanami-rei', unpainted: true })
     },
   },
   {
@@ -605,13 +605,13 @@ export const JOURNEYS: Journey[] = [
       const a = await p.open()
       await p.type(a, 'mkdir -p ~/work && cd ~/work')
       const b = await p.open()
-      p.pin('work', 'ttheme/kita')
+      p.pin('work', 'ttheme/kita-ikuyo')
       await p.focus(a)
-      await p.look('pinned', { want: 'ttheme/kita' })
+      await p.look('pinned', { want: 'ttheme/kita-ikuyo' })
       await p.focus(b)
-      p.pin('work', 'ttheme/miku')
+      p.pin('work', 'ttheme/hatsune-miku')
       await p.focus(a)
-      await p.look('moved', { want: 'ttheme/miku' })
+      await p.look('moved', { want: 'ttheme/hatsune-miku' })
     },
   },
   {
@@ -619,16 +619,16 @@ export const JOURNEYS: Journey[] = [
     about:
       'ssh to a pinned host repaints the tab while it runs, follows it to the front, and its prompt puts the palette back',
     async run(p) {
-      p.pinHost('teal', 'ttheme/kita')
+      p.pinHost('teal', 'ttheme/kita-ikuyo')
       const a = await p.open()
       await p.launch(a, 'ssh teal', 'remote>')
-      await p.look('in', { want: 'ttheme/kita', busy: true })
+      await p.look('in', { want: 'ttheme/kita-ikuyo', busy: true })
       await p.open()
       await p.focus(a)
-      await p.look('front', { want: 'ttheme/kita', busy: true })
+      await p.look('front', { want: 'ttheme/kita-ikuyo', busy: true })
       await p.keys(a, 'q')
       await p.back(a)
-      await p.look('out', { want: 'ttheme/konata', unpainted: true })
+      await p.look('out', { want: 'ttheme/izumi-konata', unpainted: true })
     },
   },
   {
@@ -641,9 +641,9 @@ export const JOURNEYS: Journey[] = [
       await p.keys(a, 'shift-tab')
       await p.expect(a, 'GitHub')
       await p.keys(a, 'k', 'i', 't', 'a')
-      await p.look('hover', { want: 'ttheme/kita', picture: 'ttheme/konata', text: true, wears: false })
+      await p.look('hover', { want: 'ttheme/kita-ikuyo', picture: 'ttheme/izumi-konata', text: true, wears: false })
       await p.quit(a)
-      await p.look('back', { want: 'ttheme/konata', unpainted: true })
+      await p.look('back', { want: 'ttheme/izumi-konata', unpainted: true })
     },
   },
   {
@@ -657,9 +657,9 @@ export const JOURNEYS: Journey[] = [
       await p.keys(a, 'm', 'i', 'k', 'u')
       await p.quit(a)
       const b = await p.open()
-      await p.type(b, 'ttheme default rei')
+      await p.type(b, 'ttheme default ayanami-rei')
       await p.focus(a)
-      await p.look('followed', { want: 'ttheme/rei', unpainted: true })
+      await p.look('followed', { want: 'ttheme/ayanami-rei', unpainted: true })
     },
   },
   {
@@ -673,9 +673,9 @@ export const JOURNEYS: Journey[] = [
       await p.expect(a, 'GitHub')
       await p.keys(a, 'k', 'i', 't', 'a')
       await p.quit(a)
-      await p.type(a, 'ttheme use miku')
+      await p.type(a, 'ttheme use hatsune-miku')
       await p.type(a, "print -n '\\e]112\\e\\\\\\e]111\\e\\\\'")
-      await p.look('after', { want: 'ttheme/miku' })
+      await p.look('after', { want: 'ttheme/hatsune-miku' })
     },
   },
   {
@@ -684,21 +684,21 @@ export const JOURNEYS: Journey[] = [
       'the bare ttheme hands Browse the tab’s own palette whatever Preview shows, and Preview takes back the palette it showed, its picture with it, even when the switch left from a work’s row',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use kita')
+      await p.type(a, 'ttheme use kita-ikuyo')
       await p.launch(a, 'ttheme', 'Browse')
       await p.keys(a, 'k', 'o', 'n', 'up')
-      await p.look('work', { want: 'ttheme/konata', wears: false })
+      await p.look('work', { want: 'ttheme/izumi-konata', wears: false })
       await p.keys(a, 'tab')
       await p.expect(a, 'GitHub')
-      await p.look('browse', { want: 'ttheme/kita', wears: false })
+      await p.look('browse', { want: 'ttheme/kita-ikuyo', wears: false })
       await p.keys(a, 'tab')
-      await p.look('back', { want: 'ttheme/konata', wears: false })
+      await p.look('back', { want: 'ttheme/izumi-konata', wears: false })
       await p.keys(a, 'down')
-      await p.look('row', { want: 'ttheme/konata', wears: false })
+      await p.look('row', { want: 'ttheme/izumi-konata', wears: false })
       await p.keys(a, 'bs', 'bs', 'bs', 'r', 'e', 'i')
-      await p.look('moved', { want: 'ttheme/rei', wears: false })
+      await p.look('moved', { want: 'ttheme/ayanami-rei', wears: false })
       await p.quit(a)
-      await p.look('closed', { want: 'ttheme/kita' })
+      await p.look('closed', { want: 'ttheme/kita-ikuyo' })
     },
   },
   {
@@ -712,9 +712,9 @@ export const JOURNEYS: Journey[] = [
       await p.expect(a, 'GitHub')
       await p.keys(a, 'm', 'i', 'k', 'u')
       await p.keys(a, 'tab')
-      await p.look('back', { want: 'ttheme/konata', wears: false })
+      await p.look('back', { want: 'ttheme/izumi-konata', wears: false })
       await p.quit(a)
-      await p.look('closed', { want: 'ttheme/konata', unpainted: true })
+      await p.look('closed', { want: 'ttheme/izumi-konata', unpainted: true })
     },
   },
   {
@@ -725,8 +725,8 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       await p.look('open', { want: 'own' })
-      await p.answer(a, 'clear; ttheme use kita', 'now?', ['y'])
-      await p.look('used', { want: 'ttheme/kita', picture: 'none', text: true })
+      await p.answer(a, 'clear; ttheme use kita-ikuyo', 'now?', ['y'])
+      await p.look('used', { want: 'ttheme/kita-ikuyo', picture: 'none', text: true })
     },
   },
   {
@@ -735,9 +735,9 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const ghostty = await p.wire('ghostty')
       const a = await p.open()
-      await p.type(a, 'ttheme default miku')
+      await p.type(a, 'ttheme default hatsune-miku')
       await ghostty.open()
-      await ghostty.look('ghostty', { want: 'ttheme/miku' })
+      await ghostty.look('ghostty', { want: 'ttheme/hatsune-miku' })
     },
   },
   {
@@ -752,8 +752,8 @@ export const JOURNEYS: Journey[] = [
       await p.keys(a, 'down', 'down', 'down', 'down', 'right', 'right', 'right', 's', '1s')
       await p.quit(a)
       const g = await ghostty.open()
-      await ghostty.type(g, 'ttheme use kita')
-      await ghostty.look('ghostty', { want: 'ttheme/kita', opacity: '0.22' })
+      await ghostty.type(g, 'ttheme use kita-ikuyo')
+      await ghostty.look('ghostty', { want: 'ttheme/kita-ikuyo', opacity: '0.22' })
     },
   },
   {
@@ -778,9 +778,9 @@ export const JOURNEYS: Journey[] = [
       const g = await ghostty.open()
       ghostty.leave()
       const a = await p.open()
-      await p.type(a, 'ttheme default kita')
+      await p.type(a, 'ttheme default kita-ikuyo')
       await Bun.sleep(1000)
-      await ghostty.look('ghostty', { want: 'ttheme/kita', at: g })
+      await ghostty.look('ghostty', { want: 'ttheme/kita-ikuyo', at: g })
     },
   },
   {
@@ -807,13 +807,13 @@ export const JOURNEYS: Journey[] = [
     about: 'a palette tuned in another tab repaints a tab already wearing it once that tab comes to the front',
     async run(p) {
       const a = await p.open()
-      await p.type(a, 'ttheme use kita')
+      await p.type(a, 'ttheme use kita-ikuyo')
       const b = await p.open()
-      await p.launch(b, 'ttheme edit kita', 'Edit palette')
+      await p.launch(b, 'ttheme edit kita-ikuyo', 'Edit palette')
       await p.keys(b, 'enter', 'up', 'up', 'up', 'enter', 's')
       await p.back(b)
       await p.focus(a)
-      await p.look('tuned', { want: 'ttheme/kita' })
+      await p.look('tuned', { want: 'ttheme/kita-ikuyo' })
     },
   },
   {
@@ -822,19 +822,19 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       const b = await p.open()
-      await p.type(b, 'ttheme use kita')
+      await p.type(b, 'ttheme use kita-ikuyo')
       const c = await p.open()
-      await p.type(c, 'ttheme use miku')
+      await p.type(c, 'ttheme use hatsune-miku')
       await p.launch(c, 'ttheme')
       await p.keys(c, 'alt-c', 'left', 'enter', '1s')
       await p.quit(c)
-      await p.look('here', { want: 'ttheme/miku' })
+      await p.look('here', { want: 'ttheme/hatsune-miku' })
       await p.focus(b)
-      await p.look('painted', { want: 'ttheme/kita' })
+      await p.look('painted', { want: 'ttheme/kita-ikuyo' })
       await p.focus(a)
-      await p.look('unpainted', { want: 'ttheme/konata', unpainted: true })
+      await p.look('unpainted', { want: 'ttheme/izumi-konata', unpainted: true })
       await p.open()
-      await p.look('new', { want: 'ttheme/konata', repaints: 0 })
+      await p.look('new', { want: 'ttheme/izumi-konata', repaints: 0 })
     },
   },
   {
@@ -845,23 +845,23 @@ export const JOURNEYS: Journey[] = [
       const ghostty = await p.wire('ghostty')
       const a = await p.open()
       const b = await p.open()
-      await p.type(b, 'ttheme use kita')
+      await p.type(b, 'ttheme use kita-ikuyo')
       await p.launch(b, 'ttheme')
       await p.keys(b, 'alt-c', 'left', 'left', 'enter', '1s')
       await p.quit(b)
       const g = await ghostty.open()
       await ghostty.appear('light')
       await p.focus(b)
-      await p.look('painted', { want: 'ttheme/kita', mode: 'light' })
+      await p.look('painted', { want: 'ttheme/kita-ikuyo', mode: 'light' })
       await p.focus(a)
-      await p.look('unpainted', { want: 'ttheme/konata', unpainted: true })
+      await p.look('unpainted', { want: 'ttheme/izumi-konata', unpainted: true })
       await p.open()
-      await p.look('new', { want: 'ttheme/konata', repaints: 0 })
-      await ghostty.look('ghostty', { want: 'ttheme/konata', at: g })
+      await p.look('new', { want: 'ttheme/izumi-konata', repaints: 0 })
+      await ghostty.look('ghostty', { want: 'ttheme/izumi-konata', at: g })
       await p.focus(b)
       await ghostty.appear('dark')
       await ghostty.appear('light')
-      await p.look('back', { want: 'ttheme/kita', mode: 'light' })
+      await p.look('back', { want: 'ttheme/kita-ikuyo', mode: 'light' })
     },
   },
   {
@@ -871,20 +871,20 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       const b = await p.open()
-      await p.type(b, 'ttheme use kita')
+      await p.type(b, 'ttheme use kita-ikuyo')
       await p.launch(b, 'ttheme')
       await p.keys(b, 'alt-c', 'left', 'left', 'enter', '1s')
       await p.quit(b)
       await p.appear('light')
       await p.focus(b)
-      await p.look('painted', { want: 'ttheme/kita', mode: 'light' })
+      await p.look('painted', { want: 'ttheme/kita-ikuyo', mode: 'light' })
       await p.focus(a)
-      await p.look('unpainted', { want: 'ttheme/konata', unpainted: true })
+      await p.look('unpainted', { want: 'ttheme/izumi-konata', unpainted: true })
       await p.open()
-      await p.look('new', { want: 'ttheme/konata', repaints: 0 })
+      await p.look('new', { want: 'ttheme/izumi-konata', repaints: 0 })
       await p.focus(b)
       await p.appear('dark')
-      await p.look('back', { want: 'ttheme/kita', mode: 'dark' })
+      await p.look('back', { want: 'ttheme/kita-ikuyo', mode: 'dark' })
     },
   },
   {
@@ -893,10 +893,10 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       const b = await p.open()
-      await p.type(b, 'ttheme add asuka')
+      await p.type(b, 'ttheme add souryuu-asuka-langley')
       await p.focus(a)
-      await p.type(a, 'ttheme use asuka')
-      await p.look('added', { want: 'ttheme/asuka' })
+      await p.type(a, 'ttheme use souryuu-asuka-langley')
+      await p.look('added', { want: 'ttheme/souryuu-asuka-langley' })
     },
   },
 ]

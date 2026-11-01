@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "lelouch"
-subject = "code-geass/lelouch"
+slug = "lelouch-vi-britannia"
+subject = "code-geass/lelouch-vi-britannia"
 
 [palette.colors]
 background = "#19161e"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "suzaku"
-subject = "code-geass/suzaku"
+slug = "kururugi-suzaku"
+subject = "code-geass/kururugi-suzaku"
 
 [palette.colors]
 background = "#211512"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "cc"
-subject = "code-geass/cc"
+slug = "c-c"
+subject = "code-geass/c-c"
 
 [palette.colors]
 background = "#151910"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "kallen"
-subject = "code-geass/kallen"
+slug = "kouzuki-kallen"
+subject = "code-geass/kouzuki-kallen"
 
 [palette.colors]
 background = "#201516"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "nunnally"
-subject = "code-geass/nunnally"
+slug = "nunnally-vi-britannia"
+subject = "code-geass/nunnally-vi-britannia"
 
 [palette.colors]
 background = "#1f160d"
@@ -271,8 +271,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "euphemia"
-subject = "code-geass/euphemia"
+slug = "euphemia-li-britannia"
+subject = "code-geass/euphemia-li-britannia"
 
 [palette.colors]
 background = "#1e1519"

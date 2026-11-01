@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "kurisu"
-subject = "steins-gate/kurisu"
+slug = "makise-kurisu"
+subject = "steins-gate/makise-kurisu"
 
 [palette.colors]
 background = "#1f160d"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "mayuri"
-subject = "steins-gate/mayuri"
+slug = "shiina-mayuri"
+subject = "steins-gate/shiina-mayuri"
 
 [palette.colors]
 background = "#11191c"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "suzuha"
-subject = "steins-gate/suzuha"
+slug = "amane-suzuha"
+subject = "steins-gate/amane-suzuha"
 
 [palette.colors]
 background = "#1f160d"

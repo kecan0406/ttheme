@@ -40,7 +40,7 @@ home() {
   [[ -n $tab ]] || return 0
   mkdir -p $h/.config/ttheme
   cp -R $src/ttheme.zsh $src/preview.zsh(N) $src/adapters $ROOT/dist/shell/palettes.zsh $h/.config/ttheme/
-  print -rl -- 'typeset -ga TTHEME_TERMINALS=(konsole warp)' "typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'" 'typeset -g TTHEME_STARTUP=ttheme/konata' >> $h/.config/ttheme/palettes.zsh
+  print -rl -- 'typeset -ga TTHEME_TERMINALS=(konsole warp)' "typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'" 'typeset -g TTHEME_STARTUP=ttheme/izumi-konata' >> $h/.config/ttheme/palettes.zsh
   mkdir -p $h/.warp/themes $h/.config/warp-terminal $h/.local/share/warp-terminal/themes
   print -rl -- '[appearance.themes]' 'theme = "dark"' | tee $h/.warp/settings.toml > $h/.config/warp-terminal/settings.toml
   ( source $h/.config/ttheme/palettes.zsh; for n in $TTHEME_ORDER; do : > $h/.warp/themes/ttheme-${${n/@/--}/\//--}.yaml; done )
@@ -259,7 +259,7 @@ pasting() {
   zpty -w -n sh $'ttheme\r'
   upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
   [[ ${BUF#*$'\e[?1049h'} == *$'\e[?2004h'* ]] || { fail "$name: preview left bracketed paste off, so a pasted newline pressed enter"; return 1 }
-  zpty -w -n sh $'\e[200~kita\r\rprint -r -- PASTED_$((6*7))\r\e[201~'
+  zpty -w -n sh $'\e[200~kita-ikuyo\r\rprint -r -- PASTED_$((6*7))\r\e[201~'
   upto false 0.5 $name || :
   [[ $BUF != *$'\e[?1049l'* ]] || { fail "$name: a paste closed preview and ran its last line in the shell"; return 1 }
   zpty -w -n sh $'\e'
@@ -339,7 +339,7 @@ hostile() {
   measure $name stderr 0
   start $name
   upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
-  step $'ttheme use kita\r' $name
+  step $'ttheme use kita-ikuyo\r' $name
   step $'cd /\r' $name
   stop
   [[ $BUF == *$'\e]11;#'* ]] || { fail "$name: ttheme use painted nothing under the user's options"; return 1 }
@@ -370,7 +370,7 @@ ahead() {
   local name=$1 REPLY
   start $name
   upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
-  step $'ttheme use kita\r' $name
+  step $'ttheme use kita-ikuyo\r' $name
   step $'print -r -- HIST_$((3*3))\r' $name
   BUF=""
   zpty -w -n sh $'sleep 0.3\r'
@@ -495,7 +495,7 @@ check() {
   flow off
   home paste off
   mkdir -p $WORK/paste/a/b
-  print -rl -- "$WORK/paste/a ttheme/kita" "$WORK/paste/a/b ttheme/rei" > $WORK/paste/.config/ttheme/pins
+  print -rl -- "$WORK/paste/a ttheme/kita-ikuyo" "$WORK/paste/a/b ttheme/ayanami-rei" > $WORK/paste/.config/ttheme/pins
   pasting paste
   home back off
   print -r -- "const { execSync } = require('node:child_process'); if (process.argv[2] === 'browse') { execSync('stty rows 10 cols 30', { stdio: 'inherit' }); process.exit(21) } process.exit(1)" > $WORK/back/.config/ttheme/ttheme.js

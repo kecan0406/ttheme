@@ -1,27 +1,29 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import type { Work } from '../core/commons.ts'
-import { worksOf } from './names.ts'
+import { hitsOf } from './names.ts'
 
-const works: Work[] = [
-  { id: 'starfall', name: 'Starfall Academy', characters: [{ id: 'mira', danbooru: 'mira_(starfall)' }] },
-]
+function work(label: string, match: string) {
+  return { id: `w/${label}`, kind: 'work', label, match, names: [], danbooru: [] }
+}
 
-const found = [
-  { kind: 'character', danbooru: ['nobody_(elsewhere)'], works: ['w/1', 'w/2'] },
-  { kind: 'character', danbooru: ['mira_(starfall)'], works: ['w/2', 'w/3'] },
-  { kind: 'character', danbooru: [], works: ['w/3', 'w/4'] },
-  { kind: 'work', danbooru: ['starfall_academy'], works: [] },
-]
+test('a work is found by its name, its family or the start of a name, never by a guess at a typo or a sound', () => {
+  const found = [work('A', 'name'), work('B', 'family'), work('C', 'prefix'), work('D', 'typo'), work('E', 'sound')]
 
-test('a character known by its tag needs no lookup, nor do the works it already places', () => {
-  assert.deepEqual(worksOf(found, works), ['w/1', 'w/4'])
+  assert.deepEqual(
+    hitsOf(found, 'harbor').map((hit) => hit.label),
+    ['A', 'B', 'C'],
+  )
 })
 
-test("the first hit's first work is always looked up, for the request that names it", () => {
-  assert.deepEqual(worksOf(found.slice(1), works), ['w/2', 'w/4'])
+test('one word of a title counts only for a query long enough to mean it', () => {
+  const found = [work('A', 'part')]
+
+  assert.equal(hitsOf(found, 'tide').length, 0)
+  assert.equal(hitsOf(found, 'tidal').length, 1)
+  assert.equal(hitsOf(found, '항구').length, 0)
+  assert.equal(hitsOf(found, '달빛항').length, 1)
 })
 
-test('without known works every character is looked up', () => {
-  assert.deepEqual(worksOf(found, undefined), ['w/1', 'w/2', 'w/3', 'w/4'])
+test('a character is no hit, whatever it matched', () => {
+  assert.deepEqual(hitsOf([{ ...work('A', 'name'), kind: 'character' }], 'harbor'), [])
 })

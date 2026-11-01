@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "jill"
-subject = "va-11-hall-a/jill"
+slug = "jill-stingray"
+subject = "va-11-hall-a/jill-stingray"
 
 [palette.colors]
 background = "#15181e"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "dorothy"
-subject = "va-11-hall-a/dorothy"
+slug = "dorothy-haze"
+subject = "va-11-hall-a/dorothy-haze"
 
 [palette.colors]
 background = "#201515"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "alma"
-subject = "va-11-hall-a/alma"
+slug = "alma-armas"
+subject = "va-11-hall-a/alma-armas"
 
 [palette.colors]
 background = "#1e160d"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "stella"
-subject = "va-11-hall-a/stella"
+slug = "stella-hoshii"
+subject = "va-11-hall-a/stella-hoshii"
 
 [palette.colors]
 background = "#201515"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "sei"
-subject = "va-11-hall-a/sei"
+slug = "sei-asagiri"
+subject = "va-11-hall-a/sei-asagiri"
 
 [palette.colors]
 background = "#101916"

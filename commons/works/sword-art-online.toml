@@ -29,7 +29,7 @@ danbooru = "leafa_(sao)"
 sites = { konachan = "leafa", yande = "leafa", zerochan = "lyfa_(alo)" }
 
 [[character]]
-id = "alice"
+id = "alice-zuberg"
 native = ["アリス・ツーベルク", "アリス・シンセシス・サーティ"]
 danbooru = "alice_zuberg"
 sites = { zerochan = "alice_schuberg" }

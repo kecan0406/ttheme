@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "reimu"
-subject = "touhou-project/reimu"
+slug = "hakurei-reimu"
+subject = "touhou-project/hakurei-reimu"
 
 [palette.colors]
 background = "#201513"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "marisa"
-subject = "touhou-project/marisa"
+slug = "kirisame-marisa"
+subject = "touhou-project/kirisame-marisa"
 
 [palette.colors]
 background = "#1b170c"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "youmu"
-subject = "touhou-project/youmu"
+slug = "konpaku-youmu"
+subject = "touhou-project/konpaku-youmu"
 
 [palette.colors]
 background = "#101917"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "patchouli"
-subject = "touhou-project/patchouli"
+slug = "patchouli-knowledge"
+subject = "touhou-project/patchouli-knowledge"
 
 [palette.colors]
 background = "#1b161d"
@@ -271,8 +271,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "flandre"
-subject = "touhou-project/flandre"
+slug = "flandre-scarlet"
+subject = "touhou-project/flandre-scarlet"
 
 [palette.colors]
 background = "#201514"

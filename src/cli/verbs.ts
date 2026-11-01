@@ -43,7 +43,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'use',
     args: ['<palette>'],
-    about: 'Use a palette in this tab — by its name alone where one installed palette has it: ttheme use rei',
+    about: 'Use a palette in this tab — by its name alone where one installed palette has it: ttheme use ayanami-rei',
     section: 'tab',
     shell: true,
   },
@@ -257,7 +257,7 @@ export const VERB_SPECS: VerbSpec[] = [
     notes: [
       'Anchors file (--anchors), one entry per palette:',
       '  {',
-      '    "bocchi": {',
+      '    "gotoh-hitori": {',
       '      "slots": { "cursor": ["hair", "#ffb7c8"], "ansi4": ["eyes", "#7b96c8"], "ansi9": ["jacket", "#f39cbf"] },',
       '      "booru": "gotoh_hitori",',
       '      "native_names": ["後藤ひとり"],',
@@ -460,10 +460,13 @@ const WIDTH = Math.max(
 
 const EXAMPLES: [string, string][] = [
   ['npx @kecan0406/ttheme init -y', 'Wire the terminals found here, no prompts'],
-  ['ttheme add homura madoka', 'Install two palettes'],
-  ['ttheme use homura', 'Use one in this tab'],
+  ['ttheme add akemi-homura kaname-madoka', 'Install two palettes'],
+  ['ttheme use akemi-homura', 'Use one in this tab'],
   ['ttheme marketplace add alice/ttheme-pastel', "alice's marketplace, alice@pastel — ttheme add alice@pastel/dusk"],
-  ['ttheme new rei --from rei', 'Your own rei, <you>@<marketplace>/rei, to edit and share'],
+  [
+    'ttheme new ayanami-rei --from ayanami-rei',
+    'Your own ayanami-rei, <you>@<marketplace>/ayanami-rei, to edit and share',
+  ],
 ]
 
 export function briefText(color = false): string {

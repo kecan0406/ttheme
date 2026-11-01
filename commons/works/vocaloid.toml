@@ -2,10 +2,10 @@
 name = "Vocaloid"
 native = "ボーカロイド"
 danbooru = "vocaloid"
-lead = "vocaloid/miku"
+lead = "vocaloid/hatsune-miku"
 
 [[character]]
-id = "miku"
+id = "hatsune-miku"
 native = ["初音ミク"]
 danbooru = "hatsune_miku"
 
@@ -13,17 +13,17 @@ danbooru = "hatsune_miku"
 id = "kumori"
 
 [[character]]
-id = "rin"
+id = "kagamine-rin"
 native = ["鏡音リン"]
 danbooru = "kagamine_rin"
 
 [[character]]
-id = "len"
+id = "kagamine-len"
 native = ["鏡音レン"]
 danbooru = "kagamine_len"
 
 [[character]]
-id = "luka"
+id = "megurine-luka"
 native = ["巡音ルカ"]
 danbooru = "megurine_luka"
 

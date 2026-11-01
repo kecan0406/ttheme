@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "hitagi"
-subject = "monogatari/hitagi"
+slug = "senjougahara-hitagi"
+subject = "monogatari/senjougahara-hitagi"
 
 [palette.colors]
 background = "#1e151a"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "shinobu"
-subject = "monogatari/shinobu"
+slug = "oshino-shinobu"
+subject = "monogatari/oshino-shinobu"
 
 [palette.colors]
 background = "#1c170c"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "tsubasa"
-subject = "monogatari/tsubasa"
+slug = "hanekawa-tsubasa"
+subject = "monogatari/hanekawa-tsubasa"
 
 [palette.colors]
 background = "#201517"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "nadeko"
-subject = "monogatari/nadeko"
+slug = "sengoku-nadeko"
+subject = "monogatari/sengoku-nadeko"
 
 [palette.colors]
 background = "#1f1518"

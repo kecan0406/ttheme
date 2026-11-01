@@ -1,8 +1,17 @@
 import type { Art, WorkArt } from '@/lib/art'
-import { anilistIdsOf, type Casts, type CastWork, castFrom, castLeads, MOST_CAST, untaken } from '@/lib/found'
+import {
+  anilistIdsOf,
+  type Casts,
+  type CastWork,
+  castFrom,
+  castLeads,
+  MOST_CAST,
+  type People,
+  untaken,
+} from '@/lib/found'
 import { langOf } from '@/lib/theme-entry'
 import type { Work } from '../../src/core/commons.ts'
-import { type CastMember, workSlugOf } from '../../src/core/names.ts'
+import { type CastMember, slugOfTag } from '../../src/core/names.ts'
 import { liveSource, nameIndex } from '../../src/store/names.ts'
 
 export interface ArtIds {
@@ -11,101 +20,237 @@ export interface ArtIds {
   cast: Record<string, number>
 }
 
+export const PERSON_NAMES = new Map([
+  ['black-bullet/satomi-rentarou', 'Rentaro Satomi'],
+  ['black-bullet/aihara-enju', 'Enju Aihara'],
+  ['black-bullet/tendou-kisara', 'Kisara Tendo'],
+  ['black-bullet/hiruko-kohina', 'Kohina Hiruko'],
+  ['black-bullet/hiruko-kagetane', 'Kagetane Hiruko'],
+  ['call-of-the-night/kikyou-seri', 'Seri Kikyo'],
+  ['call-of-the-night/uguisu-anko', 'Anko Uguisu'],
+  ['chuunibyou/togashi-yuuta', 'Yuta Togashi'],
+  ['chuunibyou/nibutani-shinka', 'Shinka Nibutani'],
+  ['chuunibyou/dekomori-sanae', 'Sanae Dekomori'],
+  ['chuunibyou/tsuyuri-kumin', 'Kumin Tsuyuri'],
+  ['code-geass/lelouch-vi-britannia', 'Lelouch vi Britannia'],
+  ['code-geass/c-c', 'C.C.'],
+  ['code-geass/kouzuki-kallen', 'Kallen Kozuki'],
+  ['code-geass/nunnally-vi-britannia', 'Nunnally vi Britannia'],
+  ['madoka-magica/kaname-madoka', 'Madoka Kaname'],
+  ['madoka-magica/momoe-nagisa', 'Nagisa Momoe'],
+  ['nichijou/aioi-yuuko', 'Yuko Aioi'],
+  ['nichijou/naganohara-mio', 'Mio Naganohara'],
+  ['nichijou/minakami-mai', 'Mai Minakami'],
+  ['nichijou/shinonome-nano', 'Nano Shinonome'],
+  ['nichijou/sakamoto', 'Sakamoto'],
+  ['persona-5/amamiya-ren', 'Ren Amamiya'],
+  ['sailor-moon/sailor-mercury', 'Ami Mizuno'],
+  ['sailor-moon/sailor-mars', 'Rei Hino'],
+  ['sailor-moon/sailor-jupiter', 'Makoto Kino'],
+  ['sailor-moon/sailor-venus', 'Minako Aino'],
+  ['sword-art-online/sinon', 'Sinon'],
+  ['the-devil-is-a-part-timer/maou-sadao', 'Sadao Maou'],
+  ['the-devil-is-a-part-timer/yusa-emi', 'Emi Yusa'],
+  ['the-devil-is-a-part-timer/sasaki-chiho', 'Chiho Sasaki'],
+  ['the-devil-is-a-part-timer/ashiya-shirou', 'Shiro Ashiya'],
+  ['the-devil-is-a-part-timer/urushihara-hanzou', 'Hanzo Urushihara'],
+  ['the-devil-is-a-part-timer/kamazuki-suzuno', 'Suzuno Kamazuki'],
+  ['touhou-project/hakurei-reimu', 'Reimu Hakurei'],
+  ['touhou-project/kirisame-marisa', 'Marisa Kirisame'],
+  ['umineko/ushiromiya-battler', 'Battler Ushiromiya'],
+  ['va-11-hall-a/jill-stingray', 'Jill Stingray'],
+  ['va-11-hall-a/sei-asagiri', 'Sei Asagiri'],
+  ['vocaloid/kaito', 'KAITO'],
+  ['vocaloid/meiko', 'MEIKO'],
+])
+
 export const ART_IDS = {
   'black-bullet': {
     tmdb: 'tv/60834',
     anilist: 20457,
-    cast: { rentaro: 74619, enju: 74621, kisara: 83523, tina: 88336, kohina: 88339, kagetane: 83505 },
+    cast: {
+      'satomi-rentarou': 74619,
+      'aihara-enju': 74621,
+      'tendou-kisara': 83523,
+      'tina-sprout': 88336,
+      'hiruko-kohina': 88339,
+      'hiruko-kagetane': 83505,
+    },
   },
   'bocchi-the-rock': {
     tmdb: 'tv/119100',
     anilist: 130003,
-    cast: { bocchi: 257562, nijika: 261674, ryo: 264529, kita: 266041 },
+    cast: { 'gotoh-hitori': 257562, 'ijichi-nijika': 261674, 'yamada-ryo': 264529, 'kita-ikuyo': 266041 },
   },
   'call-of-the-night': {
     tmdb: 'tv/138357',
     anilist: 141391,
-    cast: { nazuna: 168774, kou: 168866, seri: 175658, anko: 175659 },
+    cast: { 'nanakusa-nazuna': 168774, 'yamori-kou': 168866, 'kikyou-seri': 175658, 'uguisu-anko': 175659 },
   },
   chuunibyou: {
     tmdb: 'tv/45501',
     anilist: 14741,
-    cast: { rikka: 65865, yuuta: 65863, shinka: 65871, dekomori: 67215, kumin: 67213 },
+    cast: {
+      'takanashi-rikka': 65865,
+      'togashi-yuuta': 65863,
+      'nibutani-shinka': 65871,
+      'dekomori-sanae': 67215,
+      'tsuyuri-kumin': 67213,
+    },
   },
   'code-geass': {
     tmdb: 'tv/31724',
     anilist: 1575,
-    cast: { lelouch: 417, suzaku: 559, cc: 1111, kallen: 558, nunnally: 1110, euphemia: 1114 },
+    cast: {
+      'lelouch-vi-britannia': 417,
+      'kururugi-suzaku': 559,
+      'c-c': 1111,
+      'kouzuki-kallen': 558,
+      'nunnally-vi-britannia': 1110,
+      'euphemia-li-britannia': 1114,
+    },
   },
   'cyberpunk-edgerunners': {
     tmdb: 'tv/105248',
     anilist: 120377,
-    cast: { david: 284158, lucy: 284157, rebecca: 284163 },
+    cast: { 'david-martinez': 284158, lucy: 284157, rebecca: 284163 },
   },
-  evangelion: { tmdb: 'tv/890', anilist: 30, cast: { asuka: 94, rei: 86, kaworu: 1261, misato: 1259 } },
-  higurashi: { tmdb: 'tv/25760', anilist: 934, cast: { rena: 1427, mion: 1611, rika: 1534, satoko: 1612 } },
+  evangelion: {
+    tmdb: 'tv/890',
+    anilist: 30,
+    cast: { 'souryuu-asuka-langley': 94, 'ayanami-rei': 86, 'nagisa-kaworu': 1261, 'katsuragi-misato': 1259 },
+  },
+  higurashi: {
+    tmdb: 'tv/25760',
+    anilist: 934,
+    cast: { 'ryuuguu-rena': 1427, 'sonozaki-mion': 1611, 'furude-rika': 1534, 'houjou-satoko': 1612 },
+  },
   'jujutsu-kaisen': {
     tmdb: 'tv/95479',
     anilist: 113415,
-    cast: { gojo: 127691, yuji: 127212, megumi: 126635, nobara: 133700, nanami: 133704, geto: 133699, sukuna: 133701 },
+    cast: {
+      'gojo-satoru': 127691,
+      'itadori-yuji': 127212,
+      'fushiguro-megumi': 126635,
+      'kugisaki-nobara': 133700,
+      'nanami-kento': 133704,
+      'geto-suguru': 133699,
+      'ryoumen-sukuna': 133701,
+    },
   },
   'k-on': {
     tmdb: 'tv/42253',
     anilist: 5680,
-    cast: { yui: 19565, ritsu: 19567, mio: 19566, mugi: 19568, azusa: 21173 },
+    cast: {
+      'hirasawa-yui': 19565,
+      'tainaka-ritsu': 19567,
+      'akiyama-mio': 19566,
+      'kotobuki-tsumugi': 19568,
+      'nakano-azusa': 21173,
+    },
   },
-  lain: { tmdb: 'tv/1087', anilist: 339, cast: { lain: 2219 } },
-  'lucky-star': { tmdb: 'tv/42500', anilist: 1887, cast: { konata: 2169, kagami: 2171, tsukasa: 2170, miyuki: 2172 } },
+  lain: { tmdb: 'tv/1087', anilist: 339, cast: { 'iwakura-lain': 2219 } },
+  'lucky-star': {
+    tmdb: 'tv/42500',
+    anilist: 1887,
+    cast: { 'izumi-konata': 2169, 'hiiragi-kagami': 2171, 'hiiragi-tsukasa': 2170, 'takara-miyuki': 2172 },
+  },
   'madoka-magica': {
     tmdb: 'tv/39218',
     anilist: 9756,
-    cast: { madoka: 37832, homura: 38005, sayaka: 38395, kyoko: 40006, mami: 38194, nagisa: 87785, kyubey: 38566 },
+    cast: {
+      'kaname-madoka': 37832,
+      'akemi-homura': 38005,
+      'miki-sayaka': 38395,
+      'sakura-kyoko': 40006,
+      'tomoe-mami': 38194,
+      'momoe-nagisa': 87785,
+      kyubey: 38566,
+    },
   },
   monogatari: {
     tmdb: 'tv/46195',
     anilist: 5081,
-    cast: { hitagi: 22037, shinobu: 23602, tsubasa: 22055, nadeko: 22050 },
+    cast: { 'senjougahara-hitagi': 22037, 'oshino-shinobu': 23602, 'hanekawa-tsubasa': 22055, 'sengoku-nadeko': 22050 },
   },
   nichijou: {
     tmdb: 'tv/44684',
     anilist: 10165,
-    cast: { yukko: 10418, naganohara: 40081, mai: 10421, nano: 10422, hakase: 41055, sakamoto: 41069 },
+    cast: {
+      'aioi-yuuko': 10418,
+      'naganohara-mio': 40081,
+      'minakami-mai': 10421,
+      'shinonome-nano': 10422,
+      'professor-shinonome': 41055,
+      sakamoto: 41069,
+    },
   },
   'no-game-no-life': {
     tmdb: 'tv/60808',
     anilist: 19815,
-    cast: { sora: 82523, shiro: 82525, steph: 82527, jibril: 87887, izuna: 88003, tet: 88004 },
+    cast: { sora: 82523, shiro: 82525, 'stephanie-dora': 82527, jibril: 87887, 'hatsuse-izuna': 88003, teto: 88004 },
   },
   oregairu: {
     tmdb: 'tv/65676',
     anilist: 14813,
-    cast: { hachiman: 67065, yukino: 67067, yuigahama: 67069, iroha: 88727, komachi: 67075, haruno: 79589 },
+    cast: {
+      'hikigaya-hachiman': 67065,
+      'yukinoshita-yukino': 67067,
+      'yuigahama-yui': 67069,
+      'isshiki-iroha': 88727,
+      'hikigaya-komachi': 67075,
+      'yukinoshita-haruno': 79589,
+    },
   },
   'persona-5': {
     tmdb: 'tv/77701',
     anilist: 99693,
-    cast: { joker: 121590, skull: 122974, panther: 120335, fox: 122975, queen: 122977, oracle: 121635 },
+    cast: {
+      'amamiya-ren': 121590,
+      'sakamoto-ryuji': 122974,
+      'takamaki-ann': 120335,
+      'kitagawa-yusuke': 122975,
+      'niijima-makoto': 122977,
+      'sakura-futaba': 121635,
+    },
   },
   'sailor-moon': {
     tmdb: 'tv/3570',
     anilist: 530,
-    cast: { moon: 2030, mercury: 2366, mars: 2367, jupiter: 2825, venus: 2826 },
+    cast: {
+      'sailor-moon': 2030,
+      'sailor-mercury': 2366,
+      'sailor-mars': 2367,
+      'sailor-jupiter': 2825,
+      'sailor-venus': 2826,
+    },
   },
-  'steins-gate': { tmdb: 'tv/42509', anilist: 9253, cast: { kurisu: 34470, mayuri: 35253, suzuha: 35255 } },
+  'steins-gate': {
+    tmdb: 'tv/42509',
+    anilist: 9253,
+    cast: { 'makise-kurisu': 34470, 'shiina-mayuri': 35253, 'amane-suzuha': 35255 },
+  },
   'sword-art-online': {
     tmdb: 'tv/45782',
     anilist: 11757,
-    cast: { kirito: 36765, asuna: 36828, sinon: 55147, leafa: 36831, alice: 75450, yuuki: 64523 },
+    cast: { kirito: 36765, asuna: 36828, sinon: 55147, leafa: 36831, 'alice-zuberg': 75450, yuuki: 64523 },
   },
   'the-devil-is-a-part-timer': {
     tmdb: 'tv/45997',
     anilist: 15809,
-    cast: { maou: 70733, emi: 70735, chiho: 70739, ashiya: 70737, urushihara: 83103, suzuno: 83105 },
+    cast: {
+      'maou-sadao': 70733,
+      'yusa-emi': 70735,
+      'sasaki-chiho': 70739,
+      'ashiya-shirou': 70737,
+      'urushihara-hanzou': 83103,
+      'kamazuki-suzuno': 83105,
+    },
   },
   umineko: {
     tmdb: 'tv/25499',
     anilist: 4896,
-    cast: { battler: 14040, beatrice: 10285, bernkastel: 11840, lambdadelta: 10196 },
+    cast: { 'ushiromiya-battler': 14040, beatrice: 10285, 'frederica-bernkastel': 11840, lambdadelta: 10196 },
   },
 } satisfies Record<string, ArtIds>
 
@@ -410,6 +555,18 @@ export function liveArtwork(slug: string, app: Twitch): Promise<Live<string | nu
 }
 
 export function artProblems(works: readonly Work[]): string[] {
+  const strays = [...PERSON_NAMES.keys()].flatMap((subject) => {
+    const [work, character] = subject.split('/')
+
+    return works.some((each) => each.id === work && each.characters.some((entry) => entry.id === character))
+      ? []
+      : [`${subject}: the commons holds no such character`]
+  })
+
+  return strays.concat(artOfWorks(works))
+}
+
+function artOfWorks(works: readonly Work[]): string[] {
   return Object.entries(ART_IDS).flatMap(([id, ids]) => {
     const work = works.find((entry) => entry.id === id)
 
@@ -456,7 +613,7 @@ export async function fetchCasts(works: readonly CastWork[], warn: (message: str
   const found = new Map<string, CastMember[]>()
 
   for (const work of works) {
-    const slug = workSlugOf(work.tag)
+    const slug = slugOfTag(work.tag)
 
     if (!slug) continue
 
@@ -484,6 +641,35 @@ export async function fetchCasts(works: readonly CastWork[], warn: (message: str
   }
 
   return casts
+}
+
+export async function fetchPeople(works: readonly Work[], warn: (message: string) => void): Promise<People> {
+  const index = nameIndex(liveSource())
+  const people: People = {}
+
+  for (const work of works) {
+    const lang = work.native ? langOf(work.native, true) : null
+
+    for (const character of work.characters) {
+      const subject = `${work.id}/${character.id}`
+      const fixed = PERSON_NAMES.get(subject)
+
+      if (fixed) {
+        people[subject] = fixed
+      } else if (character.danbooru) {
+        try {
+          const member = await index.person(character.danbooru, AbortSignal.timeout(BUILD.timeout))
+          const name = member ? castFrom([member], new Map(), lang)[0]?.name : undefined
+
+          if (name) people[subject] = name
+        } catch (error) {
+          warn(`no name for ${subject} — ${error instanceof Error ? error.message : String(error)}`)
+        }
+      }
+    }
+  }
+
+  return people
 }
 
 export function castWorks(works: readonly Work[]): CastWork[] {

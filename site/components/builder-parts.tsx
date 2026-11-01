@@ -888,7 +888,7 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
             data-meta="subject"
             value={about.subject}
             aria-invalid={String(about.unread)}
-            placeholder="vocaloid/miku"
+            placeholder="vocaloid/hatsune-miku"
             maxlength="81"
             spellcheck="false"
             autocomplete="off"

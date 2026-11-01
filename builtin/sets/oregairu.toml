@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "hachiman"
-subject = "oregairu/hachiman"
+slug = "hikigaya-hachiman"
+subject = "oregairu/hikigaya-hachiman"
 
 [palette.colors]
 background = "#17171f"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "yukino"
-subject = "oregairu/yukino"
+slug = "yukinoshita-yukino"
+subject = "oregairu/yukinoshita-yukino"
 
 [palette.colors]
 background = "#12181d"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "yuigahama"
-subject = "oregairu/yuigahama"
+slug = "yuigahama-yui"
+subject = "oregairu/yuigahama-yui"
 
 [palette.colors]
 background = "#201511"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "iroha"
-subject = "oregairu/iroha"
+slug = "isshiki-iroha"
+subject = "oregairu/isshiki-iroha"
 
 [palette.colors]
 background = "#1e160d"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "komachi"
-subject = "oregairu/komachi"
+slug = "hikigaya-komachi"
+subject = "oregairu/hikigaya-komachi"
 
 [palette.colors]
 background = "#16171f"
@@ -271,8 +271,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "haruno"
-subject = "oregairu/haruno"
+slug = "yukinoshita-haruno"
+subject = "oregairu/yukinoshita-haruno"
 
 [palette.colors]
 background = "#201516"

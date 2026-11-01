@@ -11,15 +11,8 @@ export const MOST_ASKED = 100
 
 export const NAME_PAUSE = 300
 
-export interface NamedRow {
-  id: string
-  read: string
-  by: 'work' | 'character'
-  characters: string[]
-}
-
 export interface NamesAnswer {
-  works: NamedRow[]
+  works: string[]
   found: FoundWork[]
   label: string
   request: string

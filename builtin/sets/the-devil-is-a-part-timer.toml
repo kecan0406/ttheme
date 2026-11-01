@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "maou"
-subject = "the-devil-is-a-part-timer/maou"
+slug = "maou-sadao"
+subject = "the-devil-is-a-part-timer/maou-sadao"
 
 [palette.colors]
 background = "#211512"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "emi"
-subject = "the-devil-is-a-part-timer/emi"
+slug = "yusa-emi"
+subject = "the-devil-is-a-part-timer/yusa-emi"
 
 [palette.colors]
 background = "#201516"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "chiho"
-subject = "the-devil-is-a-part-timer/chiho"
+slug = "sasaki-chiho"
+subject = "the-devil-is-a-part-timer/sasaki-chiho"
 
 [palette.colors]
 background = "#211512"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "ashiya"
-subject = "the-devil-is-a-part-timer/ashiya"
+slug = "ashiya-shirou"
+subject = "the-devil-is-a-part-timer/ashiya-shirou"
 
 [palette.colors]
 background = "#1d170c"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "urushihara"
-subject = "the-devil-is-a-part-timer/urushihara"
+slug = "urushihara-hanzou"
+subject = "the-devil-is-a-part-timer/urushihara-hanzou"
 
 [palette.colors]
 background = "#1a161e"
@@ -271,8 +271,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "suzuno"
-subject = "the-devil-is-a-part-timer/suzuno"
+slug = "kamazuki-suzuno"
+subject = "the-devil-is-a-part-timer/kamazuki-suzuno"
 
 [palette.colors]
 background = "#12181d"

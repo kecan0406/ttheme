@@ -2,7 +2,7 @@
 
 ```zsh
 W=.agents/skills/sandbox/scripts/window.zsh
-TTHEME_KITTY_APP=<kitty.app> zsh $W --kitty --shots <scratchpad>/k ttheme/asuka ttheme/gojo -- 'ttheme use ttheme/gojo' 'sb_report "ansi1 $(sb_color 1)"'
+TTHEME_KITTY_APP=<kitty.app> zsh $W --kitty --shots <scratchpad>/k ttheme/souryuu-asuka-langley ttheme/gojo-satoru -- 'ttheme use ttheme/gojo-satoru' 'sb_report "ansi1 $(sb_color 1)"'
 ```
 
 `--kitty`, `--alacritty` or `--wezterm` picks the terminal; `TTHEME_KITTY_APP`, `TTHEME_ALACRITTY_APP` and `TTHEME_WEZTERM_APP` name an app outside `/Applications` (download the release into the scratchpad and point at it). Everything else is Ghostty mode's: the same commands and the same report.

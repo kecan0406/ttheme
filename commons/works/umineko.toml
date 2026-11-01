@@ -5,7 +5,7 @@ danbooru = "umineko_no_naku_koro_ni"
 lead = "umineko/beatrice"
 
 [[character]]
-id = "battler"
+id = "ushiromiya-battler"
 native = ["右代宮戦人"]
 danbooru = "ushiromiya_battler"
 
@@ -16,7 +16,7 @@ danbooru = "beatrice_(umineko)"
 sites = { konachan = "beatrice", yande = "beatrice", zerochan = "beatrice_(umineko_no_naku_koro_ni)" }
 
 [[character]]
-id = "bernkastel"
+id = "frederica-bernkastel"
 native = ["フレデリカ・ベルンカステル"]
 danbooru = "frederica_bernkastel"
 

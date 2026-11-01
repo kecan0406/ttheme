@@ -2,24 +2,24 @@
 name = "Lucky☆Star"
 native = "らき☆すた"
 danbooru = "lucky_star"
-lead = "lucky-star/konata"
+lead = "lucky-star/izumi-konata"
 
 [[character]]
-id = "konata"
+id = "izumi-konata"
 native = ["泉こなた"]
 danbooru = "izumi_konata"
 
 [[character]]
-id = "kagami"
+id = "hiiragi-kagami"
 native = ["柊かがみ"]
 danbooru = "hiiragi_kagami"
 
 [[character]]
-id = "tsukasa"
+id = "hiiragi-tsukasa"
 native = ["柊つかさ"]
 danbooru = "hiiragi_tsukasa"
 
 [[character]]
-id = "miyuki"
+id = "takara-miyuki"
 native = ["高良みゆき"]
 danbooru = "takara_miyuki"

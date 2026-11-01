@@ -288,12 +288,12 @@ export function staleMeasures(): { row: Measured; since: string[] }[] | undefine
 }
 
 export const BRIDGES: { id: string; holds: (fact: (id: string) => string | undefined) => boolean }[] = [
-  { id: 'follow-default', holds: (fact) => fact('default-here.here.colors') === 'ttheme/miku' },
+  { id: 'follow-default', holds: (fact) => fact('default-here.here.colors') === 'ttheme/hatsune-miku' },
   { id: 'follow-belief', holds: (fact) => !(fact('default-here.here.issue') ?? '').includes('wears') },
-  { id: 'keep-painted', holds: (fact) => fact('default-keeps.here.colors') === 'ttheme/rei' },
-  { id: 'on-follow', holds: (fact) => fact('on.other.colors') === 'ttheme/konata' },
+  { id: 'keep-painted', holds: (fact) => fact('default-keeps.here.colors') === 'ttheme/ayanami-rei' },
+  { id: 'on-follow', holds: (fact) => fact('on.other.colors') === 'ttheme/izumi-konata' },
   { id: 'on-belief', holds: (fact) => !(fact('on.other.issue') ?? '').includes('wears') },
-  { id: 'reset-worn', holds: (fact) => fact('program-reset.after.colors') === 'ttheme/miku' },
+  { id: 'reset-worn', holds: (fact) => fact('program-reset.after.colors') === 'ttheme/hatsune-miku' },
 ]
 
 export function unmeasured(compat: Compat, term: Term): string[] | undefined {

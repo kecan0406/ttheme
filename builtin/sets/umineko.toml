@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "battler"
-subject = "umineko/battler"
+slug = "ushiromiya-battler"
+subject = "umineko/ushiromiya-battler"
 
 [palette.colors]
 background = "#201513"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "bernkastel"
-subject = "umineko/bernkastel"
+slug = "frederica-bernkastel"
+subject = "umineko/frederica-bernkastel"
 
 [palette.colors]
 background = "#13181e"

@@ -72,6 +72,12 @@ export function loadBuiltin(dir: string, commons: Commons): Theme[] {
         fail(`${at}: ${slug}`, `subject "${theme.subject}" is not in the commons — add it to commons/works first`)
       }
 
+      const about = aboutOf(commons.works, theme.subject)
+
+      if (about?.character && about.character.id !== slug) {
+        fail(`${at}: ${slug}`, `a palette of a character takes its id for a slug: ${about.character.id}`)
+      }
+
       if (basename(file, '.toml') !== setNameOf(theme.subject)) {
         fail(
           `${at}: ${slug}`,

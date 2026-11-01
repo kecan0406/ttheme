@@ -318,7 +318,7 @@ export function BrowseWorks({
           lens="works"
           heading={category ? `browse ${category.label} works` : 'browse works'}
           counts={{ works: entries.length, marketplaces: shelves.length }}
-          placeholder="search works and characters"
+          placeholder="search works"
         >
           <Categories current={category?.slug} />
           <Choice name="sort" options={WORK_SORTS} first="name" />
@@ -358,6 +358,7 @@ export function BrowseWorks({
                 <li
                   data-work={entry.id}
                   data-search={entry.search}
+                  data-names={entry.names}
                   data-palettes={entry.palettes}
                   data-order={index}
                   class="grid"

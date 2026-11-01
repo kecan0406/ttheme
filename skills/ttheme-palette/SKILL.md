@@ -19,7 +19,7 @@ One character, or a work's cast (5–7: the protagonists and the characters the 
 
 When `make`'s dry run shows a palette with no `subject`, the commons does not hold the character: read `references/new-work.md`.
 
-Name a palette the way the work and its fans name the character (`gojo`, `nanami`), or by codename or avatar where that is how the character is known (`joker`, `kirito`).
+Name a palette the character's full name, its danbooru tag without a qualifier and with hyphens for underscores (`gojo_satoru` is `gojo-satoru`, `lucy_(cyberpunk)` is `lucy`). Search and the character's name on the site read from this, so never a nickname or a codename.
 
 ## 2. Research
 
@@ -80,7 +80,7 @@ The anchors file's `slots` puts each part you measured into one of the palette's
 
 ```json
 {
-  "bocchi": {
+  "gotoh-hitori": {
     "booru": "gotoh_hitori",
     "slots": {
       "cursor": ["hair", "#ffb7c8"],

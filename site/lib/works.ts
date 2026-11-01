@@ -1,8 +1,8 @@
 import { type KeyArt, keyArtOf, type WorkArt } from '@/lib/art'
-import { searchText } from '@/lib/gallery'
 import { BUILTIN, faceOf, paint, type Shade, type Theme, type WorkRef } from '@/lib/themes'
+import { slugOf } from '../../src/core/theme.ts'
 
-export const FIRST = 'ttheme/miku'
+export const FIRST = 'ttheme/hatsune-miku'
 
 export const WORN_FACETS = '--k0:var(--bg);--k1:var(--a0);--k2:var(--se);--k3:var(--cu);--k4:var(--a1);--k5:var(--a5)'
 
@@ -23,6 +23,7 @@ export interface WorkEntry {
   facets: string
   palettes: number
   search: string
+  names: string
 }
 
 export const WORK_PATH = '/works'
@@ -122,7 +123,8 @@ export function workEntries(themes: readonly Theme[], artOf: (work: string) => W
         art: keyArtOf(artOf(id)),
         facets: facetStyle(leadOf(shelf)),
         palettes: shelf.themes.length,
-        search: [id, name, native ?? '', ...shelf.themes.map(searchText)].join('\n').toLowerCase(),
+        search: [id, name, native ?? ''].join('\n').toLowerCase(),
+        names: shelf.themes.flatMap((theme) => [theme.id, slugOf(theme.id)]).join('\n'),
       },
     ]
   })

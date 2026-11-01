@@ -2,15 +2,15 @@
 name = "Touhou Project"
 native = "東方Project"
 danbooru = "touhou"
-lead = "touhou-project/reimu"
+lead = "touhou-project/hakurei-reimu"
 
 [[character]]
-id = "reimu"
+id = "hakurei-reimu"
 native = ["博麗霊夢"]
 danbooru = "hakurei_reimu"
 
 [[character]]
-id = "marisa"
+id = "kirisame-marisa"
 native = ["霧雨魔理沙"]
 danbooru = "kirisame_marisa"
 
@@ -20,16 +20,16 @@ native = ["チルノ"]
 danbooru = "cirno"
 
 [[character]]
-id = "youmu"
+id = "konpaku-youmu"
 native = ["魂魄妖夢"]
 danbooru = "konpaku_youmu"
 
 [[character]]
-id = "patchouli"
+id = "patchouli-knowledge"
 native = ["パチュリー・ノーレッジ"]
 danbooru = "patchouli_knowledge"
 
 [[character]]
-id = "flandre"
+id = "flandre-scarlet"
 native = ["フランドール・スカーレット"]
 danbooru = "flandre_scarlet"

@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "alice"
-subject = "sword-art-online/alice"
+slug = "alice-zuberg"
+subject = "sword-art-online/alice-zuberg"
 
 [palette.colors]
 background = "#1b170c"

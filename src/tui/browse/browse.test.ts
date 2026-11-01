@@ -502,7 +502,7 @@ test('a filter that matches no palette says so under the head rows', async () =>
   assert.match(frames, /^ {4}No palettes match 'zzz'/m)
 })
 
-test('typing in the search filters the list at once, palette names included, and what Browse filtered opens it', async () => {
+test('typing in the search filters the list at once, a whole palette name included, and what Browse filtered opens it', async () => {
   const index = () =>
     Promise.resolve(
       listing(
@@ -514,6 +514,8 @@ test('typing in the search filters the list at once, palette names included, and
   const typed = await drive([...SEARCH, 20, ...'glow', '\x1b', '\x1b', '\x1b'], { io: io({ index }) })
   assert.match(typed.frames, / Search marketplace \(2 found\)$/m)
   assert.match(typed.frames, / Search marketplace \(1 found\)\n.*\n │ ⌕ glow_/)
+  const part = await drive([...SEARCH, 20, ...'glo', '\x1b', '\x1b', '\x1b'], { io: io({ index }) })
+  assert.match(part.frames, /⌕ No marketplaces match 'glo'/)
   const seeded = await drive([...'zzz', '\r', 20, '\x1b', '\x1b', '\x1b', '\x1b'], { io: io({ index }) })
   assert.match(seeded.frames, /│ ⌕ zzz_ +│/)
   assert.match(seeded.frames, /⌕ No marketplaces match 'zzz'/)
@@ -543,18 +545,12 @@ test('a name the provider reads finds its work once typing stops, asking once fo
     asked.push(query)
 
     return new Promise<NameHit[]>((resolve) =>
-      setTimeout(
-        () =>
-          resolve([
-            { id: 'c/1', kind: 'character', label: 'Pip', names: ['ピップ'], tags: ['pip_(starfall)'], works: [] },
-          ]),
-        60,
-      ),
+      setTimeout(() => resolve([{ id: 'w/1', label: 'スターフォール', names: ['Starfall'], tags: [] }]), 60),
     )
   }
 
-  const { frames } = await drive([...SEARCH, 20, ...'ピップ', 800, '\x1b', '\x1b', '\x1b'], { io: io({ names }) })
-  assert.deepEqual(asked, ['ピップ'])
+  const { frames } = await drive([...SEARCH, 20, ...'星降', 800, '\x1b', '\x1b', '\x1b'], { io: io({ names }) })
+  assert.deepEqual(asked, ['星降'])
   assert.match(frames, /Looking up names…/)
   assert.match(frames, /^ ▌ {2}Starfall {2}1 marketplace · 2 palettes/m)
 })
@@ -562,18 +558,17 @@ test('a name the provider reads finds its work once typing stops, asking once fo
 test('a search nothing answers offers a request and the guide, and enter on the request opens the form with what was asked', async () => {
   const visited: string[] = []
 
-  const names = () =>
-    Promise.resolve([{ id: 'w/9', kind: 'work' as const, label: 'Moonlit Harbor', names: [], tags: [], works: [] }])
+  const names = () => Promise.resolve([{ id: 'w/9', label: 'Moonlit Harbor', names: [], tags: [] }])
 
   const { frames } = await drive([...SEARCH, 20, ...'moonlit', 800, '\r', 20, '\x1b', '\x1b', '\x1b'], {
     io: io({ names, visit: (url) => visited.push(url) }),
   })
 
-  assert.match(frames, /⌕ No marketplace has Moonlit Harbor yet/)
+  assert.match(frames, /⌕ No marketplaces match 'moonlit'/)
   assert.match(frames, /Request a palette\]? +ask for one on GitHub/)
   assert.match(frames, /Make one\]? +make it and publish it yourself/)
   assert.equal(visited.length, 1)
-  assert.equal(new URL(visited[0] ?? '').searchParams.get('character'), 'Moonlit Harbor')
+  assert.equal(new URL(visited[0] ?? '').searchParams.get('character'), 'moonlit')
 })
 
 test('a search handed in by preview opens Search marketplace on it and asks at once', async () => {

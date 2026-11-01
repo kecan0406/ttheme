@@ -1,9 +1,9 @@
-import { aboutOf, mergeWorks, spoken, type Work, workOf, workOfListed, worksFor } from '../../core/commons.ts'
+import { aboutOf, mergeWorks, type Work, workOf, workOfListed, worksFor } from '../../core/commons.ts'
 import { swatch } from '../../core/manifest.ts'
-import { askedOf, MAKE_URL, type NameHit, namedWorks, requestUrl } from '../../core/names.ts'
+import { MAKE_URL, type NameHit, namedWorks, requestUrl } from '../../core/names.ts'
 import { ago, cells, containsText, counted, inert } from '../../core/text.ts'
 import { slugOf } from '../../core/theme.ts'
-import { type Listed, type Listing, listedMatches } from '../../store/marketplace-index.ts'
+import { type Listed, type Listing, listedMatches, namesPalette } from '../../store/marketplace-index.ts'
 import { sameMarketplace, TOPIC } from '../../store/sources.ts'
 import { fit, wrapText } from '../ansi.ts'
 import type { Bar, Hint } from '../bar.ts'
@@ -27,7 +27,7 @@ export interface SearchHost {
   readonly maxItems: number
   redraw(): void
   index(): Promise<Listing>
-  names?: (query: string, signal: AbortSignal, works: readonly Work[]) => Promise<NameHit[]>
+  names?: (query: string, signal: AbortSignal) => Promise<NameHit[]>
   visit(url: string): void
 }
 
@@ -38,14 +38,6 @@ interface Named {
 
 function plural(n: number, one: string): string {
   return `${n} ${one}${n === 1 ? '' : 's'}`
-}
-
-function wordsOfWork(w: Work): string[] {
-  return [
-    w.name,
-    w.native ?? '',
-    ...w.characters.flatMap((c) => [c.id, ...(c.native ?? []), c.danbooru ? spoken(c.danbooru) : '']),
-  ]
 }
 
 export class Search {
@@ -207,7 +199,7 @@ export class Search {
     this.naming = query
     this.nameError = undefined
     this.host.redraw()
-    names(query, asking.signal, this.works()).then(
+    names(query, asking.signal).then(
       (hits) => {
         if (asking.signal.aborted) {
           return
@@ -315,10 +307,23 @@ export class Search {
     }
 
     const works = this.works()
-    const named = this.named?.query === query ? namedWorks(this.named.hits, works).works.map((w) => w.id) : []
-    const local = works.filter((w) => containsText(wordsOfWork(w), query)).map((w) => w.id)
+    const named = this.named?.query === query ? namedWorks(this.named.hits, works).works : []
+    const local = works.filter((w) => containsText([w.name, w.native ?? ''], query)).map((w) => w.id)
 
-    return [...new Set([...named, ...local])].flatMap((id) => {
+    const palettes = [
+      ...this.host.staged.active().flatMap((m) => m.entries),
+      ...(this.listing?.marketplaces ?? []).flatMap((m) => m.palettes),
+    ]
+
+    const exact = palettes
+      .filter((e) => namesPalette(e.name, query))
+      .flatMap((e) => {
+        const about = aboutOf(works, e.subject)
+
+        return about ? worksFor(about) : []
+      })
+
+    return [...new Set([...exact, ...named, ...local])].flatMap((id) => {
       const work = workOf(works, id)
       const offers = work ? this.offers(works, id) : []
 
@@ -346,13 +351,7 @@ export class Search {
   private asked(): string | undefined {
     const query = this.query.value.trim()
 
-    if (!query || this.naming === query) {
-      return undefined
-    }
-
-    const hit = this.named?.query === query ? this.named.hits[0] : undefined
-
-    return hit ? inert(askedOf(query, hit)) : query
+    return !query || this.naming === query ? undefined : query
   }
 
   private found(): Row[] {
@@ -585,7 +584,6 @@ export class Search {
 
   private stateOf(): [string, string] {
     const query = this.query.value.trim()
-    const asked = this.asked()
 
     return this.loading
       ? ['Loading the marketplace list…', '']
@@ -596,7 +594,7 @@ export class Search {
           : query && this.naming === query
             ? [`Looking up '${query}'…`, '']
             : query
-              ? [asked && asked !== query ? `No marketplace has ${asked} yet` : `No marketplaces match '${query}'`, '']
+              ? [`No marketplaces match '${query}'`, '']
               : ['No marketplaces yet', '']
   }
 

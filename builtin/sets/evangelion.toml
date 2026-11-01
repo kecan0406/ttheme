@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "asuka"
-subject = "evangelion/asuka"
+slug = "souryuu-asuka-langley"
+subject = "evangelion/souryuu-asuka-langley"
 
 [palette.colors]
 background = "#211513"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "rei"
-subject = "evangelion/rei"
+slug = "ayanami-rei"
+subject = "evangelion/ayanami-rei"
 
 [palette.colors]
 background = "#12181d"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "kaworu"
-subject = "evangelion/kaworu"
+slug = "nagisa-kaworu"
+subject = "evangelion/nagisa-kaworu"
 
 [palette.colors]
 background = "#201515"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "misato"
-subject = "evangelion/misato"
+slug = "katsuragi-misato"
+subject = "evangelion/katsuragi-misato"
 
 [palette.colors]
 background = "#201514"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "eva01"
-subject = "evangelion/eva01"
+slug = "eva-01"
+subject = "evangelion/eva-01"
 
 [palette.colors]
 background = "#151910"

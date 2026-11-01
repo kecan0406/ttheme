@@ -2,7 +2,7 @@
 
 ```zsh
 I=.agents/skills/sandbox/scripts/iterm.zsh
-zsh $I --shots <scratchpad>/it ttheme/gojo ttheme/miku -- 'ttheme use ttheme/gojo' 'sb_wear ttheme/miku' 'sleep 1' 'sb_report "bg $(sb_color bg)"'
+zsh $I --shots <scratchpad>/it ttheme/gojo-satoru ttheme/hatsune-miku -- 'ttheme use ttheme/gojo-satoru' 'sb_wear ttheme/hatsune-miku' 'sleep 1' 'sb_report "bg $(sb_color bg)"'
 ```
 
 `--pictured` works as in Ghostty mode. The run wires the sandbox as `init` does for iTerm2 and starts a second iTerm2 with `-suite ttheme-sandbox`, its own preferences and its own `iTermServer`, so the user's iTerm2 is never touched; every run deletes both and rebuilds. Check that `defaults read com.googlecode.iterm2` is unchanged after a series.

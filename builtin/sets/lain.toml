@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "lain"
-subject = "lain/lain"
+slug = "iwakura-lain"
+subject = "lain/iwakura-lain"
 
 [palette.colors]
 background = "#211513"

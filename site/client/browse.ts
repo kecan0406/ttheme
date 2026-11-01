@@ -176,7 +176,7 @@ abstract class Browse extends HTMLElement {
         : within
           ? `no ${within} work matches “${query}”`
           : query
-            ? `no palettes of “${answer?.label ?? query}” yet`
+            ? `no work called “${answer?.label ?? query}” yet`
             : 'no palettes yet'
 
     if (every) every.hidden = naming
@@ -186,7 +186,7 @@ abstract class Browse extends HTMLElement {
       text.textContent =
         query && this.#failed === query
           ? 'the name lookup did not answer — ask for one, or make it yourself.'
-          : 'ask for one, or make it yourself.'
+          : 'look for its work by title, ask for one, or make it yourself.'
     }
 
     if (face) face.hidden = naming
@@ -197,7 +197,7 @@ abstract class Browse extends HTMLElement {
   }
 
   #namedFor(value: string): string[] {
-    return this.answers.get(value.trim())?.works.map((work) => work.id) ?? []
+    return this.answers.get(value.trim())?.works ?? []
   }
 
   #carry() {
@@ -350,7 +350,9 @@ class BrowseWorks extends Browse {
   #said(item: HTMLElement): boolean {
     const query = this.query.toLowerCase()
 
-    return !query || (item.dataset.search ?? '').includes(query)
+    return (
+      !query || (item.dataset.search ?? '').includes(query) || (item.dataset.names ?? '').split('\n').includes(query)
+    )
   }
 
   #hit(item: HTMLElement): boolean {
@@ -362,7 +364,6 @@ class BrowseWorks extends Browse {
     const query = this.query
     const answer = this.answers.get(query)
     const within = this.dataset.category ?? ''
-    const reads = new Set<string>()
     const works = new Set<string>()
 
     for (const item of items) {
@@ -372,9 +373,6 @@ class BrowseWorks extends Browse {
 
       if (!on) continue
       works.add(item.dataset.work ?? '')
-      const read = this.#said(item) ? undefined : answer?.works.find((work) => work.id === item.dataset.work)?.read
-
-      if (read) reads.add(read)
     }
 
     for (const group of this.querySelectorAll<HTMLElement>('[data-group]')) {
@@ -401,8 +399,7 @@ class BrowseWorks extends Browse {
 
       if (count) count.textContent = String(shown)
 
-      if (text)
-        text.textContent = `${shown === 1 ? 'work' : 'works'} for “${query}”${reads.size === 1 ? ` · ${[...reads][0]}` : ''}`
+      if (text) text.textContent = `${shown === 1 ? 'work' : 'works'} for “${query}”`
       summary.querySelector('[data-pending]')?.toggleAttribute('hidden', !(this.stalled && this.naming === query))
     }
 

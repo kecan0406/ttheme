@@ -66,7 +66,7 @@
         "properties": {
           "id": {
             "$ref": "#/definitions/id",
-            "description": "The character's id within the work: a palette of it names <work>/<id> as its subject"
+            "description": "The character's id within the work, its danbooru tag's full name where it has one: a palette of it names <work>/<id> as its subject"
           },
           "native": {
             "description": "The character's names in the work's original language, the full name first, then any other it goes by; search matches them",

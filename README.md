@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="ttheme: typing nichi filters to the Nichijou palettes, the tab shows each one as the cursor lands on it, then rei is picked and kept" width="860">
+  <img src="docs/demo.gif" alt="ttheme: typing nichi filters to the Nichijou palettes, the tab shows each one as the cursor lands on it, then ayanami-rei is picked and kept" width="860">
 </p>
 
 ttheme gives your terminal the colors of a character you love. Every tab can
@@ -59,11 +59,11 @@ ttheme adds one line to each config it wires and sets colors only.
 | To | Run |
 |---|---|
 | Try palettes on and keep one | `ttheme` |
-| Use a palette in this tab | `ttheme use miku` |
-| Set the palette new tabs open with | `ttheme default miku` |
+| Use a palette in this tab | `ttheme use hatsune-miku` |
+| Set the palette new tabs open with | `ttheme default hatsune-miku` |
 | Give a folder or ssh host its own palette | `ttheme pin` |
 | Show every palette in light, dark or your system's mode | `ttheme light` · `dark` · `auto` |
-| Make a palette, or tune one | `ttheme new dusk` · `ttheme edit miku` |
+| Make a palette, or tune one | `ttheme new dusk` · `ttheme edit hatsune-miku` |
 | Share a palette as a link | `ttheme share dusk` |
 | Give the terminal its own colors back, then ttheme's again | `ttheme off` · `on` |
 
@@ -95,7 +95,7 @@ Markdown in [`docs/`](docs).
 Base ANSI ramps come from
 [mbadolato/iTerm2-Color-Schemes](https://github.com/mbadolato/iTerm2-Color-Schemes)
 (MIT), whose notice keeps each scheme's copyright with its own author. Two
-palettes start from a theme of their own: `miku` from
+palettes start from a theme of their own: `hatsune-miku` from
 [vauxe/hatsune-miku-theme](https://github.com/vauxe/hatsune-miku-theme) (MIT)
 and `magi` from [lotap/magi-theme](https://github.com/lotap/magi-theme) (MIT).
 Only a base scheme's hues survive, turned toward the palette's own, so no scheme

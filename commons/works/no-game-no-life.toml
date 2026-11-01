@@ -15,7 +15,7 @@ native = ["白"]
 danbooru = "shiro_(no_game_no_life)"
 
 [[character]]
-id = "steph"
+id = "stephanie-dora"
 native = ["ステファニー・ドーラ"]
 danbooru = "stephanie_dora"
 sites = { konachan = [] }
@@ -27,12 +27,12 @@ danbooru = "jibril_(no_game_no_life)"
 sites = { konachan = "jibril" }
 
 [[character]]
-id = "izuna"
+id = "hatsuse-izuna"
 native = ["初瀬いづな"]
 danbooru = "hatsuse_izuna"
 
 [[character]]
-id = "tet"
+id = "teto"
 native = ["テト"]
 danbooru = "teto_(no_game_no_life)"
 sites = { konachan = "tet_(no_game_no_life)", yande = "tet_(no_game_no_life)", zerochan = "tet_(no_game_no_life)" }

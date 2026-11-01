@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "david"
-subject = "cyberpunk-edgerunners/david"
+slug = "david-martinez"
+subject = "cyberpunk-edgerunners/david-martinez"
 
 [palette.colors]
 background = "#1a180d"

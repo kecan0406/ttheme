@@ -17,23 +17,23 @@ b64d() {
 __tt_menu > /dev/null || exit 1
 ttheme help > /dev/null || { print -u2 "ttheme help broke"; exit 1 }
 ttheme -h > /dev/null || { print -u2 "ttheme -h broke"; exit 1 }
-REPLY=; __tt_resolve homura && [[ $REPLY == ttheme/homura ]] || { print -u2 "a palette typed by its name alone did not resolve to the one there is: $REPLY"; exit 1 }
-REPLY=; __tt_resolve ttheme/homura && [[ $REPLY == ttheme/homura ]] || { print -u2 "a palette typed in full did not resolve: $REPLY"; exit 1 }
+REPLY=; __tt_resolve akemi-homura && [[ $REPLY == ttheme/akemi-homura ]] || { print -u2 "a palette typed by its name alone did not resolve to the one there is: $REPLY"; exit 1 }
+REPLY=; __tt_resolve ttheme/akemi-homura && [[ $REPLY == ttheme/akemi-homura ]] || { print -u2 "a palette typed in full did not resolve: $REPLY"; exit 1 }
 __tt_resolve ho 2>/dev/null && { print -u2 "the start of a palette's name resolved to it: $REPLY"; exit 1 }
 (
-  TTHEME_PALETTE[kai@arcade/homura]=$TTHEME_PALETTE[ttheme/kita] TTHEME_SHORT[homura]="ttheme/homura kai@arcade/homura"
-  out=$(__tt_resolve homura 2>&1) && { print -u2 "a name two palettes share resolved to one of them"; exit 1 }
-  [[ $out == "ttheme: homura is ttheme/homura, kai@arcade/homura — name the one you mean" ]] || { print -u2 "a name two palettes share did not name both: $out"; exit 1 }
-  REPLY=; __tt_resolve kai@arcade/homura && [[ $REPLY == kai@arcade/homura ]] || { print -u2 "a palette typed in full was not found beside another of its name: $REPLY"; exit 1 }
-  TTHEME_PALETTE[user4127@arcade/lumi]=$TTHEME_PALETTE[ttheme/miku] TTHEME_SHORT[lumi]=user4127@arcade/lumi
-  for name want in ttheme/kita kita user4127@arcade/lumi lumi ttheme/homura ttheme/homura kai@arcade/homura kai@arcade/homura nosuchpalette nosuchpalette; do
+  TTHEME_PALETTE[kai@arcade/akemi-homura]=$TTHEME_PALETTE[ttheme/kita-ikuyo] TTHEME_SHORT[akemi-homura]="ttheme/akemi-homura kai@arcade/akemi-homura"
+  out=$(__tt_resolve akemi-homura 2>&1) && { print -u2 "a name two palettes share resolved to one of them"; exit 1 }
+  [[ $out == "ttheme: akemi-homura is ttheme/akemi-homura, kai@arcade/akemi-homura — name the one you mean" ]] || { print -u2 "a name two palettes share did not name both: $out"; exit 1 }
+  REPLY=; __tt_resolve kai@arcade/akemi-homura && [[ $REPLY == kai@arcade/akemi-homura ]] || { print -u2 "a palette typed in full was not found beside another of its name: $REPLY"; exit 1 }
+  TTHEME_PALETTE[user4127@arcade/lumi]=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_SHORT[lumi]=user4127@arcade/lumi
+  for name want in ttheme/kita-ikuyo kita-ikuyo user4127@arcade/lumi lumi ttheme/akemi-homura ttheme/akemi-homura kai@arcade/akemi-homura kai@arcade/akemi-homura nosuchpalette nosuchpalette; do
     REPLY=; __tt_label $name
     [[ $REPLY == "$want" ]] || { print -u2 "$name was shown as $REPLY, not $want"; exit 1 }
     [[ $want == nosuchpalette ]] && continue
     REPLY=; __tt_resolve $want && [[ $REPLY == "$name" ]] || { print -u2 "$name, shown as $want, did not type back to itself: $REPLY"; exit 1 }
   done
 ) || exit 1
-ttheme homura 2>/dev/null && { print -u2 "ttheme took a palette name as a command"; exit 1 }
+ttheme akemi-homura 2>/dev/null && { print -u2 "ttheme took a palette name as a command"; exit 1 }
 ttheme use nosuchpalette 2>/dev/null && { print -u2 "ttheme use took a bad name"; exit 1 }
 out=$(ttheme use city 2>&1) && { print -u2 "ttheme use took a bad name"; exit 1 }
 [[ $out == *"did you mean"*nightcity* ]] || { print -u2 "did-you-mean broke: $out"; exit 1 }
@@ -66,23 +66,23 @@ typeset -i bgprepid=0
 functions[__tt_pv_bg_prepare_run]=$functions[__tt_pv_bg_prepare]
 __tt_pv_bg_prepare() { : }
 bgd=$XDG_CONFIG_HOME/ttheme/backgrounds
-mkdir -p $bgd && : > $bgd/ttheme--kagami@fill-42.png && : > $bgd/ttheme--kagami@60-bottom-right.png && : > $bgd/ttheme--kagami@130-bottom-right-1600x1000.png
-base=("# by inkwell,paperboat" "# from safebooru 400001 https://safebooru.org/index.php?page=post&s=view&id=400001" "# image safebooru_400001 1/1" "background-image = ttheme--kagami@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2"
+mkdir -p $bgd && : > $bgd/ttheme--hiiragi-kagami@fill-42.png && : > $bgd/ttheme--hiiragi-kagami@60-bottom-right.png && : > $bgd/ttheme--hiiragi-kagami@130-bottom-right-1600x1000.png
+base=("# by inkwell,paperboat" "# from safebooru 400001 https://safebooru.org/index.php?page=post&s=view&id=400001" "# image safebooru_400001 1/1" "background-image = ttheme--hiiragi-kagami@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2"
   "# credit safebooru_400001 Background art by inkwell (x.com/inkwell), paperboat · https://www.pixiv.net/artworks/123"
   "# source safebooru_400001 pixiv 123 https://www.pixiv.net/artworks/123"
   "# profile safebooru_400001 inkwell x https://x.com/inkwell" "# profile safebooru_400001 paperboat pixiv https://www.pixiv.net/users/9 x https://x.com/paperboatart")
-print -l $base > $bgd/ttheme--kagami.conf
-print -l "background-image = ttheme--kagami@130-bottom-right-1600x1000.png" "background-image-fit = cover" "background-image-position = bottom-right" "background-image-opacity = 0.252" > $bgd/ttheme--kagami.tune.conf
-__tt_bg_load ttheme/kagami
-[[ $bgsrc[ttheme/kagami] == "$bgd/ttheme--kagami.png" && $bgfill[ttheme/kagami] == "$bgd/ttheme--kagami@fill-42.png" && $bgfocus[ttheme/kagami] == 42 && $bgsize[ttheme/kagami] == 130 && $bgpos[ttheme/kagami] == 9 && $bgop[ttheme/kagami] == 0.252 &&
-  $bgshot[ttheme/kagami] == "$bgd/ttheme--kagami@130-bottom-right-1600x1000.png" && $bgdef[ttheme/kagami] == "fill 5 0.2" && $bgoff[ttheme/kagami] == 0 &&
-  $bgfrom[ttheme/kagami] == "safebooru 400001" && $bgby[ttheme/kagami] == "inkwell, paperboat" &&
-  $bgurl[ttheme/kagami] == "https://safebooru.org/index.php?page=post&s=view&id=400001" ]] ||
-  { print -u2 "__tt_bg_load misread the confs: $bgsrc[ttheme/kagami] $bgfill[ttheme/kagami]@$bgfocus[ttheme/kagami] $bgsize[ttheme/kagami] $bgpos[ttheme/kagami] $bgop[ttheme/kagami] $bgshot[ttheme/kagami] ($bgdef[ttheme/kagami]) off=$bgoff[ttheme/kagami] from=$bgfrom[ttheme/kagami] by=$bgby[ttheme/kagami] url=$bgurl[ttheme/kagami]"; exit 1 }
-tune=ttheme/kagami tpick=ttheme/kagami color=0
+print -l $base > $bgd/ttheme--hiiragi-kagami.conf
+print -l "background-image = ttheme--hiiragi-kagami@130-bottom-right-1600x1000.png" "background-image-fit = cover" "background-image-position = bottom-right" "background-image-opacity = 0.252" > $bgd/ttheme--hiiragi-kagami.tune.conf
+__tt_bg_load ttheme/hiiragi-kagami
+[[ $bgsrc[ttheme/hiiragi-kagami] == "$bgd/ttheme--hiiragi-kagami.png" && $bgfill[ttheme/hiiragi-kagami] == "$bgd/ttheme--hiiragi-kagami@fill-42.png" && $bgfocus[ttheme/hiiragi-kagami] == 42 && $bgsize[ttheme/hiiragi-kagami] == 130 && $bgpos[ttheme/hiiragi-kagami] == 9 && $bgop[ttheme/hiiragi-kagami] == 0.252 &&
+  $bgshot[ttheme/hiiragi-kagami] == "$bgd/ttheme--hiiragi-kagami@130-bottom-right-1600x1000.png" && $bgdef[ttheme/hiiragi-kagami] == "fill 5 0.2" && $bgoff[ttheme/hiiragi-kagami] == 0 &&
+  $bgfrom[ttheme/hiiragi-kagami] == "safebooru 400001" && $bgby[ttheme/hiiragi-kagami] == "inkwell, paperboat" &&
+  $bgurl[ttheme/hiiragi-kagami] == "https://safebooru.org/index.php?page=post&s=view&id=400001" ]] ||
+  { print -u2 "__tt_bg_load misread the confs: $bgsrc[ttheme/hiiragi-kagami] $bgfill[ttheme/hiiragi-kagami]@$bgfocus[ttheme/hiiragi-kagami] $bgsize[ttheme/hiiragi-kagami] $bgpos[ttheme/hiiragi-kagami] $bgop[ttheme/hiiragi-kagami] $bgshot[ttheme/hiiragi-kagami] ($bgdef[ttheme/hiiragi-kagami]) off=$bgoff[ttheme/hiiragi-kagami] from=$bgfrom[ttheme/hiiragi-kagami] by=$bgby[ttheme/hiiragi-kagami] url=$bgurl[ttheme/hiiragi-kagami]"; exit 1 }
+tune=ttheme/hiiragi-kagami tpick=ttheme/hiiragi-kagami color=0
 art=$'\e]8;;https://www.pixiv.net/artworks/123\e\\pixiv 123\e]8;;\e\\'
 TTHEME_ADAPTER=ghostty __tt_pv_bg_credit 80
-[[ $REPLY == "by inkwell, paperboat · ⧉ $art · ⧉ "$'\e]8;;'"$bgurl[ttheme/kagami]"$'\e\\'"safebooru 400001"$'\e]8;;\e\\' ]] ||
+[[ $REPLY == "by inkwell, paperboat · ⧉ $art · ⧉ "$'\e]8;;'"$bgurl[ttheme/hiiragi-kagami]"$'\e\\'"safebooru 400001"$'\e]8;;\e\\' ]] ||
   { print -u2 "the picture's credit did not link its artwork and its post: ${(q+)REPLY}"; exit 1 }
 TTHEME_ADAPTER=ghostty __tt_pv_bg_credit 40
 [[ $REPLY == "by inkwell, paperboat · ⧉ $art" ]] ||
@@ -101,23 +101,23 @@ TTHEME_ADAPTER=ghostty __tt_pv_bg_profiles 12
   { print -u2 "a narrow profile line did not stop at the last link that fits: ${(q+)REPLY}"; exit 1 }
 TTHEME_ADAPTER=terminal-app __tt_pv_bg_profiles 80
 [[ -z $REPLY ]] || { print -u2 "the profiles showed where the terminal cannot open them: ${(q+)REPLY}"; exit 1 }
-[[ $bgcred[ttheme/kagami:safebooru_400001] == "Background art by inkwell (x.com/inkwell), paperboat · https://www.pixiv.net/artworks/123" ]] ||
-  { print -u2 "__tt_bg_load misread the credit to copy: ${(q+)bgcred[ttheme/kagami:safebooru_400001]}"; exit 1 }
+[[ $bgcred[ttheme/hiiragi-kagami:safebooru_400001] == "Background art by inkwell (x.com/inkwell), paperboat · https://www.pixiv.net/artworks/123" ]] ||
+  { print -u2 "__tt_bg_load misread the credit to copy: ${(q+)bgcred[ttheme/hiiragi-kagami:safebooru_400001]}"; exit 1 }
 tune="" tpick=""
-bgsize[ttheme/kagami]=100 bgoff[ttheme/kagami]=1
-__tt_bg_write ttheme/kagami || { print -u2 "__tt_bg_write failed"; exit 1 }
-[[ "$(<$bgd/ttheme--kagami.conf)" == "$(print -l $base "config-file = ?ttheme--kagami.tune.conf" "config-file = ?ttheme--kagami.off.conf")" ]] ||
-  { print -u2 "__tt_bg_write touched the defaults wrong:"; cat $bgd/ttheme--kagami.conf; exit 1 }
-[[ "$(<$bgd/ttheme--kagami.tune.conf)" == "$(print -l "background-image = $bgd/ttheme--kagami.png" "background-image-fit = contain" "background-image-position = bottom-right" "background-image-opacity = 0.252")" ]] ||
-  { print -u2 "__tt_bg_write wrote the tuning wrong:"; cat $bgd/ttheme--kagami.tune.conf; exit 1 }
-[[ -e $bgd/ttheme--kagami.off.conf && -e $bgd/ttheme--kagami@fill-42.png && ! -e $bgd/ttheme--kagami@60-bottom-right.png && ! -e $bgd/ttheme--kagami@130-bottom-right-1600x1000.png ]] ||
+bgsize[ttheme/hiiragi-kagami]=100 bgoff[ttheme/hiiragi-kagami]=1
+__tt_bg_write ttheme/hiiragi-kagami || { print -u2 "__tt_bg_write failed"; exit 1 }
+[[ "$(<$bgd/ttheme--hiiragi-kagami.conf)" == "$(print -l $base "config-file = ?ttheme--hiiragi-kagami.tune.conf" "config-file = ?ttheme--hiiragi-kagami.off.conf")" ]] ||
+  { print -u2 "__tt_bg_write touched the defaults wrong:"; cat $bgd/ttheme--hiiragi-kagami.conf; exit 1 }
+[[ "$(<$bgd/ttheme--hiiragi-kagami.tune.conf)" == "$(print -l "background-image = $bgd/ttheme--hiiragi-kagami.png" "background-image-fit = contain" "background-image-position = bottom-right" "background-image-opacity = 0.252")" ]] ||
+  { print -u2 "__tt_bg_write wrote the tuning wrong:"; cat $bgd/ttheme--hiiragi-kagami.tune.conf; exit 1 }
+[[ -e $bgd/ttheme--hiiragi-kagami.off.conf && -e $bgd/ttheme--hiiragi-kagami@fill-42.png && ! -e $bgd/ttheme--hiiragi-kagami@60-bottom-right.png && ! -e $bgd/ttheme--hiiragi-kagami@130-bottom-right-1600x1000.png ]] ||
   { print -u2 "__tt_bg_write left the off switch or sized copies wrong"; ls $bgd; exit 1 }
-bgsrc=(); __tt_bg_load ttheme/kagami
-[[ $bgsize[ttheme/kagami] == 100 && $bgoff[ttheme/kagami] == 1 ]] || { print -u2 "tuning did not round-trip: $bgsize[ttheme/kagami] off=$bgoff[ttheme/kagami]"; exit 1 }
-bgsize[ttheme/kagami]=fill bgpos[ttheme/kagami]=5 bgop[ttheme/kagami]=0.2 bgoff[ttheme/kagami]=0
-__tt_bg_write ttheme/kagami || { print -u2 "__tt_bg_write (defaults) failed"; exit 1 }
-[[ ! -e $bgd/ttheme--kagami.tune.conf && ! -e $bgd/ttheme--kagami.off.conf && "$(<$bgd/ttheme--kagami.conf)" == "$(print -l $base "config-file = ?ttheme--kagami.tune.conf" "config-file = ?ttheme--kagami.off.conf")" ]] ||
-  { print -u2 "returning to the defaults left files behind:"; ls $bgd; cat $bgd/ttheme--kagami.conf; exit 1 }
+bgsrc=(); __tt_bg_load ttheme/hiiragi-kagami
+[[ $bgsize[ttheme/hiiragi-kagami] == 100 && $bgoff[ttheme/hiiragi-kagami] == 1 ]] || { print -u2 "tuning did not round-trip: $bgsize[ttheme/hiiragi-kagami] off=$bgoff[ttheme/hiiragi-kagami]"; exit 1 }
+bgsize[ttheme/hiiragi-kagami]=fill bgpos[ttheme/hiiragi-kagami]=5 bgop[ttheme/hiiragi-kagami]=0.2 bgoff[ttheme/hiiragi-kagami]=0
+__tt_bg_write ttheme/hiiragi-kagami || { print -u2 "__tt_bg_write (defaults) failed"; exit 1 }
+[[ ! -e $bgd/ttheme--hiiragi-kagami.tune.conf && ! -e $bgd/ttheme--hiiragi-kagami.off.conf && "$(<$bgd/ttheme--hiiragi-kagami.conf)" == "$(print -l $base "config-file = ?ttheme--hiiragi-kagami.tune.conf" "config-file = ?ttheme--hiiragi-kagami.off.conf")" ]] ||
+  { print -u2 "returning to the defaults left files behind:"; ls $bgd; cat $bgd/ttheme--hiiragi-kagami.conf; exit 1 }
 print -l "background-image = wall.png" "background-image-fit = cover" > $bgd/wall.conf
 __tt_bg_load wall
 [[ $bgsize[wall] == fill && $bgfill[wall] == "$bgd/wall.png" && $bgfocus[wall] == 50 && $bgdef[wall] == "fill 5 1" ]] ||
@@ -125,22 +125,22 @@ __tt_bg_load wall
 (
   TTHEME_TERMINALS=(warp)
   ! __tt_bg_aligns && __tt_bg_covers || { print -u2 "with Warp wired a tuned picture was not baked for it"; exit 1 }
-  printf '\x89PNG\r\n\x1a\n\0\0\0\x0dIHDR\0\0\x06\x5a\0\0\x07\x60' >| $bgd/ttheme--kagami.png
+  printf '\x89PNG\r\n\x1a\n\0\0\0\x0dIHDR\0\0\x06\x5a\0\0\x07\x60' >| $bgd/ttheme--hiiragi-kagami.png
   __tt_bg_bake() { print -r -- "$*" >| $XDG_CONFIG_HOME/bake.log; : >| $2 }
   pw=80 ph=24 bgcw=20 bgch=40 bgmx=0 bgmy=0
-  bgsrc=(); __tt_bg_load ttheme/kagami
-  bgsize[ttheme/kagami]=60 bgpos[ttheme/kagami]=5 bgop[ttheme/kagami]=0.3
-  __tt_bg_write ttheme/kagami || { print -u2 "__tt_bg_write (Warp wired) failed"; exit 1 }
-  [[ "$(<$bgd/ttheme--kagami.tune.conf)" == "$(print -l "background-image = $bgd/ttheme--kagami@60-center-1600x960.png" "background-image-fit = cover" "background-image-position = center" "background-image-opacity = 0.3")" &&
-    "$(<$XDG_CONFIG_HOME/bake.log)" == "$bgd/ttheme--kagami.png $bgd/ttheme--kagami@60-center-1600x960.png 1600 960 "* ]] ||
-    { print -u2 "a centered picture tuned with Warp wired was not baked on the window, which Warp covers:"; cat $bgd/ttheme--kagami.tune.conf; exit 1 }
+  bgsrc=(); __tt_bg_load ttheme/hiiragi-kagami
+  bgsize[ttheme/hiiragi-kagami]=60 bgpos[ttheme/hiiragi-kagami]=5 bgop[ttheme/hiiragi-kagami]=0.3
+  __tt_bg_write ttheme/hiiragi-kagami || { print -u2 "__tt_bg_write (Warp wired) failed"; exit 1 }
+  [[ "$(<$bgd/ttheme--hiiragi-kagami.tune.conf)" == "$(print -l "background-image = $bgd/ttheme--hiiragi-kagami@60-center-1600x960.png" "background-image-fit = cover" "background-image-position = center" "background-image-opacity = 0.3")" &&
+    "$(<$XDG_CONFIG_HOME/bake.log)" == "$bgd/ttheme--hiiragi-kagami.png $bgd/ttheme--hiiragi-kagami@60-center-1600x960.png 1600 960 "* ]] ||
+    { print -u2 "a centered picture tuned with Warp wired was not baked on the window, which Warp covers:"; cat $bgd/ttheme--hiiragi-kagami.tune.conf; exit 1 }
   __tt_cli() { print -r -- "$*" >> $XDG_CONFIG_HOME/cli.log }
-  __tt_pictured ttheme/kagami
+  __tt_pictured ttheme/hiiragi-kagami
   TTHEME_TERMINALS=(iterm2 warp)
-  __tt_pictured ttheme/kagami
-  [[ "$(<$XDG_CONFIG_HOME/cli.log)" == "$(print -l "image ttheme/kagami tuned" "image ttheme/kagami tuned")" ]] ||
+  __tt_pictured ttheme/hiiragi-kagami
+  [[ "$(<$XDG_CONFIG_HOME/cli.log)" == "$(print -l "image ttheme/hiiragi-kagami tuned" "image ttheme/hiiragi-kagami tuned")" ]] ||
     { print -u2 "a picture saved with Warp wired did not refresh Warp's themes once:"; cat $XDG_CONFIG_HOME/cli.log; exit 1 }
-  rm -f $bgd/ttheme--kagami.png $bgd/ttheme--kagami.tune.conf $bgd/ttheme--kagami@60-center-1600x960.png $XDG_CONFIG_HOME/bake.log $XDG_CONFIG_HOME/cli.log
+  rm -f $bgd/ttheme--hiiragi-kagami.png $bgd/ttheme--hiiragi-kagami.tune.conf $bgd/ttheme--hiiragi-kagami@60-center-1600x960.png $XDG_CONFIG_HOME/bake.log $XDG_CONFIG_HOME/cli.log
 ) || exit 1
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/_wired.zsh
@@ -154,57 +154,57 @@ reloads=0
 TTHEME_TERMINALS=(ghostty)
 __tt_reload_ghostty() { (( ++reloads )) }
 __tt_blur
-__tt_shown ttheme/kagami && { print -u2 "a tab the terminal said is behind took the picture"; exit 1 }
+__tt_shown ttheme/hiiragi-kagami && { print -u2 "a tab the terminal said is behind took the picture"; exit 1 }
 [[ ! -e $bgd/shown.conf ]] || { print -u2 "a tab behind wrote shown.conf: $(<$bgd/shown.conf)"; exit 1 }
 TTHEME_FRONT=-1
 __tt_prompt
 (( TTHEME_FRONT == -1 )) || { print -u2 "a prompt decided where focus is for a shell that never heard"; exit 1 }
-__tt_shown ttheme/kagami && __tt_reload ||
+__tt_shown ttheme/hiiragi-kagami && __tt_reload ||
   { print -u2 "a tab that never heard where focus is did not take the picture — a shell whose line-init never turns focus reporting on would never show one"; exit 1 }
 TTHEME_FRONT=1
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--kagami.conf" ]] || { print -u2 "shown.conf named the wrong palette: $(<$bgd/shown.conf)"; exit 1 }
-__tt_shown ttheme/kagami && { print -u2 "__tt_shown asked for a reload with nothing to change"; exit 1 }
-__tt_shown ttheme/miku && __tt_reload || { print -u2 "__tt_shown kept a picture the palette does not have"; exit 1 }
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--miku.conf" ]] || { print -u2 "shown.conf did not follow ttheme/miku: $(<$bgd/shown.conf)"; exit 1 }
-__tt_shown ttheme/rei && { print -u2 "__tt_shown reloaded between two palettes with no picture"; exit 1 }
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--hiiragi-kagami.conf" ]] || { print -u2 "shown.conf named the wrong palette: $(<$bgd/shown.conf)"; exit 1 }
+__tt_shown ttheme/hiiragi-kagami && { print -u2 "__tt_shown asked for a reload with nothing to change"; exit 1 }
+__tt_shown ttheme/hatsune-miku && __tt_reload || { print -u2 "__tt_shown kept a picture the palette does not have"; exit 1 }
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--hatsune-miku.conf" ]] || { print -u2 "shown.conf did not follow ttheme/hatsune-miku: $(<$bgd/shown.conf)"; exit 1 }
+__tt_shown ttheme/ayanami-rei && { print -u2 "__tt_shown reloaded between two palettes with no picture"; exit 1 }
 (( reloads == 2 )) || { print -u2 "__tt_shown asked for $reloads reloads"; exit 1 }
 REPLY=; __tt_bg_shown || { print -u2 "__tt_bg_shown did not read shown.conf"; exit 1 }
-[[ $REPLY == ttheme/rei ]] || { print -u2 "shown.conf kept ttheme/miku after the tab moved to ttheme/rei, so a picture ttheme/miku gains later would come up behind ttheme/rei: $REPLY"; exit 1 }
-TTHEME_SPEC=$TTHEME_PALETTE[ttheme/kagami]; __tt_sync
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--kagami.conf" && $reloads == 3 ]] ||
+[[ $REPLY == ttheme/ayanami-rei ]] || { print -u2 "shown.conf kept ttheme/hatsune-miku after the tab moved to ttheme/ayanami-rei, so a picture ttheme/hatsune-miku gains later would come up behind ttheme/ayanami-rei: $REPLY"; exit 1 }
+TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hiiragi-kagami]; __tt_sync
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--hiiragi-kagami.conf" && $reloads == 3 ]] ||
   { print -u2 "taking the tab did not put its picture up: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
 __tt_focus
 (( reloads == 3 )) || { print -u2 "focus reloaded with the right picture already up"; exit 1 }
-print -r -- "config-file = ?ttheme--miku.conf" > $bgd/shown.conf
+print -r -- "config-file = ?ttheme--hatsune-miku.conf" > $bgd/shown.conf
 __tt_focus
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--kagami.conf" && $reloads == 4 ]] ||
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--hiiragi-kagami.conf" && $reloads == 4 ]] ||
   { print -u2 "focus did not take the picture back: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
-TTHEME_SPEC=$TTHEME_PALETTE[ttheme/rei]; __tt_sync
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--rei.conf" && $reloads == 5 ]] ||
+TTHEME_SPEC=$TTHEME_PALETTE[ttheme/ayanami-rei]; __tt_sync
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--ayanami-rei.conf" && $reloads == 5 ]] ||
   { print -u2 "a tab kept another palette's picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
 TTHEME_SPEC=
-TTHEME_STARTUP=ttheme/miku __tt_sync
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--rei.conf" && $reloads == 5 ]] ||
+TTHEME_STARTUP=ttheme/hatsune-miku __tt_sync
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--ayanami-rei.conf" && $reloads == 5 ]] ||
   { print -u2 "a tab of unknown colors moved the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
 (
   __tt_sync
   [[ "$(<$bgd/shown.conf)" == "config-file = ?.conf" ]] ||
     { print -u2 "a tab that wears nothing while ttheme is off left another palette's picture up: $(<$bgd/shown.conf)"; exit 1 }
 ) || exit 1
-print -r -- "config-file = ?ttheme--rei.conf" > $bgd/shown.conf
+print -r -- "config-file = ?ttheme--ayanami-rei.conf" > $bgd/shown.conf
 __tt_blur
-TTHEME_SPEC=$TTHEME_PALETTE[ttheme/kagami]; __tt_sync
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--rei.conf" && $reloads == 5 ]] ||
+TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hiiragi-kagami]; __tt_sync
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--ayanami-rei.conf" && $reloads == 5 ]] ||
   { print -u2 "a tab that lost focus still took the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
 __tt_focus
-TTHEME_SPEC=$TTHEME_PALETTE[ttheme/rei]
+TTHEME_SPEC=$TTHEME_PALETTE[ttheme/ayanami-rei]
 TTHEME_RAN=1
 __tt_prompt
 __tt_precmd
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--kagami.conf" && $reloads == 6 && $TTHEME_FRONT == 0 ]] ||
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--hiiragi-kagami.conf" && $reloads == 6 && $TTHEME_FRONT == 0 ]] ||
   { print -u2 "a prompt took the picture before the terminal said the tab is in front — a command that ends in a tab behind would take it: $(<$bgd/shown.conf) reloads=$reloads front=$TTHEME_FRONT"; exit 1 }
 __tt_focus
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--rei.conf" && $reloads == 7 && $TTHEME_FRONT == 1 ]] ||
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--ayanami-rei.conf" && $reloads == 7 && $TTHEME_FRONT == 1 ]] ||
   { print -u2 "the focus answer at a prompt did not take the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
 TTHEME_RAN=0
 __tt_prompt
@@ -212,28 +212,28 @@ __tt_prompt
   { print -u2 "a precmd no command ended in forgot where focus is, as zsh-defer's calls after the first prompt do — the first command would run with its tab unsure of being in front"; exit 1 }
 [[ -z "$(__tt_precmd)"&& "$(__tt_focus_on)" == $'\e[?1004h' && "$(__tt_preexec)" == $'\e[?1004l' ]] ||
   { print -u2 "the prompt did not turn focus reporting on and off"; exit 1 }
-__tt_bg_saved ttheme/kagami
+__tt_bg_saved ttheme/hiiragi-kagami
 (( reloads == 7 )) || { print -u2 "saving a picture Ghostty does not show reloaded it: reloads=$reloads"; exit 1 }
-__tt_bg_saved ttheme/kagami ttheme/rei
+__tt_bg_saved ttheme/hiiragi-kagami ttheme/ayanami-rei
 (( reloads == 8 )) || { print -u2 "saving the picture Ghostty shows did not reload it: reloads=$reloads"; exit 1 }
-__tt_shown ttheme/kagami && __tt_reload
-mv $bgd/ttheme--kagami.conf $bgd/ttheme--kagami.gone
-__tt_shown ttheme/miku && { print -u2 "__tt_shown asked for a reload between a palette whose picture went and one with none"; exit 1 }
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--miku.conf" ]] ||
-  { print -u2 "shown.conf kept ttheme/kagami after its last picture went and the tab moved to ttheme/miku: $(<$bgd/shown.conf)"; exit 1 }
-mv $bgd/ttheme--kagami.gone $bgd/ttheme--kagami.conf
-__tt_bg_saved ttheme/kagami
-[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--miku.conf" && $reloads == 9 ]] ||
-  { print -u2 "a picture put back on ttheme/kagami came up behind the tab wearing ttheme/miku: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
-bgsrc=(); __tt_bg_load ttheme/homura; bgsize[ttheme/homura]=60
-__tt_bg_write ttheme/homura && [[ ! -e $bgd/ttheme--homura.conf ]] || { print -u2 "tuning a palette with no picture left a conf behind"; ls $bgd; exit 1 }
-print -l "# image safebooru_2 2/3" "background-image = ttheme--kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" "config-file = ?ttheme--kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--kagami.1a2b3c4d.off.conf" > $bgd/ttheme--kagami.conf
-: > $bgd/ttheme--kagami.1a2b3c4d.png && : > $bgd/ttheme--kagami.1a2b3c4d@fill-42.png
-bgsrc=(); __tt_bg_load ttheme/kagami; bgsize[ttheme/kagami]=100 bgoff[ttheme/kagami]=1
-__tt_bg_write ttheme/kagami || { print -u2 "__tt_bg_write (a picture's own tuning) failed"; exit 1 }
-[[ -e $bgd/ttheme--kagami.1a2b3c4d.tune.conf && -e $bgd/ttheme--kagami.1a2b3c4d.off.conf && ! -e $bgd/ttheme--kagami.tune.conf && $(grep -c config-file $bgd/ttheme--kagami.conf) == 2 ]] ||
-  { print -u2 "tuning did not go to the picture the conf names:"; ls $bgd; cat $bgd/ttheme--kagami.conf; exit 1 }
-te=1 tfocus=1 tename=ttheme/kagami bgcw=8 tune=ttheme/kagami tpick=ttheme/kagami tf=1 help=0 pick= conf=0 msgt=0 flt= color=0
+__tt_shown ttheme/hiiragi-kagami && __tt_reload
+mv $bgd/ttheme--hiiragi-kagami.conf $bgd/ttheme--hiiragi-kagami.gone
+__tt_shown ttheme/hatsune-miku && { print -u2 "__tt_shown asked for a reload between a palette whose picture went and one with none"; exit 1 }
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--hatsune-miku.conf" ]] ||
+  { print -u2 "shown.conf kept ttheme/hiiragi-kagami after its last picture went and the tab moved to ttheme/hatsune-miku: $(<$bgd/shown.conf)"; exit 1 }
+mv $bgd/ttheme--hiiragi-kagami.gone $bgd/ttheme--hiiragi-kagami.conf
+__tt_bg_saved ttheme/hiiragi-kagami
+[[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--hatsune-miku.conf" && $reloads == 9 ]] ||
+  { print -u2 "a picture put back on ttheme/hiiragi-kagami came up behind the tab wearing ttheme/hatsune-miku: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
+bgsrc=(); __tt_bg_load ttheme/akemi-homura; bgsize[ttheme/akemi-homura]=60
+__tt_bg_write ttheme/akemi-homura && [[ ! -e $bgd/ttheme--akemi-homura.conf ]] || { print -u2 "tuning a palette with no picture left a conf behind"; ls $bgd; exit 1 }
+print -l "# image safebooru_2 2/3" "background-image = ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.off.conf" > $bgd/ttheme--hiiragi-kagami.conf
+: > $bgd/ttheme--hiiragi-kagami.1a2b3c4d.png && : > $bgd/ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png
+bgsrc=(); __tt_bg_load ttheme/hiiragi-kagami; bgsize[ttheme/hiiragi-kagami]=100 bgoff[ttheme/hiiragi-kagami]=1
+__tt_bg_write ttheme/hiiragi-kagami || { print -u2 "__tt_bg_write (a picture's own tuning) failed"; exit 1 }
+[[ -e $bgd/ttheme--hiiragi-kagami.1a2b3c4d.tune.conf && -e $bgd/ttheme--hiiragi-kagami.1a2b3c4d.off.conf && ! -e $bgd/ttheme--hiiragi-kagami.tune.conf && $(grep -c config-file $bgd/ttheme--hiiragi-kagami.conf) == 2 ]] ||
+  { print -u2 "tuning did not go to the picture the conf names:"; ls $bgd; cat $bgd/ttheme--hiiragi-kagami.conf; exit 1 }
+te=1 tfocus=1 tename=ttheme/hiiragi-kagami bgcw=8 tune=ttheme/hiiragi-kagami tpick=ttheme/hiiragi-kagami tf=1 help=0 pick= conf=0 msgt=0 flt= color=0
 out=; __tt_pv_foot 80
 [[ $out == *"f find"* && $out == *"s save"* ]] || { print -u2 "an EDIT bar on a picture with several images dropped the find or save key: $out"; exit 1 }
 out=; __tt_pv_foot 200
@@ -244,9 +244,9 @@ out=; __tt_pv_foot 200
   shown=""
   __tt_pv_bg_show() { shown=$1 }
   __tt_pv_paint() { print -u2 "a picture tweak in the panel repainted the list's palette over the tone"; exit 1 }
-  rtype=(thm) rval=(ttheme/konata) cur=1 resized=0 bgname=""
+  rtype=(thm) rval=(ttheme/izumi-konata) cur=1 resized=0 bgname=""
   __tt_pv_focus
-  [[ $shown == ttheme/kagami ]] || { print -u2 "a size or position step in the panel never showed the picture again: '$shown'"; exit 1 }
+  [[ $shown == ttheme/hiiragi-kagami ]] || { print -u2 "a size or position step in the panel never showed the picture again: '$shown'"; exit 1 }
 ) || exit 1
 msg=${(l:200::x:)} msgt=100 out=; __tt_pv_foot 80
 plain=${out//$'\e[K'/}
@@ -255,7 +255,7 @@ plain=${out//$'\e[K'/}
   setopt localoptions extendedglob
   local row text
   local -i width
-  applied=$TTHEME_PALETTE[ttheme/kita] painted=$TTHEME_PALETTE[ttheme/kita] ph=24 ac=
+  applied=$TTHEME_PALETTE[ttheme/kita-ikuyo] painted=$TTHEME_PALETTE[ttheme/kita-ikuyo] ph=24 ac=
   for sw sc in 36 43 54 65; do
     for (( scene = 0; scene < ${#TTHEME_SCENES}; scene++ )); do
       out= pvscene=
@@ -303,27 +303,27 @@ plain=${out//$'\e[K'/}
   pick= pk=1
   (
     typeset -A tstrip=()
-    TTHEME_PALETTE[$long]=$TTHEME_PALETTE[ttheme/kita] TTHEME_SWATCH[$long]=$TTHEME_SWATCH[ttheme/kita]
-    rval=($long ttheme/kita) rtype=(thm thm) rtop=(bocchi-the-rock bocchi-the-rock) cur=1 color=1 cdot= lw=40 flt=
+    TTHEME_PALETTE[$long]=$TTHEME_PALETTE[ttheme/kita-ikuyo] TTHEME_SWATCH[$long]=$TTHEME_SWATCH[ttheme/kita-ikuyo]
+    rval=($long ttheme/kita-ikuyo) rtype=(thm thm) rtop=(bocchi-the-rock bocchi-the-rock) cur=1 color=1 cdot= lw=40 flt=
     for i in 1 2; do
       __tt_pv_row $i
       text=${REPLY//$'\e['[0-9;?]#[A-Za-z]/}
       (( ${(m)#text} <= lw )) || { print -u2 "a palette row ran past a list $lw wide: $text"; exit 1 }
     done
-    [[ $text == *kita* && $text != *ttheme* ]] || { print -u2 "a built-in palette's row did not show its name alone: $text"; exit 1 }
+    [[ $text == *kita-ikuyo* && $text != *ttheme* ]] || { print -u2 "a built-in palette's row did not show its name alone: $text"; exit 1 }
   ) || exit 1
   (
     typeset -A tmembers=() exp=() tstrip=() pvseek=()
     typeset -a tops=() rtop=() rows=()
-    TTHEME_PALETTE[kai@arcade/rei]=$TTHEME_PALETTE[ttheme/kita] TTHEME_PALETTE[kai@arcade/lumi]=$TTHEME_PALETTE[ttheme/miku]
-    TTHEME_PALETTE[kai@arcade/dusk]=$TTHEME_PALETTE[ttheme/rei] TTHEME_PALETTE[alice@pastel/mint]=$TTHEME_PALETTE[ttheme/mio]
+    TTHEME_PALETTE[kai@arcade/rei]=$TTHEME_PALETTE[ttheme/kita-ikuyo] TTHEME_PALETTE[kai@arcade/lumi]=$TTHEME_PALETTE[ttheme/hatsune-miku]
+    TTHEME_PALETTE[kai@arcade/dusk]=$TTHEME_PALETTE[ttheme/ayanami-rei] TTHEME_PALETTE[alice@pastel/mint]=$TTHEME_PALETTE[ttheme/akiyama-mio]
     TTHEME_PALETTE[ttheme/neutral]=$TTHEME_PALETTE[ttheme/kaito]
-    TTHEME_SUBJECT[kai@arcade/rei]=evangelion/rei TTHEME_SUBJECT[kai@arcade/lumi]=glass-arcade/lumi TTHEME_ALSO[kai@arcade/lumi]=night-parade
+    TTHEME_SUBJECT[kai@arcade/rei]=evangelion/ayanami-rei TTHEME_SUBJECT[kai@arcade/lumi]=glass-arcade/lumi TTHEME_ALSO[kai@arcade/lumi]=night-parade
     TTHEME_WORKS=(evangelion glass-arcade night-parade vocaloid)
     TTHEME_WORK_NAME=(evangelion Evangelion glass-arcade "Glass Arcade" night-parade "Night Parade's Eve" vocaloid Vocaloid)
     TTHEME_WORK_NATIVE=(evangelion エヴァンゲリオン)
-    TTHEME_ABC=(ttheme/asuka ttheme/rei kai@arcade/rei kai@arcade/lumi ttheme/kaito ttheme/miku ttheme/neutral alice@pastel/mint kai@arcade/dusk)
-    TTHEME_ORDER=(ttheme/rei kai@arcade/rei ttheme/asuka kai@arcade/lumi ttheme/miku ttheme/kaito ttheme/neutral alice@pastel/mint kai@arcade/dusk)
+    TTHEME_ABC=(ttheme/souryuu-asuka-langley ttheme/ayanami-rei kai@arcade/rei kai@arcade/lumi ttheme/kaito ttheme/hatsune-miku ttheme/neutral alice@pastel/mint kai@arcade/dusk)
+    TTHEME_ORDER=(ttheme/ayanami-rei kai@arcade/rei ttheme/souryuu-asuka-langley kai@arcade/lumi ttheme/hatsune-miku ttheme/kaito ttheme/neutral alice@pastel/mint kai@arcade/dusk)
     color=0 lw=40 cur=0 flt= TTHEME_SORT=abc
     __tt_pv_tops
     [[ $tops == "evangelion glass-arcade night-parade vocaloid ttheme alice@pastel kai@arcade" ]] ||
@@ -335,8 +335,8 @@ plain=${out//$'\e[K'/}
       rows+=("${${${REPLY//  ##/ }# }% }")
     done
     o=$TTHEME_MARKS[opened]
-    want=("$o Evangelion エヴァンゲリオン 3" asuka rei "rei kai@arcade" "$o Glass Arcade 1" "lumi kai@arcade" "$o Night Parade's Eve 1" "lumi kai@arcade"
-      "$o Vocaloid 2" kaito miku "── Originals ${(l:23::─:)}" "$o ttheme 1" neutral "$o alice@pastel 1" mint "$o kai@arcade 1" dusk)
+    want=("$o Evangelion エヴァンゲリオン 3" souryuu-asuka-langl… ayanami-rei "rei kai@arcade" "$o Glass Arcade 1" "lumi kai@arcade" "$o Night Parade's Eve 1" "lumi kai@arcade"
+      "$o Vocaloid 2" kaito hatsune-miku "── Originals ${(l:23::─:)}" "$o ttheme 1" neutral "$o alice@pastel 1" mint "$o kai@arcade 1" dusk)
     [[ ${(F)rows} == ${(F)want} ]] ||
       { print -u2 "preview's list did not read as works, the Originals rule and its publishers:"; print -rlu2 -- $rows; exit 1 }
     __tt_pv_goto kai@arcade/lumi
@@ -347,14 +347,14 @@ plain=${out//$'\e[K'/}
       { print -u2 "← on a palette listed under a second work did not fold that work: ${rval[cur]}"; exit 1 }
     TTHEME_SORT=cast
     __tt_pv_tops
-    [[ ${tmembers[evangelion]} == " ttheme/rei kai@arcade/rei ttheme/asuka" ]] || { print -u2 "TTHEME_SORT=cast did not list a work's characters in their cast order: ${tmembers[evangelion]}"; exit 1 }
+    [[ ${tmembers[evangelion]} == " ttheme/ayanami-rei kai@arcade/rei ttheme/souryuu-asuka-langley" ]] || { print -u2 "TTHEME_SORT=cast did not list a work's characters in their cast order: ${tmembers[evangelion]}"; exit 1 }
     flt=arcade
     __tt_pv_rows
-    (( ! ${rval[(Ie)ttheme/rei]} && ${rval[(Ie)kai@arcade/rei]} && ! ${rval[(Ie)alice@pastel/mint]} )) ||
+    (( ! ${rval[(Ie)ttheme/ayanami-rei]} && ${rval[(Ie)kai@arcade/rei]} && ! ${rval[(Ie)alice@pastel/mint]} )) ||
       { print -u2 "preview's search did not match a marketplace's palettes by their publisher: $rval"; exit 1 }
     flt=エヴァ
     __tt_pv_rows
-    [[ ${(j: :)rval} == "evangelion ttheme/rei kai@arcade/rei ttheme/asuka" ]] || { print -u2 "preview's search did not match a work by its title: $rval"; exit 1 }
+    [[ ${(j: :)rval} == "evangelion ttheme/ayanami-rei kai@arcade/rei ttheme/souryuu-asuka-langley" ]] || { print -u2 "preview's search did not match a work by its title: $rval"; exit 1 }
     REPLY=; __tt_shelf kai@arcade/lumi
     [[ $REPLY == "kai@arcade / Glass Arcade" ]] || { print -u2 "a palette's shelf was not its publisher and its work: $REPLY"; exit 1 }
     REPLY=; __tt_shelf alice@pastel/mint
@@ -369,7 +369,7 @@ plain=${out//$'\e[K'/}
       __tt_pv_row $i
       rows+=("${${${REPLY//  ##/ }# }% }")
     done
-    want=("$o ttheme 5" "$o Evangelion エヴァンゲリオン 2" asuka rei "$o Vocaloid 2" kaito miku neutral "$o alice@pastel 1" mint
+    want=("$o ttheme 5" "$o Evangelion エヴァンゲリオン 2" souryuu-asuka-lan… ayanami-rei "$o Vocaloid 2" kaito hatsune-miku neutral "$o alice@pastel 1" mint
       "$o kai@arcade 3" "$o Evangelion エヴァンゲリオン 1" rei "$o Glass Arcade 1" lumi "$o Night Parade's Eve 1" lumi dusk)
     [[ ${(F)rows} == ${(F)want} ]] ||
       { print -u2 "preview's list grouped by marketplace did not read as each marketplace, its works, then its originals:"; print -rlu2 -- $rows; exit 1 }
@@ -381,7 +381,7 @@ plain=${out//$'\e[K'/}
   (
     local seq p s
     local -i col far
-    out= tename=ttheme/kita tewide=38 teframe=(x x x) tfocus=2 tune= tbtn=0 tearm=0 mode=hub canpick=0 bgcw=0 color=1 tetop=0
+    out= tename=ttheme/kita-ikuyo tewide=38 teframe=(x x x) tfocus=2 tune= tbtn=0 tearm=0 mode=hub canpick=0 bgcw=0 color=1 tetop=0
     __tt_pv_te_panel 2 39 3 11
     s=$out col=1 far=0
     while [[ -n $s ]]; do
@@ -419,51 +419,51 @@ plain=${out//$'\e[K'/}
     [[ $flt == kit ]] || { print -u2 "a key typed into preview's filter let a bidi control in: ${(q+)flt}"; exit 1 }
   ) || exit 1
 } || exit 1
-print -l "# image safebooru_2 2/3" "# picture safebooru_1 ttheme--kagami.aaaaaaaa ttheme--kagami.aaaaaaaa@fill-40.png 0.2 inkwell safebooru 1 x" \
-  "# picture safebooru_2 ttheme--kagami.1a2b3c4d ttheme--kagami.1a2b3c4d@fill-42.png 0.2 -" "# picture safebooru_3 ttheme--kagami.cccccccc ttheme--kagami.cccccccc@fill-40.png 0.3 -" \
-  "background-image = ttheme--kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
-  "config-file = ?ttheme--kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--kagami.1a2b3c4d.off.conf" > $bgd/ttheme--kagami.conf
-: > $bgd/ttheme--kagami.aaaaaaaa@fill-40.png && : > $bgd/ttheme--kagami.cccccccc@fill-40.png
+print -l "# image safebooru_2 2/3" "# picture safebooru_1 ttheme--hiiragi-kagami.aaaaaaaa ttheme--hiiragi-kagami.aaaaaaaa@fill-40.png 0.2 inkwell safebooru 1 x" \
+  "# picture safebooru_2 ttheme--hiiragi-kagami.1a2b3c4d ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png 0.2 -" "# picture safebooru_3 ttheme--hiiragi-kagami.cccccccc ttheme--hiiragi-kagami.cccccccc@fill-40.png 0.3 -" \
+  "background-image = ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
+  "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.off.conf" > $bgd/ttheme--hiiragi-kagami.conf
+: > $bgd/ttheme--hiiragi-kagami.aaaaaaaa@fill-40.png && : > $bgd/ttheme--hiiragi-kagami.cccccccc@fill-40.png
 bgsrc=() bgedit=() bgview=() bgswap=() tune= tpick= msgt=0
-__tt_pv_tune_open ttheme/kagami
+__tt_pv_tune_open ttheme/hiiragi-kagami
 __tt_pv_bg_pick 1
-[[ $tpick == ttheme/kagami:safebooru_3 && $bgop[$tpick] == 0.3 && $bgtunef[$tpick] == ttheme--kagami.cccccccc.tune.conf ]] ||
+[[ $tpick == ttheme/hiiragi-kagami:safebooru_3 && $bgop[$tpick] == 0.3 && $bgtunef[$tpick] == ttheme--hiiragi-kagami.cccccccc.tune.conf ]] ||
   { print -u2 "the picture strip did not move to the next picture: $tpick op=$bgop[$tpick] tune=$bgtunef[$tpick]"; exit 1 }
-__tt_bg_load ttheme/kagami:safebooru_1
-[[ $bgby[ttheme/kagami:safebooru_1] == inkwell && $bgfrom[ttheme/kagami:safebooru_1] == "safebooru 1" && -z $bgby[$tpick] ]] ||
-  { print -u2 "a held picture lost its artist or post: by=$bgby[ttheme/kagami:safebooru_1] from=$bgfrom[ttheme/kagami:safebooru_1] ($tpick by=$bgby[$tpick])"; exit 1 }
+__tt_bg_load ttheme/hiiragi-kagami:safebooru_1
+[[ $bgby[ttheme/hiiragi-kagami:safebooru_1] == inkwell && $bgfrom[ttheme/hiiragi-kagami:safebooru_1] == "safebooru 1" && -z $bgby[$tpick] ]] ||
+  { print -u2 "a held picture lost its artist or post: by=$bgby[ttheme/hiiragi-kagami:safebooru_1] from=$bgfrom[ttheme/hiiragi-kagami:safebooru_1] ($tpick by=$bgby[$tpick])"; exit 1 }
 bgop[$tpick]=0.5
 __tt_pv_untune
-[[ -z $tune && $bgop[ttheme/kagami:safebooru_3] == 0.3 && ${#bgswap} == 0 && ${#bgedit} == 0 ]] ||
-  { print -u2 "esc in the tuning panel kept a picture or its tuning: op=$bgop[ttheme/kagami:safebooru_3] swap=${(kv)bgswap} edit=${(k)bgedit}"; exit 1 }
-__tt_pv_tune_open ttheme/kagami
+[[ -z $tune && $bgop[ttheme/hiiragi-kagami:safebooru_3] == 0.3 && ${#bgswap} == 0 && ${#bgedit} == 0 ]] ||
+  { print -u2 "esc in the tuning panel kept a picture or its tuning: op=$bgop[ttheme/hiiragi-kagami:safebooru_3] swap=${(kv)bgswap} edit=${(k)bgedit}"; exit 1 }
+__tt_pv_tune_open ttheme/hiiragi-kagami
 __tt_pv_bg_pick -1
 bgop[$tpick]=0.4
 __tt_pv_tune_keep
-[[ $bgswap[ttheme/kagami] == safebooru_1 && $bgview[ttheme/kagami] == ttheme/kagami:safebooru_1 && -n $bgedit[ttheme/kagami:safebooru_1] && -z $tune ]] ||
+[[ $bgswap[ttheme/hiiragi-kagami] == safebooru_1 && $bgview[ttheme/hiiragi-kagami] == ttheme/hiiragi-kagami:safebooru_1 && -n $bgedit[ttheme/hiiragi-kagami:safebooru_1] && -z $tune ]] ||
   { print -u2 "enter in the tuning panel did not keep the picture it moved to: swap=${(kv)bgswap} view=${(kv)bgview} edit=${(k)bgedit}"; exit 1 }
-print -l "# image safebooru_2 2/3" "# picture safebooru_2 ttheme--kagami.1a2b3c4d ttheme--kagami.1a2b3c4d@fill-42.png 0.2 -" \
-  "# picture safebooru_3 ttheme--kagami.cccccccc ttheme--kagami.cccccccc@fill-40.png 0.1 -" "# colors safebooru_3 original" \
-  "background-image = ttheme--kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
-  "config-file = ?ttheme--kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--kagami.1a2b3c4d.off.conf" > $bgd/ttheme--kagami.conf
-bgsrc=() bgcolors=(); __tt_bg_load ttheme/kagami
-REPLY=; __tt_bg_coloring ttheme/kagami; first=$REPLY
-REPLY=; __tt_bg_coloring ttheme/kagami:safebooru_3
+print -l "# image safebooru_2 2/3" "# picture safebooru_2 ttheme--hiiragi-kagami.1a2b3c4d ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png 0.2 -" \
+  "# picture safebooru_3 ttheme--hiiragi-kagami.cccccccc ttheme--hiiragi-kagami.cccccccc@fill-40.png 0.1 -" "# colors safebooru_3 original" \
+  "background-image = ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
+  "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.off.conf" > $bgd/ttheme--hiiragi-kagami.conf
+bgsrc=() bgcolors=(); __tt_bg_load ttheme/hiiragi-kagami
+REPLY=; __tt_bg_coloring ttheme/hiiragi-kagami; first=$REPLY
+REPLY=; __tt_bg_coloring ttheme/hiiragi-kagami:safebooru_3
 [[ $first == tone && $REPLY == original ]] ||
   { print -u2 "the conf's colors line did not reach its picture: active=$first other=$REPLY (${(kv)bgcolors})"; exit 1 }
-te=1 tfocus=1 tename=ttheme/kagami bgcw=8 tune=ttheme/kagami tpick=ttheme/kagami:safebooru_3 tf=4 color=0 out= off=0 msgt=0 help=0 pick= conf=0 flt=
-__tt_pv_bg_panel ttheme/kagami:safebooru_3 4 1 60
+te=1 tfocus=1 tename=ttheme/hiiragi-kagami bgcw=8 tune=ttheme/hiiragi-kagami tpick=ttheme/hiiragi-kagami:safebooru_3 tf=4 color=0 out= off=0 msgt=0 help=0 pick= conf=0 flt=
+__tt_pv_bg_panel ttheme/hiiragi-kagami:safebooru_3 4 1 60
 [[ $out == *Colors* && $out == *"[original]"* && $out == *" tinted "* ]] ||
   { print -u2 "the tuning panel did not show the picture's colors: $out"; exit 1 }
 out=; __tt_pv_foot 200
 [[ $out == *"←→ change"* && $out == *"c colors"* && $out != *"= reset"* ]] ||
   { print -u2 "the Colors row's hints kept the field reset: $out"; exit 1 }
-print -l "# image safebooru_2 2/3" "# picture safebooru_2 ttheme--kagami.1a2b3c4d ttheme--kagami.1a2b3c4d@fill-42.png 0.2 -" \
-  "# picture safebooru_3 ttheme--kagami.cccccccc ttheme--kagami.cccccccc@fill-40.png 0.1 -" \
-  "background-image = ttheme--kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
-  "config-file = ?ttheme--kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--kagami.1a2b3c4d.off.conf" > $bgd/ttheme--kagami.conf
-bgsrc=(); __tt_bg_load ttheme/kagami
-REPLY=; __tt_bg_coloring ttheme/kagami:safebooru_3
+print -l "# image safebooru_2 2/3" "# picture safebooru_2 ttheme--hiiragi-kagami.1a2b3c4d ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png 0.2 -" \
+  "# picture safebooru_3 ttheme--hiiragi-kagami.cccccccc ttheme--hiiragi-kagami.cccccccc@fill-40.png 0.1 -" \
+  "background-image = ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
+  "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.off.conf" > $bgd/ttheme--hiiragi-kagami.conf
+bgsrc=(); __tt_bg_load ttheme/hiiragi-kagami
+REPLY=; __tt_bg_coloring ttheme/hiiragi-kagami:safebooru_3
 [[ $REPLY == tone && ${#bgcolors} == 0 ]] ||
   { print -u2 "a picture drawn in tone again kept its colors mark: $REPLY (${(kv)bgcolors})"; exit 1 }
 te=0 tune= tpick= bgcw=0 out=
@@ -474,33 +474,33 @@ te=0 tune= tpick= bgcw=0 out=
   __tt_cli() {
     [[ -e $bgd/closed.log ]] && print closed-before-cli > $bgd/early.log
     print -r -- "$*" > $bgd/cli.log
-    print -l "# image safebooru_2 1/1" "# picture safebooru_2 ttheme--kagami.5e5e5e5e ttheme--kagami.5e5e5e5e@fill-42.png 0.1 -" "# colors safebooru_2 original" \
-      "background-image = ttheme--kagami.5e5e5e5e@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.1" \
-      "config-file = ?ttheme--kagami.5e5e5e5e.tune.conf" "config-file = ?ttheme--kagami.5e5e5e5e.off.conf" > $bgd/ttheme--kagami.conf
-    print "Background · ttheme/kagami safebooru_2 in its own colors"
+    print -l "# image safebooru_2 1/1" "# picture safebooru_2 ttheme--hiiragi-kagami.5e5e5e5e ttheme--hiiragi-kagami.5e5e5e5e@fill-42.png 0.1 -" "# colors safebooru_2 original" \
+      "background-image = ttheme--hiiragi-kagami.5e5e5e5e@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.1" \
+      "config-file = ?ttheme--hiiragi-kagami.5e5e5e5e.tune.conf" "config-file = ?ttheme--hiiragi-kagami.5e5e5e5e.off.conf" > $bgd/ttheme--hiiragi-kagami.conf
+    print "Background · ttheme/hiiragi-kagami safebooru_2 in its own colors"
   }
-  print -l "# image safebooru_2 1/1" "# picture safebooru_2 ttheme--kagami.1a2b3c4d ttheme--kagami.1a2b3c4d@fill-42.png 0.2 -" \
-    "background-image = ttheme--kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
-    "config-file = ?ttheme--kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--kagami.1a2b3c4d.off.conf" > $bgd/ttheme--kagami.conf
+  print -l "# image safebooru_2 1/1" "# picture safebooru_2 ttheme--hiiragi-kagami.1a2b3c4d ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png 0.2 -" \
+    "background-image = ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
+    "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.off.conf" > $bgd/ttheme--hiiragi-kagami.conf
   bgsrc=() bgcolors=() bgedit=() bgview=() bgswap=() tsnaps=()
-  te=1 tfocus=1 tename=ttheme/kagami bgcw=8 color=0 msgt=0 help=0 pick= conf=0 flt=
-  __tt_pv_tune_open ttheme/kagami
-  bgoff[ttheme/kagami]=1 tf=1 key=c
+  te=1 tfocus=1 tename=ttheme/hiiragi-kagami bgcw=8 color=0 msgt=0 help=0 pick= conf=0 flt=
+  __tt_pv_tune_open ttheme/hiiragi-kagami
+  bgoff[ttheme/hiiragi-kagami]=1 tf=1 key=c
   rm -f $bgd/cli.log
   __tt_pv_tune > /dev/null
   [[ ! -e $bgd/cli.log ]] || { print -u2 "c drew a hidden picture again"; exit 1 }
-  bgoff[ttheme/kagami]=0 tf=4 out=; __tt_pv_foot 200; tf=1
+  bgoff[ttheme/hiiragi-kagami]=0 tf=4 out=; __tt_pv_foot 200; tf=1
   [[ $out == *"c colors"* ]] || { print -u2 "the EDIT bar did not offer the colors key on the Colors row: $out"; exit 1 }
   __tt_pv_tune > /dev/null
   REPLY=; __tt_bg_coloring $tpick
-  [[ "$(<$bgd/cli.log)" == "image ttheme/kagami original safebooru_2" && $REPLY == original && $tf == 1 && $tune == ttheme/kagami && $bgsrc[ttheme/kagami] == *5e5e5e5e* ]] ||
-    { print -u2 "c did not draw the picture again through the CLI, on the row it was pressed on: $(<$bgd/cli.log) coloring=$REPLY tf=$tf tune=$tune src=$bgsrc[ttheme/kagami]"; exit 1 }
+  [[ "$(<$bgd/cli.log)" == "image ttheme/hiiragi-kagami original safebooru_2" && $REPLY == original && $tf == 1 && $tune == ttheme/hiiragi-kagami && $bgsrc[ttheme/hiiragi-kagami] == *5e5e5e5e* ]] ||
+    { print -u2 "c did not draw the picture again through the CLI, on the row it was pressed on: $(<$bgd/cli.log) coloring=$REPLY tf=$tf tune=$tune src=$bgsrc[ttheme/hiiragi-kagami]"; exit 1 }
   [[ ! -e $bgd/early.log ]] ||
     { print -u2 "c took the picture or the panel's thumbnails off the screen while the CLI drew it again, so they were gone until the next frame"; exit 1 }
   rm -f $bgd/cli.log
   tf=4 key=right
   __tt_pv_tune > /dev/null
-  [[ "$(<$bgd/cli.log)" == "image ttheme/kagami tone safebooru_2" && $tf == 4 ]] ||
+  [[ "$(<$bgd/cli.log)" == "image ttheme/hiiragi-kagami tone safebooru_2" && $tf == 4 ]] ||
     { print -u2 "the Colors row did not switch back on an arrow key: $(<$bgd/cli.log) tf=$tf"; exit 1 }
 ) || exit 1
 tune= tpick= bgcw=0 out=
@@ -508,48 +508,48 @@ tune= tpick= bgcw=0 out=
   functions[__tt_pv_bg_prepare]=$functions[__tt_pv_bg_prepare_run]
   __tt_cli() { print -r -- "$*" >> $bgd/prep.log }
   rm -f $bgd/prep.log
-  print -l "# image safebooru_2 1/1" "# picture safebooru_2 ttheme--kagami.1a2b3c4d ttheme--kagami.1a2b3c4d@fill-42.png 0.2 -" \
-    "background-image = ttheme--kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
-    "config-file = ?ttheme--kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--kagami.1a2b3c4d.off.conf" > $bgd/ttheme--kagami.conf
+  print -l "# image safebooru_2 1/1" "# picture safebooru_2 ttheme--hiiragi-kagami.1a2b3c4d ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png 0.2 -" \
+    "background-image = ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
+    "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.off.conf" > $bgd/ttheme--hiiragi-kagami.conf
   bgsrc=() bgcolors=() bgprep=() bgview=() bgswap=() bgedit=() tsnaps=() bgprepid=0 tune= tpick=
-  __tt_pv_tune_open ttheme/kagami
+  __tt_pv_tune_open ttheme/hiiragi-kagami
   for i in {1..30}; do [[ -s $bgd/prep.log ]] && break; sleep 0.1; done
-  __tt_pv_tune_open ttheme/kagami
+  __tt_pv_tune_open ttheme/hiiragi-kagami
   sleep 0.3
-  [[ "$(<$bgd/prep.log)" == "image ttheme/kagami prepare safebooru_2" ]] ||
+  [[ "$(<$bgd/prep.log)" == "image ttheme/hiiragi-kagami prepare safebooru_2" ]] ||
     { print -u2 "opening a picture's tuning did not get its other coloring ready exactly once: $(<$bgd/prep.log)"; exit 1 }
-  bgprep[ttheme/kagami:safebooru_2:original]=1 bgcolors[ttheme/kagami:safebooru_2]=original
+  bgprep[ttheme/hiiragi-kagami:safebooru_2:original]=1 bgcolors[ttheme/hiiragi-kagami:safebooru_2]=original
   rm -f $bgd/prep.log
-  __tt_pv_tune_open ttheme/kagami
+  __tt_pv_tune_open ttheme/hiiragi-kagami
   sleep 0.3
   [[ ! -e $bgd/prep.log ]] ||
     { print -u2 "a coloring marked as prepared was prepared again: $(<$bgd/prep.log)"; exit 1 }
 ) || exit 1
-TTHEME_STARTUP=ttheme/miku
+TTHEME_STARTUP=ttheme/hatsune-miku
 proj=$XDG_CONFIG_HOME/proj
 mkdir -p $proj/sub/deep $proj-sibling
 ln -s $proj/sub $XDG_CONFIG_HOME/link
 cd $proj
-__tt_pin_save ttheme/homura "$proj/**" "$TTHEME_PALETTE[ttheme/miku]" > /dev/null || { print -u2 "__tt_pin_save failed"; exit 1 }
+__tt_pin_save ttheme/akemi-homura "$proj/**" "$TTHEME_PALETTE[ttheme/hatsune-miku]" > /dev/null || { print -u2 "__tt_pin_save failed"; exit 1 }
 cd $proj/sub
-__tt_pin_save ttheme/kaito "$proj/sub" "$TTHEME_PALETTE[ttheme/miku]" > /dev/null || { print -u2 "__tt_pin_save (exact) failed"; exit 1 }
+__tt_pin_save ttheme/kaito "$proj/sub" "$TTHEME_PALETTE[ttheme/hatsune-miku]" > /dev/null || { print -u2 "__tt_pin_save (exact) failed"; exit 1 }
 TTHEME_PINS_RAW=; __tt_pins_load
-[[ ${#TTHEME_PINS} == 2 && $TTHEME_PINS[$proj/**] == ttheme/homura && $TTHEME_PINS[$proj/sub] == ttheme/kaito ]] || { print -u2 "pins did not round-trip: ${(kv)TTHEME_PINS}"; cat $TTHEME_PINS_FILE; exit 1 }
+[[ ${#TTHEME_PINS} == 2 && $TTHEME_PINS[$proj/**] == ttheme/akemi-homura && $TTHEME_PINS[$proj/sub] == ttheme/kaito ]] || { print -u2 "pins did not round-trip: ${(kv)TTHEME_PINS}"; cat $TTHEME_PINS_FILE; exit 1 }
 REPLY=; __tt_dir_rule $proj/sub/deep && [[ $REPLY == "$proj/**" ]] || { print -u2 "subtree rule broke: $REPLY"; exit 1 }
 REPLY=; __tt_dir_rule $proj/sub && [[ $REPLY == "$proj/sub" ]] || { print -u2 "nearest rule broke: $REPLY"; exit 1 }
 REPLY=; __tt_dir_rule $XDG_CONFIG_HOME/link && [[ $REPLY == "$proj/sub" ]] || { print -u2 "symlink did not resolve to its pin: $REPLY"; exit 1 }
 __tt_dir_rule $proj-sibling && { print -u2 "sibling matched a pin: $REPLY"; exit 1 }
-TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
 cd $proj/sub/deep; __tt_dir_sync > /dev/null
-[[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/homura]" ]] || { print -u2 "cd into a pin did not paint ttheme/homura"; exit 1 }
+[[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/akemi-homura]" ]] || { print -u2 "cd into a pin did not paint ttheme/akemi-homura"; exit 1 }
 cd $proj/sub; __tt_dir_sync > /dev/null
 [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/kaito]" ]] || { print -u2 "nested pin did not paint ttheme/kaito"; exit 1 }
 cd $XDG_CONFIG_HOME; __tt_dir_sync > /dev/null
-[[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" ]] || { print -u2 "leaving the pins did not restore ttheme/miku"; exit 1 }
+[[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" ]] || { print -u2 "leaving the pins did not restore ttheme/hatsune-miku"; exit 1 }
 cd $proj/sub; __tt_dir_sync > /dev/null
-TTHEME_SPEC=$TTHEME_PALETTE[ttheme/rei]
+TTHEME_SPEC=$TTHEME_PALETTE[ttheme/ayanami-rei]
 cd $XDG_CONFIG_HOME; __tt_dir_sync > /dev/null
-[[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/rei]" ]] || { print -u2 "leaving overrode a hand-painted tab"; exit 1 }
+[[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/ayanami-rei]" ]] || { print -u2 "leaving overrode a hand-painted tab"; exit 1 }
 TTHEME_SPEC= TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
 resets=0 reset_fn=$functions[__tt_osc_reset]
 __tt_osc_reset() { (( resets++ )) }
@@ -560,16 +560,16 @@ functions[__tt_osc_reset]=$reset_fn
 cd $proj/sub
 __tt_unpin > /dev/null || { print -u2 "__tt_unpin failed"; exit 1 }
 TTHEME_PINS_RAW=; __tt_pins_load
-[[ ${#TTHEME_PINS} == 1 && $TTHEME_PINS[$proj/**] == ttheme/homura ]] || { print -u2 "unpin rewrote the wrong pin: ${(kv)TTHEME_PINS}"; exit 1 }
+[[ ${#TTHEME_PINS} == 1 && $TTHEME_PINS[$proj/**] == ttheme/akemi-homura ]] || { print -u2 "unpin rewrote the wrong pin: ${(kv)TTHEME_PINS}"; exit 1 }
 out=$(__tt_unpin 2>&1) && { print -u2 "unpin succeeded with nothing pinned"; exit 1 }
 [[ $out == *covers* ]] || { print -u2 "unpin hint broke: $out"; exit 1 }
 cd $proj-sibling
 __tt_unpin 2>/dev/null && { print -u2 "unpin succeeded outside every pin"; exit 1 }
 cd $proj; __tt_unpin > /dev/null || { print -u2 "__tt_unpin (last pin) failed"; exit 1 }
 [[ ! -e $TTHEME_PINS_FILE ]] || { print -u2 "empty pins file left behind"; exit 1 }
-print -l "~/proj-home/**  ttheme/luka" "# comment" "" "$proj-sibling   ttheme/rei" "$proj two/**  ttheme/mio  " > $TTHEME_PINS_FILE
+print -l "~/proj-home/**  ttheme/megurine-luka" "# comment" "" "$proj-sibling   ttheme/ayanami-rei" "$proj two/**  ttheme/akiyama-mio  " > $TTHEME_PINS_FILE
 cd $proj-sibling; __tt_chpwd > /dev/null
-[[ ${#TTHEME_PINS} == 3 && $TTHEME_PINS[$HOME/proj-home/**] == ttheme/luka && ${TTHEME_PINS[$proj two/**]} == ttheme/mio && $TTHEME_PIN == "$proj-sibling" ]] || { print -u2 "hand-written pins did not load on cd: ${(kv)TTHEME_PINS} pin=$TTHEME_PIN"; exit 1 }
+[[ ${#TTHEME_PINS} == 3 && $TTHEME_PINS[$HOME/proj-home/**] == ttheme/megurine-luka && ${TTHEME_PINS[$proj two/**]} == ttheme/akiyama-mio && $TTHEME_PIN == "$proj-sibling" ]] || { print -u2 "hand-written pins did not load on cd: ${(kv)TTHEME_PINS} pin=$TTHEME_PIN"; exit 1 }
 REPLY=; __tt_tilde $HOME/proj-home
 [[ $REPLY == "~/proj-home" ]] || { print -u2 "__tt_tilde kept the home prefix: $REPLY"; exit 1 }
 cd $OLDPWD
@@ -579,21 +579,21 @@ cd $OLDPWD
   cd $XDG_CONFIG_HOME/reach
   rm -f $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load
-  TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+  TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
   __tt_fresh > /dev/null
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" ]] || { print -u2 "a prompt repainted a tab with no pin changed"; exit 1 }
-  print -r -- "$XDG_CONFIG_HOME/reach  ttheme/homura" > $TTHEME_PINS_FILE
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" ]] || { print -u2 "a prompt repainted a tab with no pin changed"; exit 1 }
+  print -r -- "$XDG_CONFIG_HOME/reach  ttheme/akemi-homura" > $TTHEME_PINS_FILE
   __tt_fresh > /dev/null
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/homura]" && $TTHEME_PIN == "$XDG_CONFIG_HOME/reach" ]] ||
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/akemi-homura]" && $TTHEME_PIN == "$XDG_CONFIG_HOME/reach" ]] ||
     { print -u2 "a pin set in another tab did not reach a tab already in its directory at its next prompt: pin=$TTHEME_PIN"; exit 1 }
   print -r -- "$XDG_CONFIG_HOME/reach  ttheme/kaito" > $TTHEME_PINS_FILE
   touch -t 203101010000 $TTHEME_PINS_FILE
   __tt_fresh > /dev/null
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/kaito]" && $TTHEME_BASE_SPEC == "$TTHEME_PALETTE[ttheme/miku]" ]] ||
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/kaito]" && $TTHEME_BASE_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" ]] ||
     { print -u2 "a pin moved to another palette in another tab did not repaint a tab under it, or lost the palette it wore before"; exit 1 }
   rm -f $TTHEME_PINS_FILE
   __tt_fresh > /dev/null
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" && -z $TTHEME_PIN ]] ||
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" && -z $TTHEME_PIN ]] ||
     { print -u2 "a pin dropped in another tab did not give a tab under it its palette back: pin=$TTHEME_PIN"; exit 1 }
 ) || exit 1
 TTHEME_STARTUP=
@@ -641,7 +641,7 @@ TTHEME_STARTUP=
     __tt_ssh_host "$line" || REPLY=-
     [[ $REPLY == "$want" ]] || { print -u2 "ssh read ${(q+)line} as ${(q+)REPLY}, not $want"; exit 1 }
   done
-  print -l "ssh:Teal  ttheme/homura" "ssh:*.prod  ttheme/kaito" "ssh:db?.prod  ttheme/rei" "ssh:gone  nosuchpalette" "ssh:bad host  ttheme/mio" "ssh:  ttheme/mio" > $TTHEME_PINS_FILE
+  print -l "ssh:Teal  ttheme/akemi-homura" "ssh:*.prod  ttheme/kaito" "ssh:db?.prod  ttheme/ayanami-rei" "ssh:gone  nosuchpalette" "ssh:bad host  ttheme/akiyama-mio" "ssh:  ttheme/akiyama-mio" > $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
   [[ ${(j: :)${(ok)TTHEME_PINS}} == 'ssh:*.prod ssh:db?.prod ssh:gone ssh:teal' ]] || { print -u2 "ssh pins did not load: ${(kv)TTHEME_PINS}"; exit 1 }
   for host want in teal ssh:teal db1.prod 'ssh:db?.prod' db10.prod 'ssh:*.prod' gone - teal2 -; do
@@ -649,35 +649,35 @@ TTHEME_STARTUP=
     __tt_ssh_rule $host || REPLY=-
     [[ $REPLY == "$want" ]] || { print -u2 "ssh to $host took the pin ${(q+)REPLY}, not $want"; exit 1 }
   done
-  TTHEME_STARTUP=ttheme/miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku]
+  TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku]
   __tt_apply() { export TTHEME_PAINTED=1 }
   unset TTHEME_PAINTED
   __tt_ran 'ssh teal' 'ssh teal' 'ssh teal' > /dev/null
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/homura]" ]] || { print -u2 "ssh to a pinned host did not paint its palette"; exit 1 }
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/akemi-homura]" ]] || { print -u2 "ssh to a pinned host did not paint its palette"; exit 1 }
   __tt_prompt > /dev/null
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "the prompt after ssh did not put the palette back"; exit 1 }
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "the prompt after ssh did not put the palette back"; exit 1 }
   [[ -z ${TTHEME_PAINTED+x} ]] || { print -u2 "a tab that never painted came back from ssh painted, so it no longer follows the default"; exit 1 }
   export TTHEME_PAINTED=1
   __tt_ran 'ssh teal' 'ssh teal' 'ssh teal' > /dev/null
   __tt_prompt > /dev/null
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" && -n $TTHEME_PAINTED ]] || { print -u2 "a tab painted by hand came back from ssh unpainted"; exit 1 }
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" && -n $TTHEME_PAINTED ]] || { print -u2 "a tab painted by hand came back from ssh unpainted"; exit 1 }
   __tt_apply() { : }
   __tt_ran 'ssh web.prod' 'ssh web.prod' 'ssh web.prod'
-  TTHEME_SPEC=$TTHEME_PALETTE[ttheme/rei]
+  TTHEME_SPEC=$TTHEME_PALETTE[ttheme/ayanami-rei]
   __tt_prompt
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/rei]" ]] || { print -u2 "the prompt after ssh overrode a palette painted by hand"; exit 1 }
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/ayanami-rei]" ]] || { print -u2 "the prompt after ssh overrode a palette painted by hand"; exit 1 }
   __tt_ran 'ssh teal uptime' 'ssh teal uptime' 'ssh teal uptime'
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/rei]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "a remote command painted the tab"; exit 1 }
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/ayanami-rei]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "a remote command painted the tab"; exit 1 }
   TTHEME_STARTUP=
   __tt_ran 'ssh teal' 'ssh teal' 'ssh teal'
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/rei]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "ssh to a pinned host painted the tab while ttheme is off"; exit 1 }
-  TTHEME_STARTUP=ttheme/miku TTHEME_SPEC= resets=0
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/ayanami-rei]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "ssh to a pinned host painted the tab while ttheme is off"; exit 1 }
+  TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_SPEC= resets=0
   __tt_osc_reset() { (( ++resets )) }
   __tt_ran 'ssh teal' 'ssh teal' 'ssh teal'
   __tt_prompt
   [[ -z $TTHEME_SPEC && $resets == 1 ]] || { print -u2 "the prompt after ssh did not reset a tab of unknown colors: spec=[$TTHEME_SPEC] resets=$resets"; exit 1 }
   TTHEME_SPEC=$TTHEME_PALETTE[ttheme/kaito]
-  out=$(__tt_pin_save ttheme/kaito ssh:teal "$TTHEME_PALETTE[ttheme/miku]"; [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" ]] && print back)
+  out=$(__tt_pin_save ttheme/kaito ssh:teal "$TTHEME_PALETTE[ttheme/hatsune-miku]"; [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" ]] && print back)
   [[ $out == "Pinned · kaito → ssh teal · while connected"$'\n'back ]] || { print -u2 "pinning a host broke: $out"; exit 1 }
   TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
   [[ $TTHEME_PINS[ssh:teal] == ttheme/kaito && ${#TTHEME_PINS} == 4 ]] || { print -u2 "a host pin did not round-trip: ${(kv)TTHEME_PINS}"; exit 1 }
@@ -855,10 +855,10 @@ TTHEME_STARTUP=
 (
   HOME=$XDG_CONFIG_HOME/home
   mkdir -p $HOME/work/api/v2 $HOME/work/site/x $HOME/notes
-  print -r -- "//**  ttheme/rei" > $TTHEME_PINS_FILE
+  print -r -- "//**  ttheme/ayanami-rei" > $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load
   REPLY=; __tt_dir_rule $HOME/work && [[ $REPLY == "//**" ]] || { print -u2 "a pin on / and below skipped what is below it: $REPLY"; exit 1 }
-  print -l "~/work/**  ttheme/homura" "~/work/site  ttheme/kaito" "~/work/site/**  ttheme/miku" "~/notes/**  nosuchpalette" "/nonexistent-ttheme/place/**  ttheme/rei" "~  ttheme/mio" "ssh:teal  ttheme/kaito" "ssh:*.prod  nosuchpalette" > $TTHEME_PINS_FILE
+  print -l "~/work/**  ttheme/akemi-homura" "~/work/site  ttheme/kaito" "~/work/site/**  ttheme/hatsune-miku" "~/notes/**  nosuchpalette" "/nonexistent-ttheme/place/**  ttheme/ayanami-rei" "~  ttheme/akiyama-mio" "ssh:teal  ttheme/kaito" "ssh:*.prod  nosuchpalette" > $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
   REPLY=; __tt_dir_rule $HOME && [[ $REPLY == "$HOME" ]] || { print -u2 "a pin on ~ alone did not cover the home directory: $REPLY"; exit 1 }
   REPLY=; __tt_dir_rule $HOME/work/site && [[ $REPLY == "$HOME/work/site" ]] || { print -u2 "a directory's own pin lost to its pin on everything below: $REPLY"; exit 1 }
@@ -867,31 +867,31 @@ TTHEME_STARTUP=
   color=0
   out=$(COLUMNS=200 __tt_map_tree)
   want=(
-    "~                          mio            this directory"
+    "~                          akiyama-mio    this directory"
     "├── notes/                 nosuchpalette  and below · not installed"
-    "└── work/                  homura         and below"
+    "└── work/                  akemi-homura   and below"
     "    ├── api/v2/ ← here"
-    "    └── site/              kaito          this directory · miku below"
-    "/nonexistent-ttheme/place  rei            and below · no such directory"
+    "    └── site/              kaito          this directory · hatsune-miku below"
+    "/nonexistent-ttheme/place  ayanami-rei    and below · no such directory"
     "ssh"
     "├── *.prod                 nosuchpalette  while connected · not installed"
     "└── teal                   kaito          while connected"
     ""
-    "Here · homura pinned to ~/work and below"
+    "Here · akemi-homura pinned to ~/work and below"
     "ttheme pin picks one here · ttheme unpin drops one · $TTHEME_PINS_FILE"
   )
   [[ $out == ${(F)want} ]] || { print -u2 "the pins map drew:"; print -ru2 -- $out; exit 1 }
   color=1
   out=$(__tt_map_tree)
-  __tt_map_tip ttheme/homura
+  __tt_map_tip ttheme/akemi-homura
   [[ ${${(f)out}[4]} == "    $REPLY├── "$'\e[0m\e[2mapi/v2/\e[0m '"$REPLY"$'\e[1m← here\e[0m' ]] ||
-    { print -u2 "the pins map did not draw ttheme/homura's branches, or the here mark, in ttheme/homura's color: ${(q+)${(f)out}[4]}"; exit 1 }
+    { print -u2 "the pins map did not draw ttheme/akemi-homura's branches, or the here mark, in ttheme/akemi-homura's color: ${(q+)${(f)out}[4]}"; exit 1 }
   [[ ${${(f)out}[2]} == $'\e[2m├── \e[0m\e[1mnotes/\e[0m'* ]] || { print -u2 "a branch outside every pin was not dim: ${(q+)${(f)out}[2]}"; exit 1 }
   cd $HOME/work/site
   [[ ${${(f)"$(color=0 __tt_map_tree)"}[-2]} == "Here · kaito pinned to this directory" ]] ||
     { print -u2 "the pins map named the wrong pin here: ${${(f)"$(color=0 __tt_map_tree)"}[-2]}"; exit 1 }
   out=$(__tt_pins_map)
-  want=("/nonexistent-ttheme/place/**"$'\t'ttheme/rei "$HOME"$'\t'ttheme/mio "~/notes/**"$'\t'nosuchpalette "~/work/**"$'\t'ttheme/homura "~/work/site"$'\t'ttheme/kaito "~/work/site/**"$'\t'ttheme/miku "ssh:*.prod"$'\t'nosuchpalette "ssh:teal"$'\t'ttheme/kaito)
+  want=("/nonexistent-ttheme/place/**"$'\t'ttheme/ayanami-rei "$HOME"$'\t'ttheme/akiyama-mio "~/notes/**"$'\t'nosuchpalette "~/work/**"$'\t'ttheme/akemi-homura "~/work/site"$'\t'ttheme/kaito "~/work/site/**"$'\t'ttheme/hatsune-miku "ssh:*.prod"$'\t'nosuchpalette "ssh:teal"$'\t'ttheme/kaito)
   [[ $out == ${(F)want} ]] || { print -u2 "piped, pins did not print path and palette per line:"; print -ru2 -- $out; exit 1 }
   rm -f $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=x
@@ -906,7 +906,7 @@ TTHEME_STARTUP=
   typeset pkdef="" rsub="" pick="" cover=""
   typeset -i pk color=0
   fresh() {
-    print -l "~/code/**  ttheme/konata" "~/code/acme/docs/**  ttheme/rei" "~/code/acme/docs/api  ttheme/miku" "~/code/acme/web  ttheme/kita" > $TTHEME_PINS_FILE
+    print -l "~/code/**  ttheme/izumi-konata" "~/code/acme/docs/**  ttheme/ayanami-rei" "~/code/acme/docs/api  ttheme/hatsune-miku" "~/code/acme/web  ttheme/kita-ikuyo" > $TTHEME_PINS_FILE
     TTHEME_PINS_RAW=; __tt_pins_load
   }
   fresh
@@ -924,26 +924,26 @@ TTHEME_STARTUP=
   rmdir $HOME/.git
   cd $HOME/code/acme/src/deep
   __tt_pin_scopes $PWD
-  pick=ttheme/homura pk=3
+  pick=ttheme/akemi-homura pk=3
   __tt_pv_reach 60 12
   want=(
-    "~/code            konata  and below"
-    "└── acme/         homura  and below  new"
-    "    ├── docs/     rei     and below"
-    "    │   └── api/  miku    this directory"
+    "~/code            izumi-konata  and below"
+    "└── acme/         akemi-homura  and below  new"
+    "    ├── docs/     ayanami-rei   and below"
+    "    │   └── api/  hatsune-miku  this directory"
     "    ├── src/deep/ ← here"
-    "    └── web/      kita    this directory"
+    "    └── web/      kita-ikuyo    this directory"
     ""
-    "Then here · homura pinned to ~/code/acme and below"
+    "Then here · akemi-homura pinned to ~/code/acme and below"
   )
   [[ ${(F)reach} == ${(F)want} && $rsub == "→ ~/code/acme · and below" ]] ||
     { print -u2 "pinning the repository did not show what it reaches ($rsub):"; print -rlu2 -- $reach; exit 1 }
   __tt_pv_reach 30 12
-  [[ ${reach[2]} == "└── acme/         homura  new" && ${reach[-1]} == "  pinned to ~/code/acme and b…" ]] ||
+  [[ ${reach[2]} == "└── acme/      akemi-hom…  new" && ${reach[-1]} == "  pinned to ~/code/acme and b…" ]] ||
     { print -u2 "a narrow reach panel did not give up the notes before the tree, or wrap what paints here:"; print -rlu2 -- $reach; exit 1 }
   (
-    TTHEME_PALETTE[someone@mine/own-orla]=$TTHEME_PALETTE[ttheme/miku]
-    print -l "~/code/acme/docs/**  someone@mine/own-orla" "~/code/acme/web  ttheme/kita" > $TTHEME_PINS_FILE
+    TTHEME_PALETTE[someone@mine/own-orla]=$TTHEME_PALETTE[ttheme/hatsune-miku]
+    print -l "~/code/acme/docs/**  someone@mine/own-orla" "~/code/acme/web  ttheme/kita-ikuyo" > $TTHEME_PINS_FILE
     TTHEME_PINS_RAW=; __tt_pins_load
     cd $HOME
     __tt_pin_scopes $HOME
@@ -967,48 +967,48 @@ TTHEME_STARTUP=
   COLUMNS=100 LINES=30 __tt_unpin_block 2
   want=(
     "[UNPIN]  This directory  [And below]  ~/code    ←→ choose   enter unpin   esc keep"
-    "~/code                konata  and below"
+    "~/code                izumi-konata  and below"
     "└── acme/"
-    "    ├── docs/ ← here  rei     and below  × unpin"
-    "    │   └── api/      miku    this directory  × unpin"
-    "    └── web/          kita    this directory"
-    "Then here · konata pinned to ~/code and below"
+    "    ├── docs/ ← here  ayanami-rei   and below  × unpin"
+    "    │   └── api/      hatsune-miku  this directory  × unpin"
+    "    └── web/          kita-ikuyo    this directory"
+    "Then here · izumi-konata pinned to ~/code and below"
   )
   [[ ${(F)block} == ${(F)want} ]] || { print -u2 "unpin's and-below choice did not mark what goes:"; print -rlu2 -- $block; exit 1 }
   COLUMNS=100 LINES=30 __tt_unpin_block 3
-  [[ ${block[2]} == *"× unpin" && ${block[4]} != *"×"* &&${block[-1]} == "Then here · rei pinned to this directory and below" ]] ||
+  [[ ${block[2]} == *"× unpin" && ${block[4]} != *"×"* &&${block[-1]} == "Then here · ayanami-rei pinned to this directory and below" ]] ||
     { print -u2 "unpin's covering choice marked the wrong pin:"; print -rlu2 -- $block; exit 1 }
   out=$(ttheme unpin < /dev/null 2>&1) || { print -u2 "unpin without a terminal did not drop this directory's own pin: $out"; exit 1 }
   TTHEME_PINS_RAW=; __tt_pins_load
-  [[ -z ${TTHEME_PINS[$HOME/code/acme/docs/**]} && -n ${TTHEME_PINS[$HOME/code/acme/docs/api]} && $out == *"Unpinned · rei on ~/code/acme/docs · and below"* ]] ||
+  [[ -z ${TTHEME_PINS[$HOME/code/acme/docs/**]} && -n ${TTHEME_PINS[$HOME/code/acme/docs/api]} && $out == *"Unpinned · ayanami-rei on ~/code/acme/docs · and below"* ]] ||
     { print -u2 "unpin without a terminal dropped the wrong pins: $out"; exit 1 }
   cd $HOME/code/acme/src/deep
   out=$(ttheme unpin < /dev/null 2>&1) && { print -u2 "unpin dropped a pin above without being asked"; exit 1 }
   [[ $out == *"ttheme unpin ~/code"* ]] || { print -u2 "unpin under someone else's pin did not say how to drop it: $out"; exit 1 }
   out=$(ttheme unpin '~/code/acme/web' 2>&1) || { print -u2 "unpin with a path did not drop its pin: $out"; exit 1 }
   TTHEME_PINS_RAW=; __tt_pins_load
-  [[ -z ${TTHEME_PINS[$HOME/code/acme/web]} && $out == *"Unpinned · kita on ~/code/acme/web · this directory"* ]] ||
+  [[ -z ${TTHEME_PINS[$HOME/code/acme/web]} && $out == *"Unpinned · kita-ikuyo on ~/code/acme/web · this directory"* ]] ||
     { print -u2 "unpin with a path dropped the wrong pin: $out"; exit 1 }
   out=$(ttheme unpin $HOME/code/acme 2>&1) && { print -u2 "unpin with a path took one without a pin"; exit 1 }
   [[ $out == *"nothing pinned to ~/code/acme — the pin on ~/code and below covers it"* ]] || { print -u2 "unpin's hint for a path under a pin broke: $out"; exit 1 }
   ttheme pin $HOME/nowhere 2>/dev/null && { print -u2 "ttheme pin took a directory that does not exist"; exit 1 }
   fresh
-  TTHEME_SPEC=$TTHEME_PALETTE[ttheme/mio] TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
-  TTHEME_SPEC=$TTHEME_PALETTE[ttheme/homura]
-  __tt_pin_save ttheme/homura "$HOME/code/acme/**" "$TTHEME_PALETTE[ttheme/mio]" > /dev/null
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/homura]" && $TTHEME_PIN == "$HOME/code/acme/**" && $TTHEME_BASE_SPEC == "$TTHEME_PALETTE[ttheme/mio]" ]] ||
+  TTHEME_SPEC=$TTHEME_PALETTE[ttheme/akiyama-mio] TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+  TTHEME_SPEC=$TTHEME_PALETTE[ttheme/akemi-homura]
+  __tt_pin_save ttheme/akemi-homura "$HOME/code/acme/**" "$TTHEME_PALETTE[ttheme/akiyama-mio]" > /dev/null
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/akemi-homura]" && $TTHEME_PIN == "$HOME/code/acme/**" && $TTHEME_BASE_SPEC == "$TTHEME_PALETTE[ttheme/akiyama-mio]" ]] ||
     { print -u2 "a repository pin did not take the tab inside it: pin=$TTHEME_PIN"; exit 1 }
   cd $HOME/code/acme/docs
   __tt_dir_sync
   TTHEME_SPEC=$TTHEME_PALETTE[ttheme/kaito]
-  out=$(__tt_pin_save ttheme/kaito "$HOME/code/acme/**" "$TTHEME_PALETTE[ttheme/rei]"; print -r -- "|$TTHEME_PIN|${TTHEME_SPEC%% *}")
-  [[ $out == *"Here · rei pinned to this directory and below"*"|$HOME/code/acme/docs/**|${TTHEME_PALETTE[ttheme/rei]%% *}" ]] ||
+  out=$(__tt_pin_save ttheme/kaito "$HOME/code/acme/**" "$TTHEME_PALETTE[ttheme/ayanami-rei]"; print -r -- "|$TTHEME_PIN|${TTHEME_SPEC%% *}")
+  [[ $out == *"Here · ayanami-rei pinned to this directory and below"*"|$HOME/code/acme/docs/**|${TTHEME_PALETTE[ttheme/ayanami-rei]%% *}" ]] ||
     { print -u2 "a tab under its own pin took a pin above it: $out"; exit 1 }
 ) || exit 1
-print -r -- 'typeset -g TTHEME_STARTUP=ttheme/rei' >> $TTHEME_HOME/palettes.zsh
+print -r -- 'typeset -g TTHEME_STARTUP=ttheme/ayanami-rei' >> $TTHEME_HOME/palettes.zsh
 touch -t 203001010000 $TTHEME_HOME/palettes.zsh
 __tt_fresh
-[[ $TTHEME_STARTUP == ttheme/rei && -n ${TTHEME_PALETTE[ttheme/miku]} ]] || { print -u2 "a rewritten palettes.zsh did not reload: startup=$TTHEME_STARTUP"; exit 1 }
+[[ $TTHEME_STARTUP == ttheme/ayanami-rei && -n ${TTHEME_PALETTE[ttheme/hatsune-miku]} ]] || { print -u2 "a rewritten palettes.zsh did not reload: startup=$TTHEME_STARTUP"; exit 1 }
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/windows-terminal.zsh
   integer asks=0 naps=0 paints=0
@@ -1018,14 +1018,14 @@ __tt_fresh
   __tt_dir_sync() { : }
   zselect() { (( ++naps )) }
   export TTHEME_PAINTED=1
-  TTHEME_STARTUP=ttheme/miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_PALETTES_AT= shown=${TTHEME_PALETTE[ttheme/rei]%% *}
+  TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_PALETTES_AT= shown=${TTHEME_PALETTE[ttheme/ayanami-rei]%% *}
   __tt_fresh > /dev/null
-  (( asks == 0 && naps == 0 && paints == 1 )) && [[ $shown == ${TTHEME_PALETTE[ttheme/miku]%% *} ]] ||
+  (( asks == 0 && naps == 0 && paints == 1 )) && [[ $shown == ${TTHEME_PALETTE[ttheme/hatsune-miku]%% *} ]] ||
     { print -u2 "a Windows Terminal tab wearing the old default asked its background $asks times, waited $naps times and painted $paints times at its prompt after the default moved in another tab, or lost its palette: $shown"; exit 1 }
-  asks=0 naps=0 shown=${TTHEME_PALETTE[ttheme/miku]%% *}
-  zselect() { (( ++naps )); (( naps < 3 )) || shown=${TTHEME_PALETTE[ttheme/rei]%% *} }
+  asks=0 naps=0 shown=${TTHEME_PALETTE[ttheme/hatsune-miku]%% *}
+  zselect() { (( ++naps )); (( naps < 3 )) || shown=${TTHEME_PALETTE[ttheme/ayanami-rei]%% *} }
   __tt_reloaded
-  (( naps == 3 )) && [[ $shown == ${TTHEME_PALETTE[ttheme/miku]%% *} ]] ||
+  (( naps == 3 )) && [[ $shown == ${TTHEME_PALETTE[ttheme/hatsune-miku]%% *} ]] ||
     { print -u2 "a Windows Terminal tab that ran the command did not wait for the settings reload's reset before it painted again: $naps waits, $shown"; exit 1 }
 ) || exit 1
 (
@@ -1033,7 +1033,7 @@ __tt_fresh
   __tt_osc_apply() { (( ++paints )) }
   __tt_dir_sync() { : }
   export TTHEME_PAINTED=1
-  TTHEME_TMUX=1 TTHEME_STARTUP=ttheme/miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_PALETTES_AT=
+  TTHEME_TMUX=1 TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_PALETTES_AT=
   __tt_fresh > /dev/null
   (( paints == 0 )) || { print -u2 "a tmux pane wearing the old default repainted the whole terminal tab at its prompt after the default moved"; exit 1 }
 ) || exit 1
@@ -1063,14 +1063,14 @@ __tt_fresh
   __tt_active() { return 0 }
   mkdir -p $XDG_CONFIG_HOME/oldpin
   cd $XDG_CONFIG_HOME/oldpin
-  print -r -- "$XDG_CONFIG_HOME/oldpin  ttheme/miku" > $TTHEME_PINS_FILE
+  print -r -- "$XDG_CONFIG_HOME/oldpin  ttheme/hatsune-miku" > $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load
   unset TTHEME_PAINTED
-  TTHEME_STARTUP=ttheme/miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_PIN=$XDG_CONFIG_HOME/oldpin TTHEME_PIN_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_BASE_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_PALETTES_AT=
+  TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_PIN=$XDG_CONFIG_HOME/oldpin TTHEME_PIN_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_BASE_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_PALETTES_AT=
   __tt_fresh > /dev/null
   cd $XDG_CONFIG_HOME
   rm -rf $TTHEME_PINS_FILE $XDG_CONFIG_HOME/oldpin
-  (( paints == 1 )) && [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" ]] ||
+  (( paints == 1 )) && [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" ]] ||
     { print -u2 "a tab under a pin to the old default painted $paints times at the prompt after the default moved, or left the pin: ${TTHEME_SPEC%% *}"; exit 1 }
 ) || exit 1
 (
@@ -1079,7 +1079,7 @@ __tt_fresh
   __tt_osc_apply() { (( ++paints )) }
   __tt_dir_sync() { : }
   export TTHEME_PAINTED=1
-  TTHEME_ADAPTER=editor TTHEME_STARTUP=ttheme/miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_PALETTES_AT=
+  TTHEME_ADAPTER=editor TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_PALETTES_AT=
   __tt_fresh > /dev/null
   (( paints == 0 )) || { print -u2 "an editor's built-in terminal that inherited a painted tab's palette painted it into the editor at its next ttheme command after the default moved"; exit 1 }
 ) || exit 1
@@ -1091,20 +1091,20 @@ __tt_fresh
   print -r -- "$XDG_CONFIG_HOME/barepin  ttheme/kaito" > $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load
   unset TTHEME_PAINTED
-  TTHEME_STARTUP=ttheme/miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+  TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
   cd $XDG_CONFIG_HOME/barepin
   __tt_dir_sync
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/kaito]" && -n $TTHEME_PAINTED ]] || { print -u2 "a pinned directory did not paint its palette"; exit 1 }
   cd $XDG_CONFIG_HOME
   __tt_dir_sync
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" && -z ${TTHEME_PAINTED+x} && $resets == 1 ]] ||
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" && -z ${TTHEME_PAINTED+x} && $resets == 1 ]] ||
     { print -u2 "a tab that never painted came back from a pin painted, so it no longer follows the default: spec=${TTHEME_SPEC%% *} resets=$resets"; exit 1 }
   export TTHEME_PAINTED=1
   cd $XDG_CONFIG_HOME/barepin
   __tt_dir_sync
   cd $XDG_CONFIG_HOME
   __tt_dir_sync
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" && -n $TTHEME_PAINTED && $resets == 1 ]] || { print -u2 "a tab painted by hand came back from a pin unpainted"; exit 1 }
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" && -n $TTHEME_PAINTED && $resets == 1 ]] || { print -u2 "a tab painted by hand came back from a pin unpainted"; exit 1 }
   rm -rf $TTHEME_PINS_FILE $XDG_CONFIG_HOME/barepin
 ) || exit 1
 (
@@ -1120,11 +1120,11 @@ __tt_fresh
   (( ons == 1 )) || { print -u2 "a line with keys typed ahead turned focus reporting on, whose answer can land after the line runs and be echoed: $ons"; exit 1 }
 ) || exit 1
 adapter=$TTHEME_ADAPTER
-TTHEME_ITERM_SHOWN=default TTHEME_STARTUP=ttheme/miku
+TTHEME_ITERM_SHOWN=default TTHEME_STARTUP=ttheme/hatsune-miku
 source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
-REPLY=; __tt_bg_shown && [[ $REPLY == ttheme/miku ]] || { print -u2 "a tab on ttheme · default did not read the startup picture: $REPLY"; exit 1 }
-TTHEME_STARTUP=ttheme/rei
-REPLY=; __tt_bg_shown && [[ $REPLY == ttheme/rei ]] || { print -u2 "a tab on ttheme · default did not follow a new default: $REPLY"; exit 1 }
+REPLY=; __tt_bg_shown && [[ $REPLY == ttheme/hatsune-miku ]] || { print -u2 "a tab on ttheme · default did not read the startup picture: $REPLY"; exit 1 }
+TTHEME_STARTUP=ttheme/ayanami-rei
+REPLY=; __tt_bg_shown && [[ $REPLY == ttheme/ayanami-rei ]] || { print -u2 "a tab on ttheme · default did not follow a new default: $REPLY"; exit 1 }
 forks_of() {
   local log=$XDG_CONFIG_HOME/xtrace.log
   local -a pids
@@ -1137,7 +1137,7 @@ for pair in 'orla b3JsYQ==' 'owner@marketplace/slug b3duZXJAbWFya2V0cGxhY2Uvc2x1
   [[ $REPLY == ${pair##* } ]] || { print -u2 "__tt_b64s broke on ${pair% *}: $REPLY"; exit 1 }
 done
 typeset -A bgsent=()
-forks_of __tt_bg_send $bgd/ttheme--kagami.png
+forks_of __tt_bg_send $bgd/ttheme--hiiragi-kagami.png
 (( REPLY == 0 )) || { print -u2 "sending a picture to preview forks again ($REPLY processes)"; exit 1 }
 (
   zmodload -F zsh/datetime p:EPOCHSECONDS
@@ -1154,10 +1154,10 @@ forks_of __tt_bg_send $bgd/ttheme--kagami.png
   TTHEME_APPEARANCE_AT=""
   forks_of __tt_appeared
   (( REPLY == 0 )) || { print -u2 "a prompt reading the appearance a terminal's hook left forks ($REPLY processes)"; exit 1 }
-  TTHEME_ITERM_SHOWN=ttheme/miku TTHEME_ITERM_DYED=0
+  TTHEME_ITERM_SHOWN=ttheme/hatsune-miku TTHEME_ITERM_DYED=0
   forks_of __tt_appearance_of light
   (( REPLY == 0 )) || { print -u2 "reading an iTerm2 appearance report forks ($REPLY processes)"; exit 1 }
-  __tt_appearance_of light && [[ $REPLY == light ]] || { print -u2 "an iTerm2 tab showing ttheme/miku's light mode was not heard as light"; exit 1 }
+  __tt_appearance_of light && [[ $REPLY == light ]] || { print -u2 "an iTerm2 tab showing ttheme/hatsune-miku's light mode was not heard as light"; exit 1 }
   ! __tt_appearance_of dark || { print -u2 "an iTerm2 tab still showing the mode it wears was heard as a change"; exit 1 }
   : >| $TTHEME_STATE_DIR/remode
   __tt_appearance_of dark && [[ $REPLY == dark ]] || { print -u2 "an iTerm2 tab back in the mode it wears went unheard while a remode ran"; exit 1 }
@@ -1189,41 +1189,41 @@ bgdim=()
 forks_of __tt_bg_dim $bgd/dim.png
 (( REPLY == 0 )) || { print -u2 "reading a picture's size forks again ($REPLY processes) — preview's first hover of every picture pays it"; exit 1 }
 __tt_bg_dim $bgd/dim.png && [[ $bgdim[$bgd/dim.png] == "1880 1008" ]] || { print -u2 "__tt_bg_dim misread a PNG header: ${bgdim[$bgd/dim.png]}"; exit 1 }
-__tt_bg_dim $bgd/ttheme--kagami@fill-42.png && { print -u2 "__tt_bg_dim took an empty file for a picture"; exit 1 }
+__tt_bg_dim $bgd/ttheme--hiiragi-kagami@fill-42.png && { print -u2 "__tt_bg_dim took an empty file for a picture"; exit 1 }
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/kitty.zsh
-  forks_of __tt_apply "$TTHEME_PALETTE[ttheme/miku]"
+  forks_of __tt_apply "$TTHEME_PALETTE[ttheme/hatsune-miku]"
   (( REPLY == 0 )) || { print -u2 "a kitty paint forks again ($REPLY processes) — every preview hover pays it"; exit 1 }
   source $XDG_CONFIG_HOME/ttheme/adapters/wezterm.zsh
-  forks_of __tt_shown ttheme/miku force
+  forks_of __tt_shown ttheme/hatsune-miku force
   (( REPLY == 0 )) || { print -u2 "a WezTerm picture change forks again ($REPLY processes)"; exit 1 }
 ) || exit 1
 for pictured in ghostty iterm2 kitty; do
   (
     source $XDG_CONFIG_HOME/ttheme/adapters/$pictured.zsh
-    print -r -- "config-file = ?ttheme--miku.conf" > $bgd/shown.conf
-    TTHEME_ITERM_SHOWN=ttheme/miku
-    forks_of __tt_shown ttheme/kagami force
+    print -r -- "config-file = ?ttheme--hatsune-miku.conf" > $bgd/shown.conf
+    TTHEME_ITERM_SHOWN=ttheme/hatsune-miku
+    forks_of __tt_shown ttheme/hiiragi-kagami force
     (( REPLY == 0 )) || { print -u2 "a picture change in $pictured forks again ($REPLY processes) — every focus-in between two pictures pays it"; exit 1 }
   ) || exit 1
 done
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/wezterm.zsh
   typeset -A bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgdim=() bgtunef=() bgofff=() bgimages=()
-  print -rn -- $'\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\x07\x58\0\0\x03\xf0\x08\x06' > $bgd/ttheme--homura@fill-50.png
-  print -l "background-image = ttheme--homura@fill-50.png" "background-image-fit = cover" "background-image-opacity = 0.3" > $bgd/ttheme--homura.conf
+  print -rn -- $'\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\x07\x58\0\0\x03\xf0\x08\x06' > $bgd/ttheme--akemi-homura@fill-50.png
+  print -l "background-image = ttheme--akemi-homura@fill-50.png" "background-image-fit = cover" "background-image-opacity = 0.3" > $bgd/ttheme--akemi-homura.conf
   bgcw=14 bgch=32 pw=80 ph=24 bginc="" bgname="" TTHEME_WEZTERM_VIEW=""
-  __tt_pv_bg_show ttheme/homura > $bgd/view.out
+  __tt_pv_bg_show ttheme/akemi-homura > $bgd/view.out
   REPLY=; __tt_bg_frame 1880 1008 1120 768 100 5 cover
-  want="${${=TTHEME_PALETTE[ttheme/homura]}[1]}|$bgd/ttheme--homura@fill-50.png|0.3|1120|768|${REPLY// /|}|5"
+  want="${${=TTHEME_PALETTE[ttheme/akemi-homura]}[1]}|$bgd/ttheme--akemi-homura@fill-50.png|0.3|1120|768|${REPLY// /|}|5"
   [[ $(<$bgd/view.out) == $'\e]1337;SetUserVar=ttheme_view='*$'\a' && "$(print -rn -- ${${$(<$bgd/view.out)#*=ttheme_view=}%$'\a'} | b64d)" == "$want" ]] ||
     { print -u2 "a WezTerm preview hover sent the wrong view: ${(V)$(<$bgd/view.out)}, wanted $want"; exit 1 }
-  __tt_pv_bg_show ttheme/homura > $bgd/view.out
+  __tt_pv_bg_show ttheme/akemi-homura > $bgd/view.out
   [[ ! -s $bgd/view.out ]] || { print -u2 "a WezTerm preview hover sent an unchanged view again"; exit 1 }
   TTHEME_WEZTERM_VIEW=""
-  forks_of __tt_pv_bg_show ttheme/homura
+  forks_of __tt_pv_bg_show ttheme/akemi-homura
   (( REPLY == 0 )) || { print -u2 "a WezTerm preview hover forks again ($REPLY processes)"; exit 1 }
-  __tt_pv_bg_show ttheme/homura > /dev/null
+  __tt_pv_bg_show ttheme/akemi-homura > /dev/null
   __tt_pv_bg_close > $bgd/view.out
   [[ $(<$bgd/view.out) == *$'\e]1337;SetUserVar=ttheme_view=\a' ]] || { print -u2 "closing preview in WezTerm left its view up"; exit 1 }
 ) || exit 1
@@ -1262,7 +1262,7 @@ done
   rm -rf $bgcut $bgd/tall.png $bgd/bake.log
 ) || exit 1
 (
-  TTHEME_TERMINALS=(konsole) TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false' TTHEME_STARTUP=ttheme/miku TTHEME_TMUX=0
+  TTHEME_TERMINALS=(konsole) TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false' TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_TMUX=0
   source $XDG_CONFIG_HOME/ttheme/adapters/konsole.zsh
   cursor=${${=TTHEME_PALETTE[ttheme/kaito]}[3]}
   [[ "$(__tt_apply "$TTHEME_PALETTE[ttheme/kaito]")" == $'\e]50;ColorScheme=ttheme-ttheme--kaito;UseCustomCursorColor=true;customCursorColor='$cursor$'\a' ]] ||
@@ -1283,13 +1283,13 @@ done
   [[ ! -e $kd/$view.colorscheme ]] || { print -u2 "a Konsole view scheme two paints old was left behind"; exit 1 }
   views=($kd/ttheme-view.$$.*.colorscheme(N))
   (( ${#views} == 2 )) || { print -u2 "Konsole keeps other than the two latest view schemes: $views"; exit 1 }
-  [[ "$(__tt_osc_reset)" == $'\e]50;ColorScheme=ttheme-ttheme--miku;UseCustomCursorColor=true;customCursorColor='${${=TTHEME_PALETTE[ttheme/miku]}[3]}$'\a' ]] ||
+  [[ "$(__tt_osc_reset)" == $'\e]50;ColorScheme=ttheme-ttheme--hatsune-miku;UseCustomCursorColor=true;customCursorColor='${${=TTHEME_PALETTE[ttheme/hatsune-miku]}[3]}$'\a' ]] ||
     { print -u2 "a Konsole reset did not go back to the default palette's scheme, which new tabs open with"; exit 1 }
   TTHEME_STARTUP=
   [[ "$(__tt_osc_reset)" == $'\e]50;ColorScheme=Breeze;UseCustomCursorColor=false\a' ]] ||
     { print -u2 "a Konsole reset while ttheme is off did not go back to the user's own scheme"; exit 1 }
   __tt_keepable || { print -u2 "a wired Konsole did not offer to keep a palette as the default"; exit 1 }
-  TTHEME_TERMINALS=() TTHEME_STARTUP=ttheme/miku
+  TTHEME_TERMINALS=() TTHEME_STARTUP=ttheme/hatsune-miku
   ! __tt_keepable || { print -u2 "an unwired Konsole offered to keep a palette as the default its new tabs never open with"; exit 1 }
   ! __tt_takes_default || { print -u2 "an unwired Konsole tab that never painted took a default its profile never shows"; exit 1 }
   print -l '[Desktop Entry]' 'DefaultProfile=Mine.profile' > $XDG_CONFIG_HOME/konsolerc
@@ -1304,7 +1304,7 @@ done
   (( ! ${#views} )) || { print -u2 "a Konsole shell left its view schemes behind when it exited: $views"; exit 1 }
 ) || exit 1
 (
-  TTHEME_TERMINALS=(iterm2) TTHEME_STARTUP=ttheme/miku TTHEME_TMUX=0 TTHEME_ITERM_SWITCH=1 TTHEME_ITERM_SHOWN=default TTHEME_ITERM_DYED=0
+  TTHEME_TERMINALS=(iterm2) TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_TMUX=0 TTHEME_ITERM_SWITCH=1 TTHEME_ITERM_SHOWN=default TTHEME_ITERM_DYED=0
   TTHEME_ITERM_PROFILES=$XDG_CONFIG_HOME/ttheme.json
   print -r -- '{}' > $TTHEME_ITERM_PROFILES
   touch -t 202001010000 $TTHEME_ITERM_PROFILES
@@ -1357,11 +1357,11 @@ done
   source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
   mkdir -p $XDG_CONFIG_HOME/warp $XDG_CONFIG_HOME/dotwarp $XDG_CONFIG_HOME/warpthemes
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/warp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/warpthemes TTHEME_TERMINALS=(warp)
-  TTHEME_STARTUP=ttheme/miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_WARP_FOLLOWS=0 WARP_TERMINAL_SESSION_UUID=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_WARP_FOLLOWS=0 WARP_TERMINAL_SESSION_UUID=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   unset TTHEME_PAINTED
-  for name in miku kaito homura; do print -r -- "name: \"ttheme/$name\"" > $TTHEME_WARP_THEMES/ttheme-ttheme--$name.dark.00000000.yaml; done
+  for name in hatsune-miku kaito akemi-homura; do print -r -- "name: \"ttheme/$name\"" > $TTHEME_WARP_THEMES/ttheme-ttheme--$name.dark.00000000.yaml; done
   touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-*.yaml
-  TTHEME_WARP_PLAIN="ttheme--miku ttheme-ttheme--miku.dark.00000000.yaml ttheme--kaito ttheme-ttheme--kaito.dark.00000000.yaml ttheme--homura ttheme-ttheme--homura.dark.00000000.yaml"
+  TTHEME_WARP_PLAIN="ttheme--hatsune-miku ttheme-ttheme--hatsune-miku.dark.00000000.yaml ttheme--kaito ttheme-ttheme--kaito.dark.00000000.yaml ttheme--akemi-homura ttheme-ttheme--akemi-homura.dark.00000000.yaml"
   tab=$TTHEME_WARP_TABS/$WARP_TERMINAL_SESSION_UUID
   ours() { __tt_warp_value $1; print -r -- "theme = $REPLY" }
   recorded() { print -r -- "$$ $* ${TTHEME_PALETTES_AT:--} ${TTHEME_PINS_AT:--}" }
@@ -1370,7 +1370,7 @@ done
   ln -s ../dotwarp/settings.toml $TTHEME_WARP_SETTINGS
   __tt_paints && __tt_keepable || { print -u2 "a wired Warp with a settings.toml refused to paint, or to keep a palette as the default"; exit 1 }
   __tt_prompted
-  [[ "$(<$tab)" == "$(recorded ttheme/miku - -)" && "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/miku)"* ]] ||
+  [[ "$(<$tab)" == "$(recorded ttheme/hatsune-miku - -)" && "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/hatsune-miku)"* ]] ||
     { print -u2 "a Warp tab that took no palette did not follow the default: $(<$tab)"; exit 1 }
   zstat -L -A linked +inode -- $TTHEME_WARP_SETTINGS
   ttheme use kaito > /dev/null || { print -u2 "ttheme use failed in a wired Warp"; exit 1 }
@@ -1382,14 +1382,14 @@ done
     { print -u2 "ttheme use in Warp wrote through the link without putting an identical link in its place, which Warp's watch on its folder never hears: $linkto"; exit 1 }
   [[ "$(<$TTHEME_HOME/warp.base)" == '"dark_city"' && "$(<$TTHEME_WARP_SETTINGS.ttheme.bak)" == "$(print -rl -- "${mine[@]}")" && ${(t)TTHEME_PAINTED} == *export* ]] ||
     { print -u2 "a Warp paint did not keep the user's theme where ttheme off finds it, or did not mark the tab painted"; exit 1 }
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/kaito]" && "$(<$tab)" == "$(recorded ttheme/miku ttheme/kaito -)" ]] ||
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/kaito]" && "$(<$tab)" == "$(recorded ttheme/hatsune-miku ttheme/kaito -)" ]] ||
     { print -u2 "a Warp tab did not record the palette it wears where tab switches read it: $(<$tab)"; exit 1 }
-  forks_of __tt_apply "$TTHEME_PALETTE[ttheme/homura]"
+  forks_of __tt_apply "$TTHEME_PALETTE[ttheme/akemi-homura]"
   (( REPLY == 0 )) || { print -u2 "a Warp paint forks again ($REPLY processes) — every preview hover pays it"; exit 1 }
   forks_of __tt_prompted
   (( REPLY == 0 )) || { print -u2 "a Warp prompt forks again ($REPLY processes)"; exit 1 }
   __tt_osc_reset
-  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/miku)"* && "$(<$tab)" == "$(recorded ttheme/miku - -)" && -z ${TTHEME_PAINTED+x} ]] ||
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/hatsune-miku)"* && "$(<$tab)" == "$(recorded ttheme/hatsune-miku - -)" && -z ${TTHEME_PAINTED+x} ]] ||
     { print -u2 "a Warp reset did not put on the default palette new tabs open with: $(<$tab)"; exit 1 }
   mine[6]='theme = "koi"'
   print -rl -- "${mine[@]}" >| $XDG_CONFIG_HOME/dotwarp/settings.toml
@@ -1401,15 +1401,15 @@ done
   [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- "${mine[@]}")" && ! -e $TTHEME_HOME/warp.base ]] ||
     { print -u2 "a Warp reset while ttheme is off did not give the user's theme back as it was:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
   __tt_hear && { print -u2 "a new Warp tab heard a palette while ttheme is off: $REPLY"; exit 1 }
-  TTHEME_STARTUP=ttheme/miku
+  TTHEME_STARTUP=ttheme/hatsune-miku
   REPLY=; __tt_hear
-  [[ $REPLY == ${TTHEME_PALETTE[ttheme/miku]%% *} ]] || { print -u2 "a new Warp tab did not take the default palette for the one it wears: $REPLY"; exit 1 }
-  __tt_apply "$TTHEME_PALETTE[ttheme/homura]"
+  [[ $REPLY == ${TTHEME_PALETTE[ttheme/hatsune-miku]%% *} ]] || { print -u2 "a new Warp tab did not take the default palette for the one it wears: $REPLY"; exit 1 }
+  __tt_apply "$TTHEME_PALETTE[ttheme/akemi-homura]"
   REPLY=; __tt_hear
-  [[ $REPLY == ${TTHEME_PALETTE[ttheme/homura]%% *} ]] || { print -u2 "a shell started in a painted Warp tab did not take the palette Warp wears: $REPLY"; exit 1 }
+  [[ $REPLY == ${TTHEME_PALETTE[ttheme/akemi-homura]%% *} ]] || { print -u2 "a shell started in a painted Warp tab did not take the palette Warp wears: $REPLY"; exit 1 }
   TTHEME_WARP_FOLLOWS=1 TTHEME_SPEC=$TTHEME_PALETTE[ttheme/kaito]
   __tt_shown ttheme/kaito
-  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/homura)"* && "$(<$tab)" == "$(recorded ttheme/miku ttheme/kaito -)" ]] ||
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/akemi-homura)"* && "$(<$tab)" == "$(recorded ttheme/hatsune-miku ttheme/kaito -)" ]] ||
     { print -u2 "a Warp prompt moved the app-wide theme itself where tab switches are followed, or did not record its palette"; exit 1 }
   __tt_shown ttheme/kaito force
   [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/kaito)"* ]] || { print -u2 "a Warp tab that took a palette did not put it on"; exit 1 }
@@ -1422,13 +1422,13 @@ done
   zsh -c 'zmodload zsh/system; zsystem flock -f fd $1 && : >| $2 && sleep 5' zsh $TTHEME_WARP_TABS/.follow $XDG_CONFIG_HOME/held >/dev/null 2>&1 &
   holder=$!
   for (( i = 0; i < 100; i++ )); do [[ -e $XDG_CONFIG_HOME/held ]] && break; sleep 0.05; done
-  __tt_apply "$TTHEME_PALETTE[ttheme/miku]"
-  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/kaito)"* && "$(<$tab)" == "$(recorded ttheme/miku ttheme/miku -)" ]] ||
+  __tt_apply "$TTHEME_PALETTE[ttheme/hatsune-miku]"
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/kaito)"* && "$(<$tab)" == "$(recorded ttheme/hatsune-miku ttheme/hatsune-miku -)" ]] ||
     { print -u2 "a Warp tab behind another one moved the app-wide theme, or did not record its palette"; exit 1 }
   kill $holder 2>/dev/null
   wait $holder 2>/dev/null
-  __tt_apply "$TTHEME_PALETTE[ttheme/miku]"
-  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/miku)"* ]] || { print -u2 "a Warp tab stayed off the theme after the follower that put another tab in front was gone"; exit 1 }
+  __tt_apply "$TTHEME_PALETTE[ttheme/hatsune-miku]"
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/hatsune-miku)"* ]] || { print -u2 "a Warp tab stayed off the theme after the follower that put another tab in front was gone"; exit 1 }
   rm -f $TTHEME_WARP_TABS/.active $TTHEME_WARP_TABS/.follow $XDG_CONFIG_HOME/held
   print -r -- 'name: "ttheme/kaito"' >| $TTHEME_WARP_THEMES/ttheme-ttheme--kaito.dark.0123abcd.yaml
   at=$EPOCHREALTIME
@@ -1437,19 +1437,19 @@ done
     { print -u2 "Warp was pointed at a theme file too new for it to know yet"; exit 1 }
   rm -f $TTHEME_WARP_THEMES/ttheme-ttheme--kaito.dark.0123abcd.yaml $TTHEME_HOME/warp.base
   print -rl -- '[general]' 'x = 1' >| $XDG_CONFIG_HOME/dotwarp/settings.toml
-  __tt_apply "$TTHEME_PALETTE[ttheme/miku]"
-  [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- '[general]' 'x = 1' '' '[appearance.themes]' "$(ours ttheme/miku)")" ]] ||
+  __tt_apply "$TTHEME_PALETTE[ttheme/hatsune-miku]"
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- '[general]' 'x = 1' '' '[appearance.themes]' "$(ours ttheme/hatsune-miku)")" ]] ||
     { print -u2 "a Warp paint did not add the theme table:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
   TTHEME_STARTUP=
   __tt_osc_reset
   [[ "$(<$TTHEME_WARP_SETTINGS)" == *$'\ntheme = "dark"' && ! -e $TTHEME_HOME/warp.base ]] ||
     { print -u2 "a Warp reset while ttheme is off, over no theme of the user's, did not leave Warp's default"; cat $TTHEME_WARP_SETTINGS; exit 1 }
   __tt_apply "custom" && { print -u2 "Warp wore a spec that is no palette"; exit 1 }
-  : > $TTHEME_WARP_THEMES/ttheme-ttheme--miku.dark.0123abcd.yaml
-  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-ttheme--miku.dark.0123abcd.yaml
-  : > $TTHEME_WARP_THEMES/ttheme-ttheme--miku.dark.89abcdef.yaml
-  REPLY=; __tt_warp_value ttheme/miku
-  [[ $REPLY == '{ custom = { name = "ttheme/miku", path = "ttheme-ttheme--miku.dark.89abcdef.yaml" } }' ]] ||
+  : > $TTHEME_WARP_THEMES/ttheme-ttheme--hatsune-miku.dark.0123abcd.yaml
+  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-ttheme--hatsune-miku.dark.0123abcd.yaml
+  : > $TTHEME_WARP_THEMES/ttheme-ttheme--hatsune-miku.dark.89abcdef.yaml
+  REPLY=; __tt_warp_value ttheme/hatsune-miku
+  [[ $REPLY == '{ custom = { name = "ttheme/hatsune-miku", path = "ttheme-ttheme--hatsune-miku.dark.89abcdef.yaml" } }' ]] ||
     { print -u2 "a Warp palette with a picture did not wear its newest pictured theme: $REPLY"; exit 1 }
   rm -rf $TTHEME_WARP_TABS
 ) || exit 1
@@ -1458,8 +1458,8 @@ done
   mkdir -p $XDG_CONFIG_HOME/oswarp $XDG_CONFIG_HOME/oswarpthemes
   rm -f $TTHEME_HOME/warp.base $TTHEME_HOME/warp.system
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/oswarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/oswarpthemes TTHEME_TERMINALS=(warp)
-  TTHEME_STARTUP=ttheme/miku TTHEME_WARP_FOLLOWS=0 WARP_TERMINAL_SESSION_UUID=cccccccccccccccccccccccccccccccc
-  for name in miku kaito; do print -r -- "name: \"ttheme/$name\"" > $TTHEME_WARP_THEMES/ttheme-ttheme--$name.dark.00000000.yaml; done
+  TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_WARP_FOLLOWS=0 WARP_TERMINAL_SESSION_UUID=cccccccccccccccccccccccccccccccc
+  for name in hatsune-miku kaito; do print -r -- "name: \"ttheme/$name\"" > $TTHEME_WARP_THEMES/ttheme-ttheme--$name.dark.00000000.yaml; done
   touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-*.yaml
   mine=('[appearance.themes]' 'system_theme = true' 'selected_system_themes = { light = "solarized_light", dark = "dracula" }' 'theme = "koi"')
   print -rl -- "${mine[@]}" > $TTHEME_WARP_SETTINGS
@@ -1475,8 +1475,8 @@ done
   [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- "${mine[@]}")" && ! -e $TTHEME_HOME/warp.system && ! -e $TTHEME_HOME/warp.base ]] ||
     { print -u2 "a Warp reset while ttheme is off did not give the user's system themes back:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
   print -rl -- '[appearance.themes]' 'system_theme = true' >| $TTHEME_WARP_SETTINGS
-  TTHEME_STARTUP=ttheme/miku
-  __tt_apply "$TTHEME_PALETTE[ttheme/miku]"
+  TTHEME_STARTUP=ttheme/hatsune-miku
+  __tt_apply "$TTHEME_PALETTE[ttheme/hatsune-miku]"
   TTHEME_STARTUP=
   __tt_osc_reset
   [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- '[appearance.themes]' 'theme = "dark"' "selected_system_themes = $TTHEME_WARP_PAIR" 'system_theme = true')" ]] ||
@@ -1507,11 +1507,11 @@ done
   (( $+commands[sqlite3] )) || { print -u2 "sqlite3 is missing — Warp's tab switches are read with it"; exit 1 }
   mkdir -p $XDG_CONFIG_HOME/fwarp $XDG_CONFIG_HOME/fwarpthemes
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/fwarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/fwarpthemes TTHEME_TERMINALS=(warp)
-  TTHEME_STARTUP=ttheme/miku TTHEME_WARP_DB=$XDG_CONFIG_HOME/fwarp/warp.sqlite
+  TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_WARP_DB=$XDG_CONFIG_HOME/fwarp/warp.sqlite
   print -rl -- '[appearance.themes]' 'theme = "Dracula"' > $TTHEME_WARP_SETTINGS
-  for name in miku kaito homura; do print -r -- "name: \"ttheme/$name\"" > $TTHEME_WARP_THEMES/ttheme-ttheme--$name.dark.00000000.yaml; done
+  for name in hatsune-miku kaito akemi-homura; do print -r -- "name: \"ttheme/$name\"" > $TTHEME_WARP_THEMES/ttheme-ttheme--$name.dark.00000000.yaml; done
   touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-*.yaml
-  TTHEME_WARP_PLAIN="ttheme--miku ttheme-ttheme--miku.dark.00000000.yaml ttheme--kaito ttheme-ttheme--kaito.dark.00000000.yaml ttheme--homura ttheme-ttheme--homura.dark.00000000.yaml"
+  TTHEME_WARP_PLAIN="ttheme--hatsune-miku ttheme-ttheme--hatsune-miku.dark.00000000.yaml ttheme--kaito ttheme-ttheme--kaito.dark.00000000.yaml ttheme--akemi-homura ttheme-ttheme--akemi-homura.dark.00000000.yaml"
   sqlite3 $TTHEME_WARP_DB "
     create table app (id integer primary key, active_window_id integer references windows(id));
     create table windows (id integer primary key not null, active_tab_index integer not null);
@@ -1532,9 +1532,9 @@ done
   mkdir -p $TTHEME_WARP_TABS
   sleep 30 >/dev/null 2>&1 &
   alive=$!
-  print -r -- "$alive ttheme/miku ttheme/kaito -" > $TTHEME_WARP_TABS/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-  print -r -- "$alive ttheme/miku ttheme/homura -" > $TTHEME_WARP_TABS/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-  print -r -- "$alive ttheme/miku - -" > $TTHEME_WARP_TABS/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  print -r -- "$alive ttheme/hatsune-miku ttheme/kaito -" > $TTHEME_WARP_TABS/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  print -r -- "$alive ttheme/hatsune-miku ttheme/akemi-homura -" > $TTHEME_WARP_TABS/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  print -r -- "$alive ttheme/hatsune-miku - -" > $TTHEME_WARP_TABS/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
   ours() { __tt_warp_value $1; print -r -- "theme = $REPLY" }
   worn() { grep '^theme' $TTHEME_WARP_SETTINGS }
   __tt_warp_tick
@@ -1549,15 +1549,15 @@ done
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/fwarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/fwarpthemes TTHEME_WARP_DB=$XDG_CONFIG_HOME/fwarp/warp.sqlite
   sqlite3 $TTHEME_WARP_DB 'update windows set active_tab_index = 1 where id = 1'
   __tt_warp_tick
-  [[ "$(<$TTHEME_WARP_TABS/.active)" == bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb && "$(worn)" == "$(ours ttheme/homura)" ]] ||
+  [[ "$(<$TTHEME_WARP_TABS/.active)" == bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb && "$(worn)" == "$(ours ttheme/akemi-homura)" ]] ||
     { print -u2 "switching tabs did not put on the palette of the tab in front: $(worn)"; exit 1 }
   sqlite3 $TTHEME_WARP_DB 'update app set active_window_id = 2; update windows set active_tab_index = 1 where id = 2'
   __tt_warp_tick
-  [[ "$(worn)" == "$(ours ttheme/miku)" ]] || { print -u2 "a tab that wears no palette of its own did not get the default: $(worn)"; exit 1 }
+  [[ "$(worn)" == "$(ours ttheme/hatsune-miku)" ]] || { print -u2 "a tab that wears no palette of its own did not get the default: $(worn)"; exit 1 }
   sqlite3 $TTHEME_WARP_DB 'update app set active_window_id = null'
   __tt_warp_tick
   [[ "$(<$TTHEME_WARP_TABS/.active)" == eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ]] || { print -u2 "Warp going to the background moved the front tab"; exit 1 }
-  print -r -- "$alive ttheme/miku ttheme/kaito -" > $TTHEME_WARP_TABS/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  print -r -- "$alive ttheme/hatsune-miku ttheme/kaito -" > $TTHEME_WARP_TABS/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
   __tt_warp_tick
   [[ "$(worn)" == "$(ours ttheme/kaito)" ]] || { print -u2 "a palette the front tab took did not follow: $(worn)"; exit 1 }
   TTHEME_STARTUP= TTHEME_WARP_LAST=
@@ -1588,16 +1588,16 @@ done
   sent=${(j::)${${${(ps:\e_G:)out}#*;}%$'\e\\'}}
   [[ $out == $'\e_Ga=t,f=100,i=7,m=1,q=2;'* && ${#${(M)${(ps:\e_G:)out}:#m=0,*}} == 1 && $sent != *[^A-Za-z0-9+/=]* && "$(print -rn -- $sent | base64 --decode | shasum)" == "$(shasum < $XDG_CONFIG_HOME/big.png)" ]] ||
     { print -u2 "a picture sent to Warp did not arrive whole in its chunks"; exit 1 }
-  print -rl -- 'name: "ttheme/miku · dark"' 'details: darker' 'terminal_colors:' >| $TTHEME_WARP_THEMES/ttheme-ttheme--miku.dark.00000000.yaml
-  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-ttheme--miku.dark.00000000.yaml
-  : >| $TTHEME_WARP_THEMES/ttheme-ttheme--miku.dark.89abcdef.yaml
-  TTHEME_WARP_PLAIN="ttheme--miku ttheme-ttheme--miku.dark.00000000.yaml"
-  printf '\x89PNG\r\n\x1a\n\0\0\0\x0dIHDR\0\0\x06\x5a\0\0\x07\x60' >| $bgd/ttheme--miku.0a1b2c3d.png
-  : >| $bgd/ttheme--miku.0a1b2c3d@fill-40.png
-  print -rl -- 'background-image = ttheme--miku.0a1b2c3d@fill-40.png' 'background-image-fit = cover' 'background-image-opacity = 0.19' >| $bgd/ttheme--miku.conf
+  print -rl -- 'name: "ttheme/hatsune-miku · dark"' 'details: darker' 'terminal_colors:' >| $TTHEME_WARP_THEMES/ttheme-ttheme--hatsune-miku.dark.00000000.yaml
+  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-ttheme--hatsune-miku.dark.00000000.yaml
+  : >| $TTHEME_WARP_THEMES/ttheme-ttheme--hatsune-miku.dark.89abcdef.yaml
+  TTHEME_WARP_PLAIN="ttheme--hatsune-miku ttheme-ttheme--hatsune-miku.dark.00000000.yaml"
+  printf '\x89PNG\r\n\x1a\n\0\0\0\x0dIHDR\0\0\x06\x5a\0\0\x07\x60' >| $bgd/ttheme--hatsune-miku.0a1b2c3d.png
+  : >| $bgd/ttheme--hatsune-miku.0a1b2c3d@fill-40.png
+  print -rl -- 'background-image = ttheme--hatsune-miku.0a1b2c3d@fill-40.png' 'background-image-fit = cover' 'background-image-opacity = 0.19' >| $bgd/ttheme--hatsune-miku.conf
   (
     zmodload zsh/datetime
-    fresh=$TTHEME_WARP_THEMES/ttheme-ttheme--miku.ripe.yaml TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/warpview/ripe.toml
+    fresh=$TTHEME_WARP_THEMES/ttheme-ttheme--hatsune-miku.ripe.yaml TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/warpview/ripe.toml
     : >| $TTHEME_WARP_SETTINGS
     touch -t 202001010000 $TTHEME_WARP_SETTINGS
     : >| $fresh
@@ -1610,68 +1610,68 @@ done
     : >| $TTHEME_WARP_SETTINGS
     t=$EPOCHREALTIME; __tt_warp_ripe $fresh; took=$(( EPOCHREALTIME - t ))
     (( took >= 0.6 && took < 0.9 )) || { print -u2 "a new theme was named $took s after a settings write Warp may not have read yet, instead of 0.7 s"; exit 1 }
-    print -rl -- '[appearance.themes]' 'theme = { custom = { name = "ttheme/miku", path = "ttheme-ttheme--miku.ripe.yaml" } }' >| $TTHEME_WARP_SETTINGS
+    print -rl -- '[appearance.themes]' 'theme = { custom = { name = "ttheme/hatsune-miku", path = "ttheme-ttheme--hatsune-miku.ripe.yaml" } }' >| $TTHEME_WARP_SETTINGS
     : >| $fresh
-    t=$EPOCHREALTIME; __tt_warp_set '{ custom = { name = "ttheme/miku", path = "ttheme-ttheme--miku.ripe.yaml" } }'; took=$(( EPOCHREALTIME - t ))
+    t=$EPOCHREALTIME; __tt_warp_set '{ custom = { name = "ttheme/hatsune-miku", path = "ttheme-ttheme--hatsune-miku.ripe.yaml" } }'; took=$(( EPOCHREALTIME - t ))
     (( took < 0.05 )) || { print -u2 "Warp's settings already named the theme, and the write still waited $took s for it to ripen"; exit 1 }
     rm -f $fresh $TTHEME_WARP_SETTINGS
   ) || exit 1
   zselect() { : }
   __tt_cli() { print -r -- "$*" >> $XDG_CONFIG_HOME/cli.log; [[ $1 == flatten ]] && : >| $3 }
-  shown() { __tt_warp_view ttheme/miku > /dev/null; __tt_bg_settle }
+  shown() { __tt_warp_view ttheme/hatsune-miku > /dev/null; __tt_bg_settle }
   bgsrc=() bgcut="" pw=91 ph=51 bgcw=32 bgch=40 msg="" msgt=0
-  __tt_bg_load ttheme/miku
-  bgsize[ttheme/miku]=140 bgpos[ttheme/miku]=6
+  __tt_bg_load ttheme/hatsune-miku
+  bgsize[ttheme/hatsune-miku]=140 bgpos[ttheme/hatsune-miku]=6
   shown
   view=$TTHEME_WARP_SHOWING
-  __tt_warp_laid ttheme/miku $bgd/ttheme--miku.0a1b2c3d@140-center-right-2912x2040.png
+  __tt_warp_laid ttheme/hatsune-miku $bgd/ttheme--hatsune-miku.0a1b2c3d@140-center-right-2912x2040.png
   out=$REPLY
-  [[ $out == $TTHEME_WARP_THEMES/ttheme-ttheme--miku.????????.png && "$(<$XDG_CONFIG_HOME/cli.log)" == "flatten $bgd/ttheme--miku.0a1b2c3d.png $out ${TTHEME_PALETTE[ttheme/miku]%% *} 1 2912x2040 2459x2856+453-122" && $TTHEME_WARP_LAID == "$out" ]] ||
+  [[ $out == $TTHEME_WARP_THEMES/ttheme-ttheme--hatsune-miku.????????.png && "$(<$XDG_CONFIG_HOME/cli.log)" == "flatten $bgd/ttheme--hatsune-miku.0a1b2c3d.png $out ${TTHEME_PALETTE[ttheme/hatsune-miku]%% *} 1 2912x2040 2459x2856+453-122" && $TTHEME_WARP_LAID == "$out" ]] ||
     { print -u2 "a Warp view did not lay its picture whole on the grid's canvas, into the file saving it shows: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
-  [[ "$(<$TTHEME_WARP_THEMES/$view)" == $'name: "ttheme/miku · dark · picture"\ndetails: darker\nbackground_image:\n  path: "'$out$'"\n  opacity: 19\nterminal_colors:'* && "$(<$TTHEME_WARP_SETTINGS)" == *"name = \"ttheme/miku · dark · picture\", path = \"$view\""* ]] ||
+  [[ "$(<$TTHEME_WARP_THEMES/$view)" == $'name: "ttheme/hatsune-miku · dark · picture"\ndetails: darker\nbackground_image:\n  path: "'$out$'"\n  opacity: 19\nterminal_colors:'* && "$(<$TTHEME_WARP_SETTINGS)" == *"name = \"ttheme/hatsune-miku · dark · picture\", path = \"$view\""* ]] ||
     { print -u2 "Warp was not put on a view of the laid picture at its opacity:"; cat $TTHEME_WARP_THEMES/$view; exit 1 }
   [[ "$(<$TTHEME_HOME/warp.base)" == '"Dracula"' ]] || { print -u2 "a Warp view did not keep the user's theme where ttheme off finds it"; exit 1 }
   : >| $XDG_CONFIG_HOME/cli.log
-  bgop[ttheme/miku]=0.3
+  bgop[ttheme/hatsune-miku]=0.3
   shown
   [[ ! -s $XDG_CONFIG_HOME/cli.log && $TTHEME_WARP_SHOWING != "$view" && "$(<$TTHEME_WARP_THEMES/$TTHEME_WARP_SHOWING)" == *$'  path: "'$out$'"\n  opacity: 30\n'* ]] ||
     { print -u2 "a Warp view that only changed its opacity drew its picture again or stayed in the same file: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
   [[ -e $TTHEME_WARP_THEMES/$view ]] || { print -u2 "a new Warp view removed the one before it, which Warp may still be reading its settings onto"; exit 1 }
   last=$TTHEME_WARP_SHOWING
-  bgop[ttheme/miku]=0.19
+  bgop[ttheme/hatsune-miku]=0.19
   shown
   [[ ! -s $XDG_CONFIG_HOME/cli.log && $TTHEME_WARP_SHOWING == "$view" && ${#TTHEME_WARP_MADE} == 2 ]] ||
     { print -u2 "going back to a Warp view shown before wrote another theme for it, or drew it again: $TTHEME_WARP_MADE"; exit 1 }
   : >| $XDG_CONFIG_HOME/cli.log
   __tt_cli() { print -r -- "$*" >> $XDG_CONFIG_HOME/cli.log; [[ $1 == flatten ]] && { sleep 0.2; : >| $3 } }
-  bgsize[ttheme/miku]=141
-  __tt_warp_view ttheme/miku > /dev/null
+  bgsize[ttheme/hatsune-miku]=141
+  __tt_warp_view ttheme/hatsune-miku > /dev/null
   (( TTHEME_BG_JOB )) && __tt_pv_bg_busy && [[ $msg == "Loading the background" ]] ||
     { print -u2 "a Warp view waited for its picture in the key loop instead of behind it"; exit 1 }
-  bgsize[ttheme/miku]=142
-  __tt_warp_view ttheme/miku > /dev/null
-  bgsize[ttheme/miku]=143
-  __tt_warp_view ttheme/miku > /dev/null
+  bgsize[ttheme/hatsune-miku]=142
+  __tt_warp_view ttheme/hatsune-miku > /dev/null
+  bgsize[ttheme/hatsune-miku]=143
+  __tt_warp_view ttheme/hatsune-miku > /dev/null
   TTHEME_BG_ASKED=0
   for i in {1..400}; do
     __tt_pv_bg_poll
     __tt_pv_bg_busy || break
     sleep 0.01
   done
-  __tt_warp_laid ttheme/miku $bgd/ttheme--miku.0a1b2c3d@143-center-right-2912x2040.png
+  __tt_warp_laid ttheme/hatsune-miku $bgd/ttheme--hatsune-miku.0a1b2c3d@143-center-right-2912x2040.png
   laid=("${(@f)$(<$XDG_CONFIG_HOME/cli.log)}")
   [[ ${#laid} == 2 && "$(<$TTHEME_WARP_THEMES/$TTHEME_WARP_SHOWING)" == *$'  path: "'$REPLY'"'* && -z $msg ]] && ! __tt_pv_bg_busy ||
     { print -u2 "Warp views asked for while one was laid were not folded into the last of them: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
   __tt_cli() { print -r -- "$*" >> $XDG_CONFIG_HOME/cli.log; [[ $1 == flatten ]] && : >| $3 }
   : >| $XDG_CONFIG_HOME/cli.log
-  bgsize[ttheme/miku]=fill bgpos[ttheme/miku]=5
+  bgsize[ttheme/hatsune-miku]=fill bgpos[ttheme/hatsune-miku]=5
   shown
-  __tt_warp_laid ttheme/miku $bgd/ttheme--miku.0a1b2c3d@fill-40.png
-  [[ "$(<$XDG_CONFIG_HOME/cli.log)" == "flatten $bgd/ttheme--miku.0a1b2c3d@fill-40.png $REPLY ${TTHEME_PALETTE[ttheme/miku]%% *} 1" ]] ||
+  __tt_warp_laid ttheme/hatsune-miku $bgd/ttheme--hatsune-miku.0a1b2c3d@fill-40.png
+  [[ "$(<$XDG_CONFIG_HOME/cli.log)" == "flatten $bgd/ttheme--hatsune-miku.0a1b2c3d@fill-40.png $REPLY ${TTHEME_PALETTE[ttheme/hatsune-miku]%% *} 1" ]] ||
     { print -u2 "a Warp view of the fill did not lay the fill itself into the file its theme shows: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
-  bgsize[ttheme/miku]=140 bgpos[ttheme/miku]=6
+  bgsize[ttheme/hatsune-miku]=140 bgpos[ttheme/hatsune-miku]=6
   shown
-  view=$TTHEME_WARP_SHOWING bgname=ttheme/miku bgedit[ttheme/miku]=1 applied=$TTHEME_PALETTE[ttheme/miku]
+  view=$TTHEME_WARP_SHOWING bgname=ttheme/hatsune-miku bgedit[ttheme/hatsune-miku]=1 applied=$TTHEME_PALETTE[ttheme/hatsune-miku]
   made=($TTHEME_WARP_MADE)
   __tt_pv_bg_close > /dev/null
   (( ${#TTHEME_WARP_LAID} + ${#TTHEME_WARP_MADE} == 0 )) || { print -u2 "closing preview kept its lists of laid pictures and views to sweep"; exit 1 }
@@ -1685,28 +1685,28 @@ done
   done
   (( ${#made} > 1 && ! ${#reply} )) && [[ -e $TTHEME_WARP_THEMES/$view ]] ||
     { print -u2 "closing preview left Warp views behind, or swept the one Warp shows: $reply"; exit 1 }
-  __tt_bg_refresh ttheme/miku
+  __tt_bg_refresh ttheme/hatsune-miku
   [[ -z $TTHEME_WARP_SHOWING && ! -e $TTHEME_WARP_THEMES/$view && "$(<$TTHEME_WARP_SETTINGS)" == *"path = \"$view\""* ]] ||
     { print -u2 "a saved tuning moved Warp itself where the CLI puts its new picture on, or left the view file"; exit 1 }
   : >| $XDG_CONFIG_HOME/cli.log
-  __tt_bg_bake $bgd/ttheme--miku.0a1b2c3d.png $bgd/ttheme--miku.0a1b2c3d@140-center-right-2912x2040.png 2912 2040 2459 2856 453 -122
-  [[ "$(<$XDG_CONFIG_HOME/cli.log)" == "bake $bgd/ttheme--miku.0a1b2c3d.png $bgd/ttheme--miku.0a1b2c3d@140-center-right-2912x2040.png 2912x2040 2459x2856+453-122" ]] ||
+  __tt_bg_bake $bgd/ttheme--hatsune-miku.0a1b2c3d.png $bgd/ttheme--hatsune-miku.0a1b2c3d@140-center-right-2912x2040.png 2912 2040 2459 2856 453 -122
+  [[ "$(<$XDG_CONFIG_HOME/cli.log)" == "bake $bgd/ttheme--hatsune-miku.0a1b2c3d.png $bgd/ttheme--hatsune-miku.0a1b2c3d@140-center-right-2912x2040.png 2912x2040 2459x2856+453-122" ]] ||
     { print -u2 "Warp baked a tuned picture without the CLI: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
-  bgedit=() bgsize[ttheme/miku]=144
+  bgedit=() bgsize[ttheme/hatsune-miku]=144
   shown
-  view=$TTHEME_WARP_SHOWING bgname=ttheme/miku:k2 bgview[ttheme/miku]=ttheme/miku:k2
+  view=$TTHEME_WARP_SHOWING bgname=ttheme/hatsune-miku:k2 bgview[ttheme/hatsune-miku]=ttheme/hatsune-miku:k2
   __tt_pv_bg_close > /dev/null
   [[ $TTHEME_WARP_SHOWING == "$view" ]] || { print -u2 "closing preview took Warp off the view of a picture chosen to be shown"; exit 1 }
-  bgname=ttheme/miku bgview=()
+  bgname=ttheme/hatsune-miku bgview=()
   __tt_pv_bg_close > /dev/null
-  [[ -z $TTHEME_WARP_SHOWING && ! -e $TTHEME_WARP_THEMES/$view && "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-ttheme--miku.dark.89abcdef.yaml"'* ]] ||
+  [[ -z $TTHEME_WARP_SHOWING && ! -e $TTHEME_WARP_THEMES/$view && "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-ttheme--hatsune-miku.dark.89abcdef.yaml"'* ]] ||
     { print -u2 "closing preview left up the view of a picture nobody kept"; exit 1 }
-  bgsize[ttheme/miku]=145
-  __tt_warp_view ttheme/miku > /dev/null
-  __tt_bg_hide ttheme/miku
-  (( ! TTHEME_BG_JOB )) && ! __tt_pv_bg_busy && [[ "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-ttheme--miku.dark.00000000.yaml"'* ]] ||
+  bgsize[ttheme/hatsune-miku]=145
+  __tt_warp_view ttheme/hatsune-miku > /dev/null
+  __tt_bg_hide ttheme/hatsune-miku
+  (( ! TTHEME_BG_JOB )) && ! __tt_pv_bg_busy && [[ "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-ttheme--hatsune-miku.dark.00000000.yaml"'* ]] ||
     { print -u2 "find opened over Warp's picture, which covers its loading bar, or a view laid meanwhile went up after it"; exit 1 }
-  rm -f $bgd/ttheme--miku.0a1b2c3d.png $bgd/ttheme--miku.0a1b2c3d@fill-40.png $bgd/ttheme--miku.conf $XDG_CONFIG_HOME/cli.log
+  rm -f $bgd/ttheme--hatsune-miku.0a1b2c3d.png $bgd/ttheme--hatsune-miku.0a1b2c3d@fill-40.png $bgd/ttheme--hatsune-miku.conf $XDG_CONFIG_HOME/cli.log
 ) || exit 1
 mkdir -p $XDG_CONFIG_HOME/fakebin
 print -rl -- '#!/bin/sh' 'printf %s "$NODE_COMPILE_CACHE"' > $XDG_CONFIG_HOME/fakebin/node
@@ -1714,7 +1714,7 @@ chmod +x $XDG_CONFIG_HOME/fakebin/node
 out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
 [[ $out == /c/ttheme/node ]] || { print -u2 "the layer no longer hands node its compile cache: [$out]"; exit 1 }
 (
-  TTHEME_STATE_DIR=$XDG_CONFIG_HOME/state TTHEME_TAB_PALETTE=off TTHEME_STARTUP=ttheme/miku TTHEME_ADAPTER=ghostty TTHEME_TMUX=0
+  TTHEME_STATE_DIR=$XDG_CONFIG_HOME/state TTHEME_TAB_PALETTE=off TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_ADAPTER=ghostty TTHEME_TMUX=0
   unset TTHEME_PAINTED
   __tt_osc_apply "$TTHEME_PALETTE[ttheme/kaito]" > /dev/null
   [[ ${(t)TTHEME_PAINTED} == *export* ]] || { print -u2 "a paint no longer tells the shells it starts that the tab is painted"; exit 1 }
@@ -1722,21 +1722,21 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   [[ ! -e $TTHEME_STATE_DIR/colors.ghostty ]] || { print -u2 "a painted tab kept its paint as the terminal's own colors"; exit 1 }
   __tt_osc_reset > /dev/null
   [[ -z ${TTHEME_PAINTED+x} ]] || { print -u2 "a reset left the tab marked painted"; exit 1 }
-  stale=${TTHEME_PALETTE[ttheme/miku]%% *} fresh=${TTHEME_PALETTE[ttheme/kaito]%% *} synced=0
+  stale=${TTHEME_PALETTE[ttheme/hatsune-miku]%% *} fresh=${TTHEME_PALETTE[ttheme/kaito]%% *} synced=0
   __tt_hear() { REPLY=$fresh }
   __tt_sync() { synced=1 }
-  TTHEME_HEARD=$stale TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_PIN=
+  TTHEME_HEARD=$stale TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_PIN=
   __tt_recheck
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/kaito]" && $TTHEME_HEARD == $fresh && $synced == 1 && "$(<$TTHEME_STATE_DIR/colors.ghostty)" == "ttheme/miku:$stale $fresh" ]] ||
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/kaito]" && $TTHEME_HEARD == $fresh && $synced == 1 && "$(<$TTHEME_STATE_DIR/colors.ghostty)" == "ttheme/hatsune-miku:$stale $fresh" ]] ||
     { print -u2 "a recheck did not move the tab off a stale remembered color: spec=${TTHEME_SPEC%% *} heard=$TTHEME_HEARD synced=$synced"; exit 1 }
-  TTHEME_HEARD=$stale TTHEME_PIN=/pinned TTHEME_BASE_SPEC=$TTHEME_PALETTE[ttheme/miku] TTHEME_SPEC=$TTHEME_PALETTE[ttheme/homura]
+  TTHEME_HEARD=$stale TTHEME_PIN=/pinned TTHEME_BASE_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_SPEC=$TTHEME_PALETTE[ttheme/akemi-homura]
   __tt_recheck
-  [[ $TTHEME_BASE_SPEC == "$TTHEME_PALETTE[ttheme/kaito]" && $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/homura]" ]] ||
+  [[ $TTHEME_BASE_SPEC == "$TTHEME_PALETTE[ttheme/kaito]" && $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/akemi-homura]" ]] ||
     { print -u2 "a recheck under a pin moved the wrong spec: base=${TTHEME_BASE_SPEC%% *} spec=${TTHEME_SPEC%% *}"; exit 1 }
-  TTHEME_HEARD=$stale TTHEME_PIN= TTHEME_SPEC=$TTHEME_PALETTE[ttheme/miku]
+  TTHEME_HEARD=$stale TTHEME_PIN= TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku]
   export TTHEME_PAINTED=1
   __tt_recheck
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/miku]" && $TTHEME_HEARD == $stale ]] || { print -u2 "a recheck trusted a painted tab's colors"; exit 1 }
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hatsune-miku]" && $TTHEME_HEARD == $stale ]] || { print -u2 "a recheck trusted a painted tab's colors"; exit 1 }
   unset TTHEME_PAINTED
   TTHEME_STARTUP= TTHEME_HEARD='#123456' TTHEME_PIN= TTHEME_SPEC= synced=0
   __tt_recheck
@@ -1786,7 +1786,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   mkdir -p $XDG_CONFIG_HOME/resync/backgrounds
   TTHEME_CONFIG=$XDG_CONFIG_HOME/resync/config.zsh calls=$XDG_CONFIG_HOME/resync/calls
   store=${TTHEME_CONFIG:h}/backgrounds/images.json
-  TTHEME_ORDER=(ttheme/miku)
+  TTHEME_ORDER=(ttheme/hatsune-miku)
   __tt_reload() { print -r -- reload >> $calls }
   __tt_bg_refresh() { print -r -- "refresh $*" >> $calls }
   __tt_cli() { print -r -- "$*" >> $calls; [[ -z $moves ]] || print -r -- $RANDOM >| $store }
@@ -1796,12 +1796,12 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   rm -f $calls
   moves=1
   __tt_resync || { print -u2 "a sync that moved the pictures failed"; exit 1 }
-  [[ "$(<$calls)" == $'sync\nreload\nrefresh ttheme/miku' ]] ||
+  [[ "$(<$calls)" == $'sync\nreload\nrefresh ttheme/hatsune-miku' ]] ||
     { print -u2 "a sync that moved the pictures did not refresh the terminal's pictures once: $(<$calls)"; exit 1 }
   rm -f $calls
   __tt_fresh() { print -r -- fresh >> $calls }
   __tt_resync here || { print -u2 "a mode verb's sync failed"; exit 1 }
-  [[ "$(<$calls)" == $'sync\nreload\nfresh\nrefresh ttheme/miku' ]] ||
+  [[ "$(<$calls)" == $'sync\nreload\nfresh\nrefresh ttheme/hatsune-miku' ]] ||
     { print -u2 "a mode verb's tab did not take the new palettes before its terminal refreshed the pictures: $(<$calls)"; exit 1 }
   rm -f $calls
   __tt_cli() { print -r -- "$*" >> $calls; return 1 }
@@ -1810,7 +1810,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
 ) || exit 1
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh
-  TTHEME_TERMINALS=(ghostty) TTHEME_STARTUP=ttheme/miku TTHEME_TMUX=0 TERM_PROGRAM_VERSION=1.3.2
+  TTHEME_TERMINALS=(ghostty) TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_TMUX=0 TERM_PROGRAM_VERSION=1.3.2
   reloads=0 asks=$XDG_CONFIG_HOME/asks
   __tt_reload_ghostty() { (( ++reloads )) }
   mkdir -p $TTHEME_GHOSTTY_TABS $XDG_CONFIG_HOME/ttys
@@ -1823,44 +1823,44 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
     typeset key$t=$REPLY
   done
   ttya=$XDG_CONFIG_HOME/ttys/a ttyb=$XDG_CONFIG_HOME/ttys/b ttyc=$XDG_CONFIG_HOME/ttys/c
-  print -r -- "$alive ttheme/miku ttheme/kagami $ttya" > $TTHEME_GHOSTTY_TABS/$keya
-  print -r -- "$alive ttheme/miku ttheme/rei $ttyb" > $TTHEME_GHOSTTY_TABS/$keyb
-  print -r -- "$alive ttheme/miku - $ttyc" > $TTHEME_GHOSTTY_TABS/$keyc
-  print -r -- "config-file = ?ttheme--rei.conf" >| $bgd/shown.conf
+  print -r -- "$alive ttheme/hatsune-miku ttheme/hiiragi-kagami $ttya" > $TTHEME_GHOSTTY_TABS/$keya
+  print -r -- "$alive ttheme/hatsune-miku ttheme/ayanami-rei $ttyb" > $TTHEME_GHOSTTY_TABS/$keyb
+  print -r -- "$alive ttheme/hatsune-miku - $ttyc" > $TTHEME_GHOSTTY_TABS/$keyc
+  print -r -- "config-file = ?ttheme--ayanami-rei.conf" >| $bgd/shown.conf
   answer() { print -r -- "$*" >| $XDG_CONFIG_HOME/answer }
   osascript() { print >> $asks; print -r -- "$(<$XDG_CONFIG_HOME/answer)" }
   shown() { print -r -- "$(<$bgd/shown.conf)" }
   answer 1 $ttya 999
   __tt_ghostty_check || { print -u2 "the follower went blind on a Ghostty that names the terminal in front"; exit 1 }
-  [[ "$(shown)" == "config-file = ?ttheme--kagami.conf" && $reloads == 1 && $TTHEME_GHOSTTY_FRONT == $keya && $TTHEME_GHOSTTY_IDLE == 0 ]] ||
+  [[ "$(shown)" == "config-file = ?ttheme--hiiragi-kagami.conf" && $reloads == 1 && $TTHEME_GHOSTTY_FRONT == $keya && $TTHEME_GHOSTTY_IDLE == 0 ]] ||
     { print -u2 "the follower did not put up the picture of a busy tab in front: $(shown) reloads=$reloads front=$TTHEME_GHOSTTY_FRONT idle=$TTHEME_GHOSTTY_IDLE"; exit 1 }
   __tt_ghostty_check
   (( reloads == 1 )) || { print -u2 "the follower reloaded Ghostty with the right picture already up"; exit 1 }
   answer 1 $ttyb $alive
   __tt_ghostty_check
-  [[ "$(shown)" == "config-file = ?ttheme--rei.conf" && $reloads == 2 && $TTHEME_GHOSTTY_IDLE == 1 ]] ||
+  [[ "$(shown)" == "config-file = ?ttheme--ayanami-rei.conf" && $reloads == 2 && $TTHEME_GHOSTTY_IDLE == 1 ]] ||
     { print -u2 "the follower left another tab's picture over a tab at its prompt in front: $(shown) reloads=$reloads"; exit 1 }
   answer 0 $ttya 999
   __tt_ghostty_check
-  [[ "$(shown)" == "config-file = ?ttheme--rei.conf" && -z $TTHEME_GHOSTTY_FRONT ]] ||
+  [[ "$(shown)" == "config-file = ?ttheme--ayanami-rei.conf" && -z $TTHEME_GHOSTTY_FRONT ]] ||
     { print -u2 "the follower moved the picture while Ghostty was behind another app: $(shown)"; exit 1 }
   answer 1 $ttyc 999
   __tt_ghostty_check
   answer 1 /dev/ttys999 999
   __tt_ghostty_check
-  [[ "$(shown)" == "config-file = ?ttheme--rei.conf" && $reloads == 2 ]] ||
+  [[ "$(shown)" == "config-file = ?ttheme--ayanami-rei.conf" && $reloads == 2 ]] ||
     { print -u2 "a tab that wears no palette, or no ttheme at all, moved the picture: $(shown)"; exit 1 }
   TTHEME_STARTUP=
   answer 1 $ttya 999
   __tt_ghostty_check
   [[ "$(shown)" == "config-file = ?.conf" && $reloads == 2 ]] ||
     { print -u2 "a busy tab painted before ttheme went off did not take the picture down, or reloaded with none to take: $(shown) reloads=$reloads"; exit 1 }
-  TTHEME_STARTUP=ttheme/miku
+  TTHEME_STARTUP=ttheme/hatsune-miku
   osascript() {
     print >> $asks
     if [[ ! -e $XDG_CONFIG_HOME/claimed ]]; then
       : > $XDG_CONFIG_HOME/claimed
-      print -r -- "config-file = ?ttheme--kagami.conf" >| $bgd/shown.conf
+      print -r -- "config-file = ?ttheme--hiiragi-kagami.conf" >| $bgd/shown.conf
       touch -t 203201010000 $bgd/shown.conf
       print -r -- "1 $ttya 999"
     else
@@ -1869,7 +1869,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   }
   : > $asks
   __tt_ghostty_check
-  [[ "$(shown)" == "config-file = ?ttheme--rei.conf" && $(wc -l < $asks) -eq 2 ]] ||
+  [[ "$(shown)" == "config-file = ?ttheme--ayanami-rei.conf" && $(wc -l < $asks) -eq 2 ]] ||
     { print -u2 "the follower acted on an answer a tab's own claim made stale: $(shown), asked $(wc -l < $asks) times"; exit 1 }
   osascript() { print >> $asks; print -r -- "$(<$XDG_CONFIG_HOME/answer)" }
   answer blind
@@ -1896,14 +1896,14 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   answer 1 $ttya 999
   TTHEME_GHOSTTY_SEEN=() TTHEME_GHOSTTY_RUN=() TTHEME_GHOSTTY_BLUR="" TTHEME_GHOSTTY_ASKED=0 TTHEME_GHOSTTY_WANT=0 TTHEME_GHOSTTY_HUSH=0 TTHEME_GHOSTTY_NONE=0
   TTHEME_GHOSTTY_FRONT=$keyb TTHEME_GHOSTTY_IDLE=1
-  print -r -- "config-file = ?ttheme--rei.conf" >| $bgd/shown.conf
+  print -r -- "config-file = ?ttheme--ayanami-rei.conf" >| $bgd/shown.conf
   __tt_pins_load
   : > $asks
   __tt_ghostty_tick
   [[ ! -s $asks ]] || { print -u2 "the follower asked Ghostty before any tab took input"; exit 1 }
   touch -a -t 203301010000 $ttya
   __tt_ghostty_tick
-  [[ $(wc -l < $asks) -eq 1 && "$(shown)" == "config-file = ?ttheme--kagami.conf" ]] ||
+  [[ $(wc -l < $asks) -eq 1 && "$(shown)" == "config-file = ?ttheme--hiiragi-kagami.conf" ]] ||
     { print -u2 "a busy tab behind that took input — the focus report a switch to it sends — did not bring its picture up: $(shown)"; exit 1 }
   : > $asks
   TTHEME_GHOSTTY_ASKED=0
@@ -1950,7 +1950,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh
   __tt_ghostty_modules
-  TTHEME_TERMINALS=(ghostty) TTHEME_STARTUP=ttheme/miku TTHEME_TMUX=0 TTHEME_FRONT=1 TERM_PROGRAM_VERSION=1.3.2
+  TTHEME_TERMINALS=(ghostty) TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_TMUX=0 TTHEME_FRONT=1 TERM_PROGRAM_VERSION=1.3.2
   reloads=0 asks=$XDG_CONFIG_HOME/asks
   __tt_reload_ghostty() { (( ++reloads )) }
   mkdir -p $TTHEME_GHOSTTY_TABS $XDG_CONFIG_HOME/ttys
@@ -1960,19 +1960,19 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   ttya=$XDG_CONFIG_HOME/ttys/a
   __tt_ghostty_key $ttya
   keya=$REPLY
-  print -r -- "$alive ttheme/miku ttheme/kagami $ttya" > $TTHEME_GHOSTTY_TABS/$keya
-  print -r -- "config-file = ?ttheme--rei.conf" >| $bgd/shown.conf
+  print -r -- "$alive ttheme/hatsune-miku ttheme/hiiragi-kagami $ttya" > $TTHEME_GHOSTTY_TABS/$keya
+  print -r -- "config-file = ?ttheme--ayanami-rei.conf" >| $bgd/shown.conf
   __tt_ghostty_take "1 $ttya 999 $(( EPOCHREALTIME - 5 ))"
-  [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--rei.conf" && $reloads == 0 ]] ||
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--ayanami-rei.conf" && $reloads == 0 ]] ||
     { print -u2 "the follower took a watcher's answer older than the last claim: $(<$bgd/shown.conf)"; exit 1 }
   __tt_ghostty_take "1 $ttya 999 $(( EPOCHREALTIME + 5 ))"
-  [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--kagami.conf" && $reloads == 1 ]] ||
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--hiiragi-kagami.conf" && $reloads == 1 ]] ||
     { print -u2 "the follower did not take a watcher's answer made after the last claim: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
-  print -r -- "config-file = ?ttheme--rei.conf" >| $bgd/shown.conf
+  print -r -- "config-file = ?ttheme--ayanami-rei.conf" >| $bgd/shown.conf
   exec {TTHEME_GHOSTTY_WFD}< <(print -r -- "1 $ttya 999")
   zselect -t 200 -r $TTHEME_GHOSTTY_WFD
   __tt_ghostty_heard
-  [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--kagami.conf" && $reloads == 2 ]] && (( TTHEME_GHOSTTY_TOLD > 0 )) ||
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--hiiragi-kagami.conf" && $reloads == 2 ]] && (( TTHEME_GHOSTTY_TOLD > 0 )) ||
     { print -u2 "a line from the watcher did not put up its tab's picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
   zselect -t 200 -r $TTHEME_GHOSTTY_WFD
   __tt_ghostty_heard
@@ -1994,27 +1994,27 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   TTHEME_GHOSTTY_CODE=
   __tt_apply() { painted=$EPOCHREALTIME }
   __tt_reload_ghostty() { TTHEME_GHOSTTY_SENT=1; ( zselect -t 2; print -r -- $EPOCHREALTIME > $XDG_CONFIG_HOME/read; print -r -- "$(<$bgd/shown.conf)" > /dev/null ) & reader=$! }
-  print -r -- "config-file = ?ttheme--rei.conf" >| $bgd/shown.conf
+  print -r -- "config-file = ?ttheme--ayanami-rei.conf" >| $bgd/shown.conf
   painted=0
-  __tt_wear "$TTHEME_PALETTE[ttheme/kagami]" ttheme/kagami force || { print -u2 "__tt_wear did not claim a picture it changes"; exit 1 }
+  __tt_wear "$TTHEME_PALETTE[ttheme/hiiragi-kagami]" ttheme/hiiragi-kagami force || { print -u2 "__tt_wear did not claim a picture it changes"; exit 1 }
   wait $reader
-  [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--kagami.conf" && $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/kagami]" ]] ||
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--hiiragi-kagami.conf" && $TTHEME_SPEC == "$TTHEME_PALETTE[ttheme/hiiragi-kagami]" ]] ||
     { print -u2 "__tt_wear did not put the palette and its picture on: $(<$bgd/shown.conf)"; exit 1 }
   (( painted > $(<$XDG_CONFIG_HOME/read) )) ||
     { print -u2 "a palette was painted before Ghostty read the picture that goes with it"; exit 1 }
   __tt_reload_ghostty() { TTHEME_GHOSTTY_SENT=1 }
-  print -r -- "config-file = ?ttheme--rei.conf" >| $bgd/shown.conf
+  print -r -- "config-file = ?ttheme--ayanami-rei.conf" >| $bgd/shown.conf
   start=$EPOCHREALTIME
-  __tt_wear "$TTHEME_PALETTE[ttheme/kagami]" ttheme/kagami force
+  __tt_wear "$TTHEME_PALETTE[ttheme/hiiragi-kagami]" ttheme/hiiragi-kagami force
   (( painted - start < 1 )) || { print -u2 "a claim Ghostty never read held the palette back $(( painted - start )) s"; exit 1 }
   __tt_ghostty_took() { print -u2 "a palette whose picture is already up waited for Ghostty"; exit 1 }
   painted=0
-  __tt_wear "$TTHEME_PALETTE[ttheme/kagami]" ttheme/kagami force && { print -u2 "__tt_wear reloaded with the picture already up"; exit 1 }
+  __tt_wear "$TTHEME_PALETTE[ttheme/hiiragi-kagami]" ttheme/hiiragi-kagami force && { print -u2 "__tt_wear reloaded with the picture already up"; exit 1 }
   (( painted )) || { print -u2 "a palette whose picture is already up was not painted"; exit 1 }
   TTHEME_FRONT=0
-  print -r -- "config-file = ?ttheme--rei.conf" >| $bgd/shown.conf
-  __tt_wear "$TTHEME_PALETTE[ttheme/kagami]" && { print -u2 "a pin reached behind took the picture"; exit 1 }
-  [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--rei.conf" ]] || { print -u2 "a pin reached behind moved the picture: $(<$bgd/shown.conf)"; exit 1 }
+  print -r -- "config-file = ?ttheme--ayanami-rei.conf" >| $bgd/shown.conf
+  __tt_wear "$TTHEME_PALETTE[ttheme/hiiragi-kagami]" && { print -u2 "a pin reached behind took the picture"; exit 1 }
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--ayanami-rei.conf" ]] || { print -u2 "a pin reached behind moved the picture: $(<$bgd/shown.conf)"; exit 1 }
   kill $alive
   wait $alive 2>/dev/null
   rm -rf $TTHEME_GHOSTTY_TABS $XDG_CONFIG_HOME/ttys $XDG_CONFIG_HOME/read $asks

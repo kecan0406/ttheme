@@ -9,12 +9,12 @@ Run `ttheme` on its own. It opens Preview, where the tab shows every palette you
 installed as the cursor lands on it, so you choose by looking.
 
 ```screen title="ttheme"
- >ω   Preview   Browse   ⇧tab Browse       konata  Lucky☆Star
- ⌕ Search… e.g. kita | Lucky☆St…  2/2      Shell  Code  Diff  Logs  Monitor
+ >ω   Preview   Browse   ⇧tab Browse izumi-konata  Lucky☆Star
+ ⌕ Search… e.g. kita-ikuyo | Lu…  2/2      Shell  Code  Diff  Logs  Monitor
 
    ▸ Bocchi the Rock!  ぼっち・ざ…  1      ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀
    ▾ Lucky☆Star  らき☆すた          1
-▌    ■ konata             ■ ■ ■ ■ ■ ■      ~/code/demo on main +2 ~1
+▌    ■ izumi-konata       ■ ■ ■ ■ ■ ■      ~/code/demo on main +2 ~1
                                            ❯ git status -sb
                                             M src/main.rs
                                            ?? notes.md
@@ -31,7 +31,7 @@ installed as the cursor lands on it, so you choose by looking.
   `→` or `enter` opens a work, `←` closes it.
 - Typing filters the list. It matches palette names, works and characters, and a
   character's names in their original language too, so `hitori` and `ひとり`
-  both find `bocchi`.
+  both find `gotoh-hitori`.
 - From 76 columns on, a sample beside the list shows the palette in a shell
   session, code, a diff, logs and a process monitor. `⇧←` `⇧→` switch the scene.
 - `?` lists every key of the screen you are on, and the mouse works too.
@@ -44,9 +44,9 @@ open with, in every terminal you wired; **This tab** uses it in this tab alone.
 name, skip Preview:
 
 ```sh
-ttheme use miku          # this tab only
-ttheme use ttheme/miku   # by its full name, when two marketplaces have a miku
-ttheme default miku      # the default for new tabs
+ttheme use hatsune-miku          # this tab only
+ttheme use ttheme/hatsune-miku   # by its full name, when two marketplaces have a hatsune-miku
+ttheme default hatsune-miku      # the default for new tabs
 ```
 
 - A tab only ever changes its own colors, so a palette you used there stays
@@ -67,10 +67,10 @@ ttheme default miku      # the default for new tabs
 A pin gives a folder, or an ssh host, its own palette. A tab shows it while it
 is there and puts back what it showed before when it leaves.
 
-```pins default="ttheme/miku"
-~/work/**     ttheme/konata
-~/work/site   ttheme/kita
-ssh:*.prod    ttheme/bocchi
+```pins default="ttheme/hatsune-miku"
+~/work/**     ttheme/izumi-konata
+~/work/site   ttheme/kita-ikuyo
+ssh:*.prod    ttheme/gotoh-hitori
 
 cd ~/work
 cd api/v2
@@ -111,7 +111,7 @@ ttheme unpin ssh:tusa
 ```
 
 Pins live in `~/.config/ttheme/pins`, one per line, and the file is yours to edit
-(`~/work/**  ttheme/konata`, where `path/**` covers everything below the path).
+(`~/work/**  ttheme/izumi-konata`, where `path/**` covers everything below the path).
 
 ## Light, dark and auto
 
@@ -144,8 +144,8 @@ under its work, whichever marketplace it comes from. A palette of no work is an
 original, on a shelf per marketplace. `alt+g` in Preview groups the list by work
 or by marketplace and sorts a work's characters by name (`abc`) or by cast.
 
-Every palette has a full name: `ttheme/rei` for a built-in one,
-`alice@pastel/rei` for the rei in alice's `pastel` marketplace. A name typed
+Every palette has a full name: `ttheme/ayanami-rei` for a built-in one,
+`alice@pastel/ayanami-rei` for the ayanami-rei in alice's `pastel` marketplace. A name typed
 alone works when only one palette has it, and `tab` completes full names.
 
 `ttheme`, then `shift+tab`, opens Browse: a card per marketplace you added and
@@ -158,7 +158,7 @@ the palettes of the one under the cursor, by work.
   written before that.
 
 ```sh
-ttheme add gojo geto                        # install palettes by name
+ttheme add gojo-satoru geto-suguru                        # install palettes by name
 ttheme add alice@pastel/dusk                # a palette from another marketplace
 ttheme add tt8:…                            # a share link or its code
 ttheme marketplace add alice/ttheme-pastel  # a GitHub repository; #v1 pins a tag, branch or commit
@@ -167,10 +167,11 @@ ttheme marketplace remove alice@pastel      # installed palettes keep working
 ```
 
 In Browse, `+ Add marketplace` takes the same sources, and `⌕ Search marketplace`
-lists every public marketplace on GitHub. Type a work or a character there, in
-any language you know it by, and it lists the works it means, each with the
-marketplaces that have palettes of it; once you stop typing it asks
-names.ttheme.dev what the name means, which `TTHEME_NAME_LOOKUP=off` stops. When
+lists every public marketplace on GitHub. Type a work's title there, in any
+language you know it by, or a palette's whole name, and it lists the works it
+means, each with the marketplaces that have palettes of it; once you stop typing
+it asks names.ttheme.dev what the title means, which `TTHEME_NAME_LOOKUP=off`
+stops. A character is found on its work's page at ttheme.dev. When
 no marketplace has one yet, `Request a palette` opens a request on GitHub. In
 Preview, a filter that finds nothing offers the same search, and `enter` takes
 it there. [ttheme.dev/browse](https://ttheme.dev/browse) searches the

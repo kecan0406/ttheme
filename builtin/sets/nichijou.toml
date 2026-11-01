@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "yukko"
-subject = "nichijou/yukko"
+slug = "aioi-yuuko"
+subject = "nichijou/aioi-yuuko"
 
 [palette.colors]
 background = "#1f160e"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "naganohara"
-subject = "nichijou/naganohara"
+slug = "naganohara-mio"
+subject = "nichijou/naganohara-mio"
 
 [palette.colors]
 background = "#13181e"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "mai"
-subject = "nichijou/mai"
+slug = "minakami-mai"
+subject = "nichijou/minakami-mai"
 
 [palette.colors]
 background = "#1b1713"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "nano"
-subject = "nichijou/nano"
+slug = "shinonome-nano"
+subject = "nichijou/shinonome-nano"
 
 [palette.colors]
 background = "#171819"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "hakase"
-subject = "nichijou/hakase"
+slug = "professor-shinonome"
+subject = "nichijou/professor-shinonome"
 
 [palette.colors]
 background = "#1f160d"

@@ -15,6 +15,7 @@ try {
   writeFileSync(join(stand, 'repo.json'), 'null')
   writeFileSync(join(stand, 'art.json'), '{}')
   writeFileSync(join(stand, 'cast.json'), '{}')
+  writeFileSync(join(stand, 'people.json'), '{}')
   writeFileSync(join(stand, 'commands.json'), JSON.stringify({ sections: [], exits: [] }))
   writeFileSync(
     join(stand, 'tsconfig.json'),
@@ -28,6 +29,7 @@ try {
           '@/repo.json': [join(stand, 'repo.json')],
           '@/art.json': [join(stand, 'art.json')],
           '@/cast.json': [join(stand, 'cast.json')],
+          '@/people.json': [join(stand, 'people.json')],
           '@/commands.json': [join(stand, 'commands.json')],
           '@/*': [join(SITE, '*')],
         },

@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "yui"
-subject = "k-on/yui"
+slug = "hirasawa-yui"
+subject = "k-on/hirasawa-yui"
 
 [palette.colors]
 background = "#211513"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "ritsu"
-subject = "k-on/ritsu"
+slug = "tainaka-ritsu"
+subject = "k-on/tainaka-ritsu"
 
 [palette.colors]
 background = "#19180d"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "mio"
-subject = "k-on/mio"
+slug = "akiyama-mio"
+subject = "k-on/akiyama-mio"
 
 [palette.colors]
 background = "#14181e"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "mugi"
-subject = "k-on/mugi"
+slug = "kotobuki-tsumugi"
+subject = "k-on/kotobuki-tsumugi"
 
 [palette.colors]
 background = "#1f1518"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "azusa"
-subject = "k-on/azusa"
+slug = "nakano-azusa"
+subject = "k-on/nakano-azusa"
 
 [palette.colors]
 background = "#131912"

@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "joker"
-subject = "persona-5/joker"
+slug = "amamiya-ren"
+subject = "persona-5/amamiya-ren"
 
 [palette.colors]
 background = "#201513"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "skull"
-subject = "persona-5/skull"
+slug = "sakamoto-ryuji"
+subject = "persona-5/sakamoto-ryuji"
 
 [palette.colors]
 background = "#1b170c"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "panther"
-subject = "persona-5/panther"
+slug = "takamaki-ann"
+subject = "persona-5/takamaki-ann"
 
 [palette.colors]
 background = "#201514"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "fox"
-subject = "persona-5/fox"
+slug = "kitagawa-yusuke"
+subject = "persona-5/kitagawa-yusuke"
 
 [palette.colors]
 background = "#12181d"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "queen"
-subject = "persona-5/queen"
+slug = "niijima-makoto"
+subject = "persona-5/niijima-makoto"
 
 [palette.colors]
 background = "#201513"
@@ -271,8 +271,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "oracle"
-subject = "persona-5/oracle"
+slug = "sakura-futaba"
+subject = "persona-5/sakura-futaba"
 
 [palette.colors]
 background = "#1f160e"

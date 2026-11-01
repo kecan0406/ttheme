@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "rentaro"
-subject = "black-bullet/rentaro"
+slug = "satomi-rentarou"
+subject = "black-bullet/satomi-rentarou"
 
 [palette.colors]
 background = "#14181e"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "enju"
-subject = "black-bullet/enju"
+slug = "aihara-enju"
+subject = "black-bullet/aihara-enju"
 
 [palette.colors]
 background = "#201512"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "kisara"
-subject = "black-bullet/kisara"
+slug = "tendou-kisara"
+subject = "black-bullet/tendou-kisara"
 
 [palette.colors]
 background = "#1c151c"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "tina"
-subject = "black-bullet/tina"
+slug = "tina-sprout"
+subject = "black-bullet/tina-sprout"
 
 [palette.colors]
 background = "#1b170c"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "kohina"
-subject = "black-bullet/kohina"
+slug = "hiruko-kohina"
+subject = "black-bullet/hiruko-kohina"
 
 [palette.colors]
 background = "#12181d"
@@ -271,8 +271,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "kagetane"
-subject = "black-bullet/kagetane"
+slug = "hiruko-kagetane"
+subject = "black-bullet/hiruko-kagetane"
 
 [palette.colors]
 background = "#201515"

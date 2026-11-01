@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-- Search marketplace in Browse places a character in the work it comes from, not in a game it only guests in, and Request a palette names that work: Ruby Kurosawa asks for Love Live! Sunshine!! rather than Love Live! School Idol Festival.
-- Request a palette from Search marketplace names a work by its title rather than its first season: ぼっち・ざ・ろっく! instead of ぼっち・ざ・ろっく！ 第1期.
+- Every built-in palette whose character has a danbooru tag now goes by the character's full name: `bocchi` is `gotoh-hitori`, `gojo` is `gojo-satoru`, `joker` is `amamiya-ren`. A palette you installed under the old name stays installed under it but no longer updates; add the new name to follow it, and pin or tune it again there.
+- Search marketplace finds works by their titles and palettes by their whole names. It no longer finds a work by the name of a character in it; look for the work, then the character on the site's page for that work.
 
 ## 1.2.83
 

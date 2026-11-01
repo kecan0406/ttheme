@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "rena"
-subject = "higurashi/rena"
+slug = "ryuuguu-rena"
+subject = "higurashi/ryuuguu-rena"
 
 [palette.colors]
 background = "#20150f"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "mion"
-subject = "higurashi/mion"
+slug = "sonozaki-mion"
+subject = "higurashi/sonozaki-mion"
 
 [palette.colors]
 background = "#141911"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "rika"
-subject = "higurashi/rika"
+slug = "furude-rika"
+subject = "higurashi/furude-rika"
 
 [palette.colors]
 background = "#16171f"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "satoko"
-subject = "higurashi/satoko"
+slug = "houjou-satoko"
+subject = "higurashi/houjou-satoko"
 
 [palette.colors]
 background = "#1b170c"

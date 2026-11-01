@@ -2,34 +2,34 @@
 name = "Black Bullet"
 native = "ブラック・ブレット"
 danbooru = "black_bullet"
-lead = "black-bullet/enju"
+lead = "black-bullet/aihara-enju"
 
 [[character]]
-id = "rentaro"
+id = "satomi-rentarou"
 native = ["里見蓮太郎"]
 danbooru = "satomi_rentarou"
 
 [[character]]
-id = "enju"
+id = "aihara-enju"
 native = ["藍原延珠"]
 danbooru = "aihara_enju"
 
 [[character]]
-id = "kisara"
+id = "tendou-kisara"
 native = ["天童木更"]
 danbooru = "tendou_kisara"
 
 [[character]]
-id = "tina"
+id = "tina-sprout"
 native = ["ティナ・スプラウト"]
 danbooru = "tina_sprout"
 
 [[character]]
-id = "kohina"
+id = "hiruko-kohina"
 native = ["蛭子小比奈"]
 danbooru = "hiruko_kohina"
 
 [[character]]
-id = "kagetane"
+id = "hiruko-kagetane"
 native = ["蛭子影胤"]
 danbooru = "hiruko_kagetane"

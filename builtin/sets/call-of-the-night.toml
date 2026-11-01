@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "nazuna"
-subject = "call-of-the-night/nazuna"
+slug = "nanakusa-nazuna"
+subject = "call-of-the-night/nanakusa-nazuna"
 
 [palette.colors]
 background = "#1e151a"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "kou"
-subject = "call-of-the-night/kou"
+slug = "yamori-kou"
+subject = "call-of-the-night/yamori-kou"
 
 [palette.colors]
 background = "#211513"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "seri"
-subject = "call-of-the-night/seri"
+slug = "kikyou-seri"
+subject = "call-of-the-night/kikyou-seri"
 
 [palette.colors]
 background = "#1e160d"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "anko"
-subject = "call-of-the-night/anko"
+slug = "uguisu-anko"
+subject = "call-of-the-night/uguisu-anko"
 
 [palette.colors]
 background = "#201511"

@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "bocchi"
-subject = "bocchi-the-rock/bocchi"
+slug = "gotoh-hitori"
+subject = "bocchi-the-rock/gotoh-hitori"
 
 [palette.colors]
 background = "#201517"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "nijika"
-subject = "bocchi-the-rock/nijika"
+slug = "ijichi-nijika"
+subject = "bocchi-the-rock/ijichi-nijika"
 
 [palette.colors]
 background = "#1d170c"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "ryo"
-subject = "bocchi-the-rock/ryo"
+slug = "yamada-ryo"
+subject = "bocchi-the-rock/yamada-ryo"
 
 [palette.colors]
 background = "#19180d"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "kita"
-subject = "bocchi-the-rock/kita"
+slug = "kita-ikuyo"
+subject = "bocchi-the-rock/kita-ikuyo"
 
 [palette.colors]
 background = "#201513"

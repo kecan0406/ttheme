@@ -9,7 +9,7 @@ danbooru = "gen_(gitadora)"
 sites = { konachan = [], yande = [], zerochan = [] }
 
 [[character]]
-id = "kyoka"
+id = "kyouka"
 native = ["響香", "キョウカ"]
 danbooru = "kyouka_(gitadora)"
 sites = { konachan = [], yande = [], zerochan = [] }

@@ -4,29 +4,23 @@ import type { Work } from '../../src/core/commons.ts'
 import type { NameHit } from '../../src/core/names.ts'
 
 const works: Work[] = [
-  {
-    id: 'moonlit-harbor',
-    name: 'Moonlit Harbor',
-    danbooru: 'moonlit_harbor',
-    characters: [{ id: 'nell', danbooru: 'nell_(moonlit_harbor)' }],
-  },
+  { id: 'moonlit-harbor', name: 'Moonlit Harbor', danbooru: 'moonlit_harbor', characters: [] },
   { id: 'tidewater', name: 'Tidewater', danbooru: 'tidewater', characters: [] },
 ]
 
-function hit(kind: NameHit['kind'], label: string, tags: string[]): NameHit {
-  return { id: `${kind}/${label}`, kind, label, names: [], tags, works: [] }
+function hit(label: string, tags: string[]): NameHit {
+  return { id: `work/${label}`, label, names: [], tags }
 }
 
 function asked(request: string): string | null {
   return new URL(request).searchParams.get('character')
 }
 
-test('an answer keeps the works that have palettes and says what a character was read as', () => {
-  const hits = [hit('character', 'ネル', ['nell_(moonlit_harbor)']), hit('work', 'Tidewater', ['tidewater'])]
-  const answer = answerOf('넬', hits, works, new Set(['moonlit-harbor']), [])
+test('an answer keeps the works that have palettes', () => {
+  const hits = [hit('月明かりの港', ['moonlit_harbor']), hit('Tidewater', ['tidewater'])]
+  const answer = answerOf('달빛', hits, works, new Set(['moonlit-harbor']), [])
 
-  expect(answer.works).toEqual([{ id: 'moonlit-harbor', read: 'ネル', by: 'character', characters: ['nell'] }])
-  expect([answer.label, asked(answer.request), answer.name]).toEqual(['ネル', 'ネル', 'nell'])
+  expect(answer.works).toEqual(['moonlit-harbor'])
 })
 
 test('a name no index knows is asked for and made as it was typed', () => {

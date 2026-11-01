@@ -2,34 +2,34 @@
 name = "Oregairu"
 native = "やはり俺の青春ラブコメはまちがっている。"
 danbooru = "yahari_ore_no_seishun_lovecome_wa_machigatteiru."
-lead = "oregairu/iroha"
+lead = "oregairu/isshiki-iroha"
 
 [[character]]
-id = "hachiman"
+id = "hikigaya-hachiman"
 native = ["比企谷八幡"]
 danbooru = "hikigaya_hachiman"
 
 [[character]]
-id = "yukino"
+id = "yukinoshita-yukino"
 native = ["雪ノ下雪乃"]
 danbooru = "yukinoshita_yukino"
 
 [[character]]
-id = "yuigahama"
+id = "yuigahama-yui"
 native = ["由比ヶ浜結衣"]
 danbooru = "yuigahama_yui"
 
 [[character]]
-id = "iroha"
+id = "isshiki-iroha"
 native = ["一色いろは"]
 danbooru = "isshiki_iroha"
 
 [[character]]
-id = "komachi"
+id = "hikigaya-komachi"
 native = ["比企谷小町"]
 danbooru = "hikigaya_komachi"
 
 [[character]]
-id = "haruno"
+id = "yukinoshita-haruno"
 native = ["雪ノ下陽乃"]
 danbooru = "yukinoshita_haruno"

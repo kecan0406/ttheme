@@ -1,418 +1,418 @@
 fact	spec	ghostty	iterm2	kitty	alacritty	wezterm	windows-terminal	warp	konsole	terminal-app	rio	contour
-new-tab.open.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-new-tab.open.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-new-tab.open.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+new-tab.open.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+new-tab.open.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+new-tab.open.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 new-tab.open.repaints	0	=	=	=	=	=	=	=	=	=	=	=
-new-tab.open.text	txt:95ca5f3476	=	=	=	=	=	=	=	=	=	=	=
+new-tab.open.text	txt:b55fdfafe3	=	=	=	=	=	=	=	=	=	=	=
 new-tab.open.issue	-	=	=	=	=	=	=	=	=	=	=	=
-new-tab-seq.open.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-new-tab-seq.open.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-new-tab-seq.open.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
-new-tab-seq.open.text	txt:944f1bf5d6	=	=	=	=	=	=	=	=	=	=	=
+new-tab-seq.open.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+new-tab-seq.open.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+new-tab-seq.open.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+new-tab-seq.open.text	txt:2043b765d1	=	=	=	=	=	=	=	=	=	=	=
 new-tab-seq.open.issue	-	=	=	=	=	=	=	=	=	=	=	=
-use.used.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-use.used.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-use.used.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
-use.used.text	txt:944f1bf5d6	=	=	=	=	=	=	=	=	=	=	=
+use.used.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+use.used.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+use.used.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+use.used.text	txt:2043b765d1	=	=	=	=	=	=	=	=	=	=	=
 use.used.issue	-	=	=	=	=	=	=	=	=	=	=	=
-use-plain.used.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+use-plain.used.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 use-plain.used.picture	none	=	=	=	=	=	=	=	=	=	=	=
-use-plain.used.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+use-plain.used.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 use-plain.used.issue	-	=	=	=	=	=	=	=	=	=	=	=
-hub.preview.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-hub.preview.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-hub.preview.text	txt:0a8c977c56	=	=	=	=	=	=	=	=	=	=	=
+hub.preview.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+hub.preview.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+hub.preview.text	txt:2d024e6bca	=	=	=	=	=	=	=	=	=	=	=
 hub.preview.issue	-	=	=	=	=	=	=	=	=	=	=	=
-hub.browse.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-hub.browse.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-hub.browse.text	txt:13a4cf2da1	=	=	=	=	=	=	=	=	=	=	=
+hub.browse.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+hub.browse.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+hub.browse.text	txt:abbae77471	=	=	=	=	=	=	=	=	=	=	=
 hub.browse.issue	-	=	=	=	=	=	=	=	=	=	=	=
-hub.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-hub.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-hub.back.text	txt:0a8c977c56	=	=	=	=	=	=	=	=	=	=	=
+hub.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+hub.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+hub.back.text	txt:2d024e6bca	=	=	=	=	=	=	=	=	=	=	=
 hub.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
-hub.closed.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-hub.closed.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-hub.closed.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+hub.closed.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+hub.closed.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+hub.closed.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 hub.closed.issue	-	=	=	=	=	=	=	=	=	=	=	=
-default-here.here.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+default-here.here.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 default-here.here.picture	none	=	=	=	=	=	=	=	=	=	=	=
-default-here.here.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+default-here.here.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 default-here.here.issue	-	=	=	=	=	=	=	=	=	=	=	=
-default-keeps.here.colors	ttheme/rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/rei cursor:ttheme/rei ansi:ttheme/rei
+default-keeps.here.colors	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/ayanami-rei cursor:ttheme/ayanami-rei ansi:ttheme/ayanami-rei
 default-keeps.here.picture	none	=	=	=	=	=	=	=	=	=	=	=
-default-keeps.here.wears	ttheme/rei	=	=	=	=	=	=	=	=	=	=	=
+default-keeps.here.wears	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	=
 default-keeps.here.issue	-	=	=	=	=	=	=	=	=	=	=	=
-default.painted.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-default.painted.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-default.painted.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+default.painted.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+default.painted.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+default.painted.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 default.painted.issue	-	=	=	=	=	=	=	=	=	=	=	=
-default.unpainted.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+default.unpainted.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 default.unpainted.picture	none	=	=	=	=	=	=	=	=	=	=	=
-default.unpainted.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+default.unpainted.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 default.unpainted.issue	-	=	=	=	=	=	=	=	=	=	=	=
-default.new.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+default.new.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 default.new.picture	none	=	=	=	=	=	=	=	=	=	=	=
-default.new.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+default.new.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 default.new.issue	-	=	=	=	=	=	=	=	=	=	=	=
-off.here.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+off.here.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 off.here.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off.here.wears	none	=	=	=	=	=	=	=	=	=	=	=
 off.here.issue	-	=	=	=	=	=	=	=	=	=	=	wears
-off.other.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+off.other.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 off.other.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off.other.wears	none	=	=	=	=	=	=	=	=	=	=	=
 off.other.issue	-	=	=	=	=	=	=	=	=	=	=	wears
-off.new.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+off.new.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 off.new.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off.new.wears	none	=	=	=	=	=	=	=	=	=	=	=
 off.new.issue	-	=	=	=	=	=	=	=	=	=	=	wears
-off-seq.new.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+off-seq.new.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 off-seq.new.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off-seq.new.wears	none	=	=	=	=	=	=	=	=	=	=	=
 off-seq.new.issue	-	=	=	=	=	=	=	=	=	=	=	wears
-off-use.used.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-off-use.used.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-off-use.used.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+off-use.used.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+off-use.used.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+off-use.used.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 off-use.used.issue	-	=	=	=	=	=	=	=	=	=	=	=
-off-use.new.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+off-use.new.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 off-use.new.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off-use.new.wears	none	=	=	=	=	=	=	=	=	=	=	=
 off-use.new.issue	-	=	=	=	=	=	=	=	=	=	=	wears
-off-behind.back.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+off-behind.back.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 off-behind.back.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off-behind.back.wears	none	=	=	=	=	=	=	=	=	=	=	=
 off-behind.back.issue	-	=	=	=	=	=	=	=	=	=	=	wears
-off-idle.behind.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+off-idle.behind.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 off-idle.behind.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off-idle.behind.wears	none	=	=	=	=	=	=	=	=	=	=	=
 off-idle.behind.issue	-	=	=	=	=	=	=	=	=	=	=	wears
-off-busy.busy.colors	own	=	ttheme/kita	ttheme/kita	ttheme/kita	ttheme/kita	=	=	ttheme/kita	ttheme/kita	bg:own fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-off-busy.busy.picture	none	=	ttheme/kita	ttheme/kita	=	ttheme/kita	=	=	ttheme/kita	ttheme/kita	=	=
+off-busy.busy.colors	own	=	ttheme/kita-ikuyo	ttheme/kita-ikuyo	ttheme/kita-ikuyo	ttheme/kita-ikuyo	=	=	ttheme/kita-ikuyo	ttheme/kita-ikuyo	bg:own fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+off-busy.busy.picture	none	=	ttheme/kita-ikuyo	ttheme/kita-ikuyo	=	ttheme/kita-ikuyo	=	=	ttheme/kita-ikuyo	ttheme/kita-ikuyo	=	=
 off-busy.busy.issue	-	=	=	=	=	=	=	=	=	=	=	=
-off-pin.dir.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+off-pin.dir.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 off-pin.dir.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off-pin.dir.wears	none	=	=	=	=	=	=	=	=	=	=	=
 off-pin.dir.issue	-	=	=	=	=	=	=	=	=	=	=	wears
-off-pin.host.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+off-pin.host.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 off-pin.host.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off-pin.host.issue	-	=	=	=	=	=	=	=	=	=	=	=
-off-pin.back.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+off-pin.back.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 off-pin.back.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off-pin.back.wears	none	=	=	=	=	=	=	=	=	=	=	=
 off-pin.back.issue	-	=	=	=	=	=	=	=	=	=	=	wears
-on.here.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-on.here.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-on.here.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+on.here.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+on.here.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+on.here.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 on.here.issue	-	=	=	=	=	=	=	=	=	=	=	=
-on.other.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-on.other.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-on.other.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+on.other.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+on.other.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+on.other.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 on.other.issue	-	=	=	=	=	=	=	=	=	=	=	=
-on.new.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-on.new.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-on.new.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+on.new.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+on.new.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+on.new.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 on.new.issue	-	=	=	=	=	=	=	=	=	=	=	=
-on-pin.in.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-on-pin.in.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-on-pin.in.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+on-pin.in.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+on-pin.in.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+on-pin.in.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 on-pin.in.issue	-	=	=	=	=	=	=	=	=	=	=	=
-on-pin.out.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-on-pin.out.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-on-pin.out.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+on-pin.out.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+on-pin.out.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+on-pin.out.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 on-pin.out.issue	-	=	=	=	=	=	=	=	=	=	=	=
-on-pin-plain.in.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+on-pin-plain.in.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 on-pin-plain.in.picture	none	=	=	=	=	=	=	=	=	=	=	=
-on-pin-plain.in.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+on-pin-plain.in.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 on-pin-plain.in.issue	-	=	=	=	=	=	=	=	=	=	=	=
-on-pin-other.off.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/konata
+on-pin-other.off.colors	own	=	=	=	=	=	=	=	=	=	=	ttheme/izumi-konata
 on-pin-other.off.picture	none	=	=	=	=	=	=	=	=	=	=	=
 on-pin-other.off.wears	none	=	=	=	=	=	=	=	=	=	=	=
 on-pin-other.off.issue	-	=	=	=	=	=	=	=	=	=	=	wears
-on-pin-other.on.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-on-pin-other.on.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-on-pin-other.on.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+on-pin-other.on.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+on-pin-other.on.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+on-pin-other.on.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 on-pin-other.on.issue	-	=	=	=	=	=	=	=	=	=	=	=
-focus.a.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-focus.a.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-focus.a.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+focus.a.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+focus.a.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+focus.a.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 focus.a.issue	-	=	=	=	=	=	=	=	=	=	=	=
-focus.b.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-focus.b.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-focus.b.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+focus.b.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+focus.b.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+focus.b.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 focus.b.issue	-	=	=	=	=	=	=	=	=	=	=	=
-focus-busy.busy.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-focus-busy.busy.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
+focus-busy.busy.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+focus-busy.busy.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
 focus-busy.busy.issue	-	=	=	=	=	=	=	=	=	=	=	=
-focus-busy.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-focus-busy.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-focus-busy.back.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+focus-busy.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+focus-busy.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+focus-busy.back.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 focus-busy.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
-prompt-behind.front.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-prompt-behind.front.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-prompt-behind.front.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+prompt-behind.front.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+prompt-behind.front.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+prompt-behind.front.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 prompt-behind.front.issue	-	=	=	=	=	=	=	=	=	=	=	=
-program-reset.after.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+program-reset.after.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 program-reset.after.picture	none	=	=	=	=	=	=	=	=	=	=	=
-program-reset.after.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+program-reset.after.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 program-reset.after.issue	-	=	=	=	=	=	=	=	=	=	=	=
-default-after-reset.kept.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-default-after-reset.kept.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-default-after-reset.kept.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+default-after-reset.kept.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+default-after-reset.kept.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+default-after-reset.kept.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 default-after-reset.kept.issue	-	=	=	=	=	=	=	=	=	=	=	=
-editor-terminal.after.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-editor-terminal.after.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-editor-terminal.after.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+editor-terminal.after.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+editor-terminal.after.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+editor-terminal.after.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 editor-terminal.after.text	txt:1b7974a0e0	=	=	=	=	=	=	=	=	=	=	=
 editor-terminal.after.issue	-	=	=	=	=	=	=	=	=	=	=	=
-tmux.in.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-tmux.in.picture	ttheme/kita	=	=	=	none	=	none	=	=	none	none	none
-tmux.in.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+tmux.in.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+tmux.in.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	none	none	none
+tmux.in.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 tmux.in.issue	-	=	=	=	=	=	=	=	=	=	=	=
-tmux.out.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+tmux.out.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 tmux.out.picture	none	=	=	=	=	=	=	=	=	=	=	=
-tmux.out.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+tmux.out.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 tmux.out.issue	-	=	=	=	=	=	=	=	=	=	=	=
-tmux-behind.behind.colors	ttheme/miku	=	=	=	=	=	=	ttheme/rei	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
-tmux-behind.behind.picture	none	=	=	=	=	=	=	=	=	ttheme/konata	=	=
-tmux-behind.behind.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+tmux-behind.behind.colors	ttheme/hatsune-miku	=	=	=	=	=	=	ttheme/ayanami-rei	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
+tmux-behind.behind.picture	none	=	=	=	=	=	=	=	=	ttheme/izumi-konata	=	=
+tmux-behind.behind.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 tmux-behind.behind.issue	-	=	=	=	=	=	=	wears	=	=	=	=
-tmux-behind.pane.colors	ttheme/rei	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/rei cursor:ttheme/rei ansi:ttheme/rei	=	bg:ttheme/konata fg:ttheme/rei cursor:ttheme/rei ansi:ttheme/rei
-tmux-behind.pane.picture	none	=	=	=	=	=	=	=	=	ttheme/konata	=	=
-tmux-behind.pane.wears	ttheme/rei	=	=	=	=	=	=	=	=	=	=	=
+tmux-behind.pane.colors	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/ayanami-rei cursor:ttheme/ayanami-rei ansi:ttheme/ayanami-rei	=	bg:ttheme/izumi-konata fg:ttheme/ayanami-rei cursor:ttheme/ayanami-rei ansi:ttheme/ayanami-rei
+tmux-behind.pane.picture	none	=	=	=	=	=	=	=	=	ttheme/izumi-konata	=	=
+tmux-behind.pane.wears	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	=
 tmux-behind.pane.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-hover.hover.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-preview-hover.hover.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-preview-hover.hover.text	txt:9c19b900ea	=	=	=	=	=	=	=	=	=	=	=
+preview-hover.hover.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+preview-hover.hover.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+preview-hover.hover.text	txt:2aa59b666c	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.hover.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-hover.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-preview-hover.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-preview-hover.back.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+preview-hover.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+preview-hover.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+preview-hover.back.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-esc.followed.colors	ttheme/rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/rei cursor:ttheme/rei ansi:ttheme/rei
+preview-esc.followed.colors	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/ayanami-rei cursor:ttheme/ayanami-rei ansi:ttheme/ayanami-rei
 preview-esc.followed.picture	none	=	=	=	=	=	=	=	=	=	=	=
-preview-esc.followed.wears	ttheme/rei	=	=	=	=	=	=	=	=	=	=	=
+preview-esc.followed.wears	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	=
 preview-esc.followed.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-default-same.followed.colors	ttheme/rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/rei cursor:ttheme/rei ansi:ttheme/rei
+preview-default-same.followed.colors	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/ayanami-rei cursor:ttheme/ayanami-rei ansi:ttheme/ayanami-rei
 preview-default-same.followed.picture	none	=	=	=	=	=	=	=	=	=	=	=
-preview-default-same.followed.wears	ttheme/rei	=	=	=	=	=	=	=	=	=	=	=
+preview-default-same.followed.wears	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	=
 preview-default-same.followed.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-tab.pick.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-preview-tab.pick.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-preview-tab.pick.text	txt:97c1eea33c	=	=	=	=	=	=	=	=	=	=	=
+preview-tab.pick.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+preview-tab.pick.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+preview-tab.pick.text	txt:f9fe92d570	=	=	=	=	=	=	=	=	=	=	=
 preview-tab.pick.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-tab.kept.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-preview-tab.kept.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-preview-tab.kept.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+preview-tab.kept.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+preview-tab.kept.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+preview-tab.kept.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 preview-tab.kept.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-tab-same.kept.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-preview-tab-same.kept.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-preview-tab-same.kept.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+preview-tab-same.kept.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+preview-tab-same.kept.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+preview-tab-same.kept.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 preview-tab-same.kept.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-default.here.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+preview-default.here.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 preview-default.here.picture	none	=	=	=	=	=	=	=	=	=	=	=
-preview-default.here.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+preview-default.here.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 preview-default.here.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-default.new.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+preview-default.new.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 preview-default.new.picture	none	=	=	=	=	=	=	=	=	=	=	=
-preview-default.new.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+preview-default.new.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 preview-default.new.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-tune.tune.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-preview-tune.tune.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-preview-tune.tune.text	txt:b2a1c00aba	=	=	=	txt:b69a1dc437	=	txt:b69a1dc437	=	txt:2fca1220aa	txt:0953791768	txt:b69a1dc437	txt:b69a1dc437
+preview-tune.tune.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+preview-tune.tune.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+preview-tune.tune.text	txt:86211cf926	=	=	=	txt:296abf63b6	=	txt:296abf63b6	=	txt:e89ec02e2c	txt:5660e85331	txt:296abf63b6	txt:296abf63b6
 preview-tune.tune.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-tune.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-preview-tune.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-preview-tune.back.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+preview-tune.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+preview-tune.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+preview-tune.back.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 preview-tune.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-config.panel.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-preview-config.panel.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-preview-config.panel.text	txt:44955c4c63	=	=	=	=	=	=	=	=	=	=	=
+preview-config.panel.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+preview-config.panel.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+preview-config.panel.text	txt:8d06a80dd4	=	=	=	=	=	=	=	=	=	=	=
 preview-config.panel.issue	-	=	=	=	=	=	=	=	=	=	=	=
-preview-config.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-preview-config.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-preview-config.back.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+preview-config.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+preview-config.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+preview-config.back.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 preview-config.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
-picture-drop.here.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-picture-drop.here.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-picture-drop.here.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+picture-drop.here.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+picture-drop.here.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+picture-drop.here.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 picture-drop.here.issue	-	=	=	=	=	=	=	=	=	=	=	=
-picture-drop.other.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
+picture-drop.other.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
 picture-drop.other.picture	none	=	=	=	=	=	=	=	=	=	=	=
-picture-drop.other.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+picture-drop.other.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 picture-drop.other.issue	-	=	=	=	=	=	=	=	=	=	=	=
-picture-tune.other.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-picture-tune.other.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-picture-tune.other.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+picture-tune.other.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+picture-tune.other.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+picture-tune.other.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 picture-tune.other.opacity	0.22	=	=	=	-	=	-	=	=	=	-	-
 picture-tune.other.issue	-	=	=	=	=	=	=	=	=	=	=	=
-pin.in.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-pin.in.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-pin.in.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+pin.in.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+pin.in.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+pin.in.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 pin.in.issue	-	=	=	=	=	=	=	=	=	=	=	=
-pin.out.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-pin.out.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-pin.out.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+pin.out.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+pin.out.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+pin.out.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 pin.out.issue	-	=	=	=	=	=	=	=	=	=	=	=
-pin-default.kept.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-pin-default.kept.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-pin-default.kept.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+pin-default.kept.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+pin-default.kept.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+pin-default.kept.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 pin-default.kept.issue	-	=	=	=	=	=	=	=	=	=	=	=
-pin-preview.pinned.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-pin-preview.pinned.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-pin-preview.pinned.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+pin-preview.pinned.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+pin-preview.pinned.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+pin-preview.pinned.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 pin-preview.pinned.issue	-	=	=	=	=	=	=	=	=	=	=	=
-pin-preview.followed.colors	ttheme/rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/rei cursor:ttheme/rei ansi:ttheme/rei
+pin-preview.followed.colors	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/ayanami-rei cursor:ttheme/ayanami-rei ansi:ttheme/ayanami-rei
 pin-preview.followed.picture	none	=	=	=	=	=	=	=	=	=	=	=
-pin-preview.followed.wears	ttheme/rei	=	=	=	=	=	=	=	=	=	=	=
+pin-preview.followed.wears	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	=
 pin-preview.followed.issue	-	=	=	=	=	=	=	=	=	=	=	=
-pin-reach.pinned.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-pin-reach.pinned.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-pin-reach.pinned.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+pin-reach.pinned.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+pin-reach.pinned.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+pin-reach.pinned.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 pin-reach.pinned.issue	-	=	=	=	=	=	=	=	=	=	=	=
-pin-reach.moved.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+pin-reach.moved.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 pin-reach.moved.picture	none	=	=	=	=	=	=	=	=	=	=	=
-pin-reach.moved.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+pin-reach.moved.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 pin-reach.moved.issue	-	=	=	=	=	=	=	=	=	=	=	=
-ssh.in.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-ssh.in.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
+ssh.in.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+ssh.in.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
 ssh.in.issue	-	=	=	=	=	=	=	=	=	=	=	=
-ssh.front.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-ssh.front.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
+ssh.front.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+ssh.front.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
 ssh.front.issue	-	=	=	=	=	=	=	=	=	=	=	=
-ssh.out.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-ssh.out.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-ssh.out.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+ssh.out.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+ssh.out.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+ssh.out.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 ssh.out.issue	-	=	=	=	=	=	=	=	=	=	=	=
-browse.hover.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-browse.hover.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-browse.hover.text	txt:13a4cf2da1	=	=	=	=	=	=	=	=	=	=	=
+browse.hover.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+browse.hover.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+browse.hover.text	txt:abbae77471	=	=	=	=	=	=	=	=	=	=	=
 browse.hover.issue	-	=	=	=	=	=	=	=	=	=	=	=
-browse.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-browse.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-browse.back.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+browse.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+browse.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+browse.back.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 browse.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
-browse-follow.followed.colors	ttheme/rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/rei cursor:ttheme/rei ansi:ttheme/rei
+browse-follow.followed.colors	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/ayanami-rei cursor:ttheme/ayanami-rei ansi:ttheme/ayanami-rei
 browse-follow.followed.picture	none	=	=	=	=	=	=	=	=	=	=	=
-browse-follow.followed.wears	ttheme/rei	=	=	=	=	=	=	=	=	=	=	=
+browse-follow.followed.wears	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	=
 browse-follow.followed.issue	-	=	=	=	=	=	=	=	=	=	=	=
-browse-reset.after.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+browse-reset.after.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 browse-reset.after.picture	none	=	=	=	=	=	=	=	=	=	=	=
-browse-reset.after.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+browse-reset.after.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 browse-reset.after.issue	-	=	=	=	=	=	=	=	=	=	=	=
-hub-back.browse.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-hub-back.browse.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
+hub-back.browse.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+hub-back.browse.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
 hub-back.browse.issue	-	=	=	=	=	=	=	=	=	=	=	=
-hub-back.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-hub-back.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
+hub-back.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+hub-back.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
 hub-back.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
-hub-back.row.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-hub-back.row.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
+hub-back.row.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+hub-back.row.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
 hub-back.row.issue	-	=	=	=	=	=	=	=	=	=	=	=
-hub-back.moved.colors	ttheme/rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/rei cursor:ttheme/rei ansi:ttheme/rei
+hub-back.moved.colors	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/ayanami-rei cursor:ttheme/ayanami-rei ansi:ttheme/ayanami-rei
 hub-back.moved.picture	none	=	=	=	=	=	=	=	=	=	=	=
 hub-back.moved.issue	-	=	=	=	=	=	=	=	=	=	=	=
-hub-back.closed.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-hub-back.closed.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-hub-back.closed.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+hub-back.closed.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+hub-back.closed.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+hub-back.closed.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 hub-back.closed.issue	-	=	=	=	=	=	=	=	=	=	=	=
-hub-back.work.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-hub-back.work.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
+hub-back.work.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+hub-back.work.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
 hub-back.work.issue	-	=	=	=	=	=	=	=	=	=	=	=
-browse-back.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-browse-back.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
+browse-back.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+browse-back.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
 browse-back.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
-browse-back.closed.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-browse-back.closed.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-browse-back.closed.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+browse-back.closed.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+browse-back.closed.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+browse-back.closed.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 browse-back.closed.issue	-	=	=	=	=	=	=	=	=	=	=	=
 unwired.open.colors	own	=	=	=	=	=	=	=	=	=	=	=
 unwired.open.picture	none	=	=	=	=	=	=	=	=	=	=	=
 unwired.open.wears	none	=	=	=	=	=	=	=	=	=	=	=
 unwired.open.issue	-	=	=	=	=	=	=	=	=	=	=	=
-unwired.used.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:own fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-unwired.used.picture	none	=	=	=	=	=	=	ttheme/kita	=	=	=	=
-unwired.used.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
-unwired.used.text	txt:944f1bf5d6	=	=	=	=	=	=	txt:e755ae2222	=	=	=	=
+unwired.used.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:own fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+unwired.used.picture	none	=	=	=	=	=	=	ttheme/kita-ikuyo	=	=	=	=
+unwired.used.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+unwired.used.text	txt:2043b765d1	=	=	=	=	=	=	txt:905f1b92c0	=	=	=	=
 unwired.used.issue	-	=	=	=	=	=	=	=	=	=	=	=
-reach.ghostty.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+reach.ghostty.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 reach.ghostty.picture	none	=	=	=	=	=	=	=	=	=	=	=
-reach.ghostty.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
-reach-picture.ghostty.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
-reach-picture.ghostty.picture	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+reach.ghostty.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
+reach-picture.ghostty.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+reach-picture.ghostty.picture	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 reach-picture.ghostty.opacity	0.22	=	=	=	0.19	=	0.19	=	=	=	0.19	0.19
-reach-picture.ghostty.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+reach-picture.ghostty.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 off-beside.ghostty.colors	own	=	=	=	=	=	=	=	=	=	=	=
 off-beside.ghostty.picture	none	=	=	=	=	=	=	=	=	=	=	=
 off-beside.ghostty.wears	none	=	=	=	=	=	=	=	=	=	=	=
-default-beside.ghostty.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
-default-beside.ghostty.picture	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
-default-beside.ghostty.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+default-beside.ghostty.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+default-beside.ghostty.picture	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+default-beside.ghostty.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 off-reach-busy.ghostty.colors	own	=	=	=	=	=	=	=	=	=	=	=
 off-reach-busy.ghostty.picture	none	=	=	=	=	=	=	=	=	=	=	=
-tone-reach.tuned.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-tone-reach.tuned.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-tone-reach.tuned.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+tone-reach.tuned.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+tone-reach.tuned.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+tone-reach.tuned.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 tone-reach.tuned.issue	-	=	=	=	=	=	=	=	=	=	=	=
-mode.here.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+mode.here.colors	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/hatsune-miku cursor:ttheme/hatsune-miku ansi:ttheme/hatsune-miku
 mode.here.picture	none	=	=	=	=	=	=	=	=	=	=	=
-mode.here.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
+mode.here.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 mode.here.issue	-	=	=	=	=	=	=	=	=	=	=	=
-mode.painted.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-mode.painted.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-mode.painted.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+mode.painted.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+mode.painted.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+mode.painted.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 mode.painted.issue	-	=	=	=	=	=	=	=	=	=	=	=
-mode.unpainted.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/konata cursor:ttheme/konata ansi:ttheme/konata
-mode.unpainted.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-mode.unpainted.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+mode.unpainted.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/izumi-konata cursor:ttheme/izumi-konata ansi:ttheme/izumi-konata
+mode.unpainted.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+mode.unpainted.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 mode.unpainted.issue	-	=	=	=	=	=	=	=	=	=	=	=
-mode.new.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/konata cursor:ttheme/konata ansi:ttheme/konata
-mode.new.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-mode.new.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+mode.new.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/izumi-konata cursor:ttheme/izumi-konata ansi:ttheme/izumi-konata
+mode.new.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+mode.new.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 mode.new.repaints	0	=	=	=	=	=	=	=	=	1	=	=
 mode.new.issue	-	=	=	=	=	=	=	=	=	=	=	=
-auto.painted.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-auto.painted.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-auto.painted.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+auto.painted.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+auto.painted.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+auto.painted.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 auto.painted.mode	light	=	=	=	=	=	=	=	=	=	=	=
 auto.painted.issue	-	=	=	=	=	=	=	=	=	=	=	=
-auto.unpainted.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/konata cursor:ttheme/konata ansi:ttheme/konata
-auto.unpainted.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-auto.unpainted.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+auto.unpainted.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/izumi-konata cursor:ttheme/izumi-konata ansi:ttheme/izumi-konata
+auto.unpainted.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+auto.unpainted.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 auto.unpainted.issue	-	=	=	=	=	=	=	=	=	=	=	=
-auto.new.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/konata cursor:ttheme/konata ansi:ttheme/konata
-auto.new.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-auto.new.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+auto.new.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/izumi-konata cursor:ttheme/izumi-konata ansi:ttheme/izumi-konata
+auto.new.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+auto.new.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 auto.new.repaints	0	=	=	=	=	=	=	=	=	1	=	=
 auto.new.issue	-	=	=	=	=	=	=	=	=	=	=	=
-auto.ghostty.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-auto.ghostty.picture	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-auto.ghostty.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
-auto.back.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-auto.back.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-auto.back.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+auto.ghostty.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+auto.ghostty.picture	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+auto.ghostty.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
+auto.back.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+auto.back.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+auto.back.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 auto.back.mode	light	=	=	=	=	=	=	=	=	=	=	=
 auto.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
-auto-own.painted.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-auto-own.painted.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-auto-own.painted.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+auto-own.painted.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+auto-own.painted.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+auto-own.painted.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 auto-own.painted.mode	light	=	=	=	=	=	=	=	=	=	=	=
 auto-own.painted.issue	-	=	=	=	=	=	=	=	=	=	=	=
-auto-own.unpainted.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/konata cursor:ttheme/konata ansi:ttheme/konata
-auto-own.unpainted.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-auto-own.unpainted.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+auto-own.unpainted.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/izumi-konata cursor:ttheme/izumi-konata ansi:ttheme/izumi-konata
+auto-own.unpainted.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+auto-own.unpainted.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 auto-own.unpainted.issue	-	=	=	=	=	=	=	=	=	=	=	=
-auto-own.new.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/konata cursor:ttheme/konata ansi:ttheme/konata
-auto-own.new.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-auto-own.new.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
+auto-own.new.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/izumi-konata cursor:ttheme/izumi-konata ansi:ttheme/izumi-konata
+auto-own.new.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
+auto-own.new.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 auto-own.new.repaints	0	=	=	=	=	=	=	=	=	1	=	=
 auto-own.new.issue	-	=	=	=	=	=	=	=	=	=	=	=
-auto-own.back.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
-auto-own.back.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-auto-own.back.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
+auto-own.back.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+auto-own.back.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+auto-own.back.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 auto-own.back.mode	dark	=	=	=	light	=	light	light	light	light	light	=
 auto-own.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
-palettes.added.colors	ttheme/asuka	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/asuka cursor:ttheme/asuka ansi:ttheme/asuka
+palettes.added.colors	ttheme/souryuu-asuka-langley	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/souryuu-asuka-langley cursor:ttheme/souryuu-asuka-langley ansi:ttheme/souryuu-asuka-langley
 palettes.added.picture	none	=	=	=	=	=	=	=	=	=	=	=
-palettes.added.wears	ttheme/asuka	=	=	=	=	=	=	=	=	=	=	=
+palettes.added.wears	ttheme/souryuu-asuka-langley	=	=	=	=	=	=	=	=	=	=	=
 palettes.added.issue	-	=	=	=	=	=	=	=	=	=	=	=

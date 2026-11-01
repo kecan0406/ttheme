@@ -7,7 +7,7 @@ checks, and share the result as a link or a marketplace.
 
 ```sh
 ttheme new dusk                    # from blank
-ttheme new rei --from ttheme/rei   # starting from another palette's colors
+ttheme new ayanami-rei --from ttheme/ayanami-rei   # starting from another palette's colors
 ttheme edit dusk                   # change it later
 ```
 
@@ -52,7 +52,7 @@ into every color you left as it was. A color you both changed stays yours, and
 ## Tune a palette that is not yours
 
 ```sh
-ttheme edit miku   # a built-in palette: your changes are kept as its tuning
+ttheme edit hatsune-miku   # a built-in palette: your changes are kept as its tuning
 ```
 
 In `ttheme`, the same editor opens from a palette's panel: `tab`, then `enter` on
@@ -70,8 +70,8 @@ palette's marketplace gives, in `~/.config/ttheme/tone.json`.
 ## Contrast checks
 
 ```sh
-ttheme check miku         # every check's numbers for a palette
-ttheme check --fix miku   # colors that pass, saved as its tuning (or into your own palette's set)
+ttheme check hatsune-miku         # every check's numbers for a palette
+ttheme check --fix hatsune-miku   # colors that pass, saved as its tuning (or into your own palette's set)
 ```
 
 The checks tell a palette's author what it fails and never refuse a palette; the
@@ -121,7 +121,7 @@ the palette open with every draft of the same work as one set: a `.toml` that
 marketplace ready to push.
 
 When a search on [ttheme.dev/browse](https://ttheme.dev/browse) finds
-no palette of a work or a character, **make one** opens the builder on blank
+no palette of a work, **make one** opens the builder on blank
 seeds under its name, and **request a palette** asks for one on GitHub.
 
 ## Share a link
@@ -130,7 +130,7 @@ A share link carries the palette itself, so nothing is uploaded or stored. It
 opens the palette in the builder, and `ttheme add` installs it from there.
 
 ```sh
-ttheme share rei       # one palette
+ttheme share ayanami-rei       # one palette
 ttheme share           # asks how to share, then which palettes
 ttheme share | pbcopy  # the palette this tab shows, straight to the clipboard
 ttheme add https://ttheme.dev/builder/tt8:…   # install a link; the bare code works too
@@ -189,9 +189,9 @@ palettes of a marketplace share a slug.
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "rei"                               # its name in the marketplace
-subject = "evangelion/rei"                 # what it is of: a work, or a work's character
-upstream.palette = "ttheme/rei"            # the palette it was copied from, if any
+slug = "ayanami-rei"                               # its name in the marketplace
+subject = "evangelion/ayanami-rei"                 # what it is of: a work, or a work's character
+upstream.palette = "ttheme/ayanami-rei"            # the palette it was copied from, if any
 
 [palette.colors]
 background = "#201516"

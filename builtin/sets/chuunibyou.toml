@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "rikka"
-subject = "chuunibyou/rikka"
+slug = "takanashi-rikka"
+subject = "chuunibyou/takanashi-rikka"
 
 [palette.colors]
 background = "#1b170c"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "yuuta"
-subject = "chuunibyou/yuuta"
+slug = "togashi-yuuta"
+subject = "chuunibyou/togashi-yuuta"
 
 [palette.colors]
 background = "#211512"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "shinka"
-subject = "chuunibyou/shinka"
+slug = "nibutani-shinka"
+subject = "chuunibyou/nibutani-shinka"
 
 [palette.colors]
 background = "#1f1519"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "dekomori"
-subject = "chuunibyou/dekomori"
+slug = "dekomori-sanae"
+subject = "chuunibyou/dekomori-sanae"
 
 [palette.colors]
 background = "#1a180d"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "kumin"
-subject = "chuunibyou/kumin"
+slug = "tsuyuri-kumin"
+subject = "chuunibyou/tsuyuri-kumin"
 
 [palette.colors]
 background = "#1a161e"

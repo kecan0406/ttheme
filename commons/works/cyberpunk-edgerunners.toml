@@ -5,7 +5,7 @@ danbooru = "cyberpunk:_edgerunners"
 lead = "cyberpunk-edgerunners/lucy"
 
 [[character]]
-id = "david"
+id = "david-martinez"
 native = ["デイビッド・マルティネス", "デイヴィッド・マルティネス"]
 danbooru = "david_martinez"
 

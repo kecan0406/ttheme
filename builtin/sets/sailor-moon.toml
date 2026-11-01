@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "moon"
-subject = "sailor-moon/moon"
+slug = "sailor-moon"
+subject = "sailor-moon/sailor-moon"
 
 [palette.colors]
 background = "#1f1518"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "mercury"
-subject = "sailor-moon/mercury"
+slug = "sailor-mercury"
+subject = "sailor-moon/sailor-mercury"
 
 [palette.colors]
 background = "#12181d"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "mars"
-subject = "sailor-moon/mars"
+slug = "sailor-mars"
+subject = "sailor-moon/sailor-mars"
 
 [palette.colors]
 background = "#201514"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "jupiter"
-subject = "sailor-moon/jupiter"
+slug = "sailor-jupiter"
+subject = "sailor-moon/sailor-jupiter"
 
 [palette.colors]
 background = "#131913"
@@ -217,8 +217,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "venus"
-subject = "sailor-moon/venus"
+slug = "sailor-venus"
+subject = "sailor-moon/sailor-venus"
 
 [palette.colors]
 background = "#1e160d"

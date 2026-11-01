@@ -2,19 +2,19 @@
 name = "Steins;Gate"
 native = "シュタインズ・ゲート"
 danbooru = "steins;gate"
-lead = "steins-gate/kurisu"
+lead = "steins-gate/makise-kurisu"
 
 [[character]]
-id = "kurisu"
+id = "makise-kurisu"
 native = ["牧瀬紅莉栖"]
 danbooru = "makise_kurisu"
 
 [[character]]
-id = "mayuri"
+id = "shiina-mayuri"
 native = ["椎名まゆり"]
 danbooru = "shiina_mayuri"
 
 [[character]]
-id = "suzuha"
+id = "amane-suzuha"
 native = ["阿万音鈴羽"]
 danbooru = "amane_suzuha"

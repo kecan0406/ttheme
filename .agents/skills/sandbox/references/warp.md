@@ -2,7 +2,7 @@
 
 ```zsh
 W=.agents/skills/sandbox/scripts/window.zsh
-zsh $W --warp --shots <scratchpad>/w ttheme/rei ttheme/asuka -- "sb_drive 'ttheme' 2 text:rei 1 right end f 12 shot:find"
+zsh $W --warp --shots <scratchpad>/w ttheme/ayanami-rei ttheme/souryuu-asuka-langley -- "sb_drive 'ttheme' 2 text:ayanami-rei 1 right end f 12 shot:find"
 ```
 
 `--warp` opens a window in the user's own Warp, from `env -i`. The tab's first shell is the user's own before `sandbox.command` execs the sandbox shell, and opening the window can move the user's own Warp to another palette: tell the user. At the end the run hangs up that window's shell instead of quitting Warp.

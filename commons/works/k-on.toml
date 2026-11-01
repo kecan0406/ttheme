@@ -2,29 +2,29 @@
 name = "K-On!"
 native = "けいおん!"
 danbooru = "k-on!"
-lead = "k-on/yui"
+lead = "k-on/hirasawa-yui"
 
 [[character]]
-id = "yui"
+id = "hirasawa-yui"
 native = ["平沢唯"]
 danbooru = "hirasawa_yui"
 
 [[character]]
-id = "ritsu"
+id = "tainaka-ritsu"
 native = ["田井中律"]
 danbooru = "tainaka_ritsu"
 
 [[character]]
-id = "mio"
+id = "akiyama-mio"
 native = ["秋山澪"]
 danbooru = "akiyama_mio"
 
 [[character]]
-id = "mugi"
+id = "kotobuki-tsumugi"
 native = ["琴吹紬"]
 danbooru = "kotobuki_tsumugi"
 
 [[character]]
-id = "azusa"
+id = "nakano-azusa"
 native = ["中野梓"]
 danbooru = "nakano_azusa"

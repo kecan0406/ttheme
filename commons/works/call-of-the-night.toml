@@ -2,28 +2,28 @@
 name = "Call of the Night"
 native = "よふかしのうた"
 danbooru = "yofukashi_no_uta"
-lead = "call-of-the-night/nazuna"
+lead = "call-of-the-night/nanakusa-nazuna"
 
 [[character]]
-id = "nazuna"
+id = "nanakusa-nazuna"
 native = ["七草ナズナ"]
 danbooru = "nanakusa_nazuna_(yofukashi_no_uta)"
 sites = { konachan = "nanakusa_nazuna", yande = "nanakusa_nazuna", zerochan = "nanakusa_nazuna" }
 
 [[character]]
-id = "kou"
+id = "yamori-kou"
 native = ["夜守コウ"]
 danbooru = "yamori_kou"
 sites = { konachan = [] }
 
 [[character]]
-id = "seri"
+id = "kikyou-seri"
 native = ["桔梗セリ"]
 danbooru = "kikyou_seri"
 sites = { konachan = [], zerochan = "kikiyou_seri" }
 
 [[character]]
-id = "anko"
+id = "uguisu-anko"
 native = ["鶯アンコ"]
 danbooru = "uguisu_anko"
 sites = { konachan = [] }

@@ -241,6 +241,18 @@ test('the commons holds together: also names another work, and one danbooru tag 
   ])
 })
 
+test("a character with a tag takes the tag's full name for an id", () => {
+  const work: Work = { id: 'tide', name: 'Tide', characters: [{ id: 'nell', danbooru: 'harbor_nell' }] }
+
+  assert.deepEqual(commonsProblems([work]), [
+    'tide/nell: a character\'s id is its danbooru tag\'s full name, "harbor-nell"',
+  ])
+  assert.deepEqual(
+    commonsProblems([{ ...work, characters: [{ id: 'harbor-nell', danbooru: 'harbor_nell' }, { id: 'lighthouse' }] }]),
+    [],
+  )
+})
+
 test('the commons reads back from the JSON init writes, and refuses another shape', () => {
   const commons = { works: [starfall] }
   assert.deepEqual(parseCommons(JSON.stringify(commons)), commons)

@@ -1061,7 +1061,7 @@ export class BrowsePanel {
     }
 
     if (this.showing === 'search') {
-      return this.p.dim('Search… a work, a character or a marketplace')
+      return this.p.dim('Search… a work or a marketplace')
     }
 
     const example = this.hint.text()
@@ -1349,8 +1349,8 @@ export class BrowsePanel {
         {
           group: 'Filter',
           keys: 'type',
-          does: 'Find a work, a character or a marketplace',
-          more: 'Once you stop typing, the name is looked up in any language, unless TTHEME_NAME_LOOKUP is off.',
+          does: 'Find a work or a marketplace',
+          more: "Once you stop typing, the title is looked up in any language, unless TTHEME_NAME_LOOKUP is off. A palette's whole name finds its work too.",
         },
         filtering[1] as Topic,
         {

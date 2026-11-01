@@ -5,6 +5,7 @@ import {
   castFrom,
   familyOf,
   foundSlugs,
+  heldNamed,
   igdbOf,
   MOST_FOUND,
   membersOf,
@@ -15,35 +16,38 @@ import {
 } from '@/lib/found'
 import type { CastMember, NameHit, TaggedWork } from '../../src/core/names.ts'
 
-function hit(kind: NameHit['kind'], label: string, tags: string[], works: NameHit[] = []): NameHit {
-  return { id: `${kind}/${label}`, kind, label, names: [], tags, works }
+function hit(label: string, tags: string[]): NameHit {
+  return { id: `work/${label}`, label, names: [], tags }
 }
 
 function tagged(id: string, tags: string[], more: Partial<TaggedWork> = {}): TaggedWork {
   return { id, label: id, names: [], tags, refs: [], origin: [], year: null, medium: null, ...more }
 }
 
-test('a work hit gives the slug of its main tag, and a character the one of its home, never a work it guests in', () => {
-  const harbor = hit('work', '月明かりの港', ['moonlit_harbor_(series)', 'moonlit_harbor_movie'])
-  const cameo = hit('work', 'Starfall Arena', ['starfall_arena'])
+test('a work hit gives the slug of its main tag, unless a work holds it already', () => {
+  const harbor = hit('月明かりの港', ['moonlit_harbor_(series)', 'moonlit_harbor_movie'])
+  const cameo = hit('Starfall Arena', ['starfall_arena'])
 
-  const nell = {
-    ...hit('character', 'ネル', ['nell_(moonlit_harbor)'], [cameo, harbor]),
-    home: 'moonlit_harbor_(series)',
-  }
-
-  const drifter = hit('character', 'Drifter', ['drifter'], [cameo])
-
-  expect(foundSlugs([nell], new Set())).toEqual(['moonlit-harbor'])
-  expect(foundSlugs([harbor, nell], new Set())).toEqual(['moonlit-harbor'])
-  expect(foundSlugs([drifter], new Set())).toEqual([])
+  expect(foundSlugs([harbor], new Set())).toEqual(['moonlit-harbor'])
+  expect(foundSlugs([hit('Drifter', [])], new Set())).toEqual([])
   expect(foundSlugs([cameo, harbor], new Set(['moonlit-harbor']))).toEqual(['starfall-arena'])
 })
 
 test('found slugs stop at the most a search shows', () => {
-  const hits = Array.from({ length: MOST_FOUND + 2 }, (_, at) => hit('work', `Glass ${at}`, [`glass_orchard_${at}`]))
+  const hits = Array.from({ length: MOST_FOUND + 2 }, (_, at) => hit(`Glass ${at}`, [`glass_orchard_${at}`]))
 
   expect(foundSlugs(hits, new Set())).toHaveLength(MOST_FOUND)
+})
+
+test('a character with a palette is found in its work by a word of its name or by a native name', () => {
+  const held = [
+    { id: 'harbor-nell', keys: ['harbor_nell', 'ハーバー・ネル'] },
+    { id: 'tide-oren', keys: ['tide_oren'] },
+  ]
+
+  expect(heldNamed('nell', held).map((holder) => holder.id)).toEqual(['harbor-nell'])
+  expect(heldNamed('ネル', held).map((holder) => holder.id)).toEqual(['harbor-nell'])
+  expect(heldNamed('quill', held)).toEqual([])
 })
 
 test('the members of a slug are the works one of whose tags makes it', () => {

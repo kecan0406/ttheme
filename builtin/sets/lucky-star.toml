@@ -1,8 +1,8 @@
 "$schema" = "https://www.schemastore.org/ttheme-set.json"
 
 [[palette]]
-slug = "konata"
-subject = "lucky-star/konata"
+slug = "izumi-konata"
+subject = "lucky-star/izumi-konata"
 
 [palette.colors]
 background = "#13181e"
@@ -55,8 +55,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "kagami"
-subject = "lucky-star/kagami"
+slug = "hiiragi-kagami"
+subject = "lucky-star/hiiragi-kagami"
 
 [palette.colors]
 background = "#19161e"
@@ -109,8 +109,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "tsukasa"
-subject = "lucky-star/tsukasa"
+slug = "hiiragi-tsukasa"
+subject = "lucky-star/hiiragi-tsukasa"
 
 [palette.colors]
 background = "#1b161d"
@@ -163,8 +163,8 @@ ansi = [
 ]
 
 [[palette]]
-slug = "miyuki"
-subject = "lucky-star/miyuki"
+slug = "takara-miyuki"
+subject = "lucky-star/takara-miyuki"
 
 [palette.colors]
 background = "#201517"

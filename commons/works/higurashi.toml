@@ -5,22 +5,22 @@ danbooru = "higurashi_no_naku_koro_ni"
 lead = "higurashi/hinamizawa"
 
 [[character]]
-id = "rena"
+id = "ryuuguu-rena"
 native = ["竜宮レナ"]
 danbooru = "ryuuguu_rena"
 
 [[character]]
-id = "mion"
+id = "sonozaki-mion"
 native = ["園崎魅音"]
 danbooru = "sonozaki_mion"
 
 [[character]]
-id = "rika"
+id = "furude-rika"
 native = ["古手梨花"]
 danbooru = "furude_rika"
 
 [[character]]
-id = "satoko"
+id = "houjou-satoko"
 native = ["北条沙都子"]
 danbooru = "houjou_satoko"
 

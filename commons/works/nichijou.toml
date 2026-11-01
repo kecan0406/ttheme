@@ -5,28 +5,28 @@ danbooru = "nichijou"
 lead = "nichijou/sakamoto"
 
 [[character]]
-id = "yukko"
+id = "aioi-yuuko"
 native = ["相生祐子"]
 danbooru = "aioi_yuuko"
 sites = { yande = "aioi_yuko" }
 
 [[character]]
-id = "naganohara"
+id = "naganohara-mio"
 native = ["長野原みお"]
 danbooru = "naganohara_mio"
 
 [[character]]
-id = "mai"
+id = "minakami-mai"
 native = ["水上麻衣"]
 danbooru = "minakami_mai"
 
 [[character]]
-id = "nano"
+id = "shinonome-nano"
 native = ["東雲なの"]
 danbooru = "shinonome_nano"
 
 [[character]]
-id = "hakase"
+id = "professor-shinonome"
 native = ["東雲はかせ"]
 danbooru = "professor_shinonome"
 sites = { konachan = "hakase_(nichijou)", yande = "hakase", zerochan = "shinonome_hakase" }

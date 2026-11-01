@@ -2,26 +2,26 @@
 name = "Bocchi the Rock!"
 native = "ぼっち・ざ・ろっく!"
 danbooru = "bocchi_the_rock!"
-lead = "bocchi-the-rock/bocchi"
+lead = "bocchi-the-rock/gotoh-hitori"
 
 [[character]]
-id = "bocchi"
+id = "gotoh-hitori"
 native = ["後藤ひとり"]
 danbooru = "gotoh_hitori"
 sites = { konachan = "gotou_hitori", yande = "gotou_hitori", zerochan = "gotou_hitori" }
 
 [[character]]
-id = "nijika"
+id = "ijichi-nijika"
 native = ["伊地知虹夏"]
 danbooru = "ijichi_nijika"
 
 [[character]]
-id = "ryo"
+id = "yamada-ryo"
 native = ["山田リョウ"]
 danbooru = "yamada_ryo"
 sites = { konachan = "yamada_ryou", yande = "yamada_ryou", zerochan = "yamada_ryou" }
 
 [[character]]
-id = "kita"
+id = "kita-ikuyo"
 native = ["喜多郁代"]
 danbooru = "kita_ikuyo"

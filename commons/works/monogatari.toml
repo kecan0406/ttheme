@@ -2,24 +2,24 @@
 name = "Monogatari"
 native = "〈物語〉シリーズ"
 danbooru = "monogatari_(series)"
-lead = "monogatari/hitagi"
+lead = "monogatari/senjougahara-hitagi"
 
 [[character]]
-id = "hitagi"
+id = "senjougahara-hitagi"
 native = ["戦場ヶ原ひたぎ"]
 danbooru = "senjougahara_hitagi"
 
 [[character]]
-id = "shinobu"
+id = "oshino-shinobu"
 native = ["忍野忍"]
 danbooru = "oshino_shinobu"
 
 [[character]]
-id = "tsubasa"
+id = "hanekawa-tsubasa"
 native = ["羽川翼"]
 danbooru = "hanekawa_tsubasa"
 
 [[character]]
-id = "nadeko"
+id = "sengoku-nadeko"
 native = ["千石撫子"]
 danbooru = "sengoku_nadeko"
