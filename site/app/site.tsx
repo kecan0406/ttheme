@@ -19,9 +19,9 @@ import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
 import { BROWSE_PATH, MARKETPLACES_PATH, marketplacePath, palettePath, palettesPath, shelvesOf } from '@/lib/gallery'
 import { artFor } from '@/lib/key-art'
-import { foundPage, lookUp, prime } from '@/lib/lookup'
+import { castNamed, foundPage, lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
-import { MOST_ASKED, NAMES_PATH, type NamesAnswer } from '@/lib/names'
+import { CAST_FILE, type CastAnswer, MOST_ASKED, NAMES_PATH, type NamesAnswer } from '@/lib/names'
 import { crumbs, ROBOTS, siteGraph, sitemapXml } from '@/lib/seo'
 import { readShared, type Shared } from '@/lib/share'
 import { faviconIco, touchIconPng } from '@/lib/tab-icon'
@@ -93,7 +93,7 @@ function gone(reason: string): Response {
   return new Response(reason, { status: 404, headers: { 'cache-control': RETRY } })
 }
 
-function answer(body: NamesAnswer | { error: string }, cache: string, status = 200): Response {
+function answer(body: NamesAnswer | CastAnswer | { error: string }, cache: string, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cache },
@@ -111,6 +111,22 @@ async function named(asked: string, signal: AbortSignal): Promise<Response> {
     return answer(looked.answer, looked.settled ? WEEKLY : RETRY)
   } catch (error) {
     process.stderr.write(`site: names: ${error instanceof Error ? error.message : String(error)}\n`)
+
+    return answer({ error: 'the name index did not answer' }, 'no-store', 502)
+  }
+}
+
+async function castFound(id: string, asked: string, signal: AbortSignal): Promise<Response> {
+  const query = Array.from(asked.trim()).slice(0, MOST_ASKED).join('')
+
+  if (!query) return answer({ error: 'no name to look up' }, RETRY, 400)
+
+  try {
+    const cast = await castNamed(id, query, AbortSignal.any([signal, AbortSignal.timeout(LOOKUP_MS)]))
+
+    return cast ? answer({ cast }, WEEKLY) : answer({ error: 'no such work' }, RETRY, 404)
+  } catch (error) {
+    process.stderr.write(`site: cast: ${error instanceof Error ? error.message : String(error)}\n`)
 
     return answer({ error: 'the name index did not answer' }, 'no-store', 502)
   }
@@ -492,6 +508,9 @@ export const site = new Elysia({ name: 'site' })
       <WorkView page={found} facts={facts} path={path} />,
     )
   })
+  .get(`${WORK_PATH}/:id/${CAST_FILE}`, ({ params, query, request }) =>
+    castFound(params.id, String(query.q ?? ''), request.signal),
+  )
   .get(NAMES_PATH, ({ query, request }) =>
     query.q === undefined ? primed(request.signal) : named(String(query.q), request.signal),
   )

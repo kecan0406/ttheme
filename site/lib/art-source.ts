@@ -1,5 +1,5 @@
 import type { Art, WorkArt } from '@/lib/art'
-import { anilistIdsOf, type Casts, type CastWork, castFrom, MOST_CAST } from '@/lib/found'
+import { anilistIdsOf, type Casts, type CastWork, castFrom, castLeads, MOST_CAST, untaken } from '@/lib/found'
 import { langOf } from '@/lib/theme-entry'
 import type { Work } from '../../src/core/commons.ts'
 import { type CastMember, workSlugOf } from '../../src/core/names.ts'
@@ -459,17 +459,11 @@ export async function fetchCasts(works: readonly CastWork[], warn: (message: str
     const slug = workSlugOf(work.tag)
 
     if (!slug) continue
-    const taken = new Set(work.taken)
 
     try {
       const members = await index.cast(slug, AbortSignal.timeout(BUILD.timeout), MOST_CAST)
 
-      found.set(
-        work.id,
-        members.filter(
-          (member) => !member.tags.some((tag) => taken.has(tag)) && !member.names.some((name) => taken.has(name.text)),
-        ),
-      )
+      found.set(work.id, untaken(castLeads(members), work.taken))
     } catch (error) {
       warn(`no cast of ${work.id} — ${error instanceof Error ? error.message : String(error)}`)
     }

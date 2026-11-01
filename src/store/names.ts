@@ -9,6 +9,7 @@ import {
   type NameHit,
   type TaggedWork,
   type WorkName,
+  workSlugOf,
 } from '../core/names.ts'
 import { inert } from '../core/text.ts'
 import { cacheRoot } from './paths.ts'
@@ -23,10 +24,13 @@ export interface NameIndex {
   search: NameSearch
   tagged(slug: string, signal: AbortSignal): Promise<TaggedWork[]>
   cast(slug: string, signal: AbortSignal, limit: number): Promise<CastMember[]>
+  find(query: string, slug: string, signal: AbortSignal): Promise<CastMember[]>
   open(signal: AbortSignal): Promise<void>
 }
 
 const LIMIT = 10
+
+const FIND_LIMIT = 50
 
 const RETRIES = [150, 500]
 
@@ -150,6 +154,7 @@ function memberOf(value: unknown): CastMember | undefined {
     names: workNamesOf(v.names),
     tags: strings(v.danbooru, (t) => t !== '' && !ODD.test(t)),
     refs: strings(v.refs, (r) => REF.test(r)),
+    lead: v.role === 'lead',
   }
 }
 
@@ -258,6 +263,22 @@ export function nameIndex(source: Source): NameIndex {
       const found: unknown = await names.cast(slug, { adult: false, limit, prefix: cutSlug(slug), signal })
 
       return castMembers(found)
+    },
+    async find(query, slug, signal) {
+      const [found, works]: unknown[] = await Promise.all([
+        names.search(query, { kind: 'character', limit: FIND_LIMIT, adult: false, signal }),
+        names.tagged(slug, { kind: 'work', adult: false, prefix: cutSlug(slug), signal }),
+      ])
+
+      const ids = new Set(cardsOf(works).flatMap((card) => (typeof card.id === 'string' ? [card.id] : [])))
+
+      return castMembers(
+        cardsOf(found).filter(
+          (card) =>
+            (typeof card.home === 'string' && workSlugOf(card.home) === slug) ||
+            strings(card.works, Boolean).some((id) => ids.has(id)),
+        ),
+      )
     },
     async open(signal) {
       await names.lookup([], signal)

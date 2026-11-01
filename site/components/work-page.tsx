@@ -2,7 +2,7 @@ import { ArrowRight, Plus } from 'lucide'
 import { LinkButton } from '@/components/ui/button'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { Facts } from '@/lib/facts'
-import { type FamilyWork, type FoundCast, type FoundPage, type FoundWork, nativeLang, SHOWN_CAST } from '@/lib/found'
+import { type FamilyWork, type FoundCast, type FoundPage, type FoundWork, SHOWN_CAST } from '@/lib/found'
 import { BROWSE_PATH, marketplacePath, palettePath } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
 import { makePath } from '@/lib/names'
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import type { CastSlot, WorkMarket, WorkPage } from '@/lib/work-page'
 import { ribbon, swatchStyle, WORN_FACETS } from '@/lib/works'
 import { requestUrl } from '../../src/core/names.ts'
+import { CAST, CastSearch, CIRCLE, Member } from './cast-members'
 import { Crumbs } from './marketplace-frame'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
@@ -22,11 +23,6 @@ export const HERO_SIZES = '100vw'
 const HEADING = 'flex items-baseline gap-2.5 font-display text-display-md font-black'
 
 const COUNT = 'font-mono text-sm font-normal tracking-normal text-muted-foreground'
-
-const CIRCLE = 'relative grid size-24 place-items-center overflow-hidden rounded-full max-sm:size-19'
-
-const CAST =
-  'flex flex-wrap gap-x-5.5 gap-y-5 max-sm:-mx-5 max-sm:snap-x max-sm:snap-mandatory max-sm:scroll-px-5 max-sm:flex-nowrap max-sm:gap-x-3.5 max-sm:overflow-x-auto max-sm:px-5 max-sm:pt-1.5 max-sm:pb-1.5 max-sm:[scrollbar-width:none]'
 
 const MAIN = 'relative mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] pb-24'
 
@@ -236,46 +232,6 @@ function WorkHead({ name, native, lang }: { name: string; native: string | null;
   )
 }
 
-function Member({ member, lang, work }: { member: FoundCast; lang: string | null; work: string }) {
-  return (
-    <li class="grid w-27 flex-none max-sm:w-21 max-sm:snap-start">
-      <a
-        href={requestUrl(`${member.name}, ${work}`)}
-        target="_blank"
-        rel="noopener"
-        class="group/who grid content-start justify-items-center gap-2 text-center outline-none"
-      >
-        <span
-          class={cn(
-            CIRCLE,
-            'bg-muted transition-[translate,box-shadow] duration-200 group-focus-visible/who:ring-2 group-focus-visible/who:ring-ring group-focus-visible/who:ring-offset-2 group-focus-visible/who:ring-offset-background motion-safe:group-hover/who:-translate-y-0.5',
-          )}
-        >
-          <SlotArt picture={member.picture} />
-        </span>
-        <span class="grid w-full min-w-0 justify-items-center gap-px">
-          <b class="flex max-w-full min-w-0 items-center gap-1 font-display text-base leading-snug font-extrabold transition-colors group-hover/who:text-primary">
-            <span translate="no" class="truncate" safe>
-              {member.name}
-            </span>
-            <NewTab class="size-3 flex-none opacity-0 transition-opacity group-hover/who:opacity-100 group-focus-visible/who:opacity-100" />
-          </b>
-          {member.native === null ? null : (
-            <small
-              translate="no"
-              lang={nativeLang(member.native, lang) ?? undefined}
-              class="max-w-full truncate font-display text-xs font-extrabold text-muted-foreground"
-              safe
-            >
-              {member.native}
-            </small>
-          )}
-        </span>
-      </a>
-    </li>
-  )
-}
-
 function Members({ cast, lang, work }: { cast: FoundCast[]; lang: string | null; work: string }) {
   const rest = cast.slice(SHOWN_CAST)
 
@@ -362,6 +318,7 @@ export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts
                 characters <span class={COUNT}>{cast.length}</span>
               </h2>
               <Members cast={cast} lang={work.lang} work={work.name} />
+              <CastSearch id={work.id} work={work.name} lang={work.lang} />
             </section>
           )}
           {family.length < 2 ? null : (
@@ -425,6 +382,7 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
                 <Members cast={more} lang={work.lang} work={work.name} />
               </div>
             )}
+            {page.findable ? <CastSearch id={work.id} work={work.name} lang={work.lang} /> : null}
           </section>
           <section aria-labelledby="palettes" class={SECTION}>
             <h2 id="palettes" class={HEADING}>

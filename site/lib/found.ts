@@ -7,6 +7,8 @@ export const SHOWN_CAST = 24
 
 export const MOST_CAST = 400
 
+export const FEW_CAST = 6
+
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 const ORIGIN_LANGS = new Map<string, readonly string[]>([
@@ -245,6 +247,20 @@ function shown(text: string): string {
   return /^[\x20-\x7e]+$/.test(base) && base === base.toLowerCase()
     ? base.replace(/\b[a-z]/g, (letter) => letter.toUpperCase())
     : base
+}
+
+export function castLeads(members: readonly CastMember[]): CastMember[] {
+  const leads = members.filter((member) => member.lead)
+
+  return leads.length > 0 ? leads : members.slice(0, FEW_CAST)
+}
+
+export function untaken(members: readonly CastMember[], taken: readonly string[]): CastMember[] {
+  const known = new Set(taken)
+
+  return members.filter(
+    (member) => !member.tags.some((tag) => known.has(tag)) && !member.names.some((name) => known.has(name.text)),
+  )
 }
 
 export function castFrom(

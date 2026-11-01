@@ -157,6 +157,7 @@ test("a cast member shows a Latin name and its name in the work's language, a Da
     names,
     tags: [],
     refs,
+    lead: false,
   })
 
   const pictures = new Map([[31, 'https://s4.anilist.co/file/anilistcdn/character/large/b31.png']])

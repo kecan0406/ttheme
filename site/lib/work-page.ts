@@ -30,6 +30,7 @@ export interface WorkPage {
   facets: string
   cast: CastSlot[]
   more: FoundCast[]
+  findable: boolean
   markets: WorkMarket[]
 }
 
@@ -104,6 +105,7 @@ export function workPages(themes: readonly Theme[], shelves: readonly Shelf[]): 
       facets: facetStyle(lead),
       cast,
       more: castFor(ref.id),
+      findable: commons.works.some((work) => work.id === ref.id && Boolean(work.danbooru)),
       markets,
     })
   }

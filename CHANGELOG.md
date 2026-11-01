@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Search marketplace in Browse places a character in the work it comes from, not in a game it only guests in, and Request a palette names that work: Ruby Kurosawa asks for Love Live! Sunshine!! rather than Love Live! School Idol Festival.
+- Request a palette from Search marketplace names a work by its title rather than its first season: ぼっち・ざ・ろっく! instead of ぼっち・ざ・ろっく！ 第1期.
 
 ## 1.2.83
 

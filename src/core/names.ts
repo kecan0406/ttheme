@@ -47,6 +47,7 @@ export interface CastMember {
   names: WorkName[]
   tags: string[]
   refs: string[]
+  lead: boolean
 }
 
 export interface NamedWork {

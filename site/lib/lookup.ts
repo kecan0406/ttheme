@@ -1,6 +1,7 @@
 import { answerOf } from '@/lib/answer'
 import { heroArtOf, igdbArtOf, keyArtOf } from '@/lib/art'
 import {
+  castWorks,
   type Live,
   liveArtwork,
   liveBackdrop,
@@ -15,6 +16,7 @@ import {
   anilistIdsOf,
   anilistOf,
   castFrom,
+  castLeads,
   type FamilyWork,
   type FoundCast,
   type FoundPage,
@@ -28,11 +30,12 @@ import {
   steamOf,
   titleOf,
   tmdbOf,
+  untaken,
 } from '@/lib/found'
 import { listedWorks, marketplaces } from '@/lib/marketplaces'
 import type { NamesAnswer } from '@/lib/names'
 import { mergeWorks, workOfListed } from '../../src/core/commons.ts'
-import { namedWorks } from '../../src/core/names.ts'
+import { namedWorks, workSlugOf } from '../../src/core/names.ts'
 import { liveSource, nameIndex } from '../../src/store/names.ts'
 
 const KEEP_MS = 6 * 60 * 60 * 1000
@@ -55,6 +58,8 @@ const index = nameIndex(liveSource())
 const works = mergeWorks(commons.works, listedWorks.map(workOfListed))
 
 const taken = new Set(works.map((work) => work.id))
+
+const castable = new Map(castWorks(commons.works).map((work) => [work.id, work]))
 
 const shelved = new Set(
   [...themes, ...marketplaces.flatMap((marketplace) => marketplace.palettes)].flatMap((theme) =>
@@ -161,7 +166,7 @@ function castOf(slug: string, lang: string | null): Promise<Live<FoundCast[]>> {
     casts,
     slug,
     async () => {
-      const members = await index.cast(slug, AbortSignal.timeout(FOUND_MS), MOST_CAST)
+      const members = castLeads(await index.cast(slug, AbortSignal.timeout(FOUND_MS), MOST_CAST))
       const ids = anilistIdsOf(members)
       const pictures = ids.length > 0 ? await livePictures(ids) : { value: new Map<number, string>(), settled: true }
 
@@ -182,6 +187,19 @@ export async function foundPage(slug: string): Promise<{ page: FoundPage; settle
     page: { work: found.work, cast: cast.value, family: found.family },
     settled: found.settled && cast.settled,
   }
+}
+
+export async function castNamed(id: string, query: string, signal: AbortSignal): Promise<FoundCast[] | null> {
+  const listed = castable.get(id)
+  const slug = listed ? workSlugOf(listed.tag) : slugLike(id) && !taken.has(id) ? id : undefined
+
+  if (!slug) return null
+  const lang = listed ? listed.lang : (await resolve(slug))?.work.lang
+
+  if (lang === undefined) return null
+  const members = untaken(await index.find(query, slug, signal), listed?.taken ?? [])
+
+  return castFrom(members, new Map(), lang)
 }
 
 export function prime(signal: AbortSignal): Promise<void> {

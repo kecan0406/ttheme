@@ -12,6 +12,7 @@ declare namespace JSX {
   interface IntrinsicElements {
     'browse-marketplaces': HtmlTag
     'browse-works': HtmlTag
+    'cast-search': HtmlTag
     'docs-page': HtmlTag
     'facet-ground': HtmlTag
     'kaomoji-rain': HtmlTag
