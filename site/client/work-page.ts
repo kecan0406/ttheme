@@ -35,6 +35,8 @@ class WorkPage extends HTMLElement {
       slot.toggleAttribute('data-dim', who !== null && slot.dataset.who !== who)
     }
 
+    for (const member of this.querySelectorAll('a[data-member]')) member.toggleAttribute('data-dim', who !== null)
+
     this.querySelector('[data-show-all]')?.toggleAttribute('hidden', who === null)
     const markets = [...this.querySelectorAll<HTMLElement>('[data-market]')]
     let holding = 0

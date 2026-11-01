@@ -40,68 +40,72 @@ const MEDIA = new Map([
 
 function Who({ slot }: { slot: CastSlot }) {
   return (
-    <button
-      type="button"
-      data-who={slot.id}
-      aria-pressed="false"
-      class="group/who grid w-27 flex-none content-start justify-items-center gap-2 text-center outline-none transition-opacity duration-200 data-dim:opacity-45 max-sm:w-21 max-sm:snap-start"
-    >
-      <span
-        class={cn(
-          CIRCLE,
-          'bg-muted transition-[translate,box-shadow] duration-200 group-focus-visible/who:ring-2 group-focus-visible/who:ring-ring group-focus-visible/who:ring-offset-2 group-focus-visible/who:ring-offset-background group-aria-pressed/who:ring-2 group-aria-pressed/who:ring-primary group-aria-pressed/who:ring-offset-2 group-aria-pressed/who:ring-offset-background motion-safe:group-hover/who:-translate-y-0.5',
-        )}
+    <li class="grid w-27 flex-none max-sm:w-21 max-sm:snap-start">
+      <button
+        type="button"
+        data-who={slot.id}
+        aria-pressed="false"
+        class="group/who grid content-start justify-items-center gap-2 text-center outline-none transition-opacity duration-200 data-dim:opacity-45"
       >
-        <SlotArt picture={slot.picture} />
-      </span>
-      <span class="grid w-full min-w-0 justify-items-center gap-px">
-        <b class="flex max-w-full min-w-0 items-center gap-1.5 font-display text-base leading-snug font-extrabold transition-colors group-hover/who:text-primary">
-          <span translate="no" class="truncate" safe>
-            {slot.id}
-          </span>
-          {slot.lead ? <LeadStar /> : null}
-        </b>
-        {slot.native === null ? null : (
-          <small
-            translate="no"
-            lang={slot.lang ?? undefined}
-            class="max-w-full truncate font-display text-xs font-extrabold text-muted-foreground"
-            safe
-          >
-            {slot.native}
-          </small>
-        )}
-      </span>
-    </button>
+        <span
+          class={cn(
+            CIRCLE,
+            'bg-muted transition-[translate,box-shadow] duration-200 group-focus-visible/who:ring-2 group-focus-visible/who:ring-ring group-focus-visible/who:ring-offset-2 group-focus-visible/who:ring-offset-background group-aria-pressed/who:ring-2 group-aria-pressed/who:ring-primary group-aria-pressed/who:ring-offset-2 group-aria-pressed/who:ring-offset-background motion-safe:group-hover/who:-translate-y-0.5',
+          )}
+        >
+          <SlotArt picture={slot.picture} />
+        </span>
+        <span class="grid w-full min-w-0 justify-items-center gap-px">
+          <b class="flex max-w-full min-w-0 items-center gap-1.5 font-display text-base leading-snug font-extrabold transition-colors group-hover/who:text-primary">
+            <span translate="no" class="truncate" safe>
+              {slot.id}
+            </span>
+            {slot.lead ? <LeadStar /> : null}
+          </b>
+          {slot.native === null ? null : (
+            <small
+              translate="no"
+              lang={slot.lang ?? undefined}
+              class="max-w-full truncate font-display text-xs font-extrabold text-muted-foreground"
+              safe
+            >
+              {slot.native}
+            </small>
+          )}
+        </span>
+      </button>
+    </li>
   )
 }
 
 function Request({ work }: { work: string }) {
   return (
-    <a
-      href={requestUrl(work)}
-      target="_blank"
-      rel="noopener"
-      class="group/who grid w-27 flex-none content-start justify-items-center gap-2 text-center outline-none max-sm:w-21 max-sm:snap-start"
-    >
-      <span
-        class={cn(
-          CIRCLE,
-          'bg-muted/65 text-soft-foreground inset-ring inset-ring-border transition-[color,box-shadow,translate] duration-200 group-hover/who:text-foreground group-hover/who:inset-ring-input group-focus-visible/who:ring-2 group-focus-visible/who:ring-ring group-focus-visible/who:ring-offset-2 group-focus-visible/who:ring-offset-background motion-safe:group-hover/who:-translate-y-0.5',
-        )}
+    <li class="grid w-27 flex-none max-sm:w-21 max-sm:snap-start">
+      <a
+        href={requestUrl(work)}
+        target="_blank"
+        rel="noopener"
+        class="group/who grid content-start justify-items-center gap-2 text-center outline-none"
       >
-        <Icon node={Plus} class="size-5.5" />
-      </span>
-      <span class="grid w-full justify-items-center gap-px">
-        <b class="font-display text-base leading-snug font-extrabold text-soft-foreground transition-colors group-hover/who:text-foreground">
-          request
-        </b>
-        <small class="inline-flex items-center gap-1 font-display text-xs font-extrabold text-muted-foreground">
-          a character
-          <NewTab class="size-3" />
-        </small>
-      </span>
-    </a>
+        <span
+          class={cn(
+            CIRCLE,
+            'bg-muted/65 text-soft-foreground inset-ring inset-ring-border transition-[color,box-shadow,translate] duration-200 group-hover/who:text-foreground group-hover/who:inset-ring-input group-focus-visible/who:ring-2 group-focus-visible/who:ring-ring group-focus-visible/who:ring-offset-2 group-focus-visible/who:ring-offset-background motion-safe:group-hover/who:-translate-y-0.5',
+          )}
+        >
+          <Icon node={Plus} class="size-5.5" />
+        </span>
+        <span class="grid w-full justify-items-center gap-px">
+          <b class="font-display text-base leading-snug font-extrabold text-soft-foreground transition-colors group-hover/who:text-foreground">
+            request
+          </b>
+          <small class="inline-flex items-center gap-1 font-display text-xs font-extrabold text-muted-foreground">
+            a character
+            <NewTab class="size-3" />
+          </small>
+        </span>
+      </a>
+    </li>
   )
 }
 
@@ -232,9 +236,34 @@ function WorkHead({ name, native, lang }: { name: string; native: string | null;
   )
 }
 
-function Members({ cast, lang, work }: { cast: FoundCast[]; lang: string | null; work: string }) {
-  const rest = cast.slice(SHOWN_CAST)
+function RestOfCast({
+  rest,
+  total,
+  lang,
+  work,
+}: {
+  rest: FoundCast[]
+  total: number
+  lang: string | null
+  work: string
+}) {
+  return rest.length === 0 ? null : (
+    <Collapsible class="group/more grid grid-cols-[minmax(0,1fr)] gap-5">
+      <CollapsibleTrigger class="justify-self-start rounded-sm text-sm font-medium text-primary outline-none group-open/more:hidden hover:underline focus-visible:ring-2 focus-visible:ring-ring">
+        show all {total}
+      </CollapsibleTrigger>
+      <CollapsiblePanel>
+        <ul class={CAST}>
+          {rest.map((member) => (
+            <Member member={member} lang={lang} work={work} />
+          ))}
+        </ul>
+      </CollapsiblePanel>
+    </Collapsible>
+  )
+}
 
+function Members({ cast, lang, work }: { cast: FoundCast[]; lang: string | null; work: string }) {
   return (
     <>
       <ul class={CAST}>
@@ -242,20 +271,7 @@ function Members({ cast, lang, work }: { cast: FoundCast[]; lang: string | null;
           <Member member={member} lang={lang} work={work} />
         ))}
       </ul>
-      {rest.length === 0 ? null : (
-        <Collapsible class="group/more grid grid-cols-[minmax(0,1fr)] gap-5">
-          <CollapsibleTrigger class="justify-self-start rounded-sm text-sm font-medium text-primary outline-none group-open/more:hidden hover:underline focus-visible:ring-2 focus-visible:ring-ring">
-            show all {cast.length}
-          </CollapsibleTrigger>
-          <CollapsiblePanel>
-            <ul class={CAST}>
-              {rest.map((member) => (
-                <Member member={member} lang={lang} work={work} />
-              ))}
-            </ul>
-          </CollapsiblePanel>
-        </Collapsible>
-      )}
+      <RestOfCast rest={cast.slice(SHOWN_CAST)} total={cast.length} lang={lang} work={work} />
     </>
   )
 }
@@ -346,6 +362,7 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
   const { work, cast, more, markets } = page
   const count = markets.reduce((sum, market) => sum + market.palettes.length, 0)
   const langs = new Map(cast.map((slot) => [slot.id, slot.lang]))
+  const room = Math.max(0, SHOWN_CAST - cast.length)
 
   return (
     <div class="ground relative isolate flex min-h-dvh flex-col">
@@ -357,7 +374,7 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
           <section aria-labelledby="characters" class={SECTION}>
             <div class="flex items-baseline gap-3.5">
               <h2 id="characters" class={HEADING}>
-                characters <span class={COUNT}>{cast.length}</span>
+                characters <span class={COUNT}>{cast.length + more.length}</span>
               </h2>
               <button
                 type="button"
@@ -368,20 +385,16 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
                 show all
               </button>
             </div>
-            <div class={CAST}>
+            <ul class={CAST}>
               {cast.map((slot) => (
                 <Who slot={slot} />
               ))}
+              {more.slice(0, room).map((member) => (
+                <Member member={member} lang={work.lang} work={work.name} />
+              ))}
               <Request work={work.name} />
-            </div>
-            {more.length === 0 ? null : (
-              <div class="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4.5">
-                <h3 class="flex items-baseline gap-2.5 font-display text-display-sm font-black">
-                  no palette yet <span class={COUNT}>{more.length}</span>
-                </h3>
-                <Members cast={more} lang={work.lang} work={work.name} />
-              </div>
-            )}
+            </ul>
+            <RestOfCast rest={more.slice(room)} total={cast.length + more.length} lang={work.lang} work={work.name} />
             {page.findable ? <CastSearch id={work.id} work={work.name} lang={work.lang} /> : null}
           </section>
           <section aria-labelledby="palettes" class={SECTION}>

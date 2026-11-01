@@ -21,7 +21,8 @@ export function Member({ member, lang, work }: { member: FoundCast; lang: string
         href={requestUrl(`${member.name}, ${work}`)}
         target="_blank"
         rel="noopener"
-        class="group/who grid content-start justify-items-center gap-2 text-center outline-none"
+        data-member
+        class="group/who grid content-start justify-items-center gap-2 text-center outline-none transition-opacity duration-200 data-dim:opacity-45"
       >
         <span
           class={cn(
