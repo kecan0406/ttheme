@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.84
+
 - Every built-in palette whose character has a danbooru tag now goes by the character's full name: `bocchi` is `gotoh-hitori`, `gojo` is `gojo-satoru`, `joker` is `amamiya-ren`. A palette you installed under the old name stays installed under it but no longer updates; add the new name to follow it, and pin or tune it again there.
 - Search marketplace finds works by their titles and palettes by their whole names. It no longer finds a work by the name of a character in it; look for the work, then the character on the site's page for that work.
 

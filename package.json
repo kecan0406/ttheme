@@ -1,6 +1,6 @@
 {
   "name": "@kecan0406/ttheme",
-  "version": "1.2.83",
+  "version": "1.2.84",
   "type": "module",
   "bin": {
     "ttheme": "bin/ttheme.js"
