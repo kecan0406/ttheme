@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- In Windows Terminal, `ttheme light`, `ttheme dark` and `ttheme auto` typed in a tab with a palette no longer drop that tab to the default palette.
+
 ## 1.2.85
 
 - A marketplace palette whose `subject` names a built-in character by an old id, `vocaloid/miku` for one, fails `ttheme marketplace check` until it names the new id, `vocaloid/hatsune-miku`; it still installs and shows.

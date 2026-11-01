@@ -1856,7 +1856,7 @@ __tt_resync() {
   zstat -F %s.%N -A was +mtime -- $store 2>/dev/null
   __tt_cli sync || return 1
   __tt_reload
-  [[ $1 == here ]] && __tt_fresh
+  [[ $1 == here ]] && __tt_fresh here
   zstat -F %s.%N -A now +mtime -- $store 2>/dev/null
   [[ $now[1] == "$was[1]" ]] || { (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER }
   return 0

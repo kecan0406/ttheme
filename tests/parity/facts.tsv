@@ -371,6 +371,16 @@ mode.new.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
 mode.new.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 mode.new.repaints	0	=	=	=	=	=	=	=	=	1	=	=
 mode.new.issue	-	=	=	=	=	=	=	=	=	=	=	=
+mode-verb.light.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+mode-verb.light.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+mode-verb.light.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+mode-verb.light.mode	light	=	=	=	=	=	=	=	=	=	=	=
+mode-verb.light.issue	-	=	=	=	=	=	=	=	=	=	=	=
+mode-verb.dark.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+mode-verb.dark.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+mode-verb.dark.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+mode-verb.dark.mode	dark	=	=	=	=	=	=	=	=	=	=	=
+mode-verb.dark.issue	-	=	=	=	=	=	=	=	=	=	=	=
 auto.painted.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
 auto.painted.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
 auto.painted.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=

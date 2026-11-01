@@ -838,6 +838,18 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'mode-verb',
+    about: 'a mode typed in a painted tab leaves that tab on its palette once the reload it set off is over',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use kita-ikuyo')
+      await p.type(a, 'ttheme light')
+      await p.look('light', { want: 'ttheme/kita-ikuyo', mode: 'light' })
+      await p.type(a, 'ttheme dark')
+      await p.look('dark', { want: 'ttheme/kita-ikuyo', mode: 'dark' })
+    },
+  },
+  {
     id: 'auto',
     about:
       'with the mode on auto, the appearance a Ghostty tab hears at its prompt reaches every tab, painted or not, and new tabs, in every wired terminal',
