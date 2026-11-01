@@ -1,6 +1,6 @@
 import { type KeyArt, keyArtOf, type WorkArt } from '@/lib/art'
 import { searchText } from '@/lib/gallery'
-import { BUILTIN, faceOf, isBuiltin, paint, type Shade, type Theme, type WorkRef } from '@/lib/themes'
+import { BUILTIN, faceOf, paint, type Shade, type Theme, type WorkRef } from '@/lib/themes'
 
 export const FIRST = 'ttheme/miku'
 
@@ -22,8 +22,6 @@ export interface WorkEntry {
   art: KeyArt | null
   facets: string
   palettes: number
-  builtin: boolean
-  community: boolean
   search: string
 }
 
@@ -124,8 +122,6 @@ export function workEntries(themes: readonly Theme[], artOf: (work: string) => W
         art: keyArtOf(artOf(id)),
         facets: facetStyle(leadOf(shelf)),
         palettes: shelf.themes.length,
-        builtin: shelf.themes.some(isBuiltin),
-        community: !shelf.themes.every(isBuiltin),
         search: [id, name, native ?? '', ...shelf.themes.map(searchText)].join('\n').toLowerCase(),
       },
     ]

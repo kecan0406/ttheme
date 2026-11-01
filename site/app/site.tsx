@@ -14,6 +14,7 @@ import { RESTORE_SCRIPT } from '@/lib/builder'
 import { builderData, starts } from '@/lib/builder-page'
 import { fallback, gate, themes } from '@/lib/builtin'
 import { type Card, cardAlt, cardPng } from '@/lib/card'
+import { CATEGORIES, categoryPath } from '@/lib/categories'
 import { creditsOf } from '@/lib/credits'
 import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
@@ -27,6 +28,7 @@ import { readShared, type Shared } from '@/lib/share'
 import { faviconIco, touchIconPng } from '@/lib/tab-icon'
 import { BUILTIN, type Marketplace, type Theme } from '@/lib/themes'
 import {
+  browseCategoryMeta,
   browseMeta,
   builderMeta,
   creditsMeta,
@@ -161,6 +163,7 @@ function stockOf(id: string): Stock | undefined {
 export const PRERENDERED: string[] = [
   '/',
   BROWSE_PATH,
+  ...CATEGORIES.map((category) => categoryPath(category.slug)),
   MARKETPLACES_PATH,
   '/builder',
   CREDITS_PATH,
@@ -370,6 +373,34 @@ export const site = new Elysia({ name: 'site' })
       <BrowseMarketplaces shelves={listings} works={entries.length} facts={facts} />,
     ),
   )
+  .get(`${BROWSE_PATH}/:category`, ({ params }) => {
+    const category = CATEGORIES.find((one) => one.slug === params.category)
+
+    if (!category)
+      return page(
+        { title: 'ttheme — no such page', description: STORE, status: 404, cache: RETRY },
+        <Missing title="no such page" text="Nothing lives at this address." facts={facts} />,
+      )
+
+    const path = categoryPath(category.slug)
+
+    return page(
+      {
+        ...browseCategoryMeta(category.label),
+        path,
+        ...CARD,
+        ld: [
+          crumbs([
+            { name: 'ttheme', path: '/' },
+            { name: 'browse', path: BROWSE_PATH },
+            { name: category.label, path },
+          ]),
+        ],
+        cache: FIXED,
+      },
+      <BrowseWorks entries={entries} shelves={listings} facts={facts} category={category} />,
+    )
+  })
   .get('/builder', () =>
     builder(null, {
       ...builderMeta(),

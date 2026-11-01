@@ -75,20 +75,4 @@ function RadioGroupItem({
   )
 }
 
-function RadioGroupCount({
-  class: className,
-  ...props
-}: PropsWithChildren<Omit<JSX.HtmlTag, 'class'> & { class?: string }>) {
-  return (
-    <span
-      data-slot="radio-group-count"
-      class={cn(
-        'min-w-5 rounded-full bg-muted px-1.5 text-center font-mono text-xs leading-4.5 text-muted-foreground tabular-nums',
-        className,
-      )}
-      {...props}
-    />
-  )
-}
-
-export { RadioGroup, RadioGroupCount, RadioGroupItem }
+export { RadioGroup, RadioGroupItem }

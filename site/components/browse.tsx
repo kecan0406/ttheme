@@ -8,19 +8,18 @@ import {
   Clock,
   GalleryHorizontalEnd,
   type IconNode,
-  Layers,
   LayoutGrid,
   Plus,
   Search,
   Star,
-  Store,
 } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
-import { RadioGroup, RadioGroupCount, RadioGroupItem } from '@/components/ui/radio-group'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { type KeyArt, keyArtOf } from '@/lib/art'
+import { alsoIn, CATEGORIES, type Category, type CategorySlug, categoriesOf, categoryPath } from '@/lib/categories'
 import type { Facts } from '@/lib/facts'
 import {
   BROWSE_PATH,
@@ -29,13 +28,8 @@ import {
   marketplacePath,
   palettePath,
   type Shelf,
-  SOURCE_LABELS,
-  SOURCES,
   type Sort,
-  type Source,
-  START,
-  searchable,
-  shelvesMatching,
+  searchText,
 } from '@/lib/gallery'
 import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { artFor } from '@/lib/key-art'
@@ -61,8 +55,6 @@ const LENSES: { lens: Lens; href: string }[] = [
   { lens: 'works', href: BROWSE_PATH },
   { lens: 'marketplaces', href: MARKETPLACES_PATH },
 ]
-
-const SOURCE_ICONS: Record<Source, IconNode | null> = { all: null, builtin: Layers, community: Store }
 
 const WORK_SORTS = {
   name: { label: 'a–z', icon: ArrowDownAZ },
@@ -133,13 +125,16 @@ function Lenses({ lens, counts }: { lens: Lens; counts: Record<Lens, number> }) 
 
 function Head({
   lens,
+  heading,
   counts,
   placeholder,
   children,
-}: PropsWithChildren<{ lens: Lens; counts: Record<Lens, number>; placeholder: string }>) {
+}: PropsWithChildren<{ lens: Lens; heading: string; counts: Record<Lens, number>; placeholder: string }>) {
   return (
     <div class="grid grid-cols-[minmax(0,1fr)] gap-5">
-      <h1 class="sr-only">{lens === 'works' ? 'browse works' : 'browse marketplaces'}</h1>
+      <h1 class="sr-only" safe>
+        {heading}
+      </h1>
       <div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-5">
         <Lenses lens={lens} counts={counts} />
         <search class="max-w-[540px] flex-[1_1_22rem]">
@@ -170,24 +165,6 @@ function Head({
       </div>
       <div class="flex flex-wrap items-end">{children}</div>
     </div>
-  )
-}
-
-function Sources({ counts }: { counts: Record<Source, number> }) {
-  return (
-    <RadioGroup variant="underline" label="source" class="w-auto flex-[1_1_auto]">
-      {SOURCES.map((source) => {
-        const icon = SOURCE_ICONS[source]
-
-        return (
-          <RadioGroupItem variant="underline" name="source" value={source} checked={source === START.source}>
-            {icon ? <Icon node={icon} /> : null}
-            {SOURCE_LABELS[source]}
-            <RadioGroupCount data-count={source}>{counts[source]}</RadioGroupCount>
-          </RadioGroupItem>
-        )
-      })}
-    </RadioGroup>
   )
 }
 
@@ -237,16 +214,16 @@ function Hint({ href, label }: { href: string; label: string }) {
   )
 }
 
-function Empty() {
+function Empty({ everyWork = false }: { everyWork?: boolean }) {
   return (
     <div data-empty hidden class="grid justify-items-center gap-1 py-15 text-center text-muted-foreground">
       <strong class="block font-semibold text-foreground">
-        <span data-empty-title>no palette matches these filters</span>{' '}
+        <span data-empty-title>no palettes yet</span>{' '}
         <span data-empty-face aria-hidden="true">
           ( ˘ω˘ )
         </span>
       </strong>
-      <span data-empty-text>clear a filter, or search for a work instead.</span>
+      <span data-empty-text>ask for one, or make it yourself.</span>
       <span data-empty-ask hidden class="mt-3 flex flex-wrap justify-center gap-2">
         <LinkButton variant="outline" size="sm" href={requestUrl('')} target="_blank" rel="noopener" data-request>
           request a palette
@@ -256,6 +233,13 @@ function Empty() {
           make one
         </LinkButton>
       </span>
+      {everyWork ? (
+        <span data-empty-every hidden class="mt-3 flex justify-center">
+          <LinkButton variant="outline" size="sm" href={BROWSE_PATH} data-keep-query>
+            search every work
+          </LinkButton>
+        </span>
+      ) : null}
     </div>
   )
 }
@@ -264,10 +248,64 @@ function Count({ value }: { value: number }) {
   return <b class="font-mono font-normal text-soft-foreground tabular-nums">{value}</b>
 }
 
-export function BrowseWorks({ entries, shelves, facts }: { entries: WorkEntry[]; shelves: Shelf[]; facts: Facts }) {
-  const count = (source: Source) =>
-    entries.filter((entry) => source === 'all' || (source === 'builtin' ? entry.builtin : entry.community)).length
+const TILES =
+  'grid grid-cols-[repeat(auto-fill,minmax(min(100%,13.75rem),1fr))] gap-x-4 gap-y-6.5 max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:gap-y-5'
 
+interface WorkGroup {
+  id: string
+  slug: CategorySlug | null
+  label: string
+  href: string | null
+  entries: WorkEntry[]
+}
+
+function groupsOf(entries: WorkEntry[], category: Category | undefined): WorkGroup[] {
+  const groups = (category ? [category] : CATEGORIES).map((one) => ({
+    id: one.slug,
+    slug: one.slug,
+    label: one.label,
+    href: category ? null : categoryPath(one.slug),
+    entries: entries.filter((entry) => categoriesOf(entry.id).includes(one.slug)),
+  }))
+
+  const other = entries.filter((entry) => categoriesOf(entry.id).length === 0)
+
+  return category || other.length === 0
+    ? groups
+    : [...groups, { id: 'other', slug: null, label: 'other', href: null, entries: other }]
+}
+
+function Categories({ current }: { current: CategorySlug | undefined }) {
+  return (
+    <nav
+      aria-label="category"
+      class="flex flex-[1_1_auto] items-center gap-6 border-b border-border max-sm:basis-full max-sm:overflow-x-auto max-sm:[scrollbar-width:none]"
+    >
+      {CATEGORIES.map((one) => (
+        <a
+          href={one.slug === current ? BROWSE_PATH : categoryPath(one.slug)}
+          data-keep-query
+          aria-current={one.slug === current ? 'page' : undefined}
+          class="relative -mb-px flex-none px-0.5 pb-3 text-sm font-medium whitespace-nowrap text-soft-foreground transition-colors duration-150 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:after:opacity-100 max-sm:mb-0"
+        >
+          {one.label}
+        </a>
+      ))}
+    </nav>
+  )
+}
+
+export function BrowseWorks({
+  entries,
+  shelves,
+  facts,
+  category,
+}: {
+  entries: WorkEntry[]
+  shelves: Shelf[]
+  facts: Facts
+  category?: Category
+}) {
   const markets = shelves.map((shelf) => ({
     id: shelf.id,
     text: [shelf.id, shelf.repo, shelf.about].join(' ').toLowerCase(),
@@ -275,13 +313,14 @@ export function BrowseWorks({ entries, shelves, facts }: { entries: WorkEntry[];
 
   return (
     <MarketplaceFrame facts={facts} current={BROWSE_PATH}>
-      <browse-works class="grid grid-cols-[minmax(0,1fr)] gap-5">
+      <browse-works data-category={category?.label} class="grid grid-cols-[minmax(0,1fr)] gap-5">
         <Head
           lens="works"
+          heading={category ? `browse ${category.label} works` : 'browse works'}
           counts={{ works: entries.length, marketplaces: shelves.length }}
           placeholder="search works and characters"
         >
-          <Sources counts={{ all: count('all'), builtin: count('builtin'), community: count('community') }} />
+          <Categories current={category?.slug} />
           <Choice name="sort" options={WORK_SORTS} first="name" />
         </Head>
         <Hint href={MARKETPLACES_PATH} label="see marketplaces" />
@@ -293,37 +332,55 @@ export function BrowseWorks({ entries, shelves, facts }: { entries: WorkEntry[];
             · looking up names…
           </span>
         </p>
-        <ul
-          data-tiles
-          aria-label="works"
-          class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,13.75rem),1fr))] gap-x-4 gap-y-6.5 pt-2 max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:gap-y-5"
-        >
-          {entries.map((entry, index) => (
-            <li
-              data-work={entry.id}
-              data-search={entry.search}
-              data-builtin={entry.builtin}
-              data-community={entry.community}
-              data-palettes={entry.palettes}
-              data-order={index}
-              class="grid"
-            >
-              <WorkThumb
-                href={entry.path}
-                name={entry.name}
-                native={entry.native}
-                lang={entry.lang}
-                count={entry.palettes}
-                art={entry.art}
-                facets={entry.facets}
-                sizes={THUMB_SIZES}
-                eager={index < 5}
-                community={!entry.builtin}
-              />
-            </li>
-          ))}
-        </ul>
-        <Empty />
+        {groupsOf(entries, category).map((group, at) => (
+          <section
+            data-group
+            aria-labelledby={`group-${group.id}`}
+            class="grid grid-cols-[minmax(0,1fr)] gap-3.5 not-first-of-type:pt-3.5"
+          >
+            <h2 id={`group-${group.id}`} class="flex items-baseline gap-2 font-display text-display-sm font-black">
+              {group.href ? (
+                <a href={group.href} data-keep-query class="transition-colors hover:text-primary" safe>
+                  {group.label}
+                </a>
+              ) : (
+                <span safe>{group.label}</span>
+              )}
+              <span
+                data-group-count
+                class="font-mono text-xs font-normal tracking-normal text-muted-foreground tabular-nums"
+              >
+                {group.entries.length}
+              </span>
+            </h2>
+            <ul data-tiles aria-label={group.label} class={TILES}>
+              {group.entries.map((entry, index) => (
+                <li
+                  data-work={entry.id}
+                  data-search={entry.search}
+                  data-palettes={entry.palettes}
+                  data-order={index}
+                  class="grid"
+                >
+                  <WorkThumb
+                    href={entry.path}
+                    name={entry.name}
+                    native={entry.native}
+                    lang={entry.lang}
+                    count={entry.palettes}
+                    art={entry.art}
+                    facets={entry.facets}
+                    sizes={THUMB_SIZES}
+                    eager={at === 0 && index < 5}
+                    also={alsoIn(entry.id, group.slug)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+        {category ? null : <ul data-found-tiles hidden aria-label="works without palettes" class={TILES}></ul>}
+        <Empty everyWork={category !== undefined} />
         <script type="application/json" data-markets>
           {json(markets)}
         </script>
@@ -333,7 +390,6 @@ export function BrowseWorks({ entries, shelves, facts }: { entries: WorkEntry[];
 }
 
 function MarketShelf({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
-  const builtin = shelf.id === BUILTIN
   const heading = `shelf-${shelf.id.replace(/[^\w-]/g, '-')}`
 
   return (
@@ -352,7 +408,7 @@ function MarketShelf({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
                 {shelf.id}
               </a>
             </h2>
-            <MarketBadge builtin={builtin} />
+            <MarketBadge builtin={shelf.id === BUILTIN} />
           </span>
           <p class="text-sm text-pretty text-soft-foreground" safe>
             {shelf.about}
@@ -407,8 +463,7 @@ function MarketShelf({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
           <li
             data-stack
             data-work={stack.id ?? undefined}
-            data-search={stack.themes.map((theme) => searchable(theme).text).join('\n')}
-            data-builtin={builtin}
+            data-search={stack.themes.map(searchText).join('\n')}
             class="grid snap-start"
           >
             <WorkThumb
@@ -539,18 +594,16 @@ function Publish({ class: className }: { class?: string }) {
 
 export function BrowseMarketplaces({ shelves, works, facts }: { shelves: Shelf[]; works: number; facts: Facts }) {
   const stacks = shelves.map(stacksIn)
-  const found = shelves.map((shelf) => shelf.palettes.map(searchable))
-  const count = (source: Source) => shelvesMatching(found, { ...START, source })
 
   return (
     <MarketplaceFrame facts={facts} current={MARKETPLACES_PATH}>
       <browse-marketplaces class="group/browse grid grid-cols-[minmax(0,1fr)] gap-5">
         <Head
           lens="marketplaces"
+          heading="browse marketplaces"
           counts={{ works, marketplaces: shelves.length }}
           placeholder="search marketplaces, works, palettes"
         >
-          <Sources counts={{ all: count('all'), builtin: count('builtin'), community: count('community') }} />
           <Choice name="sort" options={MARKET_SORTS} first={FIRST_SORT} />
           <Choice name="view" options={VIEWS} first="shelves" class="flex-none pl-6" />
         </Head>

@@ -48,7 +48,7 @@ holds, what `subject` and `upstream` say, proposing a work the commons lacks,
 and `ttheme marketplace check`. Give the
 repository the `ttheme-marketplace` topic — `ttheme share` does for a public
 one — and Browse's search and the
-[marketplace page](https://ttheme.dev/marketplace) find it.
+[marketplace page](https://ttheme.dev/browse/marketplaces) find it.
 
 Open a pull request here when a palette belongs in the built-in marketplace: it
 then has to pass the contrast checks and everything below.

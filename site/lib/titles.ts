@@ -52,6 +52,13 @@ export function browseMeta(): Meta {
   }
 }
 
+export function browseCategoryMeta(label: string): Meta {
+  return {
+    title: `${label} terminal themes — browse works · ttheme`,
+    description: `Every ${label} work with a ttheme palette, built in or from a community marketplace.`,
+  }
+}
+
 export function marketplacesMeta(): Meta {
   return {
     title: 'browse marketplaces — built-in and community terminal themes · ttheme',

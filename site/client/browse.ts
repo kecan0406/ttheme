@@ -1,17 +1,6 @@
 import { THUMB_SIZES, WorkThumb } from '@/components/work-parts'
 import type { FoundWork } from '@/lib/found'
-import {
-  type Filters,
-  matches,
-  ORDERS,
-  type Ranked,
-  type Searchable,
-  SOURCES,
-  type Sort,
-  type Source,
-  START,
-  shelvesMatching,
-} from '@/lib/gallery'
+import { type Filters, matches, ORDERS, type Ranked, type Searchable, type Sort, START } from '@/lib/gallery'
 import { makePath, NAME_PAUSE, NAMES_PATH, type NamesAnswer, namesPath } from '@/lib/names'
 import { html } from '@/lib/render'
 import { plural } from '@/lib/utils'
@@ -32,22 +21,9 @@ interface Market {
 }
 
 function palettesOf(card: HTMLElement): Searchable[] {
-  const builtin = card.hasAttribute('data-builtin')
   const works = card.dataset.work ? [card.dataset.work] : []
 
-  return (card.dataset.search ?? '').split('\n').map((text) => ({ text, builtin, works }))
-}
-
-function merged(palettes: Searchable[]): Searchable[] {
-  const byText = new Map<string, Searchable>()
-
-  for (const palette of palettes) {
-    const seen = byText.get(palette.text)
-
-    byText.set(palette.text, seen ? { ...seen, works: [...seen.works, ...palette.works] } : palette)
-  }
-
-  return [...byText.values()]
+  return (card.dataset.search ?? '').split('\n').map((text) => ({ text, works }))
 }
 
 function rankOf(card: HTMLElement): Ranked {
@@ -99,11 +75,6 @@ abstract class Browse extends HTMLElement {
     const { name, value } = event.target as HTMLInputElement
 
     if (name === 'sort') this.order(value)
-
-    if (name !== 'source') return
-    this.filters = { ...this.filters, source: value as Source }
-    this.render()
-    this.#say()
   }
 
   #find = (event: KeyboardEvent) => {
@@ -129,10 +100,7 @@ abstract class Browse extends HTMLElement {
 
     if (field && asked) field.value = asked
     const query = field?.value ?? ''
-    const start = this.querySelector<HTMLInputElement>(`input[name="source"][value="${START.source}"]`)
     const order = this.querySelector<HTMLInputElement>('input[name="sort"]')
-
-    if (start) start.checked = true
 
     if (order) order.checked = true
     this.filters = { ...START, query }
@@ -169,14 +137,6 @@ abstract class Browse extends HTMLElement {
     return this.filters.query.trim()
   }
 
-  protected counts(values: Record<Source, number>) {
-    for (const source of SOURCES) {
-      const label = this.querySelector(`[data-count="${source}"]`)
-
-      if (label) label.textContent = String(values[source])
-    }
-  }
-
   protected hint(text: string | null) {
     const hint = this.querySelector<HTMLElement>('[data-hint]')
 
@@ -187,7 +147,7 @@ abstract class Browse extends HTMLElement {
     if (label && text !== null) label.textContent = text
   }
 
-  protected empty(shown: boolean, elsewhere: boolean) {
+  protected empty(shown: boolean, within = '') {
     const empty = this.querySelector('[data-empty]')
 
     if (shown) {
@@ -197,39 +157,41 @@ abstract class Browse extends HTMLElement {
     }
 
     const query = this.query
-    const waiting = !elsewhere && query !== '' && this.naming === query && !this.stalled
+    const naming = query !== '' && this.naming === query
+    const waiting = naming && !this.stalled
 
     empty?.toggleAttribute('hidden', waiting)
 
     if (waiting) return
     const answer = this.answers.get(query)
-    const state = !query || elsewhere ? 'filters' : this.naming === query ? 'naming' : 'none'
     const title = this.querySelector('[data-empty-title]')
     const text = this.querySelector<HTMLElement>('[data-empty-text]')
     const face = this.querySelector<HTMLElement>('[data-empty-face]')
     const ask = this.querySelector<HTMLElement>('[data-empty-ask]')
+    const every = this.querySelector<HTMLElement>('[data-empty-every]')
 
     if (title)
-      title.textContent =
-        state === 'naming'
-          ? `looking up “${query}”…`
-          : state === 'none'
+      title.textContent = naming
+        ? `looking up “${query}”…`
+        : within
+          ? `no ${within} work matches “${query}”`
+          : query
             ? `no palettes of “${answer?.label ?? query}” yet`
-            : `no palette matches${query ? ` “${query}”` : ' these filters'}`
+            : 'no palettes yet'
+
+    if (every) every.hidden = naming
 
     if (text) {
-      text.hidden = state === 'naming'
+      text.hidden = naming || within !== ''
       text.textContent =
-        state === 'filters'
-          ? 'clear a filter to see the rest.'
-          : this.#failed === query
-            ? 'the name lookup did not answer — ask for one, or make it yourself.'
-            : 'ask for one, or make it yourself.'
+        query && this.#failed === query
+          ? 'the name lookup did not answer — ask for one, or make it yourself.'
+          : 'ask for one, or make it yourself.'
     }
 
-    if (face) face.hidden = state === 'naming'
+    if (face) face.hidden = naming
 
-    if (ask) ask.hidden = state !== 'none'
+    if (ask) ask.hidden = naming || within !== ''
     this.querySelector('[data-request]')?.setAttribute('href', answer?.request ?? this.#request)
     this.querySelector('[data-make]')?.setAttribute('href', makePath(answer?.name ?? null))
   }
@@ -241,7 +203,7 @@ abstract class Browse extends HTMLElement {
   #carry() {
     const query = this.query
 
-    for (const link of this.querySelectorAll<HTMLAnchorElement>('[data-lens], [data-hint-link]')) {
+    for (const link of this.querySelectorAll<HTMLAnchorElement>('[data-lens], [data-hint-link], [data-keep-query]')) {
       const target = new URL(link.href)
 
       if (query) target.searchParams.set('q', query)
@@ -346,26 +308,22 @@ class BrowseWorks extends Browse {
   }
 
   #items(): HTMLElement[] {
-    return [...this.querySelectorAll<HTMLElement>('[data-tiles] > [data-work]:not([data-found])')]
+    return [...this.querySelectorAll<HTMLElement>('[data-tiles] > [data-work]')]
   }
 
   #place(found: readonly FoundWork[]) {
-    const list = this.querySelector('[data-tiles]')
+    const list = this.querySelector<HTMLElement>('[data-found-tiles]')
 
     if (!list) return
-    const shown = new Set(found.map((work) => work.id))
-
-    for (const tile of list.querySelectorAll<HTMLElement>(':scope > [data-found]'))
-      tile.hidden = !shown.has(tile.dataset.work ?? '')
+    list.hidden = found.length === 0
 
     const tiles = found.map((work) => {
-      const known = list.querySelector<HTMLElement>(`:scope > [data-found][data-work="${CSS.escape(work.id)}"]`)
+      const known = list.querySelector<HTMLElement>(`:scope > [data-work="${CSS.escape(work.id)}"]`)
 
       if (known) return known
       const tile = document.createElement('li')
       tile.className = 'grid'
       tile.dataset.work = work.id
-      tile.dataset.found = ''
       fill(
         tile,
         html(
@@ -385,11 +343,8 @@ class BrowseWorks extends Browse {
       return tile
     })
 
-    const tail = [...list.children].slice(-tiles.length)
-
-    if (tiles.some((tile, at) => tail[at] !== tile)) list.append(...tiles)
-
-    for (const tile of tiles) tile.hidden = false
+    if (list.children.length !== tiles.length || tiles.some((tile, at) => list.children[at] !== tile))
+      list.replaceChildren(...tiles)
   }
 
   #said(item: HTMLElement): boolean {
@@ -398,40 +353,42 @@ class BrowseWorks extends Browse {
     return !query || (item.dataset.search ?? '').includes(query)
   }
 
-  #hit(item: HTMLElement, source: Source): boolean {
-    if (source === 'builtin' && !item.hasAttribute('data-builtin')) return false
-
-    if (source === 'community' && !item.hasAttribute('data-community')) return false
-
+  #hit(item: HTMLElement): boolean {
     return this.#said(item) || this.filters.named.includes(item.dataset.work ?? '')
   }
 
   protected render() {
     const items = this.#items()
-    const source = this.filters.source
     const query = this.query
-
-    this.counts({
-      all: items.filter((item) => this.#hit(item, 'all')).length,
-      builtin: items.filter((item) => this.#hit(item, 'builtin')).length,
-      community: items.filter((item) => this.#hit(item, 'community')).length,
-    })
-
     const answer = this.answers.get(query)
-    const reads: string[] = []
-    let shown = 0
+    const within = this.dataset.category ?? ''
+    const reads = new Set<string>()
+    const works = new Set<string>()
 
     for (const item of items) {
-      const on = this.#hit(item, source)
+      const on = this.#hit(item)
 
       item.hidden = !on
 
       if (!on) continue
-      shown += 1
+      works.add(item.dataset.work ?? '')
       const read = this.#said(item) ? undefined : answer?.works.find((work) => work.id === item.dataset.work)?.read
 
-      if (read) reads.push(read)
+      if (read) reads.add(read)
     }
+
+    for (const group of this.querySelectorAll<HTMLElement>('[data-group]')) {
+      const visible = [...group.querySelectorAll<HTMLElement>('[data-tiles] > [data-work]')].filter(
+        (item) => !item.hidden,
+      ).length
+
+      group.hidden = visible === 0
+      const count = group.querySelector('[data-group-count]')
+
+      if (count) count.textContent = String(visible)
+    }
+
+    const shown = works.size
 
     this.#shown = shown
     const summary = this.querySelector<HTMLElement>('[data-summary]')
@@ -445,7 +402,7 @@ class BrowseWorks extends Browse {
       if (count) count.textContent = String(shown)
 
       if (text)
-        text.textContent = `${shown === 1 ? 'work' : 'works'} for “${query}”${reads.length === 1 ? ` · ${reads[0]}` : ''}`
+        text.textContent = `${shown === 1 ? 'work' : 'works'} for “${query}”${reads.size === 1 ? ` · ${[...reads][0]}` : ''}`
       summary.querySelector('[data-pending]')?.toggleAttribute('hidden', !(this.stalled && this.naming === query))
     }
 
@@ -460,25 +417,22 @@ class BrowseWorks extends Browse {
           : `${plural(markets.length, 'marketplace')} match “${query}”`,
     )
 
-    const elsewhere = items.some((item) => this.#hit(item, 'all'))
-
-    this.#place(shown === 0 && !elsewhere ? (answer?.found ?? []) : [])
-    this.empty(shown > 0, source !== 'all' && elsewhere)
+    this.#place(shown === 0 ? (answer?.found ?? []) : [])
+    this.empty(shown > 0, within)
   }
 
   protected order(sort: string) {
-    const list = this.querySelector('[data-tiles]')
-
-    if (!list) return
     const at = (item: HTMLElement) => Number(item.dataset.order)
-    const items = this.#items()
 
-    list.append(
-      ...(sort === 'palettes'
-        ? items.toSorted((a, b) => Number(b.dataset.palettes) - Number(a.dataset.palettes) || at(a) - at(b))
-        : items.toSorted((a, b) => at(a) - at(b))),
-      ...list.querySelectorAll(':scope > [data-found]'),
-    )
+    for (const list of this.querySelectorAll('[data-tiles]')) {
+      const items = [...list.querySelectorAll<HTMLElement>(':scope > [data-work]')]
+
+      list.append(
+        ...(sort === 'palettes'
+          ? items.toSorted((a, b) => Number(b.dataset.palettes) - Number(a.dataset.palettes) || at(a) - at(b))
+          : items.toSorted((a, b) => at(a) - at(b))),
+      )
+    }
   }
 
   protected summary(): string {
@@ -542,16 +496,9 @@ class BrowseMarketplaces extends Browse {
     const covers = [...this.querySelectorAll<HTMLElement>('[data-covers] > [data-shelf]')]
     const cards = shelves.map((shelf) => [...shelf.querySelectorAll<HTMLElement>('[data-stack]')])
     const members = cards.map((group) => group.map(palettesOf))
-    const found = members.map((group) => merged(group.flat()))
     const filtering = this.query !== ''
     const works = new Set<string>()
     let shown = 0
-
-    this.counts({
-      all: shelvesMatching(found, { ...this.filters, source: 'all' }),
-      builtin: shelvesMatching(found, { ...this.filters, source: 'builtin' }),
-      community: shelvesMatching(found, { ...this.filters, source: 'community' }),
-    })
 
     for (const [index, shelf] of shelves.entries()) {
       const group = cards[index] ?? []
@@ -583,10 +530,7 @@ class BrowseMarketplaces extends Browse {
     this.hint(
       filtering && works.size > 0 ? `${plural(works.size, 'work')} for “${this.query}” in these marketplaces` : null,
     )
-    this.empty(
-      shown > 0,
-      this.filters.source !== 'all' && shelvesMatching(found, { ...this.filters, source: 'all' }) > 0,
-    )
+    this.empty(shown > 0)
     this.#measure()
   }
 

@@ -1,28 +1,16 @@
 import type { Facts } from '@/lib/facts'
-import { BUILTIN, isBuiltin, type Marketplace, type Theme } from '@/lib/themes'
+import { BUILTIN, type Marketplace, type Theme } from '@/lib/themes'
 import type { Runner } from '../../src/core/runner.ts'
-
-export type Source = 'all' | 'builtin' | 'community'
-
-export const SOURCES: Source[] = ['all', 'builtin', 'community']
-
-export const SOURCE_LABELS = {
-  all: 'all',
-  builtin: 'built-in',
-  community: 'community',
-} as const satisfies Record<Source, string>
 
 export interface Filters {
   query: string
-  source: Source
   named: readonly string[]
 }
 
-export const START: Filters = { query: '', source: 'all', named: [] }
+export const START: Filters = { query: '', named: [] }
 
 export interface Searchable {
   text: string
-  builtin: boolean
   works: string[]
 }
 
@@ -35,25 +23,10 @@ export function searchText(theme: Theme): string {
     .toLowerCase()
 }
 
-export function searchable(theme: Theme): Searchable {
-  return {
-    text: searchText(theme),
-    builtin: isBuiltin(theme),
-    works: [theme.work, ...theme.also].flatMap((work) => (work ? [work.id] : [])),
-  }
-}
-
-export function matches({ text, builtin, works }: Searchable, { query, source, named }: Filters): boolean {
-  if (source === 'builtin' && !builtin) return false
-
-  if (source === 'community' && builtin) return false
+export function matches({ text, works }: Searchable, { query, named }: Filters): boolean {
   const q = query.trim().toLowerCase()
 
   return !q || text.includes(q) || works.some((work) => named.includes(work))
-}
-
-export function shelvesMatching(shelves: Searchable[][], filters: Filters): number {
-  return shelves.filter((members) => members.some((member) => matches(member, filters))).length
 }
 
 export interface Shelf {

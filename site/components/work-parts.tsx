@@ -85,7 +85,7 @@ export function WorkThumb({
   facets,
   sizes,
   eager = false,
-  community = false,
+  also = null,
 }: {
   href: string
   name: string
@@ -96,18 +96,12 @@ export function WorkThumb({
   facets: string
   sizes: string
   eager?: boolean
-  community?: boolean
+  also?: string | null
 }) {
   return (
     <a href={href} class="group/thumb grid min-w-0 content-start gap-2.5 outline-none">
-      <span class="relative block rounded-xl transition-[translate,box-shadow] duration-200 group-hover/thumb:shadow-md group-focus-visible/thumb:ring-2 group-focus-visible/thumb:ring-ring group-focus-visible/thumb:ring-offset-2 group-focus-visible/thumb:ring-offset-background motion-safe:group-hover/thumb:-translate-y-0.5">
+      <span class="block rounded-xl transition-[translate,box-shadow] duration-200 group-hover/thumb:shadow-md group-focus-visible/thumb:ring-2 group-focus-visible/thumb:ring-ring group-focus-visible/thumb:ring-offset-2 group-focus-visible/thumb:ring-offset-background motion-safe:group-hover/thumb:-translate-y-0.5">
         <WorkArt art={art} facets={facets} sizes={sizes} eager={eager} class="relative aspect-video rounded-xl" />
-        {community ? (
-          <Badge variant="glass" class="absolute top-2 left-2">
-            <Icon node={Store} />
-            community
-          </Badge>
-        ) : null}
       </span>
       <span class="grid min-w-0 gap-px">
         <span class="flex min-w-0 items-baseline gap-2">
@@ -122,14 +116,23 @@ export function WorkThumb({
             {count === 0 ? 'no palettes yet' : plural(count, 'palette')}
           </span>
         </span>
-        {native ? (
-          <span
-            translate="no"
-            lang={lang ?? undefined}
-            class="truncate font-display text-xs font-extrabold text-muted-foreground"
-            safe
-          >
-            {native}
+        {native || also ? (
+          <span class="flex min-w-0 items-baseline gap-2">
+            {native ? (
+              <span
+                translate="no"
+                lang={lang ?? undefined}
+                class="truncate font-display text-xs font-extrabold text-muted-foreground"
+                safe
+              >
+                {native}
+              </span>
+            ) : null}
+            {also ? (
+              <span class="ml-auto flex-none font-mono text-2xs text-primary" safe>
+                {also}
+              </span>
+            ) : null}
           </span>
         ) : null}
       </span>
