@@ -1,4 +1,4 @@
-import type { FoundCast, FoundWork } from '@/lib/found'
+import type { FoundMember, FoundWork } from '@/lib/found'
 import { workPath } from '@/lib/works'
 
 export const NAMES_PATH = '/names.json'
@@ -27,7 +27,7 @@ export interface NamesAnswer {
 }
 
 export interface CastAnswer {
-  cast: FoundCast[]
+  cast: FoundMember[]
 }
 
 function asked(query: string): URLSearchParams {

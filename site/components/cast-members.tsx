@@ -1,7 +1,7 @@
 import { Search } from 'lucide'
 import { LinkButton } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
-import { type FoundCast, nativeLang } from '@/lib/found'
+import { type FoundCast, type FoundMember, nativeLang } from '@/lib/found'
 import { Icon, NewTab } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { requestUrl } from '../../src/core/names.ts'
@@ -54,6 +54,36 @@ export function Member({ member, lang, work }: { member: FoundCast; lang: string
   )
 }
 
+function Holding({ member, palette }: { member: FoundCast; palette: string }) {
+  return (
+    <li class="grid w-27 flex-none max-sm:w-21 max-sm:snap-start">
+      <button
+        type="button"
+        data-who={palette}
+        aria-pressed="false"
+        class="group/who grid content-start justify-items-center gap-2 text-center outline-none transition-opacity duration-200 data-dim:opacity-45"
+      >
+        <span
+          class={cn(
+            CIRCLE,
+            'bg-muted transition-[translate,box-shadow] duration-200 group-focus-visible/who:ring-2 group-focus-visible/who:ring-ring group-focus-visible/who:ring-offset-2 group-focus-visible/who:ring-offset-background group-aria-pressed/who:ring-2 group-aria-pressed/who:ring-primary group-aria-pressed/who:ring-offset-2 group-aria-pressed/who:ring-offset-background motion-safe:group-hover/who:-translate-y-0.5',
+          )}
+        >
+          <SlotArt picture={member.picture} />
+        </span>
+        <span class="grid w-full min-w-0 justify-items-center gap-px">
+          <b class="flex max-w-full min-w-0 items-center font-display text-base leading-snug font-extrabold transition-colors group-hover/who:text-primary">
+            <span translate="no" class="truncate" safe>
+              {palette}
+            </span>
+          </b>
+          <small class="font-display text-xs font-extrabold text-muted-foreground">has a palette</small>
+        </span>
+      </button>
+    </li>
+  )
+}
+
 export function CastSearch({ id, work, lang }: { id: string; work: string; lang: string | null }) {
   return (
     <cast-search data-work={id} data-name={work} data-lang={lang ?? ''} class="grid grid-cols-[minmax(0,1fr)] gap-4.5">
@@ -98,7 +128,7 @@ export function CastFound({
   work,
   lang,
 }: {
-  cast: FoundCast[]
+  cast: FoundMember[]
   query: string
   work: string
   lang: string | null
@@ -106,9 +136,13 @@ export function CastFound({
   if (cast.length > 0) {
     return (
       <ul class={CAST}>
-        {cast.map((member) => (
-          <Member member={member} lang={lang} work={work} />
-        ))}
+        {cast.map((member) =>
+          member.palette === null ? (
+            <Member member={member} lang={lang} work={work} />
+          ) : (
+            <Holding member={member} palette={member.palette} />
+          ),
+        )}
       </ul>
     )
   }

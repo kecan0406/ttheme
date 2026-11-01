@@ -54,11 +54,20 @@ export interface FoundCast {
   picture: string | null
 }
 
+export interface FoundMember extends FoundCast {
+  palette: string | null
+}
+
+export interface Holder {
+  id: string
+  keys: string[]
+}
+
 export interface CastWork {
   id: string
   tag: string
   lang: string | null
-  taken: string[]
+  held: Holder[]
 }
 
 export type Casts = Record<string, FoundCast[]>
@@ -255,12 +264,38 @@ export function castLeads(members: readonly CastMember[]): CastMember[] {
   return leads.length > 0 ? leads : members.slice(0, FEW_CAST)
 }
 
-export function untaken(members: readonly CastMember[], taken: readonly string[]): CastMember[] {
-  const known = new Set(taken)
-
-  return members.filter(
-    (member) => !member.tags.some((tag) => known.has(tag)) && !member.names.some((name) => known.has(name.text)),
+export function holderOf(member: CastMember, held: readonly Holder[]): string | null {
+  const holder = held.find(
+    (each) =>
+      member.tags.some((tag) => each.keys.includes(tag)) || member.names.some((name) => each.keys.includes(name.text)),
   )
+
+  return holder?.id ?? null
+}
+
+export function untaken(members: readonly CastMember[], held: readonly Holder[]): CastMember[] {
+  return members.filter((member) => holderOf(member, held) === null)
+}
+
+export function membersFound(
+  members: readonly CastMember[],
+  held: readonly Holder[],
+  lang: string | null,
+): FoundMember[] {
+  const palettes = new Set<string>()
+
+  const holding = members.flatMap((member) => {
+    const palette = holderOf(member, held)
+
+    if (palette === null || palettes.has(palette)) return []
+    palettes.add(palette)
+
+    return castFrom([member], new Map(), lang).map((cast) => ({ ...cast, palette }))
+  })
+
+  const free = castFrom(untaken(members, held), new Map(), lang).map((cast) => ({ ...cast, palette: null }))
+
+  return [...holding, ...free]
 }
 
 export function castFrom(

@@ -19,18 +19,19 @@ import {
   castLeads,
   type FamilyWork,
   type FoundCast,
+  type FoundMember,
   type FoundPage,
   type FoundWork,
   familyOf,
   foundSlugs,
   igdbOf,
   MOST_CAST,
+  membersFound,
   membersOf,
   slugLike,
   steamOf,
   titleOf,
   tmdbOf,
-  untaken,
 } from '@/lib/found'
 import { listedWorks, marketplaces } from '@/lib/marketplaces'
 import type { NamesAnswer } from '@/lib/names'
@@ -189,7 +190,7 @@ export async function foundPage(slug: string): Promise<{ page: FoundPage; settle
   }
 }
 
-export async function castNamed(id: string, query: string, signal: AbortSignal): Promise<FoundCast[] | null> {
+export async function castNamed(id: string, query: string, signal: AbortSignal): Promise<FoundMember[] | null> {
   const listed = castable.get(id)
   const slug = listed ? workSlugOf(listed.tag) : slugLike(id) && !taken.has(id) ? id : undefined
 
@@ -197,9 +198,8 @@ export async function castNamed(id: string, query: string, signal: AbortSignal):
   const lang = listed ? listed.lang : (await resolve(slug))?.work.lang
 
   if (lang === undefined) return null
-  const members = untaken(await index.find(query, slug, signal), listed?.taken ?? [])
 
-  return castFrom(members, new Map(), lang)
+  return membersFound(await index.find(query, slug, signal), listed?.held ?? [], lang)
 }
 
 export function prime(signal: AbortSignal): Promise<void> {

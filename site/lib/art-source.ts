@@ -463,7 +463,7 @@ export async function fetchCasts(works: readonly CastWork[], warn: (message: str
     try {
       const members = await index.cast(slug, AbortSignal.timeout(BUILD.timeout), MOST_CAST)
 
-      found.set(work.id, untaken(castLeads(members), work.taken))
+      found.set(work.id, untaken(castLeads(members), work.held))
     } catch (error) {
       warn(`no cast of ${work.id} — ${error instanceof Error ? error.message : String(error)}`)
     }
@@ -494,11 +494,14 @@ export function castWorks(works: readonly Work[]): CastWork[] {
             id: work.id,
             tag: work.danbooru,
             lang: work.native ? langOf(work.native, true) : null,
-            taken: work.characters.flatMap((character) => [
-              ...(character.danbooru ? [character.danbooru] : []),
-              ...Object.values(character.sites ?? {}).flat(),
-              ...(character.native ?? []),
-            ]),
+            held: work.characters.map((character) => ({
+              id: character.id,
+              keys: [
+                ...(character.danbooru ? [character.danbooru] : []),
+                ...Object.values(character.sites ?? {}).flat(),
+                ...(character.native ?? []),
+              ],
+            })),
           },
         ]
       : [],
