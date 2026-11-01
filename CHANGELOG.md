@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A marketplace palette whose `subject` names a built-in character by an old id, `vocaloid/miku` for one, fails `ttheme marketplace check` until it names the new id, `vocaloid/hatsune-miku`; it still installs and shows.
+
 ## 1.2.84
 
 - Every built-in palette whose character has a danbooru tag now goes by the character's full name: `bocchi` is `gotoh-hitori`, `gojo` is `gojo-satoru`, `joker` is `amamiya-ren`. A palette you installed under the old name stays installed under it but no longer updates; add the new name to follow it, and pin or tune it again there.
