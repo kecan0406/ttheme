@@ -23,6 +23,7 @@ export interface WorkName {
   text: string
   lang: string | null
   official: boolean
+  preferred?: true
 }
 
 export interface TaggedWork {

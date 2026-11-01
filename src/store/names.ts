@@ -93,6 +93,7 @@ function workNamesOf(value: unknown): WorkName[] {
             text: shown,
             lang: typeof v.lang === 'string' && LANG.test(v.lang) ? v.lang : null,
             official: v.kind === 'official' || v.kind === 'main',
+            ...(v.preferred === true && v.kind !== 'generated' ? { preferred: true as const } : {}),
           },
         ]
       : []

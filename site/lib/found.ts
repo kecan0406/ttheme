@@ -33,8 +33,6 @@ const BANGUMI = /^bangumi:(\d+)$/
 
 const BANGUMI_IMAGES = 'https://api.bgm.tv/v0/characters'
 
-const LATIN_LANGS = ['en', 'ja-Latn']
-
 const HANGUL = /\p{Script=Hangul}/u
 
 const KANA = /[\p{Script=Hiragana}\p{Script=Katakana}]/u
@@ -124,36 +122,18 @@ function shortest(names: readonly WorkName[], keep: (name: WorkName) => boolean)
   return best
 }
 
+function preferredOf(names: readonly WorkName[], lang: string): WorkName | undefined {
+  return names.find((name) => name.preferred && name.lang === lang)
+}
+
 function latinKey(text: string): string {
   return text
     .normalize('NFKD')
     .replace(/\p{M}/gu, '')
     .toLowerCase()
-    .replace(/ou|oo/g, 'o')
-    .replace(/(a|i|u|e)\1/g, '$1')
-    .split(/[^a-z]+/)
+    .split(/[^a-z0-9]+/)
     .filter(Boolean)
-    .toSorted()
     .join(' ')
-}
-
-function agreed(names: readonly WorkName[]): WorkName | undefined {
-  const keys = names.map((name) => latinKey(name.text))
-  let best: WorkName | undefined
-  let most = 0
-
-  for (const name of names) {
-    if (!name.official || !LATIN_LANGS.includes(name.lang ?? '')) continue
-    const key = latinKey(name.text)
-    const support = keys.filter((each) => each === key).length
-
-    if (support > most || (support === most && best && [...name.text].length < [...best.text].length)) {
-      best = name
-      most = support
-    }
-  }
-
-  return best
 }
 
 function nativeLangs(members: readonly TaggedWork[]): string[] {
@@ -162,21 +142,69 @@ function nativeLangs(members: readonly TaggedWork[]): string[] {
   return origin.flatMap((country) => ORIGIN_LANGS.get(country) ?? [])
 }
 
-export function titleOf(members: readonly TaggedWork[]): Title {
-  const names = members.flatMap((member) => member.names)
-  const head = members[0]
+function eldestOf(members: readonly TaggedWork[]): TaggedWork | undefined {
+  return members.toSorted((a, b) => (a.year ?? Infinity) - (b.year ?? Infinity))[0]
+}
+
+function sameTitle(a: TaggedWork, b: TaggedWork): boolean {
+  return a.label.normalize('NFKC').toLowerCase() === b.label.normalize('NFKC').toLowerCase()
+}
+
+function spellingIn(text: string, key: string): string | undefined {
+  const words = [...text.matchAll(/[\p{L}\p{N}\p{M}]+/gu)]
+  const wanted = key.split(' ')
+
+  for (let at = 0; at + wanted.length <= words.length; at++) {
+    const first = words[at]
+    const last = words[at + wanted.length - 1]
+
+    if (
+      first &&
+      last &&
+      !text.slice(0, first.index).includes(':') &&
+      wanted.every((word, index) => latinKey(words[at + index]?.[0] ?? '') === word)
+    ) {
+      return text.slice(first.index, last.index + last[0].length)
+    }
+  }
+
+  return undefined
+}
+
+export function titleOf(slug: string, members: readonly TaggedWork[]): Title {
+  const key = latinKey(slug)
+  const eldest = eldestOf(members)
+  const every = members.flatMap((member) => member.names)
+  const names = members.filter((member) => eldest && sameTitle(member, eldest)).flatMap((member) => member.names)
+  const english = every.filter((each) => each.official && each.lang === 'en')
+  const exact = english.find((each) => latinKey(each.text) === key)?.text
+  const within = exact ? undefined : english.map((each) => spellingIn(each.text, key)).find(Boolean)
+
+  if (within) return { name: within, native: null, lang: null }
+
+  const spoken = every.find((each) => each.official && each.lang === null && latinKey(each.text) === key)?.text
 
   const name =
+    (exact && shown(exact)) ??
     shortest(names, (each) => each.official && each.lang === 'en')?.text ??
-    head?.names.find((each) => each.official && each.lang === null)?.text ??
-    head?.label ??
+    shortest(every, (each) => each.official && each.lang === 'en')?.text ??
+    (spoken && shown(spoken)) ??
+    eldest?.names.find((each) => each.official && each.lang === null)?.text ??
+    eldest?.label ??
     ''
 
   const native = nativeLangs(members)
-    .map((lang) => shortest(names, (each) => each.official && each.lang === lang))
+    .map(
+      (lang) =>
+        (eldest && preferredOf(eldest.names, lang)) ??
+        shortest(names, (each) => each.official && each.lang === lang) ??
+        shortest(every, (each) => each.official && each.lang === lang),
+    )
     .find((each) => each !== undefined)
 
-  return native && native.text !== name
+  const spelling = native ? latinKey(native.text) : ''
+
+  return native && native.text !== name && (spelling === '' || spelling !== latinKey(name))
     ? { name, native: native.text, lang: native.lang }
     : { name, native: null, lang: null }
 }
@@ -242,7 +270,10 @@ export function familyOf(members: readonly TaggedWork[]): FamilyWork[] {
 
   return members
     .flatMap((member) => {
-      const name = shortest(member.names, (each) => each.official && each.lang === 'en')?.text ?? member.label
+      const name =
+        (preferredOf(member.names, 'en') ?? shortest(member.names, (each) => each.official && each.lang === 'en'))
+          ?.text ?? member.label
+
       const key = `${name}\u0000${member.year ?? ''}\u0000${member.medium ?? ''}`
 
       if (seen.has(key)) return []
@@ -313,12 +344,15 @@ export function castFrom(
   const seen = new Set<string>()
 
   return members.flatMap((member) => {
-    const latin = agreed(member.names)
-    const plain = member.names.find((name) => name.official && name.lang === null)
+    const latin = preferredOf(member.names, 'en') ?? preferredOf(member.names, 'ja-Latn')
+    const plain = shortest(member.names, (each) => each.official && each.lang === null)
     const name = latin?.text ?? shown(plain?.text ?? member.label)
 
     const native =
-      lang === null ? undefined : shortest(member.names, (each) => each.official && each.lang === lang)?.text
+      lang === null
+        ? undefined
+        : (preferredOf(member.names, lang) ?? shortest(member.names, (each) => each.official && each.lang === lang))
+            ?.text
 
     const key = `${name}\u0000${native ?? ''}`
 

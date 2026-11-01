@@ -142,7 +142,7 @@ function resolve(slug: string): Promise<Resolved | null> {
         (artwork.value ? igdbArtOf(artwork.value) : null)
 
       return {
-        work: { id: slug, ...titleOf(members), art },
+        work: { id: slug, ...titleOf(slug, members), art },
         family: familyOf(members),
         settled: backdrop.settled && (banner?.settled ?? true) && hero.settled && artwork.settled,
       }
