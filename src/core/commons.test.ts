@@ -275,3 +275,17 @@ test('a tag longer than a booru tag can be is refused where a marketplace or an 
   assert.equal(isTag(long), false)
   assert.equal(isTag('orla_(starfall)'), true)
 })
+
+test('a commons file in a shape it cannot read says so, whichever part is wrong', () => {
+  for (const source of [
+    '{"works":[{"id":"w","name":"W","characters":[null]}]}',
+    '{"works":[{"id":"w","name":"W","characters":[{"id":"c","native":"x"}]}]}',
+    '{"works":[{"id":"w","name":"W","characters":[{"id":"c","also":"x"}]}]}',
+    '{"works":[{"id":"w","name":"W","characters":[{"id":"c","danbooru":"t","sites":{"danbooru":1}}]}]}',
+  ]) {
+    assert.throws(
+      () => parseCommons(source),
+      (error: Error) => error.constructor === Error && /the commons' work "w" does not read/.test(error.message),
+    )
+  }
+})

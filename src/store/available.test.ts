@@ -25,6 +25,7 @@ import {
   writeBundled,
   writeKept,
 } from './available.ts'
+import { readInstalled } from './installed.ts'
 import { setFiles } from './local.ts'
 import { localIdentity } from './sources.ts'
 
@@ -317,6 +318,32 @@ test("a marketplace names itself in ttheme-marketplace.toml — the owner of an 
     /owner is a table/,
   )
   assert.throws(() => archiveId('ann/ttheme-pastel', marketplace('name = "pastel"\n')), /owner is a table/)
+})
+
+test('a kept palette some code would trip on later is left out, and installed.json takes only what it can read', () => {
+  const at = home()
+  const { backdrop: _, ...unshown } = entry({ name: 'bob@x/unshown' })
+
+  writeKept(at, [
+    unshown as PaletteEntry,
+    entry({ name: 'bob@x/listless', pictures: 'many' as never }),
+    entry({ name: 'bob@x/holed', pictures: [null] as never }),
+    entry({ name: 'bob@x/kept', pictures: [{ site: 'danbooru', id: 3 }] }),
+  ])
+
+  assert.deepEqual(
+    readKept(at).map((p) => p.name),
+    ['bob@x/kept'],
+  )
+
+  writeFileSync(join(at, 'ttheme', 'installed.json'), '{"terminals":[],"palettes":["ttheme/orla",1,null,{}]}')
+  assert.deepEqual(readInstalled(at).palettes, ['ttheme/orla'])
+
+  writeFileSync(join(at, 'ttheme', 'installed.json'), '{')
+  assert.throws(
+    () => readInstalled(at),
+    (error: Error) => error.constructor === Error && /installed\.json is not valid JSON/.test(error.message),
+  )
 })
 
 test('a kept palette whose name or subject could not be one is left out, so share never copies it outside its marketplace', () => {

@@ -279,5 +279,16 @@ export function entryProblem(p: PaletteEntry): string | undefined {
     return 'holds upstream colors that are not 20 "#rrggbb" colors'
   }
 
+  if (typeof p.backdrop?.color !== 'string' || typeof p.backdrop.opacity !== 'number') {
+    return 'has no backdrop color and opacity'
+  }
+
+  if (
+    p.pictures !== undefined &&
+    !(Array.isArray(p.pictures) && p.pictures.every((picture) => typeof picture?.id === 'number'))
+  ) {
+    return 'holds pictures that are not a list of posts'
+  }
+
   return undefined
 }

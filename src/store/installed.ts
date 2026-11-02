@@ -56,6 +56,14 @@ const OPTIONAL = {
   runner: (value) => RUNNERS.find((runner) => runner === value),
 } satisfies { [K in Optional]-?: (value: unknown) => Installed[K] }
 
+function parsed(path: string) {
+  try {
+    return JSON.parse(readFileSync(path, 'utf8'))
+  } catch {
+    throw new Error(`${path} is not valid JSON`)
+  }
+}
+
 export function readInstalled(configHome: string): Installed {
   const path = installedPath(configHome)
 
@@ -63,7 +71,7 @@ export function readInstalled(configHome: string): Installed {
     throw new Error(`nothing installed yet at ${path} — run \`ttheme init\` first`)
   }
 
-  const doc = JSON.parse(readFileSync(path, 'utf8'))
+  const doc = parsed(path)
 
   if (!Array.isArray(doc?.palettes) || !Array.isArray(doc.terminals)) {
     throw new Error(`${path} has no palettes or terminals`)
@@ -78,7 +86,7 @@ export function readInstalled(configHome: string): Installed {
         return value === undefined ? [] : [[key, value]]
       }),
     ),
-    palettes: doc.palettes,
+    palettes: doc.palettes.filter((name: unknown) => typeof name === 'string'),
   }
 }
 

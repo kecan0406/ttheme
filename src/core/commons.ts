@@ -306,7 +306,15 @@ function readCommonsJson(source: string): Commons {
       throw new Error(`the commons' work ${JSON.stringify(id)} has no characters`)
     }
 
-    return readWork(`commons/${id}`, workToml(work), id)
+    let text: string
+
+    try {
+      text = workToml(work)
+    } catch {
+      throw new Error(`the commons' work ${JSON.stringify(id)} does not read`)
+    }
+
+    return readWork(`commons/${id}`, text, id)
   })
 
   return { works }
