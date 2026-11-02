@@ -422,13 +422,17 @@ plain=${out//$'\e[K'/}
   ) || exit 1
   (
     local -a feed=(${(s::)${:-$'k\u202ei\u2066t\u200ea\u061c\u0085\e[201~'}})
-    __tt_pv_getch() { (( ${#feed} )) || return 1; REPLY=$feed[1]; shift feed }
+    __tt_pv_gulp() { (( ${#feed} )) || return 1; REPLY=$feed[1]; shift feed }
     __tt_pv_rows() { : }
     __tt_pv_first() { : }
     __tt_pv_lw() { reply=(80) }
     local key pasted
     __tt_pv_paste
     [[ $key == paste && $pasted == kita ]] || { print -u2 "a paste into preview's filter kept a bidi or C1 control: ${(q+)pasted}"; exit 1 }
+    feed=($'a\nb' $'\e[20' $'1~x')
+    __tt_pv_paste
+    [[ $pasted == 'a b' && $pvrest == x ]] || { print -u2 "a paste read in pieces lost its end or the key after it: ${(q+)pasted} then ${(q+)pvrest}"; exit 1 }
+    pvrest=
     flt=ki rtype=() rval=() cur=1 help=0 pick= te=0 tune= conf=0
     for key in $'\u2066' $'\u202e' $'\u061c' t; do
       __tt_pv_handle

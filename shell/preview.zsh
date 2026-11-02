@@ -1669,6 +1669,10 @@ __tt_pv_size() {
 }
 
 __tt_pv_getch() {
+  if [[ -n $pvrest ]]; then
+    REPLY=$pvrest[1] pvrest=$pvrest[2,-1]
+    return 0
+  fi
   if (( $# )); then
     read -sk 1 -t $1 2>/dev/null
     return
@@ -1762,15 +1766,23 @@ __tt_pv_string() {
   done
 }
 
+__tt_pv_gulp() { sysread -t 0.5 -s 4096 REPLY 2>/dev/null }
+
 __tt_pv_paste() {
   setopt localoptions extendedglob
-  local text=""
+  local text="" seam="" end=$'\e[201~'
   key=nop
-  while __tt_pv_getch 0.5; do
-    text+=$REPLY
-    [[ $REPLY == '~' && $text == *$'\e[201~' ]] && break
+  while __tt_pv_gulp; do
+    seam+=$REPLY
+    if [[ $seam == *$end* ]]; then
+      pvrest=${seam#*$end} seam=${seam%%$end*}
+      break
+    fi
+    (( ${#text} < 1024 )) && text+=${seam[1,-6]}
+    seam=${seam[-5,-1]}
   done
-  text=${${text%$'\e[201~'}//[$'\r\n\t']##/ }
+  text+=$seam
+  text=${${text[1,1024]}//[$'\r\n\t']##/ }
   __tt_pv_plain "$text"
   pasted=$REPLY
   [[ -n $pasted ]] && key=paste
@@ -2825,7 +2837,7 @@ __tt_preview() {
   local te=0 tfocus=0 tetop=0 tewide=0 tbtn=0 tearm=0 tename=""
   local -i pvgone=0 bgprepid=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
   local -F mlast=0 pvsized=0
-  local mact="" mzone="" pvmouse="" pasted=""
+  local mact="" mzone="" pvmouse="" pasted="" pvrest=""
   local -a pvz=()
   local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=(Mode "New tabs" Announce "Search fx" Mouse Blur Pictures)
   local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "on off" "0 1 2 3 4" "original tone") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "on off" "off 1px 2px 3px 4px" "original tinted")
