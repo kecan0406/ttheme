@@ -1661,6 +1661,7 @@ __tt_pv_roll() {
 
 __tt_pv_size() {
   local sz=$(stty size 2>/dev/null)
+  pvsized=$EPOCHREALTIME
   [[ $sz == <1->" "<1-> ]] || return 1
   [[ $sz == "$ph $pw" ]] && return 1
   ph=${sz%% *} pw=${sz##* } resized=1
@@ -2817,7 +2818,7 @@ __tt_preview() {
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
   local te=0 tfocus=0 tetop=0 tewide=0 tbtn=0 tearm=0 tename=""
   local -i pvgone=0 bgprepid=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
-  local -F mlast=0
+  local -F mlast=0 pvsized=0
   local mact="" mzone="" pvmouse="" pasted=""
   local -a pvz=()
   local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=(Mode "New tabs" Announce "Search fx" Mouse Blur Pictures)
@@ -2860,6 +2861,7 @@ __tt_preview() {
     printf '\e[?2026h\e[?1049h\e[?7l\e[?25l\e[?2004h'
     __tt_pv_pointer
     while :; do
+      (( EPOCHREALTIME - pvsized < 0.2 )) || __tt_pv_size
       printf '\e[?2026h'
       if (( tick && ! te )); then
         __tt_pv_draw hint

@@ -31,6 +31,7 @@
 - Network failures say what went wrong, such as a name that did not resolve or no answer in time
 - `ttheme update` exits non-zero when it could not reach a marketplace or check for a release
 - A paste or a terminal answer that is cut short no longer locks up Browse, the palette editor or find.
+- Resizing the window while holding a key no longer garbles preview until the key is let go.
 
 ## 1.2.85
 
