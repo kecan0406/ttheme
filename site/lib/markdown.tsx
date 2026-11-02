@@ -161,7 +161,7 @@ function shell(text: string): string {
 
   const label = commands.length === 1 ? `copy ${commands[0]}` : `copy ${commands.length} commands`
 
-  return `<div data-slot="shell"><pre translate="no"><code>${rows}</code></pre>${copyButton(commands.join('\n'), label)}</div>\n`
+  return `<div data-slot="shell"><pre tabindex="0" translate="no"><code>${rows}</code></pre>${copyButton(commands.join('\n'), label)}</div>\n`
 }
 
 function body(kind: string | undefined, text: string): string {
@@ -169,7 +169,7 @@ function body(kind: string | undefined, text: string): string {
 }
 
 function file(text: string, title: string, kind: string | undefined): string {
-  return `<figure data-slot="file"><figcaption><span translate="no">${escapeHtml(title)}</span>${copyButton(text, `copy ${title}`)}</figcaption><pre translate="no"><code>${body(kind, text)}</code></pre></figure>\n`
+  return `<figure data-slot="file"><figcaption><span translate="no">${escapeHtml(title)}</span>${copyButton(text, `copy ${title}`)}</figcaption><pre tabindex="0" translate="no"><code>${body(kind, text)}</code></pre></figure>\n`
 }
 
 function screen(text: string, title: string | undefined): string {
@@ -354,7 +354,7 @@ function markdown(doc: Doc, place: Place): Marked {
 
         if (title) return file(text, title, kind)
 
-        return `<pre data-slot="output" translate="no"><code>${body(kind, text)}</code></pre>\n`
+        return `<pre data-slot="output" tabindex="0" translate="no"><code>${body(kind, text)}</code></pre>\n`
       },
       codespan({ text }) {
         if (KEY.test(text)) return `<kbd translate="no">${escapeHtml(text)}</kbd>`

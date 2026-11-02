@@ -134,6 +134,7 @@ export function BuilderBar({
 }) {
   return (
     <WorkspaceBar data-bar class="relative z-10 [grid-area:bar] max-[760px]:flex-wrap max-[760px]:py-3">
+      <h1 class="sr-only">palette builder</h1>
       <WorkspaceTitle>
         <TitleLine>
           <div data-draft class="relative -ml-1 max-w-85 min-w-14">

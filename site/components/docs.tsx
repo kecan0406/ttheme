@@ -74,7 +74,7 @@ function CommandEntry({ command }: { command: Command }) {
           {command.name}
         </code>
       </h3>
-      <pre data-slot="usage" translate="no">
+      <pre data-slot="usage" tabindex="0" translate="no">
         <code safe>{command.usage}</code>
       </pre>
       <p>{safeAbout}</p>

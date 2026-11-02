@@ -57,12 +57,8 @@ function DocsNav({ path }: { path: string }) {
         </InputGroup>
       </search>
       {DOCS.map((group) => (
-        <section data-group class="grid gap-0.5" aria-labelledby={`docs-${group.slug}`}>
-          <p
-            id={`docs-${group.slug}`}
-            class="mt-3 mb-1 px-2.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase"
-            safe
-          >
+        <section data-group class="grid gap-0.5">
+          <p class="mt-3 mb-1 px-2.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase" safe>
             {group.title}
           </p>
           <ul class="grid gap-0.5">

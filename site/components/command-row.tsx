@@ -42,7 +42,7 @@ function Line({ command, class: className }: { command: string; class?: string }
   const safeCommand = highlightHtml('sh', command)
 
   return (
-    <pre translate="no" class={cn(LINE, className)}>
+    <pre tabindex="0" translate="no" class={cn(LINE, className)}>
       <code class="select-all">{safeCommand}</code>
     </pre>
   )

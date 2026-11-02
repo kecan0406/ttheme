@@ -221,7 +221,7 @@ function WorkHead({ name, native, lang }: { name: string; native: string | null;
   return (
     <div class="relative mx-auto grid min-h-133 w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] content-end gap-1.5 pt-15 pb-8 max-sm:min-h-102">
       <Crumbs trail={[{ label: 'browse', href: BROWSE_PATH }, { label: 'works' }]} />
-      <h1 translate="no" class="font-display text-display-xl font-black text-balance" safe>
+      <h1 translate="no" class="font-display text-display-xl font-black text-balance [overflow-wrap:anywhere]" safe>
         {name}
       </h1>
       {native === null ? null : (
@@ -327,32 +327,34 @@ export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts
     <div class="ground relative isolate flex min-h-dvh flex-col">
       <WorkHero art={work.art} facets={WORN_FACETS} sizes={HERO_SIZES} />
       <SiteHeader current={BROWSE_PATH} facts={facts} />
-      <WorkHead name={work.name} native={work.native} lang={work.lang} />
-      <main id="content" class={MAIN}>
-        <div class={SECTIONS}>
-          {cast.length === 0 ? null : (
-            <section aria-labelledby="characters" class={SECTION}>
-              <h2 id="characters" class={HEADING}>
-                characters <span class={COUNT}>{cast.length}</span>
+      <main id="content">
+        <WorkHead name={work.name} native={work.native} lang={work.lang} />
+        <div class={MAIN}>
+          <div class={SECTIONS}>
+            {cast.length === 0 ? null : (
+              <section aria-labelledby="characters" class={SECTION}>
+                <h2 id="characters" class={HEADING}>
+                  characters <span class={COUNT}>{cast.length}</span>
+                </h2>
+                <Members cast={cast} lang={work.lang} work={work.name} />
+                <CastSearch id={work.id} work={work.name} lang={work.lang} />
+              </section>
+            )}
+            {family.length < 2 ? null : (
+              <section aria-labelledby="works" class={SECTION}>
+                <h2 id="works" class={HEADING}>
+                  works <span class={COUNT}>{family.length}</span>
+                </h2>
+                <Family works={family} />
+              </section>
+            )}
+            <section aria-labelledby="palettes" class={SECTION}>
+              <h2 id="palettes" class={HEADING}>
+                palettes <span class={COUNT}>0</span>
               </h2>
-              <Members cast={cast} lang={work.lang} work={work.name} />
-              <CastSearch id={work.id} work={work.name} lang={work.lang} />
+              <NoPalettes work={work} />
             </section>
-          )}
-          {family.length < 2 ? null : (
-            <section aria-labelledby="works" class={SECTION}>
-              <h2 id="works" class={HEADING}>
-                works <span class={COUNT}>{family.length}</span>
-              </h2>
-              <Family works={family} />
-            </section>
-          )}
-          <section aria-labelledby="palettes" class={SECTION}>
-            <h2 id="palettes" class={HEADING}>
-              palettes <span class={COUNT}>0</span>
-            </h2>
-            <NoPalettes work={work} />
-          </section>
+          </div>
         </div>
       </main>
       <SiteFooter facts={facts} current={path} />
@@ -370,46 +372,48 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
     <div class="ground relative isolate flex min-h-dvh flex-col">
       <WorkHero art={page.art} facets={page.facets} sizes={HERO_SIZES} />
       <SiteHeader current={BROWSE_PATH} facts={facts} />
-      <WorkHead name={work.name} native={work.native} lang={work.lang} />
-      <main id="content" class={MAIN}>
-        <work-page class={SECTIONS}>
-          <section aria-labelledby="characters" class={SECTION}>
-            <div class="flex items-baseline gap-3.5">
-              <h2 id="characters" class={HEADING}>
-                characters <span class={COUNT}>{cast.length + more.length}</span>
+      <main id="content">
+        <WorkHead name={work.name} native={work.native} lang={work.lang} />
+        <div class={MAIN}>
+          <work-page class={SECTIONS}>
+            <section aria-labelledby="characters" class={SECTION}>
+              <div class="flex items-baseline gap-3.5">
+                <h2 id="characters" class={HEADING}>
+                  characters <span class={COUNT}>{cast.length + more.length}</span>
+                </h2>
+                <button
+                  type="button"
+                  data-show-all
+                  hidden
+                  class="rounded-sm text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  show all
+                </button>
+              </div>
+              <ul class={CAST}>
+                {cast.map((slot) => (
+                  <Who slot={slot} />
+                ))}
+                {more.slice(0, room).map((member) => (
+                  <Member member={member} lang={work.lang} work={work.name} />
+                ))}
+                <Request work={work.name} />
+              </ul>
+              <RestOfCast rest={more.slice(room)} total={cast.length + more.length} lang={work.lang} work={work.name} />
+              {page.findable ? <CastSearch id={work.id} work={work.name} lang={work.lang} /> : null}
+            </section>
+            <section aria-labelledby="palettes" class={SECTION}>
+              <h2 id="palettes" class={HEADING}>
+                palettes <span class={COUNT}>{count}</span>
               </h2>
-              <button
-                type="button"
-                data-show-all
-                hidden
-                class="rounded-sm text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                show all
-              </button>
-            </div>
-            <ul class={CAST}>
-              {cast.map((slot) => (
-                <Who slot={slot} />
-              ))}
-              {more.slice(0, room).map((member) => (
-                <Member member={member} lang={work.lang} work={work.name} />
-              ))}
-              <Request work={work.name} />
-            </ul>
-            <RestOfCast rest={more.slice(room)} total={cast.length + more.length} lang={work.lang} work={work.name} />
-            {page.findable ? <CastSearch id={work.id} work={work.name} lang={work.lang} /> : null}
-          </section>
-          <section aria-labelledby="palettes" class={SECTION}>
-            <h2 id="palettes" class={HEADING}>
-              palettes <span class={COUNT}>{count}</span>
-            </h2>
-            <div class="grid grid-cols-[minmax(0,1fr)] gap-8.5">
-              {markets.map((market) => (
-                <Tracks market={market} work={work.name} leadSubject={work.lead} langs={langs} />
-              ))}
-            </div>
-          </section>
-        </work-page>
+              <div class="grid grid-cols-[minmax(0,1fr)] gap-8.5">
+                {markets.map((market) => (
+                  <Tracks market={market} work={work.name} leadSubject={work.lead} langs={langs} />
+                ))}
+              </div>
+            </section>
+          </work-page>
+        </div>
       </main>
       <SiteFooter facts={facts} current={path} />
     </div>

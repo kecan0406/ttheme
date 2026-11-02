@@ -44,7 +44,8 @@ export function WorkspaceSide({ head, class: className, children, ...props }: Pr
 
 export function WorkspaceBar({ class: className, children, ...props }: Props) {
   return (
-    <div
+    <section
+      aria-label="palette"
       data-slot="workspace-bar"
       class={cn(
         'flex min-h-16 min-w-0 items-center justify-between gap-x-5 gap-y-3 pt-4 app:min-h-15 app:pt-3',
@@ -54,7 +55,7 @@ export function WorkspaceBar({ class: className, children, ...props }: Props) {
       {...props}
     >
       {children}
-    </div>
+    </section>
   )
 }
 
