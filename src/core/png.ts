@@ -305,7 +305,7 @@ function idatOf(png: Buffer): Buffer {
 function readByPngjs(bytes: Uint8Array): Rgba {
   const png = Buffer.from(bytes)
 
-  if (png.length >= 33 && png[28] !== 0) {
+  if (png.length >= 33) {
     unpacked(idatOf(png), png.readUInt32BE(16), png.readUInt32BE(20), DEEPEST_PIXEL)
   }
 

@@ -223,6 +223,7 @@ test('a damaged PNG is a plain failure, and one with no pixels is refused', () =
   const damaged = [
     crafted(4, 4, 8, 0, Uint8Array.of(1, 2, 3, 4)),
     crafted(4, 4, 8, 0, body.subarray(0, body.length - 6)),
+    crafted(4, 4, 16, 0, Uint8Array.of(1, 2, 3, 4)),
     crafted(4, 4, 8, 1, Uint8Array.of(1, 2, 3, 4)),
     crafted(4, 4, 7, 0, body),
     Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 3, 73, 72, 68, 82, 1, 2, 3, 0, 0, 0, 0),
