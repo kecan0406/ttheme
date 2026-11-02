@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { CellProbe, CLICK_GAP, decode, ESC_WAIT, type Inbound, Keys, keysOf, lineStep } from './keys.ts'
+import { CellProbe, CLICK_GAP, decode, ESC_WAIT, type Inbound, Keys, keysOf, lineStep, STRING_WAIT } from './keys.ts'
 
 function cellOf(input: string): { h: number; w: number } | undefined {
   const probe = new CellProbe()
@@ -135,6 +135,23 @@ test('an escape sequence split across two reads is one key, and a lone esc is re
   await new Promise((resolve) => setTimeout(resolve, ESC_WAIT * 3))
   assert.deepEqual(got.at(-1), { kind: 'key', key: 'esc' })
   keys.stop()
+})
+
+test('a paste or a terminal answer that never ends gives the keys back once the input goes quiet', async () => {
+  const pasted: Inbound[] = []
+  const answered: Inbound[] = []
+  const paste = new Keys((events) => pasted.push(...events))
+  const answer = new Keys((events) => answered.push(...events))
+  paste.feed('\x1b[200~half a paste')
+  paste.feed(' and more')
+  answer.feed('\x1b]11;rgb:11')
+  assert.deepEqual([pasted, answered], [[], []])
+  await new Promise((resolve) => setTimeout(resolve, STRING_WAIT + 50))
+  assert.deepEqual(pasted, [{ kind: 'paste', text: 'half a paste and more' }])
+  answer.feed('\x03')
+  assert.deepEqual(answered, [{ kind: 'key', key: 'ctrl-c' }])
+  paste.stop()
+  answer.stop()
 })
 
 function mice(input: string): string[] {

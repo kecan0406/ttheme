@@ -3,6 +3,7 @@ import { StringDecoder } from 'node:string_decoder'
 
 export const ESC_WAIT = 30
 const SEQUENCE_WAIT = 50
+export const STRING_WAIT = 1000
 export const CLICK_GAP = 500
 const WHEEL_GAP = 5
 const LEGACY = Buffer.from('\x1b[M')
@@ -704,6 +705,7 @@ export class Keys {
 
     if (long(this.held) && !ended(this.held, text)) {
       this.held += text
+      this.wait(STRING_WAIT)
 
       return
     }
@@ -720,8 +722,8 @@ export class Keys {
   private settle(): void {
     const waiting = this.held.length + (this.carry?.length ?? 0)
 
-    if (waiting > 0 && !long(this.held)) {
-      this.wait(waiting === 1 ? ESC_WAIT : SEQUENCE_WAIT)
+    if (waiting > 0) {
+      this.wait(long(this.held) ? STRING_WAIT : waiting === 1 ? ESC_WAIT : SEQUENCE_WAIT)
     }
   }
 

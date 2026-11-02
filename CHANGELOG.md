@@ -30,6 +30,7 @@
 - A verb's `--json` output piped into something that stops reading no longer ends in a stack trace
 - Network failures say what went wrong, such as a name that did not resolve or no answer in time
 - `ttheme update` exits non-zero when it could not reach a marketplace or check for a release
+- A paste or a terminal answer that is cut short no longer locks up Browse, the palette editor or find.
 
 ## 1.2.85
 
