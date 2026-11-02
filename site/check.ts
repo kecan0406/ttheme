@@ -1,10 +1,18 @@
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { commons } from './lib/builtin'
+import { uncategorized } from './lib/categories'
 
 const SITE = import.meta.dirname
 const stand = mkdtempSync(join(tmpdir(), 'ttheme-site-check-'))
+const loose = uncategorized(commons.works)
 let failed = 0
+
+if (loose.length > 0) {
+  process.stderr.write(`site/lib/categories.ts has no place for ${loose.join(', ')}\n`)
+  failed = 1
+}
 
 try {
   writeFileSync(

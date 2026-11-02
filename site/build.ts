@@ -8,6 +8,7 @@ import { repoFacts, showcase } from '../src/cli/showcase.ts'
 import { DOCS_URL, docsOf, flagRows, headOf, SECTIONS, usageOf, VERB_SPECS } from '../src/cli/verbs.ts'
 import { artProblems, castWorks, fetchArt, fetchCasts, fetchPeople } from './lib/art-source'
 import { commons, themes } from './lib/builtin'
+import { uncategorized } from './lib/categories'
 import type { Commands } from './lib/commands'
 import { REPO } from './lib/gallery'
 
@@ -415,6 +416,12 @@ function artChecked(): void {
     throw new Error(`site/lib/art-source.ts names what the commons lacks:\n  ${problems.join('\n  ')}`)
 }
 
+function categoriesChecked(): void {
+  const loose = uncategorized(commons.works)
+
+  if (loose.length > 0) throw new Error(`site/lib/categories.ts has no place for ${loose.join(', ')}`)
+}
+
 async function prerender(bundle: string): Promise<Record<string, { path: string; contentType: string }>> {
   const { default: server, DATA, PRERENDERED } = (await import(bundle)) as typeof import('./server')
   const overrides: Record<string, { path: string; contentType: string }> = {}
@@ -505,6 +512,7 @@ async function docsChecked(): Promise<void> {
 
 if (import.meta.main) {
   artChecked()
+  categoriesChecked()
   await snapshot(true)
   commands()
   await docsChecked()

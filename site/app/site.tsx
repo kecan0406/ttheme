@@ -18,7 +18,15 @@ import { CATEGORIES, categoryPath } from '@/lib/categories'
 import { creditsOf } from '@/lib/credits'
 import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
-import { BROWSE_PATH, MARKETPLACES_PATH, marketplacePath, palettePath, palettesPath, shelvesOf } from '@/lib/gallery'
+import {
+  ASKED_SCRIPT,
+  BROWSE_PATH,
+  MARKETPLACES_PATH,
+  marketplacePath,
+  palettePath,
+  palettesPath,
+  shelvesOf,
+} from '@/lib/gallery'
 import { artFor } from '@/lib/key-art'
 import { castNamed, foundPage, lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
@@ -344,6 +352,7 @@ export const site = new Elysia({ name: 'site' })
       {
         ...browseMeta(),
         path: BROWSE_PATH,
+        head: ASKED_SCRIPT,
         ...CARD,
         ld: [
           crumbs([
@@ -388,6 +397,7 @@ export const site = new Elysia({ name: 'site' })
       {
         ...browseCategoryMeta(category.label),
         path,
+        head: ASKED_SCRIPT,
         ...CARD,
         ld: [
           crumbs([

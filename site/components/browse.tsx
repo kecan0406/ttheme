@@ -18,8 +18,18 @@ import { Button, LinkButton } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Toggle } from '@/components/ui/toggle'
 import { type KeyArt, keyArtOf } from '@/lib/art'
-import { alsoIn, CATEGORIES, type Category, type CategorySlug, categoriesOf, categoryPath } from '@/lib/categories'
+import {
+  alsoIn,
+  CATEGORIES,
+  type Category,
+  type CategorySlug,
+  categoriesOf,
+  categoryPath,
+  genresIn,
+  genresOf,
+} from '@/lib/categories'
 import type { Facts } from '@/lib/facts'
 import {
   BROWSE_PATH,
@@ -300,6 +310,25 @@ function Categories({ current }: { current: CategorySlug | undefined }) {
   )
 }
 
+function Genres({ category, entries }: { category: CategorySlug; entries: WorkEntry[] }) {
+  const genres = genresIn(category)
+
+  if (genres.length === 0) return null
+
+  return (
+    <fieldset aria-label="genre" data-genre-filter class="flex flex-wrap items-center gap-2">
+      {genres.map((genre) => (
+        <Toggle variant="chip" value={genre.slug}>
+          <span>{genre.label}</span>
+          <b data-genre-count class="font-mono text-xs font-normal text-muted-foreground tabular-nums">
+            {entries.filter((entry) => genresOf(entry.id).includes(genre.slug)).length}
+          </b>
+        </Toggle>
+      ))}
+    </fieldset>
+  )
+}
+
 export function BrowseWorks({
   entries,
   shelves,
@@ -328,6 +357,7 @@ export function BrowseWorks({
           <Categories current={category?.slug} />
           <Choice name="sort" options={WORK_SORTS} first="name" />
         </Head>
+        {category ? <Genres category={category.slug} entries={entries} /> : null}
         <Hint href={MARKETPLACES_PATH} label="see marketplaces" />
         <p data-summary hidden class="text-sm text-soft-foreground">
           <b data-summary-count class="font-mono font-normal text-foreground tabular-nums"></b>{' '}
@@ -362,6 +392,7 @@ export function BrowseWorks({
               {group.entries.map((entry, index) => (
                 <li
                   data-work={entry.id}
+                  data-genres={genresOf(entry.id).join(' ') || undefined}
                   data-search={entry.search}
                   data-names={entry.names}
                   data-palettes={entry.palettes}

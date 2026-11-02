@@ -84,7 +84,8 @@ sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakur
   lowercase letters, digits and single hyphens, at most 40 characters and never
   `ttheme`, and `name` is its English title as fans write it. A sequel, a
   spin-off or a game of the same franchise joins its work's file rather than
-  starting another.
+  starting another. A new work also takes a row in `site/lib/categories.ts`,
+  which says where the site's browse pages list it.
 - The `[[character]]` tables come in cast order — the order the work's own
   materials list its cast, the leads first — which `TTHEME_SORT=cast` lists a
   work's palettes in. A place, an object or an idea from the work is one of its

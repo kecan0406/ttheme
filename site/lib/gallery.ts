@@ -131,4 +131,6 @@ export function palettesPath(id: string): string {
 
 export const BROWSE_PATH = '/browse'
 
+export const ASKED_SCRIPT = "if(location.search)document.documentElement.dataset.asked=''"
+
 export const MARKETPLACES_PATH = '/browse/marketplaces'

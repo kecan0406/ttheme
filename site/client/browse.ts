@@ -1,4 +1,5 @@
 import { THUMB_SIZES, WorkThumb } from '@/components/work-parts'
+import { GENRE_KEY, GENRES } from '@/lib/categories'
 import type { FoundWork } from '@/lib/found'
 import { type Filters, matches, ORDERS, type Ranked, type Searchable, type Sort, START } from '@/lib/gallery'
 import { makePath, NAME_PAUSE, NAMES_PATH, type NamesAnswer, namesPath } from '@/lib/names'
@@ -9,6 +10,8 @@ import { paletteNameOf } from '../../src/core/names.ts'
 import { announce, fill, readJson, reducedMotion } from './dom'
 import { composing, letter, typing } from './keys'
 import { afterPaint } from './palettes'
+import type { PressedChange } from './ui/change'
+import { press } from './ui/pressed'
 
 const STALL_MS = 300
 
@@ -315,15 +318,65 @@ abstract class Browse extends HTMLElement {
 
 class BrowseWorks extends Browse {
   #markets: Market[] = []
+  #genres = new Set<string>()
   #shown = 0
+
+  #pressed = (event: CustomEvent<PressedChange>) => {
+    const genre = (event.detail.trigger as HTMLElement).dataset.value ?? ''
+
+    if (event.detail.pressed) this.#genres.add(genre)
+    else this.#genres.delete(genre)
+    this.#rememberGenres()
+    this.render()
+    announce(this.summary())
+  }
 
   connectedCallback() {
     this.#markets = readJson<Market[]>(this, 'script[data-markets]')
+    const asked = new URLSearchParams(location.search).getAll(GENRE_KEY)
+
+    for (const toggle of this.#genreToggles()) {
+      const genre = toggle.dataset.value ?? ''
+      const on = asked.includes(genre)
+
+      press(toggle, on)
+
+      if (on) this.#genres.add(genre)
+    }
+
+    this.addEventListener('pressedchange', this.#pressed)
     super.connectedCallback()
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback()
+    this.removeEventListener('pressedchange', this.#pressed)
   }
 
   #items(): HTMLElement[] {
     return [...this.querySelectorAll<HTMLElement>('[data-tiles] > [data-work]')]
+  }
+
+  #genreToggles(): HTMLElement[] {
+    return [...this.querySelectorAll<HTMLElement>('[data-genre-filter] [data-slot="toggle"]')]
+  }
+
+  #rememberGenres() {
+    const url = new URL(location.href)
+
+    url.searchParams.delete(GENRE_KEY)
+
+    for (const { slug } of GENRES) if (this.#genres.has(slug)) url.searchParams.append(GENRE_KEY, slug)
+
+    if (url.href !== location.href) history.replaceState(history.state, '', url)
+  }
+
+  #genresOf(item: HTMLElement): string[] {
+    return (item.dataset.genres ?? '').split(' ')
+  }
+
+  #wanted(item: HTMLElement): boolean {
+    return this.#genres.size === 0 || this.#genresOf(item).some((genre) => this.#genres.has(genre))
   }
 
   #place(found: readonly FoundWork[]) {
@@ -380,14 +433,23 @@ class BrowseWorks extends Browse {
     const answer = this.answers.get(query)
     const within = this.dataset.category ?? ''
     const works = new Set<string>()
+    const counts = new Map<string, number>()
 
     for (const item of items) {
-      const on = this.#hit(item)
+      const hit = this.#hit(item)
+      const on = hit && this.#wanted(item)
 
       item.hidden = !on
 
-      if (!on) continue
-      works.add(item.dataset.work ?? '')
+      if (on) works.add(item.dataset.work ?? '')
+
+      if (hit) for (const genre of this.#genresOf(item)) counts.set(genre, (counts.get(genre) ?? 0) + 1)
+    }
+
+    for (const toggle of this.#genreToggles()) {
+      const count = toggle.querySelector('[data-genre-count]')
+
+      if (count) count.textContent = String(counts.get(toggle.dataset.value ?? '') ?? 0)
     }
 
     for (const group of this.querySelectorAll<HTMLElement>('[data-group]')) {

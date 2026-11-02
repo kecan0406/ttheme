@@ -1531,7 +1531,7 @@ route-progress[data-state='done'],
 
 .mock-term:not([data-sized]) > .mock-pane {
   visibility: hidden;
-  animation: builder-reveal 0s linear 2.5s forwards;
+  animation: late-reveal 0s linear 2.5s forwards;
 }
 
 .mock .r {
@@ -1679,12 +1679,14 @@ route-progress[data-state='done'],
 }
 
 :root[data-restoring] palette-builder [data-draft],
-:root[data-restoring] palette-builder .mock-term {
+:root[data-restoring] palette-builder .mock-term,
+:root[data-asked] browse-works:not(:defined) [data-group],
+:root[data-asked] browse-works:not(:defined) [data-genre-filter] {
   visibility: hidden;
-  animation: builder-reveal 0s linear 2.5s forwards;
+  animation: late-reveal 0s linear 2.5s forwards;
 }
 
-@keyframes builder-reveal {
+@keyframes late-reveal {
   to {
     visibility: visible;
   }
