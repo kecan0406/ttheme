@@ -51,10 +51,11 @@ export function writeAtomic(path: string, content: string | Uint8Array, aside?: 
   const real = existsSync(path) ? realpathSync(path) : path
   mkdirSync(dirname(real), { recursive: true })
   const tmp = join(aside ?? dirname(real), `${basename(real)}.ttheme-${process.pid}`)
-  writeFileSync(tmp, content)
+  const mode = existsSync(real) ? statSync(real).mode & 0o7777 : undefined
+  writeFileSync(tmp, content, mode === undefined ? {} : { mode })
 
-  if (existsSync(real)) {
-    chmodSync(tmp, statSync(real).mode & 0o7777)
+  if (mode !== undefined) {
+    chmodSync(tmp, mode)
   }
 
   renameSync(tmp, real)
