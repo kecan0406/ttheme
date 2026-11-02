@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.86
+
 - In Windows Terminal, `ttheme light`, `ttheme dark` and `ttheme auto` typed in a tab with a palette no longer drop that tab to the default palette.
 - `ttheme add` says "1 palette installed" rather than "1 palettes installed".
 - The builder's `Slot` tab reads `Color`.
