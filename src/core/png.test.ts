@@ -202,6 +202,15 @@ function pngOf(width: number, height: number, interlace: number, inflated: numbe
   )
 }
 
+test('a PNG of no width or no height is refused before it unpacks', () => {
+  const inflated = 8 * 1024 * 1024
+
+  for (const interlace of [0, 1]) {
+    assert.throws(() => decodeImage(pngOf(0, inflated, interlace, inflated), 1e6), /has no pixels/)
+    assert.throws(() => decodeImage(pngOf(inflated, 0, interlace, inflated), 1e6), /has no pixels/)
+  }
+})
+
 test('a PNG that unpacks far past the size its header gives is refused', () => {
   const inflated = 8 * 1024 * 1024
 

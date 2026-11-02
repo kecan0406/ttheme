@@ -303,6 +303,12 @@ function interlacedFits(bytes: Uint8Array): void {
 }
 
 export function decodePng(bytes: Uint8Array): Rgba {
+  const head = pngHead(bytes)
+
+  if (head && (head.width === 0 || head.height === 0)) {
+    throw new Error('the PNG has no pixels')
+  }
+
   const scan = scanned(bytes)
 
   if (scan) {
