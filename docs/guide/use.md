@@ -158,7 +158,7 @@ the palettes of the one under the cursor, by work.
   written before that.
 
 ```sh
-ttheme add gojo-satoru geto-suguru                        # install palettes by name
+ttheme add gojo-satoru geto-suguru          # install palettes by name
 ttheme add alice@pastel/dusk                # a palette from another marketplace
 ttheme add tt8:…                            # a share link or its code
 ttheme marketplace add alice/ttheme-pastel  # a GitHub repository; #v1 pins a tag, branch or commit

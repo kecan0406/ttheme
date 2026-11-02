@@ -6,9 +6,9 @@ checks, and share the result as a link or a marketplace.
 ## Start a palette
 
 ```sh
-ttheme new dusk                    # from blank
+ttheme new dusk                                    # from blank
 ttheme new ayanami-rei --from ttheme/ayanami-rei   # starting from another palette's colors
-ttheme edit dusk                   # change it later
+ttheme edit dusk                                   # change it later
 ```
 
 `ttheme new` opens the palette editor. You tune twenty colors while a mock
@@ -131,9 +131,9 @@ A share link carries the palette itself, so nothing is uploaded or stored. It
 opens the palette in the builder, and `ttheme add` installs it from there.
 
 ```sh
-ttheme share ayanami-rei       # one palette
-ttheme share           # asks how to share, then which palettes
-ttheme share | pbcopy  # the palette this tab shows, straight to the clipboard
+ttheme share ayanami-rei                      # one palette
+ttheme share                                  # asks how to share, then which palettes
+ttheme share | pbcopy                         # the palette this tab shows, straight to the clipboard
 ttheme add https://ttheme.dev/builder/tt8:…   # install a link; the bare code works too
 ```
 
