@@ -35,6 +35,8 @@ function colorsOf([background, foreground, cursor, selection, ...ansi]: string[]
 
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
 
+const MODE_SLOTS = [0, 1]
+
 export function follow(mine: Colors, base: Colors, theirs: Colors): Followed {
   const own = listOf(mine)
   const was = listOf(base)
@@ -62,7 +64,25 @@ export function follow(mine: Colors, base: Colors, theirs: Colors): Followed {
     }
   }
 
-  return { colors: colorsOf(colors), base: colorsOf(next), taken, conflicts }
+  if (modeOf(colorsOf(colors)) === modeOf(mine) && modeOf(colorsOf(next)) === modeOf(base)) {
+    return { colors: colorsOf(colors), base: colorsOf(next), taken, conflicts }
+  }
+
+  const their = listOf(theirs)
+
+  for (const slot of MODE_SLOTS) {
+    colors[slot] = own[slot] as string
+    next[slot] = was[slot] as string
+  }
+
+  return {
+    colors: colorsOf(colors),
+    base: colorsOf(next),
+    taken: taken.filter((slot) => !MODE_SLOTS.includes(slot)),
+    conflicts: [
+      ...new Set([...MODE_SLOTS.filter((slot) => !same(own[slot] as string, their[slot] as string)), ...conflicts]),
+    ],
+  }
 }
 
 function inMode(sides: Sides, mode: Mode): Colors | undefined {
