@@ -37,7 +37,14 @@ ttheme akemi-homura 2>/dev/null && { print -u2 "ttheme took a palette name as a 
 ttheme use nosuchpalette 2>/dev/null && { print -u2 "ttheme use took a bad name"; exit 1 }
 out=$(ttheme use city 2>&1) && { print -u2 "ttheme use took a bad name"; exit 1 }
 [[ $out == *"did you mean"*nightcity* ]] || { print -u2 "did-you-mean broke: $out"; exit 1 }
-ttheme --frobnicate 2>/dev/null && { print -u2 "ttheme took an unknown option"; exit 1 }
+ttheme --frobnicate 2>/dev/null
+(( $? == 3 )) || { print -u2 "an unknown option did not exit 3, as the CLI's do"; exit 1 }
+ttheme frobnicate 2>/dev/null
+(( $? == 3 )) || { print -u2 "an unknown command did not exit 3, as the CLI's do"; exit 1 }
+ttheme use 2>/dev/null
+(( $? == 3 )) || { print -u2 "a missing argument did not exit 3, as the CLI's do"; exit 1 }
+out=$(ttheme help frobnicate 2>&1)
+(( $? == 3 )) && [[ $out == "ttheme: unknown command 'frobnicate'"* ]] || { print -u2 "ttheme help took an unknown command: $out"; exit 1 }
 [[ $(ttheme pin --help) == "Usage: ttheme pin"* ]] || { print -u2 "ttheme pin --help did not describe pin"; exit 1 }
 [[ $(ttheme pins --help) == "Usage: ttheme pins"$'\n'* ]] || { print -u2 "ttheme pins --help did not describe pins"; exit 1 }
 [[ $(ttheme use ttheme/akemi-homura --help) == "Usage: ttheme use"* ]] || { print -u2 "--help after a palette did not describe use"; exit 1 }

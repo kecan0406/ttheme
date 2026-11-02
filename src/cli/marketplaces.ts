@@ -58,6 +58,7 @@ import {
 } from '../store/sources.ts'
 import { pending } from '../tui/pending.ts'
 import { interactive } from '../tui/terminal.ts'
+import { InputError } from './answer.ts'
 import { type Fetched, fetchedAt, fetchMarketplace, readTries, storeMarketplace } from './refresh.ts'
 import { sync } from './sync.ts'
 
@@ -86,7 +87,7 @@ async function handle(home: string, state: Installed, owner?: string): Promise<s
   }
 
   if (owner !== undefined && !(HANDLE.test(owner.toLowerCase()) && owner.length <= 39)) {
-    throw new Error(`--owner ${owner} is not a GitHub handle`)
+    throw new InputError(`--owner ${owner} is not a GitHub handle`)
   }
 
   let author = owner?.toLowerCase() ?? fromGh()
@@ -403,7 +404,7 @@ async function initLocal(home: string, dir: string, name: string, owner?: string
     const problem = marketplaceNameProblem(name)
 
     if (problem) {
-      throw new Error(`the marketplace name ${name} ${problem}`)
+      throw new InputError(`the marketplace name ${name} ${problem}`)
     }
 
     if (existsSync(dir) && !(statSync(dir).isDirectory() && readdirSync(dir).length === 0)) {
@@ -671,13 +672,13 @@ export async function runMarketplace(
     case 'check':
       return checkMarketplace(arg)
     default:
-      throw new Error(`unknown marketplace action ${action} — ${ACTIONS.join(', ')}`)
+      throw new InputError(`unknown marketplace action ${action} — ${ACTIONS.join(', ')}`)
   }
 }
 
 function required(action: string, arg: string | undefined): string {
   if (!arg) {
-    throw new Error(
+    throw new InputError(
       action === 'add'
         ? 'marketplace add takes a repository or a folder: ttheme marketplace add alice/ttheme-dust'
         : 'marketplace remove takes a marketplace name: ttheme marketplace remove alice@pastel',

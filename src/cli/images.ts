@@ -18,6 +18,7 @@ import { find, readAvailable } from '../store/available.ts'
 import { rewrite, writeAtomic } from '../store/edits.ts'
 import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
+import { InputError } from './answer.ts'
 import { prepareColoring, redrawColoring } from './redraw.ts'
 import { refreshPictures } from './sync.ts'
 
@@ -27,7 +28,7 @@ export async function runImage(asked: string, action: string, key?: string): Pro
 
   if (action === 'show') {
     if (!key) {
-      throw new Error('image show needs the picture to show')
+      throw new InputError('image show needs the picture to show')
     }
 
     const { at, of } = showImage(home, name, key)
@@ -67,7 +68,7 @@ export async function runImage(asked: string, action: string, key?: string): Pro
     return 0
   }
 
-  throw new Error(`unknown image action ${action} — show, drop, original, tone, prepare or tuned`)
+  throw new InputError(`unknown image action ${action} — show, drop, original, tone, prepare or tuned`)
 }
 
 function geometry(canvas: string, place: string): Canvas {
@@ -75,7 +76,7 @@ function geometry(canvas: string, place: string): Canvas {
   const at = /^(\d+)x(\d+)([+-]\d+)([+-]\d+)$/.exec(place)
 
   if (!size || !at) {
-    throw new Error('a canvas is <width>x<height> and a place <width>x<height>+<x>+<y>')
+    throw new InputError('a canvas is <width>x<height> and a place <width>x<height>+<x>+<y>')
   }
 
   const [width, height] = size.slice(1).map(Number) as [number, number]
@@ -121,7 +122,7 @@ export function runFlatten(
   const level = Number(opacity)
 
   if (!isHex(background) || !Number.isFinite(level)) {
-    throw new Error('flatten needs a #rrggbb background and an opacity from 0 to 1')
+    throw new InputError('flatten needs a #rrggbb background and an opacity from 0 to 1')
   }
 
   const image = decodePng(new Uint8Array(readFileSync(source)))

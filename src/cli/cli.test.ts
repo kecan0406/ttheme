@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { Missing } from '../store/available.ts'
+import { failureOf, InputError } from './answer.ts'
 import { isCrash, parse, UsageError, VERBS } from './cli.ts'
+import { runMarketplace } from './marketplaces.ts'
+import { runWire } from './wire.ts'
 
 test('build --only rejects unknown terminals', () => {
   assert.throws(() => parse(['build', '--only', 'vscode']), UsageError)
@@ -42,4 +45,16 @@ test('only a crash points to ttheme info, never a message written for the user',
 
 test('init rejects unknown options', () => {
   assert.throws(() => parse(['init', '--frobnicate']), UsageError)
+})
+
+test('an action or a terminal a verb does not know is invalid input, not a failure', async () => {
+  for (const asked of [runMarketplace('frobnicate', undefined), runMarketplace('add', undefined), runWire('frobnicate')]) {
+    const error = await asked.then(
+      () => assert.fail('it ran'),
+      (thrown: Error) => thrown,
+    )
+
+    assert.ok(error instanceof InputError)
+    assert.equal(failureOf(error, false).code, 3)
+  }
 })

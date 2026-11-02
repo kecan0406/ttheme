@@ -24,6 +24,7 @@ import { colorless } from '../terminals/osc.ts'
 import type { Pointed } from '../terminals/types.ts'
 import { PalettePrompt, type PickerScope, promptFx } from '../tui/palette-prompt.ts'
 import { pending, say } from '../tui/pending.ts'
+import { InputError } from './answer.ts'
 import { adopt, isPaletteFile, type Refused, takeFile } from './craft.ts'
 import { bringPictures, followPictures } from './pictures.ts'
 import { redrawPictures } from './redraw.ts'
@@ -40,7 +41,7 @@ export async function runAdd(asked: string[], into?: string): Promise<void> {
   const link = asked.find((n) => /^https?:\/\//i.test(n.trim()) && !codeOf(n))
 
   if (link) {
-    throw new Error(`${link} is not a share link — one reads ${SHARE_URL}${CODE}…`)
+    throw new InputError(`${link} is not a share link — one reads ${SHARE_URL}${CODE}…`)
   }
 
   const home = configHome()

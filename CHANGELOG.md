@@ -26,6 +26,7 @@
 - `ttheme palette make` no longer overwrites a work file that has a typo in it; it says which file to fix.
 - In Warp, a command that rewrites ttheme's files, `ttheme add` for one, no longer takes away a palette you put on with `ttheme use` while ttheme is off.
 - `ttheme palette` works from the shell command; before, it did nothing unless run through its file
+- A mistyped command, option or action now exits 3 from the shell command as from the CLI, and `ttheme help <unknown>` says so instead of printing the general help
 
 ## 1.2.85
 

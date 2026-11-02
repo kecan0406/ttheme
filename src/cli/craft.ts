@@ -47,6 +47,7 @@ import type { Choice, Edited, EditorOptions } from '../tui/palette-editor.ts'
 import { PickerLayer } from '../tui/picker-art.ts'
 import { interactive } from '../tui/terminal.ts'
 import { toneRows } from '../tui/tone-view.ts'
+import { InputError } from './answer.ts'
 import { findFor } from './find/find.ts'
 import { ensureLocal } from './marketplaces.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
@@ -348,7 +349,7 @@ export async function runNew(name: string, from: string | undefined, into: strin
   const problem = nameProblem(full)
 
   if (problem) {
-    throw new Error(`${full} ${problem}`)
+    throw new InputError(`${full} ${problem}`)
   }
 
   if (publisherOf(full) !== marketplace.id) {
@@ -553,7 +554,7 @@ export async function runTone(name: string, action: string, width?: string): Pro
   }
 
   if (action !== 'edit') {
-    throw new Error(`tone takes show, edit or reset, not ${action}`)
+    throw new InputError(`tone takes show, edit or reset, not ${action}`)
   }
 
   if (!interactive()) {

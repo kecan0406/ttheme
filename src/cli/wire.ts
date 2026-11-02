@@ -8,12 +8,13 @@ import { readInstalled, writeInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { WIRINGS } from '../terminals/index.ts'
 import { interactive } from '../tui/terminal.ts'
+import { InputError } from './answer.ts'
 import { launch } from './release.ts'
 import { pointDefaults, sync, wiringNext, wiringNotes, wiringPlan, withBases } from './sync.ts'
 
 export async function runWire(name: string): Promise<number> {
   if (!(WIRED as readonly string[]).includes(name)) {
-    throw new Error(`no terminal ${name} — one of ${WIRED.join(', ')}`)
+    throw new InputError(`no terminal ${name} — one of ${WIRED.join(', ')}`)
   }
 
   const id = name as Wired

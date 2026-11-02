@@ -1747,17 +1747,22 @@ __tt_verb_help() {
     __tt_help $1
   elif (( ${TTHEME_SHELL_VERBS[(Ie)$1]} )); then
     __tt_usage $1
-  elif [[ -n $1 && -n ${TTHEME_VERB_ABOUT[$1]} ]]; then
+  elif [[ -n ${TTHEME_VERB_ABOUT[$1]} ]]; then
     __tt_cli $1 --help
   else
-    __tt_help
+    __tt_unknown $1
   fi
+}
+
+__tt_unknown() {
+  print -u2 -r -- "ttheme: unknown ${${1:#-*}:+command}${${(M)1:#-*}:+option} '$1' — see \`ttheme help\`"
+  return 3
 }
 
 __tt_misuse() {
   print -u2 -r -- "ttheme $1: $2"$'\n'
   __tt_usage $1 >&2
-  return 1
+  return 3
 }
 
 __tt_arity() {
@@ -2046,12 +2051,12 @@ __tt_verb() {
   case $1 in
     -h|--help) __tt_help; return 0 ;;
     -v|--version) __tt_cli --version; return ;;
-    help) __tt_verb_help $2; return 0 ;;
-    -*) print -u2 "ttheme: unknown option $1 — see \`ttheme help\`"; return 1 ;;
+    help) __tt_verb_help $2; return ;;
+    -*) __tt_unknown $1; return ;;
   esac
   if (( $# )) && [[ -z ${TTHEME_VERB_ABOUT[$1]} ]]; then
-    print -u2 "ttheme: unknown command '$1' — see \`ttheme help\`"
-    return 1
+    __tt_unknown $1
+    return
   fi
   __tt_fresh
   (( $+functions[ttheme] )) || { print -u2 "ttheme: uninstalled — \`npx @kecan0406/ttheme@latest init\` sets it up again"; return 1 }
@@ -2102,8 +2107,8 @@ __tt_verb() {
       if [[ $2 == ssh:* ]]; then
         REPLY=ssh:${(L)2#ssh:}
         [[ $REPLY != ssh: ]] || { __tt_misuse pin "missing the host after ssh:"; return }
-        [[ $REPLY != *@* ]] || { print -u2 -r -- "ttheme pin: an ssh pin names the host alone — ssh:${REPLY##*@}"; return 1 }
-        __tt_ssh_ok $REPLY || { print -u2 -r -- "ttheme pin: not a host: ${2#ssh:} — letters, digits, . - : and the wildcards * ?"; return 1 }
+        [[ $REPLY != *@* ]] || { print -u2 -r -- "ttheme pin: an ssh pin names the host alone — ssh:${REPLY##*@}"; return 3 }
+        __tt_ssh_ok $REPLY || { print -u2 -r -- "ttheme pin: not a host: ${2#ssh:} — letters, digits, . - : and the wildcards * ?"; return 3 }
       elif [[ -n $2 ]]; then
         REPLY=$2
         [[ $REPLY == \~ || $REPLY == \~/* ]] && REPLY=$HOME${REPLY#\~}
