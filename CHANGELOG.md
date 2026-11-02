@@ -25,11 +25,11 @@
 - `ttheme share` refuses a link too large to open again and points to a marketplace, instead of printing one that fails for whoever opens it.
 - `ttheme palette make` no longer overwrites a work file that has a typo in it; it says which file to fix.
 - In Warp, a command that rewrites ttheme's files, `ttheme add` for one, no longer takes away a palette you put on with `ttheme use` while ttheme is off.
-- `ttheme palette` works from the shell command; before, it did nothing unless run through its file
-- A mistyped command, option or action now exits 3 from the shell command as from the CLI, and `ttheme help <unknown>` says so instead of printing the general help
-- A verb's `--json` output piped into something that stops reading no longer ends in a stack trace
-- Network failures say what went wrong, such as a name that did not resolve or no answer in time
-- `ttheme update` exits non-zero when it could not reach a marketplace or check for a release
+- `ttheme palette` works from the shell command; before, it did nothing unless run through its file.
+- A mistyped command, option or action now exits 3 from the shell command as from the CLI, and `ttheme help <unknown>` says so instead of printing the general help.
+- A verb's `--json` output piped into something that stops reading no longer ends in a stack trace.
+- Network failures say what went wrong, such as a name that did not resolve or no answer in time.
+- `ttheme update` exits non-zero when it could not reach a marketplace or check for a release.
 - A paste or a terminal answer that is cut short no longer locks up Browse, the palette editor or find.
 - Resizing the window while holding a key no longer garbles preview until the key is let go.
 - Moving the mouse a little while clicking in preview no longer closes it and leaves stray text at the prompt.
@@ -40,7 +40,6 @@
 - Pasting a very long text into Browse no longer slows every key after it.
 - Alt+enter no longer closes Browse, the palette editor or find.
 - Preview's list says how many rows are above and below the window.
-- Browse's search puts the work you named first: `cyberpunk 2077` finds the game, not its anime.
 
 ## 1.2.85
 
