@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
@@ -184,10 +184,18 @@ export function readMarketplaceInfo(text: string, where: string): MarketplaceInf
   }
 }
 
+export function isFile(path: string): boolean {
+  try {
+    return statSync(path).isFile()
+  } catch {
+    return false
+  }
+}
+
 export function localIdentity(dir: string): MarketplaceInfo {
   const path = join(dir, MARKETPLACE_FILE)
 
-  if (!existsSync(path)) {
+  if (!isFile(path)) {
     throw new Error(`${dir} has no ${MARKETPLACE_FILE} — \`ttheme marketplace init ${dir}\` makes one`)
   }
 

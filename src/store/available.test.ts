@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -25,6 +25,8 @@ import {
   writeBundled,
   writeKept,
 } from './available.ts'
+import { setFiles } from './local.ts'
+import { localIdentity } from './sources.ts'
 
 function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
@@ -375,4 +377,14 @@ test('the head of a body stops reading at what it asked for', async () => {
   assert.equal(head.length, 1500)
   assert.ok(stopped)
   assert.equal((await firstBytes(new Response('ab'), 1500)).length, 2)
+})
+
+test('a marketplace folder reads only regular files, whatever a link in it points at', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-links-'))
+  mkdirSync(join(dir, 'sets'))
+  symlinkSync('/dev/null', join(dir, 'sets', 'device.toml'))
+  symlinkSync(join(dir, 'gone'), join(dir, 'sets', 'gone.toml'))
+  symlinkSync('/dev/null', join(dir, 'ttheme-marketplace.toml'))
+  assert.deepEqual(setFiles(dir), [])
+  assert.throws(() => localIdentity(dir), /has no ttheme-marketplace\.toml/)
 })
