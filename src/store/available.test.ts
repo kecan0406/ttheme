@@ -12,8 +12,10 @@ import {
   archiveId,
   archiveInfo,
   available,
+  bodyWithin,
   booruTags,
   find,
+  firstBytes,
   gateFailures,
   readKept,
   readMarketplaces,
@@ -326,4 +328,51 @@ test('a kept palette whose name or subject could not be one is left out, so shar
     readKept(at).map((p) => p.name),
     ['bob@x/kept'],
   )
+})
+
+function endless(chunk: Uint8Array, stopped: () => void = () => {}): Response {
+  return new Response(
+    new ReadableStream({
+      pull(controller) {
+        controller.enqueue(chunk)
+      },
+      cancel: stopped,
+    }),
+  )
+}
+
+test('a body over its ceiling is refused, whatever its length header says', async () => {
+  let stopped = false
+
+  const flood = endless(new Uint8Array(1024), () => {
+    stopped = true
+  })
+
+  await assert.rejects(bodyWithin(flood, 4096, 'too much'), /too much/)
+  assert.ok(stopped, 'the stream is let go')
+
+  const told = new Response('small', { headers: { 'content-length': '999999' } })
+  await assert.rejects(bodyWithin(told, 4096, 'too much'), /too much/)
+
+  const fine = new Response('small')
+  const seen: number[] = []
+  const bytes = await bodyWithin(fine, 4096, 'too much', (got) => seen.push(got))
+  assert.equal(new TextDecoder().decode(bytes), 'small')
+  assert.deepEqual(seen, [5])
+  assert.equal((await bodyWithin(new Response(null, { status: 204 }), 4096, 'too much')).length, 0)
+})
+
+test('the head of a body stops reading at what it asked for', async () => {
+  let stopped = false
+
+  const head = await firstBytes(
+    endless(new Uint8Array(1024).fill(7), () => {
+      stopped = true
+    }),
+    1500,
+  )
+
+  assert.equal(head.length, 1500)
+  assert.ok(stopped)
+  assert.equal((await firstBytes(new Response('ab'), 1500)).length, 2)
 })

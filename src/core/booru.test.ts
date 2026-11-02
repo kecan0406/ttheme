@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync }
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
-import { fetchPosts, redirected, retryAfter, sweepCache } from '../pictures/booru-net.ts'
+import { fetchBytes, fetchPosts, redirected, retryAfter, sweepCache } from '../pictures/booru-net.ts'
 import {
   blockSet,
   cutoutMap,
@@ -721,6 +721,21 @@ test("a redirect keeps the query the target left off, and keeps the target's own
     'https://www.zerochan.net/Orla+Starling?json=&l=100',
   )
   assert.equal(redirected('https://a.test/x?q=1', '/y?z=2'), 'https://a.test/y?z=2')
+})
+
+test('a file past the most find keeps is refused before it fills memory', async () => {
+  const fetched = spyOn(globalThis, 'fetch').mockImplementation(
+    Object.assign(async () => new Response('x', { headers: { 'content-length': String(2 ** 40) } }), { preconnect }),
+  )
+
+  try {
+    await assert.rejects(
+      fetchBytes(SITES[0] as Site, 'https://cdn.test/a.png', new AbortController().signal),
+      /sent a file over 256 MB/,
+    )
+  } finally {
+    fetched.mockRestore()
+  }
 })
 
 test('a tag zerochan does not know lists nothing instead of failing the search', async () => {

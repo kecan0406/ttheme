@@ -4,13 +4,14 @@ import { isTag } from '../core/commons.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { containsText, inert } from '../core/text.ts'
 import { nameProblem, slugOf, slugProblem, subjectProblem, textProblem } from '../core/theme.ts'
-import { reach } from './available.ts'
+import { bodyWithin, reach } from './available.ts'
 import { writeAtomic } from './edits.ts'
 import { cacheRoot } from './paths.ts'
 import { isRemote, parseSource } from './sources.ts'
 
 export const INDEX_URL = 'https://index.ttheme.dev/marketplaces.json'
 
+const INDEX_MOST = 32 * 1024 * 1024
 const HEX = /^#[0-9a-f]{6}$/i
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 
@@ -246,7 +247,8 @@ export async function readIndex(signal?: AbortSignal, path = indexCache(), url =
       return { marketplaces, at }
     }
 
-    const text = await response.text()
+    const bytes = await bodyWithin(response, INDEX_MOST, `the marketplace index is over ${INDEX_MOST / 1024 / 1024} MB`)
+    const text = new TextDecoder().decode(bytes)
     const fresh = parseIndex(text)
     writeAtomic(path, JSON.stringify({ etag: response.headers.get('etag') ?? '', at, text }))
 

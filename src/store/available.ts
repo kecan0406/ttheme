@@ -312,6 +312,56 @@ export async function reach(
   return response
 }
 
+export async function bodyWithin(
+  response: Response,
+  most: number,
+  tooLarge: string,
+  progress?: (got: number, size: number) => void,
+): Promise<Uint8Array> {
+  const size = Number(response.headers.get('content-length')) || 0
+
+  if (size > most) {
+    await response.body?.cancel()
+    throw new Error(tooLarge)
+  }
+
+  const reader = response.body?.getReader()
+  const chunks: Uint8Array[] = []
+  let got = 0
+
+  for (let read = await reader?.read(); read && !read.done; read = await reader?.read()) {
+    got += read.value.length
+
+    if (got > most) {
+      await reader?.cancel()
+      throw new Error(tooLarge)
+    }
+
+    chunks.push(read.value)
+    progress?.(got, size)
+  }
+
+  return Buffer.concat(chunks)
+}
+
+export async function firstBytes(response: Response, count: number): Promise<Uint8Array> {
+  const reader = response.body?.getReader()
+  const chunks: Uint8Array[] = []
+  let got = 0
+
+  for (let read = await reader?.read(); read && !read.done; read = await reader?.read()) {
+    chunks.push(read.value)
+    got += read.value.length
+
+    if (got >= count) {
+      await reader?.cancel()
+      break
+    }
+  }
+
+  return Buffer.concat(chunks).subarray(0, count)
+}
+
 export function gateFailures(palette: PaletteEntry): string[] {
   const theme = toTheme(palette)
   const values = measure(theme)

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { reach } from '../store/available.ts'
+import { bodyWithin, reach } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { cacheRoot } from '../store/paths.ts'
 
@@ -61,13 +61,7 @@ export async function fetchArt(ref: string): Promise<{ bytes: Uint8Array; path: 
     'sec-fetch-site': 'cross-site',
   })
 
-  if (Number(response.headers.get('content-length') ?? 0) > MOST) {
-    throw new Error(`${url.host} sent a picture over ${MOST / 1024 / 1024} MB`)
-  }
-
-  const bytes = new Uint8Array(await response.arrayBuffer())
-
-  if (bytes.length > MOST) throw new Error(`${url.host} sent a picture over ${MOST / 1024 / 1024} MB`)
+  const bytes = await bodyWithin(response, MOST, `${url.host} sent a picture over ${MOST / 1024 / 1024} MB`)
 
   if (!isPicture(bytes)) {
     throw new Error(

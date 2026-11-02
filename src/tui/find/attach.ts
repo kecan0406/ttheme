@@ -9,6 +9,7 @@ import { inflateSync } from 'node:zlib'
 import { AGENT, KEY_SPAN, MAX_PIXELS, type Site } from '../../core/booru.ts'
 import { jpegSize } from '../../core/jpeg.ts'
 import { isPng, pngHead } from '../../core/png.ts'
+import { bodyWithin } from '../../store/available.ts'
 import type { Inbound } from '../keys.ts'
 
 const run = promisify(execFile)
@@ -256,11 +257,7 @@ export async function loadRef(ref: string, signal: AbortSignal): Promise<Loaded>
       throw new Error(`${new URL(ref).host} answered ${response.status}`)
     }
 
-    if (Number(response.headers.get('content-length') ?? 0) > LIMIT) {
-      throw new Error('that picture is over 64 MB')
-    }
-
-    const bytes = new Uint8Array(await response.arrayBuffer())
+    const bytes = await bodyWithin(response, LIMIT, 'that picture is over 64 MB')
 
     if (/^text\/html/i.test(response.headers.get('content-type') ?? '')) {
       throw new Error(`${new URL(ref).host} sent a web page, not a picture — copy the image address instead`)

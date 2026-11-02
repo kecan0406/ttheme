@@ -8,6 +8,7 @@ import { untar } from '../core/tarball.ts'
 import { BUILTIN, MARKETPLACE_FILE, marketplaceId } from '../core/theme.ts'
 import {
   type Archive,
+  bodyWithin,
   builtinPath,
   Missing,
   type ReadMarketplace,
@@ -138,34 +139,6 @@ function archiveOf(tarball: Uint8Array, etag: string | null): Archive {
   return { ...(etag ? { etag } : {}), files }
 }
 
-async function archiveBytes(response: Response): Promise<Uint8Array> {
-  const reader = response.body?.getReader()
-
-  if (!reader) {
-    return new Uint8Array(await response.arrayBuffer())
-  }
-
-  const chunks: Uint8Array[] = []
-  let size = 0
-
-  for (;;) {
-    const { done, value } = await reader.read()
-
-    if (done) {
-      return Buffer.concat(chunks)
-    }
-
-    size += value.length
-
-    if (size > ARCHIVE_MOST) {
-      await reader.cancel()
-      throw new Error(`the archive is more than ${ARCHIVE_MOST / 1024 / 1024} MB`)
-    }
-
-    chunks.push(value)
-  }
-}
-
 export async function fetchArchive(
   source: string,
   timeout?: number,
@@ -189,7 +162,9 @@ export async function fetchArchive(
     return undefined
   }
 
-  return archiveOf(await archiveBytes(response), response.headers.get('etag'))
+  const bytes = await bodyWithin(response, ARCHIVE_MOST, `the archive is more than ${ARCHIVE_MOST / 1024 / 1024} MB`)
+
+  return archiveOf(bytes, response.headers.get('etag'))
 }
 
 export function fromArchive(source: string, archive: Archive): FetchedMarketplace {

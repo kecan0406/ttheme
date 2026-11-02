@@ -26,12 +26,17 @@ import {
   uncredited,
 } from '../core/booru.ts'
 import { pngHead } from '../core/png.ts'
+import { bodyWithin, firstBytes } from '../store/available.ts'
 import { listing } from '../store/edits.ts'
 import { cacheRoot } from '../store/paths.ts'
 
 const CACHE_BYTES = 512 * 1024 * 1024
 
 const HEAD = 8191
+
+const ANSWER_MOST = 32 * 1024 * 1024
+
+const FILE_MOST = 256 * 1024 * 1024
 
 const TIMEOUT = 20_000
 
@@ -208,9 +213,19 @@ async function get(
   }
 }
 
+async function answerOf(site: Site, response: Response): Promise<string> {
+  const bytes = await bodyWithin(
+    response,
+    ANSWER_MOST,
+    `${site.name} answered more than ${ANSWER_MOST / 1024 / 1024} MB`,
+  )
+
+  return new TextDecoder().decode(bytes)
+}
+
 async function listed(site: Site, url: string, signal: AbortSignal): Promise<string> {
   try {
-    return await (await get(site, url, signal)).text()
+    return await answerOf(site, await get(site, url, signal))
   } catch (error) {
     if (site.missing !== undefined && (error as { status?: number }).status === site.missing) {
       return ''
@@ -246,7 +261,7 @@ export async function fetchLent(md5s: readonly string[], signal: AbortSignal): P
   }
 
   for (let at = 0; at < md5s.length; at += PAGE) {
-    const text = await (await get(LENDER, lentUrl(md5s.slice(at, at + PAGE)), signal, {}, LEND_TIMEOUT)).text()
+    const text = await answerOf(LENDER, await get(LENDER, lentUrl(md5s.slice(at, at + PAGE)), signal, {}, LEND_TIMEOUT))
 
     for (const [md5, found] of parseLent(text)) {
       lent.set(md5, found)
@@ -274,7 +289,10 @@ async function fetchArtistUrls(names: readonly string[], signal: AbortSignal): P
   }
 
   for (let at = 0; at < names.length; at += PAGE) {
-    const text = await (await get(LENDER, artistsUrl(names.slice(at, at + PAGE)), signal, {}, LEND_TIMEOUT)).text()
+    const text = await answerOf(
+      LENDER,
+      await get(LENDER, artistsUrl(names.slice(at, at + PAGE)), signal, {}, LEND_TIMEOUT),
+    )
 
     for (const [name, urls] of parseArtistUrls(text)) {
       found.set(name, urls)
@@ -296,7 +314,7 @@ export async function locate(
   for (const url of site.guesses(post)) {
     try {
       const response = await get(site, url, signal, { Range: `bytes=0-${HEAD}` })
-      const head = pngHead(new Uint8Array(await response.arrayBuffer()))
+      const head = pngHead(await firstBytes(response, HEAD + 1))
       post.file = url
       post.ext = extension(url)
 
@@ -322,7 +340,7 @@ export async function fetchSuggestions(prefix: string, signal: AbortSignal): Pro
 
       const url = `${LENDER.origin}/autocomplete.json?${params}`
 
-      return parseSuggestions(await (await get(LENDER, url, signal, {}, SUGGEST_TIMEOUT)).text())
+      return parseSuggestions(await answerOf(LENDER, await get(LENDER, url, signal, {}, SUGGEST_TIMEOUT)))
     } catch (error) {
       if (signal.aborted) {
         throw error
@@ -334,7 +352,7 @@ export async function fetchSuggestions(prefix: string, signal: AbortSignal): Pro
   const params = new URLSearchParams({ name: prefix, order: 'count', limit: String(SUGGESTED) })
 
   return parseTagList(
-    await (await get(yande, `${yande.origin}/tag.json?${params}`, signal, {}, SUGGEST_TIMEOUT)).text(),
+    await answerOf(yande, await get(yande, `${yande.origin}/tag.json?${params}`, signal, {}, SUGGEST_TIMEOUT)),
   )
 }
 
@@ -350,14 +368,17 @@ export async function fetchRelated(tag: string, signal: AbortSignal): Promise<Su
   })
 
   return parseRelated(
-    await (await get(LENDER, `${LENDER.origin}/related_tag.json?${params}`, signal, {}, RELATED_TIMEOUT)).text(),
+    await answerOf(
+      LENDER,
+      await get(LENDER, `${LENDER.origin}/related_tag.json?${params}`, signal, {}, RELATED_TIMEOUT),
+    ),
   )
 }
 
 export async function headOf(site: Site, url: string, signal: AbortSignal): Promise<ReturnType<typeof pngHead>> {
   const response = await get(site, url, signal, { Range: `bytes=0-${HEAD}` })
 
-  return pngHead(new Uint8Array(await response.arrayBuffer()))
+  return pngHead(await firstBytes(response, HEAD + 1))
 }
 
 export async function fetchBytes(
@@ -367,37 +388,8 @@ export async function fetchBytes(
   progress?: (got: number, size: number) => void,
 ): Promise<Uint8Array> {
   const response = await get(site, url, signal, {}, 0)
-  const size = Number(response.headers.get('content-length')) || 0
-  const reader = response.body?.getReader()
 
-  if (!reader) {
-    return new Uint8Array(await response.arrayBuffer())
-  }
-
-  const chunks: Uint8Array[] = []
-  let got = 0
-
-  for (;;) {
-    const { done, value } = await reader.read()
-
-    if (done) {
-      break
-    }
-
-    chunks.push(value)
-    got += value.length
-    progress?.(got, size)
-  }
-
-  const bytes = new Uint8Array(got)
-  let at = 0
-
-  for (const chunk of chunks) {
-    bytes.set(chunk, at)
-    at += chunk.length
-  }
-
-  return bytes
+  return bodyWithin(response, FILE_MOST, `${site.name} sent a file over ${FILE_MOST / 1024 / 1024} MB`, progress)
 }
 
 export async function fetchProfiles(names: readonly string[], signal: AbortSignal): Promise<Map<string, string[]>> {
