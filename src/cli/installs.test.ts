@@ -242,6 +242,27 @@ test('a tuned palette travels by its name alone, made from the original, and joi
   )
 })
 
+test('a tuning that turns a palette into its other mode is not sent as a link the receiver could not add', async () => {
+  const sender = installedHome(['ttheme/juno'])
+
+  const other = {
+    background: '#f8f8f8',
+    foreground: '#202020',
+    cursor: '#7cc1d6',
+    selection: '#d0d8f0',
+    ansi: entry('x').ansi,
+  }
+
+  const juno = { ...entry('ttheme/juno'), other }
+  writeBundled(sender, { builtin: { ...manifest, palettes: [juno] }, commons })
+  writeTone(sender, { 'ttheme/juno': { dark: { background: '#fafafa', foreground: '#111111' } } })
+
+  await assert.rejects(
+    sharedLink(sender, ['juno']),
+    /ttheme\/juno cannot be shared with your tuning — .*share the original/,
+  )
+})
+
 test('adding a set file, or a link with a tuned palette, before you have a local marketplace makes one, keeps it and proposes what the commons lacks', async () => {
   const juno = manifest.palettes[1] as PaletteEntry
   const file = join(mkdtempSync(join(tmpdir(), 'ttheme-file-')), 'pip.toml')

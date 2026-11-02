@@ -179,7 +179,21 @@ export async function runShare(names: readonly string[], tone?: Tone): Promise<v
 
     used.add(name)
 
-    return tuned ? { ...draft, name, upstream: upstreamFrom(original) } : draft
+    if (!tuned) {
+      return draft
+    }
+
+    const copy = { ...draft, name, upstream: upstreamFrom(original) }
+
+    try {
+      readOwnText(name, paletteToml(copy), true)
+    } catch (error) {
+      throw new Error(
+        `${entry.name} cannot be shared with your tuning — ${(error as Error).message} — share the original`,
+      )
+    }
+
+    return copy
   })
 
   const [first] = drafts
