@@ -1042,3 +1042,28 @@ test('blurring a picture in its own colors softens its edge without dimming the 
     'a partial pixel keeps its red instead of fading toward black',
   )
 })
+
+test('a damaged images.json says so, whatever shape it is in', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-store-'))
+
+  for (const body of [
+    '{',
+    'null',
+    '{"version":1}',
+    '{"version":1,"palettes":null}',
+    '{"version":1,"palettes":{"a@b/c":null}}',
+    '{"version":1,"palettes":{"a@b/c":{}}}',
+    '{"version":1,"palettes":{"a@b/c":{"active":"x","pictures":[null]}}}',
+    '{"version":1,"palettes":{"a@b/c":{"active":"x","pictures":[{"key":"x"}]}}}',
+  ]) {
+    writeFileSync(join(dir, 'images.json'), body)
+    assert.throws(
+      () => readStore(dir),
+      (error: Error) => error.constructor === Error && /images\.json is damaged/.test(error.message),
+      body,
+    )
+  }
+
+  writeFileSync(join(dir, 'images.json'), '{"version":1,"palettes":{}}')
+  assert.deepEqual(readStore(dir).palettes, {})
+})

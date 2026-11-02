@@ -550,13 +550,36 @@ export function readStore(dir: string): Store {
     return migrate(dir)
   }
 
-  const store = JSON.parse(text) as Store
+  const store = parsedStore(text)
+
+  if (!store) {
+    throw new Error(`${storePath(dir)} is damaged — move it away and ttheme starts another from the pictures it finds`)
+  }
 
   if (store.version !== VERSION) {
     throw new Error(`${storePath(dir)} is version ${store.version} — this ttheme reads version ${VERSION}`)
   }
 
   return store
+}
+
+function parsedStore(text: string): Store | undefined {
+  try {
+    const store = JSON.parse(text) as Partial<Store> | null
+
+    if (store?.version !== VERSION) {
+      return store ? (store as Store) : undefined
+    }
+
+    return store.palettes &&
+      Object.values(store.palettes).every((rack) =>
+        rack?.pictures?.every((picture) => picture?.key && picture.stem && picture.fill),
+      )
+      ? (store as Store)
+      : undefined
+  } catch {
+    return undefined
+  }
 }
 
 export function rackIn(store: Store, name: string): Rack | undefined {
