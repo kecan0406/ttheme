@@ -206,7 +206,7 @@ export function withDescription(text: string, description: string | undefined): 
   const line = description ? `description = ${JSON.stringify(description)}\n` : ''
 
   if (DESCRIPTION.test(top)) {
-    return top.replace(DESCRIPTION, line) + rest
+    return top.replace(DESCRIPTION, () => line) + rest
   }
 
   if (!line) {

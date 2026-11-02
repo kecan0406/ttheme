@@ -187,6 +187,22 @@ test('withSetting rewrites the line a setting already has, and adds one when it 
   )
 })
 
+test('a setting or a block goes in as written, whatever dollar signs it holds', () => {
+  for (const value of ["a$'b", 'a$&b', 'a$`b', 'a$$b', 'a$1b']) {
+    assert.ok(
+      withSetting(configTemplate(), 'TTHEME_FIND_HIDE_TAGS', value).includes(
+        `\n: \${TTHEME_FIND_HIDE_TAGS:='${value.replaceAll("'", "'\\''")}'}\n`,
+      ),
+      value,
+    )
+    assert.equal(upsertBlock('# ttheme begin\nold\n# ttheme end\n', value), `# ttheme begin\n${value}\n# ttheme end\n`)
+    assert.equal(
+      upsertLuaBlock('-- ttheme begin\nold\n-- ttheme end\n', value),
+      `-- ttheme begin\n${value}\n-- ttheme end\n`,
+    )
+  }
+})
+
 test("ttheme's kitty file leaves the logo settings the user set to the user", () => {
   assert.equal(
     kittyOwnText(undefined, '/cfg/ttheme/kitty.py', 'dark', 'window_logo_alpha 0.4\n'),

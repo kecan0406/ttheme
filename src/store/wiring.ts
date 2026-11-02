@@ -18,7 +18,7 @@ export function upsertBlock(content: string, body: string): string {
   const block = `${BLOCK_BEGIN}\n${body}\n${BLOCK_END}\n`
 
   if (BLOCK.test(content)) {
-    return content.replace(BLOCK, block)
+    return content.replace(BLOCK, () => block)
   }
 
   if (content === '') {

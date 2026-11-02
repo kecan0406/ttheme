@@ -1850,7 +1850,7 @@ class Finder {
 
     if (key === 'enter') {
       const picked = view.pick === undefined ? undefined : shown[view.pick]
-      const chosen = picked ? text.replace(/\S*$/, picked.value) : text
+      const chosen = picked ? text.replace(/\S*$/, () => picked.value) : text
       view.editing = undefined
       view.suggest = undefined
       view.pick = undefined

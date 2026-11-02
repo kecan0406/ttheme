@@ -17,6 +17,7 @@
 - A damaged PNG now fails with a plain message, and a PNG built to swell in memory is refused.
 - A session of find that meets many damaged JPEGs no longer stops showing pictures.
 - `ttheme palette make` no longer crashes on an anchors file that names every accent color.
+- A marketplace description or a find setting holding `$&` or `$'` goes in as you typed it.
 
 ## 1.2.85
 

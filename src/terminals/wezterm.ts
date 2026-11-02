@@ -31,7 +31,7 @@ export function upsertLuaBlock(content: string, body: string): string | undefine
   const block = `-- ttheme begin\n${body}\n-- ttheme end\n`
 
   if (LUA_BLOCK.test(content)) {
-    return content.replace(LUA_BLOCK, block)
+    return content.replace(LUA_BLOCK, () => block)
   }
 
   if (content === '') {

@@ -28,6 +28,15 @@ test('a description goes in after the name, is replaced in place, and comes out 
   assert.equal(withDescription(toml, undefined), toml)
 })
 
+test('a description goes in as typed, whatever dollar signs it holds', () => {
+  for (const description of ["costs $' nothing", 'a $& b', 'a $` b', 'a $$ b']) {
+    const replaced = withDescription(withDescription(toml, 'Soft colors'), description)
+
+    assert.equal(readMarketplaceInfo(replaced, 'x').description, description)
+    assert.equal(replaced.split('[owner]').length, 2)
+  }
+})
+
 test('a hand-written description over several lines is replaced whole, and the tables after it stay as they were', () => {
   const written = toml.replace('name = "pastel"\n', 'name = "pastel"\ndescription = """\nSoft colors"""\n')
 
