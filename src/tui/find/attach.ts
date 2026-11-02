@@ -14,6 +14,7 @@ import type { Inbound } from '../keys.ts'
 
 const run = promisify(execFile)
 const LIMIT = 64 * 1024 * 1024
+const PROFILE_MOST = 16 * 1024 * 1024
 const SIDE = 4096
 const SRGB = '/System/Library/ColorSync/Profiles/sRGB Profile.icc'
 const IMAGE_MIMES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/tiff', 'image/heic']
@@ -151,7 +152,7 @@ function profileOf(bytes: Uint8Array): Buffer | undefined {
         const body = data.subarray(at + 8, at + 8 + size)
 
         try {
-          return inflateSync(body.subarray(body.indexOf(0) + 2))
+          return inflateSync(body.subarray(body.indexOf(0) + 2), { maxOutputLength: PROFILE_MOST })
         } catch {
           return undefined
         }
