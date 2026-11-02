@@ -39,6 +39,7 @@
 - Pasting a long text into preview no longer freezes it.
 - Pasting a very long text into Browse no longer slows every key after it.
 - Alt+enter no longer closes Browse, the palette editor or find.
+- Preview's list says how many rows are above and below the window.
 
 ## 1.2.85
 

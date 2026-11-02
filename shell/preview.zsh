@@ -1487,7 +1487,7 @@ __tt_pv_draw() {
     (( hub )) || out+=$'\e[K\n'
   fi
   if (( N > h && top > 1 )); then
-    out+="   "$dd"…"$zz
+    out+="   "$dd$TTHEME_MARKS[above]" $(( top - 1 )) more"$zz
     pvz+=("$(( hd + 1 )) 1 $lw more -1")
   fi
   out+=$'\e[K\n'
@@ -1517,7 +1517,7 @@ __tt_pv_draw() {
         esac
       fi
     elif (( k == h && N > h && top + h <= N )); then
-      line="   "$dd"…"$zz
+      line="   "$dd$TTHEME_MARKS[below]" $(( N - top - h + 1 )) more"$zz
       pvz+=("$(( hd + 2 + k )) 1 $lw more 1")
     fi
     out+=$line$'\e[K\n'
