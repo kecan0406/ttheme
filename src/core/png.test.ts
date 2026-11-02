@@ -363,3 +363,14 @@ test('a JPEG that fails leaves nothing behind for the next one to run out of', (
 
   assert.equal(decodeImage(new Uint8Array(Buffer.from(TWO_COLORS, 'base64')), 1e6).width, 16)
 })
+
+test('the JPEGs the decoder chokes on leave it working for the next one, however many there are', () => {
+  const bytes = new Uint8Array(Buffer.from(TWO_COLORS, 'base64'))
+  const damaged = Uint8Array.from(bytes)
+  damaged[157] = 0xff
+
+  for (let round = 0; round < 80; round++) {
+    assert.throws(() => decodeImage(damaged, 1e6), /not a JPEG picture this decoder can read/)
+    assert.equal(decodeImage(bytes, 1e6).width, 16)
+  }
+})
