@@ -169,7 +169,7 @@ export function characterIdOf(subject: string): string | undefined {
 }
 
 export function textProblem(value: string): string | undefined {
-  if (/[\p{Cc}\p{Bidi_Control}"$`\\]/u.test(value)) {
+  if (/[\p{Cc}\p{Cs}\p{Bidi_Control}"$`\\]/u.test(value)) {
     return 'holds a control character, a direction mark, a quote, $, ` or \\'
   }
 

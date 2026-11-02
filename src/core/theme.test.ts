@@ -142,3 +142,8 @@ test('a built-in palette carries its other mode', () => {
   const light = `\n[colors.light]\nbackground = "#fafafa"\nforeground = "#202020"\ncursor = "#a04060"\nselection_background = "#c0c0e0"\nansi = [${Array.from({ length: 16 }, () => '"#606060"').join(', ')}]\n`
   assert.equal(readTheme('d', `${palette('')}${light}`, builtin).other?.background, '#fafafa')
 })
+
+test('a lone surrogate is refused where text is read, since no TOML file could hold it again', () => {
+  assert.ok(textProblem('\ud800'))
+  assert.equal(textProblem('😀'), undefined)
+})
