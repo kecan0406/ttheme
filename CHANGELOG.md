@@ -37,6 +37,7 @@
 - find says its search failed, in red, when no site could be reached, rather than that there are no posts.
 - Browse's search stops looking up names when the server gives no answer in 20 seconds.
 - Pasting a long text into preview no longer freezes it.
+- Pasting a very long text into Browse no longer slows every key after it.
 
 ## 1.2.85
 

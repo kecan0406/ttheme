@@ -2,6 +2,8 @@ import { graphemes } from '../core/text.ts'
 
 const CONTROL = /[\p{Cc}\p{Bidi_Control}]/u
 
+const PASTE_MOST = 1024
+
 function printable(key: string): boolean {
   return [...key].length === 1 && !CONTROL.test(key)
 }
@@ -49,6 +51,6 @@ export class Field {
   }
 
   paste(text: string): void {
-    this.value += plain(text)
+    this.value = [...(this.value + plain(text))].slice(0, PASTE_MOST).join('')
   }
 }
