@@ -6,7 +6,16 @@ import { keepDerived, saveDerived } from './store/derived.ts'
 import { cacheRoot } from './store/paths.ts'
 import { capsFor, useCaps } from './tui/keycaps.ts'
 
+function closedPipe(error: NodeJS.ErrnoException): void {
+  if (error.code !== 'EPIPE') {
+    throw error
+  }
+}
+
 if (isMainThread) {
+  process.stdout.on('error', closedPipe)
+  process.stderr.on('error', closedPipe)
+
   if (process.env.TTHEME_DEBUG && typeof Bun === 'undefined' && !process.sourceMapsEnabled) {
     const child = spawnSync(process.execPath, ['--enable-source-maps', ...process.argv.slice(1)], { stdio: 'inherit' })
     process.exitCode = child.status ?? 1
