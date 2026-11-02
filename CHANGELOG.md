@@ -3,6 +3,7 @@
 ## Unreleased
 
 - A marketplace palette whose `subject` names a built-in character by an old id, `vocaloid/miku` for one, fails `ttheme marketplace check` until it names the new id, `vocaloid/hatsune-miku`; it still installs and shows.
+- `ttheme use` and every other shell command take a palette or path with `-h` in its name, such as `akemi-homura`, instead of printing their usage
 
 ## 1.2.84
 

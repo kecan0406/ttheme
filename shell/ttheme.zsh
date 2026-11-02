@@ -2031,7 +2031,7 @@ ttheme() {
 
 __tt_verb() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  if (( $# > 1 && ${${argv[2,-1]}[(I)(-h|--help)]} )); then
+  if (( $# > 1 && ${argv[2,-1][(I)(-h|--help)]} )); then
     __tt_verb_help $1
     return
   fi
