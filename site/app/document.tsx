@@ -3,6 +3,7 @@ import assets from '@/assets.json' with { type: 'json' }
 import { FacetGround } from '@/components/facet-ground'
 import { fallback } from '@/lib/builtin'
 import { CARD_HEIGHT, CARD_WIDTH } from '@/lib/card'
+import { contentPolicy } from '@/lib/csp'
 import { HANDOFF_SCRIPT } from '@/lib/handoff'
 import { KEYS_SCRIPT } from '@/lib/keys'
 import { html, json } from '@/lib/render'
@@ -17,6 +18,10 @@ const RELOAD = `let s=null,b=null;const c=()=>{s?.close();s=null},f=()=>{if(docu
 const FONTS: string[] = assets.fonts
 
 const WEAR_SCRIPT = wearScript(fallback)
+
+const INLINE = [KEYS_SCRIPT, RUNNER_SCRIPT, WEAR_SCRIPT, HANDOFF_SCRIPT, ROUTE_SCRIPT, SPECULATION_RULES].concat(
+  assets.reload ? [RELOAD] : [],
+)
 
 const INSIGHTS = ['/_vercel/insights/script.js', '/_vercel/speed-insights/script.js']
 
@@ -71,6 +76,7 @@ function Document({
     <html lang="en" data-mode="dark" data-setting="auto" style={rootStyle(fallback)}>
       <head>
         <meta charset="utf-8" />
+        <meta http-equiv="Content-Security-Policy" content={contentPolicy(head ? [...INLINE, head] : INLINE)} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content={fallback.background} />
         <link rel="icon" type="image/svg+xml" href={themeIcon(fallback)} />
