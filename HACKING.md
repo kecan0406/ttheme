@@ -297,7 +297,7 @@ an Apply button — and the part the cursor is in takes the keys:
 |---|---|---|---|
 | `↑` `↓` `j` `k` | Pictures, then colors, size, position, opacity, and past the last one Edit palette | the picture, Apply | Edit palette, the top |
 | `home` `end` | the top, Apply | same | same |
-| `←` `→` `h` `l` | on Pictures, another picture; on Colors, own colors or tinted; on another field, a step | the Edit palette and Reset palette buttons | — |
+| `←` `→` `h` `l` | on Pictures, another picture; on Colors, original or tinted; on another field, a step | the Edit palette and Reset palette buttons | — |
 | `⇧←` `⇧→` | on Pictures and Colors, as `←` `→`; on size and opacity, ×10; on position, one place | — | — |
 | `enter` | on the empty frame under Pictures of a palette with no picture, find one | open the palette editor on it; on Reset palette, press twice to reset (esc between the two calls it off) | apply, saving first and asking where as enter on a palette does |
 | `1`-`9` | place | — | — |

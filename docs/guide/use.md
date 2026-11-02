@@ -213,7 +213,7 @@ In `ttheme`, put the cursor on a palette and press `tab` to open its panel. The
 - `enter` on a thumbnail shows the window the way the picture will look. `x`
   switches between the cut-out and the whole picture (on macOS `>=14` the
   system's own Vision framework does the cutting; nothing is uploaded), `c` draws
-  it in its own colors or tinted in one color of the palette, and `t` opens the
+  it in its original colors or tinted in one color of the palette, and `t` opens the
   tuning. `enter` installs it with the artist and the artwork's page.
 - Drop a picture file on the window while find is open, or paste one: a file, its
   path, a link, or a screenshot with `ctrl+v`. PNG and JPEG work everywhere.

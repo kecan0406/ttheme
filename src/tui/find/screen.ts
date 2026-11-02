@@ -1353,7 +1353,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
     meta.push(['  ', ''], ...transparent(shown))
 
     if (view.coloring === 'original') {
-      meta.push([`${SEP}own colors`, D])
+      meta.push([`${SEP}original colors`, D])
     }
   }
 
@@ -1447,7 +1447,7 @@ const TUNE_KEYS: Key[] = [
   {
     group: 'Tune',
     keys: 'c',
-    does: 'Own colors or tinted',
+    does: 'Original or tinted',
     more: 'An opacity you changed keeps the same multiple of the default.',
     press: 'c',
   },
@@ -1520,7 +1520,7 @@ const KEYS: Record<FindView['mode'], Key[]> = {
     {
       group: 'Picture',
       keys: 'c',
-      does: 'Own colors or tinted',
+      does: 'Original or tinted',
       more: 'The picture installs in the colors shown.',
       press: 'c',
     },

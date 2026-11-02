@@ -31,7 +31,7 @@ export const PREVIEW_KEYS: readonly PreviewKey[] = [
   { where: 'panel', group: 'Picture', keys: '1-9', does: 'Place it' },
   { where: 'panel', group: 'Picture', keys: '=  +', does: 'Reset this row, or every row' },
   { where: 'panel', group: 'Picture', keys: 'space', does: 'Hide or show the picture' },
-  { where: 'panel', group: 'Picture', keys: 'c', does: 'Own colors or tinted' },
+  { where: 'panel', group: 'Picture', keys: 'c', does: 'Original or tinted' },
   { where: 'panel', group: 'Picture', keys: 'y', does: 'Copy the artist credit' },
   { where: 'panel', group: 'Palette', keys: 'enter', does: 'Edit its colors full screen' },
   { where: 'panel', group: 'Finish', keys: 's', does: 'Save the picture' },

@@ -12,7 +12,7 @@
  │ Black     │    1-9        Place it                                                │
  │ Red       │    =  +       Reset this row, or every row                            │
  │ Green     │    space      Hide or show the picture                                │
- │ Yellow    │    c          Own colors or tinted                                    │
+ │ Yellow    │    c          Original or tinted                                      │
  │ Blue      │    y          Copy the artist credit                                  │
  │ Magenta   │  Palette                                                              │
  │ Cyan      │    enter      Edit its colors full screen                             │
