@@ -267,8 +267,8 @@ panel below — also take `h` and `l` as `←` and `→`.
 | `space` | fold or open a work while nothing is filtered | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, the search's query or the `+ Add marketplace` form's source, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and its Marks list says what browse's marks mean |
-| `alt+g` | the group menu: how the list is grouped and sorted | — |
-| `alt+c` | settings | — |
+| `alt+g` | the group menu: how the list is grouped and sorted; a Mac's option sends `©`, which counts only while the filter is empty and is typed once it holds text, so the chip then drops the key | — |
+| `alt+c` | settings; a Mac's option sends `ç`, which counts only while the filter is empty and is typed once it holds text, so the bar then drops the hint | — |
 | `alt+u` | in the bare `ttheme`, while a newer release is known: close and run `ttheme update` | the same, asking first when something is staged |
 | `ctrl+e` | open the palette's panel | — |
 | `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a work, stage its update; in the search, load the marketplace list again |

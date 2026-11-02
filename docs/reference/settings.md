@@ -5,7 +5,8 @@ made from the same source as the comments in your `config.zsh`.
 
 Settings live in `~/.config/ttheme/config.zsh`. `ttheme config` opens it in
 `$EDITOR`, `alt+c` in `ttheme` edits the common ones in place, and `alt+g`
-there picks how the list is grouped and sorted. Each default
-sits on a commented line, so a default a later version changes reaches you; a
-line you uncomment keeps your value. A variable exported before ttheme loads
-wins over the file.
+there picks how the list is grouped and sorted. On a Mac where option types
+characters, those two work while the filter is empty, and type `ç` and `©` once
+it holds text. Each default sits on a commented line, so a default a later
+version changes reaches you; a line you uncomment keeps your value. A variable
+exported before ttheme loads wins over the file.

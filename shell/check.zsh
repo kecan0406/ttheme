@@ -66,6 +66,13 @@ out=$(ttheme use ttheme/akemi-homura 2>&1)
 ttheme pins extra 2>/dev/null && { print -u2 "ttheme pins took an extra argument"; exit 1 }
 out=$(__tt_preview hub </dev/null 2>&1) && { print -u2 "preview ran without a tty"; exit 1 }
 [[ $out == *"needs a terminal"* ]] || { print -u2 "preview tty guard broke: $out"; exit 1 }
+(
+  [[ $OSTYPE == darwin* ]] && LC_ALL=en_US.UTF-8 || LC_ALL=C.UTF-8
+  for flt typed want in "" ç altc "" © altg ki ç ç ki © ©; do
+    pvrest=$typed key=""
+    __tt_pv_read && [[ $key == "$want" ]] || { print -u2 "$typed with '$flt' in the filter read as $key, not $want"; exit 1 }
+  done
+) || exit 1
 EDITOR=true ttheme config > /dev/null || { print -u2 "ttheme config broke"; exit 1 }
 source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh
 REPLY=; __tt_b64 26 22 29

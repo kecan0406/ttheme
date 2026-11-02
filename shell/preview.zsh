@@ -611,7 +611,8 @@ __tt_pv_foot() {
       (( split )) && { kk+=(⇧←→); kl+=(sample) }
       [[ -n $flt ]] && { kk+=(bksp); kl+=(edit) }
     fi
-    kk+=(alt+c '?') kl+=(settings keys)
+    __tt_pv_alt && { kk+=(alt+c); kl+=(settings) }
+    kk+=('?') kl+=(keys)
     if [[ -n $flt ]]; then
       rk=esc right=$b$ke$z$d" clear"$z
     else
@@ -1015,11 +1016,13 @@ __tt_pv_gmenu() {
     up|k) __tt_pv_gstep -1 ;;
     down|j) __tt_pv_gstep 1 ;;
     ' '|$'\r') __tt_pv_gpick $gm ;;
-    esc|altg) gmenu=0 ;;
+    esc|altg|©) gmenu=0 ;;
     '?') help=1 ;;
   esac
   return 0
 }
+
+__tt_pv_alt() { [[ -z $flt ]] || ! __tt_caps }
 
 __tt_pv_chip() {
   local text key
@@ -1039,7 +1042,7 @@ __tt_pv_chip() {
   else
     REPLY=$'\e['$at'G'$TTHEME_SGR[chip]" $text "$TTHEME_SGR[/chip]
   fi
-  if (( gap >= 2 )); then
+  if (( gap >= 2 )) && __tt_pv_alt; then
     (( color )) && REPLY+="  "$TTHEME_SGR[dim]$key$TTHEME_SGR[/dim] || REPLY+="  $key"
     end=$(( lw + 2 + ${(m)#key} ))
   fi
@@ -1716,8 +1719,8 @@ __tt_pv_read() {
     __tt_pv_getch || return 1
   fi
   key=$REPLY
-  [[ $key == ç ]] && key=altc
-  [[ $key == © ]] && key=altg
+  [[ -z $flt && $key == ç ]] && key=altc
+  [[ -z $flt && $key == © ]] && key=altg
   [[ $key == $'\n' ]] && key=down
   [[ $key == $'\v' ]] && key=up
   [[ $key == $'\e' ]] || return 0

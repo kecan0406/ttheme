@@ -10,6 +10,7 @@
 - Cancelling `init`, `uninstall`, `share`, `edit` or `new` now exits 2, as nothing changed, where they exited 1 or 0, so a script can tell a cancel from a failure.
 - `ctrl+z` at one of ttheme's questions no longer leaves the cursor hidden, and `fg` asks the question again, where it ended the command.
 - In a narrow window, Browse's questions shorten to `Apply 5?` and `Remove alice@pastel?`, so their `y` and `n` answers stay on the bar.
+- `ç` and `©` typed in Preview's filter are now typed once it holds text, where they opened the settings and the group menu as `alt+c` and `alt+g` do on a Mac; with an empty filter they still open them.
 
 ## 1.2.86
 
