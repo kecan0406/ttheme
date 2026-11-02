@@ -156,6 +156,10 @@ async function picture(ref: string): Promise<{ path: string; key: string; image:
   let key: string
 
   if (isUrl(ref)) {
+    if (!URL.canParse(ref)) {
+      throw new InputError(`${ref} cannot be read`, [{ path: 'image', problem: 'a file or an http(s) address' }])
+    }
+
     ;({ bytes, path } = await fetchArt(ref))
     key = artKey(ref)
   } else {
