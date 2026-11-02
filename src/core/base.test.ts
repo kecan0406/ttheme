@@ -69,3 +69,14 @@ test('bestBase drops a scheme it cannot read and one with a light background', (
     ],
   )
 })
+
+test('a palette that anchors every accent has no drift to score, and still gets a base', () => {
+  const accents = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
+  const ansi = scheme.ansi.map((c, i) => (i >= 9 && i <= 14 ? (scheme.ansi[i - 8] as string) : c))
+  const anchorSlots = ['cursor', ...accents.map((i) => `ansi${i}`)]
+  const choice = bestBase({ name: 'wren', anchorSlots, ...scheme, ansi }, [['tomorrow', scheme]])
+
+  assert.equal(choice.best?.name, 'tomorrow')
+  assert.equal(choice.best?.mean, 0)
+  assert.ok(Number.isFinite(choice.best?.score))
+})

@@ -98,8 +98,8 @@ function scored(name: string, held: ReadonlySet<number>, shade: Shade): Omit<Ran
     .filter((i) => !held.has(i))
     .map((i) => ({ slot: i, drift: hueDiff(hctOf(shade.ansi[i] as Hex).hue, FUNCTION_HUE.get(i % 8) as number) }))
 
-  const worst = drifts.reduce((a, b) => (b.drift > a.drift ? b : a))
-  const mean = drifts.reduce((sum, d) => sum + d.drift, 0) / drifts.length
+  const worst = drifts.reduce((a, b) => (b.drift > a.drift ? b : a), drifts[0] ?? { slot: 0, drift: 0 })
+  const mean = drifts.reduce((sum, d) => sum + d.drift, 0) / Math.max(1, drifts.length)
   let collision = Number.POSITIVE_INFINITY
   let pair: [number, number] = [0, 0]
 

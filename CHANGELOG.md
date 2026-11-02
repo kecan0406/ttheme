@@ -16,6 +16,7 @@
 - `ttheme edit` and `ttheme add` no longer break the other palettes in a set you wrote by hand; they say so when they cannot change it in place.
 - A damaged PNG now fails with a plain message, and a PNG built to swell in memory is refused.
 - A session of find that meets many damaged JPEGs no longer stops showing pictures.
+- `ttheme palette make` no longer crashes on an anchors file that names every accent color.
 
 ## 1.2.85
 
