@@ -173,6 +173,13 @@ export function parse(argv: readonly string[]): Invocation {
   }
 
   const verb = verbNamed(first)
+  const end = rest.indexOf('--')
+  const flagged = end === -1 ? rest : rest.slice(0, end)
+
+  if (flagged.includes('-h') || flagged.includes('--help')) {
+    return { kind: 'help', verb }
+  }
+
   const parsed = parseFlags(verb, rest)
 
   if (parsed.values.help) {
