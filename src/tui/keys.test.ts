@@ -137,6 +137,11 @@ test('an escape sequence split across two reads is one key, and a lone esc is re
   keys.stop()
 })
 
+test('alt with enter or tab is one chord no screen takes, and never reads as esc', () => {
+  assert.deepEqual(keysOf('\x1b\r\x1b\t'), ['alt-enter', 'alt-tab'])
+  assert.deepEqual(keysOf('\x1b\x1b'), ['esc', 'esc'])
+})
+
 test('a paste or a terminal answer that never ends gives the keys back once the input goes quiet', async () => {
   const pasted: Inbound[] = []
   const answered: Inbound[] = []

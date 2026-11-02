@@ -91,6 +91,11 @@ const CTRL_ALIASES = new Map([
   ['m', 'enter'],
 ])
 
+const ALT_CONTROLS = new Map([
+  ['\r', 'alt-enter'],
+  ['\t', 'alt-tab'],
+])
+
 const LINES = new Map<string, -1 | 1>([
   ['up', -1],
   ['ctrl-k', -1],
@@ -173,6 +178,11 @@ function lone(at: number): Parsed {
 function alted(input: string, at: number): Step {
   const ch = String.fromCodePoint(input.codePointAt(at + 1) as number)
   const code = ch.codePointAt(0) ?? 0
+  const control = ALT_CONTROLS.get(ch)
+
+  if (control) {
+    return { events: [key(control)], end: at + 2 }
+  }
 
   if (code < 32 || (code >= 127 && code < 160)) {
     return lone(at)

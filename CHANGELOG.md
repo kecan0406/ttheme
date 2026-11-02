@@ -38,6 +38,7 @@
 - Browse's search stops looking up names when the server gives no answer in 20 seconds.
 - Pasting a long text into preview no longer freezes it.
 - Pasting a very long text into Browse no longer slows every key after it.
+- Alt+enter no longer closes Browse, the palette editor or find.
 
 ## 1.2.85
 
