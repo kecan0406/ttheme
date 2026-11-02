@@ -1,8 +1,8 @@
 import { spawn } from 'node:child_process'
 
-export function visit(url: string): void {
+export function visit(url: string): boolean {
   if (process.env.SSH_CONNECTION || !/^(?:https?|file):/i.test(url)) {
-    return
+    return false
   }
 
   try {
@@ -13,5 +13,9 @@ export function visit(url: string): void {
 
     opener.on('error', () => {})
     opener.unref()
-  } catch {}
+
+    return true
+  } catch {
+    return false
+  }
 }

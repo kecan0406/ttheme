@@ -181,7 +181,7 @@ function io(overrides: Partial<BrowseIo> = {}): BrowseIo {
     fetch: () => Promise.reject(new Error('offline')),
     index: () => Promise.resolve(listing()),
     apply: () => Promise.resolve(),
-    visit: () => {},
+    visit: () => true,
     ...overrides,
   }
 }
@@ -561,7 +561,14 @@ test('a search nothing answers offers a request and the guide, and enter on the 
   const names = () => Promise.resolve([{ id: 'w/9', label: 'Moonlit Harbor', names: [], tags: [] }])
 
   const { frames } = await drive([...SEARCH, 20, ...'moonlit', 800, '\r', 20, '\x1b', '\x1b', '\x1b'], {
-    io: io({ names, visit: (url) => visited.push(url) }),
+    io: io({
+      names,
+      visit: (url) => {
+        visited.push(url)
+
+        return true
+      },
+    }),
   })
 
   assert.match(frames, /⌕ No marketplaces match 'moonlit'/)
@@ -569,6 +576,30 @@ test('a search nothing answers offers a request and the guide, and enter on the 
   assert.match(frames, /Make one\]? +make it and publish it yourself/)
   assert.equal(visited.length, 1)
   assert.equal(new URL(visited[0] ?? '').searchParams.get('character'), 'moonlit')
+})
+
+test('where no browser can open, enter on the request shows the address instead', async () => {
+  const names = () => Promise.resolve([{ id: 'w/9', label: 'Moonlit Harbor', names: [], tags: [] }])
+
+  const { frames } = await drive([...SEARCH, 20, ...'moonlit', 800, '\r', 20, '\x1b', '\x1b', '\x1b'], {
+    columns: 160,
+    io: io({ names, visit: () => false }),
+  })
+
+  assert.match(frames, /issues\/new\?template=palette\.yml&character=moonlit/)
+})
+
+test('a search taken back while its longer name is asked keeps the works it found', async () => {
+  const names = (query: string) =>
+    query === '星降'
+      ? Promise.resolve([{ id: 'w/1', label: 'スターフォール', names: ['Starfall'], tags: [] }])
+      : new Promise<NameHit[]>((resolve) => setTimeout(() => resolve([]), 1000))
+
+  const { frames } = await drive([...SEARCH, 20, ...'星降', 800, 'ろ', 700, '\x7f', 1200, '\x1b', '\x1b', '\x1b'], {
+    io: io({ names }),
+  })
+
+  assert.match(frames.split(FRAME).findLast((frame) => frame.includes('星降')) ?? '', /Starfall/)
 })
 
 test('a search handed in by preview opens Search marketplace on it and asks at once', async () => {

@@ -9,6 +9,7 @@
 - A tag with a quote or a `$` in find's Hide tags no longer breaks config.zsh or runs as a command when a shell starts.
 - A marketplace of more than 300 palettes and works no longer shows in Browse's search or on the site, and is still added by its name.
 - Search marketplace finds a palette of a marketplace you have not added by its whole name, `bob@neon/glow`.
+- Over ssh, enter on Request a palette or Make one in Browse shows the address to open, where it did nothing.
 
 ## 1.2.85
 

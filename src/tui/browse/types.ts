@@ -31,7 +31,7 @@ export interface BrowseIo {
   fetch(source: string): Promise<Marketplace>
   index(): Promise<Listing>
   names?(query: string, signal: AbortSignal): Promise<NameHit[]>
-  visit(url: string): void
+  visit(url: string): boolean
   apply(result: BrowseResult, report: Report): Promise<void>
 }
 

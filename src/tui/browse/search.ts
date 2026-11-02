@@ -28,7 +28,7 @@ export interface SearchHost {
   redraw(): void
   index(): Promise<Listing>
   names?: (query: string, signal: AbortSignal) => Promise<NameHit[]>
-  visit(url: string): void
+  visit(url: string): boolean
 }
 
 interface Named {
@@ -49,6 +49,8 @@ export class Search {
   private loadError: string | undefined
   private named: Named | undefined
   private naming: string | undefined
+
+  private unopened: string | undefined
   private nameError: string | undefined
   private timer: ReturnType<typeof setTimeout> | undefined
   private asking: AbortController | undefined
@@ -176,6 +178,11 @@ export class Search {
   private later(): void {
     clearTimeout(this.timer)
     const query = this.query.value.trim()
+
+    if (this.naming && this.naming !== query) {
+      this.asking?.abort()
+      this.naming = undefined
+    }
 
     if (!this.host.names || !query || this.named?.query === query) {
       return
@@ -484,13 +491,13 @@ export class Search {
     if (found.kind === 'request') {
       const what = `Asks for a built-in palette of ${found.asked} on GitHub, in a form your browser opens`
 
-      return { title: p.bold('Request a palette'), lines: wrapText(what, width), brief: capped('enter opens the form') }
+      return this.opening('Request a palette', what, requestUrl(found.asked), 'enter opens the form', width)
     }
 
     if (found.kind === 'make') {
       const what = 'How to make a palette from official art and publish it in a marketplace of your own'
 
-      return { title: p.bold('Make one'), lines: wrapText(what, width), brief: capped('enter opens the guide') }
+      return this.opening('Make one', what, MAKE_URL, 'enter opens the guide', width)
     }
 
     if (found.kind === 'work') {
@@ -629,21 +636,26 @@ export class Search {
     ]
   }
 
+  private opening(title: string, what: string, url: string, hint: string, width: number): Detail {
+    const closed = this.unopened === url
+
+    return {
+      title: this.host.p.bold(title),
+      lines: [...wrapText(what, width), ...(closed ? ['', ...wrapText(url, width)] : [])],
+      brief: capped(closed ? url : hint),
+    }
+  }
+
   visitFocused(): boolean {
     const found = this.focused()
+    const url = found?.kind === 'request' ? requestUrl(found.asked) : found?.kind === 'make' ? MAKE_URL : undefined
 
-    if (found?.kind === 'request') {
-      this.host.visit(requestUrl(found.asked))
-
-      return true
+    if (url === undefined) {
+      return false
     }
 
-    if (found?.kind === 'make') {
-      this.host.visit(MAKE_URL)
+    this.unopened = this.host.visit(url) ? undefined : url
 
-      return true
-    }
-
-    return false
+    return true
   }
 }
