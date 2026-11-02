@@ -2554,6 +2554,14 @@ class Finder {
     }
 
     board.note = [board.note, reason(site.name, error)].filter(Boolean).join(' · ')
+
+    if (board.arrived.size === 0 && board.sources.every((source) => source.done)) {
+      board.error = board.note
+
+      if (board === this.board) {
+        this.view.notice = { text: board.error, tone: 'error' }
+      }
+    }
   }
 
   private wants(): boolean {
