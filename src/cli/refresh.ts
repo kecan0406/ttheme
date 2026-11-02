@@ -47,6 +47,7 @@ export const REFRESH_AFTER = 24 * 60 * 60 * 1000
 export const RETRY_AFTER = 60 * 60 * 1000
 export const AUTO_TIMEOUT = 5_000
 const ARCHIVE_MOST = 16 * 1024 * 1024
+const TEXT_MOST = 4 * 1024 * 1024
 const MARKETPLACE_PATH = new RegExp(`^(?:${SETS_DIR}|${WORKS_DIR})/[^/]+\\.toml$`)
 
 export interface Tried {
@@ -128,13 +129,13 @@ export function dueSources(home: string, state: Installed, now = Date.now()): st
 
 function archiveOf(tarball: Uint8Array, etag: string | null): Archive {
   const text = new TextDecoder()
+  const kept = [...untar(tarball)].filter(([path]) => path === MARKETPLACE_FILE || MARKETPLACE_PATH.test(path))
 
-  const files = Object.fromEntries(
-    untar(tarball)
-      .entries()
-      .filter(([path]) => path === MARKETPLACE_FILE || MARKETPLACE_PATH.test(path))
-      .map(([path, data]) => [path, text.decode(data)]),
-  )
+  if (kept.reduce((size, [, data]) => size + data.length, 0) > TEXT_MOST) {
+    throw new Error(`its palette and work files are more than ${TEXT_MOST / 1024 / 1024} MB`)
+  }
+
+  const files = Object.fromEntries(kept.map(([path, data]) => [path, text.decode(data)]))
 
   return { ...(etag ? { etag } : {}), files }
 }

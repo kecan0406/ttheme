@@ -100,6 +100,25 @@ test('a fetched archive keeps what a marketplace is read from — its file, its 
   )
 })
 
+test('an archive whose palette and work files hold more than any marketplace is refused', async () => {
+  const header = Buffer.alloc(512)
+  header.write('repo-HEAD/sets/huge.toml')
+  header.write((5 * 1024 * 1024).toString(8).padStart(11, '0'), 124)
+  header[156] = 0x30
+
+  await withNetwork(
+    async () => new Response(Buffer.concat([header, Buffer.alloc(5 * 1024 * 1024)])),
+    async (home) => {
+      const failure = await attempt(home, SOURCE)
+      assert.ok(failure)
+      assert.equal(
+        failureLine(SOURCE, failure),
+        'github.com/ann/ttheme-pastel: its palette and work files are more than 4 MB',
+      )
+    },
+  )
+})
+
 test('an archive larger than any marketplace is refused before it is read whole', async () => {
   const chunk = new Uint8Array(1024 * 1024)
   let sent = 0
