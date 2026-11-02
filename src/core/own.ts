@@ -22,7 +22,7 @@ import { memo } from './memo.ts'
 import type { Colors } from './seeds.ts'
 import { readSet, SETS_DIR, type SetPalette } from './sets.ts'
 import { quoted } from './text.ts'
-import { nameProblem, slugOf, slugProblem, themeOf } from './theme.ts'
+import { nameProblem, slugOf, slugProblem, table as tableOf, themeOf, toml } from './theme.ts'
 
 const PACKS: ((bytes: Uint8Array) => Uint8Array)[] = [
   (bytes) => bytes,
@@ -204,14 +204,15 @@ export function fromCode(code: string): Draft[] {
 }
 
 function sectionOf(text: string, table: string): [number, number] | undefined {
-  const head = new RegExp(`^\\[${table.replaceAll('.', '\\.')}\\][ \\t]*$`, 'm').exec(text)
+  const path = table.split('.').join('[ \\t]*\\.[ \\t]*')
+  const head = new RegExp(`^[ \\t]*\\[[ \\t]*${path}[ \\t]*\\][ \\t]*(?:#.*)?$`, 'm').exec(text)
 
   if (!head) {
     return undefined
   }
 
   const body = head.index + head[0].length
-  const next = /^\[/m.exec(text.slice(body))
+  const next = /^[ \t]*\[/m.exec(text.slice(body))
 
   return [head.index, next ? body + next.index : text.length]
 }
@@ -242,6 +243,44 @@ export function withTable(text: string, table: string, block: string | undefined
   return joined(text.slice(0, anchor[1]), block, text.slice(anchor[1]))
 }
 
+const COLOR = `(?:"#[0-9a-fA-F]{6}"|'#[0-9a-fA-F]{6}')`
+
+const ANSI_LIST = /^[ \t]*(?:ansi|"ansi"|'ansi')[ \t]*=[ \t]*\[/m
+
+const ANSI_PART = new RegExp(`#[^\\n]*|${COLOR}|\\]`, 'g')
+
+function recoloredList(rest: string, ansi: readonly string[]): string {
+  let index = 0
+  let closed = false
+
+  return rest.replace(ANSI_PART, (part) => {
+    if (closed || part.startsWith('#')) {
+      return part
+    }
+
+    closed = part === ']'
+
+    return closed ? part : q(ansi[index++] as string)
+  })
+}
+
+function holds(text: string, colors: Colors, table: string): boolean {
+  try {
+    const held = table.split('.').reduce<unknown>((doc, key) => tableOf(doc)[key], toml(table, text))
+    const { background, foreground, cursor, selection_background: selection, ansi } = tableOf(held)
+
+    return (
+      background === colors.background &&
+      foreground === colors.foreground &&
+      cursor === colors.cursor &&
+      selection === colors.selection &&
+      JSON.stringify(ansi) === JSON.stringify(colors.ansi)
+    )
+  } catch {
+    return false
+  }
+}
+
 export function recolor(text: string, colors: Colors, table = 'colors'): string {
   const at = sectionOf(text, table)
 
@@ -250,15 +289,13 @@ export function recolor(text: string, colors: Colors, table = 'colors'): string 
   }
 
   const section = text.slice(at[0], at[1])
-  const start = section.indexOf('ansi = [')
-  const end = section.indexOf(']', start)
+  const list = ANSI_LIST.exec(section)
 
-  if (start < 0 || end < 0) {
+  if (!list) {
     throw new Error(`no ansi = [...] list in [${table}] to rewrite`)
   }
 
-  let index = 0
-  const block = section.slice(start, end).replace(/"#[0-9a-fA-F]{6}"/g, () => q(colors.ansi[index++] as string))
+  const start = list.index + list[0].length
 
   const keys: [string, string][] = [
     ['background', colors.background],
@@ -269,11 +306,22 @@ export function recolor(text: string, colors: Colors, table = 'colors'): string 
 
   const rewritten = keys.reduce(
     (out, [key, color]) =>
-      out.replace(new RegExp(`^(${key}\\s*=\\s*)"#[0-9a-fA-F]{6}"`, 'm'), (_, head) => `${head}${q(color)}`),
-    section.slice(0, start) + block + section.slice(end),
+      out.replace(
+        new RegExp(`^([ \\t]*(?:${key}|"${key}"|'${key}')[ \\t]*=[ \\t]*)${COLOR}`, 'm'),
+        (_, head) => `${head}${q(color)}`,
+      ),
+    section.slice(0, start) + recoloredList(section.slice(start), colors.ansi),
   )
 
-  return text.slice(0, at[0]) + rewritten + text.slice(at[1])
+  const out = text.slice(0, at[0]) + rewritten + text.slice(at[1])
+
+  if (!holds(out, colors, table)) {
+    throw new Error(
+      `[${table}] is written in a way ttheme cannot change in place — write its colors as key = "#rrggbb"`,
+    )
+  }
+
+  return out
 }
 
 export function withShade(text: string, colors: Colors, table: string): string {

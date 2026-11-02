@@ -223,6 +223,40 @@ test('recolor rewrites the twenty colors and nothing else', () => {
   assert.deepEqual(pictured.pictures?.at(-1), { site: 'danbooru', id: 42, size: 'fill' })
 })
 
+test('recolor rewrites a table written by hand, and refuses one it cannot change in place', () => {
+  const was = paletteToml(draft)
+  const ansi = draft.ansi.map((_, i) => `#0000${i.toString(16).padStart(2, '0')}`)
+  const colors = { background: '#101010', foreground: '#ffffff', cursor: '#00ff00', selection: '#000080', ansi }
+
+  const handWritten: [string, (text: string) => string][] = [
+    ['literal strings', (text) => text.replace(/"(#[0-9a-f]{6})"/g, "'$1'")],
+    [
+      'indented keys',
+      (text) => text.replace(/^(background|foreground|cursor|selection_background|ansi) =/gm, '  $1 ='),
+    ],
+    ['no spaces', (text) => text.replace(/^(background|foreground|cursor|selection_background|ansi) = /gm, '$1=')],
+    ['quoted keys', (text) => text.replace(/^(background|foreground|cursor|selection_background|ansi) =/gm, '"$1" =')],
+    ['a comment naming a color', (text) => text.replace(/^(\s*"#[0-9a-f]{6}",)$/m, '$1 # was "#123123"')],
+    ['a comment with a bracket', (text) => text.replace(/^(\s*"#[0-9a-f]{6}",)$/m, '$1 # dim [red]')],
+    ['a comment beside the table', (text) => text.replace('[colors]', '[colors] # the dark one')],
+    ['an indented table', (text) => text.replace('[colors]', '  [colors]')],
+    ['spaces in the table', (text) => text.replace('[colors]', '[ colors ]')],
+  ]
+
+  for (const [how, written] of handWritten) {
+    const theme = readOwnText(draft.name, recolor(written(was), colors))
+
+    assert.equal(theme.background, '#101010', how)
+    assert.equal(theme.selectionBackground, '#000080', how)
+    assert.deepEqual(theme.ansi, ansi, how)
+  }
+
+  const escaped = was.replace(/^background = "#/m, 'background = "\\u0023')
+
+  assert.equal(readOwnText(draft.name, escaped).background, draft.background)
+  assert.throws(() => recolor(escaped, colors), /\[colors\] is written in a way ttheme cannot change in place/)
+})
+
 test('a marketplace reads its palettes from the set files flat in sets/, named by their slugs, and its proposed works beside them', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
   const { pictures: _, ...plain } = draft

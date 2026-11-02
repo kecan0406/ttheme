@@ -11,6 +11,7 @@
 - Search marketplace finds a palette of a marketplace you have not added by its whole name, `bob@neon/glow`.
 - Over ssh, enter on Request a palette or Make one in Browse shows the address to open, where it did nothing.
 - An update no longer turns a palette into its other mode when you and its upstream each changed its background or foreground; `ttheme edit` picks between them.
+- `ttheme update` and `ttheme edit` no longer lose or garble colors in a palette you wrote by hand with single quotes, indented keys or comments in its ANSI list.
 
 ## 1.2.85
 
