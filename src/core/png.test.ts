@@ -250,3 +250,18 @@ test('a JPEG is measured marker by marker as its decoder reads it', () => {
 
   assert.throws(() => decodeImage(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), 25_000_000), /not a JPEG picture/)
 })
+
+test('a JPEG with more scans than any encoder writes is refused before it decodes', () => {
+  const scan = [0xff, 0xda, 0, 8, 1, 1, 0, 1, 63, 0, 0]
+  const scans = (count: number) => Array.from({ length: count }, () => scan).flat()
+  const frame = [0xff, 0xc2, 0, 11, 8, 0, 16, 0, 16, 1, 1, 0x11, 0]
+
+  assert.throws(
+    () => decodeImage(new Uint8Array([0xff, 0xd8, ...frame, ...scans(257)]), 1e6),
+    /has more scans than a picture needs/,
+  )
+  assert.throws(
+    () => decodeImage(new Uint8Array([0xff, 0xd8, ...frame, ...scans(256)]), 1e6),
+    /not a JPEG picture this decoder can read/,
+  )
+})

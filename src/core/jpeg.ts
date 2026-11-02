@@ -3,6 +3,8 @@ import mozjpeg, { type MozJPEGModule } from '@jsquash/jpeg/codec/dec/mozjpeg_dec
 import { embedded } from '../embed.ts' with { type: 'macro' }
 import type { Rgba } from './png.ts'
 
+const SCANS_MOST = 256
+
 export function exifTurn(tiff: Uint8Array): number {
   const view = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength)
   const little = tiff[0] === 0x49 && tiff[1] === 0x49
@@ -119,6 +121,18 @@ function opened(): MozJPEGModule['decode'] {
   return decode
 }
 
+function scansOf(bytes: Uint8Array): number {
+  let scans = 0
+
+  for (let at = bytes.indexOf(0xff); at !== -1; at = bytes.indexOf(0xff, at + 1)) {
+    if (bytes[at + 1] === 0xda) {
+      scans++
+    }
+  }
+
+  return scans
+}
+
 export function decodeJpeg(bytes: Uint8Array, limit: number): Rgba {
   const size = jpegSize(bytes)
 
@@ -128,6 +142,10 @@ export function decodeJpeg(bytes: Uint8Array, limit: number): Rgba {
 
   if (size.width * size.height > limit) {
     throw new Error(`${size.width}×${size.height} is over ${limit / 1e6} megapixels`)
+  }
+
+  if (scansOf(bytes) > SCANS_MOST) {
+    throw new Error('this JPEG has more scans than a picture needs')
   }
 
   let image: ReturnType<MozJPEGModule['decode']> = null
