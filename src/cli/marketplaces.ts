@@ -406,7 +406,7 @@ async function initLocal(home: string, dir: string, name: string, owner?: string
       throw new Error(`the marketplace name ${name} ${problem}`)
     }
 
-    if (existsSync(dir) && readdirSync(dir).length > 0) {
+    if (existsSync(dir) && !(statSync(dir).isDirectory() && readdirSync(dir).length === 0)) {
       throw new Error(`${dir} is not empty — pick a new folder for the marketplace`)
     }
 

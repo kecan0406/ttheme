@@ -188,3 +188,22 @@ test('adding a marketplace already on the list says so, though its copy is gone'
     }
   }
 })
+
+test('marketplace init over a file says to pick a new folder', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-check-'))
+  writeFileSync(join(home, 'pastel'), 'a file, not a folder')
+  mkdirSync(join(home, 'ttheme'))
+  writeFileSync(join(home, 'ttheme', 'installed.json'), JSON.stringify({ terminals: [], palettes: [], author: 'ann' }))
+  const was = process.env.XDG_CONFIG_HOME
+  process.env.XDG_CONFIG_HOME = home
+
+  try {
+    await assert.rejects(runMarketplace('init', join(home, 'pastel')), /is not empty — pick a new folder/)
+  } finally {
+    if (was === undefined) {
+      delete process.env.XDG_CONFIG_HOME
+    } else {
+      process.env.XDG_CONFIG_HOME = was
+    }
+  }
+})
