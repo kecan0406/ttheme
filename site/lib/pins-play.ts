@@ -50,7 +50,7 @@ type Step =
   | { op: 'ssh'; host: string; text: string }
   | { op: 'exit'; text: string }
 
-export interface PinsScript {
+interface PinsScript {
   start: string
   pins: Pin[]
   steps: Step[]

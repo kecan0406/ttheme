@@ -9,12 +9,12 @@ export interface Partner {
   floor: number | undefined
 }
 
-export interface Placed {
+interface Placed {
   lch: Oklch
   hex: Hex
 }
 
-export interface Solved extends Placed {
+interface Solved extends Placed {
   stops: number | undefined
 }
 

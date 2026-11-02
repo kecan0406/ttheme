@@ -4,7 +4,7 @@ import { BROWSE_PATH, MARKETPLACES_PATH, marketplacePath } from '@/lib/gallery'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 
-export interface Crumb {
+interface Crumb {
   label: string
   href?: string
 }

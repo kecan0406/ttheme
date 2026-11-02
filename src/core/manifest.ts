@@ -1,8 +1,7 @@
-import pkg from '../../package.json' with { type: 'json' }
 import { backdropTone } from './backdrop-tone.ts'
 import { isHex } from './color.ts'
 import type { Work } from './commons.ts'
-import { GATE_RULES, type GateRule, measure } from './contrast.ts'
+import { type GateRule, measure } from './contrast.ts'
 import { memo } from './memo.ts'
 import { mirror } from './mirror.ts'
 import { type Mode, modeOf } from './mode.ts'
@@ -52,7 +51,7 @@ export function colorsOfTheme(theme: Shade): Colors {
   }
 }
 
-export function shadeOf(colors: Colors): Shade {
+function shadeOf(colors: Colors): Shade {
   return {
     background: colors.background,
     foreground: colors.foreground,
@@ -62,7 +61,7 @@ export function shadeOf(colors: Colors): Shade {
   }
 }
 
-export function upstreamEntry({ palette, colors, other }: Upstream): UpstreamEntry {
+function upstreamEntry({ palette, colors, other }: Upstream): UpstreamEntry {
   return {
     palette,
     ...(colors ? { colors: colorsOfTheme(colors) } : {}),
@@ -201,10 +200,6 @@ export function swatch(entry: Swatched): string[] {
   }
 
   return colors
-}
-
-export function emptyManifest(): Manifest {
-  return { version: pkg.version, gate: GATE_RULES, palettes: [], works: [] }
 }
 
 export function parseBuiltin(source: string): Bundle {

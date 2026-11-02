@@ -17,9 +17,9 @@ export interface Bar {
   keep?: string[]
 }
 
-export const KEPT = ['?', 'enter']
+const KEPT = ['?', 'enter']
 
-export const UPDATE_KEY: Hint = ['alt+u', 'update']
+const UPDATE_KEY: Hint = ['alt+u', 'update']
 
 function releaseOf(p: Paint, standing: ReleaseLine): string {
   if (standing.standing !== 'newer') {

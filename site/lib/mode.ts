@@ -24,6 +24,6 @@ export function modeFor(setting: Setting, systemLight: boolean): Mode {
   return setting
 }
 
-export function otherOf(mode: Mode): Mode {
+function otherOf(mode: Mode): Mode {
   return mode === 'dark' ? 'light' : 'dark'
 }

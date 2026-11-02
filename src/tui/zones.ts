@@ -29,7 +29,7 @@ const MOST = 9999
 
 let marks: unknown[] | undefined
 
-export type Target = { readonly kind: string } | string
+type Target = { readonly kind: string } | string
 
 export function zone<T extends Target>(target: T, text: string): string {
   if (!marks || text === '' || marks.length >= MOST) {

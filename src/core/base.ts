@@ -18,14 +18,14 @@ export interface Ranked {
   moves: Move[]
 }
 
-export type Choice = { best: Ranked } | { best: undefined; dropped: Map<string, string> }
+type Choice = { best: Ranked } | { best: undefined; dropped: Map<string, string> }
 
 interface Candidate extends Omit<Ranked, 'shade' | 'moves'> {
   raw: Shade
   at: number
 }
 
-export const FUNCTION_HUE = new Map([
+const FUNCTION_HUE = new Map([
   [1, 22],
   [2, 143],
   [3, 90],
@@ -34,7 +34,7 @@ export const FUNCTION_HUE = new Map([
   [6, 200],
 ])
 
-export const COLLISION_WEIGHT = 4
+const COLLISION_WEIGHT = 4
 
 const GROUPS = [
   [1, 2, 3, 4, 5, 6],
@@ -127,7 +127,7 @@ function scored(name: string, held: ReadonlySet<number>, shade: Shade): Omit<Ran
   }
 }
 
-export function finished(theme: Anchored, shade: Shade) {
+function finished(theme: Anchored, shade: Shade) {
   const { theme: fixed, moves } = fixRoles({ ...shade, name: theme.name })
 
   return { shade: { ...shade, ansi: fixed.ansi }, moves }

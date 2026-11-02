@@ -45,7 +45,7 @@ export interface Theme {
 
 export type Shade = Pick<Theme, 'background' | 'foreground' | 'cursor' | 'selectionBackground' | 'ansi'>
 
-export interface Place {
+interface Place {
   name: string
   builtin?: true
   foreign?: true

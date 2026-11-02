@@ -42,7 +42,7 @@ export interface DocPage extends Doc {
   next?: DocLink
 }
 
-export interface DocGroup {
+interface DocGroup {
   slug: string
   title: string
   pages: DocPage[]

@@ -31,7 +31,7 @@ const COLORTEST = ['«2»❯ «»colortest', `«d»0-7   ${SWATCHES(0)}`, `«d»
 
 const MARGIN = 2
 
-export interface Part {
+interface Part {
   text: string
   role: string
   col: number

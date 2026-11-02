@@ -40,7 +40,7 @@ export type WarpLook = Pick<Theme, 'name' | 'background' | 'foreground' | 'curso
 
 export const WARP_PART = ' · '
 
-export function warpThemeName(theme: WarpLook, picture?: WarpPicture): string {
+function warpThemeName(theme: WarpLook, picture?: WarpPicture): string {
   return [theme.name, modeOf(theme), ...(picture ? ['picture'] : [])].join(WARP_PART)
 }
 

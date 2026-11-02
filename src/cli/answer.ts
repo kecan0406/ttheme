@@ -20,7 +20,7 @@ export class InputError extends Error {
   }
 }
 
-export interface Answer {
+interface Answer {
   status: 'done' | 'unchanged' | 'error'
 }
 

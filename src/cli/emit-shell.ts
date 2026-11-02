@@ -16,7 +16,7 @@ import { bannerHead, helpText, VERB_SPECS } from './verbs.ts'
 
 const UNQUOTABLE = /["$`\\]/
 
-export interface ZshContext {
+interface ZshContext {
   startup?: string
   terminals?: readonly string[]
   layer?: Readonly<Record<string, string>>

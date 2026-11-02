@@ -140,7 +140,7 @@ export function MarketSteps({ view }: { view: MarketView }) {
   )
 }
 
-export function MarketPanel({ view, description }: { view: MarketView; description: string }) {
+function MarketPanel({ view, description }: { view: MarketView; description: string }) {
   return (
     <>
       <div class="grid gap-3 min-[560px]:grid-cols-2">

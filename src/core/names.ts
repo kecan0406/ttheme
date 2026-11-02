@@ -44,7 +44,7 @@ export interface CastMember {
   lead: boolean
 }
 
-export interface Named {
+interface Named {
   works: string[]
   unknown: NameHit[]
 }

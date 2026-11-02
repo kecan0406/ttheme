@@ -91,11 +91,11 @@ function slotsOf(shade: Shade): string[] {
   return [shade.background, shade.foreground, shade.cursor, shade.selectionBackground, ...shade.ansi]
 }
 
-export function wearSlots(theme: Theme): Vars {
+function wearSlots(theme: Theme): Vars {
   return named(SLOTS, slotsOf(theme))
 }
 
-export function wearSigns(theme: Theme): Vars {
+function wearSigns(theme: Theme): Vars {
   return named(SIGNS, [JSON.stringify(theme.name), ...faceOf(theme)])
 }
 

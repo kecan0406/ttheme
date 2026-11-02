@@ -37,7 +37,7 @@ export interface Doc {
   mentions: string[]
 }
 
-export interface Place {
+interface Place {
   resolve: (href: string) => string
   verbs: readonly string[]
   theme: (id: string) => Theme | undefined
@@ -87,7 +87,7 @@ export function slugOf(text: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-export function plainOf(tokens: readonly Token[] | undefined): string {
+function plainOf(tokens: readonly Token[] | undefined): string {
   return (tokens ?? [])
     .map((token) =>
       'tokens' in token && token.tokens ? plainOf(token.tokens) : 'text' in token ? String(token.text) : '',

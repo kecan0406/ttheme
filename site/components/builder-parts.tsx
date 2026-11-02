@@ -247,7 +247,7 @@ export function BuilderBar({
   )
 }
 
-export function SeedFields({ seeds }: { seeds: SeedRow[] }) {
+function SeedFields({ seeds }: { seeds: SeedRow[] }) {
   return (
     <>
       {seeds.map((seed) => (

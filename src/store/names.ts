@@ -6,13 +6,11 @@ import { type CastMember, cutSlug, type NameHit, slugOfTag, type TaggedWork, typ
 import { inert } from '../core/text.ts'
 import { cacheRoot } from './paths.ts'
 
-export const NAMES_URL = 'https://names.ttheme.dev'
+const NAMES_URL = 'https://names.ttheme.dev'
 
-export const PROVIDERS = ['aninames', 'off'] as const
+type NameSearch = (query: string, signal: AbortSignal) => Promise<NameHit[]>
 
-export type NameSearch = (query: string, signal: AbortSignal) => Promise<NameHit[]>
-
-export interface NameIndex {
+interface NameIndex {
   search: NameSearch
   tagged(slug: string, signal: AbortSignal): Promise<TaggedWork[]>
   cast(slug: string, signal: AbortSignal, limit: number): Promise<CastMember[]>
@@ -126,7 +124,7 @@ function taggedOf(value: unknown): TaggedWork | undefined {
   }
 }
 
-export function taggedWorks(found: unknown): TaggedWork[] {
+function taggedWorks(found: unknown): TaggedWork[] {
   return (Array.isArray(found) ? found : []).flatMap((f: unknown) => taggedOf(f) ?? [])
 }
 

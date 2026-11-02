@@ -184,7 +184,7 @@ export function readMarketplaceInfo(text: string, where: string): MarketplaceInf
   }
 }
 
-export function isFile(path: string): boolean {
+function isFile(path: string): boolean {
   try {
     return statSync(path).isFile()
   } catch {

@@ -1,6 +1,6 @@
 import { hubNext } from './hub.ts'
 
-export interface PreviewKey {
+interface PreviewKey {
   where: 'list' | 'panel' | 'group' | 'hub' | 'help' | 'first'
   group: string
   keys: string

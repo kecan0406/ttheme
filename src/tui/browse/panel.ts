@@ -15,7 +15,7 @@ import type { Action, Detail, Marketplace, Row } from './types.ts'
 
 const ACTION_PAD = 20
 
-export interface PanelHost {
+interface PanelHost {
   readonly staged: Staged
   readonly network: Network
   readonly p: Paint

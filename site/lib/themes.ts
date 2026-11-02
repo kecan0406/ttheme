@@ -69,7 +69,7 @@ export function faceOf(shade: Pick<Shade, 'cursor' | 'selectionBackground' | 'fo
   return [shade.cursor, shade.selectionBackground, shade.foreground]
 }
 
-export function shadeOf(theme: Shade): Shade {
+function shadeOf(theme: Shade): Shade {
   return {
     background: theme.background,
     foreground: theme.foreground,

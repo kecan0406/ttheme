@@ -58,7 +58,7 @@ export interface Gate {
   passed: number
 }
 
-export interface Tick {
+interface Tick {
   at: number
   label: string
   floor: boolean
@@ -95,11 +95,11 @@ const TICKS = [3, 4.5, 7]
 
 export const ratioAt = (at: number) => MOST_RATIO ** Math.min(1, Math.max(0, at))
 
-export const atRatio = (ratio: number) => Math.log(Math.max(1, ratio)) / Math.log(MOST_RATIO)
+const atRatio = (ratio: number) => Math.log(Math.max(1, ratio)) / Math.log(MOST_RATIO)
 
 const round = (value: number) => Math.round(value * 10_000) / 10_000
 
-export function rowOf(
+function rowOf(
   list: Hex[],
   slot: number,
   missed: ReadonlySet<number>,
@@ -154,7 +154,7 @@ export function gateOf(list: Hex[]): Gate {
   }
 }
 
-export function partnered(list: Hex[], slot: number): Partnered {
+function partnered(list: Hex[], slot: number): Partnered {
   const partner = partnerOf(list, slot)
   const ratio = contrast(list[slot] as Hex, list[partner.against] as Hex)
 
@@ -243,7 +243,7 @@ export interface FileView {
   left: string[]
 }
 
-export interface SetMembers {
+interface SetMembers {
   members: Edit[]
   left: string[]
 }
@@ -279,7 +279,7 @@ export interface StartGroup {
   palettes: StartItem[]
 }
 
-export interface DraftItem {
+interface DraftItem {
   id: string
   name: string
   when: string

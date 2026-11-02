@@ -1,7 +1,7 @@
 import { inert } from '../../core/text.ts'
 import type { BrowseIo, Marketplace } from './types.ts'
 
-export interface Fresh {
+interface Fresh {
   marketplace: Marketplace
   updates: string[]
 }

@@ -14,9 +14,9 @@ import { MARKS, type Paint, SPINNER } from '../style.ts'
 import type { Staged } from './staged.ts'
 import type { BrowseResult, Report } from './types.ts'
 
-export type Phase = 'browse' | 'review' | 'applying' | 'done'
+type Phase = 'browse' | 'review' | 'applying' | 'done'
 
-export interface ReviewHost {
+interface ReviewHost {
   readonly staged: Staged
   readonly p: Paint
   readonly hub: HubTab | undefined

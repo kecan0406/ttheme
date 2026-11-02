@@ -25,7 +25,7 @@ export type HelpSpot = TopicSpot | { kind: 'help' }
 
 export type Legend = [mark: string, means: string][]
 
-export type Answer = 'stay' | 'close' | 'run'
+type Answer = 'stay' | 'close' | 'run'
 
 const CHROME = 5
 const MEASURE = 56

@@ -1,4 +1,4 @@
-export const PROFILE_KINDS = ['pixiv', 'x', 'bsky', 'fanbox', 'skeb', 'patreon', 'fantia'] as const
+const PROFILE_KINDS = ['pixiv', 'x', 'bsky', 'fanbox', 'skeb', 'patreon', 'fantia'] as const
 
 export type ProfileKind = (typeof PROFILE_KINDS)[number]
 
@@ -7,12 +7,12 @@ export interface Profile {
   url: string
 }
 
-export interface Page {
+interface Page {
   label: string
   url: string
 }
 
-export interface Credited {
+interface Credited {
   artist?: string[]
   profiles?: Record<string, string[]>
   source?: string
@@ -70,7 +70,7 @@ export function safeUrl(url: string): boolean {
   return SAFE_URL.test(url)
 }
 
-export function profileKind(url: string): ProfileKind | undefined {
+function profileKind(url: string): ProfileKind | undefined {
   return FORMS.find(([, form]) => form.test(url))?.[0]
 }
 
@@ -118,7 +118,7 @@ export function pageLabel(url: string): string {
   }
 }
 
-export function publicUrl(url: string): string {
+function publicUrl(url: string): string {
   try {
     const at = new URL(url)
     const host = CANONICAL.get(at.hostname)
@@ -143,7 +143,7 @@ export function artworkOf(picture: Credited): Page | undefined {
   return safeUrl(source) ? { label: pageLabel(source), url: source } : undefined
 }
 
-export function postOf(picture: Credited): Page | undefined {
+function postOf(picture: Credited): Page | undefined {
   const words = (picture.from ?? '').split(' ')
   const url = words[2] ?? ''
 
@@ -154,7 +154,7 @@ export function pageKind(url: string): ProfileKind | undefined {
   return PAGE_KINDS.find(([form]) => form.test(url))?.[1]
 }
 
-export function followOf(urls: readonly string[] | undefined, page: string | undefined): string | undefined {
+function followOf(urls: readonly string[] | undefined, page: string | undefined): string | undefined {
   const on = page ? pageKind(page) : undefined
   const links = linksOf(urls)
   const kind = FOLLOWS.find((each) => each !== on && links.some((link) => link.kind === each))

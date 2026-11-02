@@ -22,7 +22,7 @@ export interface Block {
   text: string
 }
 
-export interface Blocks {
+interface Blocks {
   head: string
   blocks: Block[]
 }

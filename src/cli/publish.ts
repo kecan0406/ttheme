@@ -102,7 +102,7 @@ export async function isPublic(repo: Repo): Promise<boolean> {
   }
 }
 
-export interface Unsaved {
+interface Unsaved {
   fresh: string[]
   changed: string[]
 }

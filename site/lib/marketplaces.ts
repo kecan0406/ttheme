@@ -7,7 +7,7 @@ import type { PaletteEntry } from '../../src/core/manifest.ts'
 import { slugOf } from '../../src/core/theme.ts'
 import type { ListedWork, Shown } from '../../src/store/marketplace-index.ts'
 
-export interface Stock {
+interface Stock {
   marketplace: Marketplace
   entries: PaletteEntry[]
   shelves: Shelves

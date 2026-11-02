@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { reach } from './available.ts'
 import { cacheRoot } from './paths.ts'
 
-export interface Corpus {
+interface Corpus {
   names: string[]
   fetched: number
   missing: number

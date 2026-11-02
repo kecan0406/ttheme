@@ -16,7 +16,7 @@ export interface Anchors {
   source?: string
 }
 
-export interface Reading {
+interface Reading {
   anchors: Anchors[]
   problems: Problem[]
 }
@@ -26,7 +26,7 @@ export interface Problem {
   problem: string
 }
 
-export const ANCHOR_FIELDS = ['slots', 'booru', 'native_names', 'source']
+const ANCHOR_FIELDS = ['slots', 'booru', 'native_names', 'source']
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)

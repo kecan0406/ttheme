@@ -42,8 +42,6 @@ export interface Shelf {
 
 export type Sort = 'popular' | 'updated' | 'name'
 
-export const SORTS: Sort[] = ['popular', 'updated', 'name']
-
 export const FIRST_SORT: Sort = 'popular'
 
 export interface Ranked {
@@ -66,7 +64,7 @@ export const ORDERS: Record<Sort, (a: Ranked, b: Ranked) => number> = {
   name: byName,
 }
 
-export function rankOf(shelf: Pick<Shelf, 'id' | 'stars' | 'pushedAt'>): Ranked {
+function rankOf(shelf: Pick<Shelf, 'id' | 'stars' | 'pushedAt'>): Ranked {
   return { id: shelf.id, stars: shelf.stars ?? 0, pushedAt: shelf.pushedAt ?? '' }
 }
 

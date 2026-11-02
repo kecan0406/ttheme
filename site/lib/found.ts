@@ -8,7 +8,7 @@ export const SHOWN_CAST = 24
 
 export const MOST_CAST = 400
 
-export const FEW_CAST = 6
+const FEW_CAST = 6
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -85,7 +85,7 @@ export interface FoundPage {
   family: FamilyWork[]
 }
 
-export interface Title {
+interface Title {
   name: string
   native: string | null
   lang: string | null
@@ -250,7 +250,7 @@ export function igdbOf(members: readonly TaggedWork[]): string | null {
   return first(members, IGDB)
 }
 
-export function anilistCharacterOf(member: CastMember): number | null {
+function anilistCharacterOf(member: CastMember): number | null {
   const id = first([member], ANIME)
 
   return id ? Number(id) : null
@@ -299,7 +299,7 @@ export function castLeads(members: readonly CastMember[]): CastMember[] {
   return leads.length > 0 ? leads : members.slice(0, FEW_CAST)
 }
 
-export function holderOf(member: CastMember, held: readonly Holder[]): string | null {
+function holderOf(member: CastMember, held: readonly Holder[]): string | null {
   const holder = held.find(
     (each) =>
       member.tags.some((tag) => each.keys.includes(tag)) || member.names.some((name) => each.keys.includes(name.text)),

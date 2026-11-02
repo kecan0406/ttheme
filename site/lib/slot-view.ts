@@ -16,11 +16,11 @@ import {
   slotUse,
 } from '../../src/core/slots.ts'
 
-export const PLANE_ROWS = 40
+const PLANE_ROWS = 40
 
 const HUE_STOPS = 24
 
-export const RULES: GateRule[] = GATE_RULES
+const RULES: GateRule[] = GATE_RULES
 
 const round = (value: number, digits: number) => Number(value.toFixed(digits))
 

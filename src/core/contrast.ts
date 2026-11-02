@@ -38,7 +38,7 @@ const RED_GREEN: [number, number][] = [
   [9, 10],
 ]
 
-export interface Violation {
+interface Violation {
   theme: string
   rule: string
   detail: string

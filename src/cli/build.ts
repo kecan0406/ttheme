@@ -17,8 +17,6 @@ const DIST = join(ROOT, 'dist')
 
 const TERMINAL_EMITTERS: Emitter[] = WIRED.map((id) => WIRINGS[id].emitter)
 
-export const EMITTED = TERMINAL_EMITTERS.map((e) => e.id)
-
 function tomlFiles(dir: string, at: string): string[] {
   return readdirSync(dir, { withFileTypes: true })
     .filter((item) => !item.name.startsWith('.'))

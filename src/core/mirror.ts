@@ -9,7 +9,7 @@ type Mirrored = Shade & Pick<Theme, 'name'>
 
 type Band = { min: number; max: number }
 
-export interface Mirroring {
+interface Mirroring {
   shade: Shade
   moves: Move[]
 }
@@ -40,7 +40,7 @@ export const FOREGROUND_CHROMA = 24
 
 export const CHROMA_LIFT = 1.3
 
-export const OLIVE = { hue: { min: 86, max: 133 }, chroma: 16, tone: 65 }
+const OLIVE = { hue: { min: 86, max: 133 }, chroma: 16, tone: 65 }
 
 export const OLIVE_EXIT = { yellow: 84, green: 136 }
 
@@ -59,7 +59,7 @@ const own = (value: Hex, tone: number, chroma = Number.POSITIVE_INFINITY) => {
 
 const edge = (hue: number, tone: number) => hctOf(hctHex(hue, 200, tone)).chroma
 
-export function carried(value: Hex, tone: number): Hex {
+function carried(value: Hex, tone: number): Hex {
   const o = hctOf(value)
   const room = edge(o.hue, o.tone)
   const share = room > 0 ? Math.min(1, o.chroma / room) : 0

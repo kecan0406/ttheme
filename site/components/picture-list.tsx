@@ -89,7 +89,7 @@ function Profiles({ picture }: { picture: Picture }) {
   )
 }
 
-export function PictureRows({ pictures }: { pictures: Picture[] }) {
+function PictureRows({ pictures }: { pictures: Picture[] }) {
   return (
     <>
       {pictures.map((picture) => (

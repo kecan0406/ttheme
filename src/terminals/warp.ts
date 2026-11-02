@@ -75,7 +75,7 @@ export function warpSettings(home: string, configHome: string, channel: WarpChan
     : join(configHome, warpFolder(channel), 'settings.toml')
 }
 
-export function warpChannels(home: string): WarpChannel[] {
+function warpChannels(home: string): WarpChannel[] {
   return WARP_CHANNELS.filter((channel) => existsSync(dirname(warpThemes(home, channel))))
 }
 
@@ -91,11 +91,11 @@ export function warpBasePath(configHome: string, channel: WarpChannel = 'stable'
   return warpOwn(configHome, channel, 'base')
 }
 
-export function warpSystemPath(configHome: string, channel: WarpChannel = 'stable'): string {
+function warpSystemPath(configHome: string, channel: WarpChannel = 'stable'): string {
   return warpOwn(configHome, channel, 'system')
 }
 
-export function warpContrastPath(configHome: string, channel: WarpChannel = 'stable'): string {
+function warpContrastPath(configHome: string, channel: WarpChannel = 'stable'): string {
   return warpOwn(configHome, channel, 'contrast')
 }
 
@@ -183,7 +183,7 @@ function withWarpKey(content: string, key: string, value: string | undefined, he
   return lines.join('\n')
 }
 
-export function withWarpTheme(content: string, value: string | undefined): string {
+function withWarpTheme(content: string, value: string | undefined): string {
   return withWarpKey(content, 'theme', value)
 }
 
@@ -191,7 +191,7 @@ function ours(value: string | undefined): boolean {
   return value?.includes(`path = "${owned('')}`) === true
 }
 
-export function warpBack(content: string, base: string, system: string, made = ''): string {
+function warpBack(content: string, base: string, system: string, made = ''): string {
   const theme = ours(warpThemeOf(content)) ? withWarpTheme(content, base || WARP_DEFAULT) : content
   const back = ours(warpSystemOf(content)) ? withWarpKey(theme, WARP_SYSTEM, system || WARP_SYSTEM_DEFAULT) : theme
 
@@ -275,7 +275,7 @@ export function warpWear(content: string, value: string | undefined, configHome:
   return withWarpKey(next, WARP_SYSTEM, warpSystemValue(value))
 }
 
-export const WARP_KNOWN = 260
+const WARP_KNOWN = 260
 
 export const WARP_SPACED = 700
 

@@ -2,7 +2,7 @@ import { runOf } from '@/lib/terminal'
 import type { Pane } from '@/lib/view-types'
 import { footerRows, lights, paneLines, paneTiles } from '../../src/core/builder-layout.ts'
 
-export interface Scenes {
+interface Scenes {
   panes: Pane[]
   uses: number[][]
 }

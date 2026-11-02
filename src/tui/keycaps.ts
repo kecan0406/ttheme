@@ -1,6 +1,6 @@
 import { MARKS } from './style.ts'
 
-export type Caps = 'mac' | 'text'
+type Caps = 'mac' | 'text'
 
 export const MODIFIERS: [string, string][] = [
   ['ctrl', '⌃'],

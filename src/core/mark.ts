@@ -7,7 +7,7 @@ type Arc = { center: Point; radius: number; from: number; to: number }
 
 type Step = { line: Point } | { arc: Arc } | { curve: readonly [Point, Point, Point] }
 
-export interface Stroke {
+interface Stroke {
   start: Point
   steps: readonly Step[]
   width: number
@@ -184,7 +184,7 @@ export function marksOf(background: Hex, foreground: Hex, cursor: Hex, selection
   })
 }
 
-export function placed(scale: number): string {
+function placed(scale: number): string {
   return `translate(32 32) scale(${scale}) translate(${-CENTER[0]} ${-CENTER[1]})`
 }
 

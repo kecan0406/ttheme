@@ -14,13 +14,13 @@ import type { Work } from '../../src/core/commons.ts'
 import { type CastMember, slugOfTag } from '../../src/core/names.ts'
 import { liveSource, nameIndex } from '../../src/store/names.ts'
 
-export interface ArtIds {
+interface ArtIds {
   tmdb: string
   anilist: number
   cast: Record<string, number>
 }
 
-export const PERSON_NAMES = new Map([
+const PERSON_NAMES = new Map([
   ['black-bullet/satomi-rentarou', 'Rentaro Satomi'],
   ['black-bullet/aihara-enju', 'Enju Aihara'],
   ['black-bullet/tendou-kisara', 'Kisara Tendo'],
@@ -64,7 +64,7 @@ export const PERSON_NAMES = new Map([
   ['vocaloid/meiko', 'MEIKO'],
 ])
 
-export const ART_IDS = {
+const ART_IDS = {
   'black-bullet': {
     tmdb: 'tv/60834',
     anilist: 20457,

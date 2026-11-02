@@ -9,7 +9,7 @@ export interface WorkspaceData {
   current: string
 }
 
-export interface Neighbors {
+interface Neighbors {
   prev: Theme
   next: Theme
 }

@@ -1,14 +1,14 @@
 import { slugOf } from '@/lib/markdown'
 import { CONFIG_SETTINGS } from '../../src/store/wiring.ts'
 
-export interface Setting {
+interface Setting {
   name: string
   id: string
   about: string
   fallback: string
 }
 
-export interface SettingGroup {
+interface SettingGroup {
   title: string
   id: string
   settings: Setting[]

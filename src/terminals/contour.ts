@@ -17,7 +17,7 @@ function contourDir(at: At): string {
   return join(at.configHome, 'contour')
 }
 
-export function contourSettings(at: At): string {
+function contourSettings(at: At): string {
   return join(contourDir(at), 'settings.yml')
 }
 

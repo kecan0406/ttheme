@@ -41,7 +41,7 @@ export const wezterm: Emitter = {
   },
 }
 
-export function weztermScheme(palette: string, mode: Mode): string {
+function weztermScheme(palette: string, mode: Mode): string {
   return `${owned(palette)}.${mode}`
 }
 

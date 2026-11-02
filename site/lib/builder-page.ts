@@ -39,7 +39,7 @@ export function starts(): Start[] {
   })
 }
 
-export interface BuilderPageData {
+interface BuilderPageData {
   data: BuilderData
   panes: Pane[]
 }

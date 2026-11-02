@@ -5,7 +5,7 @@ export interface Tagged {
   frequency: number
 }
 
-export interface Worn {
+interface Worn {
   hair: Tagged[]
   eyes: Tagged[]
   items: Tagged[]
@@ -18,9 +18,9 @@ export type Verdict =
   | { kind: 'item'; tag: Tagged }
   | { kind: 'none' }
 
-export const THIN = 50
-export const EYES = 0.5
-export const ITEM = 0.3
+const THIN = 50
+const EYES = 0.5
+const ITEM = 0.3
 
 const FLOOR = 0.08
 const ACHROMATIC_HAIR = 0.8
@@ -31,7 +31,7 @@ const MIXED = ['multicolored', 'gradient']
 
 const colorOf = (name: string) => name.split('_')[0] as string
 
-export const chromatic = (t: Tagged) => CHROMATIC.includes(colorOf(t.name))
+const chromatic = (t: Tagged) => CHROMATIC.includes(colorOf(t.name))
 
 const neutral = (t: Tagged) => NEUTRAL.includes(colorOf(t.name))
 

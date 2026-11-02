@@ -404,7 +404,7 @@ export async function fetchProfiles(names: readonly string[], signal: AbortSigna
   return new Map(names.map((name) => [name, profilesOf(found.get(name) ?? [])]))
 }
 
-export interface PostCredit {
+interface PostCredit {
   artist: string[]
   source: string
   profiles: Record<string, string[]>

@@ -22,7 +22,7 @@ interface Found {
   license: { spdx_id: string } | null
 }
 
-export interface RepoFacts {
+interface RepoFacts {
   stars: number
   pushedAt: string
 }

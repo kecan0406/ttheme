@@ -19,7 +19,7 @@ export interface AgentHomes {
   claude: string
 }
 
-export interface Placed {
+interface Placed {
   placed: SkillTarget[]
   failed: string[]
 }

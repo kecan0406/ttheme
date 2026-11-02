@@ -26,7 +26,7 @@ export function contourScheme(shade: Shade): string {
   ].join('\n')
 }
 
-export function contourTheme(shade: Theme): string {
+function contourTheme(shade: Theme): string {
   return [...banner(shade), '', contourScheme(shade)].join('\n')
 }
 

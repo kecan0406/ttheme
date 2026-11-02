@@ -2,9 +2,9 @@ import { escapeHtml } from '@kitajs/html'
 
 export type Lang = 'sh' | 'toml'
 
-export type Role = 'plain' | 'cmd' | 'opt' | 'path' | 'var' | 'str' | 'comment' | 'key' | 'table' | 'num'
+type Role = 'plain' | 'cmd' | 'opt' | 'path' | 'var' | 'str' | 'comment' | 'key' | 'table' | 'num'
 
-export interface Token {
+interface Token {
   role: Role
   text: string
 }

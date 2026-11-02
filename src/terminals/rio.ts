@@ -16,7 +16,7 @@ function rioDir(at: At): string {
   return join(at.configHome, 'rio')
 }
 
-export function rioConfig(at: At): string {
+function rioConfig(at: At): string {
   return join(rioDir(at), 'config.toml')
 }
 
@@ -28,7 +28,7 @@ function rioOwn(at: At): string {
   return join(themes(at), `${NAME}.toml`)
 }
 
-export function upsertRioTheme(content: string): string | undefined {
+function upsertRioTheme(content: string): string | undefined {
   const block = `${BLOCK_BEGIN}\n# ${MANAGED}\ntheme = ${JSON.stringify(NAME)}\n${BLOCK_END}\n`
 
   if (BLOCK.test(content)) {
@@ -44,7 +44,7 @@ export function upsertRioTheme(content: string): string | undefined {
   return content === '' ? block : `${block}\n${content}`
 }
 
-export function ownColors(config: string): string {
+function ownColors(config: string): string {
   const outside = config.replace(BLOCK, '')
   const at = outside.search(TOML_COLORS)
 

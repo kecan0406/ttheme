@@ -5,7 +5,7 @@ import { banner, type Emitter, type Output } from './types.ts'
 
 const NAMES = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
 
-export function rioColors(shade: Shade): string {
+function rioColors(shade: Shade): string {
   return [
     '[colors]',
     `background = '${shade.background}'`,

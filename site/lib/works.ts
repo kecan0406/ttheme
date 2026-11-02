@@ -2,11 +2,11 @@ import { type KeyArt, keyArtOf, type WorkArt } from '@/lib/art'
 import { BUILTIN, faceOf, paint, type Shade, type Theme, type WorkRef } from '@/lib/themes'
 import { slugOf } from '../../src/core/theme.ts'
 
-export const FIRST = 'ttheme/hatsune-miku'
+const FIRST = 'ttheme/hatsune-miku'
 
 export const WORN_FACETS = '--k0:var(--bg);--k1:var(--a0);--k2:var(--se);--k3:var(--cu);--k4:var(--a1);--k5:var(--a5)'
 
-export interface WorkShelf {
+interface WorkShelf {
   key: string
   work: WorkRef | null
   publisher: string | null

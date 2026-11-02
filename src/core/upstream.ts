@@ -7,7 +7,7 @@ export interface Sides {
   other?: Colors
 }
 
-export interface Followed {
+interface Followed {
   colors: Colors
   base: Colors
   taken: number[]

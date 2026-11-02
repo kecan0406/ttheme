@@ -1,7 +1,7 @@
 import type { FoundWork } from '@/lib/found'
 import { type Marketplace, shortName, type Theme, type WorkRef } from '@/lib/themes'
 
-export interface Meta {
+interface Meta {
   title: string
   description: string
 }

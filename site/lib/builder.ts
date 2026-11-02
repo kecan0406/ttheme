@@ -16,7 +16,7 @@ export const MOST_DRAFTS = 30
 
 export const RETURNS = ['reload', 'back_forward']
 
-export const BLANK_NAME = 'my-palette'
+const BLANK_NAME = 'my-palette'
 
 export interface Meta {
   subject?: string
@@ -77,7 +77,7 @@ function copied(side: Side): Side {
   return { base: side.base ? [...side.base] : null, tuned: { ...side.tuned } }
 }
 
-export function metaOf(draft: Draft): Meta {
+function metaOf(draft: Draft): Meta {
   return {
     ...(draft.subject ? { subject: draft.subject } : {}),
     ...(draft.upstream ? { upstream: draft.upstream } : {}),
@@ -149,7 +149,7 @@ export function modeOfView(edit: Pick<Edit, 'made'>, view: View): Mode {
 
 const mirrors = new Map<string, Hex[]>()
 
-export function mirrored(edit: Pick<Edit, 'made' | 'meta' | 'name'>): Hex[] {
+function mirrored(edit: Pick<Edit, 'made' | 'meta' | 'name'>): Hex[] {
   const key = JSON.stringify(edit.made)
   const known = mirrors.get(key)
 
@@ -175,11 +175,11 @@ export function mirrored(edit: Pick<Edit, 'made' | 'meta' | 'name'>): Hex[] {
 
 type Body = Pick<Edit, 'name' | 'made' | 'other' | 'meta' | 'keep'>
 
-export function otherBase(edit: Body): Hex[] {
+function otherBase(edit: Body): Hex[] {
   return edit.other.base ?? mirrored(edit)
 }
 
-export function otherList(edit: Body): Hex[] {
+function otherList(edit: Body): Hex[] {
   return otherBase(edit).map((hex, slot) => edit.other.tuned[slot] ?? hex)
 }
 

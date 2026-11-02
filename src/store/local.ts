@@ -22,7 +22,7 @@ export interface LocalMarketplace extends Identity {
   id: string
 }
 
-export interface Shelved {
+interface Shelved {
   entries: PaletteEntry[]
   works: Work[]
 }
@@ -102,7 +102,7 @@ export function ownIn(dir: string): Map<string, Own> {
   return found
 }
 
-export function localFor(configHome: string, name: string): LocalMarketplace {
+function localFor(configHome: string, name: string): LocalMarketplace {
   if (isBuiltin(name)) {
     throw new Error(`${name} is a built-in palette — yours are named <you>@<marketplace>/<palette>`)
   }

@@ -26,7 +26,7 @@ export interface Draft {
   pictures?: SharedPicture[]
 }
 
-export interface Sealed {
+interface Sealed {
   packed: Uint8Array
   sum: Uint8Array
 }
@@ -207,7 +207,7 @@ class Reader {
   }
 }
 
-export function base64url(bytes: Uint8Array): string {
+function base64url(bytes: Uint8Array): string {
   let out = ''
 
   for (let at = 0; at < bytes.length; at += 3) {
@@ -225,7 +225,7 @@ export function base64url(bytes: Uint8Array): string {
   return out
 }
 
-export function fromBase64url(text: string): Uint8Array {
+function fromBase64url(text: string): Uint8Array {
   const out: number[] = []
 
   for (let at = 0; at + 1 < text.length; at += 4) {

@@ -13,7 +13,7 @@ export function outdated(latest: string, running: string, how: string): string {
   return `ttheme ${latest} is out, you have ${running} — ${how}`
 }
 
-export const KEPT_ON_UPDATE = 'keeps your palettes, pins and settings'
+const KEPT_ON_UPDATE = 'keeps your palettes, pins and settings'
 
 export function outdatedLines(p: Paint, latest: string, running: string, command: string): string[] {
   if (!p.color) {

@@ -1,6 +1,6 @@
 import { crc32 } from './crc.ts'
 
-export interface Packed {
+interface Packed {
   path: string
   text: string
 }

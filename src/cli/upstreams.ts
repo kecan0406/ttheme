@@ -7,13 +7,13 @@ import { type Following, following, moves, type Sides, sidesOf } from '../core/u
 import { readInstalled } from '../store/installed.ts'
 import { ownFile, readLocal, writeOwn } from '../store/local.ts'
 
-export interface Behind {
+interface Behind {
   entry: PaletteEntry
   theirs: Sides
   done: Following
 }
 
-export interface Clash {
+interface Clash {
   against: string
   slots: number[]
   original: Colors

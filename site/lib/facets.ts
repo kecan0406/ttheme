@@ -18,9 +18,9 @@ export type Vertex = Point & { z: number }
 
 export type Corners = [Vertex, Vertex, Vertex]
 
-export type Facet = { corners: [number, number, number]; tone: 0 | 1 | 2; tint: number }
+type Facet = { corners: [number, number, number]; tone: 0 | 1 | 2; tint: number }
 
-export type FacetMesh = { points: Vertex[]; facets: Facet[] }
+type FacetMesh = { points: Vertex[]; facets: Facet[] }
 
 export type Shade = { tint: number; lift: number }
 

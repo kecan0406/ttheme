@@ -106,7 +106,7 @@ export function statusOf(theme: Theme): string {
   return `"${theme.name}"${theme.work ? ` ${theme.work.name}` : ''}`
 }
 
-export function ScenePanes({ theme }: { theme: Theme }) {
+function ScenePanes({ theme }: { theme: Theme }) {
   const use = useOf(theme)
 
   return (

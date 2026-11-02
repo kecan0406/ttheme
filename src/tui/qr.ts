@@ -20,7 +20,7 @@ interface Room {
   rows: number
 }
 
-export interface Qr {
+interface Qr {
   cols: number
   rows: number
   out: string

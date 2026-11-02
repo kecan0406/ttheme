@@ -17,9 +17,9 @@ import type { Network } from './network.ts'
 import type { Staged } from './staged.ts'
 import type { Detail, Found, Marketplace, Offer, Row } from './types.ts'
 
-export const PAUSE = 600
+const PAUSE = 600
 
-export interface SearchHost {
+interface SearchHost {
   readonly staged: Staged
   readonly network: Network
   readonly p: Paint

@@ -19,12 +19,12 @@ export interface Flat {
   shadowOf?: Hex
 }
 
-export interface Counting {
+interface Counting {
   crop?: Crop
   quant?: number
 }
 
-export interface Flats {
+interface Flats {
   pixels: number
   opaque: number
   distinct: number

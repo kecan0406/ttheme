@@ -22,7 +22,7 @@ const HEADLINE = [
 
 const TAGLINE = 'in your terminal'
 
-export interface Frame {
+interface Frame {
   width: number
   height: number
 }
