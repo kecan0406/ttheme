@@ -212,9 +212,12 @@ export function parse(argv: readonly string[]): Invocation {
 }
 
 const CRASHES = [TypeError, RangeError, ReferenceError, SyntaxError]
+const MACHINE = new Set(['EACCES', 'EPERM', 'EROFS', 'ENOSPC', 'EDQUOT', 'EMFILE', 'ENFILE'])
 
 export function isCrash(error: Error): boolean {
-  return CRASHES.some((kind) => error instanceof kind) || 'code' in error
+  const code = 'code' in error ? String(error.code) : undefined
+
+  return CRASHES.some((kind) => error instanceof kind) || (code !== undefined && !MACHINE.has(code))
 }
 
 export async function runCli(argv: readonly string[]): Promise<number> {

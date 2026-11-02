@@ -38,9 +38,15 @@ test('every verb either runs here or belongs to the shell layer', () => {
 
 test('only a crash points to ttheme info, never a message written for the user', () => {
   assert.ok(isCrash(new TypeError("Cannot read properties of undefined (reading 'ansi')")))
-  assert.ok(isCrash(Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' })))
+  assert.ok(isCrash(Object.assign(new Error('ENOENT: no such file or directory'), { code: 'ENOENT' })))
   assert.ok(!isCrash(new Error('not installed: orla')))
   assert.ok(!isCrash(new Missing('nothing at https://example.com')))
+})
+
+test('a full or read-only disk is the machine, never a bug to report', () => {
+  for (const code of ['EACCES', 'EPERM', 'EROFS', 'ENOSPC']) {
+    assert.ok(!isCrash(Object.assign(new Error(`${code}: cannot write`), { code })))
+  }
 })
 
 test('--help wins over any other argument, up to a --', () => {
