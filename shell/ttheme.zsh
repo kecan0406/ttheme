@@ -1057,7 +1057,7 @@ __tt_key() {
       ;;
     $'\t') REPLY=tab ;;
     $'\r') REPLY=enter ;;
-    q|$'\x03') REPLY=esc ;;
+    $'\x03') REPLY=esc ;;
     *) REPLY=$c ;;
   esac
 }
