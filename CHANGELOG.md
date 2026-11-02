@@ -23,6 +23,7 @@
 - `ttheme share` says when your tuning has turned a palette into its other mode, instead of printing a link nobody can add.
 - Changing what find hides no longer overwrites your hidden tags in a config.zsh that has no line for it.
 - An empty `XDG_CONFIG_HOME`, `XDG_STATE_HOME`, `XDG_CACHE_HOME` or `XDG_DATA_HOME` now means the default folder, instead of the folder you ran ttheme in.
+- `ttheme share` refuses a link too large to open again and points to a marketplace, instead of printing one that fails for whoever opens it.
 
 ## 1.2.85
 

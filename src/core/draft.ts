@@ -305,7 +305,13 @@ export function codeBody(drafts: readonly Draft[]): Uint8Array {
     writeDraft(w, d)
   }
 
-  return w.body()
+  const body = w.body()
+
+  if (body.length > UNPACKED) {
+    throw new Error('that is too much for one share link — share them as a marketplace')
+  }
+
+  return body
 }
 
 export function smallest(packs: readonly Uint8Array[]): Uint8Array {

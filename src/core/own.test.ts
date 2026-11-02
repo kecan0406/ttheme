@@ -84,6 +84,20 @@ test('a share code refuses a post number it cannot carry instead of naming anoth
   assert.throws(() => shareCode([{ ...draft, pictures: pictures(2 ** 32 + 5) }]), /post numbers up to 4294967295/)
 })
 
+test('a share code too large to unpack again is refused when it is made', () => {
+  const pictures = Array.from({ length: 200 }, (_, i) => ({
+    site: 'danbooru',
+    id: i * 7919 + 1,
+    strength: (i % 90) + 0.5,
+  }))
+
+  const many = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({ ...draft, name: `kumquat09@dust/w${i}`, pictures }))
+
+  assert.equal(fromCode(shareCode(many(20))).length, 20)
+  assert.throws(() => shareCode(many(255)), /too much for one share link/)
+})
+
 test('a share link reads as the code it carries, however it was pasted', () => {
   const code = shareCode([draft])
   const link = shareLink(code)
