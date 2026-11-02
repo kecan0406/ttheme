@@ -35,6 +35,7 @@
 - Moving the mouse a little while clicking in preview no longer closes it and leaves stray text at the prompt.
 - Browse's search says the marketplace index is not JSON when a portal or a proxy answers in its place.
 - find says its search failed, in red, when no site could be reached, rather than that there are no posts.
+- Browse's search stops looking up names when the server gives no answer in 20 seconds.
 
 ## 1.2.85
 

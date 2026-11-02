@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { test } from 'node:test'
-import { castMembers, hitsOf } from './names.ts'
+import { castMembers, hitsOf, nameSearch } from './names.ts'
 
 function work(label: string, match: string) {
   return { id: `w/${label}`, kind: 'work', label, match, names: [], danbooru: [] }
@@ -46,4 +49,34 @@ test('a generated name is never the preferred one', () => {
     member?.names.map((name) => name.preferred === true),
     [false, true],
   )
+})
+
+test('a lookup the server never answers ends as a failure, so the screen stops saying it is looking', async () => {
+  const fetching = globalThis.fetch
+  const cache = process.env.XDG_CACHE_HOME
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-names-'))
+  process.env.XDG_CACHE_HOME = dir
+
+  globalThis.fetch = ((_url: string, init?: RequestInit) =>
+    new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(init.signal?.reason))
+    })) as typeof fetch
+
+  try {
+    const search = nameSearch('aninames', 'https://names.example.test', 20)
+
+    await assert.rejects(search?.('harbor', new AbortController().signal) as Promise<unknown>, {
+      message: 'names.example.test gave no answer within 0.02 s',
+    })
+  } finally {
+    globalThis.fetch = fetching
+
+    if (cache === undefined) {
+      delete process.env.XDG_CACHE_HOME
+    } else {
+      process.env.XDG_CACHE_HOME = cache
+    }
+
+    rmSync(dir, { recursive: true, force: true })
+  }
 })

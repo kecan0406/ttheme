@@ -467,6 +467,10 @@ function describe(error: Error | string): string {
     return describe(error.cause instanceof Error ? error.cause : String(error.cause))
   }
 
+  if (error.name === 'TimeoutError') {
+    return 'no answer in time'
+  }
+
   const code = 'code' in error ? error.code : undefined
 
   if (code === String(code)) {

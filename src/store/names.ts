@@ -27,6 +27,8 @@ const FIND_LIMIT = 50
 
 const RETRIES = [150, 500]
 
+const LOOKUP_MOST = 20_000
+
 const LANG = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/
 
 const REF = /^[a-z]+:[\w./-]+$/
@@ -260,6 +262,20 @@ export function nameIndex(source: Source): NameIndex {
   }
 }
 
-export function nameSearch(provider: string | undefined, base = NAMES_URL): NameSearch | undefined {
-  return provider === 'off' ? undefined : nameIndex(cachedSource(liveSource(base), join(cacheRoot(), 'names'))).search
+export function nameSearch(provider: string | undefined, base = NAMES_URL, most = LOOKUP_MOST): NameSearch | undefined {
+  if (provider === 'off') {
+    return undefined
+  }
+
+  const { search } = nameIndex(cachedSource(liveSource(base), join(cacheRoot(), 'names')))
+
+  return async (query, signal) => {
+    const limit = AbortSignal.timeout(most)
+
+    try {
+      return await search(query, AbortSignal.any([signal, limit]))
+    } catch (error) {
+      throw limit.aborted ? new Error(`${new URL(base).host} gave no answer within ${most / 1000} s`) : error
+    }
+  }
 }
