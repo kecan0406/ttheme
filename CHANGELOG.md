@@ -40,6 +40,7 @@
 - Pasting a very long text into Browse no longer slows every key after it.
 - Alt+enter no longer closes Browse, the palette editor or find.
 - Preview's list says how many rows are above and below the window.
+- Browse's search puts the work you named first: `cyberpunk 2077` finds the game, not its anime.
 
 ## 1.2.85
 
