@@ -188,7 +188,14 @@ function readListed(value: unknown): Listed | undefined {
 }
 
 export function parseIndex(text: string): Listed[] {
-  const doc: unknown = JSON.parse(text)
+  let doc: unknown
+
+  try {
+    doc = JSON.parse(text)
+  } catch {
+    throw new Error('the marketplace index is not JSON')
+  }
+
   const listed = typeof doc === 'object' && doc !== null ? (doc as Record<string, unknown>).marketplaces : undefined
 
   if (!Array.isArray(listed)) {

@@ -58,6 +58,10 @@ test('the index the CI writes reads back as it was, most starred first, and keep
   })
 })
 
+test('an answer that is not JSON, a portal page say, is named as that and quotes none of it', () => {
+  assert.throws(() => parseIndex('<html>\x1b]0;sign in\x07</html>'), { message: 'the marketplace index is not JSON' })
+})
+
 test('a listed marketplace comes back without the control and bidi characters its text holds, and one that does not read is dropped', () => {
   const [good] = JSON.parse(indexText([shown('bob@neon', 'bob/ttheme-neon', 1, 'x')])).marketplaces
 

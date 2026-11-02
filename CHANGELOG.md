@@ -33,6 +33,7 @@
 - A paste or a terminal answer that is cut short no longer locks up Browse, the palette editor or find.
 - Resizing the window while holding a key no longer garbles preview until the key is let go.
 - Moving the mouse a little while clicking in preview no longer closes it and leaves stray text at the prompt.
+- Browse's search says the marketplace index is not JSON when a portal or a proxy answers in its place.
 
 ## 1.2.85
 
