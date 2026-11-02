@@ -83,7 +83,7 @@ exit
 ```sh
 ttheme pin              # this folder
 ttheme pin ~/work/site  # another folder, without going there
-ttheme pin ssh:tusa     # one host
+ttheme pin ssh:teal     # one host
 ttheme pin 'ssh:*.prod' # every host ending in .prod
 ```
 
@@ -98,16 +98,16 @@ far the pin reaches with `←` `→`:
 
 The nearest pin above a folder wins, and a palette you used in the tab by hand
 between a `cd` in and out stays. An ssh pin shows from the moment you run
-`ssh tusa` until the prompt comes back. The host is the name you type after
+`ssh teal` until the prompt comes back. The host is the name you type after
 `ssh`, so a `Host` from `~/.ssh/config` works as it is, and a host's own pin
 beats a pattern. Only a session counts: `scp`, `rsync`, `git` and an `ssh` in a
-script leave the tab alone. In Ghostty, `ghostty +ssh tusa` counts too, and so
-does `ssh tusa` under the alias Ghostty suggests, `alias ssh='ghostty +ssh --'`.
+script leave the tab alone. In Ghostty, `ghostty +ssh teal` counts too, and so
+does `ssh teal` under the alias Ghostty suggests, `alias ssh='ghostty +ssh --'`.
 
 ```sh
 ttheme pins             # every pin as a tree, in its palette's colors
 ttheme unpin            # this folder's pin, or choose which
-ttheme unpin ssh:tusa
+ttheme unpin ssh:teal
 ```
 
 Pins live in `~/.config/ttheme/pins`, one per line, and the file is yours to edit
