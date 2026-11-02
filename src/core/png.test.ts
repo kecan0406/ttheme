@@ -274,3 +274,33 @@ test('a JPEG with more scans than any encoder writes is refused before it decode
     /not a JPEG picture this decoder can read/,
   )
 })
+
+test('a JPEG that fails leaves nothing behind for the next one to run out of', () => {
+  const segment = (marker: number, body: number[]) => [0xff, marker, 0, body.length + 2, ...body]
+
+  const tables = [
+    ...segment(0xdb, [0, ...new Array<number>(64).fill(1)]),
+    ...segment(0xc4, [0x00, 0, 1, ...new Array<number>(14).fill(0), 0]),
+    ...segment(0xc4, [0x10, 0, 1, ...new Array<number>(14).fill(0), 0]),
+  ]
+
+  const wide = [8, 4000 >> 8, 4000 & 255, 4000 >> 8, 4000 & 255, 1, 1, 0x11, 0]
+
+  const failing = new Uint8Array([
+    0xff,
+    0xd8,
+    ...tables,
+    ...segment(0xc2, wide),
+    ...segment(0xda, [1, 1, 0, 0, 0, 0]),
+    0xff,
+    0x02,
+    0,
+    0,
+  ])
+
+  for (let run = 0; run < 200; run++) {
+    assert.throws(() => decodeImage(failing, 25e6), /not a JPEG picture this decoder can read/)
+  }
+
+  assert.equal(decodeImage(new Uint8Array(Buffer.from(TWO_COLORS, 'base64')), 1e6).width, 16)
+})

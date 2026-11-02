@@ -86,6 +86,8 @@ interface Boot {
   decode?: MozJPEGModule['decode']
 }
 
+let compiled: WebAssembly.Module | undefined
+
 let decoder: MozJPEGModule['decode'] | undefined
 
 function opened(): MozJPEGModule['decode'] {
@@ -93,9 +95,11 @@ function opened(): MozJPEGModule['decode'] {
     return decoder
   }
 
-  const code = new WebAssembly.Module(
+  compiled ??= new WebAssembly.Module(
     inflateRawSync(Buffer.from(embedded('@jsquash/jpeg/codec/dec/mozjpeg_dec.wasm'), 'base64')),
   )
+
+  const code = compiled
 
   const loaded: Boot = {
     noInitialRun: true,
@@ -157,6 +161,7 @@ export function decodeJpeg(bytes: Uint8Array, limit: number): Rgba {
   }
 
   if (!image) {
+    decoder = undefined
     throw new Error('not a JPEG picture this decoder can read')
   }
 
