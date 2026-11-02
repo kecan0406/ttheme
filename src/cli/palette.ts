@@ -383,7 +383,13 @@ interface Recorded {
 function builtinIn(dir: string): boolean {
   const path = join(dir, MARKETPLACE_FILE)
 
-  return existsSync(path) && toml(MARKETPLACE_FILE, readFileSync(path, 'utf8')).name === BUILTIN
+  if (!existsSync(path)) {
+    return false
+  }
+
+  const { name, owner } = toml(MARKETPLACE_FILE, readFileSync(path, 'utf8'))
+
+  return name === BUILTIN && owner === undefined
 }
 
 async function targetOf(into: string | undefined, dry: boolean): Promise<Target | undefined> {
