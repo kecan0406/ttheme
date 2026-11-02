@@ -161,8 +161,8 @@ list on what it holds: pick the palettes to publish, and one you unpick is
 deleted. It needs [GitHub CLI](https://cli.github.com) (`gh`) logged in, creates
 the repository, adds the `ttheme-marketplace` topic to a public one, shows what it
 will push and asks once more. Run it again to push changes. A public repository
-with the topic shows in Browse's `⌕ Search marketplace` and on
-[ttheme.dev/browse/marketplaces](https://ttheme.dev/browse/marketplaces) within the hour,
+with the topic shows in Browse's `⌕ Search marketplace` within the hour and on
+[ttheme.dev/browse/marketplaces](https://ttheme.dev/browse/marketplaces) within a day,
 as long as it holds at most 300 palettes and works; a larger one is still added by
 its name with `ttheme marketplace add`. Its palette and work files can take up to 4 MB.
 

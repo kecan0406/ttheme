@@ -5,7 +5,7 @@ on:
     branches: [main]
   schedule:
     - cron: '17,47 * * * *'
-    - cron: '5 4 * * 1'
+    - cron: '5 4 * * *'
   workflow_dispatch:
 
 permissions:
@@ -22,8 +22,6 @@ jobs:
       contents: read
     outputs:
       changed: ${{ steps.compare.outputs.changed }}
-      index: ${{ steps.compare.outputs.index }}
-      stars: ${{ steps.compare.outputs.stars }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -39,14 +37,6 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         run: |
           same() { curl -fsS "https://index.ttheme.dev/$1" | cmp -s - "pages/$1"; }
-          index=changed
-          if same marketplaces.json; then
-            index=same
-          fi
-          stars=same
-          if [ -f pages/stars.json ] && ! same stars.json; then
-            stars=changed
-          fi
           changed=false
           for file in $(cd pages && find . -type f); do
             if ! same "${file#./}"; then
@@ -54,8 +44,6 @@ jobs:
             fi
           done
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
-          echo "index=$index" >> "$GITHUB_OUTPUT"
-          echo "stars=$stars" >> "$GITHUB_OUTPUT"
 
       - if: steps.compare.outputs.changed != 'false'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
@@ -80,10 +68,35 @@ jobs:
 
   site:
     needs: build
-    if: github.event_name == 'schedule' && (github.event.schedule == '5 4 * * 1' || needs.build.outputs.index == 'changed' || needs.build.outputs.stars == 'changed')
+    if: github.event_name == 'schedule' && github.event.schedule == '5 4 * * *'
     runs-on: ubuntu-26.04
     permissions: {}
     steps:
-      - env:
+      - run: |
+          mkdir built
+          curl -fsS https://index.ttheme.dev/marketplaces.json -o built/marketplaces.json
+          curl -fsS https://index.ttheme.dev/stars.json -o built/stars.json
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: rebuilt
+          key: site-index-${{ github.run_id }}
+          restore-keys: site-index-
+      - id: compare
+        run: |
+          due=false
+          if [ "$(date -u +%u)" = 1 ] || ! diff -r built rebuilt > /dev/null 2>&1; then
+            due=true
+          fi
+          echo "due=$due" >> "$GITHUB_OUTPUT"
+      - if: steps.compare.outputs.due == 'true'
+        env:
           VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
-        run: curl -fsS -X POST "${VERCEL_DEPLOY_HOOK:?VERCEL_DEPLOY_HOOK is not set}" > /dev/null
+        run: |
+          curl -fsS -X POST "${VERCEL_DEPLOY_HOOK:?VERCEL_DEPLOY_HOOK is not set}" > /dev/null
+          rm -rf rebuilt
+          mv built rebuilt
+      - if: steps.compare.outputs.due == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: rebuilt
+          key: site-index-${{ github.run_id }}
