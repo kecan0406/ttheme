@@ -7,7 +7,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/88 hover:shadow-md',
+        default:
+          'bg-primary text-primary-foreground shadow-sm hover:bg-[color-mix(in_oklab,var(--primary)_88%,var(--fg))] hover:shadow-md',
         outline:
           'border-border bg-card text-soft-foreground hover:border-input hover:bg-secondary hover:text-foreground aria-expanded:bg-secondary data-popup-open:bg-secondary data-pressed:border-primary data-pressed:text-foreground',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-muted',
@@ -22,7 +23,7 @@ const buttonVariants = cva(
         scene: 'text-(--fg)/65 hover:bg-(--fg)/12 hover:text-(--fg)',
         destructive: 'bg-destructive/16 text-destructive hover:bg-destructive/24',
         link: 'font-medium text-primary underline-offset-4 hover:underline',
-        pop: 'bg-primary text-primary-foreground shadow-[0_4px_0_color-mix(in_oklab,var(--primary)_62%,black)] transition-[transform,box-shadow] duration-75 hover:brightness-105 active:translate-y-1 active:scale-100 active:shadow-none',
+        pop: 'bg-primary text-primary-foreground shadow-[0_4px_0_color-mix(in_oklab,var(--primary)_62%,black)] transition-[transform,box-shadow] duration-75 hover:bg-[color-mix(in_oklab,var(--primary)_88%,var(--fg))] active:translate-y-1 active:scale-100 active:shadow-none',
       },
       size: {
         default: 'h-9 px-4.5',
