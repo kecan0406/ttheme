@@ -3,6 +3,7 @@ import { type Profile, pagesOf } from '../../core/artists.ts'
 import type { Coloring } from '../../core/backdrop-tone.ts'
 import { BLOCKS, type Block, KEY_SPAN, type Kind, type Narrow, type Rating, SITES } from '../../core/booru.ts'
 import { type Hex, mix } from '../../core/color.ts'
+import { unqualified } from '../../core/names.ts'
 import { SCENES, sceneAt, sceneParts, WIDE } from '../../core/scenes.ts'
 import { cells as columns } from '../../core/text.ts'
 import { POSITIONS } from '../../core/theme.ts'
@@ -450,10 +451,6 @@ class Line {
 
     return out
   }
-}
-
-function plain(artist: string): string {
-  return artist.replace(/_\([^)]*\)?$/, '')
 }
 
 function dims(tile: Tile): Part {
@@ -1248,7 +1245,7 @@ function grid(
         inside[r0 + 10]?.put(c0 + TILE.cols, '≈', accent)
       }
 
-      inside[r0 + 11]?.put(c0 + 1, tile.artist ? plain(tile.artist).slice(0, TILE.cols - 8) : '—', D)
+      inside[r0 + 11]?.put(c0 + 1, tile.artist ? unqualified(tile.artist, true).slice(0, TILE.cols - 8) : '—', D)
       const marks: Part[] = []
 
       if (tile.score > 0) {

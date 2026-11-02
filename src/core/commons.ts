@@ -1,6 +1,6 @@
 import { SITES } from './booru.ts'
 import { memo } from './memo.ts'
-import { slugOfTag } from './names.ts'
+import { slugOfTag, unqualified } from './names.ts'
 import { escaped, quoted } from './text.ts'
 import {
   BUILTIN,
@@ -447,7 +447,7 @@ export function siteTags(about: About | undefined, site: string): string[] {
 }
 
 export function spoken(tag: string): string {
-  return tag.replace(/_\([^)]*\)$/, '').replaceAll('_', ' ')
+  return unqualified(tag).replaceAll('_', ' ')
 }
 
 export function wordsOf(about: About | undefined): string[] {

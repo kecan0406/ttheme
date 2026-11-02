@@ -4,8 +4,6 @@ import { searchKey } from './text.ts'
 
 export const MAKE_URL = 'https://ttheme.dev/docs/guide/make'
 
-const QUALIFIER = /_\([^)]*\)/g
-
 const SLUG_MOST = 40
 
 export function requestUrl(asked: string): string {
@@ -125,8 +123,37 @@ function slugFrom(text: string): string | undefined {
   return slug || undefined
 }
 
+export function unqualified(tag: string, unclosed = false): string {
+  const closed = tag.endsWith(')')
+
+  if (!closed && !unclosed) {
+    return tag
+  }
+
+  const at = tag.indexOf('_(', tag.lastIndexOf(')', closed ? tag.length - 2 : tag.length) + 1)
+
+  return at < 0 ? tag : tag.slice(0, at)
+}
+
+function withoutQualifiers(tag: string): string {
+  let kept = ''
+  let from = 0
+
+  for (;;) {
+    const open = tag.indexOf('_(', from)
+    const close = open < 0 ? -1 : tag.indexOf(')', open)
+
+    if (close < 0) {
+      return kept + tag.slice(from)
+    }
+
+    kept += tag.slice(from, open)
+    from = close + 1
+  }
+}
+
 export function slugOfTag(tag: string): string | undefined {
-  return slugFrom(tag.replace(QUALIFIER, ''))
+  return slugFrom(withoutQualifiers(tag))
 }
 
 export function cutSlug(slug: string): boolean {

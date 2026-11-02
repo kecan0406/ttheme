@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Work } from './commons.ts'
-import { type NameHit, namedWorks, paletteNameOf, requestUrl, slugOfTag } from './names.ts'
+import { type NameHit, namedWorks, paletteNameOf, requestUrl, slugOfTag, unqualified } from './names.ts'
 
 const works: Work[] = [
   {
@@ -50,4 +50,32 @@ test("a palette's name to make is what was typed, as a slug", () => {
   assert.equal(paletteNameOf('Café Nell!'), 'cafe-nell')
   assert.equal(paletteNameOf('a'.repeat(50)), 'a'.repeat(40))
   assert.equal(paletteNameOf('달빛 항구'), undefined)
+})
+
+test('a qualifier comes off the end of a tag, in time linear in the tag', () => {
+  const tags: [string, string, string][] = [
+    ['mira_(starfall)', 'mira', 'mira'],
+    ['mira_(a)_(b)', 'mira_(a)', 'mira_(a)'],
+    ['mira_(a_(b)', 'mira', 'mira'],
+    ['mira_(a)b', 'mira_(a)b', 'mira_(a)b'],
+    ['mira_(cut', 'mira_(cut', 'mira'],
+    ['mira', 'mira', 'mira'],
+    ['_()', '', ''],
+    [')', ')', ')'],
+  ]
+
+  for (const [tag, closed, open] of tags) {
+    assert.equal(unqualified(tag), closed, tag)
+    assert.equal(unqualified(tag, true), open, tag)
+  }
+
+  const hostile = ['_('.repeat(200_000), `${'_('.repeat(200_000)})x`, `${'_('.repeat(200_000)})`]
+  const from = performance.now()
+
+  for (const tag of hostile) {
+    slugOfTag(tag)
+    unqualified(tag, true)
+  }
+
+  assert.ok(performance.now() - from < 1000)
 })
