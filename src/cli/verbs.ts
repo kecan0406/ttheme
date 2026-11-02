@@ -59,7 +59,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'pin',
     args: ['[dir|ssh:<host>]'],
     about:
-      'Pin a palette to a directory or an ssh host — the pin covers everything below it, or its whole repository; cd or ssh in repaints, leaving restores',
+      'Pin a palette to a directory or an ssh host — the pin covers everything below it, or its whole repository; cd or ssh in shows it, leaving puts back what was there',
     section: 'tab',
     shell: true,
   },
@@ -96,14 +96,14 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'light',
     args: [],
-    about: 'Show every palette in its light mode — every open tab repaints, and new tabs open in it',
+    about: 'Show every palette in its light mode — every open tab changes, and new tabs open in it',
     section: 'startup',
     shell: true,
   },
   {
     name: 'dark',
     args: [],
-    about: 'Show every palette in its dark mode — every open tab repaints, and new tabs open in it',
+    about: 'Show every palette in its dark mode — every open tab changes, and new tabs open in it',
     section: 'startup',
     shell: true,
   },

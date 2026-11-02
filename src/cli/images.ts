@@ -55,7 +55,7 @@ export async function runImage(asked: string, action: string, key?: string): Pro
   if (action === 'prepare') {
     const { key: ready, coloring } = prepareColoring(home, name, key)
     process.stderr.write(
-      `Background · ${name} ${ready} ready in ${coloring === 'tone' ? 'its tone' : 'its own colors'}\n`,
+      `Background · ${name} ${ready} ready ${coloring === 'tone' ? 'tinted' : 'in its own colors'}\n`,
     )
 
     return 0

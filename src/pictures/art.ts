@@ -71,7 +71,7 @@ export async function fetchArt(ref: string): Promise<{ bytes: Uint8Array; path: 
 
   if (!isPicture(bytes)) {
     throw new Error(
-      `${url.host} sent a web page, not a picture (a challenge page?) — use the image's own address, or save it and pass the file`,
+      `${url.host} sent a web page, not a picture (a challenge page?) — use the picture's own address, or save it and pass the file`,
     )
   }
 

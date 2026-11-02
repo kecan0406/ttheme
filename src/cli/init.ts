@@ -166,7 +166,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
       : []),
     ...(shells.some((shell) => shell !== 'zsh')
       ? [
-          `${shells.filter((shell) => shell !== 'zsh').join(' and ')} run ttheme through zsh — a pin taking effect on cd, the picture following the tab in front and the repaint after a program resets the colors stay with zsh tabs`,
+          `${shells.filter((shell) => shell !== 'zsh').join(' and ')} run ttheme through zsh — a pin taking effect on cd, the picture following the tab in front and the palette coming back after a program resets the colors stay with zsh tabs`,
         ]
       : []),
   ]

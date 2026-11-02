@@ -54,7 +54,7 @@ const CONFIG_HEADER = '# ttheme settings — uncomment a line to change it; expo
 
 export const CONFIG_SETTINGS = {
   TTHEME_MODE: {
-    doc: '# the mode every palette shows in: auto, which follows the appearance of the system where a wired Ghostty, iTerm2, kitty, WezTerm or Contour reports it, or light or dark, which each palette carries both of — changing it repaints every open tab (default dark)',
+    doc: '# the mode every palette shows in: auto, which follows the appearance of the system where a wired Ghostty, iTerm2, kitty, WezTerm or Contour reports it, or light or dark, which each palette carries both of — changing it reaches every open tab (default dark)',
     default: 'dark',
   },
   TTHEME_TAB_PALETTE: {
@@ -98,7 +98,7 @@ export const CONFIG_SETTINGS = {
     default: 'on',
   },
   TTHEME_MARKETPLACE_LOOKUP: {
-    doc: '# GitHub lookups in browse: on downloads the list of marketplaces carrying the ttheme-marketplace topic when Search marketplace opens; off waits for space (default on)',
+    doc: "# the list in browse's Search marketplace: on downloads the marketplaces carrying the ttheme-marketplace topic when it opens; off waits for space (default on)",
     default: 'on',
   },
   TTHEME_NAME_LOOKUP: {
