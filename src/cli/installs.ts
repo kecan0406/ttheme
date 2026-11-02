@@ -24,7 +24,7 @@ import { colorless } from '../terminals/osc.ts'
 import type { Pointed } from '../terminals/types.ts'
 import { PalettePrompt, type PickerScope, promptFx } from '../tui/palette-prompt.ts'
 import { pending, say } from '../tui/pending.ts'
-import { InputError } from './answer.ts'
+import { EXIT, failureOf, InputError } from './answer.ts'
 import { adopt, isPaletteFile, type Refused, takeFile } from './craft.ts'
 import { bringPictures, followPictures } from './pictures.ts'
 import { redrawPictures } from './redraw.ts'
@@ -239,13 +239,13 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   const all = marketplaceSources(home)
   const named = asked.map((name) => marketplaceNamed(home, all, name))
   const release = await newerRelease()
-  let stuck = false
+  const failures: number[] = release.failed ? [EXIT.failed] : []
 
   if (release.latest) {
     try {
       return upgradeTo(release.latest, asked)
     } catch (error) {
-      stuck = true
+      failures.push(EXIT.failed)
       console.log(`  ttheme could not update to ${release.latest}: ${(error as Error).message}`)
     }
   } else {
@@ -283,14 +283,17 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
       }
 
       if (failure) {
+        failures.push(failureOf(failure, false).code)
         line.say(`  ${kept(source, failure)}`)
       }
     }),
   )
   line.done()
 
+  const code = failures.includes(EXIT.network) ? EXIT.network : (failures[0] ?? EXIT.done)
+
   if (!existsSync(installedPath(home))) {
-    return stuck ? 1 : 0
+    return code
   }
 
   const updates = updatesLine(home)
@@ -299,7 +302,7 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
     console.log(updates)
   }
 
-  return stuck ? 1 : 0
+  return code
 }
 
 export async function takeUpdates(home: string, names: string[]): Promise<string[]> {

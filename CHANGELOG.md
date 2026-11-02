@@ -29,6 +29,7 @@
 - A mistyped command, option or action now exits 3 from the shell command as from the CLI, and `ttheme help <unknown>` says so instead of printing the general help
 - A verb's `--json` output piped into something that stops reading no longer ends in a stack trace
 - Network failures say what went wrong, such as a name that did not resolve or no answer in time
+- `ttheme update` exits non-zero when it could not reach a marketplace or check for a release
 
 ## 1.2.85
 

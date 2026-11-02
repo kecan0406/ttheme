@@ -312,7 +312,7 @@ export function upgradeTo(latest: string, args: readonly string[]): number {
   return next.status ?? 1
 }
 
-export async function newerRelease(): Promise<{ latest?: string; note: string }> {
+export async function newerRelease(): Promise<{ latest?: string; note: string; failed?: true }> {
   if (process.env.TTHEME_UPDATED) {
     return { note: `  ttheme ${pkg.version} — updated` }
   }
@@ -322,7 +322,10 @@ export async function newerRelease(): Promise<{ latest?: string; note: string }>
   try {
     latest = await fetchLatest()
   } catch (error) {
-    return { note: `  ttheme ${pkg.version} — could not check for a newer one: ${(error as Error).message}` }
+    return {
+      note: `  ttheme ${pkg.version} — could not check for a newer one: ${(error as Error).message}`,
+      failed: true,
+    }
   }
 
   writeSeen({ ...settled(readSeen()), checked: Date.now(), latest })
