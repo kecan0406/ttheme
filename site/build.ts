@@ -409,9 +409,9 @@ export async function snapshot(fresh: boolean): Promise<void> {
     fresh,
   )
   await fetched(PEOPLE_FILE, 'people', () => fetchPeople(commons.works), {}, fresh)
-  const { listedWorks } = await import('./lib/marketplaces')
   const known = new Set(commons.works.map((work) => work.id))
-  const proposed = listedWorks.filter((work) => !known.has(work.id))
+  const shown = JSON.parse(readFileSync(SNAPSHOT, 'utf8')) as { works: { id: string; danbooru?: string }[] }[]
+  const proposed = shown.flatMap((one) => one.works).filter((work) => !known.has(work.id))
 
   await fetched(PLACES_FILE, 'places of proposed works', () => fetchPlaces(proposed), {}, fresh)
 }
