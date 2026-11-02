@@ -71,7 +71,8 @@ moves a fact fails until `mise run parity --update` records it; `--only`,
 
 The journeys are the cases someone thought of. `mise run walk` walks the same
 model at random — tabs opened and focused, `use`, `default`, `off` and `on`,
-pins, a program's reset, a mode switch, preview — and after every step holds
+pins, a program's reset, a mode switch, the system's appearance, a palette
+added, preview — and after every step holds
 the tab in front to what it must keep whatever the journey: the shell believes
 what the tab shows, the tab shows its palette's picture, and no escape reaches
 the screen as text; a step that never settles fails too. `--jitter` makes the
@@ -79,7 +80,8 @@ reload of every terminal without a delay of its own land up to 0.3 s late, as
 real ones do. A failure is walked again; one that fails twice is shrunk, step
 by step, toward the fewest steps that still fail, printed as a journey to start
 from and kept in `$TMPDIR/ttheme-walks.json`, which the next run walks first;
-a seed replays it.
+a seed replays it. The nightly run keeps that file from one night to the next,
+so its issue closes when the failure is gone and not when other seeds pass.
 
 `mise run costs` (part of CI) holds what each action costs in each terminal's
 model to `tests/costs.tsv`: the CLI runs it starts, the reload signals, profile

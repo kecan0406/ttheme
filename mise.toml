@@ -214,7 +214,7 @@ depends = ["build", "bin:build"]
 run = "bun tests/costs.ts"
 
 [tasks.walk]
-description = "walk the parity model at random: seeded sequences of tabs, uses, defaults, off and on, pins, resets, mode switches and preview, held after every step to what any terminal must keep (the shell believes what the tab shows, the tab shows its palette's picture, no escape reaches the screen as text), a failure walked again, shrunk and printed as a journey to start from — `mise run walk [--only <terminal,…>] [--runs N] [--steps N] [--seed N] [--jitter] [--whole] [--slots N]`"
+description = "walk the parity model at random: seeded sequences of tabs, uses, defaults, off and on, pins, resets, mode switches, the system's appearance, an added palette and preview, held after every step to what any terminal must keep (the shell believes what the tab shows, the tab shows its palette's picture, no escape reaches the screen as text), a failure walked again, shrunk and printed as a journey to start from — `mise run walk [--only <terminal,…>] [--runs N] [--steps N] [--seed N] [--jitter] [--whole] [--slots N]`"
 depends = ["build", "bin:build"]
 run = "bun tests/parity/walk.ts"
 

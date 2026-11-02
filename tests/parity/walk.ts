@@ -2,6 +2,7 @@ import { existsSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'n
 import { availableParallelism } from 'node:os'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
+import type { Mode } from '../../src/core/mode.ts'
 import { pending } from '../../src/tui/pending.ts'
 import { explained, type Facts, readGaps } from './facts.ts'
 import { build, type Fixture, PALETTES, PICTURED, reap, restore, shims, workDir } from './home.ts'
@@ -36,6 +37,7 @@ if (unknown !== undefined) {
 const RESET = "print -n '\\e]112\\e\\\\\\e]111\\e\\\\'"
 const LETTERS = 'konatakitamikurei'
 const SLUGS = PALETTES.map((name) => name.split('/')[1] ?? name)
+const ANOTHER = 'souryuu-asuka-langley'
 
 type Step =
   | { do: 'open' }
@@ -43,6 +45,7 @@ type Step =
   | { do: 'type'; line: string }
   | { do: 'pin'; palette: string }
   | { do: 'preview'; keys: string[] }
+  | { do: 'appear'; mode: Mode }
 
 interface Failure {
   at: number
@@ -87,7 +90,9 @@ function stepsOf(seed: number, count: number): Step[] {
         return { do: 'type', line: away ? 'cd ~' : 'mkdir -p ~/work && cd ~/work' }
       },
     ],
-    [3, () => ({ do: 'type', line: pick(['ttheme light', 'ttheme dark']) })],
+    [3, () => ({ do: 'type', line: pick(['ttheme light', 'ttheme dark', 'ttheme auto']) })],
+    [3, () => ({ do: 'appear', mode: pick(['light', 'dark'] as const) })],
+    [3, () => ({ do: 'type', line: pick([`ttheme add ${ANOTHER}`, `ttheme use ${ANOTHER}`]) })],
     [4, () => ({ do: 'preview', keys: Array.from({ length: 1 + Math.floor(next() * 3) }, () => pick([...LETTERS])) })],
   ]
 
@@ -129,6 +134,8 @@ function described(step: Step): string {
       return `pin ~/work to ${step.palette}`
     case 'preview':
       return `ttheme, type ${step.keys.join('')}, esc`
+    case 'appear':
+      return `the system turns ${step.mode}`
   }
 }
 
@@ -159,6 +166,9 @@ function journeyOf(term: Term, seed: number, steps: readonly Step[], failure: Fa
           `await p.keys(${front}, ${step.keys.map((key) => JSON.stringify(key)).join(', ')})`,
           `await p.quit(${front})`,
         )
+        break
+      case 'appear':
+        lines.push(`await p.appear(${JSON.stringify(step.mode)})`)
         break
     }
   }
@@ -249,6 +259,9 @@ async function walked(fixture: Fixture, steps: readonly Step[], seed: number): P
             await p.launch(app.front as Tab, 'ttheme', 'Browse')
             await p.keys(app.front as Tab, ...step.keys)
             await p.quit(app.front as Tab)
+            break
+          case 'appear':
+            await p.appear(step.mode)
             break
         }
 
