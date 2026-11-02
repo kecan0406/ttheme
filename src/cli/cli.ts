@@ -17,7 +17,7 @@ import { runMarketplace } from './marketplaces.ts'
 import { type PaletteFlags, runPalette } from './palette.ts'
 import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
-import { checkLatest, startReleaseCheck, tellRelease } from './release.ts'
+import { checkLatest, initCommand, startReleaseCheck, tellRelease } from './release.ts'
 import { runShare, runShareAsked, type Tone } from './share.ts'
 import { runUninstall } from './uninstall.ts'
 import { briefText, commandHelp, helpText, VERB_SPECS, type VerbSpec } from './verbs.ts'
@@ -251,7 +251,7 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     running = call.verb
 
     if (!call.verb.run) {
-      throw new Error('runs in the shell layer — open a new tab once `ttheme init` has wired it')
+      throw new Error(`runs in the shell layer — open a new tab once \`${initCommand()}\` has wired it`)
     }
 
     if (REFRESHES.has(call.verb.name)) {

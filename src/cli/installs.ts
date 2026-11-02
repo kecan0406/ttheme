@@ -29,7 +29,7 @@ import { adopt, isPaletteFile, type Refused, takeFile } from './craft.ts'
 import { bringPictures, followPictures } from './pictures.ts'
 import { redrawPictures } from './redraw.ts'
 import { attempt, failureLine, updatesLine } from './refresh.ts'
-import { newerRelease, upgradeTo } from './release.ts'
+import { initCommand, newerRelease, upgradeTo } from './release.ts'
 import { commit, sync } from './sync.ts'
 import { behindOf, conflictLine, takes, takeUpstream } from './upstreams.ts'
 
@@ -221,7 +221,7 @@ function defaultNote(name: string, terminals: Wired[], pointed: ReadonlyMap<Wire
 
   return lines.length > 0
     ? lines
-    : [`Default ${name} · no terminal is wired to open with it — \`ttheme init\` wires one`]
+    : [`Default ${name} · no terminal is wired to open with it — \`${initCommand()}\` wires one`]
 }
 
 function marketplaceNamed(home: string, sources: string[], name: string): string {

@@ -68,7 +68,7 @@ export function readInstalled(configHome: string): Installed {
   const path = installedPath(configHome)
 
   if (!existsSync(path)) {
-    throw new Error(`nothing installed yet at ${path} — run \`ttheme init\` first`)
+    throw new Error(`nothing installed yet at ${path} — run \`npx @kecan0406/ttheme@latest init\` first`)
   }
 
   const doc = parsed(path)
