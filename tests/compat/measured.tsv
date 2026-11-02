@@ -1,11 +1,11 @@
 expect	terminal	version	measured	commit
 expect	alacritty	0.17.0	2026-10-17	a17e5423
-expect	ghostty	?	2026-09-30	3edbdad4
-expect	iterm2	?	2026-10-17	8351c2a4
-expect	kitty	0.49.2	2026-10-17	8351c2a4
+expect	ghostty	cf0ab14ae	2026-11-02	2d8d8127da+
+expect	iterm2	3.7.6	2026-11-02	2d8d8127da+
+expect	kitty	0.49.2	2026-11-02	2d8d8127da+
 expect	konsole	23.08	2026-10-25	ef29ab99
-expect	terminal-app	?	2026-10-17	c725b525
-expect	warp	?	2026-10-02	03141e29
+expect	terminal-app	2.15	2026-11-02	2d8d8127da+
+expect	warp	0.2026.10.21.08.25.02	2026-11-02	2d8d8127da+
 expect	wezterm	20261010-083911-e2a98e1b	2026-10-17	a17e5423
 expect-linux	alacritty	alacritty 0.16.1	2026-10-29	6dac5851af+
 expect-linux	contour	Contour Terminal Emulator 0.8.0.9335	2026-10-29	6dac5851af+
