@@ -1742,6 +1742,9 @@ print -rl -- '#!/bin/sh' 'printf %s "$NODE_COMPILE_CACHE"' > $XDG_CONFIG_HOME/fa
 chmod +x $XDG_CONFIG_HOME/fakebin/node
 out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
 [[ $out == /c/ttheme/node ]] || { print -u2 "the layer no longer hands node its compile cache: [$out]"; exit 1 }
+print -rl -- '#!/bin/sh' 'printf %s "$NODE_USE_ENV_PROXY $NODE_NO_WARNINGS"' > $XDG_CONFIG_HOME/fakebin/node
+out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH HTTPS_PROXY=http://proxy.invalid:3128 __tt_cli --version)
+[[ $out == "1 1" ]] || { print -u2 "the layer did not tell node to use the proxy its shell names: [$out]"; exit 1 }
 (
   TTHEME_STATE_DIR=$XDG_CONFIG_HOME/state TTHEME_TAB_PALETTE=off TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_ADAPTER=ghostty TTHEME_TMUX=0
   unset TTHEME_PAINTED

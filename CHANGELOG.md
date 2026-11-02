@@ -4,6 +4,7 @@
 
 - The cursor of every built-in palette now reads at 4.5:1 or better on its background, so the letter under a block cursor is easier to read. 98 of the 298 light and dark shades move a little in brightness; their hue stays.
 - A palette you make holds its cursor to the same 4.5:1: `ttheme palette make` keeps it there, and the palette editor shows the check on the cursor's row.
+- On a network that needs a proxy, the `ttheme` command now sends its requests through `HTTPS_PROXY` and `HTTP_PROXY`, with Node.js 22.21 or newer; every command that uses the network failed there before.
 
 ## 1.2.86
 

@@ -267,6 +267,9 @@ comes back byte for byte; one you edited keeps its backup.
   `detected`.
 - **`init` stops without asking anything.** It asks in a terminal and stops where
   there is none. Run it in a terminal tab, or add `--yes`.
+- **A command cannot reach the network behind a proxy.** The `ttheme` command
+  sends its requests through `HTTPS_PROXY` and `HTTP_PROXY`, leaving out what
+  `NO_PROXY` names, on Node.js 22.21 or newer. An older Node.js goes direct.
 
 When none of these fits, `ttheme info` prints what a bug report needs (before
 ttheme is set up, `npx @kecan0406/ttheme@latest info`, or the same through
