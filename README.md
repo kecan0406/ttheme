@@ -50,7 +50,7 @@ exec zsh   # the ttheme command in this tab
 ttheme     # the tab shows each palette the cursor lands on; enter keeps one
 ```
 
-ttheme adds one line to each config it wires and sets colors only.
+ttheme adds one block to each config it wires and sets colors only.
 `npx @kecan0406/ttheme@latest uninstall` takes it all back out
 ([what changed](https://ttheme.dev/docs/guide/use#what-init-changes)).
 

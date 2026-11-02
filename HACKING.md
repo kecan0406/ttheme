@@ -329,7 +329,7 @@ sit on a chip — `chip`, slot 8, which `style.test.ts` holds at 3:1 or more fro
 the background on every built-in palette (3.95:1 at the least, in either mode,
 on 2026-10-28) — and the chip under the cursor is a `pill`; a button that
 removes something stays a grey `chip` until the cursor reaches it and then is a
-red `danger` chip, not a `pill` (red text on the grey chip reads at 1.32–1.53:1,
+red `danger` chip, not a `pill` (red text on the grey chip reads at 1.33–1.53:1,
 so red is only ever a fill, slot 1 under the background's own color); one with
 nothing to do is dim, with no chip. A status that is not a control, like a
 card's `↻ auto-update` badge, gets no zone of its own.

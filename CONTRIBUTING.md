@@ -161,8 +161,8 @@ you have up.
 ## The set
 
 A set holds one or more palettes, and a built-in one holds one work's:
-`builtin/sets/madoka-magica.toml` holds every palette of Madoka Magica, and
-`builtin/sets/original.toml` the one of no work. A palette is a `[[palette]]`
+`builtin/sets/madoka-magica.toml` holds every palette of Madoka Magica, and a
+palette of no work would go in `builtin/sets/original.toml`. A palette is a `[[palette]]`
 table in it — copy any of them:
 
 ```toml
@@ -249,10 +249,12 @@ mise run format   # fixes most of what lint would fail on
 mise run ci
 ```
 
-That runs lint, typecheck, tests, the build with its contrast gate, the shell
-check, the Ghostty config check (where `ghostty` is installed, which it is not
-on CI), the node bundle check, the TUI screens, the site's typecheck and XSS
-scan, the cost ratchet and the parity walk — exactly what CI runs.
+That checks your commit subjects (`<area>: <summary>`, the areas listed in
+[`AGENTS.md`](AGENTS.md)), then runs lint, typecheck, tests, the build with its
+contrast gate, the shell check, the Ghostty config check (where `ghostty` is
+installed, which it is not on CI), the node bundle check, the TUI screens, the
+site's typecheck and XSS scan, the cost ratchet and the parity walk — exactly
+what CI runs.
 
 ```sh
 mise run build                # regenerates dist/ for every terminal — fails on bad contrast or a subject the commons lacks
