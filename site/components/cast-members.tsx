@@ -10,7 +10,7 @@ import { SlotArt } from './work-art'
 export const CIRCLE = 'relative grid size-24 place-items-center overflow-hidden rounded-full max-sm:size-19'
 
 export const CAST =
-  'flex flex-wrap gap-x-5.5 gap-y-5 max-sm:-mx-5 max-sm:snap-x max-sm:snap-mandatory max-sm:scroll-px-5 max-sm:flex-nowrap max-sm:gap-x-3.5 max-sm:overflow-x-auto max-sm:px-5 max-sm:pt-1.5 max-sm:pb-1.5 max-sm:[scrollbar-width:none]'
+  'relative flex flex-wrap gap-x-5.5 gap-y-5 max-sm:-mx-5 max-sm:snap-x max-sm:snap-mandatory max-sm:scroll-px-5 max-sm:flex-nowrap max-sm:gap-x-3.5 max-sm:overflow-x-auto max-sm:px-5 max-sm:pt-1.5 max-sm:pb-1.5 max-sm:[scrollbar-width:none]'
 
 const NOTE = 'text-soft-foreground'
 
