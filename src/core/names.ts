@@ -4,7 +4,7 @@ import { searchKey } from './text.ts'
 
 export const MAKE_URL = 'https://ttheme.dev/docs/guide/make'
 
-const QUALIFIER = /_\([^)]*\)$/
+const QUALIFIER = /_\([^)]*\)/g
 
 const SLUG_MOST = 40
 

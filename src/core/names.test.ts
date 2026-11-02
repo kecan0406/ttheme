@@ -43,6 +43,7 @@ test("a slug is a tag without its qualifier and with hyphens, in the tag's own o
   assert.equal(slugOfTag('harbor_nell'), 'harbor-nell')
   assert.equal(slugOfTag('nell_(moonlit_harbor)'), 'nell')
   assert.equal(slugOfTag('n.e._ll'), 'n-e-ll')
+  assert.equal(slugOfTag('tide_(old)_harbor_(series)'), 'tide-harbor')
 })
 
 test("a palette's name to make is what was typed, as a slug", () => {
