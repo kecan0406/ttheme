@@ -1,10 +1,13 @@
 import type { Picture, PictureCredit } from '@/lib/view-types'
 import { linksOf, pageKind, pageLabel, pagesOf, safeUrl } from '../../src/core/artists.ts'
 import { SITES } from '../../src/core/booru.ts'
+import type { PaletteEntry } from '../../src/core/manifest.ts'
 import { postCredit } from '../../src/pictures/booru-net.ts'
 import type { Shared } from './share'
 
 const TIMEOUT = 8000
+
+export const MOST_CREDITED = 12
 
 async function creditOf(site: string, id: number): Promise<PictureCredit | null> {
   const found = SITES.find((s) => s.key === site)
@@ -34,9 +37,13 @@ async function creditOf(site: string, id: number): Promise<PictureCredit | null>
   }
 }
 
-export async function creditsOf(shared: Shared): Promise<{ pictures: Picture[]; complete: boolean }> {
+export async function creditsOf(
+  shared: Pick<Shared, 'pictures'> & { entry: Pick<PaletteEntry, 'pictures'> },
+): Promise<{ pictures: Picture[]; complete: boolean }> {
   const credits = await Promise.all(
-    (shared.entry.pictures ?? []).map((picture) => creditOf(picture.site, picture.id).catch(() => null)),
+    (shared.entry.pictures ?? [])
+      .slice(0, MOST_CREDITED)
+      .map((picture) => creditOf(picture.site, picture.id).catch(() => null)),
   )
 
   return {
