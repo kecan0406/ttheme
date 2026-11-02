@@ -16,6 +16,7 @@ const RAW_URL = `https://raw.githubusercontent.com/${REPO}/master/ghostty/`
 const INDEX = '.index'
 const INDEX_TTL = 24 * 60 * 60 * 1000
 const CONCURRENCY = 16
+const FILE_NAME = /^[^./\\\p{Cc}\p{Bidi_Control}][^/\\\p{Cc}\p{Bidi_Control}]*$/u
 
 export function schemesDir(): string {
   return join(cacheRoot(), 'schemes')
@@ -79,7 +80,7 @@ export async function syncSchemes(dir = schemesDir()): Promise<Corpus> {
   await mkdir(dir, { recursive: true })
 
   const notes: string[] = []
-  const listed = await listing(dir, notes)
+  const listed = (await listing(dir, notes)).filter((name) => FILE_NAME.test(name))
   const present = new Set(await readdir(dir))
   const missing = listed.filter((name) => !present.has(name))
   const fetched = missing.length > 0 ? await download(dir, missing, notes) : 0
