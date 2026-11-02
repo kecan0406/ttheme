@@ -4,7 +4,7 @@ import { Cancelled, Signalled } from '../core/cancelled.ts'
 import { inertLines } from '../core/text.ts'
 import { colorless } from '../terminals/osc.ts'
 import { interactive } from '../tui/terminal.ts'
-import { emit, failureOf, InputError } from './answer.ts'
+import { cutOff, emit, failureOf, InputError } from './answer.ts'
 import { runBrowse } from './browse.ts'
 import { build } from './build.ts'
 import { runCheck, runEdit, runNew, runTone, thisTab } from './craft.ts'
@@ -217,7 +217,7 @@ const MACHINE = new Set(['EACCES', 'EPERM', 'EROFS', 'ENOSPC', 'EDQUOT', 'EMFILE
 export function isCrash(error: Error): boolean {
   const code = 'code' in error ? String(error.code) : undefined
 
-  return CRASHES.some((kind) => error instanceof kind) || (code !== undefined && !MACHINE.has(code))
+  return !cutOff(error) && (CRASHES.some((kind) => error instanceof kind) || (code !== undefined && !MACHINE.has(code)))
 }
 
 export async function runCli(argv: readonly string[]): Promise<number> {
@@ -278,7 +278,11 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     }
 
     const thrown = error instanceof Error ? error : new Error(String(error))
-    const message = inertLines(thrown.message)
+
+    const message = inertLines(
+      cutOff(thrown) ? 'the connection stopped before the answer ended — try again' : thrown.message,
+    )
+
     const { code, reason } = failureOf(thrown, thrown instanceof UsageError)
     const problems = thrown instanceof InputError ? thrown.problems : []
 

@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { AGENT } from '../core/booru.ts'
 import { aboutOf, type Commons, mergeWorks, parseCommons, shelfOf, type Work, wordsOf } from '../core/commons.ts'
 import { boundOf, GATE_RULES, measure, missedRules, shownOf } from '../core/contrast.ts'
 import {
@@ -280,6 +281,18 @@ export class Unreachable extends Error {}
 
 class Limited extends Unreachable {}
 
+export function whyNot(error: unknown, timeout: number): string {
+  if (!(error instanceof Error)) {
+    return String(error)
+  }
+
+  if (error.name === 'TimeoutError') {
+    return `no answer within ${timeout / 1000} s`
+  }
+
+  return error.cause instanceof Error ? error.cause.message : error.message
+}
+
 export async function reach(
   url: string,
   timeout = TIMEOUT,
@@ -287,12 +300,17 @@ export async function reach(
   headers: Record<string, string> = {},
 ): Promise<Response> {
   let response: Response
+  const sent = new Headers(headers)
+
+  if (!sent.has('user-agent')) {
+    sent.set('user-agent', AGENT)
+  }
 
   try {
     const limit = AbortSignal.timeout(timeout)
-    response = await fetch(url, { headers, signal: signal ? AbortSignal.any([limit, signal]) : limit })
+    response = await fetch(url, { headers: sent, signal: signal ? AbortSignal.any([limit, signal]) : limit })
   } catch (error) {
-    throw new Unreachable(`cannot reach ${url} — ${error instanceof Error ? error.message : String(error)}`)
+    throw new Unreachable(`cannot reach ${url} — ${whyNot(error, timeout)}`)
   }
 
   if (response.status === 404) {

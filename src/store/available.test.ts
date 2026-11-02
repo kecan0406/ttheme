@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -17,11 +19,13 @@ import {
   find,
   firstBytes,
   gateFailures,
+  reach,
   readKept,
   readMarketplaces,
   search,
   untuned,
   updatesOf,
+  whyNot,
   writeBundled,
   writeKept,
 } from './available.ts'
@@ -417,4 +421,33 @@ test('a marketplace folder never opens a device or a pipe a link in it points at
     ['gone'],
   )
   assert.throws(() => localIdentity(dir), /has no ttheme-marketplace\.toml/)
+})
+
+test('a failed request says what stopped it', () => {
+  const lost = new TypeError('fetch failed', { cause: new Error('getaddrinfo ENOTFOUND example.invalid') })
+  assert.equal(whyNot(lost, 20_000), 'getaddrinfo ENOTFOUND example.invalid')
+  assert.equal(whyNot(new DOMException('aborted', 'TimeoutError'), 20_000), 'no answer within 20 s')
+  assert.equal(whyNot(new Error('refused'), 20_000), 'refused')
+})
+
+test('a request says who is asking unless the caller names someone', async () => {
+  const seen: (string | undefined)[] = []
+
+  const server = createServer((request, response) => {
+    seen.push(request.headers['user-agent'])
+    response.end('{}')
+  })
+
+  await new Promise<void>((listening) => server.listen(0, '127.0.0.1', listening))
+  const { port } = server.address() as AddressInfo
+
+  try {
+    await reach(`http://127.0.0.1:${port}/`)
+    await reach(`http://127.0.0.1:${port}/`, undefined, undefined, { 'User-Agent': 'orla' })
+  } finally {
+    server.close()
+  }
+
+  assert.match(seen[0] ?? '', /^ttheme\//)
+  assert.equal(seen[1], 'orla')
 })

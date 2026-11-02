@@ -28,10 +28,14 @@ export function emit<T extends Answer>(value: T): void {
   process.stdout.write(`${JSON.stringify(value, undefined, 2)}\n`)
 }
 
+export function cutOff(error: Error): boolean {
+  return error.name === 'TimeoutError' || (error instanceof TypeError && error.message === 'terminated')
+}
+
 export function failureOf(error: Error, input: boolean) {
   if (input || error instanceof InputError) return { code: EXIT.input, reason: 'input' }
 
-  if (error instanceof Unreachable) return { code: EXIT.network, reason: 'network' }
+  if (error instanceof Unreachable || cutOff(error)) return { code: EXIT.network, reason: 'network' }
 
   return { code: EXIT.failed, reason: 'failed' }
 }
