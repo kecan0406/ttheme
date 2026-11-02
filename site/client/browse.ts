@@ -5,6 +5,7 @@ import { makePath, NAME_PAUSE, NAMES_PATH, type NamesAnswer, namesPath } from '@
 import { html } from '@/lib/render'
 import { plural } from '@/lib/utils'
 import { WORN_FACETS, workPath } from '@/lib/works'
+import { paletteNameOf } from '../../src/core/names.ts'
 import { announce, fill, readJson, reducedMotion } from './dom'
 import { composing, letter, typing } from './keys'
 import { afterPaint } from './palettes'
@@ -176,7 +177,9 @@ abstract class Browse extends HTMLElement {
         : within
           ? `no ${within} work matches “${query}”`
           : query
-            ? `no work called “${answer?.label ?? query}” yet`
+            ? answer?.found.length
+              ? `no palettes for “${answer.label}” yet`
+              : `no work called “${answer?.label ?? query}” yet`
             : 'no palettes yet'
 
     if (every) every.hidden = naming
@@ -192,8 +195,19 @@ abstract class Browse extends HTMLElement {
     if (face) face.hidden = naming
 
     if (ask) ask.hidden = naming || within !== ''
-    this.querySelector('[data-request]')?.setAttribute('href', answer?.request ?? this.#request)
-    this.querySelector('[data-make]')?.setAttribute('href', makePath(answer?.name ?? null))
+    this.querySelector('[data-request]')?.setAttribute('href', answer?.request ?? this.#requestOf(query))
+    this.querySelector('[data-make]')?.setAttribute(
+      'href',
+      makePath(answer?.name ?? (query ? (paletteNameOf(query) ?? null) : null)),
+    )
+  }
+
+  #requestOf(query: string): string {
+    if (!query || !this.#request) return this.#request
+    const url = new URL(this.#request)
+    url.searchParams.set('character', query)
+
+    return url.href
   }
 
   #namedFor(value: string): string[] {
@@ -242,6 +256,7 @@ abstract class Browse extends HTMLElement {
 
   #ask(query: string) {
     window.clearTimeout(this.#pause)
+    this.#remember()
 
     if (!query || this.answers.has(query) || this.#asked === query) return
     this.#asking?.abort()

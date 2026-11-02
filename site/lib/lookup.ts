@@ -158,6 +158,10 @@ export async function lookUp(query: string, signal: AbortSignal): Promise<{ answ
   const looked = await Promise.all(slugs.map((slug) => resolve(slug).catch(() => undefined)))
   const found = looked.flatMap((each) => (each ? [each.work] : []))
 
+  if (slugs.length > 0 && looked.every((each) => each === undefined)) {
+    throw new Error(`the works of ${query} did not load`)
+  }
+
   return {
     answer: answerOf(query, hits, works, shelved, found),
     settled: looked.every((each) => each !== undefined && (each === null || each.settled)),
