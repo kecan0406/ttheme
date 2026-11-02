@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
-import { inert } from '../core/text.ts'
+import { escaped, inert } from '../core/text.ts'
 import { BUILTIN, type Identity, MARKETPLACE_FILE, nameProblem } from '../core/theme.ts'
 
 export const MARKETPLACE_KEYS = ['$schema', 'name', 'description', 'owner']
@@ -205,5 +205,5 @@ export function shownSource(source: string): string {
 
   const home = homedir()
 
-  return source === home || source.startsWith(`${home}/`) ? `~${source.slice(home.length)}` : source
+  return escaped(source === home || source.startsWith(`${home}/`) ? `~${source.slice(home.length)}` : source)
 }

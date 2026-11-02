@@ -67,3 +67,8 @@ test('a marketplace shows as its repository, or its folder under ~ when it sits 
   assert.equal(shownSource(join(homedir(), '.config/ttheme/marketplace')), '~/.config/ttheme/marketplace')
   assert.equal(shownSource('/srv/marketplace'), '/srv/marketplace')
 })
+
+test('a folder is shown with what its name would do to a terminal spelled out', () => {
+  assert.equal(shownSource('/srv/dust\x1b]0;x\x07'), '/srv/dust\\u001b]0;x\\u0007')
+  assert.equal(shownSource(join(homedir(), 'mine')), '~/mine')
+})
