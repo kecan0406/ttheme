@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { crc32, deflateSync } from 'node:zlib'
+import { PNG } from 'pngjs'
 import { jpegSize } from '../../core/jpeg.ts'
 import { decode } from '../keys.ts'
-import { type Got, Grabber, pastedRefs } from './attach.ts'
+import { type Got, Grabber, normalize, pastedRefs } from './attach.ts'
 
 const files = new Set(['/pics/a.png', '/pics/my pic.png', '/pics/b.jpg'])
 const exists = (path: string) => files.has(path)
@@ -23,6 +25,25 @@ test('a pasted link that holds a control character or a direction mark is not ta
   assert.deepEqual(pastedRefs('https://example.com/x.png\x07\x1b]52;c;aGk=\x07', exists), [])
   assert.deepEqual(pastedRefs(`https://example.com/${rlo}gnp.png`, exists), [])
   assert.deepEqual(pastedRefs('https://example.com/\x9b31m.png', exists), [])
+})
+
+test('a PNG whose color profile inflates past any real one reads as having no profile', async () => {
+  const body = Buffer.concat([Buffer.from('bomb\0\0', 'latin1'), deflateSync(new Uint8Array(64 * 1024 * 1024))])
+
+  const icc = (data: Buffer) => {
+    const kind = Buffer.concat([Buffer.from('iCCP', 'latin1'), data])
+    const out = Buffer.alloc(12 + data.length)
+    out.writeUInt32BE(data.length, 0)
+    kind.copy(out, 4)
+    out.writeUInt32BE(crc32(kind), 8 + data.length)
+
+    return out
+  }
+
+  const plain = PNG.sync.write(new PNG({ width: 1, height: 1 }))
+  const bytes = new Uint8Array(Buffer.concat([plain.subarray(0, 33), icc(body), plain.subarray(33)]))
+
+  assert.equal((await normalize(bytes, 'bomb.png')).bytes, bytes)
 })
 
 test('jpegSize reads the frame header', () => {

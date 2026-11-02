@@ -44,8 +44,8 @@ export interface Canvas {
 const SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10]
 const CLEAR = 13
 const INDEXED = 3
-const SPARE = 1 << 20
-const WIDEST_PIXEL = 8
+const SPARE = 1 << 16
+const DEEPEST_PIXEL = 8
 
 export function isPng(bytes: Uint8Array): boolean {
   return bytes.length >= SIGNATURE.length && SIGNATURE.every((b, i) => bytes[i] === b)
@@ -175,14 +175,16 @@ function unfilter(raw: Uint8Array, stride: number, height: number, bpp: number):
   }
 }
 
-function unpacked(deflated: Buffer, size: number): Buffer {
+function unpacked(idat: Buffer, width: number, height: number, pixel: number): Buffer {
+  const size = height * (width * pixel + 1)
+
   try {
-    return inflateSync(deflated, {
+    return inflateSync(idat, {
       chunkSize: Math.min(1 << 28, Math.max(1 << 16, size)),
-      maxOutputLength: size + SPARE,
+      maxOutputLength: size * 2 + SPARE,
     })
-  } catch (error) {
-    throw error instanceof RangeError ? new Error('the PNG unpacks to more than its size says') : error
+  } catch {
+    throw new Error('this PNG holds damaged pixels, or far more than its size says')
   }
 }
 
@@ -190,7 +192,7 @@ function inflated(scan: Scan): Rgba {
   const { width, height, type } = scan
   const bpp = CHANNELS.get(type) as number
   const stride = width * bpp
-  const raw = unpacked(Buffer.concat(scan.idat), height * (stride + 1))
+  const raw = unpacked(Buffer.concat(scan.idat), width, height, bpp)
 
   if (raw.length < height * (stride + 1)) {
     throw new Error('truncated PNG')
@@ -284,41 +286,48 @@ function turned(image: Rgba, turn: number): Rgba {
   return { width, height, data }
 }
 
-function interlacedFits(bytes: Uint8Array): void {
-  if (bytes.length < 33 || !isPng(bytes) || bytes[28] === 0) {
-    return
-  }
+function idatOf(png: Buffer): Buffer {
+  const parts: Buffer[] = []
 
-  const png = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  const idat: Buffer[] = []
+  for (let at = 8; at + 12 <= png.length; ) {
+    const size = png.readUInt32BE(at)
 
-  for (let at = 8; at + 12 <= png.length; at += 12 + png.readUInt32BE(at)) {
     if (png.toString('latin1', at + 4, at + 8) === 'IDAT') {
-      idat.push(png.subarray(at + 8, at + 8 + png.readUInt32BE(at)))
+      parts.push(png.subarray(at + 8, at + 8 + size))
     }
+
+    at += 12 + size
   }
 
-  const height = png.readUInt32BE(20)
-  unpacked(Buffer.concat(idat), png.readUInt32BE(16) * height * WIDEST_PIXEL + height * 4)
+  return Buffer.concat(parts)
+}
+
+function readByPngjs(bytes: Uint8Array): Rgba {
+  const png = Buffer.from(bytes)
+
+  if (png.length >= 33 && png[28] !== 0) {
+    unpacked(idatOf(png), png.readUInt32BE(16), png.readUInt32BE(20), DEEPEST_PIXEL)
+  }
+
+  try {
+    const { width, height, data } = PNG.sync.read(png)
+
+    return { width, height, data: new Uint8Array(data) }
+  } catch (error) {
+    throw new Error(`this PNG does not read — ${(error as Error).message}`)
+  }
 }
 
 export function decodePng(bytes: Uint8Array): Rgba {
   const head = pngHead(bytes)
 
   if (head && (head.width === 0 || head.height === 0)) {
-    throw new Error('the PNG has no pixels')
+    throw new Error('this PNG has no pixels')
   }
 
   const scan = scanned(bytes)
 
-  if (scan) {
-    return turned(inflated(scan), turnOf(bytes))
-  }
-
-  interlacedFits(bytes)
-  const png = PNG.sync.read(Buffer.from(bytes))
-
-  return turned({ width: png.width, height: png.height, data: new Uint8Array(png.data) }, turnOf(bytes))
+  return turned(scan ? inflated(scan) : readByPngjs(bytes), turnOf(bytes))
 }
 
 export function decodeImage(bytes: Uint8Array, limit: number): Rgba {

@@ -14,6 +14,7 @@
 - `ttheme update` and `ttheme edit` no longer lose or garble colors in a palette you wrote by hand with single quotes, indented keys or comments in its ANSI list.
 - A broken link or an odd file in your marketplace's `sets/` folder no longer stops every command; ttheme skips it and `ttheme marketplace check` names it.
 - `ttheme edit` and `ttheme add` no longer break the other palettes in a set you wrote by hand; they say so when they cannot change it in place.
+- A damaged PNG now fails with a plain message, and a PNG built to swell in memory is refused.
 
 ## 1.2.85
 

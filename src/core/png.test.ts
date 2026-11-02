@@ -176,6 +176,65 @@ test('a JPEG decodes to its own size and colors, keeps each decode apart, and is
   assert.throws(() => decodeImage(bytes, 100), /16×8 is over 0.0001 megapixels/)
 })
 
+function chunked(kind: string, data: Uint8Array): Buffer {
+  const body = Buffer.concat([Buffer.from(kind, 'latin1'), data])
+  const out = Buffer.alloc(12 + data.length)
+  out.writeUInt32BE(data.length, 0)
+  body.copy(out, 4)
+  out.writeUInt32BE(crc32(body), 8 + data.length)
+
+  return out
+}
+
+function crafted(width: number, height: number, depth: number, interlace: number, idat: Uint8Array): Uint8Array {
+  const head = Buffer.alloc(13)
+  head.writeUInt32BE(width, 0)
+  head.writeUInt32BE(height, 4)
+  head.set([depth, 6, 0, 0, interlace], 8)
+
+  return new Uint8Array(
+    Buffer.concat([
+      Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+      chunked('IHDR', head),
+      chunked('IDAT', idat),
+      chunked('IEND', new Uint8Array(0)),
+    ]),
+  )
+}
+
+const plainFailure = (error: Error) => error.constructor === Error && !('code' in error)
+
+test('a PNG that inflates to far more than its size says is refused, whichever decoder would read it', () => {
+  const bomb = deflateSync(new Uint8Array(32 * 1024 * 1024))
+
+  for (const [depth, interlace] of [
+    [8, 0],
+    [8, 1],
+  ] as const) {
+    assert.throws(() => decodeImage(crafted(1, 1, depth, interlace, bomb), 1e6), plainFailure)
+  }
+})
+
+test('a damaged PNG is a plain failure, and one with no pixels is refused', () => {
+  const body = deflateSync(new Uint8Array((4 * 4 + 1) * 4))
+
+  assert.equal(decodeImage(crafted(4, 4, 8, 0, body), 1e6).width, 4)
+
+  const damaged = [
+    crafted(4, 4, 8, 0, Uint8Array.of(1, 2, 3, 4)),
+    crafted(4, 4, 8, 0, body.subarray(0, body.length - 6)),
+    crafted(4, 4, 8, 1, Uint8Array.of(1, 2, 3, 4)),
+    crafted(4, 4, 7, 0, body),
+    Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 3, 73, 72, 68, 82, 1, 2, 3, 0, 0, 0, 0),
+    crafted(0, 4, 8, 0, deflateSync(new Uint8Array(4))),
+    crafted(4, 0, 8, 0, deflateSync(new Uint8Array(1))),
+  ]
+
+  for (const bytes of damaged) {
+    assert.throws(() => decodeImage(bytes, 1e6), plainFailure)
+  }
+})
+
 function pngOf(width: number, height: number, interlace: number, inflated: number): Uint8Array {
   const head = Buffer.alloc(13)
   head.writeUInt32BE(width, 0)
@@ -215,7 +274,7 @@ test('a PNG that unpacks far past the size its header gives is refused', () => {
   const inflated = 8 * 1024 * 1024
 
   for (const interlace of [0, 1]) {
-    assert.throws(() => decodeImage(pngOf(1, 1, interlace, inflated), 1e6), /unpacks to more than its size says/)
+    assert.throws(() => decodeImage(pngOf(1, 1, interlace, inflated), 1e6), /far more than its size says/)
   }
 
   assert.deepEqual(
