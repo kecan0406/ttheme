@@ -259,7 +259,9 @@ export function tellRelease(now = Date.now()): void {
   }
 
   if (process.stderr.isTTY) {
-    writeSeen({ ...seen, told: now })
+    try {
+      writeSeen({ ...seen, told: now })
+    } catch {}
   }
 
   advise(
