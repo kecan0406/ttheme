@@ -1,3 +1,5 @@
+import { isTag } from './commons.ts'
+
 export interface Tagged {
   name: string
   frequency: number
@@ -89,10 +91,10 @@ export function readRelated(doc: unknown): { posts: number; tags: Tagged[]; sear
     const { tag, frequency } = entry as Record<string, unknown>
     const name = typeof tag === 'object' && tag !== null ? (tag as Record<string, unknown>).name : undefined
 
-    return typeof name === 'string' && typeof frequency === 'number' ? [{ name, frequency }] : []
+    return isTag(name) && typeof frequency === 'number' ? [{ name, frequency }] : []
   })
 
   const searched = typeof query === 'string' ? query.split(' ').find((part) => part !== 'solo') : undefined
 
-  return { posts, tags, ...(searched ? { searched } : {}) }
+  return { posts, tags, ...(isTag(searched) ? { searched } : {}) }
 }

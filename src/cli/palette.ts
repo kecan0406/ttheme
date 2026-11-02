@@ -296,7 +296,7 @@ async function consensus(tag: string | undefined, flags: PaletteFlags): Promise<
 
   const query = new URLSearchParams({ query: `${tag} solo`, category: 'general', limit: '150' })
   const response = await reach(`${RELATED}?${query}`, RELATED_TIMEOUT, undefined, { 'User-Agent': AGENT })
-  const related = readRelated(await response.json())
+  const related = readRelated(await response.json().catch(() => undefined))
 
   if (!related) throw new Error('safebooru answered something ttheme cannot read')
 
