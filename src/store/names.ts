@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import { cachedSource, httpSource, Names, type Source } from '@kecan0406/aninames'
 import { AGENT } from '../core/booru.ts'
+import { isTag } from '../core/commons.ts'
 import { type CastMember, cutSlug, type NameHit, slugOfTag, type TaggedWork, type WorkName } from '../core/names.ts'
 import { inert } from '../core/text.ts'
 import { cacheRoot } from './paths.ts'
@@ -25,8 +26,6 @@ const LIMIT = 10
 const FIND_LIMIT = 50
 
 const RETRIES = [150, 500]
-
-const ODD = /[\s\p{Cc}\p{Bidi_Control}]/u
 
 const LANG = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/
 
@@ -75,7 +74,7 @@ function hitOf(value: unknown, query: string): NameHit | undefined {
     typeof n === 'object' && n !== null ? (text((n as Record<string, unknown>).text) ?? []) : [],
   )
 
-  return { id, label, names, tags: strings(v.danbooru, (t) => t !== '' && !ODD.test(t)) }
+  return { id, label, names, tags: strings(v.danbooru, isTag) }
 }
 
 function workNamesOf(value: unknown): WorkName[] {
@@ -117,7 +116,7 @@ function taggedOf(value: unknown): TaggedWork | undefined {
     id,
     label,
     names: workNamesOf(v.names),
-    tags: strings(v.danbooru, (t) => t !== '' && !ODD.test(t)),
+    tags: strings(v.danbooru, isTag),
     refs: strings(v.refs, (r) => REF.test(r)),
     origin: strings(v.origin, (c) => COUNTRY.test(c)),
     year: Number.isSafeInteger(v.year) && (v.year as number) > 0 ? (v.year as number) : null,
@@ -146,7 +145,7 @@ function memberOf(value: unknown): CastMember | undefined {
     id,
     label,
     names: workNamesOf(v.names),
-    tags: strings(v.danbooru, (t) => t !== '' && !ODD.test(t)),
+    tags: strings(v.danbooru, isTag),
     refs: strings(v.refs, (r) => REF.test(r)),
     lead: v.role === 'lead',
   }

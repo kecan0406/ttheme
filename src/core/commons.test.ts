@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import {
   aboutOf,
   commonsProblems,
+  isTag,
   leadOf,
   mergeWorks,
   parseCommons,
@@ -258,4 +259,19 @@ test('the commons reads back from the JSON init writes, and refuses another shap
   assert.deepEqual(parseCommons(JSON.stringify(commons)), commons)
   assert.throws(() => parseCommons('{"works": "x"}'), /no works/)
   assert.throws(() => parseCommons('<html>'), /not valid JSON/)
+})
+
+test('a tag longer than a booru tag can be is refused where a marketplace or an answer gives one', () => {
+  const long = '_('.repeat(40_000)
+
+  assert.throws(
+    () => readWork('w.toml', `name = "Glass arcade"\ndanbooru = "${long}"\n`, 'w'),
+    /longer than a booru tag/,
+  )
+  assert.throws(
+    () => readWork('w.toml', `name = "Glass arcade"\n[[character]]\nid = "orla"\ndanbooru = "${long}"\n`, 'w'),
+    /longer than a booru tag/,
+  )
+  assert.equal(isTag(long), false)
+  assert.equal(isTag('orla_(starfall)'), true)
 })

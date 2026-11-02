@@ -56,12 +56,18 @@ export const CHARACTER_KEYS = ['id', 'native', 'danbooru', 'also', 'sites']
 
 const TAG = /[\s\p{Cc}\p{Bidi_Control}]/u
 
+const TAG_MOST = 200
+
 export function isTag(value: unknown): value is string {
-  return typeof value === 'string' && value !== '' && !TAG.test(value)
+  return typeof value === 'string' && value !== '' && value.length <= TAG_MOST && !TAG.test(value)
 }
 
 function tagOf(file: string, field: string, value: unknown): string {
   const tag = str(file, field, value)
+
+  if (tag.length > TAG_MOST) {
+    fail(file, `${field} is longer than a booru tag can be, ${TAG_MOST} characters`)
+  }
 
   if (TAG.test(tag)) {
     fail(file, `${field} must be a single booru tag, got ${quoted(tag)}`)
