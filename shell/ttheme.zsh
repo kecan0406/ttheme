@@ -1755,7 +1755,11 @@ __tt_verb_help() {
 }
 
 __tt_unknown() {
-  print -u2 -r -- "ttheme: unknown ${${1:#-*}:+command}${${(M)1:#-*}:+option} '$1' — see \`ttheme help\`"
+  if [[ $1 == (init|uninstall) ]]; then
+    print -u2 -r -- "ttheme: $1 runs through npx — \`npx @kecan0406/ttheme@latest $1\`"
+  else
+    print -u2 -r -- "ttheme: unknown ${${1:#-*}:+command}${${(M)1:#-*}:+option} '$1' — see \`ttheme help\`"
+  fi
   return 3
 }
 

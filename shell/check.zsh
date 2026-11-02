@@ -41,6 +41,10 @@ ttheme --frobnicate 2>/dev/null
 (( $? == 3 )) || { print -u2 "an unknown option did not exit 3, as the CLI's do"; exit 1 }
 ttheme frobnicate 2>/dev/null
 (( $? == 3 )) || { print -u2 "an unknown command did not exit 3, as the CLI's do"; exit 1 }
+for verb in init uninstall; do
+  out=$(ttheme $verb 2>&1)
+  (( $? == 3 )) && [[ $out == *"\`npx @kecan0406/ttheme@latest $verb\`"* && $out != *unknown* ]] || { print -u2 "ttheme $verb in a shell did not name the command that does it: $out"; exit 1 }
+done
 ttheme use 2>/dev/null
 (( $? == 3 )) || { print -u2 "a missing argument did not exit 3, as the CLI's do"; exit 1 }
 [[ $(ttheme help --help) == *"Getting help:"* ]] || { print -u2 "ttheme help --help did not print the help"; exit 1 }
