@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { crc32, deflateSync } from 'node:zlib'
 import { PNG } from 'pngjs'
+import { jpegSize } from './jpeg.ts'
 import { decodeImage, decodePng, encodeMask, pngHead, toneOf } from './png.ts'
 
 function sample(width: number, height: number, alpha: boolean, smooth: boolean): PNG {
@@ -213,4 +214,39 @@ test('a PNG that unpacks far past the size its header gives is refused', () => {
     [0, 0, 0, 0],
     'a little spare data after the last row still reads',
   )
+})
+
+function jpegWithSize(width: number, height: number, ahead: number[]): Uint8Array {
+  return new Uint8Array([
+    0xff,
+    0xd8,
+    ...ahead,
+    0xff,
+    0xc0,
+    0,
+    11,
+    8,
+    height >> 8,
+    height & 255,
+    width >> 8,
+    width & 255,
+    1,
+    1,
+    0x11,
+    0,
+  ])
+}
+
+test('a JPEG is measured marker by marker as its decoder reads it', () => {
+  const claim = [0xff, 0xc0, 0, 11, 8, 0, 16, 0, 16, 1, 1, 0x11, 0]
+  const payload = [0, 0, ...claim, 0, 0]
+  const held = [0xff, 0xe0, 0, payload.length + 2, ...payload]
+
+  for (const lone of [0xd0, 0xd7, 0x01, 0x00]) {
+    const bytes = jpegWithSize(8000, 8000, [0xff, lone, 0, 4, ...held])
+    assert.deepEqual(jpegSize(bytes), { width: 8000, height: 8000 }, `marker ${lone}`)
+    assert.throws(() => decodeImage(bytes, 25_000_000), /8000×8000 is over 25 megapixels/)
+  }
+
+  assert.throws(() => decodeImage(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), 25_000_000), /not a JPEG picture/)
 })

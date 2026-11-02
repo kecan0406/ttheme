@@ -49,6 +49,11 @@ export function jpegSize(bytes: Uint8Array): { width: number; height: number } |
       continue
     }
 
+    if (marker === 0x00 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      at += 2
+      continue
+    }
+
     const length = ((bytes[at + 2] as number) << 8) | (bytes[at + 3] as number)
 
     if (marker === 0xe1 && String.fromCharCode(...bytes.subarray(at + 4, at + 10)) === 'Exif\0\0') {
@@ -117,7 +122,11 @@ function opened(): MozJPEGModule['decode'] {
 export function decodeJpeg(bytes: Uint8Array, limit: number): Rgba {
   const size = jpegSize(bytes)
 
-  if (size && size.width * size.height > limit) {
+  if (!size) {
+    throw new Error('not a JPEG picture this decoder can read')
+  }
+
+  if (size.width * size.height > limit) {
     throw new Error(`${size.width}×${size.height} is over ${limit / 1e6} megapixels`)
   }
 
@@ -131,6 +140,10 @@ export function decodeJpeg(bytes: Uint8Array, limit: number): Rgba {
 
   if (!image) {
     throw new Error('not a JPEG picture this decoder can read')
+  }
+
+  if (image.width * image.height > limit) {
+    throw new Error(`${image.width}×${image.height} is over ${limit / 1e6} megapixels`)
   }
 
   return {
