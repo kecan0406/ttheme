@@ -9,7 +9,7 @@ import { brotliDecompressSync, deflateRawSync, inflateRawSync } from 'node:zlib'
 import { readMarketplaceDir, warning } from '../store/local.ts'
 import { codeOf, type Draft, paletteToml, readOwnText, shareLink, withPictures } from './draft.ts'
 import { fromCode, readCodes, recolor, shareCode } from './own.ts'
-import { setText } from './sets.ts'
+import { readSet, setText, withPalette } from './sets.ts'
 import { quoted } from './text.ts'
 import { publisherOf } from './theme.ts'
 
@@ -341,6 +341,35 @@ test('a set file that cannot be read is reported and skipped, and the rest of th
   writeFileSync(join(flat, 'works'), 'a file, not a folder')
 
   assert.deepEqual(readMarketplaceDir(flat, 'kai@shop', warning(false)), { entries: [], works: [] })
+})
+
+test('a set is rewritten only when its other palettes read the same afterwards', () => {
+  const { pictures: _, upstream: __, ...plain } = draft
+  const text = paletteToml(plain)
+
+  const set = setText([
+    { slug: 'one', text },
+    { slug: 'two', text },
+  ])
+
+  const unwritable = [
+    set.replaceAll('[palette.colors]', '["palette".colors]'),
+    set.replace('slug = "two"', '"\\u0073lug" = "two"'),
+    set.replace('slug = "two"', 'slug = "two"\n\n[colors]\nnote = "a stray table"'),
+  ]
+
+  for (const written of unwritable) {
+    assert.equal(readSet('neon.toml', written).length, 2, written)
+    assert.throws(() => withPalette('neon.toml', written, 'one', text), /cannot change in place/, written)
+  }
+
+  const stray = set.replace('slug = "two"', 'slug = "two"\nnote = """\n[kept]\n"""')
+  const after = withPalette('neon.toml', stray, 'one', text) as string
+
+  assert.deepEqual(
+    readSet('neon.toml', after).map((p) => p.doc.colors),
+    readSet('neon.toml', stray).map((p) => p.doc.colors),
+  )
 })
 
 test('a slug two set files of one marketplace hold is reported, and the second is skipped', () => {

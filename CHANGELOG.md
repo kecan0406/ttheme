@@ -13,6 +13,7 @@
 - An update no longer turns a palette into its other mode when you and its upstream each changed its background or foreground; `ttheme edit` picks between them.
 - `ttheme update` and `ttheme edit` no longer lose or garble colors in a palette you wrote by hand with single quotes, indented keys or comments in its ANSI list.
 - A broken link or an odd file in your marketplace's `sets/` folder no longer stops every command; ttheme skips it and `ttheme marketplace check` names it.
+- `ttheme edit` and `ttheme add` no longer break the other palettes in a set you wrote by hand; they say so when they cannot change it in place.
 
 ## 1.2.85
 

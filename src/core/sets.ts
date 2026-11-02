@@ -1,11 +1,12 @@
 import { quoted } from './text.ts'
-import { fail, oddKeys, paletteOddKeys, slugProblem, toml, workIdOf } from './theme.ts'
+import { fail, oddKeys, PALETTE_KEYS, paletteOddKeys, slugProblem, toml, workIdOf } from './theme.ts'
 
 export const SETS_DIR = 'sets'
 export const SET_SCHEMA_URL = 'https://www.schemastore.org/ttheme-set.json'
 export const SET_KEYS = ['$schema', 'palette']
 
 const ORIGINAL = 'original'
+const READ_KEYS = PALETTE_KEYS.get('') as string[]
 const HEAD = /^[ \t]*\[\[[ \t]*palette[ \t]*\]\][ \t]*(?:#.*)?$/gm
 const SLUG_LINE = /^[ \t]*(?:slug|"slug"|'slug')[ \t]*=.*(?:\n|$)/m
 const NESTED = /^([ \t]*\[\[?)[ \t]*palette[ \t]*\./gm
@@ -95,21 +96,35 @@ function blocked({ slug, text }: Block): string {
   return `[[palette]]\nslug = ${JSON.stringify(slug)}\n${text.trim().replace(TABLE, '$1palette.')}`
 }
 
+function meaning(palettes: readonly SetPalette[]): string {
+  return JSON.stringify(palettes.map(({ doc }) => READ_KEYS.map((key) => doc[key])))
+}
+
+function readsTheSame(file: string, { head, blocks }: Blocks, palettes: readonly SetPalette[]): boolean {
+  try {
+    return meaning(readSet(file, setText(blocks, head))) === meaning(palettes)
+  } catch {
+    return false
+  }
+}
+
 export function setBlocks(file: string, source: string): Blocks {
-  const slugs = readSet(file, source).map((p) => p.slug)
+  const palettes = readSet(file, source)
   const starts = [...source.matchAll(HEAD)].map((m) => m.index)
 
-  if (starts.length !== slugs.length) {
-    fail(file, 'writes a palette in a way ttheme cannot change in place — write each one as its own [[palette]] table')
-  }
-
-  return {
+  const read = {
     head: source.slice(0, starts[0]),
     blocks: starts.map((start, i) => ({
-      slug: slugs[i] as string,
+      slug: palettes[i]?.slug as string,
       text: unblocked(source.slice(start, starts[i + 1] ?? source.length)),
     })),
   }
+
+  if (starts.length !== palettes.length || !readsTheSame(file, read, palettes)) {
+    fail(file, 'writes a palette in a way ttheme cannot change in place — write each one as its own [[palette]] table')
+  }
+
+  return read
 }
 
 export function setText(blocks: readonly Block[], head = `"$schema" = ${JSON.stringify(SET_SCHEMA_URL)}`): string {
