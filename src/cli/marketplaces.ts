@@ -28,7 +28,7 @@ import {
   workIdOf,
 } from '../core/theme.ts'
 import { ROOT } from '../root.ts'
-import { commonsPath, idOf, nameOf, readMarketplaces } from '../store/available.ts'
+import { commonsPath, nameOf, readMarketplaces } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { type Installed, readInstalled, writeInstalled } from '../store/installed.ts'
 import {
@@ -219,7 +219,7 @@ async function addSource(home: string, arg: string): Promise<{ source: string; i
   if (sources.includes(source)) {
     console.log(`${shownSource(source)} is already added`)
 
-    return { source, id: idOf(home, source), fresh: false }
+    return { source, id: nameOf(home, source) ?? source, fresh: false }
   }
 
   const was = isRemote(source) ? sources.find((s) => isRemote(s) && sameMarketplace(s, source)) : undefined

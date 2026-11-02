@@ -163,3 +163,28 @@ test('marketplace check reports a folder it cannot read as an error of the marke
   assert.equal(named.result, 1)
   assert.ok(named.said.some((line) => line.startsWith('  ✗ EISDIR')))
 })
+
+test('adding a marketplace already on the list says so, though its copy is gone', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-check-'))
+  mkdirSync(join(home, 'ttheme'))
+  writeFileSync(
+    join(home, 'ttheme', 'installed.json'),
+    JSON.stringify({ terminals: [], palettes: [], marketplaces: ['ann/ttheme-pastel'] }),
+  )
+
+  const was = process.env.XDG_CONFIG_HOME
+  process.env.XDG_CONFIG_HOME = home
+
+  try {
+    const { result, said } = heard(() => runMarketplace('add', 'ann/ttheme-pastel'))
+
+    await result
+    assert.ok(said.includes('github.com/ann/ttheme-pastel is already added'))
+  } finally {
+    if (was === undefined) {
+      delete process.env.XDG_CONFIG_HOME
+    } else {
+      process.env.XDG_CONFIG_HOME = was
+    }
+  }
+})
