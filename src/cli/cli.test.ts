@@ -49,6 +49,12 @@ test('a full or read-only disk is the machine, never a bug to report', () => {
   }
 })
 
+test('help answers a question about itself', () => {
+  for (const asked of ['help', '-h', '--help']) {
+    assert.deepEqual(parse(['help', asked]), { kind: 'help', all: false })
+  }
+})
+
 test('--help wins over any other argument, up to a --', () => {
   const add = VERBS.find((v) => v.name === 'add')
   assert.deepEqual(parse(['add', '--frobnicate', '--help']), { kind: 'help', verb: add })

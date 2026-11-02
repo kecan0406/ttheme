@@ -1743,7 +1743,7 @@ __tt_usage() {
 }
 
 __tt_verb_help() {
-  if [[ -z $1 || $1 == all ]]; then
+  if [[ -z $1 || $1 == (all|help) ]]; then
     __tt_help $1
   elif (( ${TTHEME_SHELL_VERBS[(Ie)$1]} )); then
     __tt_usage $1

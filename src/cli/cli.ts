@@ -165,7 +165,7 @@ export function parse(argv: readonly string[]): Invocation {
   }
 
   if (first === 'help') {
-    if (rest[0] === undefined || rest[0] === 'all') {
+    if (rest[0] === undefined || ['all', 'help', '-h', '--help'].includes(rest[0])) {
       return { kind: 'help', all: rest[0] === 'all' }
     }
 

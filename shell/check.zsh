@@ -43,6 +43,7 @@ ttheme frobnicate 2>/dev/null
 (( $? == 3 )) || { print -u2 "an unknown command did not exit 3, as the CLI's do"; exit 1 }
 ttheme use 2>/dev/null
 (( $? == 3 )) || { print -u2 "a missing argument did not exit 3, as the CLI's do"; exit 1 }
+[[ $(ttheme help --help) == *"Getting help:"* ]] || { print -u2 "ttheme help --help did not print the help"; exit 1 }
 out=$(ttheme help frobnicate 2>&1)
 (( $? == 3 )) && [[ $out == "ttheme: unknown command 'frobnicate'"* ]] || { print -u2 "ttheme help took an unknown command: $out"; exit 1 }
 [[ $(ttheme pin --help) == "Usage: ttheme pin"* ]] || { print -u2 "ttheme pin --help did not describe pin"; exit 1 }
