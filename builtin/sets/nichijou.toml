@@ -86,7 +86,7 @@ ansi = [
 [palette.colors.light]
 background = "#f7f9ff"
 foreground = "#17202a"
-cursor = "#4982b7"
+cursor = "#4176a6"
 selection_background = "#c6d8f8"
 ansi = [
   "#f0f4fc",
@@ -115,7 +115,7 @@ subject = "nichijou/minakami-mai"
 [palette.colors]
 background = "#1b1713"
 foreground = "#ebe1d9"
-cursor = "#766f69"
+cursor = "#87807a"
 selection_background = "#383430"
 ansi = [
   "#28231e",
@@ -140,7 +140,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f4"
 foreground = "#231f1a"
-cursor = "#5f5953"
+cursor = "#67615b"
 selection_background = "#ded6d0"
 ansi = [
   "#fcf2ea",
@@ -150,7 +150,7 @@ ansi = [
   "#30669d",
   "#8e4895",
   "#005a5a",
-  "#302b26",
+  "#302b27",
 
   "#7d7670",
   "#8c3a3f",
@@ -159,7 +159,7 @@ ansi = [
   "#2e558d",
   "#81387e",
   "#004b48",
-  "#231f1a",
+  "#231f1b",
 ]
 
 [[palette]]
@@ -169,7 +169,7 @@ subject = "nichijou/shinonome-nano"
 [palette.colors]
 background = "#171819"
 foreground = "#e3e2e4"
-cursor = "#707072"
+cursor = "#818183"
 selection_background = "#353432"
 ansi = [
   "#232425",
@@ -194,10 +194,10 @@ ansi = [
 [palette.colors.light]
 background = "#faf9fb"
 foreground = "#1e2021"
-cursor = "#595a5c"
+cursor = "#616263"
 selection_background = "#dad6d3"
 ansi = [
-  "#f5f3f5",
+  "#f4f3f5",
   "#a14648",
   "#2c5a31",
   "#815d00",
@@ -248,7 +248,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f5"
 foreground = "#2b1d0f"
-cursor = "#b7752d"
+cursor = "#a2631d"
 selection_background = "#c5d8fa"
 ansi = [
   "#fff1e8",

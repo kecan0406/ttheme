@@ -61,7 +61,7 @@ subject = "the-devil-is-a-part-timer/yusa-emi"
 [palette.colors]
 background = "#201516"
 foreground = "#fbdbdf"
-cursor = "#b2395a"
+cursor = "#d65475"
 selection_background = "#463a44"
 ansi = [
   "#2d2122",
@@ -86,7 +86,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f7"
 foreground = "#2c1b1e"
-cursor = "#9c284a"
+cursor = "#ad3556"
 selection_background = "#e4d2df"
 ansi = [
   "#fff0f1",
@@ -223,7 +223,7 @@ subject = "the-devil-is-a-part-timer/urushihara-hanzou"
 [palette.colors]
 background = "#1a161e"
 foreground = "#e9dff1"
-cursor = "#705c8e"
+cursor = "#8d78ac"
 selection_background = "#3c3e3d"
 ansi = [
   "#26222a",
@@ -248,7 +248,7 @@ ansi = [
 [palette.colors.light]
 background = "#fef7ff"
 foreground = "#221d2a"
-cursor = "#5f4c7c"
+cursor = "#6e5694"
 selection_background = "#d7d7d6"
 ansi = [
   "#f9f1fc",
@@ -277,7 +277,7 @@ subject = "the-devil-is-a-part-timer/kamazuki-suzuno"
 [palette.colors]
 background = "#12181d"
 foreground = "#d9e4f0"
-cursor = "#3c6a8c"
+cursor = "#5986a9"
 selection_background = "#3c3e3e"
 ansi = [
   "#1e242a",
@@ -302,7 +302,7 @@ ansi = [
 [palette.colors.light]
 background = "#f6f9ff"
 foreground = "#162129"
-cursor = "#29597a"
+cursor = "#386688"
 selection_background = "#d7d7d7"
 ansi = [
   "#eff4fc",

@@ -32,7 +32,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff9ea"
 foreground = "#23200e"
-cursor = "#96870c"
+cursor = "#807300"
 selection_background = "#e7cef6"
 ansi = [
   "#faf3e1",
@@ -86,7 +86,7 @@ ansi = [
 [palette.colors.light]
 background = "#f2fbff"
 foreground = "#132227"
-cursor = "#4b8fa6"
+cursor = "#3a7a8f"
 selection_background = "#ebcdf3"
 ansi = [
   "#edf5f9",
@@ -169,7 +169,7 @@ subject = "no-game-no-life/jibril"
 [palette.colors]
 background = "#1e151a"
 foreground = "#f5dce8"
-cursor = "#ba489b"
+cursor = "#ca55a9"
 selection_background = "#3b3e43"
 ansi = [
   "#2b2126",
@@ -194,7 +194,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f9"
 foreground = "#291b24"
-cursor = "#9c2e81"
+cursor = "#a43487"
 selection_background = "#d5d7dd"
 ansi = [
   "#fff0f6",
@@ -302,7 +302,7 @@ ansi = [
 [palette.colors.light]
 background = "#f5fcf0"
 foreground = "#172218"
-cursor = "#649167"
+cursor = "#507c54"
 selection_background = "#d7d7d7"
 ansi = [
   "#eff6ea",

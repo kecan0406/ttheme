@@ -7,7 +7,7 @@ subject = "black-bullet/satomi-rentarou"
 [palette.colors]
 background = "#14181e"
 foreground = "#dfe3e7"
-cursor = "#4e6692"
+cursor = "#6a82af"
 selection_background = "#3c4568"
 ansi = [
   "#21242b",
@@ -32,7 +32,7 @@ ansi = [
 [palette.colors.light]
 background = "#f9f9ff"
 foreground = "#1b2023"
-cursor = "#3d5580"
+cursor = "#4a628d"
 selection_background = "#ced5fc"
 ansi = [
   "#f2f3fd",
@@ -194,7 +194,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f0"
 foreground = "#251f0d"
-cursor = "#9a853f"
+cursor = "#85702d"
 selection_background = "#bcdbf4"
 ansi = [
   "#fcf3e0",
@@ -277,7 +277,7 @@ subject = "black-bullet/hiruko-kagetane"
 [palette.colors]
 background = "#201515"
 foreground = "#e2e2ec"
-cursor = "#a24a4e"
+cursor = "#c46568"
 selection_background = "#4f4258"
 ansi = [
   "#2d2120",
@@ -302,10 +302,10 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f7"
 foreground = "#1d1f26"
-cursor = "#8d3a3e"
+cursor = "#9d474a"
 selection_background = "#e3d1ec"
 ansi = [
-  "#fff0f0",
+  "#fff0ef",
   "#a2454c",
   "#3a5824",
   "#8b5821",

@@ -86,7 +86,7 @@ ansi = [
 [palette.colors.light]
 background = "#f4faff"
 foreground = "#1c2026"
-cursor = "#4b8ca7"
+cursor = "#3e7991"
 selection_background = "#c4d9f7"
 ansi = [
   "#edf5fa",

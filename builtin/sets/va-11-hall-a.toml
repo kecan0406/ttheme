@@ -140,7 +140,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f4"
 foreground = "#291d0e"
-cursor = "#a66c10"
+cursor = "#9f6606"
 selection_background = "#e7d2d8"
 ansi = [
   "#fff1e5",
@@ -248,7 +248,7 @@ ansi = [
 [palette.colors.light]
 background = "#f2fcf6"
 foreground = "#12231e"
-cursor = "#378b76"
+cursor = "#297f6b"
 selection_background = "#c2d9f9"
 ansi = [
   "#ecf6f0",

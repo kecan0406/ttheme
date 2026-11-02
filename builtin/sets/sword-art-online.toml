@@ -86,7 +86,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f5"
 foreground = "#1e1f23"
-cursor = "#a4703c"
+cursor = "#9a6735"
 selection_background = "#e0d5cc"
 ansi = [
   "#fff1e8",
@@ -140,7 +140,7 @@ ansi = [
 [palette.colors.light]
 background = "#f2fcf5"
 foreground = "#13231c"
-cursor = "#53927a"
+cursor = "#3f7d67"
 selection_background = "#ead2cd"
 ansi = [
   "#ecf6ef",
@@ -248,7 +248,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8ef"
 foreground = "#241f0e"
-cursor = "#99853f"
+cursor = "#84712d"
 selection_background = "#ccd6fc"
 ansi = [
   "#fcf3e0",
@@ -277,7 +277,7 @@ subject = "sword-art-online/yuuki"
 [palette.colors]
 background = "#1b161d"
 foreground = "#eddeef"
-cursor = "#7a5a88"
+cursor = "#9775a5"
 selection_background = "#8f1115"
 ansi = [
   "#282229",
@@ -302,7 +302,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff7fc"
 foreground = "#251d29"
-cursor = "#684976"
+cursor = "#765684"
 selection_background = "#ffcbc5"
 ansi = [
   "#fcf0fb",

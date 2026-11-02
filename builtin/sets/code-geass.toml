@@ -61,7 +61,7 @@ subject = "code-geass/kururugi-suzaku"
 [palette.colors]
 background = "#211512"
 foreground = "#fddbd3"
-cursor = "#945545"
+cursor = "#b46f5e"
 selection_background = "#252968"
 ansi = [
   "#2e211e",
@@ -86,7 +86,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f6"
 foreground = "#2d1b16"
-cursor = "#804535"
+cursor = "#8f5141"
 selection_background = "#d3d4fc"
 ansi = [
   "#fff1ed",
@@ -105,7 +105,7 @@ ansi = [
   "#6142a1",
   "#803d6e",
   "#004e0f",
-  "#2d1b16",
+  "#2d1b17",
 ]
 
 [[palette]]
@@ -140,7 +140,7 @@ ansi = [
 [palette.colors.light]
 background = "#f8fbeb"
 foreground = "#1c2113"
-cursor = "#648f25"
+cursor = "#537e12"
 selection_background = "#ddd1fa"
 ansi = [
   "#f2f5e6",
@@ -169,7 +169,7 @@ subject = "code-geass/kouzuki-kallen"
 [palette.colors]
 background = "#201516"
 foreground = "#fbdbde"
-cursor = "#a3485a"
+cursor = "#c56375"
 selection_background = "#2e4b54"
 ansi = [
   "#2d2122",
@@ -194,7 +194,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f7"
 foreground = "#2c1b1d"
-cursor = "#8e384a"
+cursor = "#9e4456"
 selection_background = "#bddce7"
 ansi = [
   "#fff0f1",
@@ -302,7 +302,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f8"
 foreground = "#2a1b23"
-cursor = "#b54f8b"
+cursor = "#b34d8a"
 selection_background = "#d7d4f7"
 ansi = [
   "#fff0f4",

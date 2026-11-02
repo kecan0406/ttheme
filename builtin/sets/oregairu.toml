@@ -7,7 +7,7 @@ subject = "oregairu/hikigaya-hachiman"
 [palette.colors]
 background = "#17171f"
 foreground = "#e2e1f2"
-cursor = "#737483"
+cursor = "#7f808f"
 selection_background = "#15434c"
 ansi = [
   "#23232b",
@@ -32,7 +32,7 @@ ansi = [
 [palette.colors.light]
 background = "#fbf8ff"
 foreground = "#1e1f2b"
-cursor = "#595b6b"
+cursor = "#5f6172"
 selection_background = "#b3dfea"
 ansi = [
   "#f4f2fd",
@@ -86,7 +86,7 @@ ansi = [
 [palette.colors.light]
 background = "#f6faff"
 foreground = "#1c2022"
-cursor = "#497999"
+cursor = "#477798"
 selection_background = "#ccd9e5"
 ansi = [
   "#eef4fb",
@@ -140,7 +140,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f6"
 foreground = "#2d1b15"
-cursor = "#ba6548"
+cursor = "#ad5b3f"
 selection_background = "#b6ddf1"
 ansi = [
   "#fff1ed",
@@ -194,7 +194,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f4"
 foreground = "#281e13"
-cursor = "#a2763a"
+cursor = "#946a2f"
 selection_background = "#d5d7dd"
 ansi = [
   "#fff1e5",
@@ -248,7 +248,7 @@ ansi = [
 [palette.colors.light]
 background = "#faf8ff"
 foreground = "#1c1f2c"
-cursor = "#6072b5"
+cursor = "#5d6fb2"
 selection_background = "#eed1cb"
 ansi = [
   "#f3f2fd",
@@ -302,7 +302,7 @@ ansi = [
 [palette.colors.light]
 background = "#fff8f7"
 foreground = "#221e24"
-cursor = "#ae5967"
+cursor = "#ac5866"
 selection_background = "#d7d4f7"
 ansi = [
   "#fff0f1",
