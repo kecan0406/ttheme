@@ -110,13 +110,14 @@ function readsTheSame(file: string, { head, blocks }: Blocks, palettes: readonly
 
 export function setBlocks(file: string, source: string): Blocks {
   const palettes = readSet(file, source)
-  const starts = [...source.matchAll(HEAD)].map((m) => m.index)
+  const body = source.replace(/^\ufeff/, '')
+  const starts = [...body.matchAll(HEAD)].map((m) => m.index)
 
   const read = {
-    head: source.slice(0, starts[0]),
+    head: body.slice(0, starts[0]),
     blocks: starts.map((start, i) => ({
       slug: palettes[i]?.slug as string,
-      text: unblocked(source.slice(start, starts[i + 1] ?? source.length)),
+      text: unblocked(body.slice(start, starts[i + 1] ?? body.length)),
     })),
   }
 

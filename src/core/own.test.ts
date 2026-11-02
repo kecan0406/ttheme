@@ -372,6 +372,18 @@ test('a set is rewritten only when its other palettes read the same afterwards',
   )
 })
 
+test('a set saved with a byte order mark can be changed in place like any other', () => {
+  const { pictures: _, upstream: __, ...plain } = draft
+  const text = paletteToml(plain)
+  const set = `\ufeff${setText([{ slug: 'one', text }], '')}`
+
+  assert.equal(readSet('neon.toml', set).length, 1)
+  assert.deepEqual(
+    readSet('neon.toml', withPalette('neon.toml', set, 'two', text) as string).map((p) => p.slug),
+    ['one', 'two'],
+  )
+})
+
 test('a slug two set files of one marketplace hold is reported, and the second is skipped', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
   const { pictures: _, ...plain } = draft
