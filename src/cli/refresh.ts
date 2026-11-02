@@ -67,7 +67,7 @@ export interface FetchedMarketplace {
 export type Fetched = FetchedMarketplace | { source: string; id: string; entries: PaletteEntry[]; works: Work[] }
 
 function triesPath(): string {
-  return join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'ttheme', 'marketplaces.json')
+  return join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'ttheme', 'marketplaces.json')
 }
 
 export function readTries(): Record<string, Tried> {

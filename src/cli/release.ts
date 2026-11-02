@@ -67,7 +67,7 @@ export function autoWanted(env: NodeJS.ProcessEnv = process.env): boolean {
 }
 
 function seenPath(): string {
-  return join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'ttheme', 'release.json')
+  return join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'ttheme', 'release.json')
 }
 
 function readSeen(): Seen {

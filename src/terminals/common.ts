@@ -26,7 +26,7 @@ export function stripped(file: string, remove: (content: string) => string): Unw
 }
 
 export function dataHome(home: string): string {
-  return process.env.XDG_DATA_HOME ?? join(home, '.local', 'share')
+  return process.env.XDG_DATA_HOME || join(home, '.local', 'share')
 }
 
 export function ownedIn(dir: string): string[] {

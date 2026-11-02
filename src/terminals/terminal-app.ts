@@ -30,11 +30,11 @@ export function terminalPictures(configHome: string): string {
 }
 
 function terminalWindow(env: Host['env'], home: string): string {
-  return join(env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme', 'terminal-app.window')
+  return join(env.XDG_STATE_HOME || join(home, '.local', 'state'), 'ttheme', 'terminal-app.window')
 }
 
 function laidAhead(env: Host['env'], home: string): string {
-  return join(env.XDG_CACHE_HOME ?? join(home, '.cache'), 'ttheme', 'terminal-app')
+  return join(env.XDG_CACHE_HOME || join(home, '.cache'), 'ttheme', 'terminal-app')
 }
 
 export const TERMINAL_JS = `ObjC.import('AppKit')

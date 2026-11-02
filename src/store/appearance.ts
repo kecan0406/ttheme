@@ -6,7 +6,7 @@ import { writeAtomic } from './edits.ts'
 import type { Host } from './host.ts'
 
 export function appearancePath(): string {
-  return join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'ttheme', 'appearance')
+  return join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'ttheme', 'appearance')
 }
 
 export function readAppearance(): Mode | undefined {

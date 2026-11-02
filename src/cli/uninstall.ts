@@ -172,7 +172,7 @@ function uninstallPaths(): UninstallPaths {
     configHome: configDir(),
     zdotdir: zdotdirOf(systemHost(), home),
     cacheDir: cacheRoot(),
-    stateDir: join(process.env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme'),
+    stateDir: join(process.env.XDG_STATE_HOME || join(home, '.local', 'state'), 'ttheme'),
     claudeHome: agentHomes(home, process.env).claude,
   }
 }

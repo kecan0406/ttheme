@@ -649,7 +649,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const runner = runnerOf(host.env.npm_config_user_agent)
   const wtHome = windowsAppData(host)
   const wtProfile = process.env.WT_PROFILE_ID
-  const stateDir = join(process.env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme')
+  const stateDir = join(process.env.XDG_STATE_HOME || join(home, '.local', 'state'), 'ttheme')
 
   const paths: InitPaths = {
     root: ROOT,

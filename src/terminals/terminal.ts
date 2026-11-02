@@ -203,7 +203,7 @@ function iniValue(text: string, group: string, key: string): string | undefined 
 }
 
 function konsoleLinks(env: Env): boolean {
-  const config = env.XDG_CONFIG_HOME ?? join(homedir(), '.config')
+  const config = env.XDG_CONFIG_HOME || join(homedir(), '.config')
   const rc = join(config, 'konsolerc')
   let file = existsSync(rc) ? iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile') : undefined
 
@@ -353,7 +353,7 @@ const WALLPAPER = /^(Wallpaper|FillStyle|Anchor|WallpaperOpacity|WallpaperFlipTy
 
 function konsoleDirs(env: Env): string[] {
   return [
-    env.XDG_DATA_HOME ?? join(homedir(), '.local', 'share'),
+    env.XDG_DATA_HOME || join(homedir(), '.local', 'share'),
     ...(env.XDG_DATA_DIRS || '/usr/local/share:/usr/share').split(':'),
   ].map((dir) => join(dir, 'konsole'))
 }
