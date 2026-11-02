@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -156,6 +157,20 @@ test('upsertAlacrittyImport leaves a config alone when it already imports or def
   assert.equal(upsertAlacrittyImport('[general]\nimport = ["mine.toml"]\n', theme), undefined)
   assert.equal(upsertAlacrittyImport('import = ["mine.toml"]\n', theme), undefined)
   assert.equal(upsertAlacrittyImport('general.live_config_reload = true\n', theme), undefined)
+})
+
+test('a setting stays the text it was when zsh reads config.zsh back', () => {
+  const file = join(mkdtempSync(join(tmpdir(), 'ttheme-setting-')), 'config.zsh')
+
+  for (const value of ['$(echo ran)', '`echo ran`', "it's", 'a}b', '"x"', 'a\\b', '*', '~/x', '=ls', '$& $1', 'a b']) {
+    writeFileSync(file, withSetting(withSetting('', 'TTHEME_FIND_HIDE_TAGS', 'before'), 'TTHEME_FIND_HIDE_TAGS', value))
+
+    const read = spawnSync('zsh', ['-fc', 'source $1; print -r -- "$TTHEME_FIND_HIDE_TAGS"', 'zsh', file], {
+      encoding: 'utf8',
+    })
+
+    assert.deepEqual([read.stdout, read.stderr], [`${value}\n`, ''], value)
+  }
 })
 
 test('withSetting rewrites the line a setting already has, and adds one when it is missing', () => {

@@ -171,8 +171,14 @@ export function settingDefault(name: string): string | undefined {
   return CONFIG_SETTINGS[name as keyof typeof CONFIG_SETTINGS]?.default
 }
 
+const PLAIN_SETTING = /^[\w ,.:@%+/-]*$/
+
+function settingWord(value: string): string {
+  return PLAIN_SETTING.test(value) ? value : `'${value.replaceAll("'", "'\\''")}'`
+}
+
 function settingLine(name: string, value: string): string {
-  const line = `: \${${name}:=${value}}`
+  const line = `: \${${name}:=${settingWord(value)}}`
 
   return settingDefault(name) === value ? `# ${line}` : line
 }
@@ -240,7 +246,7 @@ export function withSetting(content: string, name: string, value: string): strin
   const pattern = settingPattern(name)
 
   if (pattern.test(content)) {
-    return content.replace(pattern, line)
+    return content.replace(pattern, () => line)
   }
 
   return `${content.replace(/\n*$/, '\n')}\n${line}\n`
