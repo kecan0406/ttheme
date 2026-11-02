@@ -95,6 +95,8 @@ __tt_follows_focus() { return 1 }
 
 __tt_reports_appearance() { return 1 }
 
+__tt_appearance_resets() { return 1 }
+
 __tt_appearance_of() { REPLY=$1 }
 
 __tt_takes_default() { return 0 }

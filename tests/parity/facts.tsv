@@ -381,6 +381,16 @@ mode-verb.dark.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
 mode-verb.dark.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 mode-verb.dark.mode	dark	=	=	=	=	=	=	=	=	=	=	=
 mode-verb.dark.issue	-	=	=	=	=	=	=	=	=	=	=	=
+appear-fixed.light.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+appear-fixed.light.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+appear-fixed.light.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+appear-fixed.light.mode	dark	=	=	=	=	=	=	=	=	=	=	=
+appear-fixed.light.issue	-	=	=	=	=	=	=	=	=	=	=	=
+appear-fixed.dark.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
+appear-fixed.dark.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
+appear-fixed.dark.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+appear-fixed.dark.mode	dark	=	=	=	=	=	=	=	=	=	=	=
+appear-fixed.dark.issue	-	=	=	=	=	=	=	=	=	=	=	=
 auto.painted.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:other fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
 auto.painted.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
 auto.painted.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=

@@ -275,7 +275,7 @@ __tt_active() {
 }
 
 typeset -g TTHEME_HEARD=""
-typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0 TTHEME_FRONT=-1 TTHEME_RAN=0 TTHEME_APPEARANCE=0 TTHEME_APPEARANCE_ON=0
+typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0 TTHEME_FRONT=-1 TTHEME_RAN=0 TTHEME_APPEARANCE=0 TTHEME_APPEARANCE_RESETS=0 TTHEME_APPEARANCE_ON=0
 
 __tt_put() {
   local f=${1:A}
@@ -612,8 +612,15 @@ __tt_appearance_heard() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local REPLY seen=light
   [[ $KEYS == *1n ]] && seen=dark
+  (( TTHEME_MODE_AUTO )) || __tt_appearance_put_back $seen
   __tt_appearance_of $seen && __tt_appearance $REPLY
   return 0
+}
+
+__tt_appearance_put_back() {
+  [[ $1 != "$TTHEME_APPEARANCE_SEEN" ]] || return 0
+  [[ -n $TTHEME_APPEARANCE_SEEN ]] && __tt_active && __tt_repaint
+  TTHEME_APPEARANCE_SEEN=$1
 }
 
 __tt_appearance() {
@@ -798,7 +805,7 @@ __tt_line_init() {
   ahead=$TTHEME_TYPED
   __tt_typed
   (( TTHEME_FOCUS && ! PENDING )) && [[ -z $ahead ]] && __tt_focus_on
-  (( TTHEME_APPEARANCE && TTHEME_MODE_AUTO && ! PENDING )) && [[ -z $ahead ]] && __tt_appearance_on
+  (( TTHEME_APPEARANCE && (TTHEME_MODE_AUTO || TTHEME_APPEARANCE_RESETS) && ! PENDING )) && [[ -z $ahead ]] && __tt_appearance_on
   return 0
 }
 
@@ -807,6 +814,7 @@ __tt_bind_appearance() {
   __tt_modes
   zle -N __tt_appearance_heard
   TTHEME_APPEARANCE=1
+  __tt_appearance_resets && TTHEME_APPEARANCE_RESETS=1
   for k in emacs viins vicmd; do
     bindkey -M $k '^[[?997;1n' __tt_appearance_heard
     bindkey -M $k '^[[?997;2n' __tt_appearance_heard

@@ -6,6 +6,8 @@ __tt_follows_focus() { return 0 }
 
 __tt_reports_appearance() { (( ! TTHEME_TMUX )) }
 
+__tt_appearance_resets() { return 0 }
+
 __tt_takes_default() { __tt_contour_wired && __tt_osc_reset }
 
 __tt_osc_reset() {

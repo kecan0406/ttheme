@@ -5,6 +5,7 @@
 - In Windows Terminal, `ttheme light`, `ttheme dark` and `ttheme auto` typed in a tab with a palette no longer drop that tab to the default palette.
 - `ttheme add` says "1 palette installed" rather than "1 palettes installed".
 - The builder's `Slot` tab reads `Color`.
+- In Contour, a tab keeps its palette when the system turns dark or light while `ttheme dark` or `ttheme light` is set, where it used to drop to the terminal's own colors until the next command.
 
 ## 1.2.85
 

@@ -1049,6 +1049,10 @@ export class App {
   }
 
   appear(mode: Mode): void {
+    if (mode === this.appearance) {
+      return
+    }
+
     const style = join(this.place.home, '.parity', 'defaults', '-g', 'AppleInterfaceStyle')
     this.appearance = mode
     this.log(`appear ${mode}`)

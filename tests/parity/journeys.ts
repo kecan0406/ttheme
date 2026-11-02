@@ -850,6 +850,18 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'appear-fixed',
+    about: "the system's appearance turning leaves a tab on its palette while the mode is fixed",
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use kita-ikuyo')
+      await p.appear('light')
+      await p.look('light', { want: 'ttheme/kita-ikuyo', mode: 'dark' })
+      await p.appear('dark')
+      await p.look('dark', { want: 'ttheme/kita-ikuyo', mode: 'dark' })
+    },
+  },
+  {
     id: 'auto',
     about:
       'with the mode on auto, the appearance a Ghostty tab hears at its prompt reaches every tab, painted or not, and new tabs, in every wired terminal',
