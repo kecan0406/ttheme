@@ -1876,8 +1876,14 @@ __tt_pv_mouse() {
   [[ $mact == release ]] && mzone=""
   case $mact in
     press) __tt_pv_press $z ;;
-    drag) [[ $z[4] == track ]] && __tt_pv_bg_track $z[5] $(( mcol - z[2] )) $(( z[3] - z[2] )) ;;
-    release) (( mrow == z[1] && mcol >= z[2] && mcol <= z[3] )) && __tt_pv_release $z ;;
+    drag)
+      [[ $z[4] == track ]] && __tt_pv_bg_track $z[5] $(( mcol - z[2] )) $(( z[3] - z[2] ))
+      return 0
+      ;;
+    release)
+      (( mrow == z[1] && mcol >= z[2] && mcol <= z[3] )) || return 0
+      __tt_pv_release $z
+      ;;
   esac
 }
 

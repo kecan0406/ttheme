@@ -435,6 +435,14 @@ plain=${out//$'\e[K'/}
     done
     [[ $flt == kit ]] || { print -u2 "a key typed into preview's filter let a bidi control in: ${(q+)flt}"; exit 1 }
   ) || exit 1
+  (
+    __tt_pv_release() { print -u2 "a release off what was pressed acted"; exit 1 }
+    local key=mouse mact=drag mzone="5 2 20 row 3"
+    local -i mrow=9 mcol=30
+    __tt_pv_handle || { print -u2 "a drag off a row left preview"; exit 1 }
+    mact=release
+    __tt_pv_handle || { print -u2 "a release off a row left preview"; exit 1 }
+  ) || exit 1
 } || exit 1
 print -l "# image safebooru_2 2/3" "# picture safebooru_1 ttheme--hiiragi-kagami.aaaaaaaa ttheme--hiiragi-kagami.aaaaaaaa@fill-40.png 0.2 inkwell safebooru 1 x" \
   "# picture safebooru_2 ttheme--hiiragi-kagami.1a2b3c4d ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png 0.2 -" "# picture safebooru_3 ttheme--hiiragi-kagami.cccccccc ttheme--hiiragi-kagami.cccccccc@fill-40.png 0.3 -" \
