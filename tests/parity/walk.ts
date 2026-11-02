@@ -13,6 +13,7 @@ import { CAPABILITIES, TERMS, type Term } from './terms.ts'
 
 const REPO = join(import.meta.dirname, '..', '..')
 const STAGGER_MS = 40
+const PICTURE_LATE_MS = 2500
 
 const { values } = parseArgs({
   options: {
@@ -274,7 +275,13 @@ async function walked(fixture: Fixture, steps: readonly Step[], seed: number): P
         }
       }
 
-      const failure = judged(fixture.term, facts, at, off)
+      let failure = judged(fixture.term, facts, at, off)
+
+      if (failure?.kind === 'picture') {
+        await Bun.sleep(PICTURE_LATE_MS)
+        await p.look(`s${at}`, { want: '-' })
+        failure = judged(fixture.term, facts, at, off)
+      }
 
       if (failure) {
         return failure
