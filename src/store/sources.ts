@@ -192,6 +192,16 @@ export function isFile(path: string): boolean {
   }
 }
 
+export function isSpecial(path: string): boolean {
+  try {
+    const found = statSync(path)
+
+    return !found.isFile() && !found.isDirectory()
+  } catch {
+    return false
+  }
+}
+
 export function localIdentity(dir: string): MarketplaceInfo {
   const path = join(dir, MARKETPLACE_FILE)
 

@@ -379,12 +379,15 @@ test('the head of a body stops reading at what it asked for', async () => {
   assert.equal((await firstBytes(new Response('ab'), 1500)).length, 2)
 })
 
-test('a marketplace folder reads only regular files, whatever a link in it points at', () => {
+test('a marketplace folder never opens a device or a pipe a link in it points at, and keeps a broken link to report', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-links-'))
   mkdirSync(join(dir, 'sets'))
   symlinkSync('/dev/null', join(dir, 'sets', 'device.toml'))
   symlinkSync(join(dir, 'gone'), join(dir, 'sets', 'gone.toml'))
   symlinkSync('/dev/null', join(dir, 'ttheme-marketplace.toml'))
-  assert.deepEqual(setFiles(dir), [])
+  assert.deepEqual(
+    setFiles(dir).map((file) => file.name),
+    ['gone'],
+  )
   assert.throws(() => localIdentity(dir), /has no ttheme-marketplace\.toml/)
 })

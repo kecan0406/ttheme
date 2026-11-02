@@ -112,7 +112,15 @@ export function readMarketplaceFiles(
   const seen = new Map<string, string>()
 
   return files.flatMap((file) => {
-    const text = read(file)
+    let text: string
+
+    try {
+      text = read(file)
+    } catch (error) {
+      report(file.path, (error as Error).message)
+
+      return []
+    }
 
     const shelf = memo('set', JSON.stringify([foreign, id, file.path, text]), () =>
       shelfOf(file.path, text, id, foreign),

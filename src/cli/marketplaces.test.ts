@@ -1,6 +1,6 @@
 import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -125,4 +125,41 @@ test('marketplace check holds the palettes and the works they propose to the com
       '  ! works/starfall.toml: the commons holds starfall/orla — its entry there wins',
     ],
   )
+})
+
+test('marketplace check reports a folder it cannot read as an error of the marketplace, never a crash', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-check-'))
+  const toml = 'name = "pastel"\ndescription = "Soft"\n\n[owner]\nname = "ann"\n'
+  writeFileSync(join(dir, 'ttheme-marketplace.toml'), toml)
+  writeFileSync(join(dir, 'sets'), 'a file, not a folder')
+  writeFileSync(join(dir, 'works'), 'a file, not a folder')
+
+  const files = heard(() => checkMarketplace(dir, { works: [] }))
+
+  assert.equal(files.result, 1)
+  assert.deepEqual(
+    files.said.filter((line) => line.startsWith('  ✗')),
+    [
+      '  ✗ sets: is a file — ttheme reads the set files in a folder of that name',
+      '  ✗ works: is a file — ttheme reads the work files in a folder of that name',
+    ],
+  )
+
+  const links = mkdtempSync(join(tmpdir(), 'ttheme-check-'))
+  writeFileSync(join(links, 'ttheme-marketplace.toml'), toml)
+  mkdirSync(join(links, 'sets'))
+  symlinkSync(join(links, 'gone.toml'), join(links, 'sets', 'broken.toml'))
+
+  const broken = heard(() => checkMarketplace(links, { works: [] }))
+
+  assert.equal(broken.result, 1)
+  assert.ok(broken.said.some((line) => line.startsWith('  ✗ sets/broken.toml: ENOENT')))
+
+  const folder = mkdtempSync(join(tmpdir(), 'ttheme-check-'))
+  mkdirSync(join(folder, 'ttheme-marketplace.toml'))
+
+  const named = heard(() => checkMarketplace(folder, { works: [] }))
+
+  assert.equal(named.result, 1)
+  assert.ok(named.said.some((line) => line.startsWith('  ✗ EISDIR')))
 })

@@ -1,9 +1,18 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { basename, join, relative } from 'node:path'
 import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
-import { aboutOf, type Commons, mergeWorks, parseCommons, type Work, workKeys, workOf } from '../core/commons.ts'
+import {
+  aboutOf,
+  type Commons,
+  mergeWorks,
+  parseCommons,
+  WORKS_DIR,
+  type Work,
+  workKeys,
+  workOf,
+} from '../core/commons.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { gateLines } from '../core/own.ts'
 import { marketplaceNameProblem, marketplaceToml, readmeOf } from '../core/scaffold.ts'
@@ -451,16 +460,35 @@ function unknownIn(dir: string, files: readonly { path: string }[], keysOf: (fil
 }
 
 function folded(dir: string): string[] {
-  const at = setsDir(dir)
+  let paths: string[]
 
-  if (!existsSync(at)) {
+  try {
+    paths = readdirSync(setsDir(dir), { recursive: true, encoding: 'utf8' })
+  } catch {
     return []
   }
 
-  return readdirSync(at, { recursive: true, encoding: 'utf8' })
+  return paths
     .filter((path) => path.includes('/') && path.endsWith('.toml'))
     .sort()
     .map((path) => `${SETS_DIR}/${escaped(path)}: ttheme reads ${SETS_DIR}/ alone, not the folders in it — move it up`)
+}
+
+function fileIn(dir: string, name: string): boolean {
+  try {
+    return statSync(join(dir, name)).isFile()
+  } catch {
+    return false
+  }
+}
+
+function notFolders(dir: string): string[] {
+  return [
+    ...(fileIn(dir, SETS_DIR) ? [`${SETS_DIR}: is a file — ttheme reads the set files in a folder of that name`] : []),
+    ...(fileIn(dir, WORKS_DIR)
+      ? [`${WORKS_DIR}: is a file — ttheme reads the work files in a folder of that name`]
+      : []),
+  ]
 }
 
 function againstCommons(
@@ -558,10 +586,11 @@ export function checkMarketplace(arg: string | undefined, commons = commonsFor(c
 
   const errors: string[] = []
   const warnings: string[] = []
-  const text = readFileSync(path, 'utf8')
+  let text: string
   let info: ReturnType<typeof localIdentity>
 
   try {
+    text = readFileSync(path, 'utf8')
     info = localIdentity(dir)
   } catch (error) {
     console.error(`  ✗ ${inertLines((error as Error).message)}`)
@@ -592,7 +621,7 @@ export function checkMarketplace(arg: string | undefined, commons = commonsFor(c
     ),
   )
 
-  errors.push(...folded(dir))
+  errors.push(...notFolders(dir), ...folded(dir))
   warnings.push(...unknownIn(dir, setFiles(dir), unknownKeys), ...unknownIn(dir, workFiles(dir), workKeys))
 
   const findings = againstCommons(dir, entries, works, commons)

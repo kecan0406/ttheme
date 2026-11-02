@@ -15,7 +15,7 @@ import { type Block, SETS_DIR, setBlocks, setNameFor, withPalette } from '../cor
 import { escaped } from '../core/text.ts'
 import { type Identity, isBuiltin, marketplaceId, publisherOf, slugOf } from '../core/theme.ts'
 import { writeAtomic } from './edits.ts'
-import { isFile, isLocal, localIdentity, marketplaceSources } from './sources.ts'
+import { isLocal, isSpecial, localIdentity, marketplaceSources } from './sources.ts'
 
 export interface LocalMarketplace extends Identity {
   dir: string
@@ -58,11 +58,13 @@ export function worksDir(dir: string): string {
 function listed(dir: string, folder: string): string[] {
   const at = join(dir, folder)
 
-  return existsSync(at)
-    ? readdirSync(at)
-        .filter((file) => isFile(join(at, file)))
-        .map((file) => `${folder}/${file}`)
-    : []
+  try {
+    return readdirSync(at)
+      .filter((file) => !isSpecial(join(at, file)))
+      .map((file) => `${folder}/${file}`)
+  } catch {
+    return []
+  }
 }
 
 export function setFiles(dir: string): SetFile[] {

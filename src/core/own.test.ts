@@ -1,9 +1,9 @@
 import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { test } from 'node:test'
 import { brotliDecompressSync, deflateRawSync, inflateRawSync } from 'node:zlib'
 import { readMarketplaceDir, warning } from '../store/local.ts'
@@ -313,6 +313,28 @@ test('a palette whose slug, or a set or work file whose name, holds a control ch
   assert.ok(said.every((line) => !/[\p{Cc}\p{Bidi_Control}]/u.test(line.slice(0, -1))))
   assert.ok(said.some((line) => line.includes(`the slug ${quoted(odd)}`)))
   assert.ok(said.some((line) => line.includes(`the work ${quoted(night)}`)))
+})
+
+test('a set file that cannot be read is reported and skipped, and the rest of the marketplace still reads', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
+  const { pictures: _, ...plain } = draft
+  mkdirSync(join(dir, 'sets', 'folder.toml'), { recursive: true })
+  symlinkSync(join(dir, 'gone.toml'), join(dir, 'sets', 'broken.toml'))
+  writeFileSync(join(dir, 'sets', 'good.toml'), setText([{ slug: 'good', text: paletteToml(plain) }]))
+  const said: string[] = []
+  const { entries } = readMarketplaceDir(dir, 'kai@shop', (where) => said.push(basename(where)))
+
+  assert.deepEqual(
+    entries.map((e) => e.name),
+    ['kai@shop/good'],
+  )
+  assert.deepEqual(said, ['broken.toml', 'folder.toml'])
+
+  const flat = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
+  writeFileSync(join(flat, 'sets'), 'a file, not a folder')
+  writeFileSync(join(flat, 'works'), 'a file, not a folder')
+
+  assert.deepEqual(readMarketplaceDir(flat, 'kai@shop', warning(false)), { entries: [], works: [] })
 })
 
 test('a slug two set files of one marketplace hold is reported, and the second is skipped', () => {

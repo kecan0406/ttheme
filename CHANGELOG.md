@@ -12,6 +12,7 @@
 - Over ssh, enter on Request a palette or Make one in Browse shows the address to open, where it did nothing.
 - An update no longer turns a palette into its other mode when you and its upstream each changed its background or foreground; `ttheme edit` picks between them.
 - `ttheme update` and `ttheme edit` no longer lose or garble colors in a palette you wrote by hand with single quotes, indented keys or comments in its ANSI list.
+- A broken link or an odd file in your marketplace's `sets/` folder no longer stops every command; ttheme skips it and `ttheme marketplace check` names it.
 
 ## 1.2.85
 
