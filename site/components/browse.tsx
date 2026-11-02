@@ -74,6 +74,8 @@ const VIEWS = {
 
 const PUBLISH = ['ttheme marketplace init', 'ttheme marketplace check']
 
+const RAIL_EAGER = 6
+
 interface Stack {
   id: string | null
   name: string
@@ -111,12 +113,15 @@ function Lenses({ lens, counts }: { lens: Lens; counts: Record<Lens, number> }) 
           href={one.href}
           data-lens={one.lens}
           aria-current={one.lens === lens ? 'page' : undefined}
-          class="relative inline-flex items-baseline gap-2.5 pb-2 font-display text-display-lg font-black text-muted-foreground transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 hover:text-soft-foreground aria-[current=page]:text-foreground aria-[current=page]:after:opacity-100"
+          class="relative inline-flex items-baseline gap-2.5 pb-2 font-display text-display-lg font-black text-muted-foreground transition-colors hover:text-soft-foreground aria-[current=page]:text-foreground"
         >
           {one.lens}
           <span class="font-mono text-sm font-normal tracking-normal text-muted-foreground tabular-nums">
             {counts[one.lens]}
           </span>
+          {one.lens === lens ? (
+            <span data-lens-bar aria-hidden="true" class="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-primary" />
+          ) : null}
         </a>
       ))}
     </nav>
@@ -390,7 +395,7 @@ export function BrowseWorks({
   )
 }
 
-function MarketShelf({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
+function MarketShelf({ shelf, stacks, first }: { shelf: Shelf; stacks: Stack[]; first: boolean }) {
   const heading = `shelf-${shelf.id.replace(/[^\w-]/g, '-')}`
 
   return (
@@ -460,7 +465,7 @@ function MarketShelf({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
         aria-label={`works in ${shelf.id}`}
         class="-mx-5 grid snap-x snap-mandatory scroll-px-5 auto-cols-[14.75rem] grid-flow-col gap-4 overflow-x-auto px-5 pt-0.5 pb-2 [scrollbar-width:none] max-sm:auto-cols-[12.5rem] max-sm:gap-3"
       >
-        {stacks.map((stack) => (
+        {stacks.map((stack, index) => (
           <li
             data-stack
             data-work={stack.id ?? undefined}
@@ -476,6 +481,7 @@ function MarketShelf({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
               art={stack.art}
               facets={stack.facets}
               sizes="(min-width: 640px) 236px, 200px"
+              eager={first && index < RAIL_EAGER}
             />
           </li>
         ))}
@@ -614,7 +620,7 @@ export function BrowseMarketplaces({ shelves, works, facts }: { shelves: Shelf[]
           class="grid grid-cols-[minmax(0,1fr)] gap-12 pt-3 group-has-[[value=covers]:checked]/browse:hidden"
         >
           {shelves.map((shelf, index) => (
-            <MarketShelf shelf={shelf} stacks={stacks[index] ?? []} />
+            <MarketShelf shelf={shelf} stacks={stacks[index] ?? []} first={index === 0} />
           ))}
         </div>
         <div

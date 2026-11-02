@@ -1030,6 +1030,139 @@ route-progress[data-state='done'],
   animation: fade-in 0.28s cubic-bezier(0.3, 0.7, 0.2, 1) 0.12s both;
 }
 
+:root:active-view-transition-type(move) {
+  view-transition-name: root;
+}
+
+:root:active-view-transition-type(move) [data-site-header] > div {
+  view-transition-name: site-row;
+}
+
+:root:active-view-transition-type(move) route-progress {
+  view-transition-name: route-bar;
+}
+
+:root:active-view-transition-type(lens) [data-lens-bar] {
+  view-transition-name: lens-bar;
+}
+
+:root:active-view-transition-type(open, close) [data-move-art] {
+  view-transition-name: work-art;
+}
+
+:root:active-view-transition-type(open, close) [data-work-main] {
+  view-transition-name: work-main;
+}
+
+:root:active-view-transition-type(open) [data-slot='work-hero']:has(> [data-move-frame]) > :is(img, svg):not([data-move-frame]),
+:root:active-view-transition-type(open) [data-slot='work-hero']:has(> [data-move-frame])::after {
+  animation: hero-land 0.4s linear both;
+}
+
+:root:active-view-transition-type(move)::view-transition {
+  clip-path: none;
+}
+
+:root:active-view-transition-type(move)::view-transition-old(root) {
+  animation: fade-out 0.28s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+:root:active-view-transition-type(move)::view-transition-new(root) {
+  animation: fade-in 0.28s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+:root:active-view-transition-type(move)::view-transition-new(root):only-child,
+:root:active-view-transition-type(move)::view-transition-group(site-row),
+:root:active-view-transition-type(move)::view-transition-new(site-row),
+:root:active-view-transition-type(move)::view-transition-group(route-bar),
+:root:active-view-transition-type(move)::view-transition-new(route-bar) {
+  animation: none;
+}
+
+:root:active-view-transition-type(move)::view-transition-old(site-row),
+:root:active-view-transition-type(move)::view-transition-old(route-bar),
+:root:active-view-transition-type(lens)::view-transition-old(lens-bar),
+:root:active-view-transition-type(open)::view-transition-new(work-art):only-child {
+  display: none;
+}
+
+:root:active-view-transition-type(lens)::view-transition-group(lens-bar) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+:root:active-view-transition-type(lens)::view-transition-new(lens-bar) {
+  width: 100%;
+  height: 100%;
+  animation: none;
+}
+
+:root:active-view-transition-type(open, close)::view-transition-group(work-art) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+:root:active-view-transition-type(open)::view-transition-image-pair(work-art) {
+  overflow: clip;
+  animation: art-open 0.4s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+:root:active-view-transition-type(open, close)::view-transition-old(work-art),
+:root:active-view-transition-type(open, close)::view-transition-new(work-art) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--art-focus);
+}
+
+:root:active-view-transition-type(facets)::view-transition-new(work-art) {
+  object-position: 50% 50%;
+}
+
+:root:active-view-transition-type(open, close)::view-transition-old(work-art) {
+  animation: fade-out 0.15s linear both;
+}
+
+:root:active-view-transition-type(open, close)::view-transition-new(work-art) {
+  animation: fade-in 0.15s linear both;
+}
+
+:root:active-view-transition-type(open, close)::view-transition-old(work-art):only-child {
+  animation: fade-out 0.28s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+:root:active-view-transition-type(close)::view-transition-new(work-art):only-child,
+:root:active-view-transition-type(open)::view-transition-new(work-main) {
+  animation: fade-in 0.28s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+:root:active-view-transition-type(close)::view-transition-old(work-main) {
+  animation: fade-out 0.28s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+@keyframes art-open {
+  from {
+    border-radius: var(--radius-xl);
+  }
+  62% {
+    opacity: 1;
+  }
+  to {
+    border-radius: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes hero-land {
+  from,
+  50% {
+    opacity: 0;
+  }
+  62% {
+    opacity: 1;
+  }
+}
+
 @keyframes fade-out {
   to {
     opacity: 0;
@@ -1239,6 +1372,10 @@ route-progress[data-state='done'],
 
 [data-slot='rail'][data-at-end] {
   --fade-end: 0px;
+}
+
+:root {
+  --art-focus: 50% 26%;
 }
 
 [data-slot='work-hero'] {

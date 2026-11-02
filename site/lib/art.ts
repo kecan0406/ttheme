@@ -34,7 +34,7 @@ export function keyArtOf(art: WorkArt | undefined): KeyArt | null {
   if (art?.backdrop)
     return {
       src: `${TMDB_IMAGES}/w1280${art.backdrop}`,
-      srcset: `${TMDB_IMAGES}/w780${art.backdrop} 780w, ${TMDB_IMAGES}/w1280${art.backdrop} 1280w`,
+      srcset: `${TMDB_IMAGES}/w300${art.backdrop} 300w, ${TMDB_IMAGES}/w780${art.backdrop} 780w, ${TMDB_IMAGES}/w1280${art.backdrop} 1280w`,
       from: 'tmdb',
     }
 

@@ -1,5 +1,6 @@
 import { HANDOFF_KEY } from '@/lib/handoff'
 import { reducedMotion } from './dom'
+import { depart, moveTo } from './page-move'
 import { arrive, worn } from './wear'
 
 const PRESS_MS = 1000
@@ -46,7 +47,7 @@ function underlined(): string | null {
   if (Number(getComputedStyle(nav, '::before').opacity) < 0.5) return ''
 
   for (const link of nav.querySelectorAll('a')) {
-    const label = link.firstElementChild
+    const label = link.querySelector(':scope > span')
 
     if (label && getComputedStyle(label).getPropertyValue('anchor-name') === '--glide')
       return link.getAttribute('href') ?? ''
@@ -90,6 +91,7 @@ function leave(event: NavigateEvent) {
         k: document.querySelector('[data-site-header][data-fixed]') ? 1 : 0,
         x: edges(),
         g: underlined(),
+        m: moveTo(destination.url),
       }),
     )
     event.signal.addEventListener('abort', () => drop(at), { once: true })
@@ -106,7 +108,7 @@ function swap(event: PageSwapEvent) {
   delete document.documentElement.dataset.fading
   const { activation, viewTransition } = event
 
-  if (!viewTransition) return
+  if (!viewTransition || depart(event)) return
 
   if (!reducedMotion() && activation?.navigationType === 'traverse' && changes(activation.entry.getState())) return
   viewTransition.ready.catch(() => {})

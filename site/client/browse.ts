@@ -475,7 +475,11 @@ class BrowseMarketplaces extends Browse {
   }
 
   #measure = () => {
-    for (const rail of this.querySelectorAll<HTMLElement>('[data-rail]')) this.#edges(rail)
+    const rails = [...this.querySelectorAll<HTMLElement>('[data-rail]')].map(
+      (rail) => [rail, this.#ends(rail)] as const,
+    )
+
+    for (const [rail, ends] of rails) this.#mark(rail, ends)
   }
 
   connectedCallback() {
@@ -494,9 +498,14 @@ class BrowseMarketplaces extends Browse {
   }
 
   #edges(rail: HTMLElement) {
-    const start = rail.scrollLeft <= EDGE
-    const end = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - EDGE
+    this.#mark(rail, this.#ends(rail))
+  }
 
+  #ends(rail: HTMLElement): [boolean, boolean] {
+    return [rail.scrollLeft <= EDGE, rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - EDGE]
+  }
+
+  #mark(rail: HTMLElement, [start, end]: readonly [boolean, boolean]) {
     rail.toggleAttribute('data-at-end', end)
 
     for (const button of rail.closest('[data-shelf]')?.querySelectorAll<HTMLButtonElement>('[data-scroll]') ?? [])

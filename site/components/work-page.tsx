@@ -327,7 +327,7 @@ export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts
     <div class="ground relative isolate flex min-h-dvh flex-col">
       <WorkHero art={work.art} facets={WORN_FACETS} sizes={HERO_SIZES} />
       <SiteHeader current={BROWSE_PATH} facts={facts} />
-      <main id="content">
+      <main id="content" data-work-main>
         <WorkHead name={work.name} native={work.native} lang={work.lang} />
         <div class={MAIN}>
           <div class={SECTIONS}>
@@ -372,7 +372,7 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
     <div class="ground relative isolate flex min-h-dvh flex-col">
       <WorkHero art={page.art} facets={page.facets} sizes={HERO_SIZES} />
       <SiteHeader current={BROWSE_PATH} facts={facts} />
-      <main id="content">
+      <main id="content" data-work-main>
         <WorkHead name={work.name} native={work.native} lang={work.lang} />
         <div class={MAIN}>
           <work-page class={SECTIONS}>

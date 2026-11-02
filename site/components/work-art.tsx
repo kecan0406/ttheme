@@ -109,7 +109,7 @@ export function WorkHero({ art, facets, sizes }: { art: KeyArt | null; facets: s
         </div>
       ) : null}
       <div data-slot="work-hero" class="absolute inset-x-0 top-0 h-175 overflow-hidden max-sm:h-135">
-        {art ? <ArtImage art={art} sizes={sizes} eager class="object-[50%_26%]" /> : <FacetArt style={facets} />}
+        {art ? <ArtImage art={art} sizes={sizes} eager class="object-(--art-focus)" /> : <FacetArt style={facets} />}
       </div>
     </div>
   )
