@@ -1,4 +1,5 @@
 import { type Hex, isHex } from './color.ts'
+import { isTag } from './commons.ts'
 import { SLOT_NAMES } from './slots.ts'
 import { slugProblem, textProblem } from './theme.ts'
 
@@ -26,8 +27,6 @@ export interface Problem {
 }
 
 export const ANCHOR_FIELDS = ['slots', 'booru', 'native_names', 'source']
-
-const TAG = /^[\p{L}\p{N}_()'.:!?~&+-]+$/u
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -121,7 +120,7 @@ function entryOf(name: string, value: unknown, problems: Problem[]): Anchors | u
   const slots = slotsOf(`${name}.slots`, value.slots, problems)
   const { booru, source } = value
 
-  if (booru !== undefined && (typeof booru !== 'string' || !TAG.test(booru))) {
+  if (booru !== undefined && !isTag(booru)) {
     problems.push({ path: `${name}.booru`, problem: 'must be a danbooru tag, such as gotoh_hitori' })
   }
 

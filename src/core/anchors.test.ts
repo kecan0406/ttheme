@@ -81,3 +81,10 @@ test('readAnchors refuses a file that is not an object of palettes', () => {
     assert.deepEqual(readAnchors(doc).problems, [{ path: '', problem: 'must map each palette name to its anchors' }])
   }
 })
+
+test('booru takes any tag a work file could hold, a slash in its qualifier included', () => {
+  const slots = { cursor: ['Hair', '#ff8040'] }
+
+  assert.deepEqual(readAnchors({ orla: { booru: 'orla_(starfall/night)', slots } }).problems, [])
+  assert.equal(readAnchors({ orla: { booru: 'orla\x1b[2J', slots } }).problems.length, 1)
+})

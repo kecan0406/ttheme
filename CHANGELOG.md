@@ -19,7 +19,6 @@
 - `ttheme palette make` no longer crashes on an anchors file that names every accent color.
 - A marketplace description or a find setting holding `$&` or `$'` goes in as you typed it.
 - `ttheme init` and `uninstall` no longer take out lines of your config when one of them happens to mention `# ttheme begin`.
-- `ttheme add` says "1 palette installed", not "1 palettes installed".
 - `ttheme share` says when your tuning has turned a palette into its other mode, instead of printing a link nobody can add.
 - Changing what find hides no longer overwrites your hidden tags in a config.zsh that has no line for it.
 - An empty `XDG_CONFIG_HOME`, `XDG_STATE_HOME`, `XDG_CACHE_HOME` or `XDG_DATA_HOME` now means the default folder, instead of the folder you ran ttheme in.
