@@ -84,7 +84,7 @@ exit
 ttheme pin              # this folder
 ttheme pin ~/work/site  # another folder, without going there
 ttheme pin ssh:tusa     # one host
-ttheme pin ssh:*.prod   # every host ending in .prod
+ttheme pin 'ssh:*.prod' # every host ending in .prod
 ```
 
 `ttheme pin` opens the palette list. Pick a palette with `enter`, then choose how
