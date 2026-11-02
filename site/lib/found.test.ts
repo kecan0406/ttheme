@@ -105,13 +105,13 @@ test("a tag a title holds names the whole family, spelled as that title spells i
     ],
   })
 
-  expect(titleOf('star-blade-saga', [blade])).toEqual({ name: 'Star-Blade Saga', native: null, lang: null })
+  expect(titleOf('star-blade-saga', [blade])).toEqual({ name: 'Star-Blade Saga', native: null, lang: 'ja' })
   expect(
     titleOf('saga', [tagged('w/2', [], { names: [{ text: 'Mobile Saga', lang: 'en', official: true }] })]),
   ).toEqual({
     name: 'Saga',
     native: null,
-    lang: null,
+    lang: 'ja',
   })
   expect(titleOf('first-crossing', [blade])).toEqual({
     name: 'Star-Blade Saga: The First Crossing',
@@ -130,7 +130,7 @@ test('a title the tag alone spells takes that spelling, and a native title spell
     ],
   })
 
-  expect(titleOf('moonlit-harbor', [spoken])).toEqual({ name: 'Moonlit Harbor', native: null, lang: null })
+  expect(titleOf('moonlit-harbor', [spoken])).toEqual({ name: 'Moonlit Harbor', native: null, lang: 'ja' })
 
   const loud = tagged('w/3', [], {
     names: [
@@ -139,7 +139,7 @@ test('a title the tag alone spells takes that spelling, and a native title spell
     ],
   })
 
-  expect(titleOf('moonlit-harbor', [loud])).toEqual({ name: 'Moonlit Harbor', native: null, lang: null })
+  expect(titleOf('moonlit-harbor', [loud])).toEqual({ name: 'Moonlit Harbor', native: null, lang: 'ja' })
 
   const unspelled = tagged('w/4', [], {
     label: '月明かりの港',
@@ -174,7 +174,7 @@ test("a native title is in the language of the first member's country of origin,
     {
       name: 'Starfall Arena',
       native: null,
-      lang: null,
+      lang: 'ja',
     },
   )
 })
@@ -188,15 +188,20 @@ test('a title falls back to the main title, then the label, and drops a native n
     ],
   })
 
-  expect(titleOf('minato', [romaji])).toEqual({ name: 'Tsukiakari no Minato', native: null, lang: null })
-  expect(titleOf('pip', [tagged('w/2', [], { label: 'Pip' })])).toEqual({ name: 'Pip', native: null, lang: null })
+  expect(titleOf('minato', [romaji])).toEqual({ name: 'Tsukiakari no Minato', native: null, lang: 'ja' })
+  expect(titleOf('pip', [tagged('w/2', [], { label: 'Pip' })])).toEqual({ name: 'Pip', native: null, lang: 'ja' })
   expect(
     titleOf('pip', [tagged('w/3', [], { names: [{ text: 'Pip', lang: 'ja', official: true }], label: 'Pip' })]),
   ).toEqual({
     name: 'Pip',
     native: null,
-    lang: null,
+    lang: 'ja',
   })
+  expect(
+    titleOf('pier', [
+      tagged('w/4', [], { label: 'x', names: [{ text: 'quay stories (movie)', lang: null, official: true }] }),
+    ]).name,
+  ).toBe('Quay Stories')
 })
 
 test("a cast member's native name is Korean by its Hangul, Japanese by its kana, and else its work's language if Japanese or Chinese", () => {

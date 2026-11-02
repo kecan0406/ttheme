@@ -180,7 +180,9 @@ export function titleOf(slug: string, members: readonly TaggedWork[]): Title {
   const exact = english.find((each) => latinKey(each.text) === key)?.text
   const within = exact ? undefined : english.map((each) => spellingIn(each.text, key)).find(Boolean)
 
-  if (within) return { name: within, native: null, lang: null }
+  const langs = nativeLangs(members)
+
+  if (within) return { name: within, native: null, lang: langs[0] ?? null }
 
   const spoken = every.find((each) => each.official && each.lang === null && latinKey(each.text) === key)?.text
 
@@ -189,11 +191,9 @@ export function titleOf(slug: string, members: readonly TaggedWork[]): Title {
     shortest(names, (each) => each.official && each.lang === 'en')?.text ??
     shortest(every, (each) => each.official && each.lang === 'en')?.text ??
     (spoken && shown(spoken)) ??
-    eldest?.names.find((each) => each.official && each.lang === null)?.text ??
-    eldest?.label ??
-    ''
+    shown(eldest?.names.find((each) => each.official && each.lang === null)?.text ?? eldest?.label ?? '')
 
-  const native = nativeLangs(members)
+  const native = langs
     .map(
       (lang) =>
         (eldest && preferredOf(eldest.names, lang)) ??
@@ -203,10 +203,11 @@ export function titleOf(slug: string, members: readonly TaggedWork[]): Title {
     .find((each) => each !== undefined)
 
   const spelling = native ? latinKey(native.text) : ''
+  const lang = native?.lang ?? langs[0] ?? null
 
   return native && native.text !== name && (spelling === '' || spelling !== latinKey(name))
-    ? { name, native: native.text, lang: native.lang }
-    : { name, native: null, lang: null }
+    ? { name, native: native.text, lang }
+    : { name, native: null, lang }
 }
 
 export function nativeLang(text: string, work: string | null): string | null {
