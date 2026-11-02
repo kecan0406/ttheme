@@ -205,6 +205,14 @@ test('a setting or a block goes in as written, whatever dollar signs it holds', 
   }
 })
 
+test('a setting is not mistaken for a longer one that starts with its name', () => {
+  const tags = ': ${TTHEME_FIND_HIDE_TAGS:=cosplay}\n'
+
+  assert.equal(withSetting(tags, 'TTHEME_FIND_HIDE', 'comic'), `${tags}\n: \${TTHEME_FIND_HIDE:=comic}\n`)
+  assert.match(configFile(tags), /^# : \$\{TTHEME_FIND_HIDE:=none\}$/m)
+  assert.match(configFile(tags), /^: \$\{TTHEME_FIND_HIDE_TAGS:=cosplay\}$/m)
+})
+
 test('only a whole line marks a block, and a begin with no end stays where the user left it', () => {
   const mine = 'source ./env # ttheme begin\nalias ll="ls -l"\n# ttheme end of my notes\n'
   const wired = upsertBlock(mine, 'x')

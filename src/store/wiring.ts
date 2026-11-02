@@ -184,7 +184,7 @@ function settingLine(name: string, value: string): string {
 }
 
 function settingPattern(name: string): RegExp {
-  return new RegExp(String.raw`^#? ?: \$\{${name}[^\n]*$`, 'm')
+  return new RegExp(String.raw`^#? ?: \$\{${name}\b[^\n]*$`, 'm')
 }
 
 function ensureSetting(content: string, name: keyof typeof CONFIG_SETTINGS): string {
