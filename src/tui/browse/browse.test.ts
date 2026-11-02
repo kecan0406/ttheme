@@ -420,6 +420,16 @@ test('ctrl-c or esc with something staged asks before leaving, esc stays, and a 
   assert.equal(ran, false)
 })
 
+test('a question in a narrow window shortens so its answers stay whole', async () => {
+  for (const columns of [40, 49, 64]) {
+    const leave = await drive([...ORLA, ' ', '\x03', '\x03'], { columns })
+    assert.match(leave.frames, /Apply 1\? {3}y apply {3}n discard/)
+  }
+
+  const remove = await drive([DOWN, RIGHT, UP, '\r', 'n', '\x03'], { columns: 60 })
+  assert.match(remove.frames, /Remove alice@pastel\? {3}y remove {3}n keep/)
+})
+
 test('tab does nothing in browse on its own', async () => {
   const plain = await drive([PLAIN_TAB, '\x1b'])
   assert.equal(plain.result, 'cancel')

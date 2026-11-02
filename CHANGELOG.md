@@ -9,6 +9,7 @@
 - `ttheme use` with its output in a pipe or a file now says `ttheme use: needs a terminal`, where it wrote its color codes there.
 - Cancelling `init`, `uninstall`, `share`, `edit` or `new` now exits 2, as nothing changed, where they exited 1 or 0, so a script can tell a cancel from a failure.
 - `ctrl+z` at one of ttheme's questions no longer leaves the cursor hidden, and `fg` asks the question again, where it ended the command.
+- In a narrow window, Browse's questions shorten to `Apply 5?` and `Remove alice@pastel?`, so their `y` and `n` answers stay on the bar.
 
 ## 1.2.86
 

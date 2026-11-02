@@ -1134,6 +1134,7 @@ export class BrowsePanel {
       return {
         badge: 'BROWSE',
         lead: `Apply ${count} ${count === 1 ? 'change' : 'changes'} before you leave?`,
+        short: `Apply ${count}?`,
         keys: [
           ['y', 'apply'],
           ['n', 'discard'],
@@ -1147,6 +1148,7 @@ export class BrowsePanel {
       return {
         badge: 'BROWSE',
         lead: `Remove ${this.removing.id}? Its installed palettes stay installed`,
+        short: `Remove ${this.removing.id}?`,
         keys: [
           ['y', 'remove'],
           ['n', 'keep'],

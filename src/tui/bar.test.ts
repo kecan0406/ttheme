@@ -22,3 +22,23 @@ test('a key dropped for room comes back in its place once a later drop leaves ro
   assert.doesNotMatch(line, /normal or bright/)
   assert.match(line, /esc cancel$/)
 })
+
+test('a question gives up its long lead, its other keys and then its badge before an answer is cut', () => {
+  const bar = {
+    badge: 'BROWSE',
+    lead: 'Apply 12 changes before you leave?',
+    short: 'Apply 12?',
+    keys: [
+      ['y', 'apply'],
+      ['n', 'discard'],
+    ] as [string, string][],
+    right: ['esc', 'stay'] as [string, string],
+    keep: ['y', 'n'],
+  }
+
+  const line = (width: number) => barLine(painter(false), bar, width)
+  assert.match(line(80), /^\[BROWSE\] Apply 12 changes before you leave\? {3}y apply {3}n discard +esc stay$/)
+  assert.match(line(60), /^\[BROWSE\] Apply 12\? {3}y apply {3}n discard +esc stay$/)
+  assert.equal(line(42), '[BROWSE] Apply 12?   y apply   n discard')
+  assert.equal(line(39), 'Apply 12?   y apply   n discard')
+})

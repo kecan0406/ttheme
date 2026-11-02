@@ -10,6 +10,7 @@ export type Hint = [string, string]
 export interface Bar {
   badge: string
   lead?: string
+  short?: string
   note?: string
   keys: Hint[]
   right?: Hint
@@ -39,13 +40,13 @@ export function toned(p: Paint, tone: Tone, text: string): string {
 }
 
 export function barLine(p: Paint, bar: Bar, width: number): string {
-  const badge = `${pillOf(p, bar.badge)}${p.color ? '  ' : ' '}`
   const hint = ([key, label]: Hint) => hintOf(p, key, label)
   const kept = new Set([...KEPT, ...(bar.keep ?? [])])
-  let { note, keys, right, standing } = bar
+  let badge = `${pillOf(p, bar.badge)}${p.color ? '  ' : ' '}`
+  let { lead, note, keys, right, standing } = bar
 
   const drawn = (shown: Hint[]) => {
-    const line = `${badge}${[bar.lead ?? '', note ? p.dim(note) : '', ...shown.map(hint)].filter(Boolean).join('   ')}`
+    const line = `${badge}${[lead ?? '', note ? p.dim(note) : '', ...shown.map(hint)].filter(Boolean).join('   ')}`
 
     const mark = standing ? releaseOf(p, standing) : ''
 
@@ -77,10 +78,14 @@ export function barLine(p: Paint, bar: Bar, width: number): string {
       note = undefined
     } else if (drop >= 0) {
       keys = keys.toSpliced(drop, 1)
+    } else if (bar.short && lead !== bar.short) {
+      lead = bar.short
     } else if (right) {
       right = undefined
     } else if (standing) {
       standing = undefined
+    } else if (bar.short && badge) {
+      badge = ''
     } else {
       return fit(line, width, false)
     }
