@@ -4,7 +4,7 @@ import { WindowMode } from './window-mode'
 
 const LIGHTS = ['--a1', '--a3', '--a2']
 
-export const WINDOW_TITLE = 'min-w-0 flex-1 truncate text-center font-mono text-xs text-(--fg)/62'
+export const WINDOW_TITLE = 'min-w-0 flex-1 truncate text-center font-mono text-xs text-(--fg)/70'
 
 function Lights({ class: className }: { class?: string }) {
   return (

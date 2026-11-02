@@ -10,7 +10,7 @@ const tabVariants = cva(
         underline:
           'relative flex-1 justify-center px-4 font-medium after:absolute after:inset-x-6 after:-bottom-px after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 data-active:after:opacity-100',
         track:
-          'relative flex-1 justify-center gap-1.5 rounded-md px-3 text-xs font-medium text-(--fg)/62 before:absolute before:top-1/2 before:left-0 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-(--fg)/16 first:before:hidden hover:text-(--fg) data-active:bg-(--fg)/16 data-active:text-(--fg) data-active:shadow-sm data-active:before:hidden [[data-active]+&]:before:hidden [&>[data-mark]]:text-(--fg)/30 data-active:[&>[data-mark]]:text-(--a5)',
+          'relative flex-1 justify-center gap-1.5 rounded-md px-3 text-xs font-medium text-(--fg)/70 before:absolute before:top-1/2 before:left-0 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-(--fg)/16 first:before:hidden hover:text-(--fg) data-active:bg-(--fg)/16 data-active:text-(--fg) data-active:shadow-sm data-active:before:hidden [[data-active]+&]:before:hidden [&>[data-mark]]:text-(--fg)/30 data-active:[&>[data-mark]]:text-(--a5)',
       },
     },
     defaultVariants: {

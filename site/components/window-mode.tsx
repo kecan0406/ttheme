@@ -19,7 +19,7 @@ const CELLS = [
 ] as const satisfies readonly { mode: Mode; icon: typeof Moon; on: string }[]
 
 const CELL =
-  'h-full w-8 cursor-pointer items-center justify-center rounded-full text-(--fg)/62 transition-colors duration-150 outline-none hover:text-(--fg) focus-visible:inset-ring-2 focus-visible:inset-ring-ring'
+  'h-full w-8 cursor-pointer items-center justify-center rounded-full text-(--fg)/70 transition-colors duration-150 outline-none hover:text-(--fg) focus-visible:inset-ring-2 focus-visible:inset-ring-ring'
 
 export function WindowMode({ class: className }: { class?: string }) {
   return (

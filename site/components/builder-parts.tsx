@@ -923,7 +923,7 @@ export function EditMode({ made, editing }: { made: Mode; editing: Mode }) {
           pressed={mode === editing}
           aria-label={`edit the ${mode} colors${mode === made ? ', the mode it was made in' : ''}`}
           title={mode === made ? `${mode}, the mode it was made in` : mode}
-          class="relative flex h-full w-8 cursor-pointer items-center justify-center rounded-full text-(--fg)/62 transition-colors duration-150 outline-none hover:text-(--fg) focus-visible:inset-ring-2 focus-visible:inset-ring-ring data-pressed:bg-(--cu) data-pressed:text-(--bg)"
+          class="relative flex h-full w-8 cursor-pointer items-center justify-center rounded-full text-(--fg)/70 transition-colors duration-150 outline-none hover:text-(--fg) focus-visible:inset-ring-2 focus-visible:inset-ring-ring data-pressed:bg-(--cu) data-pressed:text-(--bg)"
         >
           <Icon node={mode === 'dark' ? Moon : Sun} class="size-3.5" />
           <i
