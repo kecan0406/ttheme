@@ -723,6 +723,13 @@ test("a redirect keeps the query the target left off, and keeps the target's own
   assert.equal(redirected('https://a.test/x?q=1', '/y?z=2'), 'https://a.test/y?z=2')
 })
 
+test('a page with no end to its list tags still reads in a moment', () => {
+  const started = performance.now()
+  const found = parseZerochanPage('<li class="mangaka" '.repeat(40_000))
+  assert.ok(performance.now() - started < 2000)
+  assert.deepEqual(found.named.artist, [])
+})
+
 test('a file past the most find keeps is refused before it fills memory', async () => {
   const fetched = spyOn(globalThis, 'fetch').mockImplementation(
     Object.assign(async () => new Response('x', { headers: { 'content-length': String(2 ** 40) } }), { preconnect }),

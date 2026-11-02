@@ -342,7 +342,7 @@ function unescaped(text: string): string {
 export function parseZerochanPage(html: string): Credit {
   const named: Named = { artist: [], character: [], copyright: [] }
 
-  for (const [, kind, tag] of html.matchAll(/<li class="([a-z]+)[^"]*"[^>]*\bdata-tag="([^"]*)"/g)) {
+  for (const [, kind, tag] of html.matchAll(/<li class="([a-z]+)[^">]{0,64}"[^>]{0,256}\bdata-tag="([^"]*)"/g)) {
     const role = ZEROCHAN_ROLES.get(kind as string)
     const name = zerochanTag(unescaped(tag as string))
 
