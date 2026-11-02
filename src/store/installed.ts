@@ -57,8 +57,10 @@ const OPTIONAL = {
 } satisfies { [K in Optional]-?: (value: unknown) => Installed[K] }
 
 function parsed(path: string) {
+  const text = readFileSync(path, 'utf8')
+
   try {
-    return JSON.parse(readFileSync(path, 'utf8'))
+    return JSON.parse(text)
   } catch {
     throw new Error(`${path} is not valid JSON`)
   }
