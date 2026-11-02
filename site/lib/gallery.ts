@@ -88,7 +88,7 @@ export function initOf(runner: Runner): string {
   return `${runner} @kecan0406/ttheme init`
 }
 
-export const BUILTIN_ABOUT = "The palettes that come with ttheme, each measured from the character's official art."
+export const BUILTIN_ABOUT = 'The palettes that come with ttheme, one for each character.'
 
 export function shelvesOf(themes: Theme[], marketplaces: readonly Marketplace[], facts: Facts): Shelf[] {
   const shelves: Shelf[] = [

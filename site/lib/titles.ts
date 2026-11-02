@@ -70,8 +70,7 @@ export function marketplaceMeta(marketplace: Marketplace | null): Meta {
   if (!marketplace)
     return {
       title: 'built-in marketplace — character terminal themes · ttheme',
-      description:
-        "The terminal color schemes that come with ttheme: one per character, each measured from the character's official art.",
+      description: 'The terminal color schemes that come with ttheme, one for each character.',
     }
 
   return {
