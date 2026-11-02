@@ -611,6 +611,12 @@ export function layerNode(host: Host, versions: { node: string; bun?: string } =
 }
 
 export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
+  if (!flags.yes && !interactive()) {
+    throw new Error(
+      'init asks before it edits your configs — run it in a terminal, or pass --yes to accept the defaults',
+    )
+  }
+
   const paint = painter(process.stdout.isTTY === true && !colorless())
   console.log(['', ...logoOf(paint, ['ttheme', 'Installer']), ''].join('\n'))
 
@@ -668,13 +674,6 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const here = invokingShell(host.run, process.ppid) ?? shellNamed(host.env.SHELL) ?? 'zsh'
   const detected = detectTerminal(process.env)
   const preselected = offered(paths, host).filter((t) => t === detected)
-
-  if (!flags.yes && !interactive()) {
-    throw new Error(
-      'init asks before it edits your configs — run it in a terminal, or pass --yes to accept the defaults',
-    )
-  }
-
   const existing = installedState(configHome)
 
   if (flags.yes && existing) {
