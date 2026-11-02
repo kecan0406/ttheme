@@ -21,4 +21,4 @@
 
 
 
- [GROUP] Saved · ~/ttheme/config.zsh                                                      esc close
+ [GROUP] Saved  ~/ttheme/config.zsh                                                       esc close

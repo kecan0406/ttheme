@@ -138,7 +138,7 @@ export async function redrawPictures(
     if (misses.length > 0) {
       const how = ownColors ? `in ${misses.length === 1 ? 'its' : 'their'} own colors` : 'again'
 
-      say(`Drawing ${plural(misses.length)} ${how}${blurring ? ` · blur ${blurring}px` : ''}`)
+      say(`Drawing ${plural(misses.length)} ${how}${blurring ? `  blur ${blurring}px` : ''}`)
     } else {
       say(`Drawing ${plural(primes.length)} for the other mode`)
     }

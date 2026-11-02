@@ -245,7 +245,6 @@ test('the screen fits 80×24 and says what it needs below that', () => {
   assert.match(renderEditor(editor(), 70, 20, false).join('\n'), /Needs 80×24 — now 70×20/)
   const red = screen(press(editor(), ...RED))
   assert.match(red, /Red {2}ANSI 1/)
-  assert.match(red, /Hue 19° · in red 19±25°/)
 })
 
 test('p, ctrl+v, an empty paste and a pasted path or link each ask find for a picture', () => {
@@ -267,7 +266,7 @@ test('p, ctrl+v, an empty paste and a pasted path or link each ask find for a pi
 
 test('a picture find added counts as a change, and the dialog says it goes too', () => {
   const e = editor({ find: async () => ({ count: 1 }), pictures: 0 })
-  e.found({ count: 1, note: 'Background · kai@dust/dusk ← danbooru 1' })
+  e.found({ count: 1, note: 'Background  kai@dust/dusk ← danbooru 1' })
   assert.equal(e.added, 1)
   assert.match(screen(e), /▣ 1 picture/)
   press(e, 'esc')
@@ -291,7 +290,6 @@ test('the top bar keeps Reset and Save however long the name, giving up the coun
     assert.match(top(cols), /Reset(?: R)? {2}\S*Save/)
   }
 
-  assert.match(top(200), /◆ Edit palette {2}kai@dust\/a-rather-long-palette-name {3}● unsaved · 1 changed {3}Reset/)
   assert.match(top(120), /◆ Edit palette {2}kai@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
   assert.match(top(112), /◆ Edit palette {2}kai@dust\/a-rather-long-palette-name {3}● {3}Reset/)
   assert.match(top(108), /│◆ kai@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)

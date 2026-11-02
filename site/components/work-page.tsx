@@ -289,7 +289,7 @@ function Family({ works }: { works: FamilyWork[] }) {
           <span class="flex-none font-mono text-xs text-muted-foreground" safe>
             {[work.medium === null ? null : (MEDIA.get(work.medium) ?? work.medium), work.year]
               .filter((part) => part !== null)
-              .join(' · ')}
+              .join(', ')}
           </span>
         </li>
       ))}

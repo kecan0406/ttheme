@@ -186,8 +186,8 @@ Glyphs that mean a state are in `MARKS`: ▌ the cursor's row, ◆ the palette w
 or handled, ▶ the part in focus, ▸ ▾ a closed and an open
 work, ● ○ on and off, ✓ ✗ pass and miss, ↑ ↓ more rows, ⇡ an update, ↻
 auto-update, × a removal, ↶ taking one back, ★ stars, ⧉ a link, ⌕ search, ⇠ a
-bright that follows its normal, ◐ contrast, ■ a swatch, ▣ pictures, · a
-separator, – not measured and … text cut short.
+bright that follows its normal, ◐ contrast, ■ a swatch, ▣ pictures, . an empty spot,
+– not measured and … text cut short.
 
 Four more parts are shared. Browse and the palette editor draw their key bar
 with `barLine` (`src/tui/bar.ts`): a badge, a lead, the keys, the key on the
@@ -207,7 +207,7 @@ reach — wears that key after its label, dim (`keyAfter` in `src/tui/parts.ts`,
 and preview's chip in `__tt_pv_chip`), and it is the first thing a narrow
 window takes off its row: preview's chip lets it go when fewer than two blank
 columns would follow it, and the editor's top bar before it gives up its
-`· N changed` count. A key that a control carries leaves the key bar, and one
+`N changed` count. A key that a control carries leaves the key bar, and one
 that no control carries stays on it, so a key is drawn once. A bar names only
 the keys that do something where the cursor stands: preview's picture rows show
 `=` while the size, position or opacity row under the cursor is off its
@@ -234,7 +234,7 @@ the same marks from `TTHEME_MARKS` beside it (`$TTHEME_MARKS[current]`).
 `MARKS`, fails on an SGR written anywhere else in `src/` or `shell/` (tests and
 `shell/check.zsh` aside; a truecolor `printf` format in the shell layer is a
 palette's color and passes) and on a mark written literally in the shell layer —
-all but ↑ ↓ × ■ · …, which also read as text there; it also checks that every
+all but ↑ ↓ × ■ . …, which also read as text there; it also checks that every
 role closes what it opens, that slot 6, slot 8 (and the foreground on it) and
 slot 1 hold 3:1 and the surfaces rise in order on every built-in palette, and
 that no glyph sits under two names in `MARKS`. The screens in `tests/screens/`

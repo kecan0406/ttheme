@@ -89,8 +89,9 @@ ttheme pin ssh:teal     # one host
 ttheme pin 'ssh:*.prod' # every host ending in .prod
 ```
 
-`ttheme pin` opens the palette list. Pick a palette with `enter`, then choose how
-far the pin reaches with `←` `→`:
+`ttheme pin` opens the palette list, with every pin you have in the panel beside it
+and the samples a `⇧←` `⇧→` away. Pick a palette with `enter`, then choose how far
+the pin reaches with `←` `→`:
 
 | Reach | Covers |
 |---|---|

@@ -1,5 +1,5 @@
   Preview  [Browse]  tab Preview
- Browse (6/6 · 3 picked)
+ Browse (6/6  3 picked)
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -9,14 +9,14 @@
                                                  │    ▾ Briarwood Rocks! (2/3) すたあ・ふ・ばら…  │
     ● ttheme                                     │ ▌    ● briony                                  │
       Built in                                   │      ● kipa                                    │
-      6 available · 2 installed · 1 to install   │      ○ rue                                     │
+      6 available  2 installed  1 to install     │      ○ rue                                     │
                                                  │    ▸ Lumen☆Song (1/3) たい☆なみ                │
                                                  │                                                │
                                                  │                                                │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │ ttheme/briony  Will install                    │
-                                                 │ Contrast 9/13 · ✗ accent hue outside its ANSI… │
+                                                 │ Contrast 9/13  ✗ accent hue outside its ANSI … │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │    × Remove marketplace                        │

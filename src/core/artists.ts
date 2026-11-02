@@ -181,5 +181,5 @@ export function creditLine(picture: Credited): string | undefined {
           .join(', ')}`
       : 'Background art (artist unknown)'
 
-  return page ? `${by} · ${publicUrl(page)}` : by
+  return page ? `${by} — ${publicUrl(page)}` : by
 }

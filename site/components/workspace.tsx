@@ -288,9 +288,9 @@ function MarketplaceFacts({
         href={marketplace ? repoUrl(marketplace.repo) : BUILTIN_URL}
         repo={marketplace ? marketplace.repo : REPO}
       />
-      <span safe>{`· ${[...facts, ...(marketplace ? [] : ['built in'])].join(' · ')}`}</span>
+      <span safe>{[...facts, ...(marketplace ? [] : ['built in'])].join(', ')}</span>
       {!marketplace ? null : marketplace.license ? (
-        <span safe>{`· ${marketplace.license}`}</span>
+        <span safe>{marketplace.license}</span>
       ) : (
         <Badge variant="warning">no license stated</Badge>
       )}

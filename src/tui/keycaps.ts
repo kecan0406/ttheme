@@ -1,5 +1,3 @@
-import { MARKS } from './style.ts'
-
 type Caps = 'mac' | 'text'
 
 export const MODIFIERS: [string, string][] = [
@@ -82,7 +80,7 @@ export function capped(text: string): string {
       }
 
       const shown = (start ? NAMED.get(piece) : undefined) ?? chord(piece) ?? piece
-      start = piece === MARKS.sep || piece === '—' || piece === '/' || /[,:.?!]$/.test(piece)
+      start = piece === '—' || piece === '/' || /[,:.?!]$/.test(piece)
 
       return shown
     })

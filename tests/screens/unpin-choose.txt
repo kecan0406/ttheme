@@ -2,4 +2,4 @@ ttheme: unknown palette 'ttheme/rue' pinned to ~/notes/**
 [UNPIN]  This directory  [~/work]   ←→ choose   enter unpin   esc keep
 ~/work            korund  and below  × unpin
 └── site/ ← here  kipa    this directory
-Then here · kipa pinned to this directory
+Then here  kipa pinned to this directory

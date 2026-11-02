@@ -143,12 +143,12 @@ function marketplaceChanges(result: BrowseResult, marketplaces: Marketplace[], w
 
   for (const m of result.adds) {
     const auto = m.source !== BUILTIN && (result.auto[m.source] ?? m.auto)
-    lines.push(`Added ${m.id} · ${m.shown} — ${counted(m.entries.length)}${auto ? ', updating on its own' : ''}`)
+    lines.push(`Added ${m.id}  ${m.shown} — ${counted(m.entries.length)}${auto ? ', updating on its own' : ''}`)
   }
 
   for (const source of result.removes) {
     const id = marketplaces.find((m) => m.source === source)?.id ?? source
-    lines.push(`Removed ${id} · ${shownSource(source)}`)
+    lines.push(`Removed ${id}  ${shownSource(source)}`)
     const kept = wanted.filter((name) => publisherOf(name) === id)
 
     if (kept.length > 0) {

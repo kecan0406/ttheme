@@ -141,7 +141,7 @@ export async function runSync(): Promise<void> {
     await redrawPictures(home, wait.say, undefined, {
       emit: false,
       manifest,
-      step: (done, of) => wait.set(`Drawing the background pictures · ${done}/${of}`),
+      step: (done, of) => wait.set(`Drawing the background pictures  ${done}/${of}`),
     })
   } catch (error) {
     failed = error
@@ -166,7 +166,7 @@ export function runOn(): void {
   }
 
   if (!state.off) {
-    console.log(`Already on · ${name}`)
+    console.log(`Already on  ${name}`)
 
     return
   }
@@ -188,7 +188,7 @@ export function runOff(): void {
 
   const pointed = commit(home, readMarketplaces(home), state, { ...state, off: true })
   const name = startupPalette(state)
-  console.log(`Off · new tabs open in the terminal's own colors${name ? ` — \`ttheme on\` uses ${name} again` : ''}`)
+  console.log(`Off  new tabs open in the terminal's own colors${name ? ` — \`ttheme on\` uses ${name} again` : ''}`)
 
   for (const wiring of wirings(state.terminals)) {
     if (pointed.get(wiring.id)?.restart) {
@@ -203,7 +203,7 @@ function defaultNote(name: string, terminals: Wired[], pointed: ReadonlyMap<Wire
   const lines =
     wearing.length > 0
       ? [
-          `Default ${name} · ${wearing.map((wiring) => wiring.name).join(', ')} open new tabs with it once their config reloads`,
+          `Default ${name}  ${wearing.map((wiring) => wiring.name).join(', ')} open new tabs with it once their config reloads`,
         ]
       : []
 
@@ -221,7 +221,7 @@ function defaultNote(name: string, terminals: Wired[], pointed: ReadonlyMap<Wire
 
   return lines.length > 0
     ? lines
-    : [`Default ${name} · no terminal is wired to open with it — \`${initCommand()}\` wires one`]
+    : [`Default ${name}  no terminal is wired to open with it — \`${initCommand()}\` wires one`]
 }
 
 function marketplaceNamed(home: string, sources: string[], name: string): string {
@@ -267,7 +267,7 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
 
   const show = (): void =>
     line.set(
-      `Updating ${[...waiting].map(shownSource).join(', ')}${remote.length > 1 ? ` · ${remote.length - waiting.size}/${remote.length}` : ''}`,
+      `Updating ${[...waiting].map(shownSource).join(', ')}${remote.length > 1 ? `  ${remote.length - waiting.size}/${remote.length}` : ''}`,
     )
 
   show()

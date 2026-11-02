@@ -9,7 +9,7 @@ function framing({ size, position, strength }: SharedPicture): string {
     strength === undefined ? null : `${strength}× opacity`,
   ]
     .filter((part) => part !== null)
-    .join(' · ')
+    .join(', ')
 }
 
 export function pictureOf(shared: SharedPicture): Picture {

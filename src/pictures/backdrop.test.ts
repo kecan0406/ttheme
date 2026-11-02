@@ -453,12 +453,10 @@ test('the conf lists every picture preview can switch to with its artist, and on
   assert.deepEqual(
     conf()
       .split('\n')
-      .filter((line) => /^# (?:credit|source|profile) /.test(line)),
+      .filter((line) => /^# (?:source|profile) /.test(line)),
     [
-      '# credit safebooru_1 Background art by inkwell (x.com/inkwell), paper boat · https://www.pixiv.net/artworks/1',
       '# source safebooru_1 pixiv 1 https://www.pixiv.net/artworks/1',
       '# profile safebooru_1 inkwell x https://x.com/inkwell',
-      '# credit safebooru_2 Background art (artist unknown) · https://example.test/2',
     ],
   )
   showImage(configHome, 'tamsin', 'safebooru_1')

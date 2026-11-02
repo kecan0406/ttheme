@@ -357,10 +357,10 @@ __tt_pv_bg_credit() {
     [[ -n $pu ]] && smark="$TTHEME_MARKS[link] "
   fi
   items=(${by:+"by $by"} ${lab:+"$smark$lab"} ${ref:+"$pmark$ref"})
-  while (( ${#items} )) && (( ${#${(j: · :)items}} > room )); do
+  while (( ${#items} )) && (( ${#${(j:  :)items}} > room )); do
     items[-1]=()
   done
-  REPLY=${(j: · :)items}
+  REPLY=${(j:  :)items}
   if [[ -n $smark && $REPLY == *"$smark$lab"* ]]; then
     (( color )) && acc=$ac
     REPLY=${REPLY/"$smark$lab"/$acc$TTHEME_MARKS[link]${acc:+$TTHEME_SGR[/accent]} $'\e]8;;'$pu$'\e\\'$lab$'\e]8;;\e\\'}
@@ -395,7 +395,7 @@ __tt_pv_bg_copy() {
     __tt_b64s $text
     __tt_out $'\e]52;c;'$REPLY$'\a'
   fi
-  msg="Copied · $text" msgt=200
+  msg="Copied  $text" msgt=200
 }
 
 __tt_pv_bg_profiles() {
@@ -412,7 +412,7 @@ __tt_pv_bg_profiles() {
   for entry in $ents; do
     e=(${=entry})
     lead=""
-    [[ -n $plain ]] && lead=" · "
+    [[ -n $plain ]] && lead="  "
     if (( many )); then
       (( ${#plain} + ${#lead} + ${#e[1]} > room )) && return 0
       plain+=$lead$e[1] REPLY+=$lead$e[1] lead=" "
@@ -553,7 +553,7 @@ __tt_pv_foot() {
     elif (( pk == 2 )); then
       note="Until this tab closes"
     else
-      note="New tabs · the default palette"
+      note="New tabs, the default palette"
     fi
     kk=(←→ enter) kl=(choose confirm)
     rk=esc right=$b$ke$z$d" back"$z
@@ -811,18 +811,75 @@ __tt_pv_help() {
   return 0
 }
 
-__tt_pv_specimen() {
-  local -a sp=(${=applied}) lines parts
-  (( ${#sp} >= 20 )) || return 0
-  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] cell hex fore line text piece role tabs="" built="" key="$applied|$painted|$scene|$sw|$sc|$ph"
-  local -A rs=(p "" d $TTHEME_SGR[dim] b $TTHEME_SGR[bold])
-  local -i i r=6 cw=4 k n=${#TTHEME_SCENES} at room
-  (( n )) || return 0
+__tt_pv_tabs() {
+  local -a names=($TTHEME_SCENES)
+  [[ $mode == pin ]] && names=(Pins $names)
+  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] b=$TTHEME_SGR[bold]
+  local -i k at n=${#names}
+  (( n )) || return 1
+  at=$(( (scene % n + n) % n + 1 ))
+  shown=$names[at] tabs=""
+  if (( ${#${(j:  :)names}} <= sw )); then
+    for (( k = 1; k <= n; k++ )); do
+      (( k > 1 )) && tabs+="  "
+      if (( k == at )); then
+        tabs+=$b$ac$names[k]$z
+      else
+        tabs+=$d$names[k]$z
+      fi
+    done
+  else
+    tabs=$b$ac$names[at]$z"  "$d"$at/$n"$z
+  fi
+}
+
+__tt_pv_sample() {
+  local shown tabs
+  __tt_pv_tabs || return 0
+  if [[ $shown == Pins ]]; then
+    __tt_pv_pins
+  else
+    __tt_pv_specimen
+  fi
+}
+
+__tt_pv_pins() {
+  local key="pins|$sw|$sc|$ph" built=$'\e[2;'$sc'H'$tabs line REPLY
+  local -a reply lines
+  local -i r=4
   if [[ $key == "$pvscene" ]]; then
     out+=$pvscenes
     return 0
   fi
-  at=$(( (scene % n + n) % n + 1 ))
+  if (( ${#TTHEME_PINS} )); then
+    __tt_map_whole $sw $(( ph - 7 > 2 ? ph - 7 : 2 ))
+    lines=("${reply[@]}" "")
+    __tt_here_fit Here $sw
+    lines+=("${reply[@]}")
+  else
+    __tt_clip "$TTHEME_SGR[dim]No pins yet — enter picks one here$TTHEME_SGR[reset]" $sw
+    lines=("$REPLY")
+  fi
+  for line in "${lines[@]}"; do
+    (( r < ph )) || break
+    built+=$'\e['$r';'$sc'H'$line
+    (( ++r ))
+  done
+  pvscene=$key pvscenes=$built
+  out+=$built
+}
+
+__tt_pv_specimen() {
+  local -a sp=(${=applied}) lines parts
+  (( ${#sp} >= 20 )) || return 0
+  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] cell hex fore line text piece role built="" key="$applied|$painted|$scene|$sw|$sc|$ph"
+  local -A rs=(p "" d $TTHEME_SGR[dim] b $TTHEME_SGR[bold])
+  local -i i r=6 cw=4 k at=${TTHEME_SCENES[(Ie)$shown]} room
+  if [[ $key == "$pvscene" ]]; then
+    out+=$pvscenes
+    return 0
+  fi
+  built+=$'\e[2;'$sc'H'$tabs
   if [[ $applied == "$painted" ]]; then
     for (( i = 0; i < 16; i++ )); do
       k=$(( i < 8 ? 30 + i : 82 + i ))
@@ -846,19 +903,6 @@ __tt_pv_specimen() {
   rs[s]=$cell
   printf -v cell '\e[48;2;%d;%d;%dm' $((16#${sp[3]:1:2})) $((16#${sp[3]:3:2})) $((16#${sp[3]:5:2}))
   rs[c]=$cell
-  if (( ${#${(j:  :)TTHEME_SCENES}} <= sw )); then
-    for (( k = 1; k <= n; k++ )); do
-      (( k > 1 )) && tabs+="  "
-      if (( k == at )); then
-        tabs+=$TTHEME_SGR[bold]$ac$TTHEME_SCENES[k]$z
-      else
-        tabs+=$d$TTHEME_SCENES[k]$z
-      fi
-    done
-  else
-    tabs=$TTHEME_SGR[bold]$ac$TTHEME_SCENES[at]$z"  "$d"$at/$n"$z
-  fi
-  built+=$'\e[2;'$sc'H'$tabs
   (( sw < 44 )) && cw=3
   (( sw >= 56 )) && cw=$(( (sw + 1) / 8 - 1 ))
   (( cw > 7 )) && cw=7
@@ -1001,7 +1045,7 @@ __tt_pv_gpick() {
   __tt_pv_regroup
   if __tt_config_write $var $v; then
     __tt_tilde "$TTHEME_CONFIG"
-    msg="Saved · $REPLY" msgt=200
+    msg="Saved  $REPLY" msgt=200
   else
     typeset -g "$var=$was"
     __tt_pv_regroup
@@ -1151,7 +1195,7 @@ __tt_pv_conf_save() {
   fi
   if __tt_config_write "${pairs[@]}"; then
     __tt_tilde "$TTHEME_CONFIG"
-    conf=0 msg="Saved · $REPLY" msgt=200
+    conf=0 msg="Saved  $REPLY" msgt=200
     (( ${pairs[(Ie)TTHEME_TAB_PALETTE]} )) && __tt_cli sync > /dev/null 2>&1 && __tt_reload
     if (( ${pairs[(Ie)TTHEME_MODE]} )); then
       __tt_pv_redraw remode
@@ -1294,23 +1338,21 @@ __tt_pv_flush() {
 }
 
 __tt_pv_reach() {
-  local key=${pkeys[pk]} base top k lab home=${HOME:a} here=${PWD:a} htip="" d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] REPLY
-  local -A own=() below=() parent=() mark=() tstrip=()
-  local -a roots=() lp=() lpw=() ll=() lat=() lpal=() lnote=() lflag=() reply was=()
+  local key=${pkeys[pk]} base k lab t=$'\t' d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] REPLY
+  local -a reply was=()
   local -A TTHEME_PINS=("${(@kv)TTHEME_PINS}")
   local -i room=$2 spare
   (( color )) || d= z=
-  (( room < 2 )) && room=2
+  (( room < 3 )) && room=3
   if [[ $key == ssh:* ]]; then
     if [[ -n ${TTHEME_PINS[$key]} && $TTHEME_PINS[$key] != "$pick" ]]; then
       __tt_label "${TTHEME_PINS[$key]}"
       lab=$REPLY
       __tt_pin_scope "$key"
-      was+=("$lab · $REPLY")
+      was+=("$lab$t$REPLY")
     fi
     TTHEME_PINS[$key]=$pick
-    mark[$key]=new
-    __tt_map_ssh
+    base=$key
   else
     __tt_pin_base "$key"
     base=$REPLY
@@ -1322,28 +1364,23 @@ __tt_pv_reach() {
         __tt_label "${TTHEME_PINS[$k]}"
         lab=$REPLY
         __tt_pin_scope "$k"
-        was+=("$lab · $REPLY")
+        was+=("$lab$t$REPLY")
       fi
       unset "TTHEME_PINS[$k]"
     done
     TTHEME_PINS[$key]=$pick
-    top=$base
-    [[ $base != / ]] && __tt_pin_cover "${base:h}" && __tt_pin_base "$REPLY" && top=$REPLY
-    mark[$base]=new
-    __tt_map_build "$top"
   fi
-  __tt_map_fit $1
-  (( ${#reply} > room )) && reply=("${(@)reply[1,room-1]}" "    …")
+  __tt_map_whole $1 $room "$base"
   spare=$(( room - ${#reply} ))
   reach=("${reply[@]}")
   [[ $key == /* || ${#was} -gt 0 ]] && reach+=("")
   __tt_pin_where "$key"
   base=$REPLY
   for k in $was; do
-    if ! __tt_clip "${d}Replaces ${k% · *} on $base · ${k##* · }$z" $1 && (( spare > 0 )); then
-      __tt_clip "${d}Replaces ${k% · *}$z" $1
+    if ! __tt_clip "${d}Replaces ${k%$t*} on $base  ${k##*$t}$z" $1 && (( spare > 0 )); then
+      __tt_clip "${d}Replaces ${k%$t*}$z" $1
       reach+=("$REPLY")
-      __tt_clip "${d}  on $base · ${k##* · }$z" $1
+      __tt_clip "${d}  on $base  ${k##*$t}$z" $1
       (( spare-- ))
     fi
     reach+=("$REPLY")
@@ -1351,7 +1388,7 @@ __tt_pv_reach() {
   __tt_label "$pick"
   lab=$REPLY
   __tt_pin_scope "$key"
-  __tt_clip "→ $base · $REPLY" $(( $1 - ${(m)#lab} - 2 ))
+  __tt_clip "→ $base  $REPLY" $(( $1 - ${(m)#lab} - 2 ))
   rsub=$REPLY
   [[ $key == /* ]] || return 0
   __tt_here_fit "Then here" $1
@@ -1551,10 +1588,10 @@ __tt_pv_draw() {
       wk=$REPLY
       __tt_label $an
       __tt_pv_head 1 $sc $se "$REPLY" "$wk"
-      __tt_pv_specimen
+      __tt_pv_sample
     else
       __tt_pv_head 1 $sc $se "Terminal colors"
-      __tt_pv_specimen
+      __tt_pv_sample
     fi
     (( help && sw < 48 )) && __tt_pv_help
   else
@@ -2450,7 +2487,7 @@ __tt_pv_te_ghost() {
   out+=$'\e['$r0';'$col'H  '$d"Colors"$'\e['$r0';'$(( col + 12 ))'H'" original  tinted "$z
   out+=$'\e['$(( r0 + 1 ))';'$col'H  '$d"Size"$'\e['$(( r0 + 1 ))';'$(( col + 12 ))'H'${(l:T::─:)}$z
   for (( i = 1; i <= 9; i++ )); do
-    out+=$'\e['$(( r0 + 3 + (i - 1) / 3 ))';'$(( col + 12 + (i - 1) % 3 * 3 ))'H'$d"·"$z
+    out+=$'\e['$(( r0 + 3 + (i - 1) / 3 ))';'$(( col + 12 + (i - 1) % 3 * 3 ))'H'$d$TTHEME_MARKS[spot]$z
   done
   out+=$'\e['$(( r0 + 4 ))';'$col'H  '$d"Position"$z
   out+=$'\e['$(( r0 + 7 ))';'$col'H  '$d"Opacity"$'\e['$(( r0 + 7 ))';'$(( col + 12 ))'H'${(l:T::─:)}$z

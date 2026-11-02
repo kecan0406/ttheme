@@ -15,9 +15,9 @@ test('a zone is plain text outside a frame, so a view drawn elsewhere carries no
 })
 
 test('a frame lifts its marks out and keeps the columns they wrapped, past wide text and colors', () => {
-  const got = spans(() => ` ${zone('a', '\x1b[1mカタ\x1b[22m')} · ${zone('b', `x ${zone('c', 'y')}`)}`)
-  assert.equal(got.text, ' \x1b[1mカタ\x1b[22m · x y')
-  assert.deepEqual(got.spans, ['a 3:1+4', 'c 3:10+1', 'b 3:8+3'])
+  const got = spans(() => ` ${zone('a', '\x1b[1mカタ\x1b[22m')}  ${zone('b', `x ${zone('c', 'y')}`)}`)
+  assert.equal(got.text, ' \x1b[1mカタ\x1b[22m  x y')
+  assert.deepEqual(got.spans, ['a 3:1+4', 'c 3:9+1', 'b 3:7+3'])
 })
 
 test('a column move places the zones after it, and a mark cut off by fit or clip closes where the cut text ends', () => {

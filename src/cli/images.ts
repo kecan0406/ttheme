@@ -33,7 +33,7 @@ export async function runImage(asked: string, action: string, key?: string): Pro
 
     const { at, of } = showImage(home, name, key)
     refreshPictures(home)
-    process.stderr.write(`Background · ${name} ${at}/${of} ${key}\n`)
+    process.stderr.write(`Background  ${name} ${at}/${of} ${key}\n`)
 
     return 0
   }
@@ -41,23 +41,21 @@ export async function runImage(asked: string, action: string, key?: string): Pro
   if (action === 'drop') {
     const { key: gone, left } = dropImage(home, name, key)
     refreshPictures(home)
-    process.stderr.write(`Background · ${name} removed ${gone} · ${left} left\n`)
+    process.stderr.write(`Background  ${name} removed ${gone}  ${left} left\n`)
 
     return 0
   }
 
   if (action === 'tone' || action === 'original') {
     const drawn = await redrawColoring(home, name, action, key)
-    process.stderr.write(`Background · ${name} ${drawn.key} ${action === 'tone' ? 'tinted' : 'in its own colors'}\n`)
+    process.stderr.write(`Background  ${name} ${drawn.key} ${action === 'tone' ? 'tinted' : 'in its own colors'}\n`)
 
     return 0
   }
 
   if (action === 'prepare') {
     const { key: ready, coloring } = prepareColoring(home, name, key)
-    process.stderr.write(
-      `Background · ${name} ${ready} ready ${coloring === 'tone' ? 'tinted' : 'in its own colors'}\n`,
-    )
+    process.stderr.write(`Background  ${name} ${ready} ready ${coloring === 'tone' ? 'tinted' : 'in its own colors'}\n`)
 
     return 0
   }

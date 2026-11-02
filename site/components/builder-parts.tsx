@@ -794,7 +794,7 @@ export function FileNote({ about }: { about: AboutView }) {
       </code>
       {about.from ? (
         <>
-          {' · copied from '}
+          {', copied from '}
           <span class="font-medium text-soft-foreground" translate="no" safe>
             {about.from}
           </span>

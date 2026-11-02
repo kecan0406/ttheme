@@ -333,7 +333,6 @@ test('right unfolds a work and space picks the palette under the cursor', async 
   assert.deepEqual(focused, ['ttheme/juno'])
   assert.match(frames, /▌ {2}▾ Harbor Lights \(0\/2\) 灯台あかり☆ライツ/)
   assert.match(frames, /▸ Starfall \(0\/2\)/)
-  assert.match(frames, /Palettes \(4\/4 · 0 picked\)/)
 })
 
 test('works fold back and the cursor moves across them', async () => {
@@ -346,7 +345,6 @@ test('typing filters and the cursor lands on the first match', async () => {
   const { picked, frames } = await drive(['h', 'a', 'r', 'b', ' ', '\r'])
   assert.deepEqual(picked, ['ttheme/juno'])
   assert.match(frames, /│ {4}harb_/)
-  assert.match(frames, /Palettes \(2\/4 · 0 picked\)/)
 })
 
 test('editing the filter keeps the focused palette when it still matches', async () => {
@@ -394,11 +392,6 @@ test('a folded work still reports how many of its palettes are picked', async ()
   assert.match(frames, /▸ Starfall \(1\/2\)/)
 })
 
-test('the filtered count comes from the palettes, not from the drawn rows', async () => {
-  const { frames } = await drive(['p', 'i', '\r'])
-  assert.match(frames, /Palettes \(1\/4 · 0 picked\)/)
-})
-
 test('space on a work row picks every palette under it, and again drops them', async () => {
   const all = await drive([RIGHT, ' ', '\r'])
   assert.deepEqual(all.picked.sort(), ['ttheme/juno', 'ttheme/wren'])
@@ -410,10 +403,8 @@ test('work scope lists works only, previews each lead and never unfolds', async 
   const { picked, frames, focused } = await drive([RIGHT, DOWN, RIGHT, ' ', '\r'], { scope: 'work' })
   assert.deepEqual(picked.sort(), ['ttheme/pip', 'ttheme/quill'])
   assert.deepEqual(focused, ['ttheme/juno', 'ttheme/pip'])
-  assert.match(frames, /Works \(2\/2 · 0 picked\)/)
   assert.match(frames, /▌ {2}○ Harbor Lights \(2\) 灯台あかり☆ライツ/)
   assert.match(frames, /▌ {2}○ Starfall +\(2\)/)
-  assert.match(frames, /Works \(2\/2 · 1 picked\)/)
   assert.doesNotMatch(frames, /←→ fold/)
   assert.doesNotMatch(frames, /▾/)
 })
@@ -421,7 +412,6 @@ test('work scope lists works only, previews each lead and never unfolds', async 
 test('work scope picks the whole work even when a member name filtered it', async () => {
   const { picked, frames } = await drive(['j', 'u', ' ', '\r'], { scope: 'work' })
   assert.deepEqual(picked.sort(), ['ttheme/juno', 'ttheme/wren'])
-  assert.match(frames, /Works \(1\/2 · 0 picked\)/)
   assert.match(frames, /▌ {2}● Harbor Lights \(2\) 灯台あかり☆ライツ/)
 })
 

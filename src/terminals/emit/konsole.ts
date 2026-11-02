@@ -69,7 +69,7 @@ function wallpaperLines(picture: ProfileBackground | undefined): string[] {
 }
 
 export function konsoleScheme(theme: Theme, picture?: ProfileBackground): string {
-  return [...banner(theme), '', ...schemeLines(theme, `ttheme · ${theme.name}`, wallpaperLines(picture))].join('\n')
+  return [...banner(theme), '', ...schemeLines(theme, `ttheme: ${theme.name}`, wallpaperLines(picture))].join('\n')
 }
 
 export const konsole: Emitter = {

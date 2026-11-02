@@ -10,15 +10,15 @@
 
 
 
-
-
-
-
-
-kipa  → ssh teal · while connected
+kipa  → ssh teal  while connected
+~
+├── notes/                   ttheme/rue  and below  not installed
+└── work/ ← here             korund      and below
+    └── site/                kipa        this directory
+/nonexistent-ttheme/archive  kipa        and below  no such directory
 ssh
-├── *.prod  kipa  while connected
-└── teal    kipa  while connected  new
+├── *.prod                   kipa        while connected
+└── teal                     kipa        while connected  new
 
-Replaces korund on ssh teal · while connected
+Replaces korund on ssh teal  while connected
  [PREVIEW (PIN)] kipa → [This host]   ssh teal   ←→ choose   enter confirm                 esc back

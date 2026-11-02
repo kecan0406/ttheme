@@ -453,7 +453,7 @@ export function statusOf(edit: Edit, kept: boolean, saved: boolean): StatusView 
 
   return named
     ? { ok: false, text: `kept in this browser, but the name ${named}` }
-    : { ok: true, text: `kept in this browser as ${edit.name}${writesOther(edit) ? ' · both modes' : ''}` }
+    : { ok: true, text: `kept in this browser as ${edit.name}${writesOther(edit) ? ', both modes' : ''}` }
 }
 
 const SLOT_VARS = ['--bg', '--fg', '--cu', '--se', ...Array.from({ length: 16 }, (_, i) => `--a${i}`)]

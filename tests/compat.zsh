@@ -268,7 +268,7 @@ report() {
       if [[ -z $got ]]; then mark="  (not run)"
       elif [[ $got == skip && $want != skip ]]; then mark="  skip"
       elif [[ $want == '?' ]]; then mark="? $got"
-      elif [[ $got == $want ]]; then [[ $got == pass ]] && mark="✓ pass" || mark="· $got"
+      elif [[ $got == $want ]]; then [[ $got == pass ]] && mark="✓ pass" || mark="– $got"
       elif [[ $want == pass ]]; then mark="✗ $got"; broken+=1
       else mark="+ $got"
       fi
@@ -285,7 +285,7 @@ report() {
     done
     [[ -s $OUT/$term.err ]] && print -r -- "$term stderr: $(<$OUT/$term.err)"
   done
-  print -r -- "✓ as expected · known gap ✗ regression + better than expected ? not measured before, skip: not measurable this run — screenshots in $OUT"
+  print -r -- "✓ as expected – known gap ✗ regression + better than expected ? not measured before, skip: not measurable this run — screenshots in $OUT"
   (( ! broken ))
 }
 

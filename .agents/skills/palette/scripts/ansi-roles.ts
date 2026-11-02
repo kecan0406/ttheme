@@ -73,7 +73,7 @@ for (const palette of setPalettes(positionals)) {
     }
   })
   if (net.length > 0 || left.length > 0) {
-    console.log(`\n── ${name} · ${workOf(doc)}`)
+    console.log(`\n── ${name}  ${workOf(doc)}`)
     for (const n of net)
       console.log(
         `  ansi${n.slot}  ${n.from} → ${n.to}  ${n.hueFrom}° → ${n.hueTo}°  ΔE ${n.de}  ${n.rules.join(', ')}`,

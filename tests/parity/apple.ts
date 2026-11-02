@@ -1,7 +1,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const OURS = 'ttheme · '
+const OURS = 'ttheme: '
 
 export interface Bookmark {
   path: string

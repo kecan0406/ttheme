@@ -93,7 +93,7 @@ export function palettesZsh(palettes: PaletteEntry[], works: readonly Work[], co
     ...Object.entries(STANDING_LINES).map(([standing, line]) => `  ${standing} ${quote(line)}`),
     ')',
     '',
-    '# the palette new tabs open with, which the iTerm2 "ttheme · default" profile shows',
+    '# the palette new tabs open with, which the iTerm2 "ttheme: default" profile shows',
     `typeset -g TTHEME_STARTUP=${startup ?? ''}`,
     '',
     '# the mode TTHEME_PALETTE holds, whether TTHEME_MODE is auto — a tab whose terminal reports the appearance then follows it at its prompt — and the values TTHEME_MODE takes here',

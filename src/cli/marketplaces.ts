@@ -228,7 +228,7 @@ async function addSource(home: string, arg: string): Promise<{ source: string; i
   if (was) {
     const fetched = await repin(home, was, source)
     console.log(
-      `Moved ${fetched.id} to ${refOf(source) ?? 'its default branch'} · ${shownSource(source)} — ${counted(fetched.entries.length)}`,
+      `Moved ${fetched.id} to ${refOf(source) ?? 'its default branch'}  ${shownSource(source)} — ${counted(fetched.entries.length)}`,
     )
 
     return { source, id: fetched.id, fresh: false }
@@ -238,7 +238,7 @@ async function addSource(home: string, arg: string): Promise<{ source: string; i
     const id = marketplaceId(localIdentity(source))
     register(home, source, id)
     const count = readMarketplaceDir(source, id).entries.length
-    console.log(`Added ${id} · ${shownSource(source)} — ${counted(count)}, always up to date`)
+    console.log(`Added ${id}  ${shownSource(source)} — ${counted(count)}, always up to date`)
 
     return { source, id, fresh: true }
   }
@@ -251,7 +251,7 @@ async function addSource(home: string, arg: string): Promise<{ source: string; i
   console.log(
     source === BUILTIN
       ? `Added the built-in marketplace — ${count}`
-      : `Added ${fetched.id} · ${shownSource(source)} — ${count}${auto ? ', updating on its own' : ''}`,
+      : `Added ${fetched.id}  ${shownSource(source)} — ${count}${auto ? ', updating on its own' : ''}`,
   )
 
   return { source, id: fetched.id, fresh: true }
@@ -267,7 +267,7 @@ async function addMarketplace(arg: string): Promise<void> {
 
   if (isLocal(source)) {
     console.log(
-      '\nThe Browse tab of `ttheme` picks them · `ttheme share` puts the folder on GitHub, where `ttheme marketplace add <owner>/<repo>` adds it anywhere',
+      '\nThe Browse tab of `ttheme` picks them, `ttheme share` puts the folder on GitHub, where `ttheme marketplace add <owner>/<repo>` adds it anywhere',
     )
   } else if (source === BUILTIN) {
     console.log('\nThe Browse tab of `ttheme` picks them')
@@ -303,7 +303,7 @@ function removeMarketplace(name: string): void {
   writeInstalled(home, next)
   dropCache(home, source)
   sync(home, readMarketplaces(home), next)
-  console.log(`Removed ${id ?? name} · ${shownSource(source)}`)
+  console.log(`Removed ${id ?? name}  ${shownSource(source)}`)
 
   if (kept.length > 0) {
     console.log(keptNote(kept))
@@ -419,7 +419,7 @@ async function initLocal(home: string, dir: string, name: string, owner?: string
 
   const id = marketplaceId(identity)
   register(home, dir, id)
-  console.log(`${fresh ? 'Made' : 'Added'} your marketplace ${id} · ${shownSource(dir)}`)
+  console.log(`${fresh ? 'Made' : 'Added'} your marketplace ${id}  ${shownSource(dir)}`)
 
   return { dir, ...identity, id }
 }
@@ -631,7 +631,7 @@ export function checkMarketplace(arg: string | undefined, commons = commonsFor(c
 
   for (const entry of entries) {
     const failing = gateLines(entry).filter((l) => l.startsWith('  ✗'))
-    const shown = `${slugOf(entry.name)}${entry.subject ? ` · ${entry.subject}` : ''}`
+    const shown = `${slugOf(entry.name)}${entry.subject ? `  ${entry.subject}` : ''}`
     console.log(`  ${shown}${failing.length > 0 ? `\n${failing.join('\n')}` : '  passes every contrast check'}`)
   }
 
@@ -645,7 +645,7 @@ export function checkMarketplace(arg: string | undefined, commons = commonsFor(c
 
   const tally = (n: number, what: string) => `${n} ${what}${n === 1 ? '' : 's'}`
   console.log(
-    `\n${id} · ${counted(entries.length)}${works.length > 0 ? ` · ${tally(works.length, 'work')} proposed` : ''} · ${tally(errors.length, 'error')} · ${tally(warnings.length, 'warning')}`,
+    `\n${id}  ${counted(entries.length)}${works.length > 0 ? `  ${tally(works.length, 'work')} proposed` : ''}  ${tally(errors.length, 'error')}  ${tally(warnings.length, 'warning')}`,
   )
 
   return errors.length > 0 ? 1 : 0

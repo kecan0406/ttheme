@@ -1153,7 +1153,7 @@ export class PalettePrompt {
     const title = this.scope === 'work' ? 'Works' : 'Palettes'
 
     if (this.state === 'submit') {
-      return [`${dim('◇')} ${title} ${dim(`${MARKS.sep} ${this.list.pickedCount()} picked`)}`]
+      return [`${dim('◇')} ${title}  ${dim(`${this.list.pickedCount()} picked`)}`]
     }
 
     if (this.state === 'cancel') {

@@ -111,7 +111,7 @@ test('a color scheme carries all thirty of Konsole entries: normal, intense from
   assert.equal(iniValue(scheme, 'Color1Intense', 'Color'), '144,128,128')
   assert.equal(iniValue(scheme, 'Color1Faint', 'Color'), '17,77,78')
   assert.equal(iniValue(scheme, 'ForegroundIntense', 'Color'), '227,226,231')
-  assert.equal(iniValue(scheme, 'General', 'Description'), 'ttheme · orla')
+  assert.equal(iniValue(scheme, 'General', 'Description'), 'ttheme: orla')
   assert.equal(iniValue(scheme, 'General', 'Wallpaper'), '')
   const pictured = konsoleScheme(theme, { image: '/p/orla.png', opacity: 0.3, cover: true, position: 'top-right' })
   assert.equal(iniValue(pictured, 'General', 'Wallpaper'), '/p/orla.png')
@@ -170,7 +170,7 @@ test('sync gives every installed palette a profile on top of the user’s own, a
   assert.equal(orla, konsoleProfile(toTheme(manifest.palettes[1] as PaletteEntry), 'Mine.profile'))
   assert.equal(iniValue(orla, 'Appearance', 'ColorScheme'), 'ttheme-orla')
   assert.equal(iniValue(orla, 'Cursor Options', 'CustomCursorColor'), '255,0,0')
-  assert.equal(iniValue(orla, 'General', 'Name'), 'ttheme · orla')
+  assert.equal(iniValue(orla, 'General', 'Name'), 'ttheme: orla')
   assert.equal(iniValue(orla, 'General', 'Parent'), 'Mine.profile')
 
   sync(configHome, manifest, { ...state, palettes: ['orla'], konsoleBase: undefined }, home)
@@ -248,15 +248,15 @@ test('every running Konsole takes the new default over D-Bus, and one that canno
   const state: Installed = { terminals: ['konsole'], palettes: ['orla', 'juno'], konsoleBase: 'Mine.profile' }
 
   const live = bus([
-    { service: 'org.kde.konsole-8187', loaded: ['ttheme · orla', 'ttheme · juno'] },
-    { service: 'org.kde.konsole', loaded: ['ttheme · orla', 'ttheme · juno'] },
+    { service: 'org.kde.konsole-8187', loaded: ['ttheme: orla', 'ttheme: juno'] },
+    { service: 'org.kde.konsole', loaded: ['ttheme: orla', 'ttheme: juno'] },
   ])
 
   const took = commit(configHome, manifest, state, { ...state, startup: 'juno' }, true, live.host, home)
   assert.deepEqual([...took], [['konsole', { restart: false }]])
-  assert.deepEqual([...live.defaults.values()], ['ttheme · juno', 'ttheme · juno'])
+  assert.deepEqual([...live.defaults.values()], ['ttheme: juno', 'ttheme: juno'])
 
-  const stale = bus([{ service: 'org.kde.konsole-9', loaded: ['ttheme · orla'] }])
+  const stale = bus([{ service: 'org.kde.konsole-9', loaded: ['ttheme: orla'] }])
   assert.deepEqual(
     [...commit(configHome, manifest, state, { ...state, startup: 'juno' }, true, stale.host, home)],
     [['konsole', { restart: true }]],
@@ -360,11 +360,11 @@ test('init offers Konsole where it runs, preselects it once it has run, and says
   const state: Installed = { terminals: ['konsole'], palettes: ['orla'] }
   assert.deepEqual(wiringPlan(configHome, state, home), [
     `Write ${konsoleData(home).replace(home, '~')}/ttheme-* — the palettes' theme files`,
-    `Write ${konsoleData(home).replace(home, '~')}/ttheme-*.profile — a "ttheme · <palette>" profile per palette, on top of your own`,
+    `Write ${konsoleData(home).replace(home, '~')}/ttheme-*.profile — a "ttheme: <palette>" profile per palette, on top of your own`,
     'Edit ~/.config/konsolerc — DefaultProfile; `ttheme off` puts yours back',
   ])
   assert.deepEqual(wiringNext(configHome, state, new Map([['konsole', { restart: true }]]), home), [
-    'Konsole profiles  A "ttheme · <palette>" per palette in its profile list',
-    'Restart Konsole   New tabs open on "ttheme · orla"',
+    'Konsole profiles  A "ttheme: <palette>" per palette in its profile list',
+    'Restart Konsole   New tabs open on "ttheme: orla"',
   ])
 })

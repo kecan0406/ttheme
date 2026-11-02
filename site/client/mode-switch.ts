@@ -19,7 +19,7 @@ class ModeSwitch extends HTMLElement {
   }
 
   #sync = () => {
-    this.querySelector('button')?.setAttribute('title', `${setting()} · click for ${nextSetting()}`)
+    this.querySelector('button')?.setAttribute('title', `${setting()}, click for ${nextSetting()}`)
   }
 
   #click = () => {

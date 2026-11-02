@@ -5,7 +5,6 @@ import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { ROOT } from '../root.ts'
 import { cap, capped, capsFor, KEYCAPS, MODIFIERS, useCaps } from './keycaps.ts'
-import { MARKS } from './style.ts'
 
 afterEach(() => useCaps('text'))
 
@@ -32,7 +31,7 @@ test('Mac key symbols only where ttheme runs on a Mac outside ssh, unless TTHEME
 test('in a line of help, a named key turns into its symbol only where a key stands', () => {
   useCaps('mac')
   assert.equal(capped('enter  tab  opens the picker under the slot'), '↩  ⇥  opens the picker under the slot')
-  assert.equal(capped('⇧←→  another tab  ·  home  end  the ends'), '⇧←→  another tab  ·  ↖  ↘  the ends')
+  assert.equal(capped('⇧←→  another tab  home  end  the ends'), '⇧←→  another tab  ↖  ↘  the ends')
   assert.equal(capped('space adds it, enter adds it and goes back'), 'space adds it, ↩ adds it and goes back')
   assert.equal(capped('they pass the gate. enter moves on'), 'they pass the gate. ↩ moves on')
   assert.equal(capped('Reset? enter again'), 'Reset? ↩ again')
@@ -67,26 +66,25 @@ test("the shell layer's key tables are the TypeScript ones", () => {
 test('the shell layer draws every key and line of help as the Node screens do', () => {
   const lines = [
     'enter  tab  opens the picker under the slot',
-    '↑↓  lightness  ·  ←→  chroma  ·  ⇧←→  hue by 5  ·  pgup  pgdn  lightness ×5  ·  home  end  the ends',
+    '↑↓  lightness  ←→  chroma  ⇧←→  hue by 5  pgup  pgdn  lightness ×5  home  end  the ends',
     'esc  ctrl+c  leaves, asking first when something changed: y saves, n discards, esc keeps editing',
-    'Any text  ·  bksp  ·  ctrl+u clears',
-    'enter on Apply, or ⇧enter anywhere  ·  saves, asks where',
-    'alt+c  ·  ↑↓ setting  ←→ value',
-    'shift+tab  ·  tab on a work',
+    'Any text  bksp  ctrl+u clears',
+    'enter on Apply, or ⇧enter anywhere  saves, asks where',
+    'alt+c  ↑↓ setting  ←→ value',
+    'shift+tab  tab on a work',
     'space adds it, enter adds it and goes back',
     'drop a picture or ctrl+v — esc leaves',
     'Reset? enter again',
-    '←→ choose · enter unpin · esc keep',
+    '←→ choose   enter unpin   esc keep',
     'the end of the tab',
     '  leading  and trailing  ',
     'a+b  ctrl+  +  ctrl++x  ⌃+r  ctrl+[  end.',
-    'ぼっち・ざ・ろっく  ·  enter  ·  けいおん!',
+    'ぼっち・ざ・ろっく  enter  けいおん!',
   ]
 
   const keys = ['ctrl+r', 'alt+u', 'shift+tab', 'alt+shift+ctrl+a', '⇧enter', '? esc', 'bksp', '⇧←→', 'a  b', '']
 
   const script = [
-    `typeset -gA TTHEME_MARKS=(sep ${MARKS.sep})`,
     /^typeset -gA TTHEME_KEYCAPS=\([\s\S]*?^\)$/m.exec(layer)?.[0] ?? '',
     /^typeset -ga TTHEME_KEYMODS=\(.*\)$/m.exec(layer)?.[0] ?? '',
     shellFunction('__tt_caps'),

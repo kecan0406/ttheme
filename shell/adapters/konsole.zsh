@@ -132,7 +132,7 @@ __tt_konsole_view() {
   __tt_konsole_faint $p[2] $p[1]
   lines+=('[ForegroundFaint]' "Color=$REPLY" '')
   __tt_konsole_rgb $p[2]
-  lines+=('[ForegroundIntense]' "Color=$REPLY" '' '[General]' 'Blur=false' 'ColorRandomization=false' "Description=ttheme · $name" 'Opacity=1' 'Wallpaper=' '')
+  lines+=('[ForegroundIntense]' "Color=$REPLY" '' '[General]' 'Blur=false' 'ColorRandomization=false' "Description=ttheme: $name" 'Opacity=1' 'Wallpaper=' '')
   [[ -d $dir ]] || zf_mkdir -p $dir 2>/dev/null || return 1
   name=ttheme-view.$$.$(( ++TTHEME_KONSOLE_VIEWS ))
   __tt_put $dir/$name.colorscheme "${lines[@]}" || return 1

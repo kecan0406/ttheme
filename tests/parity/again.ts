@@ -17,7 +17,7 @@ const total = Number(process.argv[3] ?? new Set(rows.map((row) => row.split('\t'
 const twice = [...runs].filter(([, { walks }]) => walks.size >= 2)
 
 for (const [key, { walks, first }] of runs) {
-  console.log(`${walks.size >= 2 ? '✗' : '·'} ${key}: walked again in ${walks.size} of the walks`)
+  console.log(`${walks.size >= 2 ? '✗' : '–'} ${key}: walked again in ${walks.size} of the walks`)
 
   for (const moved of new Set(first)) {
     console.log(`    first walk: ${moved}`)

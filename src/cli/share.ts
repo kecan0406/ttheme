@@ -523,7 +523,7 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
   const works = proposals.map((proposal) => proposal.work.id)
 
   const lines = [
-    `Repository   ${repoUrl(repo)} · ${open ? 'public' : 'private'}${remote ? '' : ' · new'}`,
+    `Repository   ${repoUrl(repo)}  ${open ? 'public' : 'private'}${remote ? '' : '  new'}`,
     `Description  ${description ?? 'none'}`,
     ...(open ? ["Search       Browse's search lists it (topic ttheme-marketplace)"] : []),
     ...(added.length > 0 ? [`Add          ${added.join(', ')}`] : []),
@@ -612,7 +612,7 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
       step.done()
     }
 
-    say(`Shared ${marketplace.id} · ${repoUrl(repo)}`)
+    say(`Shared ${marketplace.id}  ${repoUrl(repo)}`)
   }
 
   showLink(

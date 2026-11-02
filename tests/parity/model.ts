@@ -744,7 +744,7 @@ const konsole = (): Kind => {
         return
       }
 
-      const file = name.startsWith('ttheme · ') ? `${owned(name.slice('ttheme · '.length))}.profile` : 'Own.profile'
+      const file = name.startsWith('ttheme: ') ? `${owned(name.slice('ttheme: '.length))}.profile` : 'Own.profile'
 
       profile = file
       app.log(`default profile ${file}`)

@@ -290,7 +290,7 @@ function summary(state: Installed): string {
       .join(', '),
     `${state.palettes.length} palettes`,
     startup ? `default ${startup}` : 'no default — ttheme is off',
-  ].join(' · ')
+  ].join('  ')
 }
 
 export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired, Pointed> {

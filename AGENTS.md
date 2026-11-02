@@ -17,13 +17,13 @@ While a change goes back and forth with the person you work for, run no check un
 | Task | Use it when |
 |---|---|
 | `mise run ci` | the gate |
-| `mise run test` · `check` · `lint` | unit tests with the contrast gate · typecheck · biome, then anti-slop |
+| `mise run test`, `check`, `lint` | unit tests with the contrast gate, typecheck, biome, then anti-slop |
 | `mise run build` | regenerate `dist/`; fails on a contrast violation or a subject the commons lacks |
 | `mise run look <scenario> <cols>x<rows>` | see a TUI screen without a window; compare a change with `--against HEAD`, never by putting a file back from git |
 | `mise run sandbox` | try ttheme in a throwaway home; opens windows, so drive it through the `sandbox` skill (`.agents/skills/sandbox/SKILL.md`), never bare |
-| `mise run parity` · `walk` · `costs` · `forks` | the terminal model, its random walk, the cost and fork ratchets (`tests/AGENTS.md`) |
+| `mise run parity`, `walk`, `costs`, `forks` | the terminal model, its random walk, the cost and fork ratchets (`tests/AGENTS.md`) |
 | `mise run compat` | each installed terminal's real behavior; opens windows, not part of `ci` |
-| `mise run shell:check` · `bin:check` | the zsh layer · the bundle under node 22 |
+| `mise run shell:check`, `bin:check` | the zsh layer, the bundle under node 22 |
 
 ## Rules
 

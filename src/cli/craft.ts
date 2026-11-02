@@ -442,7 +442,7 @@ export async function runEdit(name: string): Promise<number> {
         ? 'Nothing changed'
         : count === 0
           ? `${full} is back to its own colors`
-          : `Saved ${full} · ${tunedText(count)} — R then s in \`ttheme edit ${full}\` puts its own colors back`,
+          : `Saved ${full}  ${tunedText(count)} — R then s in \`ttheme edit ${full}\` puts its own colors back`,
     )
 
     return count === undefined ? EXIT.unchanged : EXIT.done
@@ -570,7 +570,7 @@ export async function runTone(name: string, action: string, width?: string): Pro
     return EXIT.unchanged
   }
 
-  process.stderr.write(count === 0 ? 'Back to the original colors' : `Saved · ${tunedText(count)}`)
+  process.stderr.write(count === 0 ? 'Back to the original colors' : `Saved  ${tunedText(count)}`)
 
   return 0
 }
@@ -619,7 +619,7 @@ export function runCheck(name: string, fix = false): number {
   const state = readInstalled(home)
   const view = available(home, manifest)
   const entry = find(view.palettes, name, state.palettes)
-  console.log(`${entry.name} · ${whereOf(entry, view.works)}\n`)
+  console.log(`${entry.name}  ${whereOf(entry, view.works)}\n`)
   console.log(gateLines(entry).join('\n'))
   const failures = gateFailures(entry)
 

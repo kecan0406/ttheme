@@ -16,10 +16,10 @@
 </p>
 
 <p align="center">
-  <a href="https://ttheme.dev/">Site</a> ·
-  <a href="https://ttheme.dev/docs">Docs</a> ·
-  <a href="https://ttheme.dev/browse">Browse</a> ·
-  <a href="https://ttheme.dev/docs/reference/terminals">Terminals</a> ·
+  <a href="https://ttheme.dev/">Site</a> |
+  <a href="https://ttheme.dev/docs">Docs</a> |
+  <a href="https://ttheme.dev/browse">Browse</a> |
+  <a href="https://ttheme.dev/docs/reference/terminals">Terminals</a> |
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -62,10 +62,10 @@ ttheme adds one block to each config it wires and sets colors only.
 | Use a palette in this tab | `ttheme use hatsune-miku` |
 | Set the palette new tabs open with | `ttheme default hatsune-miku` |
 | Give a folder or ssh host its own palette | `ttheme pin` |
-| Show every palette in light, dark or your system's mode | `ttheme light` · `dark` · `auto` |
-| Make a palette, or tune one | `ttheme new dusk` · `ttheme edit hatsune-miku` |
+| Show every palette in light, dark or your system's mode | `ttheme light`, `dark`, `auto` |
+| Make a palette, or tune one | `ttheme new dusk`, `ttheme edit hatsune-miku` |
 | Share a palette as a link | `ttheme share dusk` |
-| Give the terminal its own colors back, then ttheme's again | `ttheme off` · `on` |
+| Give the terminal its own colors back, then ttheme's again | `ttheme off`, `on` |
 
 `ttheme help` lists the everyday commands and `ttheme help all` every one.
 

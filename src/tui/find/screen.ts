@@ -785,7 +785,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
         const line = lines[r0 + 2 + Math.floor((i - 1) / 3)]
         const at = col + 12 + ((i - 1) % 3) * 3
         line?.mark(at - 1, 3, { kind: 'place', at: i })
-        line?.put(at, here ? '■' : MARKS.sep, here ? B + accent : D)
+        line?.put(at, here ? '■' : MARKS.spot, here ? B + accent : D)
       }
 
       value = POSITIONS[view.tune.at - 1] ?? 'center'
@@ -1124,7 +1124,7 @@ function loader(lines: (Line | undefined)[], top: number, height: number, room: 
   lines[row0 + 4]?.center(
     room,
     view.sites.flatMap(({ name, arrived }, i): Part[] => [
-      ...(i ? ([[`  ${MARKS.sep}  `, fg(mix(background, foreground, 0.25 * k))]] as Part[]) : []),
+      ...(i ? ([['    ', fg(mix(background, foreground, 0.25 * k))]] as Part[]) : []),
       [name, fg(mix(background, arrived ? mix(foreground, background, 0.2) : foreground, arrived ? k : 0.32 * k))],
     ]),
   )

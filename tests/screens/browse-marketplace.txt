@@ -1,24 +1,24 @@
- Browse (10/10 · 3 picked)
+ Browse (10/10  3 picked)
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                      ╭─ fix@shop ────────────────────────────────╮
-    + Add marketplace   owner/repo or a folder        │ Always up to date                         │
-    ⌕ Search marketplace   find one on GitHub         │                                           │
-                                                      │    ▾ neon (1/2)                           │
-    ● ttheme                                          │ ▌    ● arcade                             │
-      Built in                                        │      ○ volt                               │
-      6 available · 1 installed                       │    ▸ pastel (0/1)                         │
-                                                      │    ● dusk                                 │
-    ● fix@shop                                        │                                           │
-      ~/shop                                          │                                           │
-      4 available · 2 installed · Always up to date   │                                           │
-                                                      │                                           │
-                                                      ├───────────────────────────────────────────┤
-                                                      │ fix@shop/arcade  Installed                │
-                                                      │ Contrast 10/13 · ✗ accent hue outside it… │
-                                                      │                                           │
-                                                      ├───────────────────────────────────────────┤
-                                                      │    × Remove marketplace                   │
-                                                      ╰───────────────────────────────────────────╯
+                                                    ╭─ fix@shop ──────────────────────────────────╮
+    + Add marketplace   owner/repo or a folder      │ Always up to date                           │
+    ⌕ Search marketplace   find one on GitHub       │                                             │
+                                                    │    ▾ neon (1/2)                             │
+    ● ttheme                                        │ ▌    ● arcade                               │
+      Built in                                      │      ○ volt                                 │
+      6 available  1 installed                      │    ▸ pastel (0/1)                           │
+                                                    │    ● dusk                                   │
+    ● fix@shop                                      │                                             │
+      ~/shop                                        │                                             │
+      4 available  2 installed  Always up to date   │                                             │
+                                                    │                                             │
+                                                    ├─────────────────────────────────────────────┤
+                                                    │ fix@shop/arcade  Installed                  │
+                                                    │ Contrast 10/13  ✗ accent hue outside its A… │
+                                                    │                                             │
+                                                    ├─────────────────────────────────────────────┤
+                                                    │    × Remove marketplace                     │
+                                                    ╰─────────────────────────────────────────────╯
  [BROWSE] space pick   ? keys                                                              esc back

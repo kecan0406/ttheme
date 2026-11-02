@@ -70,7 +70,7 @@ export function describeTerminal(env: Env): string {
     name,
     env.TMUX ? `tmux ${tmuxVersion ?? 'yes'}` : 'tmux no',
     env.SSH_CONNECTION || env.SSH_TTY ? 'ssh yes' : 'ssh no',
-  ].join(' · ')
+  ].join('  ')
 }
 
 function run(command: string, args: string[]): string | undefined {
@@ -85,7 +85,7 @@ function osLine(): string {
   const cpu = arch()
 
   if (platform() === 'darwin') {
-    return `macOS ${run('sw_vers', ['-productVersion']) ?? `(Darwin ${release()})`} · ${cpu}`
+    return `macOS ${run('sw_vers', ['-productVersion']) ?? `(Darwin ${release()})`}  ${cpu}`
   }
 
   if (platform() === 'linux') {
@@ -95,10 +95,10 @@ function osLine(): string {
       text = readFileSync('/etc/os-release', 'utf8')
     } catch {}
 
-    return `${/^PRETTY_NAME="?([^"\n]*)"?$/m.exec(text)?.[1] ?? 'Linux'} · linux ${release()} · ${cpu}`
+    return `${/^PRETTY_NAME="?([^"\n]*)"?$/m.exec(text)?.[1] ?? 'Linux'}  linux ${release()}  ${cpu}`
   }
 
-  return `${platform() === 'win32' ? 'Windows' : platform()} ${release()} · ${cpu}`
+  return `${platform() === 'win32' ? 'Windows' : platform()} ${release()}  ${cpu}`
 }
 
 function shellLine(env: Env): string {

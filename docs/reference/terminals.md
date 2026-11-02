@@ -32,8 +32,8 @@ restart each once after `init`.
   the last tab's picture for a frame or two. Each palette ships as `.dark` and
   `.light`, so under `auto` new windows switch by themselves. **cmux** runs on
   Ghostty and reads its config, so wiring Ghostty sets it up too.
-- **iTerm2** gets a `ttheme · <palette>` profile per palette, and
-  `ttheme · default` as the default profile, built on yours so your font and keys
+- **iTerm2** gets a `ttheme: <palette>` profile per palette, and
+  `ttheme: default` as the default profile, built on yours so your font and keys
   carry over. The first time ttheme switches a tab's profile, iTerm2 asks whether
   a control sequence may do that: **Always Allow** switches colors and picture in
   one step, and refused, tabs show the colors without the picture. Pictures need
@@ -69,11 +69,11 @@ restart each once after `init`.
   theme you pick in Warp lasts until a tab puts a palette on again. With
   Settings sync on, your other devices without the same theme file fall back to
   Warp's dark theme; `init` says so when a Warp has it on.
-- **Konsole** gets a color scheme and a `ttheme · <palette>` profile per palette,
+- **Konsole** gets a color scheme and a `ttheme: <palette>` profile per palette,
   and shows the picture as the scheme's wallpaper. Konsole `23.08` draws a
   wallpaper only where a compositor runs. Links open only where your profile
   allows escape sequences for links.
-- **Terminal.app** gets a `ttheme · <palette>` profile per palette, copied from
+- **Terminal.app** gets a `ttheme: <palette>` profile per palette, copied from
   your default one, and a tab shows a palette by switching to it. A palette added
   while Terminal.app runs gets its profile at the next start. A profile stretches
   its picture over the window, so ttheme lays it out for your window's shape, and

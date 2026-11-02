@@ -402,7 +402,7 @@ async function main(): Promise<void> {
 
           const failure = await walked(fixture, walk.steps, walk.seed)
           done += walk.again ? 0 : 1
-          line.set(`Walking ${done}/${total} · ${walk.term} seed ${walk.seed}${failure ? ` · ${failure.kind}` : ''}`)
+          line.set(`Walking ${done}/${total}  ${walk.term} seed ${walk.seed}${failure ? `  ${failure.kind}` : ''}`)
 
           if (failure) {
             const steps = walk.steps.slice(0, failure.at + 1)

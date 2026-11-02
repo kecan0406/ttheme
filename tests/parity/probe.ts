@@ -223,7 +223,7 @@ export function probe(
 
       if (recorder.shows.some((pattern) => glob(pattern, `${journey.id}.${label}`))) {
         recorder.say(
-          `--- ${app.term} ${journey.id}.${label}\n${tab.screen(fixture.place.home)}\n--- journal: ${app.journal.join(' · ')}`,
+          `--- ${app.term} ${journey.id}.${label}\n${tab.screen(fixture.place.home)}\n--- journal: ${app.journal.join('  ')}`,
         )
       }
 

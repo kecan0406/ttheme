@@ -290,7 +290,7 @@ const PACE_MS = 40
 function itermProfileOf(env: Env): string | undefined {
   const shown = env.TTHEME_ITERM_SHOWN
 
-  return env.TTHEME_ITERM_SWITCH === '1' && env.TTHEME_ITERM_DYED === '0' && shown ? `ttheme · ${shown}` : undefined
+  return env.TTHEME_ITERM_SWITCH === '1' && env.TTHEME_ITERM_DYED === '0' && shown ? `ttheme: ${shown}` : undefined
 }
 
 function itermLive(env: Env, write: (text: string) => void): Live {
@@ -381,7 +381,7 @@ function konsoleLive(env: Env, look: string): Live {
   const views: string[] = []
 
   const show = (name: string, colors: SchemeColors, cursor: string) => {
-    const text = schemeLines(colors, `ttheme · ${name}`, general).join('\n')
+    const text = schemeLines(colors, `ttheme: ${name}`, general).join('\n')
     const scheme = `${owned('view')}.${createHash('sha1').update(text).digest('hex').slice(0, 10)}`
     const file = join(dir, `${scheme}.colorscheme`)
 

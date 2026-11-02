@@ -212,11 +212,11 @@ test('iTerm2 is put back on the profile the tab wore when the shell switches pro
   const reset = '\x1b]111\x1b\\\x1b]110\x1b\\'
   assert.equal(
     livePaint({ ...tab, TTHEME_ITERM_SHOWN: 'wren' }, true)?.restore(new Map()),
-    `\x1b[?2026h${reset}\x1b]1337;SetProfile=ttheme · wren\x07\x1b[?2026l`,
+    `\x1b[?2026h${reset}\x1b]1337;SetProfile=ttheme: wren\x07\x1b[?2026l`,
   )
   assert.equal(
     livePaint({ ...tab, TTHEME_ITERM_SHOWN: 'default' }, true)?.restore(new Map()),
-    `\x1b[?2026h${reset}\x1b]1337;SetProfile=ttheme · default\x07\x1b[?2026l`,
+    `\x1b[?2026h${reset}\x1b]1337;SetProfile=ttheme: default\x07\x1b[?2026l`,
   )
 
   for (const env of [

@@ -134,7 +134,7 @@ export class Inspector {
           ground={ground}
           tag={faint ? 'faint' : run.classList.contains('font-bold') ? 'bold' : ''}
           ratio={contrast(ink, under)}
-          snippet={run.textContent?.trim().slice(0, 24) || '·'}
+          snippet={run.textContent?.trim().slice(0, 24) || '–'}
         />,
       ),
     )

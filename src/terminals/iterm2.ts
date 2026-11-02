@@ -59,7 +59,7 @@ function switches(host: Host): boolean {
 
 const defaults: Defaults = {
   key: 'itermBase',
-  profile: () => 'ttheme · default',
+  profile: () => 'ttheme: default',
   base(moment: Moment) {
     const guid = current(moment.host)
 
@@ -103,16 +103,16 @@ export const iterm2: Wiring = {
     TTHEME_ITERM_SWITCH: switches(host) ? '1' : '',
     TTHEME_ITERM_PROFILES: itermProfilesPath(now.home),
   }),
-  plan: (ctx) => [`Write ${tilde(itermProfilesPath(ctx.home), ctx.home)} — a "ttheme · <palette>" profile per palette`],
+  plan: (ctx) => [`Write ${tilde(itermProfilesPath(ctx.home), ctx.home)} — a "ttheme: <palette>" profile per palette`],
   notes: () => [],
   next(ctx, pointed) {
-    const lines = ['iTerm2 profiles   A "ttheme · <palette>" per palette in Settings › Profiles']
+    const lines = ['iTerm2 profiles   A "ttheme: <palette>" per palette in Settings › Profiles']
 
     if (ctx.startup) {
       lines.push(
         pointed?.restart
-          ? `Restart iTerm2    New tabs open on "ttheme · default", which shows ${ctx.startup}`
-          : `iTerm2 default    "ttheme · default" shows ${ctx.startup} and follows \`ttheme default\``,
+          ? `Restart iTerm2    New tabs open on "ttheme: default", which shows ${ctx.startup}`
+          : `iTerm2 default    "ttheme: default" shows ${ctx.startup} and follows \`ttheme default\``,
       )
     }
 

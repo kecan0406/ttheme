@@ -354,7 +354,7 @@ function windowOf(kit: Raster, theme: Theme, k: Tones, title: string, { width, h
 }
 
 function windowTitle(theme: Theme): string {
-  const full = [theme.work?.name, theme.name].filter(Boolean).join(' · ')
+  const full = [theme.work?.name, theme.name].filter(Boolean).join(' / ')
 
   return full.length <= 26 ? full : clip(theme.name, 26)
 }

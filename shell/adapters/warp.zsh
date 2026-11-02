@@ -118,7 +118,7 @@ __tt_warp_read() {
   TTHEME_WARP_LINES=($at)
   (( at[2] )) && REPLY=${${reply[at[2]]#theme}##[[:space:]]#=[[:space:]]#}
   (( at[3] )) && TTHEME_WARP_HELD=${${reply[at[3]]#selected_system_themes}##[[:space:]]#=[[:space:]]#}
-  [[ $REPLY == '{ custom = { name = "'*'", path = "ttheme-'* ]] && TTHEME_WARP_WORN=${${${REPLY#*name = \"}%%\"*}%% · *}
+  [[ $REPLY == '{ custom = { name = "'*'", path = "ttheme-'* ]] && TTHEME_WARP_WORN=${${${REPLY#*name = \"}%%\"*}%%, *}
   return 0
 }
 
@@ -593,7 +593,7 @@ __tt_warp_job() {
     base=$TTHEME_WARP_THEMES/${plain[${${pal/@/--}/\//--}]}
     [[ -f $base ]] || return 1
     for line in "${(@f)$(<$base)}"; do
-      [[ -n $out && $line == 'name: "'*'"' ]] && line="${line%\"} · picture\""
+      [[ -n $out && $line == 'name: "'*'"' ]] && line="${line%\"}, picture\""
       lines+=("$line")
       [[ -n $out && $line == details:* ]] && lines+=("background_image:" "  path: \"$out\"" "  opacity: $op")
     done

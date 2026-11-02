@@ -355,18 +355,18 @@ __cc_profiles() {
   print -rn -- $green | base64 -d > $laid
   mv -f -- $laid $dir/ttheme-$stem.compat1.png
   laid=$dir/ttheme-$stem.compat1.png
-  __tt_terminal_switch "ttheme · $pal"
+  __tt_terminal_switch "ttheme: $pal"
   printf '\e]11;#a04040\a'
   __cc_seen profile-picture '#40a040' '#a04040'
   print -rn -- $blue | base64 -d > $laid
-  __tt_terminal_switch "ttheme · $pal"
+  __tt_terminal_switch "ttheme: $pal"
   __cc_seen picture-held '#40a040' '#4040a0'
   mv -f -- $laid $dir/ttheme-$stem.compat2.png
   laid=$dir/ttheme-$stem.compat2.png
-  __tt_terminal_switch "ttheme · $pal"
+  __tt_terminal_switch "ttheme: $pal"
   __cc_seen picture-renamed '#4040a0' '#40a040'
   rm -f -- $laid
-  __tt_terminal_switch "ttheme · $pal"
+  __tt_terminal_switch "ttheme: $pal"
   __cc_seen picture-gone $bg '#4040a0'
   TTHEME_TERMINAL_SHOWN=""
   __tt_osc_reset
@@ -668,11 +668,11 @@ __cc_cases() {
   else
     local -a from=(${=TTHEME_PALETTE[$pair[1]]}) to=(${=TTHEME_PALETTE[$other]})
     local first="" second=""
-    printf '\e]1337;SetProfile=ttheme · %s\a' $pair[1]
+    printf '\e]1337;SetProfile=ttheme: %s\a' $pair[1]
     sleep 0.3
     printf '\e]11;#5a4e46\e\\'
     sleep 0.1
-    printf '\e]1337;SetProfile=ttheme · %s\a' $other
+    printf '\e]1337;SetProfile=ttheme: %s\a' $other
     sleep 0.3
     printf '\e]111\e\\'
     sleep 0.2

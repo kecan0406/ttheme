@@ -189,7 +189,7 @@ async function main(): Promise<void> {
       fixtures.map(async (fixture, at) => {
         await Bun.sleep(at * STAGGER_MS)
         results.set(fixture.term, await measured(fixture))
-        line.set(`Measuring ${++done}/${fixtures.length} · ${fixture.term}`)
+        line.set(`Measuring ${++done}/${fixtures.length}  ${fixture.term}`)
       }),
     )
 

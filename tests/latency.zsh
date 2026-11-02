@@ -320,7 +320,7 @@ hovering() {
   stop
   TERMINAL=""
   if [[ $name == *-switch ]]; then
-    [[ $session == *$'\e]1337;SetProfile=ttheme · '* ]] ||
+    [[ $session == *$'\e]1337;SetProfile=ttheme: '* ]] ||
       { fail "$name: hovering palettes in an iTerm2 that lets the shell switch profiles never switched one, so nothing was tested"; return 1 }
     [[ $session != *($'\e]4;'|$'\e]10;#'|$'\e]11;#')* ]] ||
       { fail "$name: a preview hover in iTerm2 painted OSC colors where one profile switch carries the whole palette in a fraction of the time"; return 1 }

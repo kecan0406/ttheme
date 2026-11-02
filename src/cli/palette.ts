@@ -266,9 +266,9 @@ function measuredLines(m: Measured): string[] {
   const where = m.crop ? `${size}, a ${m.crop.width}×${m.crop.height} box at ${m.crop.x},${m.crop.y}` : size
 
   return [
-    `picture  ${m.image.path} · ${where}`,
+    `picture  ${m.image.path}  ${where}`,
     ...(m.preview
-      ? [`preview  ${m.preview.path} · ${m.preview.width}×${m.preview.height}, crop boxes in its pixels`]
+      ? [`preview  ${m.preview.path}  ${m.preview.width}×${m.preview.height}, crop boxes in its pixels`]
       : []),
     `opaque   ${m.opaque} of ${m.pixels} px`,
     m.quant ? `colors   ${m.distinct} buckets at ${m.quant} levels` : `colors   ${m.distinct} exact`,
@@ -331,11 +331,11 @@ async function consensus(tag: string | undefined, flags: PaletteFlags): Promise<
 
   console.log(
     [
-      `${tag} · ${related.posts} posts${current && current !== tag ? ` · danbooru calls it ${current}` : ''}`,
+      `${tag}  ${related.posts} posts${current && current !== tag ? `  danbooru calls it ${current}` : ''}`,
       `  hair     ${list(answer.hair)}`,
       `  eyes     ${list(answer.eyes)}`,
       `  items    ${list(answer.items)}`,
-      `  verdict  ${verdictText(verdict)}${hair ? ` · the hair is ${hair.chromatic ? 'chromatic' : 'achromatic'}` : ''}`,
+      `  verdict  ${verdictText(verdict)}${hair ? `  the hair is ${hair.chromatic ? 'chromatic' : 'achromatic'}` : ''}`,
     ].join('\n'),
   )
 
@@ -715,7 +715,7 @@ function madeLines(
     const part = Math.max(0, ...m.signature.map((d) => d.part.length))
 
     return [
-      `${m.name}${m.subject ? ` · ${m.subject}` : ''} · base ${m.base}`,
+      `${m.name}${m.subject ? `  ${m.subject}` : ''}  base ${m.base}`,
       ...m.signature.map(
         (d) =>
           `  ${d.slot.padEnd(10)} ${d.part.padEnd(part)}  ${d.measured} → ${d.final}  ΔE ${d.delta.toFixed(1)}${d.far || d.turned ? '  far from its anchor' : ''}`,
@@ -730,7 +730,7 @@ function madeLines(
   return [
     ...notes.map((n) => `note: ${n}`),
     ...lines,
-    ...recorded.flatMap((r) => [`${r.work} · ${r.characters.join(', ')}`, `  ${wrote(r)}`]),
+    ...recorded.flatMap((r) => [`${r.work}  ${r.characters.join(', ')}`, `  ${wrote(r)}`]),
     ...(installed.length > 0
       ? ['', `Installed ${installed.join(', ')} — \`ttheme use <name>\` uses one in a tab`]
       : []),

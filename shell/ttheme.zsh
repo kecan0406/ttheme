@@ -26,7 +26,7 @@ typeset -gA TTHEME_MARKS=(
   ok ✓ miss ✗ above ↑ below ↓
   update ⇡ auto ↻ remove × undo ↶
   star ★ link ⧉ search ⌕ linked ⇠
-  contrast ◐ swatch ■ pictures ▣ sep · none – cut …
+  contrast ◐ swatch ■ pictures ▣ spot . none – cut …
 )
 
 typeset -gA TTHEME_KEYCAPS=(
@@ -407,7 +407,7 @@ __tt_announce() {
   __tt_shelf $full
   local grp=$REPLY
   if ! __tt_color; then
-    print -r -- "$name · $grp"
+    print -r -- "$name  $grp"
     return 0
   fi
   local fg=${p[2]#\#} cur=${p[3]#\#} sel=${p[4]#\#}
@@ -973,9 +973,9 @@ __tt_pin_save() {
   k=$REPLY
   __tt_pin_scope "$key"
   if __tt_color; then
-    printf "${TTHEME_SGR[dim]}Pinned · %s → %s · %s${TTHEME_SGR[reset]}\n" "$name" "$k" "$REPLY"
+    printf "${TTHEME_SGR[dim]}Pinned  %s → %s  %s${TTHEME_SGR[reset]}\n" "$name" "$k" "$REPLY"
   else
-    print -r -- "Pinned · $name → $k · $REPLY"
+    print -r -- "Pinned  $name → $k  $REPLY"
   fi
   if [[ $key == /* && $TTHEME_PIN != "$key" ]]; then
     __tt_here_line Here
@@ -995,7 +995,7 @@ __tt_unpin_drop() {
     __tt_pin_where "$k"
     where=$REPLY
     __tt_pin_scope "$k"
-    gone+=("Unpinned · $name on $where · $REPLY")
+    gone+=("Unpinned  $name on $where  $REPLY")
     unset "TTHEME_PINS[$k]"
   done
   if ! __tt_pins_write; then
@@ -1096,7 +1096,7 @@ __tt_unpin_block() {
   [[ -n $cover ]] && __tt_pin_base "$cover" && top=$REPLY
   __tt_map_build "$top"
   __tt_map_fit $width
-  (( ${#reply} > room )) && reply=("${(@)reply[1,room-1]}" "    …")
+  __tt_map_room $room
   block=("$bar" "${reply[@]}")
   __tt_unpin_then $width $gone
   block+=("${reply[@]}")
@@ -1335,7 +1335,7 @@ __tt_capped() {
       shown=$word
     fi
     out+=$shown
-    if [[ $word == $TTHEME_MARKS[sep] || $word == — || $word == / || $word == *[,:.?!] ]]; then
+    if [[ $word == — || $word == / || $word == *[,:.?!] ]]; then
       start=1
     else
       start=0
@@ -1371,8 +1371,8 @@ __tt_map_chip() {
 __tt_here_line() {
   local rule name where
   if ! __tt_dir_rule "$PWD"; then
-    reply=("$1 · no pin" "the tab's own palette")
-    REPLY="$1 · no pin — the tab's own palette"
+    reply=("$1  no pin" "the tab's own palette")
+    REPLY="$1  no pin — the tab's own palette"
     return 0
   fi
   rule=$REPLY name=$TTHEME_PINS[$REPLY]
@@ -1386,8 +1386,8 @@ __tt_here_line() {
   [[ $rule == *"/**" ]] && where+=" and below"
   __tt_label "$name"
   __tt_map_chip "$name" ${#REPLY}
-  reply=("$1 · $REPLY" "pinned to $where")
-  REPLY="$1 · $REPLY pinned to $where"
+  reply=("$1  $REPLY" "pinned to $where")
+  REPLY="$1  $REPLY pinned to $where"
 }
 
 __tt_here_fit() {
@@ -1440,12 +1440,12 @@ __tt_map_line() {
   if [[ -n $name ]]; then
     if [[ -n ${own[$at]} ]]; then
       note="this directory"
-      [[ -n ${below[$at]} ]] && __tt_label "${below[$at]}" && note+=" · $REPLY below"
+      [[ -n ${below[$at]} ]] && __tt_label "${below[$at]}" && note+=", $REPLY below"
     else
       note="and below"
     fi
     [[ -n ${TTHEME_PALETTE[$name]} ]] || flag="not installed"
-    [[ -d $at ]] || flag+="${flag:+ · }no such directory"
+    [[ -d $at ]] || flag+="${flag:+, }no such directory"
   fi
   lp+=("$2") lpw+=($3) ll+=("$4") lat+=("$at") lpal+=("$name") lnote+=("$note") lflag+=("$flag")
 }
@@ -1528,7 +1528,7 @@ __tt_map_fit() {
         note=${lnote[i]}
         (( lvl == 2 )) && note=${${note//this directory/only}//and below/below}
         (( lvl < 3 )) && (( wr += 2 + ${(m)#note} ))
-        [[ -n $lflag[i] ]] && (( wr += 3 + ${(m)#lflag[i]} ))
+        [[ -n $lflag[i] ]] && (( wr += 2 + ${(m)#lflag[i]} ))
         tag=${mark[$lat[i]]}
         [[ $tag == new ]] && (( wr += 5 ))
         [[ $tag == drop ]] && (( wr += 9 ))
@@ -1596,7 +1596,7 @@ __tt_map_fit() {
       note=${lnote[i]}
       (( lvl == 2 )) && note=${${note//this directory/only}//and below/below}
       (( lvl < 3 )) && line+="  "$d$note$z
-      [[ -n $lflag[i] ]] && line+=$y" · "$lflag[i]$z
+      [[ -n $lflag[i] ]] && line+=$y"  "$lflag[i]$z
       tag=${mark[$lat[i]]}
       if [[ $tag == new ]]; then
         __tt_map_tip "$lpal[i]"
@@ -1633,14 +1633,37 @@ __tt_map_ssh() {
   done
 }
 
-__tt_map_tree() {
+__tt_map_room() {
+  local -i room=$1 n=${#reply} at=0
+  (( n > room )) || return 0
+  [[ -n $2 ]] && at=${lat[(Ie)$2]}
+  if (( at < room )); then
+    reply=("${(@)reply[1,room-1]}" "    …")
+  elif (( at == n )); then
+    reply=("    …" "${(@)reply[at-room+2,at]}")
+  else
+    reply=("    …" "${(@)reply[at-room+3,at]}" "    …")
+  fi
+}
+
+__tt_map_whole() {
   local home=${HOME:a} here=${PWD:a} htip="" REPLY
   local -A own=() below=() parent=() mark=() tstrip=()
-  local -a roots=() lp=() lpw=() ll=() lat=() lpal=() lnote=() lflag=() reply
-  local -i width=$(( COLUMNS > 0 ? COLUMNS : 80 ))
+  local -a roots=() lp=() lpw=() ll=() lat=() lpal=() lnote=() lflag=()
+  [[ -n $3 ]] && mark[$3]=new
   __tt_map_build ""
   __tt_map_ssh
-  __tt_map_fit $width
+  __tt_map_fit $1
+  if (( $2 )); then
+    __tt_map_room $2 "$3"
+  fi
+}
+
+__tt_map_tree() {
+  local REPLY
+  local -a reply
+  local -i width=$(( COLUMNS > 0 ? COLUMNS : 80 ))
+  __tt_map_whole $width 0
   print -rl -- "${reply[@]}"
   print
   __tt_here_line Here
@@ -1648,9 +1671,9 @@ __tt_map_tree() {
   print -r -- "$REPLY"
   __tt_tilde "$TTHEME_PINS_FILE"
   if (( color )); then
-    __tt_clip $TTHEME_SGR[dim]"ttheme pin picks one here · ttheme unpin drops one · $REPLY"$TTHEME_SGR[reset] $width
+    __tt_clip $TTHEME_SGR[dim]"ttheme pin picks one here, ttheme unpin drops one, pins live in $REPLY"$TTHEME_SGR[reset] $width
   else
-    __tt_clip "ttheme pin picks one here · ttheme unpin drops one · $REPLY" $width
+    __tt_clip "ttheme pin picks one here, ttheme unpin drops one, pins live in $REPLY" $width
   fi
   print -r -- "$REPLY"
 }

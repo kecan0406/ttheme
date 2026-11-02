@@ -84,9 +84,9 @@ paths:
 
 - `sync` owns `DynamicProfiles/ttheme.json` whole, and its temp file is made beside the folder, never inside it.
 - A dynamic profile keeps a key its file drops: write `""` for a palette without a picture.
-- A new tab is created wearing `ttheme · default` and never switches profile after it opens.
+- A new tab is created wearing `ttheme: default` and never switches profile after it opens.
 - `Default Bookmark Guid` moves only on `init`, `ttheme default`, and a change that makes a startup palette appear or vanish.
-- While off, `ttheme · default` stays as a bare child of `itermBase`: never drop it from the file.
+- While off, `ttheme: default` stays as a bare child of `itermBase`: never drop it from the file.
 - Profiles and `.itermcolors` are written in Display P3, and set `Use Separate Colors for Light and Dark Mode` false outside `auto`.
 - A profile sets no key bindings.
 - An OSC color divorces a session from its profile until the next `SetProfile`: track it in `TTHEME_ITERM_DYED`, and reset the dyed slots before a switch.

@@ -11,7 +11,7 @@ sb_profile() { sb_ttheme default "$1" }
 
 sb_wear() {
   local f=$SB_PROFILES/ttheme.json
-  jq --arg name "ttheme · $1" \
+  jq --arg name "ttheme: $1" \
     '(.Profiles[] | select(.Name == $name) | del(.Name, .Guid)) as $w | (.Profiles[] | select(.Guid == "ttheme-default")) += $w' \
     $f > $f.tmp && command mv -f -- $f.tmp $f
 }
@@ -58,5 +58,5 @@ __sb_tab_run() {
 
 sb_ttheme() {
   local f=$SB_PROFILES/ttheme.json
-  jq --arg name "ttheme · $1" "(.Profiles[] | select(.Name == \$name)) |= ($2)" $f > $f.tmp && command mv -f -- $f.tmp $f
+  jq --arg name "ttheme: $1" "(.Profiles[] | select(.Name == \$name)) |= ($2)" $f > $f.tmp && command mv -f -- $f.tmp $f
 }

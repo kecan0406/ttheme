@@ -67,11 +67,12 @@ the topic chosen; a longer story belongs in `docs/`. A line that describes the
 row under the cursor (a panel's foot, a button's note) says what the person gets
 in one sentence, never how ttheme does it.
 
-`·` has one job: it stands between short facts on one line
-(`6 available · 1 installed`, `1920×1080 PNG · 2.1 MB`), written through `SEP`
-(`src/tui/parts.ts`). Keys in a bar are apart by three spaces, names in a list
-by commas, a title and its subject by two spaces, and what to do after a state
-by ` — ` (`Opaque — x cuts it out`).
+Short facts on one line stand two spaces apart (`6 available  1 installed`,
+`1920×1080 PNG  2.1 MB`), written through `SEP` (`src/tui/parts.ts`), and no
+text uses a middle dot; a site page, where spaces collapse, takes commas. Keys in
+a bar are apart by three spaces, names in a list by commas, a title and its
+subject by two spaces, and what to do after a state by ` — `
+(`Opaque — x cuts it out`).
 
 One concept takes one word, on the screens and in `docs/`, whatever the code
 calls it — never the words in the left column:

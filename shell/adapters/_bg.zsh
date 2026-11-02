@@ -248,7 +248,7 @@ __tt_bg_image() {
 __tt_bg_label() {
   local size=${bgsize[$1]}
   [[ $size == fill ]] || size+=%
-  REPLY="$size · ${TTHEME_BG_POSITIONS[${bgpos[$1]}]} · ${bgop[$1]}"
+  REPLY="$size  ${TTHEME_BG_POSITIONS[${bgpos[$1]}]}  ${bgop[$1]}"
 }
 
 __tt_bg_dim() {
@@ -600,7 +600,7 @@ __tt_pv_bg_find() {
   __tt_pv_bg_reset $name
   __tt_bg_load $name
   bgload[$name]="" bgedit[$name]=1
-  msg=${err:-"Background · $lab"} msgt=200
+  msg=${err:-"Background  $lab"} msgt=200
   return 0
 }
 
@@ -693,7 +693,7 @@ __tt_pv_bg_drop() {
   __tt_bg_load $name
   bgload[$name]="" bgedit[$name]=1
   __tt_label $name
-  msg=${err:-"Background · $REPLY"} msgt=$(( rc ? 300 : 200 ))
+  msg=${err:-"Background  $REPLY"} msgt=$(( rc ? 300 : 200 ))
   [[ -r ${TTHEME_CONFIG:h}/backgrounds/${${name/@/--}/\//--}.conf ]] || return 0
   __tt_pv_tune_open $name
 }
@@ -720,7 +720,7 @@ __tt_pv_bg_recolor() {
   __tt_bg_load $name
   bgload[$name]="" bgedit[$name]=1
   __tt_label $name
-  msg=${err:-"Background · $REPLY"} msgt=$(( rc ? 300 : 200 ))
+  msg=${err:-"Background  $REPLY"} msgt=$(( rc ? 300 : 200 ))
   [[ -r ${TTHEME_CONFIG:h}/backgrounds/${${name/@/--}/\//--}.conf ]] || return 0
   (( rc )) || bgprep[$name:$key:$want]=1
   __tt_pv_tune_open $name
@@ -792,7 +792,7 @@ __tt_pv_bg_panel() {
         elif (( i == pos )); then
           out+=$d"■"$z
         else
-          out+=$d"·"$z
+          out+=$d$TTHEME_MARKS[spot]$z
         fi
       done
       val=${TTHEME_BG_POSITIONS[pos]}
@@ -936,12 +936,12 @@ __tt_pv_bg_save() {
     __tt_pv_shows $name
     img=$REPLY
     if [[ ! -r ${TTHEME_CONFIG:h}/backgrounds/${${name/@/--}/\//--}.conf ]]; then
-      note="Background · $lab none"
+      note="Background  $lab none"
     elif (( bgoff[$img] )); then
-      note="Background · $lab off"
+      note="Background  $lab off"
     else
       __tt_bg_label $img
-      note="Background · $lab $REPLY"
+      note="Background  $lab $REPLY"
     fi
     if __tt_color; then
       printf "${TTHEME_SGR[dim]}%s${TTHEME_SGR[reset]}\n" "$note"

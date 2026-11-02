@@ -132,7 +132,7 @@ test('the shell layer gives each mark the glyph style.ts gives it', () => {
 })
 
 test('the shell layer takes every mark from TTHEME_MARKS but the ones that also read as text, and draws no ✕ for ×', () => {
-  const alsoText = new Set<string>([MARKS.above, MARKS.below, MARKS.remove, MARKS.swatch, MARKS.sep, MARKS.cut])
+  const alsoText = new Set<string>([MARKS.above, MARKS.below, MARKS.remove, MARKS.swatch, MARKS.spot, MARKS.cut])
   const glyphs = [...Object.values(MARKS).filter((glyph) => !alsoText.has(glyph)), '✕']
 
   const raw = SHELL_FILES.flatMap((file) =>

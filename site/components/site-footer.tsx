@@ -177,7 +177,7 @@ export function SiteFooter({
         </div>
         {landing ? <Mega /> : null}
         <div class="flex flex-wrap justify-between gap-x-4 gap-y-1.5 border-t pt-5 text-xs text-muted-foreground">
-          <span safe>{`free and open, MIT · v${facts.version}`}</span>
+          <span safe>{`free and open, MIT, v${facts.version}`}</span>
           <span>a palette is colors and post numbers, never code</span>
         </div>
       </div>

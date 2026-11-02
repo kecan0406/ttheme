@@ -61,5 +61,5 @@ export function categoryPath(slug: CategorySlug): string {
 export function alsoIn(work: string, shown: CategorySlug | null): string | null {
   const others = CATEGORIES.filter((one) => one.slug !== shown && categoriesOf(work).includes(one.slug))
 
-  return others.length > 0 ? `+ ${others.map((one) => one.label).join(' · ')}` : null
+  return others.length > 0 ? `+ ${others.map((one) => one.label).join(', ')}` : null
 }

@@ -90,7 +90,7 @@ export function keyAfter(p: Paint, label: string, key: string): string {
   return `${label} ${p.dim(cap(key))}`
 }
 
-export const SEP = ` ${MARKS.sep} `
+export const SEP = '  '
 
 export function contrastOf(failing: number): string {
   return failing === 0

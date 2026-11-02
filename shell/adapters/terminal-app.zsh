@@ -92,7 +92,7 @@ __tt_terminal_wear() {
   __tt_terminal_version $1
   want=$REPLY
   [[ $want == "$TTHEME_TERMINAL_SHOWN" ]] && return 0
-  if __tt_terminal_switch "ttheme · $1"; then
+  if __tt_terminal_switch "ttheme: $1"; then
     TTHEME_TERMINAL_SHOWN=$want
     return 0
   fi
@@ -268,7 +268,7 @@ __tt_bg_done() {
     __tt_terminal_wear $pal || painted=?
   elif [[ -n $out && -e $out ]]; then
     TTHEME_TERMINAL_VIEW=${1%% *} TTHEME_TERMINAL_LAID=$1
-    __tt_terminal_switch "ttheme · $pal"
+    __tt_terminal_switch "ttheme: $pal"
     [[ $REPLY == (worn|stale) ]] && TTHEME_TERMINAL_SHOWN="$pal -"
     [[ $REPLY == stale ]] && painted=?
   else

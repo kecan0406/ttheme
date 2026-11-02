@@ -160,7 +160,7 @@ export function slotChecks(list: Hex[], slot: number): Check[] {
 
     if (isLight(theme)) return [under]
 
-    return [{ ok: lum <= max, text: `Luminance ${lum.toFixed(3)} · ≤ ${max}` }, under]
+    return [{ ok: lum <= max, text: `Luminance ${lum.toFixed(3)}  ≤ ${max}` }, under]
   }
 
   if (ansi === 7) {
@@ -198,8 +198,8 @@ export function slotChecks(list: Hex[], slot: number): Check[] {
     const over = hueGap(here.h, band.center) - band.width
     checks.push(
       over > 0
-        ? { ok: false, text: `Hue ${here.h.toFixed(0)}° · ${over.toFixed(0)}° outside ${range}` }
-        : { ok: true, text: `Hue ${here.h.toFixed(0)}° · in ${range}` },
+        ? { ok: false, text: `Hue ${here.h.toFixed(0)}°  ${over.toFixed(0)}° outside ${range}` }
+        : { ok: true, text: `Hue ${here.h.toFixed(0)}°  in ${range}` },
     )
   }
 
@@ -207,7 +207,7 @@ export function slotChecks(list: Hex[], slot: number): Check[] {
   const drift = brightDrift(theme).find((d) => d.normal === role)
 
   if (drift) {
-    checks.push({ ok: drift.gap <= BRIGHT_GAP, text: `${drift.gap.toFixed(0)}° from ANSI ${twin} · ≤ ${BRIGHT_GAP}°` })
+    checks.push({ ok: drift.gap <= BRIGHT_GAP, text: `${drift.gap.toFixed(0)}° from ANSI ${twin}  ≤ ${BRIGHT_GAP}°` })
   }
 
   const alike = lookalikes(theme).flatMap(([a, b]) => (a === ansi ? [b] : b === ansi ? [a] : []))
@@ -273,7 +273,7 @@ function ratioCheck(color: Hex, against: Hex, rule: string, what: string): Check
   const ratio = contrast(color, against)
   const min = bound(rule)
 
-  return { ok: ratio >= min, text: `${what} ${ratio.toFixed(2)}:1 · ≥ ${min}` }
+  return { ok: ratio >= min, text: `${what} ${ratio.toFixed(2)}:1  ≥ ${min}` }
 }
 
 const USES = [

@@ -1,13 +1,13 @@
 ttheme: unknown palette 'ttheme/rue' pinned to ~/notes/**
 ~
-├── notes/                   ttheme/rue  and below · not installed
+├── notes/                   ttheme/rue  and below  not installed
 └── work/                    korund      and below
     ├── api/v2/ ← here
     └── site/                kipa        this directory
-/nonexistent-ttheme/archive  kipa        and below · no such directory
+/nonexistent-ttheme/archive  kipa        and below  no such directory
 ssh
 ├── *.prod                   kipa        while connected
 └── teal                     korund      while connected
 
-Here · korund pinned to ~/work and below
-ttheme pin picks one here · ttheme unpin drops one · ~/ttheme/pins
+Here  korund pinned to ~/work and below
+ttheme pin picks one here, ttheme unpin drops one, pins live in ~/ttheme/pins

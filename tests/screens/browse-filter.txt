@@ -1,4 +1,4 @@
- Browse (1/6 · 2 picked)
+ Browse (1/6  2 picked)
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ ki_                                                                                          │
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -8,7 +8,7 @@
                                                  │    ▾ Briarwood Rocks! (1/1) すたあ・ふ・ばら…  │
     ● ttheme                                     │ ▌    ● kipa                                    │
       Built in                                   │                                                │
-      1 of 6 match · 2 installed                 │                                                │
+      1 of 6 match  2 installed                  │                                                │
                                                  │                                                │
                                                  │                                                │
                                                  │                                                │
@@ -16,7 +16,7 @@
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │ ttheme/kipa  Installed                         │
-                                                 │ Contrast 9/13 · ✗ accent hue outside its ANSI… │
+                                                 │ Contrast 9/13  ✗ accent hue outside its ANSI … │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │    × Remove marketplace                        │

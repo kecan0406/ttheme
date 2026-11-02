@@ -85,7 +85,7 @@ test('sync writes a profile per listed palette over the user’s own, and the sc
   assert.deepEqual([verb, base], ['write', 'Clear Dark'])
   assert.deepEqual(
     rest.filter((arg) => arg.startsWith('ttheme')),
-    ['ttheme · orla', 'ttheme · juno'],
+    ['ttheme: orla', 'ttheme: juno'],
   )
   assert.equal(rest.length, 44)
   assert.equal(rest[1], '#101010')
@@ -97,8 +97,8 @@ test('Terminal.app opens new windows on the default palette’s profile, gives t
   const { host, scripts, defaults } = terminal('Clear Dark')
   const state: Installed = withBases(configHome, { terminals: ['terminal-app'], palettes: ['orla'] }, host)
   assert.deepEqual(pointDefaults(configHome, state, true, host).get('terminal-app'), { restart: false })
-  assert.equal(defaults.get('Default Window Settings'), 'ttheme · orla')
-  assert.equal(defaults.get('Startup Window Settings'), 'ttheme · orla')
+  assert.equal(defaults.get('Default Window Settings'), 'ttheme: orla')
+  assert.equal(defaults.get('Startup Window Settings'), 'ttheme: orla')
   assert.ok(pointDefaults(configHome, { ...state, off: true }, false, host).has('terminal-app'))
   assert.equal(defaults.get('Default Window Settings'), 'Clear Dark')
   assert.ok(!pointDefaults(configHome, { ...state, off: true }, false, host).has('terminal-app'))

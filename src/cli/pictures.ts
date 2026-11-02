@@ -294,11 +294,11 @@ export async function bringPictures(
   const line = pending()
 
   for (const [at, { entry, shared }] of due.entries()) {
-    const label = `${entry.name} · ${postRef(shared, links)}`
-    const count = due.length > 1 ? ` · ${at + 1}/${due.length}` : ''
+    const label = `${entry.name}  ${postRef(shared, links)}`
+    const count = due.length > 1 ? `  ${at + 1}/${due.length}` : ''
 
     const step = (stage: string, detail?: string): void =>
-      line.set(`${stage} ${label}${detail ? ` · ${detail}` : ''}${count}`)
+      line.set(`${stage} ${label}${detail ? `  ${detail}` : ''}${count}`)
 
     try {
       await install(configHome, entry, shared, aligns, AbortSignal.timeout(TIMEOUT), step)

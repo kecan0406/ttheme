@@ -25,7 +25,7 @@ function profileFile(palette: string): string {
 }
 
 function profileName(palette: string): string {
-  return `ttheme · ${palette}`
+  return `ttheme: ${palette}`
 }
 
 function group(lines: string[], name: string): [number, number] | undefined {
@@ -313,7 +313,7 @@ export const konsole: Wiring = {
   }),
   plan(ctx) {
     return [
-      `Write ${tilde(konsoleData(ctx.home), ctx.home)}/${owned('*')}.profile — a "ttheme · <palette>" profile per palette, on top of your own`,
+      `Write ${tilde(konsoleData(ctx.home), ctx.home)}/${owned('*')}.profile — a "ttheme: <palette>" profile per palette, on top of your own`,
       ...(ctx.startup
         ? [`Edit ${tilde(konsolerc(ctx.configHome), ctx.home)} — DefaultProfile; \`ttheme off\` puts yours back`]
         : []),
@@ -321,7 +321,7 @@ export const konsole: Wiring = {
   },
   notes: () => [],
   next(ctx, pointed) {
-    const lines = ['Konsole profiles  A "ttheme · <palette>" per palette in its profile list']
+    const lines = ['Konsole profiles  A "ttheme: <palette>" per palette in its profile list']
 
     if (ctx.startup) {
       lines.push(

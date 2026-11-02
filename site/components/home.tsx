@@ -157,7 +157,7 @@ export function Home({
               raised
               heading={
                 <span data-lead-title aria-hidden="true" translate="no" class={WINDOW_TITLE}>
-                  ttheme · <span data-text="name" /> · <span data-text="work" />
+                  ttheme / <span data-text="name" /> / <span data-text="work" />
                 </span>
               }
               controls={

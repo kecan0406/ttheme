@@ -151,7 +151,7 @@ function iterm2Agrees(archive: Output[], install: Map<string, string>): void {
     }
   ).Profiles
 
-  const profile = profiles.find((p) => p.Name === 'ttheme · ttheme/orla')
+  const profile = profiles.find((p) => p.Name === 'ttheme: ttheme/orla')
 
   assert.ok(profile, 'the install wrote no profile for the palette')
   assert.ok(shipped.size > 0, 'the archive shipped no colors')

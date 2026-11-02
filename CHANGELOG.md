@@ -6,6 +6,9 @@
 - Keys that do the same thing are apart by a slash, as in `? / esc`, in the key bars and in Help.
 - Outside a Mac, the Shift keys read `shift+tab`, `shift+enter` and `shift+←→`, where they read `⇧tab`, `⇧enter` and `⇧←→`.
 - Clicking `erase` in find's bar now erases.
+- `ttheme pin` opens its side panel on a new Pins tab, showing every pin and which one covers this folder, and the step that asks how far a pin reaches now shows every pin too, ssh hosts included.
+- Facts on one line now stand two spaces apart on every screen and message, without the middle dot that used to sit between them.
+- iTerm2, Konsole and Terminal.app profiles are now named `ttheme: <palette>`, and Warp themes `<palette>, dark`.
 
 ## 1.2.87
 

@@ -388,12 +388,12 @@ test('sync drops Warp themes into its themes folder and wires nothing else', () 
   const plain = plainTheme(home, 'ttheme/orla')
   const [light] = warpFiles(home, 'ttheme/orla', 'light')
   const theme = readFileSync(join(warpThemes(home), plain), 'utf8')
-  assert.match(theme, /^name: "ttheme\/orla · dark"$/m)
+  assert.match(theme, /^name: "ttheme\/orla, dark"$/m)
   assert.match(theme, /^background: "#11191c"$/m)
   assert.match(theme, /^details: darker$/m)
   assert.ok(light)
   const other = readFileSync(join(warpThemes(home), light), 'utf8')
-  assert.match(other, /^name: "ttheme\/orla · light"$/m)
+  assert.match(other, /^name: "ttheme\/orla, light"$/m)
   assert.match(other, /^details: lighter$/m)
   assert.deepEqual(written, [
     join(warpThemes(home), plain),
@@ -414,7 +414,7 @@ test('sync puts the startup palette on Warp through its settings file, and gives
   assert.match(
     readFileSync(settings, 'utf8'),
     new RegExp(
-      `^\\[appearance\\.themes\\]\\ntheme = \\{ custom = \\{ name = "ttheme/orla · dark", path = "${RegExp.escape(plainTheme(home, 'ttheme/orla'))}" \\} \\}\\n\\n\\[appearance\\.vertical_tabs\\]`,
+      `^\\[appearance\\.themes\\]\\ntheme = \\{ custom = \\{ name = "ttheme/orla, dark", path = "${RegExp.escape(plainTheme(home, 'ttheme/orla'))}" \\} \\}\\n\\n\\[appearance\\.vertical_tabs\\]`,
       'm',
     ),
   )
@@ -424,7 +424,7 @@ test('sync puts the startup palette on Warp through its settings file, and gives
     { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'], startup: 'ttheme/juno' },
     home,
   )
-  assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/juno · dark"/)
+  assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/juno, dark"/)
   sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla'], off: true }, home)
   assert.equal(readFileSync(settings, 'utf8'), mine)
 })
@@ -445,7 +445,7 @@ test('ttheme off gives back the theme and the system themes picked in Warp while
   const picked = '[appearance.themes]\nsystem_theme = true\nselected_system_themes = { light = "nord", dark = "koi" }\n'
   writeFileSync(settings, `${picked}theme = "koi"\n`)
   sync(configHome, manifest, state, home)
-  assert.match(readFileSync(settings, 'utf8'), /^theme = \{ custom = \{ name = "ttheme\/orla · dark"/m)
+  assert.match(readFileSync(settings, 'utf8'), /^theme = \{ custom = \{ name = "ttheme\/orla, dark"/m)
   sync(configHome, manifest, { ...state, off: true }, home)
   assert.equal(readFileSync(settings, 'utf8'), `${picked}theme = "koi"\n`)
 })
@@ -483,18 +483,18 @@ test('sync keeps Warp on the palette of the painted tab that ran the command, un
   sync(configHome, manifest, state, home)
   const settings = warpSettings(home, configHome)
   mkdirSync(join(settings, '..'), { recursive: true })
-  const juno = warpThemeValue('ttheme/juno · dark', plainTheme(home, 'ttheme/juno'))
+  const juno = warpThemeValue('ttheme/juno, dark', plainTheme(home, 'ttheme/juno'))
   writeFileSync(settings, `[appearance.themes]\ntheme = ${juno}\n`)
   process.env.TTHEME_WARP_WEARS = 'ttheme/juno'
 
   try {
     sync(configHome, manifest, state, home)
-    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/juno · dark"/)
+    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/juno, dark"/)
     sync(configHome, manifest, { ...state, palettes: ['ttheme/orla'] }, home)
-    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/orla · dark"/)
+    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/orla, dark"/)
     writeFileSync(settings, `[appearance.themes]\ntheme = ${juno}\n`)
     sync(configHome, manifest, { ...state, off: true }, home)
-    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/juno · dark"/)
+    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/juno, dark"/)
     delete process.env.TTHEME_WARP_WEARS
     sync(configHome, manifest, { ...state, off: true }, home)
     assert.match(readFileSync(settings, 'utf8'), /^theme = "dark"$/m)
@@ -520,12 +520,12 @@ test('a Warp theme written late lands when nothing came after it, and gives way 
   sync(undone.configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla'], off: true }, undone.home)
   const until = Date.now() + 4000
 
-  while (!/name = "ttheme\/orla · dark"/.test(readFileSync(kept.settings, 'utf8')) && Date.now() < until) {
+  while (!/name = "ttheme\/orla, dark"/.test(readFileSync(kept.settings, 'utf8')) && Date.now() < until) {
     await new Promise((resolve) => setTimeout(resolve, 50))
   }
 
   await new Promise((resolve) => setTimeout(resolve, 300))
-  assert.match(readFileSync(kept.settings, 'utf8'), /name = "ttheme\/orla · dark"/)
+  assert.match(readFileSync(kept.settings, 'utf8'), /name = "ttheme\/orla, dark"/)
   assert.equal(readFileSync(undone.settings, 'utf8'), mine)
 })
 
@@ -552,12 +552,12 @@ test('a linked Warp settings file is written through its link, which an identica
   sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'] }, home)
   const until = Date.now() + 4000
 
-  while (!/name = "ttheme\/orla · dark"/.test(readFileSync(real, 'utf8')) && Date.now() < until) {
+  while (!/name = "ttheme\/orla, dark"/.test(readFileSync(real, 'utf8')) && Date.now() < until) {
     await new Promise((resolve) => setTimeout(resolve, 50))
   }
 
   await new Promise((resolve) => setTimeout(resolve, 100))
-  assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/orla · dark"/)
+  assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/orla, dark"/)
   assert.ok(relinked())
   sync(
     configHome,
@@ -565,7 +565,7 @@ test('a linked Warp settings file is written through its link, which an identica
     { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'], startup: 'ttheme/juno' },
     home,
   )
-  assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/juno · dark"/)
+  assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/juno, dark"/)
   assert.ok(relinked())
   sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla', 'ttheme/juno'], off: true }, home)
   assert.equal(readFileSync(real, 'utf8'), mine)
@@ -588,7 +588,7 @@ test('a linked Warp settings file in a folder ttheme cannot write still takes th
 
   try {
     const written = sync(configHome, manifest, { ...state, startup: 'ttheme/juno' }, home)
-    assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/juno · dark"/)
+    assert.match(readFileSync(real, 'utf8'), /name = "ttheme\/juno, dark"/)
     assert.ok(written.includes(join(configHome, 'ttheme', 'palettes.zsh')))
   } finally {
     chmodSync(dirname(settings), 0o755)
@@ -625,7 +625,7 @@ test("sync puts the palette in both of Warp's system slots while Warp follows th
 
   writeFileSync(settings, mine)
   sync(configHome, manifest, state, home)
-  const orla = warpThemeValue('ttheme/orla · dark', plainTheme(home, 'ttheme/orla'))
+  const orla = warpThemeValue('ttheme/orla, dark', plainTheme(home, 'ttheme/orla'))
   const worn = readFileSync(settings, 'utf8')
   assert.equal(warpThemeOf(worn), orla)
   assert.equal(warpSystemOf(worn), warpSystemValue(orla))
@@ -685,7 +685,7 @@ test('sync wears the startup palette in every Warp channel it finds, each throug
   sync(configHome, manifest, state, home)
   assert.equal(
     warpThemeOf(readFileSync(preview, 'utf8')),
-    warpThemeValue('ttheme/orla · dark', plainTheme(home, 'ttheme/orla', 'preview')),
+    warpThemeValue('ttheme/orla, dark', plainTheme(home, 'ttheme/orla', 'preview')),
   )
   sync(configHome, manifest, { ...state, off: true }, home)
   assert.equal(readFileSync(preview, 'utf8'), '[appearance.themes]\ntheme = "koi"\n')
@@ -704,7 +704,7 @@ test('sync wears the startup palette in every Warp channel it finds, each throug
   }
 
   sync(configHome, manifest, state, linked)
-  const orla = warpThemeValue('ttheme/orla · dark', plainTheme(linked, 'ttheme/orla'))
+  const orla = warpThemeValue('ttheme/orla, dark', plainTheme(linked, 'ttheme/orla'))
   assert.deepEqual(
     both.map((file) => warpThemeOf(readFileSync(file, 'utf8'))),
     [orla, orla],
@@ -756,7 +756,7 @@ test("sync gives a palette's Warp theme its picture under a name of its own, and
   const theme = readFileSync(join(themes, first[0] as string), 'utf8')
   const flat = /^ {2}path: "(.+)"$/m.exec(theme)?.[1] ?? ''
   assert.match(flat, new RegExp(`^${RegExp.escape(themes)}/ttheme-ttheme--orla\\.[0-9a-f]{8}\\.png$`))
-  assert.match(theme, /^name: "ttheme\/orla · dark · picture"$/m)
+  assert.match(theme, /^name: "ttheme\/orla, dark, picture"$/m)
   assert.match(theme, /^background_image:\n {2}path: ".+"\n {2}opacity: 20$/m)
   assert.deepEqual([...decodePng(readFileSync(flat)).data], [255, 255, 255, 255, 17, 25, 28, 255])
   assert.doesNotMatch(readFileSync(join(themes, plainTheme(home, 'ttheme/orla')), 'utf8'), /background_image/)
@@ -806,7 +806,7 @@ test('Warp wears the plain theme of a palette whose picture cannot be read', () 
   sync(configHome, manifest, state, home)
   assert.match(
     readFileSync(settings, 'utf8'),
-    new RegExp(`name = "ttheme/juno · dark", path = "${RegExp.escape(plainTheme(home, 'ttheme/juno'))}"`),
+    new RegExp(`name = "ttheme/juno, dark", path = "${RegExp.escape(plainTheme(home, 'ttheme/juno'))}"`),
   )
   assert.deepEqual(warpFiles(home, 'ttheme/juno'), [plainTheme(home, 'ttheme/juno')])
 })
@@ -829,7 +829,7 @@ test('a picture changed anywhere moves Warp to the new pictured theme only while
   assert.equal(readFileSync(settings, 'utf8'), mine)
   writeFileSync(
     settings,
-    `[appearance.themes]\ntheme = ${warpThemeValue('ttheme/juno · dark', plainTheme(home, 'ttheme/juno'))}\n`,
+    `[appearance.themes]\ntheme = ${warpThemeValue('ttheme/juno, dark', plainTheme(home, 'ttheme/juno'))}\n`,
   )
   pictured(configHome, 0.3)
   refreshPictures(configHome, home)
@@ -841,14 +841,14 @@ test('a picture changed anywhere moves Warp to the new pictured theme only while
   assert.equal(readFileSync(settings, 'utf8'), gone)
   writeFileSync(
     settings,
-    `[appearance.themes]\ntheme = ${warpThemeValue('ttheme/orla · dark', plainTheme(home, 'ttheme/orla'))}\n`,
+    `[appearance.themes]\ntheme = ${warpThemeValue('ttheme/orla, dark', plainTheme(home, 'ttheme/orla'))}\n`,
   )
   refreshPictures(configHome, home)
   const now = picturedThemes(home)
   assert.equal(now.length, 1)
   assert.match(
     readFileSync(settings, 'utf8'),
-    new RegExp(`name = "ttheme/orla · dark · picture", path = "${RegExp.escape(now[0] as string)}"`),
+    new RegExp(`name = "ttheme/orla, dark, picture", path = "${RegExp.escape(now[0] as string)}"`),
   )
   assert.match(readFileSync(join(warpThemes(home), now[0] as string), 'utf8'), /^ {2}opacity: 30$/m)
 })
@@ -907,9 +907,9 @@ test('sync writes an iTerm2 profile per installed palette, in P3 with one color 
   assert.deepEqual(
     written.map((p: { Name: string; Guid: string }) => [p.Name, p.Guid]),
     [
-      ['ttheme · default', 'ttheme-default'],
-      ['ttheme · ttheme/orla', 'ttheme-ttheme--orla'],
-      ['ttheme · ttheme/juno', 'ttheme-ttheme--juno'],
+      ['ttheme: default', 'ttheme-default'],
+      ['ttheme: ttheme/orla', 'ttheme-ttheme--orla'],
+      ['ttheme: ttheme/juno', 'ttheme-ttheme--juno'],
     ],
   )
   assert.deepEqual({ ...written[0], Name: 0, Guid: 0 }, { ...written[2], Name: 0, Guid: 0 })
@@ -930,10 +930,10 @@ test('sync writes an iTerm2 profile per installed palette, in P3 with one color 
   sync(configHome, manifest, { terminals: ['iterm2'], off: true, itermBase: 'BASE', palettes: ['ttheme/orla'] }, home)
   assert.deepEqual(
     read().map((p: { Name: string }) => p.Name),
-    ['ttheme · default', 'ttheme · ttheme/orla'],
+    ['ttheme: default', 'ttheme: ttheme/orla'],
   )
   assert.deepEqual(read()[0], {
-    Name: 'ttheme · default',
+    Name: 'ttheme: default',
     Guid: 'ttheme-default',
     'Dynamic Profile Parent GUID': 'BASE',
     'Background Image Location': '',
@@ -941,7 +941,7 @@ test('sync writes an iTerm2 profile per installed palette, in P3 with one color 
   sync(configHome, manifest, { terminals: ['iterm2'], off: true, palettes: ['ttheme/orla'] }, home)
   assert.deepEqual(
     read().map((p: { Name: string }) => p.Name),
-    ['ttheme · ttheme/orla'],
+    ['ttheme: ttheme/orla'],
   )
   assert.ok(!existsSync(join(configHome, 'iterm2')))
 })
@@ -1001,9 +1001,9 @@ test("sync gives a palette's iTerm2 profile its picture, tuning and off switch",
   }) => [Name, p['Background Image Location'], p['Background Image Mode'], p.Blend]
 
   assert.deepEqual(JSON.parse(readFileSync(itermProfilesPath(home), 'utf8')).Profiles.map(pick), [
-    ['ttheme · default', join(home, 'orla@60-center.png'), 3, 0.2],
-    ['ttheme · ttheme/orla', join(home, 'orla@60-center.png'), 3, 0.2],
-    ['ttheme · ttheme/juno', '', undefined, undefined],
+    ['ttheme: default', join(home, 'orla@60-center.png'), 3, 0.2],
+    ['ttheme: ttheme/orla', join(home, 'orla@60-center.png'), 3, 0.2],
+    ['ttheme: ttheme/juno', '', undefined, undefined],
   ])
 })
 
@@ -1054,7 +1054,7 @@ function defaultsAt(initial: string | undefined) {
   return { host, writes }
 }
 
-test('iTerm2 takes ttheme · default as its default profile, keeps it while off and gives the one it replaced back once nothing is installed', () => {
+test('iTerm2 takes ttheme: default as its default profile, keeps it while off and gives the one it replaced back once nothing is installed', () => {
   const { host, writes } = defaultsAt('USER')
   const state = withBases('/nowhere', { terminals: ['iterm2'], palettes: ['ttheme/orla'] }, host)
   assert.equal(state.itermBase, 'USER')

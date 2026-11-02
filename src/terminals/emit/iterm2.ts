@@ -69,7 +69,7 @@ export function itermProfiles(
   modes = false,
 ): string {
   const profile = (theme: Theme, id: string) => ({
-    Name: `ttheme · ${id}`,
+    Name: `ttheme: ${id}`,
     Guid: owned(id),
     ...(parent ? { 'Dynamic Profile Parent GUID': parent } : {}),
     'Use Separate Colors for Light and Dark Mode': modes,
@@ -78,7 +78,7 @@ export function itermProfiles(
   })
 
   const bare = {
-    Name: 'ttheme · default',
+    Name: 'ttheme: default',
     Guid: owned('default'),
     'Dynamic Profile Parent GUID': parent,
     ...background(undefined),

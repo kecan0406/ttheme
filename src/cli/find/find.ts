@@ -988,7 +988,7 @@ class Finder {
       return
     }
 
-    view.hint = capped(`Picture on the clipboard · ${PASTE_KEY} uses it`)
+    view.hint = capped(`Picture on the clipboard — ${PASTE_KEY} uses it`)
     clearTimeout(this.peekTimer)
     this.peekTimer = setTimeout(() => {
       view.hint = undefined
@@ -2491,7 +2491,7 @@ class Finder {
         : []),
     ]
 
-    board.note = notes.length > 0 ? notes.join(' · ') : undefined
+    board.note = notes.length > 0 ? notes.join('  ') : undefined
 
     if (plans.length === 0) {
       board.searching = false
@@ -2558,7 +2558,7 @@ class Finder {
       }
     }
 
-    board.note = [board.note, reason(site.name, error)].filter(Boolean).join(' · ')
+    board.note = [board.note, reason(site.name, error)].filter(Boolean).join('  ')
 
     if (board.arrived.size === 0 && board.sources.every((source) => source.done)) {
       board.error = board.note
@@ -3632,12 +3632,12 @@ class Finder {
       const { size, at, opacity } = view.tune
 
       const framing = tune
-        ? ` · ${size === 'fill' ? 'fill' : `${size}%`} · ${POSITIONS[at - 1]} · ${opacity.toFixed(2)}`
+        ? `  ${size === 'fill' ? 'fill' : `${size}%`}  ${POSITIONS[at - 1]}  ${opacity.toFixed(2)}`
         : ''
 
-      const by = post?.named.artist.length ? `${post.named.artist.join(', ')} · ` : ''
+      const by = post?.named.artist.length ? `${post.named.artist.join(', ')}  ` : ''
       view.saved = {
-        text: `Background · ${this.entry.name} ← ${by}${current.site.name} ${current.id}${framing}`,
+        text: `Background  ${this.entry.name} ← ${by}${current.site.name} ${current.id}${framing}`,
         key: tile.key,
       }
       view.installed.push(tile.key)

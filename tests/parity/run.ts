@@ -92,7 +92,7 @@ function describe(): string {
   const { phase, done, total, latest } = progress
   const detail = total - done <= 3 && running.size > 0 ? `waiting on ${[...running].join(', ')}` : latest
 
-  return `${phase} ${done}/${total}${detail ? ` · ${detail}` : ''} · ${seconds()}`
+  return `${phase} ${done}/${total}${detail ? `  ${detail}` : ''}  ${seconds()}`
 }
 
 function begin(phase: string, total: number): void {
@@ -185,7 +185,7 @@ function fixtureFor(lane: Lane, journey: Journey): Fixture {
   return journey.unwired ? (lane.unwired ?? lane.wired) : lane.wired
 }
 
-const MARK = { same: '✓', lacks: '○', gap: '·', changed: '!', broken: '✗' } as const
+const MARK = { same: '✓', lacks: '○', gap: '–', changed: '!', broken: '✗' } as const
 
 type Mark = keyof typeof MARK
 
@@ -414,7 +414,7 @@ function report(fresh: Table, old: Table): boolean {
         '  layer     ttheme could close it',
         '  deferred  left out on purpose',
         `the spec: what each look in journeys.ts says the tab shows; a screen is ${REFERENCE}'s, approved with --update`,
-        ...(short.length > 0 ? [short.map((term) => `${SHORT[term]} ${term}`).join(' · ')] : []),
+        ...(short.length > 0 ? [short.map((term) => `${SHORT[term]} ${term}`).join('  ')] : []),
       ].join('\n'),
     ),
   )
@@ -522,7 +522,7 @@ function report(fresh: Table, old: Table): boolean {
   if (!ok && values.verbose) {
     for (const [key, journal] of journals) {
       if (journal.length > 0) {
-        console.error(`${key}: ${journal.join(' · ')}`)
+        console.error(`${key}: ${journal.join('  ')}`)
       }
     }
   }

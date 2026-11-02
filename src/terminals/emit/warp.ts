@@ -38,7 +38,7 @@ function warpOpacity(picture: WarpPicture): number {
 
 export type WarpLook = Pick<Theme, 'name' | 'background' | 'foreground' | 'cursor' | 'ansi'>
 
-export const WARP_PART = ' · '
+export const WARP_PART = ', '
 
 function warpThemeName(theme: WarpLook, picture?: WarpPicture): string {
   return [theme.name, modeOf(theme), ...(picture ? ['picture'] : [])].join(WARP_PART)

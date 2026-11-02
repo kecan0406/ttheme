@@ -431,13 +431,13 @@ function listOf(state: State, pins: Pin[], label: (id: string) => string): ListR
 
   const here: Run[] = rule
     ? [
-        { text: 'Here · ' },
+        { text: 'Here  ' },
         chip(rule.id, label(rule.id).length),
         {
           text: ` pinned to ${baseOf(rule.key) === state.cwd ? 'this directory' : baseOf(rule.key)}${isBelow(rule.key) ? ' and below' : ''}`,
         },
       ]
-    : [{ text: 'Here · no pin — the tab’s own palette' }]
+    : [{ text: 'Here  no pin — the tab’s own palette' }]
 
   return [{ runs: [...promptOf(state.cwd, null), { text: 'ttheme pins' }] }, ...rows, { runs: [] }, { runs: here }]
 }

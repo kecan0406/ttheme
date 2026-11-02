@@ -13,8 +13,8 @@ const BRANDS = new Map<string, SimpleIcon>([
   ['patreon', siPatreon],
 ])
 
-function Dot() {
-  return <span class="text-muted-foreground">·</span>
+function Slash() {
+  return <span class="text-muted-foreground">/</span>
 }
 
 function Out({ link }: { link: PictureLink }) {
@@ -40,13 +40,13 @@ function Credit({ picture }: { picture: Picture }) {
           <span class="text-soft-foreground" safe>
             {`by ${names}`}
           </span>
-          <Dot />
+          <Slash />
         </>
       ) : null}
       {credit?.page ? (
         <>
           <Out link={credit.page} />
-          <Dot />
+          <Slash />
         </>
       ) : null}
       {picture.href ? (
@@ -74,7 +74,7 @@ function Profiles({ picture }: { picture: Picture }) {
     <span class="flex flex-wrap items-baseline gap-x-1.5 text-xs">
       {artists.map((artist, at) => (
         <>
-          {at > 0 ? <Dot /> : null}
+          {at > 0 ? <Slash /> : null}
           {artists.length > 1 ? (
             <span class="text-muted-foreground" safe>
               {artist.name}

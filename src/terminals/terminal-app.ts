@@ -15,7 +15,7 @@ import type { Ctx, Defaults, Moment, Wiring } from './types.ts'
 
 export const TERMINAL_DOMAIN = 'com.apple.Terminal'
 
-const OURS = 'ttheme · '
+const OURS = 'ttheme: '
 
 export function terminalProfile(palette: string): string {
   return `${OURS}${palette}`

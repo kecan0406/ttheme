@@ -6,7 +6,7 @@ zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   (( ${+TTHEME_ITERM_SHOWN} )) && return 0
   typeset -gx TTHEME_ITERM_SHOWN="" TTHEME_ITERM_DYED=0
-  [[ $ITERM_PROFILE == 'ttheme · '* ]] && TTHEME_ITERM_SHOWN=${ITERM_PROFILE#ttheme · }
+  [[ $ITERM_PROFILE == 'ttheme: '* ]] && TTHEME_ITERM_SHOWN=${ITERM_PROFILE#ttheme: }
   return 0
 }
 
@@ -67,14 +67,14 @@ __tt_profiled() {
 
 __tt_iterm_home() {
   if [[ -n $ITERM_PROFILE ]]; then
-    REPLY=${${(M)ITERM_PROFILE:#ttheme · default}:+default}
+    REPLY=${${(M)ITERM_PROFILE:#ttheme: default}:+default}
   else
     REPLY=${TTHEME_STARTUP:+default}
   fi
 }
 
 __tt_profile() {
-  local REPLY out=$'\e]1337;SetProfile='${1:+ttheme · $1}$'\a'
+  local REPLY out=$'\e]1337;SetProfile='${1:+ttheme: $1}$'\a'
   if [[ $TTHEME_ITERM_SWITCH == 1 ]] && (( TTHEME_ITERM_DYED )); then
     if (( TTHEME_ITERM_DYED == 1 )); then
       out=$'\e]104;0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\'$out

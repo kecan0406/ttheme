@@ -9,16 +9,16 @@
 
 
 
+kipa  → ~/work  this directory
+~
+├── notes/                   ttheme/rue  and below  not installed
+└── work/ ← here             kipa        this directory  new
+    └── site/                kipa        this directory
+/nonexistent-ttheme/archive  kipa        and below  no such directory
+ssh
+├── *.prod                   kipa        while connected
+└── teal                     korund      while connected
 
-
-
-
-
-
-kipa  → ~/work · this directory
-~/work ← here  kipa  this directory  new
-└── site/      kipa  this directory
-
-Replaces korund on ~/work · and below
-Then here · kipa pinned to this directory
+Replaces korund on ~/work  and below
+Then here  kipa pinned to this directory
  [PREVIEW (PIN)] kipa → [This directory]  And below    ←→ choose   enter confirm           esc back

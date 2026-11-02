@@ -334,7 +334,7 @@ export function BrowseWorks({
           <span data-summary-text></span>
           <span data-pending hidden class="text-muted-foreground">
             {' '}
-            · looking up names…
+            — looking up names…
           </span>
         </p>
         {groupsOf(entries, category).map((group, at) => (
@@ -423,7 +423,7 @@ function MarketShelf({ shelf, stacks, first }: { shelf: Shelf; stacks: Stack[]; 
             <RepoLine shelf={shelf} />
             <Updated at={updatedAt(shelf)} />
             <span class="text-xs text-muted-foreground">
-              <Count value={shelf.palettes.length} /> palettes ·{' '}
+              <Count value={shelf.palettes.length} /> palettes,{' '}
               <b data-works-count class="font-mono font-normal text-soft-foreground tabular-nums">
                 {stacks.length}
               </b>{' '}
@@ -536,7 +536,7 @@ function MarketCover({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
           <Updated at={updatedAt(shelf)} />
         </span>
         <span class="text-xs text-muted-foreground">
-          <Count value={shelf.palettes.length} /> palettes · <Count value={stacks.length} /> works
+          <Count value={shelf.palettes.length} /> palettes, <Count value={stacks.length} /> works
         </span>
       </span>
     </a>
