@@ -78,6 +78,12 @@ test('a share code refuses more pictures than its count can carry instead of dro
   assert.equal(fromCode(shareCode([{ ...draft, pictures: pictures.slice(0, 255) }]))[0]?.pictures?.length, 255)
 })
 
+test('a share code refuses a post number it cannot carry instead of naming another post', () => {
+  const pictures = (id: number) => [{ site: 'danbooru', id }]
+  assert.equal(fromCode(shareCode([{ ...draft, pictures: pictures(2 ** 32 - 1) }]))[0]?.pictures?.[0]?.id, 2 ** 32 - 1)
+  assert.throws(() => shareCode([{ ...draft, pictures: pictures(2 ** 32 + 5) }]), /post numbers up to 4294967295/)
+})
+
 test('a share link reads as the code it carries, however it was pasted', () => {
   const code = shareCode([draft])
   const link = shareLink(code)

@@ -11,6 +11,7 @@ export const SUM = 4
 export const UNPACKED = 64 * 1024
 
 const BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+const POST_MOST = 0xffffffff
 
 export interface Draft {
   name: string
@@ -259,6 +260,10 @@ function writeDraft(w: Writer, d: Draft): void {
   w.u8(pictures.length)
 
   for (const p of pictures) {
+    if (p.id > POST_MOST) {
+      throw new Error(`a share code carries post numbers up to ${POST_MOST}, and ${d.name} names ${p.id}`)
+    }
+
     w.u8(SITES.findIndex((s) => s.key === p.site))
     w.u32(p.id)
     w.u16(p.size === undefined ? 0 : p.size === 'fill' ? 1 : p.size)
