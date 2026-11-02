@@ -45,9 +45,10 @@ Your palettes live in a marketplace of your own on your machine. The first `new`
 asks for its name and creates `~/.config/ttheme/marketplace/<name>`. Each palette
 there is named `<you>@<marketplace>/<palette>`. A palette made `--from` another
 keeps the work or character that one is of, and follows it: when the upstream
-palette changes, Browse marks yours `⇡`, and `ttheme update` takes the change
-into every color you left as it was. A color you both changed stays yours, and
-`ttheme edit` then opens on it, where `r` takes the upstream's color.
+palette changes, `ttheme update` names yours and Browse marks it `⇡`, where
+`ctrl+r` takes the change into every color you left as it was. A color you both
+changed stays yours, and `ttheme edit` then opens on it, where `r` takes the
+upstream's color.
 
 ## Tune a palette that is not yours
 
