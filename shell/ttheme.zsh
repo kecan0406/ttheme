@@ -2143,6 +2143,8 @@ if (( ${+functions[compdef]} )); then
     local -a reply
     if (( CURRENT == 2 )); then
       compadd -- $TTHEME_VERBS help
+    elif [[ $words[2] == help && $CURRENT == 3 ]]; then
+      compadd -- all $TTHEME_VERBS
     elif [[ $words[2] == (use|default|edit) && $CURRENT == 3 ]]; then
       __tt_complete_names
       compadd -- $reply
@@ -2163,6 +2165,7 @@ if (( ${+functions[compdef]} )); then
       _files -/
     elif [[ $words[2] == add ]]; then
       _files -g '*.toml'
+      compadd -- --in
     elif [[ $words[2] == new && $words[CURRENT-1] == --from ]]; then
       __tt_complete_names
       compadd -- $reply

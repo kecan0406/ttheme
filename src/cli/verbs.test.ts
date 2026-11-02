@@ -5,12 +5,19 @@ import { test } from 'node:test'
 import { ROOT } from '../root.ts'
 import { VERB_SPECS } from './verbs.ts'
 
-test('the shell completes every action of ttheme marketplace that src/verbs.ts lists', () => {
+test('the shell completes every action src/verbs.ts lists', () => {
   const layer = readFileSync(join(ROOT, 'shell', 'ttheme.zsh'), 'utf8')
-  const completion = /\$words\[2\] == marketplace && \$CURRENT == 3 \]\]; then\n\s+compadd -- (.+)\n/.exec(layer)
-  const offered = completion?.[1]?.split(' ')
-  const actions = VERB_SPECS.find((verb) => verb.name === 'marketplace')?.actions?.map(([usage]) => usage.split(' ')[0])
-  assert.deepEqual(offered, actions)
+
+  for (const verb of VERB_SPECS.filter((spec) => spec.actions)) {
+    const completion = new RegExp(
+      `\\$words\\[2\\] == ${verb.name} && \\$CURRENT == 3 \\]\\]; then\\n\\s+compadd -- (.+)\\n`,
+    ).exec(layer)
+
+    assert.deepEqual(
+      completion?.[1]?.split(' '),
+      verb.actions?.map(([usage]) => usage.split(' ')[0]),
+    )
+  }
 })
 
 test('the shell completes every flag of the verbs it carries, and the choices of one that takes a value, as src/verbs.ts lists them', () => {
