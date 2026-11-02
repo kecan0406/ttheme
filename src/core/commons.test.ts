@@ -3,6 +3,7 @@ import { test } from 'node:test'
 
 import {
   aboutOf,
+  castIndex,
   commonsProblems,
   isTag,
   leadOf,
@@ -288,4 +289,26 @@ test('a commons file in a shape it cannot read says so, whichever part is wrong'
       (error: Error) => error.constructor === Error && /the commons' work "w" does not read/.test(error.message),
     )
   }
+})
+
+test('a work with a long cast reads and answers in time linear in its cast', () => {
+  const cast = Array.from({ length: 64_000 }, (_, i) => `[[character]]\nid = "c${i}"\n`).join('')
+  const from = performance.now()
+  const work = readWork('w.toml', `name = "W"\nlead = "w/c63999"\n${cast}`, 'w', true)
+
+  assert.equal(work.characters.length, 64_000)
+  assert.ok(performance.now() - from < 2000)
+  assert.throws(
+    () => readWork('w.toml', `name = "W"\n${cast}[[character]]\nid = "c5"\n`, 'w', true),
+    /"c5" is listed twice/,
+  )
+  assert.throws(() => readWork('w.toml', `name = "W"\nlead = "w/none"\n${cast}`, 'w', true), /names neither/)
+
+  const asked = performance.now()
+
+  for (let round = 0; round < 8000; round++) {
+    assert.equal(castIndex(aboutOf([work], 'w/c63999')), 63_999)
+  }
+
+  assert.ok(performance.now() - asked < 1000)
 })

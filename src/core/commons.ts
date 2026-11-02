@@ -206,10 +206,14 @@ export function readWork(file: string, source: string, id: string, foreign = fal
     elsewhere(readCharacter(file, i, raw, foreign), id),
   )
 
-  const twice = characters.find((c, i) => characters.findIndex((d) => d.id === c.id) !== i)
+  const ids = new Set<string>()
 
-  if (twice) {
-    fail(file, `the character ${quoted(twice.id)} is listed twice`)
+  for (const { id: character } of characters) {
+    if (ids.has(character)) {
+      fail(file, `the character ${quoted(character)} is listed twice`)
+    }
+
+    ids.add(character)
   }
 
   const danbooru = doc.danbooru === undefined ? undefined : tagOf(file, 'danbooru', doc.danbooru)
@@ -224,7 +228,7 @@ export function readWork(file: string, source: string, id: string, foreign = fal
 
     const character = characterIdOf(lead)
 
-    if (workIdOf(lead) !== id || (character !== undefined && !characters.some((c) => c.id === character))) {
+    if (workIdOf(lead) !== id || (character !== undefined && !ids.has(character))) {
       fail(file, `lead ${quoted(lead)} names neither ${id} nor one of its characters`)
     }
   }
@@ -412,6 +416,26 @@ export function workOf(works: readonly Work[], id: string): Work | undefined {
   return indexOf(works).get(id)
 }
 
+const CASTS = new WeakMap<Work, Map<string, number>>()
+
+function castOf(work: Work): Map<string, number> {
+  let cast = CASTS.get(work)
+
+  if (!cast) {
+    cast = new Map()
+
+    for (const [at, { id }] of work.characters.entries()) {
+      if (!cast.has(id)) {
+        cast.set(id, at)
+      }
+    }
+
+    CASTS.set(work, cast)
+  }
+
+  return cast
+}
+
 export function aboutOf(works: readonly Work[], subject: string | undefined): About | undefined {
   if (subject === undefined) {
     return undefined
@@ -429,7 +453,7 @@ export function aboutOf(works: readonly Work[], subject: string | undefined): Ab
     return { subject, work, known: true }
   }
 
-  const character = work.characters.find((c) => c.id === cid)
+  const character = work.characters[castOf(work).get(cid) ?? -1]
 
   return character ? { subject, work, character, known: true } : { subject, work, character: { id: cid }, known: false }
 }
@@ -479,9 +503,9 @@ export function castIndex(about: About | undefined): number {
     return Number.POSITIVE_INFINITY
   }
 
-  const at = about.character ? about.work.characters.findIndex((c) => c.id === about.character?.id) : -1
+  const at = about.character ? castOf(about.work).get(about.character.id) : undefined
 
-  return at < 0 ? about.work.characters.length : at
+  return at ?? about.work.characters.length
 }
 
 function cmp(a: string, b: string): number {
