@@ -1,5 +1,5 @@
 import { THUMB_SIZES, WorkThumb } from '@/components/work-parts'
-import { GENRE_KEY, GENRES } from '@/lib/categories'
+import { alsoIn, type CategorySlug, categoriesFrom, GENRE_KEY, GENRES, genresFrom, placesLabel } from '@/lib/categories'
 import type { FoundWork } from '@/lib/found'
 import { type Filters, matches, ORDERS, type Ranked, type Searchable, type Sort, START } from '@/lib/gallery'
 import { makePath, NAME_PAUSE, NAMES_PATH, type NamesAnswer, namesPath } from '@/lib/names'
@@ -404,6 +404,7 @@ class BrowseWorks extends Browse {
             art: work.art,
             facets: WORN_FACETS,
             sizes: THUMB_SIZES,
+            also: this.dataset.slug ? alsoIn(work.places, this.dataset.slug as CategorySlug) : placesLabel(work.places),
           }),
         ),
       )
@@ -413,6 +414,18 @@ class BrowseWorks extends Browse {
 
     if (list.children.length !== tiles.length || tiles.some((tile, at) => list.children[at] !== tile))
       list.replaceChildren(...tiles)
+  }
+
+  #fits(work: FoundWork): boolean {
+    const within = this.dataset.slug
+
+    if (within === undefined) return true
+    const held = genresFrom(work.places)
+
+    return (
+      categoriesFrom(work.places).some((category) => category === within) &&
+      (this.#genres.size === 0 || held.some((genre) => this.#genres.has(genre)))
+    )
   }
 
   #said(item: HTMLElement): boolean {
@@ -491,8 +504,10 @@ class BrowseWorks extends Browse {
           : `${plural(markets.length, 'marketplace')} match “${query}”`,
     )
 
-    this.#place(shown === 0 ? (answer?.found ?? []) : [])
-    this.empty(shown > 0, within)
+    const found = shown === 0 ? (answer?.found ?? []).filter((work) => this.#fits(work)) : []
+
+    this.#place(found)
+    this.empty(shown > 0, found.length > 0 ? '' : within)
   }
 
   protected order(sort: string) {

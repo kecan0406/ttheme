@@ -13,6 +13,7 @@ import {
 } from '@/lib/art-source'
 import { commons, themes } from '@/lib/builtin'
 import { personOf } from '@/lib/cast'
+import { placesFrom, placesOf } from '@/lib/categories'
 import {
   anilistIdsOf,
   anilistOf,
@@ -142,7 +143,7 @@ function resolve(slug: string): Promise<Resolved | null> {
         (artwork.value ? igdbArtOf(artwork.value) : null)
 
       return {
-        work: { id: slug, ...titleOf(slug, members), art },
+        work: { id: slug, ...titleOf(slug, members), art, places: placesOf(slug, placesFrom(members)) },
         family: familyOf(members),
         settled: backdrop.settled && (banner?.settled ?? true) && hero.settled && artwork.settled,
       }

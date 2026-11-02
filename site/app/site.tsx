@@ -14,7 +14,7 @@ import { RESTORE_SCRIPT } from '@/lib/builder'
 import { builderData, starts } from '@/lib/builder-page'
 import { fallback, gate, themes } from '@/lib/builtin'
 import { type Card, cardAlt, cardPng } from '@/lib/card'
-import { CATEGORIES, categoryPath } from '@/lib/categories'
+import { CATEGORIES, categoriesFrom, categoryPath } from '@/lib/categories'
 import { creditsOf } from '@/lib/credits'
 import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
@@ -27,7 +27,7 @@ import {
   palettesPath,
   shelvesOf,
 } from '@/lib/gallery'
-import { artFor } from '@/lib/key-art'
+import { artFor, placesFoundFor } from '@/lib/key-art'
 import { castNamed, foundPage, lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
 import { CAST_FILE, type CastAnswer, MOST_ASKED, NAMES_PATH, type NamesAnswer } from '@/lib/names'
@@ -154,7 +154,11 @@ const listings = shelvesOf(themes, marketplaces, facts)
 
 const works = workPages(everyTheme, listings)
 
-const entries = workEntries(everyTheme, artFor)
+const entries = workEntries(everyTheme, artFor, placesFoundFor)
+
+const heldCategories = CATEGORIES.filter((category) =>
+  entries.some((entry) => categoriesFrom(entry.places).includes(category.slug)),
+)
 
 type Stock = {
   marketplace: Marketplace | null
@@ -171,7 +175,7 @@ function stockOf(id: string): Stock | undefined {
 export const PRERENDERED: string[] = [
   '/',
   BROWSE_PATH,
-  ...CATEGORIES.map((category) => categoryPath(category.slug)),
+  ...heldCategories.map((category) => categoryPath(category.slug)),
   MARKETPLACES_PATH,
   '/builder',
   CREDITS_PATH,
@@ -362,7 +366,7 @@ export const site = new Elysia({ name: 'site' })
         ],
         cache: FIXED,
       },
-      <BrowseWorks entries={entries} shelves={listings} facts={facts} />,
+      <BrowseWorks entries={entries} categories={heldCategories} shelves={listings} facts={facts} />,
     ),
   )
   .get(MARKETPLACES_PATH, () =>
@@ -383,7 +387,7 @@ export const site = new Elysia({ name: 'site' })
     ),
   )
   .get(`${BROWSE_PATH}/:category`, ({ params }) => {
-    const category = CATEGORIES.find((one) => one.slug === params.category)
+    const category = heldCategories.find((one) => one.slug === params.category)
 
     if (!category)
       return page(
@@ -408,7 +412,13 @@ export const site = new Elysia({ name: 'site' })
         ],
         cache: FIXED,
       },
-      <BrowseWorks entries={entries} shelves={listings} facts={facts} category={category} />,
+      <BrowseWorks
+        entries={entries}
+        categories={heldCategories}
+        shelves={listings}
+        facts={facts}
+        category={category}
+      />,
     )
   })
   .get('/builder', () =>

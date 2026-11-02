@@ -1,4 +1,5 @@
 import { type KeyArt, keyArtOf, type WorkArt } from '@/lib/art'
+import { type Place, placesOf } from '@/lib/categories'
 import { BUILTIN, faceOf, paint, type Shade, type Theme, type WorkRef } from '@/lib/themes'
 import { slugOf } from '../../src/core/theme.ts'
 
@@ -24,6 +25,7 @@ export interface WorkEntry {
   palettes: number
   search: string
   names: string
+  places: readonly Place[]
 }
 
 export const WORK_PATH = '/works'
@@ -108,7 +110,11 @@ export function ribbon(theme: Theme): string {
   return `linear-gradient(90deg,${stops.join(',')})`
 }
 
-export function workEntries(themes: readonly Theme[], artOf: (work: string) => WorkArt | undefined): WorkEntry[] {
+export function workEntries(
+  themes: readonly Theme[],
+  artOf: (work: string) => WorkArt | undefined,
+  foundPlaces: (work: string) => readonly Place[] | undefined,
+): WorkEntry[] {
   return byWork(themes).flatMap((shelf) => {
     if (!shelf.work) return []
     const { id, name, native, lang } = shelf.work
@@ -125,6 +131,7 @@ export function workEntries(themes: readonly Theme[], artOf: (work: string) => W
         palettes: shelf.themes.length,
         search: [id, name, native ?? ''].join('\n').toLowerCase(),
         names: shelf.themes.flatMap((theme) => [theme.id, slugOf(theme.id)]).join('\n'),
+        places: placesOf(id, foundPlaces(id)),
       },
     ]
   })

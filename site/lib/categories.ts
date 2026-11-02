@@ -3,17 +3,21 @@ import { BROWSE_PATH } from '@/lib/gallery'
 export const CATEGORIES = [
   { slug: 'anime', label: 'anime' },
   { slug: 'game', label: 'game' },
+  { slug: 'manga', label: 'manga' },
+  { slug: 'novel', label: 'novel' },
   { slug: 'vocaloid', label: 'vocaloid' },
 ] as const
 
 export const GENRES = [
-  { slug: 'rhythm-game', label: 'rhythm game' },
-  { slug: 'visual-novel', label: 'visual novel' },
+  { slug: 'rhythm-game', label: 'rhythm game', fact: 'rhythm' },
+  { slug: 'visual-novel', label: 'visual novel', fact: 'vn' },
 ] as const
 
 export const GENRE_KEY = 'genre'
 
 const GENRES_IN = 'game'
+
+const PRINT = ['manga', 'novel'] as const
 
 export type Category = (typeof CATEGORIES)[number]
 
@@ -23,7 +27,14 @@ export type Genre = (typeof GENRES)[number]
 
 export type GenreSlug = Genre['slug']
 
-type Place = CategorySlug | GenreSlug
+export type Place = CategorySlug | GenreSlug
+
+export interface WorkFacts {
+  tags: readonly string[]
+  medium: string | null
+  genres: readonly string[]
+  nature: string | null
+}
 
 const WORK_PLACES = new Map<string, readonly Place[]>([
   ['beatmania-iidx', ['rhythm-game']],
@@ -44,6 +55,7 @@ const WORK_PLACES = new Map<string, readonly Place[]>([
   ['lain', ['anime']],
   ['lucky-star', ['anime']],
   ['madoka-magica', ['anime']],
+  ['marvel', []],
   ['monogatari', ['anime']],
   ['nichijou', ['anime']],
   ['no-game-no-life', ['anime']],
@@ -71,16 +83,42 @@ function categoryOf(place: Place): CategorySlug {
   return isGenre(place) ? GENRES_IN : place
 }
 
-function placesOf(work: string): readonly Place[] {
-  return WORK_PLACES.get(work) ?? []
+function gamePlace(games: readonly WorkFacts[]): Place {
+  const held = GENRES.find(
+    (genre) => games.filter((game) => game.genres.includes(genre.fact)).length * 2 >= games.length,
+  )
+
+  return held?.slug ?? GENRES_IN
 }
 
-export function categoriesOf(work: string): readonly CategorySlug[] {
-  return [...new Set(placesOf(work).map(categoryOf))]
+export function placesFrom(members: readonly WorkFacts[]): Place[] {
+  if (members.some((member) => member.nature !== null)) return []
+  const tagged = members.filter((member) => member.tags.length > 0)
+  const counted = tagged.length > 0 ? tagged : members
+  const games = counted.filter((member) => member.medium === GENRES_IN)
+
+  const screen: Place[] = [
+    ...(counted.some((member) => member.medium === 'anime') ? (['anime'] as const) : []),
+    ...(games.length > 0 ? [gamePlace(games)] : []),
+  ]
+
+  return screen.length > 0 ? screen : PRINT.filter((medium) => counted.some((member) => member.medium === medium))
 }
 
-export function genresOf(work: string): readonly GenreSlug[] {
-  return placesOf(work).filter(isGenre)
+export function placesOf(work: string, found: readonly Place[] = []): readonly Place[] {
+  return WORK_PLACES.get(work) ?? found
+}
+
+export function isPlace(value: unknown): value is Place {
+  return [...CATEGORIES, ...GENRES].some((one) => one.slug === value)
+}
+
+export function categoriesFrom(places: readonly Place[]): readonly CategorySlug[] {
+  return [...new Set(places.map(categoryOf))]
+}
+
+export function genresFrom(places: readonly Place[]): readonly GenreSlug[] {
+  return places.filter(isGenre)
 }
 
 export function genresIn(category: CategorySlug): readonly Genre[] {
@@ -91,9 +129,31 @@ export function categoryPath(slug: CategorySlug): string {
   return `${BROWSE_PATH}/${slug}`
 }
 
-export function alsoIn(work: string, shown: CategorySlug | null): string | null {
-  const places = placesOf(work).filter((place) => categoryOf(place) !== shown)
-  const others = [...CATEGORIES, ...GENRES].filter((one) => places.includes(one.slug))
+export function placeLinks(places: readonly Place[]): { label: string; href: string }[] {
+  return [...CATEGORIES, ...GENRES].flatMap((one) =>
+    places.includes(one.slug)
+      ? [
+          {
+            label: one.label,
+            href: isGenre(one.slug)
+              ? `${categoryPath(GENRES_IN)}?${new URLSearchParams({ [GENRE_KEY]: one.slug })}`
+              : categoryPath(one.slug),
+          },
+        ]
+      : [],
+  )
+}
+
+export function placesLabel(places: readonly Place[]): string | null {
+  return (
+    placeLinks(places)
+      .map((one) => one.label)
+      .join(', ') || null
+  )
+}
+
+export function alsoIn(places: readonly Place[], shown: CategorySlug | null): string | null {
+  const others = placeLinks(places.filter((place) => categoryOf(place) !== shown))
 
   return others.length > 0 ? `+ ${others.map((one) => one.label).join(', ')}` : null
 }

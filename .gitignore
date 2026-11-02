@@ -10,6 +10,7 @@ site/repo.json
 site/art.json
 site/cast.json
 site/people.json
+site/places.json
 site/commands.json
 pages/
 .vercel/

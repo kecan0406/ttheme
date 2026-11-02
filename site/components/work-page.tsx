@@ -2,6 +2,7 @@ import { ArrowRight, Plus } from 'lucide'
 import { LinkButton } from '@/components/ui/button'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { personOf } from '@/lib/cast'
+import { type Place, placeLinks } from '@/lib/categories'
 import type { Facts } from '@/lib/facts'
 import { type FamilyWork, type FoundCast, type FoundPage, type FoundWork, SHOWN_CAST } from '@/lib/found'
 import { BROWSE_PATH, marketplacePath, palettePath } from '@/lib/gallery'
@@ -30,14 +31,6 @@ const MAIN = 'relative mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[m
 const SECTIONS = 'grid grid-cols-[minmax(0,1fr)] gap-16 max-sm:gap-11'
 
 const SECTION = 'grid grid-cols-[minmax(0,1fr)] gap-4.5'
-
-const MEDIA = new Map([
-  ['anime', 'anime'],
-  ['vn', 'visual novel'],
-  ['game', 'game'],
-  ['manga', 'manga'],
-  ['novel', 'novel'],
-])
 
 function Who({ slot }: { slot: CastSlot }) {
   return (
@@ -217,7 +210,19 @@ function Tracks({
   )
 }
 
-function WorkHead({ name, native, lang }: { name: string; native: string | null; lang: string | null }) {
+function WorkHead({
+  name,
+  native,
+  lang,
+  places,
+}: {
+  name: string
+  native: string | null
+  lang: string | null
+  places: readonly Place[]
+}) {
+  const links = placeLinks(places)
+
   return (
     <div class="relative mx-auto grid min-h-133 w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] content-end gap-1.5 pt-15 pb-8 max-sm:min-h-102">
       <Crumbs trail={[{ label: 'browse', href: BROWSE_PATH }, { label: 'works' }]} />
@@ -232,6 +237,15 @@ function WorkHead({ name, native, lang }: { name: string; native: string | null;
           safe
         >
           {native}
+        </p>
+      )}
+      {links.length === 0 ? null : (
+        <p class="flex flex-wrap gap-x-3 text-sm text-soft-foreground">
+          {links.map((link) => (
+            <a href={link.href} class="underline-offset-4 hover:text-foreground hover:underline" safe>
+              {link.label}
+            </a>
+          ))}
         </p>
       )}
     </div>
@@ -287,9 +301,7 @@ function Family({ works }: { works: FamilyWork[] }) {
             {work.name}
           </span>
           <span class="flex-none font-mono text-xs text-muted-foreground" safe>
-            {[work.medium === null ? null : (MEDIA.get(work.medium) ?? work.medium), work.year]
-              .filter((part) => part !== null)
-              .join(', ')}
+            {[work.medium, work.year].filter((part) => part !== null).join(', ')}
           </span>
         </li>
       ))}
@@ -328,7 +340,7 @@ export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts
       <WorkHero art={work.art} facets={WORN_FACETS} sizes={HERO_SIZES} />
       <SiteHeader current={BROWSE_PATH} facts={facts} />
       <main id="content" data-work-main>
-        <WorkHead name={work.name} native={work.native} lang={work.lang} />
+        <WorkHead name={work.name} native={work.native} lang={work.lang} places={work.places} />
         <div class={MAIN}>
           <div class={SECTIONS}>
             {cast.length === 0 ? null : (
@@ -373,7 +385,7 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
       <WorkHero art={page.art} facets={page.facets} sizes={HERO_SIZES} />
       <SiteHeader current={BROWSE_PATH} facts={facts} />
       <main id="content" data-work-main>
-        <WorkHead name={work.name} native={work.native} lang={work.lang} />
+        <WorkHead name={work.name} native={work.native} lang={work.lang} places={page.places} />
         <div class={MAIN}>
           <work-page class={SECTIONS}>
             <section aria-labelledby="characters" class={SECTION}>

@@ -1,4 +1,5 @@
 import type { KeyArt } from '@/lib/art'
+import { GENRES, type Place } from '@/lib/categories'
 import { type CastMember, type NameHit, slugOfTag, type TaggedWork, type WorkName } from '../../src/core/names.ts'
 import { containsText } from '../../src/core/text.ts'
 
@@ -45,6 +46,7 @@ export interface FoundWork {
   native: string | null
   lang: string | null
   art: KeyArt | null
+  places: readonly Place[]
 }
 
 export interface FoundCast {
@@ -99,8 +101,8 @@ export function foundSlugs(unknown: readonly NameHit[], taken: ReadonlySet<strin
   const slugs: string[] = []
 
   for (const hit of unknown) {
-    const tag = hit.tags[0]
-    const slug = tag === undefined ? undefined : slugOfTag(tag)
+    const key = hit.tags[0] ?? hit.family
+    const slug = key === undefined ? undefined : slugOfTag(key)
 
     if (slug && !taken.has(slug) && !slugs.includes(slug)) slugs.push(slug)
   }
@@ -109,7 +111,7 @@ export function foundSlugs(unknown: readonly NameHit[], taken: ReadonlySet<strin
 }
 
 export function membersOf(slug: string, works: readonly TaggedWork[]): TaggedWork[] {
-  return works.filter((work) => work.tags.some((tag) => slugOfTag(tag) === slug))
+  return works.filter((work) => [...work.tags, work.family ?? ''].some((key) => slugOfTag(key) === slug))
 }
 
 function shortest(names: readonly WorkName[], keep: (name: WorkName) => boolean): WorkName | undefined {
@@ -266,6 +268,10 @@ export function anilistIdsOf(members: readonly CastMember[]): number[] {
   return members.flatMap((member) => (bangumiPictureOf(member) === null ? (anilistCharacterOf(member) ?? []) : []))
 }
 
+function mediumLabel(member: TaggedWork): string | null {
+  return GENRES.find((genre) => member.genres.includes(genre.fact))?.label ?? member.medium
+}
+
 export function familyOf(members: readonly TaggedWork[]): FamilyWork[] {
   const seen = new Set<string>()
 
@@ -275,12 +281,13 @@ export function familyOf(members: readonly TaggedWork[]): FamilyWork[] {
         (preferredOf(member.names, 'en') ?? shortest(member.names, (each) => each.official && each.lang === 'en'))
           ?.text ?? member.label
 
-      const key = `${name}\u0000${member.year ?? ''}\u0000${member.medium ?? ''}`
+      const medium = mediumLabel(member)
+      const key = `${name}\u0000${member.year ?? ''}\u0000${medium ?? ''}`
 
       if (seen.has(key)) return []
       seen.add(key)
 
-      return [{ name, year: member.year, medium: member.medium }]
+      return [{ name, year: member.year, medium }]
     })
     .toSorted((a, b) => Number(a.year === null) - Number(b.year === null) || (a.year ?? 0) - (b.year ?? 0))
 }

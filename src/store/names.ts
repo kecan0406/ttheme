@@ -33,7 +33,7 @@ const REF = /^[a-z]+:[\w./-]+$/
 
 const COUNTRY = /^[A-Z]{2}$/
 
-const MEDIUM = /^[a-z]{2,8}$/
+const WORD = /^[a-z]{2,16}$/
 
 function text(value: unknown): string | undefined {
   const shown = typeof value === 'string' ? inert(value).trim() : ''
@@ -57,6 +57,14 @@ function sureOf(match: unknown, query: string): boolean {
   return typeof match === 'string' && SURE.has(match)
 }
 
+function familyOf(value: unknown): string | null {
+  return isTag(value) ? value : null
+}
+
+function wordOf(value: unknown): string | null {
+  return typeof value === 'string' && WORD.test(value) ? value : null
+}
+
 function hitOf(value: unknown, query: string): NameHit | undefined {
   if (typeof value !== 'object' || value === null) {
     return undefined
@@ -74,7 +82,9 @@ function hitOf(value: unknown, query: string): NameHit | undefined {
     typeof n === 'object' && n !== null ? (text((n as Record<string, unknown>).text) ?? []) : [],
   )
 
-  return { id, label, names, tags: strings(v.danbooru, isTag) }
+  const family = familyOf(v.family)
+
+  return { id, label, names, tags: strings(v.danbooru, isTag), ...(family ? { family } : {}) }
 }
 
 function workNamesOf(value: unknown): WorkName[] {
@@ -120,7 +130,10 @@ function taggedOf(value: unknown): TaggedWork | undefined {
     refs: strings(v.refs, (r) => REF.test(r)),
     origin: strings(v.origin, (c) => COUNTRY.test(c)),
     year: Number.isSafeInteger(v.year) && (v.year as number) > 0 ? (v.year as number) : null,
-    medium: typeof v.medium === 'string' && MEDIUM.test(v.medium) ? v.medium : null,
+    medium: wordOf(v.medium),
+    genres: strings(v.genres, (genre) => WORD.test(genre)),
+    nature: wordOf(v.nature),
+    family: familyOf(v.family),
   }
 }
 

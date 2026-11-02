@@ -15,6 +15,7 @@ export interface NameHit {
   label: string
   names: string[]
   tags: string[]
+  family?: string
 }
 
 export interface WorkName {
@@ -33,6 +34,9 @@ export interface TaggedWork {
   origin: string[]
   year: number | null
   medium: string | null
+  genres: string[]
+  nature: string | null
+  family: string | null
 }
 
 export interface CastMember {

@@ -1,4 +1,5 @@
 import type { Art, WorkArt } from '@/lib/art'
+import { type Place, placesFrom, placesOf } from '@/lib/categories'
 import {
   anilistIdsOf,
   type Casts,
@@ -6,6 +7,7 @@ import {
   castFrom,
   castLeads,
   MOST_CAST,
+  membersOf,
   type People,
   untaken,
 } from '@/lib/found'
@@ -619,6 +621,24 @@ export async function fetchCasts(works: readonly CastWork[], warn: (message: str
   }
 
   return casts
+}
+
+export async function fetchPlaces(
+  works: readonly Pick<Work, 'id' | 'danbooru'>[],
+): Promise<Record<string, readonly Place[]>> {
+  const index = nameIndex(liveSource())
+  const found: Record<string, readonly Place[]> = {}
+
+  for (const work of works) {
+    const slug = work.danbooru ? slugOfTag(work.danbooru) : undefined
+
+    if (!slug || placesOf(work.id, []).length > 0) continue
+    const places = placesFrom(membersOf(slug, await index.tagged(slug, AbortSignal.timeout(BUILD.timeout))))
+
+    if (places.length > 0) found[work.id] = places
+  }
+
+  return found
 }
 
 export async function fetchPeople(works: readonly Work[]): Promise<People> {

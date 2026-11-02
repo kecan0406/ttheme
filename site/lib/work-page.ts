@@ -1,9 +1,10 @@
 import { type KeyArt, keyArtOf, pictureOf } from '@/lib/art'
 import { commons } from '@/lib/builtin'
 import { castFor, personOf } from '@/lib/cast'
+import { type Place, placesOf } from '@/lib/categories'
 import type { FoundCast } from '@/lib/found'
 import type { Shelf } from '@/lib/gallery'
-import { artFor } from '@/lib/key-art'
+import { artFor, placesFoundFor } from '@/lib/key-art'
 import { listedWorks } from '@/lib/marketplaces'
 import { langOf } from '@/lib/theme-entry'
 import { BUILTIN, type Theme, type WorkRef } from '@/lib/themes'
@@ -32,6 +33,7 @@ export interface WorkPage {
   more: FoundCast[]
   findable: boolean
   markets: WorkMarket[]
+  places: readonly Place[]
 }
 
 function cmp(a: string, b: string): number {
@@ -113,6 +115,7 @@ export function workPages(themes: readonly Theme[], shelves: readonly Shelf[]): 
       more: castFor(ref.id),
       findable: commons.works.some((work) => work.id === ref.id && Boolean(work.danbooru)),
       markets,
+      places: placesOf(ref.id, placesFoundFor(ref.id)),
     })
   }
 

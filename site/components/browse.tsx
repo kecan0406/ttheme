@@ -22,13 +22,12 @@ import { Toggle } from '@/components/ui/toggle'
 import { type KeyArt, keyArtOf } from '@/lib/art'
 import {
   alsoIn,
-  CATEGORIES,
   type Category,
   type CategorySlug,
-  categoriesOf,
+  categoriesFrom,
   categoryPath,
+  genresFrom,
   genresIn,
-  genresOf,
 } from '@/lib/categories'
 import type { Facts } from '@/lib/facts'
 import {
@@ -274,29 +273,29 @@ interface WorkGroup {
   entries: WorkEntry[]
 }
 
-function groupsOf(entries: WorkEntry[], category: Category | undefined): WorkGroup[] {
-  const groups = (category ? [category] : CATEGORIES).map((one) => ({
+function groupsOf(entries: WorkEntry[], categories: readonly Category[], category: Category | undefined): WorkGroup[] {
+  const groups = (category ? [category] : categories).map((one) => ({
     id: one.slug,
     slug: one.slug,
     label: one.label,
     href: category ? null : categoryPath(one.slug),
-    entries: entries.filter((entry) => categoriesOf(entry.id).includes(one.slug)),
+    entries: entries.filter((entry) => categoriesFrom(entry.places).includes(one.slug)),
   }))
 
-  const other = entries.filter((entry) => categoriesOf(entry.id).length === 0)
+  const other = entries.filter((entry) => entry.places.length === 0)
 
   return category || other.length === 0
     ? groups
     : [...groups, { id: 'other', slug: null, label: 'other', href: null, entries: other }]
 }
 
-function Categories({ current }: { current: CategorySlug | undefined }) {
+function Categories({ categories, current }: { categories: readonly Category[]; current: CategorySlug | undefined }) {
   return (
     <nav
       aria-label="category"
       class="flex flex-[1_1_auto] items-center gap-6 border-b border-border max-sm:basis-full max-sm:overflow-x-auto max-sm:[scrollbar-width:none]"
     >
-      {CATEGORIES.map((one) => (
+      {categories.map((one) => (
         <a
           href={one.slug === current ? BROWSE_PATH : categoryPath(one.slug)}
           data-keep-query
@@ -321,7 +320,7 @@ function Genres({ category, entries }: { category: CategorySlug; entries: WorkEn
         <Toggle variant="chip" value={genre.slug}>
           <span>{genre.label}</span>
           <b data-genre-count class="font-mono text-xs font-normal text-muted-foreground tabular-nums">
-            {entries.filter((entry) => genresOf(entry.id).includes(genre.slug)).length}
+            {entries.filter((entry) => genresFrom(entry.places).includes(genre.slug)).length}
           </b>
         </Toggle>
       ))}
@@ -331,11 +330,13 @@ function Genres({ category, entries }: { category: CategorySlug; entries: WorkEn
 
 export function BrowseWorks({
   entries,
+  categories,
   shelves,
   facts,
   category,
 }: {
   entries: WorkEntry[]
+  categories: readonly Category[]
   shelves: Shelf[]
   facts: Facts
   category?: Category
@@ -347,14 +348,18 @@ export function BrowseWorks({
 
   return (
     <MarketplaceFrame facts={facts} current={BROWSE_PATH}>
-      <browse-works data-category={category?.label} class="grid grid-cols-[minmax(0,1fr)] gap-5">
+      <browse-works
+        data-category={category?.label}
+        data-slug={category?.slug}
+        class="grid grid-cols-[minmax(0,1fr)] gap-5"
+      >
         <Head
           lens="works"
           heading={category ? `browse ${category.label} works` : 'browse works'}
           counts={{ works: entries.length, marketplaces: shelves.length }}
           placeholder="search works"
         >
-          <Categories current={category?.slug} />
+          <Categories categories={categories} current={category?.slug} />
           <Choice name="sort" options={WORK_SORTS} first="name" />
         </Head>
         {category ? <Genres category={category.slug} entries={entries} /> : null}
@@ -367,7 +372,7 @@ export function BrowseWorks({
             — looking up names…
           </span>
         </p>
-        {groupsOf(entries, category).map((group, at) => (
+        {groupsOf(entries, categories, category).map((group, at) => (
           <section
             data-group
             aria-labelledby={`group-${group.id}`}
@@ -392,7 +397,7 @@ export function BrowseWorks({
               {group.entries.map((entry, index) => (
                 <li
                   data-work={entry.id}
-                  data-genres={genresOf(entry.id).join(' ') || undefined}
+                  data-genres={genresFrom(entry.places).join(' ') || undefined}
                   data-search={entry.search}
                   data-names={entry.names}
                   data-palettes={entry.palettes}
@@ -409,14 +414,14 @@ export function BrowseWorks({
                     facets={entry.facets}
                     sizes={THUMB_SIZES}
                     eager={at === 0 && index < 5}
-                    also={alsoIn(entry.id, group.slug)}
+                    also={alsoIn(entry.places, group.slug)}
                   />
                 </li>
               ))}
             </ul>
           </section>
         ))}
-        {category ? null : <ul data-found-tiles hidden aria-label="works without palettes" class={TILES}></ul>}
+        <ul data-found-tiles hidden aria-label="works without palettes" class={TILES}></ul>
         <Empty everyWork={category !== undefined} />
         <script type="application/json" data-markets>
           {json(markets)}

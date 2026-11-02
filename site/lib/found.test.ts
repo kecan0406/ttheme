@@ -21,7 +21,20 @@ function hit(label: string, tags: string[]): NameHit {
 }
 
 function tagged(id: string, tags: string[], more: Partial<TaggedWork> = {}): TaggedWork {
-  return { id, label: id, names: [], tags, refs: [], origin: [], year: null, medium: null, ...more }
+  return {
+    id,
+    label: id,
+    names: [],
+    tags,
+    refs: [],
+    origin: [],
+    year: null,
+    medium: null,
+    genres: [],
+    nature: null,
+    family: null,
+    ...more,
+  }
 }
 
 test('a work hit gives the slug of its main tag, unless a work holds it already', () => {

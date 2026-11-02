@@ -6,7 +6,7 @@ import subsetFont from 'subset-font'
 import { EXIT_CODES } from '../src/cli/answer.ts'
 import { repoFacts, showcase } from '../src/cli/showcase.ts'
 import { DOCS_URL, docsOf, flagRows, headOf, SECTIONS, usageOf, VERB_SPECS } from '../src/cli/verbs.ts'
-import { artProblems, castWorks, fetchArt, fetchCasts, fetchPeople } from './lib/art-source'
+import { artProblems, castWorks, fetchArt, fetchCasts, fetchPeople, fetchPlaces } from './lib/art-source'
 import { commons, themes } from './lib/builtin'
 import { uncategorized } from './lib/categories'
 import type { Commands } from './lib/commands'
@@ -37,6 +37,8 @@ const ART_FILE = join(SITE, 'art.json')
 const CAST_FILE = join(SITE, 'cast.json')
 
 const PEOPLE_FILE = join(SITE, 'people.json')
+
+const PLACES_FILE = join(SITE, 'places.json')
 
 const COMMANDS = join(SITE, 'commands.json')
 
@@ -407,6 +409,11 @@ export async function snapshot(fresh: boolean): Promise<void> {
     fresh,
   )
   await fetched(PEOPLE_FILE, 'people', () => fetchPeople(commons.works), {}, fresh)
+  const { listedWorks } = await import('./lib/marketplaces')
+  const known = new Set(commons.works.map((work) => work.id))
+  const proposed = listedWorks.filter((work) => !known.has(work.id))
+
+  await fetched(PLACES_FILE, 'places of proposed works', () => fetchPlaces(proposed), {}, fresh)
 }
 
 function artChecked(): void {
