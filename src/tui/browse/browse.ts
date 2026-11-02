@@ -1332,10 +1332,10 @@ export class BrowsePanel {
         ]
       : []
 
-    const close: Topic = { group: 'Help', keys: '?  esc', does: 'Close help', run: () => {} }
+    const close: Topic = { group: 'Help', keys: '? / esc', does: 'Close help', run: () => {} }
 
     const moving: Topic[] = [
-      { group: 'Move', keys: '↑↓  ctrl+j  ctrl+k', does: 'Move up or down' },
+      { group: 'Move', keys: '↑↓ / ctrl+j  ctrl+k', does: 'Move up or down' },
       { group: 'Move', keys: 'pgup  pgdn  home  end', does: 'Move a page, or to either end' },
     ]
 
@@ -1347,7 +1347,7 @@ export class BrowsePanel {
     if (this.showing === 'search') {
       return [
         ...moving,
-        { group: 'Move', keys: '←  esc', does: 'Back to Browse', run: () => this.closeSearch() },
+        { group: 'Move', keys: '← / esc', does: 'Back to Browse', run: () => this.closeSearch() },
         {
           group: 'Filter',
           keys: 'type',
@@ -1390,13 +1390,13 @@ export class BrowsePanel {
       ...moving,
       {
         group: 'Move',
-        keys: '→  enter',
+        keys: '→ / enter',
         does: 'Open a marketplace or a work',
         ...when(!form, () => this.key('right')),
       },
       {
         group: 'Move',
-        keys: '←  esc',
+        keys: '← / esc',
         does: 'Back to the marketplaces',
         ...when(panel || form, () => this.back()),
       },

@@ -3,22 +3,22 @@
  ╭────────────│  Move                                                               │
  │ ⌕ Search… ‹hint› │
  ╰────────────│    pgup  pgdn  home  end  Move a page, or to either end             │
-              │    ←→  space              Close or open a shelf                     │
+              │    ←→ / space             Close or open a shelf                     │
 ▌  ▸ Briarwood│  Filter                                                             │
    ▸ Lumen☆Son│    type                   Filter by name or title, in Japanese too  │
               │    ctrl+u                 Clear the filter                          │
               │    enter                  Search marketplaces when nothing matches  │
               │  Palette                                                            │
-              │    ⇧←→                    Switch the sample                         │
+              │    shift+←→               Switch the sample                         │
               │    enter                  Use it, choosing where                    │
-              │    tab  →  ctrl+e         Edit its colors and picture               │
+              │    tab / → / ctrl+e       Edit its colors and picture               │
               │  Finish                                                             │
               │    esc                    Cancel and put the tab back               │
               │    alt+g                  Group and sort the list                   │
               │    alt+c                  Open the settings                         │
               │    shift+tab              Switch to Browse                          │
               │  Help                                                               │
-              │    ?  esc                 Close help                                │
+              │    ? / esc                Close help                                │
               │                                                                     │
               ╰─────────────────────────────────────────────────────────────────────╯
- [HELP]                                                                                 ? esc close
+ [HELP]                                                                               ? / esc close

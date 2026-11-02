@@ -33,7 +33,7 @@ typeset -gA TTHEME_KEYCAPS=(
   esc ⎋ enter ↩ tab ⇥ bksp ⌫ backspace ⌫ delete ⌦
   pgup ⇞ pgdn ⇟ home ↖ end ↘
 )
-typeset -ga TTHEME_KEYMODS=(ctrl ⌃ alt ⌥ shift ⇧)
+typeset -ga TTHEME_KEYMODS=(ctrl ⌃ alt ⌥ shift ⇧ cmd ⌘)
 
 __tt_palettes_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
@@ -1279,10 +1279,6 @@ __tt_caps() {
 __tt_chord() {
   local t=$1 k m g held=""
   local -a parts
-  if [[ $t == ⇧?* && ${t#⇧} != *[^a-z]* && -n ${TTHEME_KEYCAPS[${t#⇧}]} ]]; then
-    REPLY=⇧${TTHEME_KEYCAPS[${t#⇧}]}
-    return 0
-  fi
   parts=("${(@s:+:)t}")
   (( ${#parts} >= 2 )) || return 1
   k=$parts[-1]
@@ -1292,12 +1288,10 @@ __tt_chord() {
     (( ${TTHEME_KEYMODS[(Ie)$m]} % 2 )) || return 1
   done
   for m g in $TTHEME_KEYMODS; do
-    (( ${parts[(Ie)$m]} )) && held+=$g
+    (( ${parts[(Ie)$m]} )) && held+="$g + "
   done
   if [[ $k != *[^a-z]* && -n ${TTHEME_KEYCAPS[$k]} ]]; then
     k=$TTHEME_KEYCAPS[$k]
-  elif (( ${#k} == 1 )); then
-    k=${(U)k}
   fi
   REPLY=$held$k
 }
@@ -1341,7 +1335,7 @@ __tt_capped() {
       shown=$word
     fi
     out+=$shown
-    if [[ $word == $TTHEME_MARKS[sep] || $word == — || $word == *[,:.?!] ]]; then
+    if [[ $word == $TTHEME_MARKS[sep] || $word == — || $word == / || $word == *[,:.?!] ]]; then
       start=1
     else
       start=0

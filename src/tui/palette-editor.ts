@@ -414,11 +414,11 @@ export class PaletteEditor {
     const others = (this.options.palettes ?? []).length > 0
     const roomy = list && this.roomy
     const when = (on: boolean, key: string) => (on ? { run: () => this.press(key) } : {})
-    const close: Topic = { group: 'Help', keys: '?  esc', does: 'Close help', run: () => {} }
+    const close: Topic = { group: 'Help', keys: '? / esc', does: 'Close help', run: () => {} }
 
     const leave = (on: boolean): Topic => ({
       group: 'Finish',
-      keys: 'esc  ctrl+c',
+      keys: 'esc / ctrl+c',
       does: 'Leave',
       more: LEAVE,
       ...when(on, 'esc'),
@@ -447,7 +447,7 @@ export class PaletteEditor {
       return [
         { group: 'Seeds', keys: '↑↓', does: 'Choose a seed' },
         { group: 'Seeds', keys: '←→', does: 'Change it by a step' },
-        { group: 'Seeds', keys: '⇧←→', does: 'Change it by five steps', more: 'Ten steps on the hue.' },
+        { group: 'Seeds', keys: 'shift+←→', does: 'Change it by five steps', more: 'Ten steps on the hue.' },
         { group: 'Seeds', keys: 'home  end', does: 'Set it to either end' },
         {
           group: 'Seeds',
@@ -481,7 +481,7 @@ export class PaletteEditor {
         more: 'Moves only the colors a contrast check fails, as little as it can.',
         ...when(list, 'f'),
       },
-      { group: 'Tune a color', keys: 'enter  tab', does: 'Open the picker', ...when(plain, 'enter') },
+      { group: 'Tune a color', keys: 'enter / tab', does: 'Open the picker', ...when(plain, 'enter') },
       { group: 'Tune a color', keys: '↑↓', does: 'Lightness' },
       {
         group: 'Tune a color',
@@ -489,13 +489,13 @@ export class PaletteEditor {
         does: 'Chroma',
         more: `Chroma stops at what sRGB can show. What lightness or hue took away comes back while you tune, marked ${MARKS.off}.`,
       },
-      { group: 'Tune a color', keys: '⇧←→  ,  .', does: 'Hue by 5, or by 1' },
+      { group: 'Tune a color', keys: 'shift+←→ / , .', does: 'Hue by 5, or by 1' },
       { group: 'Tune a color', keys: 'pgup  pgdn', does: 'Lightness by 5' },
       {
         group: 'Tune a color',
         keys: 'home  end  0-9',
         does: 'Jump the channel moved last',
-        more: 'home and end go to either end, a digit to that tenth of the way.',
+        more: 'home / end go to either end, a digit to that tenth of the way.',
       },
       {
         group: 'Tune a color',
@@ -560,7 +560,7 @@ export class PaletteEditor {
       },
       {
         group: 'View',
-        keys: '⇧←→',
+        keys: 'shift+←→',
         does: 'Switch the sample tab',
         more: 'The color under the cursor is underlined where the sample uses it.',
       },

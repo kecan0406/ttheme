@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Key hints on a Mac now read `⌥ + u` and `⌃ + r`, where they read `⌥U` and `⌃R`.
+- Keys that do the same thing are apart by a slash, as in `? / esc`, in the key bars and in Help.
+- Outside a Mac, the Shift keys read `shift+tab`, `shift+enter` and `shift+←→`, where they read `⇧tab`, `⇧enter` and `⇧←→`.
+- Clicking `erase` in find's bar now erases.
+
 ## 1.2.87
 
 - The cursor of every built-in palette now reads at 4.5:1 or better on its background, so the letter under a block cursor is easier to read. 98 of the 298 light and dark shades move a little in brightness; their hue stays.

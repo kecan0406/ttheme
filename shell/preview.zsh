@@ -433,7 +433,7 @@ __tt_pv_bar() {
   local -i i at=${TTHEME_HUB_TABS[(Ie)preview]} len=${#TTHEME_HUB_TITLES}
   (( color )) || z= d= on=
   hint="tab ${TTHEME_HUB_TITLES[at % ${#TTHEME_HUB_TITLES} + 1]}"
-  [[ ${rtype[cur]} == thm ]] && hint="⇧tab ${TTHEME_HUB_TITLES[(at + ${#TTHEME_HUB_TITLES} - 2) % ${#TTHEME_HUB_TITLES} + 1]}"
+  [[ ${rtype[cur]} == thm ]] && hint="shift+tab ${TTHEME_HUB_TITLES[(at + ${#TTHEME_HUB_TITLES} - 2) % ${#TTHEME_HUB_TITLES} + 1]}"
   __tt_capped "$hint"
   hint=$REPLY
   for title in $TTHEME_HUB_TITLES; do
@@ -530,7 +530,7 @@ __tt_pv_foot() {
   if (( help == 2 )); then
     badge=HELP rk=any right=$b"any key"$z$d" close"$z
   elif (( help )); then
-    badge=HELP rk='?' right=$b"? $ke"$z$d" close"$z
+    badge=HELP rk='?' right=$b"? / $ke"$z$d" close"$z
   elif [[ -n $pick ]]; then
     __tt_label "$pick"
     badge='PREVIEW (APPLY)' pre="$REPLY → "
@@ -558,7 +558,7 @@ __tt_pv_foot() {
     kk=(←→ enter) kl=(choose confirm)
     rk=esc right=$b$ke$z$d" back"$z
   elif (( te && tfocus == 0 )); then
-    badge=$tb kk=(enter ↑↓ s ⇧enter '?') kl=("edit palette" move save apply keys)
+    badge=$tb kk=(enter ↑↓ s shift+enter '?') kl=("edit palette" move save apply keys)
     (( tbtn )) && kl[1]="reset palette"
     (( ${TTHEME_TUNED[(Ie)$tename]} )) && kk[2]=↑↓←→
     rk=esc right=$b$ke$z$d" cancel"$z
@@ -586,7 +586,7 @@ __tt_pv_foot() {
     else
       kk=(enter ↑↓ s) kl=(find move save)
     fi
-    kk+=(⇧enter '?') kl+=(apply keys)
+    kk+=(shift+enter '?') kl+=(apply keys)
     rk=esc right=$b$ke$z$d" cancel"$z
   elif (( gmenu )); then
     badge=GROUP kk=(↑↓ space) kl=(move pick)
@@ -608,7 +608,7 @@ __tt_pv_foot() {
       fi
     else
       kk=(enter tab) kl=(use edit)
-      (( split )) && { kk+=(⇧←→); kl+=(sample) }
+      (( split )) && { kk+=(shift+←→); kl+=(sample) }
       [[ -n $flt ]] && { kk+=(bksp); kl+=(edit) }
     fi
     __tt_pv_alt && { kk+=(alt+c); kl+=(settings) }
@@ -1855,7 +1855,7 @@ __tt_pv_word() {
     tab) REPLY=$'\t' ;;
     bksp) REPLY=$'\x7f' ;;
     space) REPLY=' ' ;;
-    ⇧enter) REPLY=senter ;;
+    shift+enter) REPLY=senter ;;
     alt+u) REPLY=altu ;;
     alt+g) REPLY=altg ;;
     alt+c) REPLY=altc ;;

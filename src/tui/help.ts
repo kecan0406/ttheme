@@ -124,7 +124,7 @@ export class Help {
     return {
       badge: 'HELP',
       keys: [...keys, ['type', 'to filter']],
-      right: this.filter.value ? ['esc', 'clear'] : ['? esc', 'close'],
+      right: this.filter.value ? ['esc', 'clear'] : ['? / esc', 'close'],
     }
   }
 
@@ -141,7 +141,7 @@ export class Help {
     const side = (text: string) => zone({ kind: 'help' } satisfies HelpSpot, boxed(p, ` ${fit(text, inner)} `, w))
     const edge = (line: string) => zone({ kind: 'help' } satisfies HelpSpot, line)
     const texts = shown.map((t) => wrap(t.does, room))
-    const mores = shown.map((t) => (t.more ? clipped(wrap(t.more, inner - gw - 4), inner - gw - 4) : []))
+    const mores = shown.map((t) => (t.more ? clipped(wrap(capped(t.more), inner - gw - 4), inner - gw - 4) : []))
 
     const tall = (from: number, to: number) => texts.slice(from, to).reduce((sum, wrapped) => sum + wrapped.length, 0)
 

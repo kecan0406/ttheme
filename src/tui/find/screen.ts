@@ -1389,7 +1389,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
         ['←→', 'change'],
         ['=', 'reset'],
         ['+', 'reset all'],
-        view.tuning.field === 1 ? ['1-9', 'place'] : ['⇧←→', 'by 10'],
+        view.tuning.field === 1 ? ['1-9', 'place'] : ['shift+←→', 'by 10'],
         ['c', 'colors'],
         ['enter', 'keep'],
       ],
@@ -1411,7 +1411,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
             ['t', 'tune'],
             ['c', 'colors'],
             ['i', 'details'],
-            ...(view.details ? [] : [['⇧←→', 'sample'] as [string, string]]),
+            ...(view.details ? [] : [['shift+←→', 'sample'] as [string, string]]),
             ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
             ['?', 'keys'],
           ]
@@ -1440,7 +1440,7 @@ const OPEN: Key = {
 const TUNE_KEYS: Key[] = [
   { group: 'Tune', keys: '↑↓', does: 'Choose size, position or opacity' },
   { group: 'Tune', keys: '←→', does: 'Change it' },
-  { group: 'Tune', keys: '⇧←→', does: 'Change it by 10' },
+  { group: 'Tune', keys: 'shift+←→', does: 'Change it by 10' },
   { group: 'Tune', keys: '1-9', does: 'Place it in one of nine spots' },
   { group: 'Tune', keys: '=', does: 'Reset this one', press: '=' },
   { group: 'Tune', keys: '+', does: 'Reset all three' },
@@ -1463,14 +1463,14 @@ const TUNE_KEYS: Key[] = [
 
 const KEYS: Record<FindView['mode'], Key[]> = {
   grid: [
-    { group: 'Move', keys: '←↑↓→  h j k l', does: 'Move between pictures' },
+    { group: 'Move', keys: '←↑↓→ / h j k l', does: 'Move between pictures' },
     { group: 'Move', keys: 'pgup  pgdn  home  end', does: 'Move a page, or to either end' },
     { group: 'Picture', keys: 'enter', does: 'Try it on', press: 'enter' },
     { group: 'Picture', keys: 'space', does: 'Unfold a set of ×N', press: ' ' },
     OPEN,
     {
       group: 'Picture',
-      keys: 'ctrl+v  v',
+      keys: 'ctrl+v / v',
       does: 'Try on a picture of your own',
       more: 'From the clipboard. Dropping one on the window or pasting its link works too.',
       press: 'v',
@@ -1508,7 +1508,7 @@ const KEYS: Record<FindView['mode'], Key[]> = {
     { group: 'Finish', keys: 'esc', does: 'Back to preview', press: 'esc' },
   ],
   try: [
-    { group: 'Move', keys: '←→  h l', does: 'Next or previous post' },
+    { group: 'Move', keys: '←→ / h l', does: 'Next or previous post' },
     { group: 'Picture', keys: 'enter', does: 'Install it', press: 'enter' },
     {
       group: 'Picture',
@@ -1540,14 +1540,14 @@ const KEYS: Record<FindView['mode'], Key[]> = {
     },
     {
       group: 'Picture',
-      keys: '⇧←→',
+      keys: 'shift+←→',
       does: 'Switch the sample',
       more: SCENES.map((scene) => scene.name).join(', '),
     },
     OPEN,
     {
       group: 'Picture',
-      keys: 'ctrl+v  v',
+      keys: 'ctrl+v / v',
       does: 'Try on a picture of your own',
       more: 'From the clipboard, or drop one on the window.',
       press: 'v',
@@ -1581,7 +1581,7 @@ export function findTopics(view: FindView, press: (key: string) => void): Topic[
 
       return { ...topic, ...(runs ? { run } : {}) }
     }),
-    { group: 'Help', keys: '?  esc', does: 'Close help', run: () => {} },
+    { group: 'Help', keys: '? / esc', does: 'Close help', run: () => {} },
   ]
 }
 
@@ -1758,7 +1758,7 @@ function panelKeys(view: FindView, row: Row | undefined): Foot {
   if (view.typing !== undefined) {
     return {
       keys: [
-        ['⌫', 'erase'],
+        ['bksp', 'erase'],
         ['enter', 'done'],
       ],
       right: ['esc', 'cancel'],

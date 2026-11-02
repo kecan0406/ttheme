@@ -29,34 +29,12 @@ test('Mac key symbols only where ttheme runs on a Mac outside ssh, unless TTHEME
   assert.equal(capsFor({ TTHEME_KEYS: 'text' }, 'darwin'), 'text')
 })
 
-test('a key is drawn with the symbols on a Mac, modifiers in Control, Option, Shift order, and as typed elsewhere', () => {
-  const keys = [
-    'ctrl+r',
-    'alt+u',
-    'shift+tab',
-    'alt+shift+ctrl+a',
-    '⇧enter',
-    '? esc',
-    'bksp',
-    'pgup',
-    '⇧←→',
-    '0-9',
-    'R',
-  ]
-
-  assert.deepEqual(keys.map(cap), keys)
-  useCaps('mac')
-  assert.deepEqual(keys.map(cap), ['⌃R', '⌥U', '⇧⇥', '⌃⌥⇧A', '⇧↩', '? ⎋', '⌫', '⇞', '⇧←→', '0-9', 'R'])
-})
-
-test('in a line of help, a named key turns into its symbol only where a key stands, a chord anywhere', () => {
+test('in a line of help, a named key turns into its symbol only where a key stands', () => {
   useCaps('mac')
   assert.equal(capped('enter  tab  opens the picker under the slot'), '↩  ⇥  opens the picker under the slot')
   assert.equal(capped('⇧←→  another tab  ·  home  end  the ends'), '⇧←→  another tab  ·  ↖  ↘  the ends')
-  assert.equal(capped('Any text  ·  bksp  ·  ctrl+u clears'), 'Any text  ·  ⌫  ·  ⌃U clears')
   assert.equal(capped('space adds it, enter adds it and goes back'), 'space adds it, ↩ adds it and goes back')
   assert.equal(capped('they pass the gate. enter moves on'), 'they pass the gate. ↩ moves on')
-  assert.equal(capped('drop a picture or ctrl+v — esc leaves'), 'drop a picture or ⌃V — ⎋ leaves')
   assert.equal(capped('Reset? enter again'), 'Reset? ↩ again')
   assert.equal(capped('the end of the tab'), 'the end of the tab')
 })

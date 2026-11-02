@@ -37,7 +37,7 @@ import {
   roleSgr,
   spot,
 } from './editor-paint.ts'
-import { capped } from './keycaps.ts'
+import { cap, capped } from './keycaps.ts'
 import { CHANNELS, CONTRAST, type PaletteEditor } from './palette-editor.ts'
 import { boxEdge, boxed, keyAfter, pillOf, SEP } from './parts.ts'
 import { type Art, type Box, type Drawn, LIGHTS, type Mock } from './picker-art.ts'
@@ -49,7 +49,7 @@ const PICKER_COL = 2
 const PLANE_MOST = 6
 const PLANE_LEAST = 3
 const ART_MOST = 7
-const HINTS = '↑↓ L  ←→ C  ⇧←→ H  tab ◐'
+const HINTS = '↑↓ L  ←→ C  shift+←→ H  tab ◐'
 
 interface Part {
   row: number
@@ -922,7 +922,7 @@ function titleBar(e: PaletteEditor, p: Paint, ui: Colors, width: number, flat: b
     }),
   ]
 
-  const hint = '⇧←→ '
+  const hint = `${cap('shift+←→')} `
 
   return [
     ...row,

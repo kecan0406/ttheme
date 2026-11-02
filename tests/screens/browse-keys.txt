@@ -2,10 +2,10 @@
  ╭─── ╭─ Help ───────────────────────────────────────────────────────────────────────────────╮ ───╮
  │ ⌕ S│ ⌕ Type to filter                                                                     │    │
  ╰─── │                                                                                      │ ───╯
-      │   Move          ↑↓  ctrl+j  ctrl+k     Move up or down                               │ ───╮
+      │   Move          ↑↓ / ctrl+j  ctrl+k    Move up or down                               │ ───╮
     + │                 pgup  pgdn  home  end  Move a page, or to either end                 │    │
-    ⌕ │ ▶               →  enter               Open a marketplace or a work                  │    │
-      │                 ←  esc                 Back to the marketplaces                      │ …  │
+    ⌕ │ ▶               → / enter              Open a marketplace or a work                  │    │
+      │                 ← / esc                Back to the marketplaces                      │ …  │
  ▌  ● │   Palettes      space                  Pick or unpick                                │    │
  ▌    │                 ctrl+r                 Take an update (⇡)                            │    │
  ▌    │   Filter        type                   Filter the list                               │    │
@@ -15,10 +15,10 @@
       │                 ↓  past the palettes   Update, auto-update or remove it              │    │
       │   Finish        enter                  Review and apply                              │    │
       │                 esc                    Leave, asking first about changes not applied │    │
-      │   Help          ?  esc                 Close help                                    │    │
+      │   Help          ? / esc                Close help                                    │    │
       │                                                                                      │    │
       │                                                                                      │    │
       │                                                                                      │ ───┤
       │                                                                                      │    │
       ╰──────────────────────────────────────────────────────────────────────────────────────╯ ───╯
- [HELP] ↑↓ choose   enter run   type to filter                                          ? esc close
+ [HELP] ↑↓ choose   enter run   type to filter                                        ? / esc close

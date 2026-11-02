@@ -6,6 +6,7 @@ export const MODIFIERS: [string, string][] = [
   ['ctrl', '⌃'],
   ['alt', '⌥'],
   ['shift', '⇧'],
+  ['cmd', '⌘'],
 ]
 
 export const KEYCAPS: [string, string][] = [
@@ -41,12 +42,6 @@ export function useCaps(chosen: Caps): void {
 }
 
 function chord(token: string): string | undefined {
-  const named = NAMED.get(token.slice(1))
-
-  if (token.startsWith('⇧') && named) {
-    return `⇧${named}`
-  }
-
   const parts = token.split('+')
   const last = parts.pop() ?? ''
 
@@ -56,7 +51,7 @@ function chord(token: string): string | undefined {
 
   const held = MODIFIERS.flatMap(([name, glyph]) => (parts.includes(name) ? [glyph] : []))
 
-  return `${held.join('')}${NAMED.get(last) ?? ([...last].length === 1 ? last.toUpperCase() : last)}`
+  return [...held, NAMED.get(last) ?? last].join(' + ')
 }
 
 export function cap(key: string): string {
@@ -87,7 +82,7 @@ export function capped(text: string): string {
       }
 
       const shown = (start ? NAMED.get(piece) : undefined) ?? chord(piece) ?? piece
-      start = piece === MARKS.sep || piece === '—' || /[,:.?!]$/.test(piece)
+      start = piece === MARKS.sep || piece === '—' || piece === '/' || /[,:.?!]$/.test(piece)
 
       return shown
     })

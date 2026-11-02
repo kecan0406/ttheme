@@ -9,16 +9,16 @@
 │  Black  │                 pgup  pgdn      Go to the base or the ANSI colors           │ ─   0.21
 │  Red    │ ▶ Contrast      n  N            Go to the next or previous color that fails │ ─  0.014
 │  Green  │                 f               Fix the colors that fail                    │ ─   253°
-│  Yellow │   Tune a color  enter  tab      Open the picker                             │ ─ 13.80:1
+│  Yellow │   Tune a color  enter / tab     Open the picker                             │ ─ 13.80:1
 │  Blue   │                 ↑↓              Lightness                                   │
 │  Magenta│                 ←→              Chroma                                      │
-│  Cyan   │                 ⇧←→  ,  .       Hue by 5, or by 1                           │
+│  Cyan   │                 shift+←→ / , .  Hue by 5, or by 1                           │
 │  White  │                 pgup  pgdn      Lightness by 5                              │
 ╰──────── │                 home  end  0-9  Jump the channel moved last                 │
-╭─ Contras│ ↓ 22 more                                                                   │        ⇧←→
+╭─ Contras│ ↓ 22 more                                                                   │   shift+←→
 │  ✗ accen│                                                                             │
 │    Red, │                                                                             │
 │  ↓ 12 mo│                                                                             │
 ╰──────── │                                                                             │
           ╰─────────────────────────────────────────────────────────────────────────────╯
-[HELP] ↑↓ choose   enter run   type to filter                                            ? esc close
+[HELP] ↑↓ choose   enter run   type to filter                                          ? / esc close

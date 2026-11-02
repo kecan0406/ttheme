@@ -114,6 +114,7 @@ import {
   type Tuning,
 } from '../../tui/find/screen.ts'
 import { Help } from '../../tui/help.ts'
+import { capped } from '../../tui/keycaps.ts'
 import { CELL_QUERY, CellProbe, type Inbound, lineStep, type Mouse } from '../../tui/keys.ts'
 import {
   FOCUS,
@@ -939,7 +940,7 @@ class Finder {
 
     if (got.kind === 'text') {
       if (got.text.trim() === '') {
-        this.notice(`No picture on the clipboard — ${SCREENSHOT}`)
+        this.notice(`No picture on the clipboard — ${capped(SCREENSHOT)}`)
 
         return
       }
@@ -987,7 +988,7 @@ class Finder {
       return
     }
 
-    view.hint = `Picture on the clipboard · ${PASTE_KEY} uses it`
+    view.hint = capped(`Picture on the clipboard · ${PASTE_KEY} uses it`)
     clearTimeout(this.peekTimer)
     this.peekTimer = setTimeout(() => {
       view.hint = undefined
@@ -1033,7 +1034,7 @@ class Finder {
     const text = clip.text.trim()
 
     if (!text) {
-      this.notice(`No picture on the clipboard — ${SCREENSHOT}`)
+      this.notice(`No picture on the clipboard — ${capped(SCREENSHOT)}`)
 
       return
     }

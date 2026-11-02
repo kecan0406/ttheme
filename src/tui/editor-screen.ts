@@ -31,7 +31,7 @@ import {
 } from './editor-paint.ts'
 import { type Start, typedDrop } from './find/attach.ts'
 import { type Help, type HelpSpot, overlay } from './help.ts'
-import { capped } from './keycaps.ts'
+import { cap, capped } from './keycaps.ts'
 import { CELL_QUERY, type Cell, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './keys.ts'
 import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCOPES } from './palette-editor.ts'
 import { boxEdge, boxed, checkOf, contrastOf, hintOf, moreOf, pillOf, SEP } from './parts.ts'
@@ -217,7 +217,7 @@ function sample(p: Paint, c: Colors, width: number, room: number, scene: number,
   const base = `${p.bg(c.background)}${p.fg(c.foreground)}`
 
   return [
-    spread(tabs, p.dim('⇧←→'), width),
+    spread(tabs, p.dim(cap('shift+←→')), width),
     ...sceneAt(scene)
       .lines.values()
       .map((text) => sceneParts(text, width - 2))
@@ -696,7 +696,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
     keys = [
       ['↑↓', 'move'],
       ['←→', 'change'],
-      ['⇧←→', 'by 5'],
+      ['shift+←→', 'by 5'],
       ['enter', 'tune colors'],
       ['o', 'open a palette'],
       ['p', 'find picture'],
@@ -708,7 +708,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
     keys = [
       ['↑↓', 'L'],
       ['←→', e.channel === CONTRAST ? 'ratio' : 'C'],
-      ['⇧←→', 'H'],
+      ['shift+←→', 'H'],
       ['u', 'undo'],
       ['r', 'reset'],
       ['tab', MARKS.contrast],
@@ -722,7 +722,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
     badge = 'EDIT (INSPECT)'
     keys = [
       ['←→↑↓', 'move'],
-      ['⇧←→', 'tab'],
+      ['shift+←→', 'tab'],
       ['enter', 'go to color'],
       ['i', 'back'],
     ]

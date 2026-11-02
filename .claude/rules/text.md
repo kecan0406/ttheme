@@ -31,10 +31,11 @@ look, and never Title Case.
   GitHub; acronyms in capitals (PNG, URL, OSC, ANSI).
 - **Keys as one name, drawn for the keyboard**: the source spells a key one
   way — `enter`, `esc`, `tab`, `bksp`, `pgup`, `home`, `ctrl+r`, `alt+u`,
-  `shift+tab`, `⇧enter`. On a Mac outside ssh a screen draws Apple's symbols —
-  ⌃ ⌥ ⇧ in Control, Option, Shift order, ↩ ⎋ ⇥ ⌫ ⌦ ⇞ ⇟ ↖ ↘, a chord's letter in
-  capitals (`⌃R`) — and elsewhere the name as written. There is no ⌘. A click
-  zone always names the key as written.
+  `shift+tab`, `shift+enter`, `shift+←→`. On a Mac outside ssh a screen draws
+  Apple's symbols — ⌃ ⌥ ⇧ in Control, Option, Shift order, ↩ ⎋ ⇥ ⌫ ⌦ ⇞ ⇟ ↖ ↘, a
+  chord as `⌥ + u` — and elsewhere the name as written. ⌘ is drawn only for a key
+  ttheme doesn't read, the system's screenshot. A click zone always names the key
+  as written.
 - **Lowercase**: key hints in footers and key bars (`↑↓ move   enter save`), and
   error messages, which read the same after the `ttheme:` prefix
   (``ttheme: kita is not installed — `ttheme add kita` first``) and in a status
@@ -56,9 +57,11 @@ changed), `close` (an overlay) and `clear` (a field). A question's own answers
 are the exception (`y save`, `n discard`, `esc keep editing`). A tab hint names
 the screen it goes to (`tab Browse`).
 
-A Help topic is its keys, as typed and apart by two spaces, and what they do: a
-verb phrase in sentence case, about six words, with no period (`Open the
-picker`), or the name of the value a key moves (`↑↓  Lightness`). How it works,
+A Help topic is its keys, as typed, and what they do: keys for the same action
+are apart by ` / ` (`? / esc`), keys for different actions by two spaces
+(`home  end`). What they do is a verb phrase in sentence case, about six words,
+with no period (`Open the picker`), or the name of the value a key moves
+(`↑↓  Lightness`). How it works,
 the exceptions and the numbers go in the topic's `more`, which shows only for
 the topic chosen; a longer story belongs in `docs/`. A line that describes the
 row under the cursor (a panel's foot, a button's note) says what the person gets

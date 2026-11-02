@@ -1,24 +1,24 @@
- ◆ korund  Lu╭─ Help ────────────────────────────────────────────────────────────────╮
-             │                                                                       │
- ╭─ Picture ─│  Move                                                                 │
- │ This termi│    ↑↓  j  k   Move between rows                                       │
- ╰───────────│    home  end  Go to the first or last row                             │
- ╭─ Palette ─│  Picture                                                              │
- │ Background│    ←→  ,  .   Choose a picture                                        │
- │ Foreground│    f          Find a picture online                                   │
- │ Cursor    │    D          Remove the picture                                      │
- │ Selection │    ←→  h  l   Change size, position or opacity                        │
- ├─ ANSI ────│    ⇧←→        Change it by 10                                         │
- │ Black     │    1-9        Place it                                                │
- │ Red       │    =  +       Reset this row, or every row                            │
- │ Green     │    space      Hide or show the picture                                │
- │ Yellow    │    c          Original or tinted                                      │
- │ Blue      │    y          Copy the artist credit                                  │
- │ Magenta   │  Palette                                                              │
- │ Cyan      │    enter      Edit its colors full screen                             │
- │ White     │  Finish                                                               │
- ├───────────│    s          Save the picture                                        │
- │ ▶ [Edit pa│  ↓ 3 more                                                             │
- ╰───────────│                                                                       │
-      Apply  ╰───────────────────────────────────────────────────────────────────────╯
- [HELP]                                                                                 ? esc close
+ ◆ korund  L╭─ Help ──────────────────────────────────────────────────────────────────╮
+            │                                                                         │
+ ╭─ Picture │  Move                                                                   │
+ │ This term│    ↑↓ / j k     Move between rows                                       │
+ ╰──────────│    home  end    Go to the first or last row                             │
+ ╭─ Palette │  Picture                                                                │
+ │ Backgroun│    ←→ / , .     Choose a picture                                        │
+ │ Foregroun│    f            Find a picture online                                   │
+ │ Cursor   │    D            Remove the picture                                      │
+ │ Selection│    ←→ / h l     Change size, position or opacity                        │
+ ├─ ANSI ───│    shift+←→     Change it by 10                                         │
+ │ Black    │    1-9          Place it                                                │
+ │ Red      │    =  +         Reset this row, or every row                            │
+ │ Green    │    space        Hide or show the picture                                │
+ │ Yellow   │    c            Original or tinted                                      │
+ │ Blue     │    y            Copy the artist credit                                  │
+ │ Magenta  │  Palette                                                                │
+ │ Cyan     │    enter        Edit its colors full screen                             │
+ │ White    │  Finish                                                                 │
+ ├──────────│    s            Save the picture                                        │
+ │ ▶ [Edit p│  ↓ 3 more                                                               │
+ ╰──────────│                                                                         │
+      Apply ╰─────────────────────────────────────────────────────────────────────────╯
+ [HELP]                                                                               ? / esc close
