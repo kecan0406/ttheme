@@ -49,6 +49,8 @@ ttheme use ttheme/hatsune-miku   # by its full name, when two marketplaces have 
 ttheme default hatsune-miku      # the default for new tabs
 ```
 
+- `ttheme use` needs a terminal: with its output in a pipe or a file it refuses,
+  since a tab takes its colors from what the command writes to it.
 - A tab only ever changes its own colors, so a palette you used there stays
   until you change it. A new default reaches open tabs where you never used a
   palette by hand at once.

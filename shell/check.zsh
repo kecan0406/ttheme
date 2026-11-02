@@ -54,6 +54,8 @@ out=$(ttheme help frobnicate 2>&1)
 [[ $(ttheme pins --help) == "Usage: ttheme pins"$'\n'* ]] || { print -u2 "ttheme pins --help did not describe pins"; exit 1 }
 [[ $(ttheme use ttheme/akemi-homura --help) == "Usage: ttheme use"* ]] || { print -u2 "--help after a palette did not describe use"; exit 1 }
 [[ $(ttheme use ttheme/akemi-homura 2>&1) != Usage:* ]] || { print -u2 "a palette with -h in its name was taken for --help"; exit 1 }
+out=$(ttheme use ttheme/akemi-homura 2>&1)
+(( $? == 1 )) && [[ $out == "ttheme use: needs a terminal" ]] || { print -u2 "ttheme use wrote into a pipe: ${(V)out}"; exit 1 }
 (
   __tt_cli() { print -r -- "$*" }
   [[ $(ttheme palette measure art.png --crop 1,2,3,4 --json) == "palette measure art.png --crop 1,2,3,4 --json" ]] || { print -u2 "ttheme palette did not reach the CLI whole"; exit 1 }
@@ -1330,8 +1332,8 @@ done
   [[ "$(__tt_osc_reset)" == $'\e]50;ColorScheme=Solarized;UseCustomCursorColor=true;customCursorColor=#ff8000\a' ]] ||
     { print -u2 "a reset in an unwired Konsole did not go back to the scheme and cursor of the user's own profile: ${(V)$(__tt_osc_reset)}"; exit 1 }
   rm -f $XDG_CONFIG_HOME/konsolerc $kd/Mine.profile
-  ttheme use kaito > $bgd/use.out 2>&1 || { print -u2 "ttheme use failed in an unwired Konsole: $(<$bgd/use.out)"; exit 1 }
-  [[ $(<$bgd/use.out) == *$'\e]50;ColorScheme=ttheme-view.'* ]] || { print -u2 "ttheme use painted an unwired Konsole through something else than a view scheme: ${(V)$(<$bgd/use.out)}"; exit 1 }
+  __tt_wear "$TTHEME_PALETTE[ttheme/kaito]" ttheme/kaito force > $bgd/use.out 2>&1
+  [[ $(<$bgd/use.out) == *$'\e]50;ColorScheme=ttheme-view.'* ]] || { print -u2 "a wear painted an unwired Konsole through something else than a view scheme: ${(V)$(<$bgd/use.out)}"; exit 1 }
   __tt_konsole_bye
   views=($kd/ttheme-view.$$.*.colorscheme(N))
   (( ! ${#views} )) || { print -u2 "a Konsole shell left its view schemes behind when it exited: $views"; exit 1 }
@@ -1406,7 +1408,7 @@ done
   [[ "$(<$tab)" == "$(recorded ttheme/hatsune-miku - -)" && "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours ttheme/hatsune-miku)"* ]] ||
     { print -u2 "a Warp tab that took no palette did not follow the default: $(<$tab)"; exit 1 }
   zstat -L -A linked +inode -- $TTHEME_WARP_SETTINGS
-  ttheme use kaito > /dev/null || { print -u2 "ttheme use failed in a wired Warp"; exit 1 }
+  __tt_wear "$TTHEME_PALETTE[ttheme/kaito]" ttheme/kaito force > /dev/null
   [[ -L $TTHEME_WARP_SETTINGS && "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- "${(@)mine[1,5]}" "$(ours ttheme/kaito)" "${(@)mine[7,-1]}")" ]] ||
     { print -u2 "ttheme use in Warp did not put the palette in settings.toml alone, or replaced the link:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
   zstat -L -A relinked +inode -- $TTHEME_WARP_SETTINGS

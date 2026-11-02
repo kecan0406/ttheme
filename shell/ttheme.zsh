@@ -2103,6 +2103,7 @@ __tt_verb() {
   case $1 in
     use)
       __tt_resolve "$2" || return 1
+      [[ -t 1 ]] || { print -u2 "ttheme use: needs a terminal"; return 1 }
       __tt_wear "${TTHEME_PALETTE[$REPLY]}" "$REPLY" force
       __tt_announce ;;
     default)
