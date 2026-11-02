@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { type Sort, worldOrder } from '../core/commons.ts'
 import { CODE, codeOf, SHARE_URL } from '../core/draft.ts'
 import type { Manifest, PaletteEntry } from '../core/manifest.ts'
+import { counted } from '../core/text.ts'
 import { BUILTIN, nameProblem } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
 import {
@@ -32,7 +33,7 @@ import { commit, sync } from './sync.ts'
 import { behindOf, conflictLine, takes, takeUpstream } from './upstreams.ts'
 
 export function reload(count: number): void {
-  say(`\n${count} ${count === 1 ? 'palette' : 'palettes'} installed — open a new tab, or reload your terminal config`)
+  say(`\n${counted(count)} installed — open a new tab, or reload your terminal config`)
 }
 
 export async function runAdd(asked: string[], into?: string): Promise<void> {

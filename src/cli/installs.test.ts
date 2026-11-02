@@ -15,7 +15,7 @@ import { readInstalled, writeInstalled } from '../store/installed.ts'
 import { writeTone } from '../store/tone.ts'
 import * as terminal from '../tui/terminal.ts'
 import { runEdit } from './craft.ts'
-import { runAdd, runDefault } from './installs.ts'
+import { reload, runAdd, runDefault } from './installs.ts'
 import { checkMarketplace, runMarketplace, withMarketplaces } from './marketplaces.ts'
 import { runShare } from './share.ts'
 import { sync } from './sync.ts'
@@ -352,4 +352,19 @@ test('installed.json keeps an auto-update setting only where it differs from the
   assert.deepEqual(next.marketplaces, ['ttheme', 'alice/pastel', 'bob/neon'])
   assert.deepEqual(next.updates, { 'alice/pastel': true })
   assert.equal(withMarketplaces(state, ['ttheme'], { ttheme: true }).updates, undefined)
+})
+
+test('the note after an add counts one palette in the singular', () => {
+  const said: string[] = []
+  const log = spyOn(console, 'log').mockImplementation((line: string) => void said.push(line))
+
+  try {
+    reload(1)
+    reload(2)
+  } finally {
+    log.mockRestore()
+  }
+
+  assert.match(said[0] ?? '', /^\n1 palette installed — /)
+  assert.match(said[1] ?? '', /^\n2 palettes installed — /)
 })
