@@ -24,7 +24,7 @@
     },
     "description": {
       "$ref": "#/definitions/text",
-      "description": "What the marketplace holds, shown in Browse, ttheme marketplace and the marketplace page"
+      "description": "What the marketplace holds, shown in Browse and the marketplace page"
     },
     "owner": {
       "description": "Who keeps the marketplace",
