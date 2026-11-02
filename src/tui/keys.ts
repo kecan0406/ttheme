@@ -703,6 +703,10 @@ export class Keys {
       return
     }
 
+    if (text === '\x03' && long(this.held)) {
+      this.flush()
+    }
+
     if (long(this.held) && !ended(this.held, text)) {
       this.held += text
       this.wait(STRING_WAIT)

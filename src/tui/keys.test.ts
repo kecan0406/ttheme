@@ -154,6 +154,20 @@ test('a paste or a terminal answer that never ends gives the keys back once the 
   answer.stop()
 })
 
+test('ctrl+c on its own read gets through a paste or an answer left open, however fast it is pressed', () => {
+  const got: Inbound[] = []
+  const keys = new Keys((events) => got.push(...events))
+  keys.feed('\x1b[200~half a paste')
+  keys.feed('\x03')
+  assert.deepEqual(got, [
+    { kind: 'paste', text: 'half a paste' },
+    { kind: 'key', key: 'ctrl-c' },
+  ])
+  keys.feed('\x1b[200~a\x03b\x1b[201~')
+  assert.deepEqual(got.at(-1), { kind: 'paste', text: 'a\x03b' })
+  keys.stop()
+})
+
 function mice(input: string): string[] {
   return decode(input, true).events.flatMap((event) =>
     event.kind === 'mouse'
