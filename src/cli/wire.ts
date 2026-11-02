@@ -1,5 +1,4 @@
 import { homedir } from 'node:os'
-import * as p from '@clack/prompts'
 import { Cancelled } from '../core/cancelled.ts'
 import { WIRED, type Wired } from '../core/wired.ts'
 import { readMarketplaces } from '../store/available.ts'
@@ -9,6 +8,7 @@ import { configHome } from '../store/paths.ts'
 import { WIRINGS } from '../terminals/index.ts'
 import { interactive } from '../tui/terminal.ts'
 import { InputError } from './answer.ts'
+import * as p from './ask.ts'
 import { launch } from './release.ts'
 import { pointDefaults, sync, wiringNext, wiringNotes, wiringPlan, withBases } from './sync.ts'
 

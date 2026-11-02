@@ -1792,7 +1792,10 @@ __tt_cli() {
 
 __tt_installs() {
   local was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
-  __tt_cli "$@" || return
+  local -i rc
+  __tt_cli "$@"
+  rc=$?
+  (( rc )) && return rc
   [[ $1 == share ]] && return 0
   __tt_installs_done "$was"
 }

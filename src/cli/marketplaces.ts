@@ -1,7 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { basename, join, relative } from 'node:path'
-import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
 import {
   aboutOf,
@@ -59,6 +58,7 @@ import {
 import { pending } from '../tui/pending.ts'
 import { interactive } from '../tui/terminal.ts'
 import { InputError } from './answer.ts'
+import * as p from './ask.ts'
 import { type Fetched, fetchedAt, fetchMarketplace, readTries, storeMarketplace } from './refresh.ts'
 import { sync } from './sync.ts'
 

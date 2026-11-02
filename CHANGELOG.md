@@ -8,6 +8,7 @@
 - `ttheme init` and `ttheme uninstall` typed in a shell now name the `npx` command that does them, instead of calling the command unknown.
 - `ttheme use` with its output in a pipe or a file now says `ttheme use: needs a terminal`, where it wrote its color codes there.
 - Cancelling `init`, `uninstall`, `share`, `edit` or `new` now exits 2, as nothing changed, where they exited 1 or 0, so a script can tell a cancel from a failure.
+- `ctrl+z` at one of ttheme's questions no longer leaves the cursor hidden, and `fg` asks the question again, where it ended the command.
 
 ## 1.2.86
 
