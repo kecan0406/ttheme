@@ -42,6 +42,13 @@ ttheme --frobnicate 2>/dev/null && { print -u2 "ttheme took an unknown option"; 
 [[ $(ttheme pins --help) == "Usage: ttheme pins"$'\n'* ]] || { print -u2 "ttheme pins --help did not describe pins"; exit 1 }
 [[ $(ttheme use ttheme/akemi-homura --help) == "Usage: ttheme use"* ]] || { print -u2 "--help after a palette did not describe use"; exit 1 }
 [[ $(ttheme use ttheme/akemi-homura 2>&1) != Usage:* ]] || { print -u2 "a palette with -h in its name was taken for --help"; exit 1 }
+(
+  __tt_cli() { print -r -- "$*" }
+  [[ $(ttheme palette measure art.png --crop 1,2,3,4 --json) == "palette measure art.png --crop 1,2,3,4 --json" ]] || { print -u2 "ttheme palette did not reach the CLI whole"; exit 1 }
+  __tt_cli() { return 3 }
+  ttheme palette measure 2>/dev/null
+  (( $? == 3 )) || { print -u2 "ttheme palette did not hand back the CLI's exit code"; exit 1 }
+) || exit 1
 ttheme pins extra 2>/dev/null && { print -u2 "ttheme pins took an extra argument"; exit 1 }
 out=$(__tt_preview hub </dev/null 2>&1) && { print -u2 "preview ran without a tty"; exit 1 }
 [[ $out == *"needs a terminal"* ]] || { print -u2 "preview tty guard broke: $out"; exit 1 }

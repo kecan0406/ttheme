@@ -2073,7 +2073,7 @@ __tt_verb() {
   fi
 
   case $1 in
-    add|update|marketplace|new) __tt_installs "$@"; return ;;
+    add|update|marketplace|new|palette) __tt_installs "$@"; return ;;
     edit|check|share)
       local REPLY worn cell=""
       __tt_name_of "$TTHEME_SPEC"
