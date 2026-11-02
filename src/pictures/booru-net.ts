@@ -60,6 +60,8 @@ const HOPS = 3
 
 const HELD = ['orig', 'tile', 'thumb', 'cut']
 
+const WEB = /^https?:/i
+
 const paused = new Map<string, number>()
 
 setDefaultAutoSelectFamilyAttemptTimeout(CONNECT)
@@ -153,6 +155,10 @@ async function get(
   let at = url
 
   for (let tries = 1, hops = 0; ; tries++) {
+    if (!WEB.test(at)) {
+      throw new Error(`${site.name} pointed at something that is not a web address`)
+    }
+
     const wait = pausedUntil(site) - Date.now()
 
     if (wait > 0) {
