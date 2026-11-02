@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { ROOT } from '../root.ts'
 import { alacrittyColors, alacrittyConfig, upsertAlacrittyImport } from '../terminals/alacritty.ts'
+import { removeContourDefault, upsertContourDefault } from '../terminals/contour.ts'
 import { ghosttyBlock, ghosttyOwnText } from '../terminals/ghostty.ts'
 import { kittyBlock, kittyOwnText } from '../terminals/kitty.ts'
 import { removeLuaBlock, upsertLuaBlock, weztermBlock } from '../terminals/wezterm.ts'
@@ -21,6 +22,7 @@ import {
   SETTING_NAMES,
   settingDefault,
   upsertBlock,
+  userSets,
   withSetting,
   zshrcBlock,
 } from './wiring.ts'
@@ -201,6 +203,51 @@ test('a setting or a block goes in as written, whatever dollar signs it holds', 
       `-- ttheme begin\n${value}\n-- ttheme end\n`,
     )
   }
+})
+
+test('only a whole line marks a block, and a begin with no end stays where the user left it', () => {
+  const mine = 'source ./env # ttheme begin\nalias ll="ls -l"\n# ttheme end of my notes\n'
+  const wired = upsertBlock(mine, 'x')
+
+  assert.equal(upsertBlock(wired, 'x'), wired)
+  assert.equal(removeBlock(wired), mine)
+  assert.equal(userSets(wired, 'alias'), true)
+
+  const stale = '# ttheme begin\nalias ll="ls -l"\n'
+  const once = upsertBlock(stale, 'x')
+
+  assert.equal(upsertBlock(once, 'y'), once.replace('\nx\n', '\ny\n'))
+  assert.equal(removeBlock(once), stale)
+
+  const lua = 'local x = 1 -- ttheme begin\nreturn config\n'
+  const module = upsertLuaBlock(lua, 'x') as string
+
+  assert.equal(upsertLuaBlock(module, 'x'), module)
+  assert.equal(removeLuaBlock(module), lua)
+
+  const staleLua = '-- ttheme begin\nlocal x = 1\nreturn config\n'
+  const onceLua = upsertLuaBlock(staleLua, 'x') as string
+
+  assert.equal(upsertLuaBlock(onceLua, 'x'), onceLua)
+  assert.equal(removeLuaBlock(onceLua), staleLua)
+})
+
+test('a block a tool turned to CRLF is still the one block', () => {
+  const crlf = upsertBlock('mine\n', 'x').replaceAll('\n', '\r\n')
+
+  assert.equal(upsertBlock(crlf, 'x').split('# ttheme begin').length, 2)
+  assert.equal(removeBlock(crlf).trimEnd(), 'mine')
+
+  const lua = (upsertLuaBlock('return config\n', 'x') as string).replaceAll('\n', '\r\n')
+
+  assert.equal((upsertLuaBlock(lua, 'x') as string).split('-- ttheme begin').length, 2)
+  assert.equal(removeLuaBlock(lua).trimEnd(), 'return config')
+})
+
+test('uninstall gives back the default_profile line it took, whatever dollar signs it holds', () => {
+  const mine = 'default_profile: "a$&b"\n'
+
+  assert.equal(removeContourDefault(upsertContourDefault(mine) as string), mine)
 })
 
 test("ttheme's kitty file leaves the logo settings the user set to the user", () => {

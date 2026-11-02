@@ -68,7 +68,7 @@ export function removeContourDefault(content: string): string {
   }
 
   const was = WAS.exec(inner)?.[1]
-  const out = content.replace(BLOCK, was ? `${was}\n` : '')
+  const out = content.replace(BLOCK, () => (was ? `${was}\n` : ''))
 
   return out.trim() === '' ? '' : out.replace(/\n*$/, '\n')
 }

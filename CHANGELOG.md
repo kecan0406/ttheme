@@ -18,6 +18,7 @@
 - A session of find that meets many damaged JPEGs no longer stops showing pictures.
 - `ttheme palette make` no longer crashes on an anchors file that names every accent color.
 - A marketplace description or a find setting holding `$&` or `$'` goes in as you typed it.
+- `ttheme init` and `uninstall` no longer take out lines of your config when one of them happens to mention `# ttheme begin`.
 
 ## 1.2.85
 

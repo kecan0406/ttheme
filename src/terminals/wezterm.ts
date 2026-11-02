@@ -7,7 +7,7 @@ import { pruneThemes, readText, stripped, tilde } from './common.ts'
 import { wezterm as emitter, weztermModule } from './emit/wezterm.ts'
 import type { At, Wiring } from './types.ts'
 
-const LUA_BLOCK = /-- ttheme begin\n[\s\S]*?-- ttheme end\n?/
+const LUA_BLOCK = /^-- ttheme begin\r?\n(?:(?!-- ttheme begin\r?\n)[\s\S])*?^-- ttheme end$\r?\n?/m
 const LUA_RETURN = /^return config[ \t]*$/gm
 
 export function weztermBlock(module: string, home: string): string {
@@ -22,7 +22,10 @@ export function weztermBlock(module: string, home: string): string {
 const WEZTERM_SKELETON = "local wezterm = require 'wezterm'\nlocal config = wezterm.config_builder()\n\n"
 
 export function removeLuaBlock(content: string): string {
-  const out = content.replace(/-- ttheme begin\n[\s\S]*?-- ttheme end\n\n?/, '')
+  const out = content.replace(
+    /^-- ttheme begin\r?\n(?:(?!-- ttheme begin\r?\n)[\s\S])*?^-- ttheme end$(?:\r?\n){0,2}/m,
+    '',
+  )
 
   return out === `${WEZTERM_SKELETON}return config\n` ? '' : out
 }
