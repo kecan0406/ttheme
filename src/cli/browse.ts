@@ -20,6 +20,7 @@ import { HUB_CLOSED, HUB_UPDATE, hubOf } from '../tui/hub.ts'
 import { promptFx } from '../tui/palette-prompt.ts'
 import { into, say } from '../tui/pending.ts'
 import { interactive } from '../tui/terminal.ts'
+import { EXIT } from './answer.ts'
 import { reload, takeUpdates } from './installs.ts'
 import { dropCache, keptNote, lastUpdate, withMarketplaces } from './marketplaces.ts'
 import { bringPictures } from './pictures.ts'
@@ -348,9 +349,11 @@ export async function runBrowse(): Promise<number> {
     if (failure) {
       throw failure
     }
-  } else {
-    console.log('Nothing changed')
+
+    return hub ? HUB_CLOSED : EXIT.done
   }
 
-  return hub ? HUB_CLOSED : 0
+  console.log('Nothing changed')
+
+  return hub ? HUB_CLOSED : EXIT.unchanged
 }

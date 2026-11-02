@@ -47,7 +47,7 @@ import type { Choice, Edited, EditorOptions } from '../tui/palette-editor.ts'
 import { PickerLayer } from '../tui/picker-art.ts'
 import { interactive } from '../tui/terminal.ts'
 import { toneRows } from '../tui/tone-view.ts'
-import { InputError } from './answer.ts'
+import { EXIT, InputError } from './answer.ts'
 import { findFor } from './find/find.ts'
 import { ensureLocal } from './marketplaces.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
@@ -341,7 +341,7 @@ async function editColors(options: EditorOptions, hosted = false): Promise<Edite
   })
 }
 
-export async function runNew(name: string, from: string | undefined, into: string | undefined): Promise<void> {
+export async function runNew(name: string, from: string | undefined, into: string | undefined): Promise<number> {
   const home = configHome()
   const manifest = readMarketplaces(home)
   const marketplace = await ensureLocal(home, into)
@@ -400,7 +400,7 @@ export async function runNew(name: string, from: string | undefined, into: strin
     shelf.discard()
     console.log('Nothing made')
 
-    return
+    return EXIT.unchanged
   }
 
   const path = writeOwn(home, full, toml(edited))
@@ -414,6 +414,8 @@ export async function runNew(name: string, from: string | undefined, into: strin
     now.terminals,
   )
   console.log(`\n\`ttheme use ${full}\` uses it   \`ttheme edit ${full}\` opens it again`)
+
+  return EXIT.done
 }
 
 function failuresOf(name: string, source: string, mode: Mode): string[] {
@@ -422,7 +424,7 @@ function failuresOf(name: string, source: string, mode: Mode): string[] {
   return gateFailures(entry).length > 0 ? gateLines(entry).filter((l) => l.startsWith('  ✗')) : []
 }
 
-export async function runEdit(name: string): Promise<void> {
+export async function runEdit(name: string): Promise<number> {
   const home = configHome()
   const manifest = readMarketplaces(home)
   const state = readInstalled(home)
@@ -443,7 +445,7 @@ export async function runEdit(name: string): Promise<void> {
           : `Saved ${full} · ${tunedText(count)} — R then s in \`ttheme edit ${full}\` puts its own colors back`,
     )
 
-    return
+    return count === undefined ? EXIT.unchanged : EXIT.done
   }
 
   const before = own.text
@@ -492,15 +494,16 @@ export async function runEdit(name: string): Promise<void> {
     shelf.discard()
     console.log('Nothing changed')
 
-    return
+    return EXIT.unchanged
   }
 
   const after = rewrite(edited)
 
   if (after === before) {
-    console.log(shelf.added() > 0 ? `Kept the pictures you added to ${full}` : 'Nothing changed')
+    const kept = shelf.added() > 0
+    console.log(kept ? `Kept the pictures you added to ${full}` : 'Nothing changed')
 
-    return
+    return kept ? EXIT.done : EXIT.unchanged
   }
 
   writeOwn(home, full, after)
@@ -519,9 +522,9 @@ export async function runEdit(name: string): Promise<void> {
       `\nIt fails these contrast checks:\n${failing.join('\n')}\n\`ttheme check --fix ${full}\` suggests colors that pass`,
     )
   }
-}
 
-const UNCHANGED = 2
+  return EXIT.done
+}
 
 function shownNamed(home: string, name: string): PaletteEntry {
   return find(shown(home, readMarketplaces(home), false).palettes, name, readInstalled(home).palettes)
@@ -543,7 +546,7 @@ export async function runTone(name: string, action: string, width?: string): Pro
     const base = shownNamed(home, name)
 
     if (toneOf(tone, base) === undefined) {
-      return UNCHANGED
+      return EXIT.unchanged
     }
 
     writeTone(home, withTone(tone, base.name, modeOf(base), {}))
@@ -564,7 +567,7 @@ export async function runTone(name: string, action: string, width?: string): Pro
   const count = await editTone(home, name, true)
 
   if (count === undefined) {
-    return UNCHANGED
+    return EXIT.unchanged
   }
 
   process.stderr.write(count === 0 ? 'Back to the original colors' : `Saved · ${tunedText(count)}`)

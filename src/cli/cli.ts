@@ -4,7 +4,7 @@ import { Cancelled, Signalled } from '../core/cancelled.ts'
 import { inertLines } from '../core/text.ts'
 import { colorless } from '../terminals/osc.ts'
 import { interactive } from '../tui/terminal.ts'
-import { cutOff, emit, failureOf, InputError } from './answer.ts'
+import { cutOff, EXIT, emit, failureOf, InputError } from './answer.ts'
 import { runBrowse } from './browse.ts'
 import { build } from './build.ts'
 import { runCheck, runEdit, runNew, runTone, thisTab } from './craft.ts'
@@ -270,7 +270,7 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     const json = argv.includes('--json')
 
     if (error instanceof Cancelled) {
-      return 1
+      return EXIT.unchanged
     }
 
     if (error instanceof Signalled) {

@@ -6,7 +6,7 @@ export const EXIT = { done: 0, failed: 1, unchanged: 2, input: 3, network: 4 } a
 export const EXIT_CODES: [string, string][] = [
   [String(EXIT.done), 'Done'],
   [String(EXIT.failed), 'Failed'],
-  [String(EXIT.unchanged), 'Nothing changed — what it would write is already there'],
+  [String(EXIT.unchanged), 'Nothing changed — you cancelled, or what it would write is already there'],
   [String(EXIT.input), 'Invalid input — the message names the field and what it takes'],
   [String(EXIT.network), 'A network request failed — try again'],
 ]

@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { Cancelled } from '../core/cancelled.ts'
 import { Missing } from '../store/available.ts'
-import { failureOf, InputError } from './answer.ts'
-import { isCrash, parse, UsageError, VERBS } from './cli.ts'
+import { EXIT, failureOf, InputError } from './answer.ts'
+import { isCrash, parse, runCli, UsageError, VERBS } from './cli.ts'
 import { runMarketplace } from './marketplaces.ts'
 import { runWire } from './wire.ts'
 
@@ -34,6 +35,22 @@ test('every verb either runs here or belongs to the shell layer', () => {
     ['use', 'pin', 'unpin', 'pins', 'config', 'auto', 'light', 'dark'],
   )
   assert.ok(VERBS.filter((v) => v.shell).every((v) => !v.run))
+})
+
+test('a cancelled question exits as nothing changed', async () => {
+  const verb = VERBS.find((v) => v.name === 'info')
+  assert.ok(verb)
+  const run = verb.run
+
+  verb.run = () => {
+    throw new Cancelled()
+  }
+
+  try {
+    assert.equal(await runCli(['info']), EXIT.unchanged)
+  } finally {
+    verb.run = run
+  }
 })
 
 test('only a crash points to ttheme info, never a message written for the user', () => {

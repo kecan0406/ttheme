@@ -7,6 +7,7 @@
 - On a network that needs a proxy, the `ttheme` command now sends its requests through `HTTPS_PROXY` and `HTTP_PROXY`, with Node.js 22.21 or newer; every command that uses the network failed there before.
 - `ttheme init` and `ttheme uninstall` typed in a shell now name the `npx` command that does them, instead of calling the command unknown.
 - `ttheme use` with its output in a pipe or a file now says `ttheme use: needs a terminal`, where it wrote its color codes there.
+- Cancelling `init`, `uninstall`, `share`, `edit` or `new` now exits 2, as nothing changed, where they exited 1 or 0, so a script can tell a cancel from a failure.
 
 ## 1.2.86
 
