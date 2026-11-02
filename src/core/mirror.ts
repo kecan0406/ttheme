@@ -24,6 +24,11 @@ export const TEXT_TONE: Record<Mode, number> = { dark: 90, light: 12 }
 export const SELECTION_TONE: Record<Mode, number> = { dark: 26, light: 86 }
 
 export const CURSOR_TONE: Record<Mode, Band> = {
+  dark: { min: 54, max: 84 },
+  light: { min: 36, max: 48 },
+}
+
+const CURSOR_SPREAD: Record<Mode, Band> = {
   dark: { min: 43, max: 84 },
   light: { min: 36, max: 56 },
 }
@@ -111,7 +116,7 @@ function flip(theme: Mirrored): Shade {
   return {
     background: surface(SURFACE_TONE[to]),
     foreground: own(theme.foreground, TEXT_TONE[to], FOREGROUND_CHROMA),
-    cursor: carried(theme.cursor, across(cursor.tone, CURSOR_TONE[from], CURSOR_TONE[to])),
+    cursor: carried(theme.cursor, clamp(across(cursor.tone, CURSOR_SPREAD[from], CURSOR_SPREAD[to]), CURSOR_TONE[to])),
     selectionBackground: own(theme.selectionBackground, SELECTION_TONE[to], SELECTION_CHROMA),
     ansi: theme.ansi.map((value, i) => {
       const tone = TONES[to][i] as number

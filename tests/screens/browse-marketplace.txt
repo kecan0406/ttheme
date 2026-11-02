@@ -16,7 +16,7 @@
                                                       │                                           │
                                                       ├───────────────────────────────────────────┤
                                                       │ fix@shop/arcade  Installed                │
-                                                      │ Contrast 9/12 · ✗ accent hue outside its… │
+                                                      │ Contrast 10/13 · ✗ accent hue outside it… │
                                                       │                                           │
                                                       ├───────────────────────────────────────────┤
                                                       │    × Remove marketplace                   │

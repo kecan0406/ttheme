@@ -16,7 +16,7 @@
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │ ttheme/briony  Will install                    │
-                                                 │ Contrast 8/12 · ✗ accent hue outside its ANSI… │
+                                                 │ Contrast 9/13 · ✗ accent hue outside its ANSI… │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │    × Remove marketplace                        │

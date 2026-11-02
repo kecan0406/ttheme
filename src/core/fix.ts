@@ -9,6 +9,7 @@ import {
   BODY_MIN,
   BRIGHT_GAP,
   brightDrift,
+  CURSOR_MIN,
   check,
   confusions,
   hueGap,
@@ -198,6 +199,7 @@ class Fixer<T extends Fixable> {
 
     if (slot === 'foreground') this.theme.foreground = to
     else if (slot === 'selection') this.theme.selectionBackground = to
+    else if (slot === 'cursor') this.theme.cursor = to
     else this.theme.ansi[Number(slot.slice(4))] = to
   }
 
@@ -205,6 +207,8 @@ class Fixer<T extends Fixable> {
     if (slot === 'foreground') return this.theme.foreground
 
     if (slot === 'selection') return this.theme.selectionBackground
+
+    if (slot === 'cursor') return this.theme.cursor as Hex
 
     return this.theme.ansi[Number(slot.slice(4))] as Hex
   }
@@ -272,6 +276,8 @@ class Fixer<T extends Fixable> {
     }
 
     lift('selection', ['selection'], BODY_MIN, this.theme.foreground)
+
+    if (this.theme.cursor !== undefined) lift('cursor', ['cursor'], CURSOR_MIN)
   }
 
   separate(): void {

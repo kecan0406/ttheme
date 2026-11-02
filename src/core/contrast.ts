@@ -6,6 +6,7 @@ export const ACCENT_MIN = 4.5
 export const ANSI0_MAX_LUMINANCE = 0.15
 export const ANSI8_MIN = 3
 export const ON_ACCENT_MIN = 4.5
+export const CURSOR_MIN = 4.5
 export const ANSI7_ON_ANSI8_MIN = 3
 
 export const ACCENT_SLOTS = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
@@ -45,7 +46,7 @@ interface Violation {
 }
 
 export type Readable = Pick<Theme, 'name' | 'background' | 'foreground' | 'ansi'> &
-  Partial<Pick<Theme, 'selectionBackground'>>
+  Partial<Pick<Theme, 'selectionBackground' | 'cursor'>>
 
 export interface GateRule {
   rule: string
@@ -297,6 +298,17 @@ const PAIR_CHECKS: Check[] = [
         ([red, green]) =>
           `ANSI ${red} ${at(theme, red)} and ANSI ${green} ${at(theme, green)} read as one color to a deuteranope at text size`,
       ),
+  },
+  {
+    rule: 'cursor',
+    label: 'cursor on background',
+    unit: 'ratio',
+    min: CURSOR_MIN,
+    measure: ({ cursor, background }) => (cursor === undefined ? Number.NaN : contrast(cursor, background)),
+    check: ({ cursor, background }) =>
+      cursor !== undefined && contrast(cursor, background) < CURSOR_MIN
+        ? [`cursor ${cursor} on ${background} is ${ratio(cursor, background)}:1, needs ${CURSOR_MIN}:1`]
+        : [],
   },
 ]
 

@@ -18,7 +18,7 @@
 ╭─ Contrast ✗ 5  n next ────────────────────────╮ │ [Shell]  Code  Diff  Logs  Monitor           ⇧←→
 │  ✗ accent hue outside its ANSI role 41.56 ≤ 0 │ │  ~/code/demo on main +2 ~1
 │    Red, Yellow, Bright red, Bright green, Br… │ │  ❯ git status -sb
-│  ↓ 11 more                                    │ │  ## main...origin/main [ahead 1]
+│  ↓ 12 more                                    │ │  ## main...origin/main [ahead 1]
 ╰───────────────────────────────────────────────╯ │   M src/main.rs
 
 [EDIT] ↑↓ move   ←→ normal or bright   enter tune   g relations   s save   ? keys         esc cancel

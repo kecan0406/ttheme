@@ -18,7 +18,7 @@
 ╭─ Contras│ ↓ 22 more                                                                   │        ⇧←→
 │  ✗ accen│                                                                             │
 │    Red, │                                                                             │
-│  ↓ 11 mo│                                                                             │
+│  ↓ 12 mo│                                                                             │
 ╰──────── │                                                                             │
           ╰─────────────────────────────────────────────────────────────────────────────╯
 [HELP] ↑↓ choose   enter run   type to filter                                            ? esc close

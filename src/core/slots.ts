@@ -142,7 +142,7 @@ export function slotChecks(list: Hex[], slot: number): Check[] {
   }
 
   if (slot === 2) {
-    return [{ ok: undefined, text: `On background ${contrast(c.cursor, c.background).toFixed(2)}:1` }]
+    return [ratioCheck(c.cursor, c.background, 'cursor', 'On background')]
   }
 
   if (slot === 3) {

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The cursor of every built-in palette now reads at 4.5:1 or better on its background, so the letter under a block cursor is easier to read. 98 of the 298 light and dark shades move a little in brightness; their hue stays.
+- A palette you make holds its cursor to the same 4.5:1: `ttheme palette make` keeps it there, and the palette editor shows the check on the cursor's row.
+
 ## 1.2.86
 
 - In Windows Terminal, `ttheme light`, `ttheme dark` and `ttheme auto` typed in a tab with a palette no longer drop that tab to the default palette.

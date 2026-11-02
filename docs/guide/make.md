@@ -95,6 +95,7 @@ mock terminal.
 | `ansi0-on-accents` | ANSI 0 as text on ANSI 1–6 ≥ 4.5:1 | WCAG AA, programs' colored grounds |
 | `ansi7-on-ansi8` | ANSI 7 as text on ANSI 8 ≥ 3:1 | fish's selection |
 | `cvd-red-green` | red and green apart for a deuteranope | a dichromat simulation |
+| `cursor` | cursor on the background ≥ 4.5:1 | WCAG AA, the letter under a block cursor |
 
 ## With a coding agent
 

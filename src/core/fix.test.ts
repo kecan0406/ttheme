@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { check } from './contrast.ts'
+import { contrast } from './color.ts'
+import { CURSOR_MIN, check } from './contrast.ts'
 import { fixGate } from './fix.ts'
 
 const failing = {
@@ -28,6 +29,14 @@ const failing = {
     '#f9edd0',
   ],
 }
+
+test('fixGate moves a cursor that reads too faint on the background', () => {
+  const dim = { ...failing, cursor: '#3a3028' }
+  assert.ok(check(dim).some((violation) => violation.rule === 'cursor'))
+  const { theme, moves } = fixGate(dim)
+  assert.ok(moves.some((move) => move.slot === 'cursor' && move.rule === 'cursor'))
+  assert.ok(contrast(theme.cursor, theme.background) >= CURSOR_MIN)
+})
 
 test('fixGate lifts every color that reads too faint until the palette passes', () => {
   assert.ok(check(failing).length > 0)
