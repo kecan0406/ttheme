@@ -63,6 +63,7 @@ __tt_poked() {
 
 __tt_cli_env() {
   local REPLY
+  [[ $1 == off ]] && return 0
   __tt_warp_tab
   [[ -n $REPLY ]] && __tt_warp_here && pass+=(TTHEME_WARP_WEARS=$REPLY)
 }

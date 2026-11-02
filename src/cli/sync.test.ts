@@ -494,6 +494,9 @@ test('sync keeps Warp on the palette of the painted tab that ran the command, un
     assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/orla · dark"/)
     writeFileSync(settings, `[appearance.themes]\ntheme = ${juno}\n`)
     sync(configHome, manifest, { ...state, off: true }, home)
+    assert.match(readFileSync(settings, 'utf8'), /name = "ttheme\/juno · dark"/)
+    delete process.env.TTHEME_WARP_WEARS
+    sync(configHome, manifest, { ...state, off: true }, home)
     assert.match(readFileSync(settings, 'utf8'), /^theme = "dark"$/m)
   } finally {
     delete process.env.TTHEME_WARP_WEARS

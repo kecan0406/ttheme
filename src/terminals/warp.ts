@@ -464,9 +464,7 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>, shelf: Wa
 function kept(startup: string | undefined, laid: Laid, channel: WarpChannel): string | undefined {
   const tab = process.env.TTHEME_WARP_WEARS
 
-  return startup !== undefined && tab !== undefined && laid.files.has(tab) && channel === warpChannelOf(process.env)
-    ? tab
-    : startup
+  return tab !== undefined && laid.files.has(tab) && channel === warpChannelOf(process.env) ? tab : startup
 }
 
 function wearWarp(
