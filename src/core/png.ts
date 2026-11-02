@@ -44,6 +44,8 @@ export interface Canvas {
 const SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10]
 const CLEAR = 13
 const INDEXED = 3
+const SPARE = 1 << 20
+const WIDEST_PIXEL = 8
 
 export function isPng(bytes: Uint8Array): boolean {
   return bytes.length >= SIGNATURE.length && SIGNATURE.every((b, i) => bytes[i] === b)
@@ -173,14 +175,22 @@ function unfilter(raw: Uint8Array, stride: number, height: number, bpp: number):
   }
 }
 
+function unpacked(deflated: Buffer, size: number): Buffer {
+  try {
+    return inflateSync(deflated, {
+      chunkSize: Math.min(1 << 28, Math.max(1 << 16, size)),
+      maxOutputLength: size + SPARE,
+    })
+  } catch (error) {
+    throw error instanceof RangeError ? new Error('the PNG unpacks to more than its size says') : error
+  }
+}
+
 function inflated(scan: Scan): Rgba {
   const { width, height, type } = scan
   const bpp = CHANNELS.get(type) as number
   const stride = width * bpp
-
-  const raw = inflateSync(Buffer.concat(scan.idat), {
-    chunkSize: Math.min(1 << 28, Math.max(1 << 16, height * (stride + 1))),
-  })
+  const raw = unpacked(Buffer.concat(scan.idat), height * (stride + 1))
 
   if (raw.length < height * (stride + 1)) {
     throw new Error('truncated PNG')
@@ -274,6 +284,24 @@ function turned(image: Rgba, turn: number): Rgba {
   return { width, height, data }
 }
 
+function interlacedFits(bytes: Uint8Array): void {
+  if (bytes.length < 33 || !isPng(bytes) || bytes[28] === 0) {
+    return
+  }
+
+  const png = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  const idat: Buffer[] = []
+
+  for (let at = 8; at + 12 <= png.length; at += 12 + png.readUInt32BE(at)) {
+    if (png.toString('latin1', at + 4, at + 8) === 'IDAT') {
+      idat.push(png.subarray(at + 8, at + 8 + png.readUInt32BE(at)))
+    }
+  }
+
+  const height = png.readUInt32BE(20)
+  unpacked(Buffer.concat(idat), png.readUInt32BE(16) * height * WIDEST_PIXEL + height * 4)
+}
+
 export function decodePng(bytes: Uint8Array): Rgba {
   const scan = scanned(bytes)
 
@@ -281,6 +309,7 @@ export function decodePng(bytes: Uint8Array): Rgba {
     return turned(inflated(scan), turnOf(bytes))
   }
 
+  interlacedFits(bytes)
   const png = PNG.sync.read(Buffer.from(bytes))
 
   return turned({ width: png.width, height: png.height, data: new Uint8Array(png.data) }, turnOf(bytes))

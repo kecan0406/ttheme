@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { crc32 } from 'node:zlib'
+import { crc32, deflateSync } from 'node:zlib'
 import { PNG } from 'pngjs'
 import { decodeImage, decodePng, encodeMask, pngHead, toneOf } from './png.ts'
 
@@ -173,4 +173,44 @@ test('a JPEG decodes to its own size and colors, keeps each decode apart, and is
   decodeImage(bytes, 1e6)
   assert.deepEqual([...first.data], [...kept])
   assert.throws(() => decodeImage(bytes, 100), /16×8 is over 0.0001 megapixels/)
+})
+
+function pngOf(width: number, height: number, interlace: number, inflated: number): Uint8Array {
+  const head = Buffer.alloc(13)
+  head.writeUInt32BE(width, 0)
+  head.writeUInt32BE(height, 4)
+  head.set([8, 6, 0, 0, interlace], 8)
+
+  const chunk = (kind: string, data: Uint8Array): Buffer => {
+    const body = Buffer.concat([Buffer.from(kind, 'latin1'), data])
+    const out = Buffer.alloc(12 + data.length)
+    out.writeUInt32BE(data.length, 0)
+    body.copy(out, 4)
+    out.writeUInt32BE(crc32(body), 8 + data.length)
+
+    return out
+  }
+
+  return new Uint8Array(
+    Buffer.concat([
+      Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+      chunk('IHDR', head),
+      chunk('IDAT', deflateSync(Buffer.alloc(inflated))),
+      chunk('IEND', new Uint8Array()),
+    ]),
+  )
+}
+
+test('a PNG that unpacks far past the size its header gives is refused', () => {
+  const inflated = 8 * 1024 * 1024
+
+  for (const interlace of [0, 1]) {
+    assert.throws(() => decodeImage(pngOf(1, 1, interlace, inflated), 1e6), /unpacks to more than its size says/)
+  }
+
+  assert.deepEqual(
+    [...decodeImage(pngOf(1, 1, 0, 5 + 1024), 1e6).data],
+    [0, 0, 0, 0],
+    'a little spare data after the last row still reads',
+  )
 })
