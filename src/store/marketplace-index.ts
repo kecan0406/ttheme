@@ -271,7 +271,7 @@ export function namesPalette(name: string, query: string): boolean {
 export function listedMatches(m: Listed, query: string): boolean {
   return (
     containsText([m.id, m.source, m.about, ...m.works.map((w) => w.name)], query) ||
-    m.palettes.some((e) => namesPalette(e.name, query))
+    m.palettes.some((e) => namesPalette(e.name, query) || namesPalette(`${m.id}/${e.name}`, query))
   )
 }
 

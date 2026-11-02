@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { indexText, listable } from '../cli/showcase.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
-import { parseIndex, type Shown } from './marketplace-index.ts'
+import { listedMatches, parseIndex, type Shown } from './marketplace-index.ts'
 
 function palette(name: string): PaletteEntry {
   return {
@@ -98,4 +98,15 @@ test('a listing keeps the most starred marketplaces that fit, and none too large
     ['b@big', 'c@big', 'e@small'],
   )
   assert.deepEqual(spoke.length, 2)
+})
+
+test('a palette of a marketplace not added yet is found by its slug or its whole name', () => {
+  const [listed] = parseIndex(indexText([shown('bob@neon', 'bob/neon', 1, '')]))
+
+  assert.ok(listed)
+  const palette = (name: string) => listedMatches(listed, name)
+
+  assert.equal(palette('bob@neon/glow'), true)
+  assert.equal(palette('glow'), true)
+  assert.equal(palette('alice@neon/glow'), false)
 })
