@@ -109,6 +109,8 @@ node "$tmp/worker.cjs" bin/ttheme.js ||
 { node bin/ttheme.js palette frobnicate --json 2> "$tmp/closed.err" && echo 0 > "$tmp/closed.status" || echo $? > "$tmp/closed.status"; } | true
 [ "$(cat "$tmp/closed.status")" = 3 ] && ! grep -q EPIPE "$tmp/closed.err" ||
   { echo "bin:check failed: --json into a closed pipe did not exit as the verb did"; cat "$tmp/closed.err"; exit 1; }
+node bin/ttheme.js browse < /dev/null 2>&1 | grep -q 'needs a terminal' ||
+  { echo "bin:check failed: browse ran without a terminal"; exit 1; }
 sandboxed() {
   env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" TTHEME_AUTO_UPDATE=off TTHEME_KEYS=text "$@"
 }

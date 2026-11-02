@@ -19,6 +19,7 @@ import type { BrowseIo, BrowseResult, Marketplace } from '../tui/browse/types.ts
 import { HUB_CLOSED, HUB_UPDATE, hubOf } from '../tui/hub.ts'
 import { promptFx } from '../tui/palette-prompt.ts'
 import { into, say } from '../tui/pending.ts'
+import { interactive } from '../tui/terminal.ts'
 import { reload, takeUpdates } from './installs.ts'
 import { dropCache, keptNote, lastUpdate, withMarketplaces } from './marketplaces.ts'
 import { bringPictures } from './pictures.ts'
@@ -253,6 +254,10 @@ async function applyBrowse(
 }
 
 export async function runBrowse(): Promise<number> {
+  if (!interactive()) {
+    throw new Error('needs a terminal')
+  }
+
   const hub = hubOf(process.env)
   const home = configHome()
   const state = readInstalled(home)
