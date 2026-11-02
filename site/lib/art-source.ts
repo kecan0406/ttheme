@@ -617,13 +617,9 @@ export async function fetchCasts(works: readonly CastWork[], warn: (message: str
 
     if (!slug) continue
 
-    try {
-      const members = await index.cast(slug, AbortSignal.timeout(BUILD.timeout), MOST_CAST)
+    const members = await index.cast(slug, AbortSignal.timeout(BUILD.timeout), MOST_CAST)
 
-      found.set(work.id, untaken(castLeads(members), work.held))
-    } catch (error) {
-      warn(`no cast of ${work.id} — ${error instanceof Error ? error.message : String(error)}`)
-    }
+    found.set(work.id, untaken(castLeads(members), work.held))
   }
 
   const pictures = await picturesOf(anilistIdsOf([...found.values()].flat())).catch((error: unknown) => {
@@ -643,7 +639,7 @@ export async function fetchCasts(works: readonly CastWork[], warn: (message: str
   return casts
 }
 
-export async function fetchPeople(works: readonly Work[], warn: (message: string) => void): Promise<People> {
+export async function fetchPeople(works: readonly Work[]): Promise<People> {
   const index = nameIndex(liveSource())
   const people: People = {}
 
@@ -657,14 +653,10 @@ export async function fetchPeople(works: readonly Work[], warn: (message: string
       if (fixed) {
         people[subject] = fixed
       } else if (character.danbooru) {
-        try {
-          const member = await index.person(character.danbooru, AbortSignal.timeout(BUILD.timeout))
-          const name = member ? castFrom([member], new Map(), lang)[0]?.name : undefined
+        const member = await index.person(character.danbooru, AbortSignal.timeout(BUILD.timeout))
+        const name = member ? castFrom([member], new Map(), lang)[0]?.name : undefined
 
-          if (name) people[subject] = name
-        } catch (error) {
-          warn(`no name for ${subject} — ${error instanceof Error ? error.message : String(error)}`)
-        }
+        if (name) people[subject] = name
       }
     }
   }

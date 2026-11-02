@@ -405,13 +405,7 @@ export async function snapshot(fresh: boolean): Promise<void> {
     {},
     fresh,
   )
-  await fetched(
-    PEOPLE_FILE,
-    'people',
-    () => fetchPeople(commons.works, (message) => process.stderr.write(`site: ${message}\n`)),
-    {},
-    fresh,
-  )
+  await fetched(PEOPLE_FILE, 'people', () => fetchPeople(commons.works), {}, fresh)
 }
 
 function artChecked(): void {
