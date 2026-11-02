@@ -60,7 +60,7 @@ const index = nameIndex(liveSource())
 
 const works = mergeWorks(commons.works, listedWorks.map(workOfListed))
 
-const taken = new Set(works.map((work) => work.id))
+const taken = new Set(works.flatMap((work) => [work.id, slugOfTag(work.danbooru ?? '') ?? work.id]))
 
 const castable = new Map(castWorks(commons.works).map((work) => [work.id, work]))
 

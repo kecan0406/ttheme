@@ -43,17 +43,19 @@ function castOf(work: Work | undefined, ref: WorkRef, themes: readonly Theme[]):
   const listed = work?.characters ?? []
   const named = new Set(listed.map((character) => character.id))
 
-  const strays = [
-    ...new Set(
-      themes.flatMap((theme) => (theme.character && !named.has(theme.character.id) ? [theme.character.id] : [])),
+  const strays = new Map(
+    themes.flatMap((theme) =>
+      theme.character && !named.has(theme.character.id)
+        ? [[theme.character.id, theme.character.native?.[0] ?? null] as const]
+        : [],
     ),
-  ]
+  )
 
   const known = workOf(commons.works, ref.id) !== undefined
 
   const slots = [
     ...listed.map((character) => ({ id: character.id, native: character.native?.[0] ?? null })),
-    ...strays.map((id) => ({ id, native: null })),
+    ...[...strays].map(([id, native]) => ({ id, native })),
   ].map(({ id, native }) => {
     const person = personOf(ref.id, id)
 
