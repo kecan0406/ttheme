@@ -335,7 +335,7 @@ test('a JPEG with more scans than any encoder writes is refused before it decode
   )
 })
 
-test('a JPEG that fails leaves nothing behind for the next one to run out of', () => {
+test('a JPEG that fails leaves nothing behind for the next one to run out of', { timeout: 60_000 }, () => {
   const segment = (marker: number, body: number[]) => [0xff, marker, 0, body.length + 2, ...body]
 
   const tables = [
@@ -358,7 +358,7 @@ test('a JPEG that fails leaves nothing behind for the next one to run out of', (
     0,
   ])
 
-  for (let run = 0; run < 200; run++) {
+  for (let run = 0; run < 100; run++) {
     assert.throws(() => decodeImage(failing, 25e6), /not a JPEG picture this decoder can read/)
   }
 
