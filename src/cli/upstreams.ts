@@ -71,13 +71,14 @@ export function clashOf(behind: Behind | undefined, mine: Colors): Clash | undef
   const their = listOf(theirs)
   const was = listOf(base)
   const own = listOf(mine)
+  const moved = colorsFrom(was.map((c, slot) => (slots.includes(slot) ? (their[slot] as string) : c)))
 
   return {
     against: upstream.palette,
     slots,
     original: colorsFrom(own.map((c, slot) => (slots.includes(slot) ? (their[slot] as string) : c))),
     table: base === upstream.colors ? 'upstream.colors' : `upstream.colors.${mode}`,
-    base: colorsFrom(was.map((c, slot) => (slots.includes(slot) ? (their[slot] as string) : c))),
+    base: modeOf(moved) === mode ? moved : { ...moved, background: theirs.background, foreground: theirs.foreground },
   }
 }
 
