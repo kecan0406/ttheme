@@ -92,8 +92,8 @@ restart each once after `init`.
 - **Color resets**: Neovim and some plugins put the terminal's colors back as
   they exit, and `reset` puts back the 16 ANSI colors in Ghostty and Alacritty.
   A tab showing a palette shows it again after the command in Ghostty, kitty,
-  Alacritty, WezTerm and Windows Terminal; iTerm2 lands on the palette's
-  profile; Terminal.app and Konsole ignore resets. The 256-color extension stays
+  Alacritty, WezTerm, Windows Terminal, Rio and Contour; iTerm2 lands on the
+  palette's profile; Terminal.app and Konsole ignore resets. The 256-color extension stays
   as every terminal ships it.
 - **tmux**: the colors belong to the terminal tab, not the pane, so a pane shows
   its palette again when it takes focus. Preview draws no picture inside tmux,
