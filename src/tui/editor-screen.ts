@@ -534,7 +534,7 @@ function viewTabs(p: Paint, e: PaletteEditor, width: number): string {
     spot({ kind: 'view', view }, e.view !== view ? p.dim(` ${name} `) : pillOf(p, name))
 
   return spread(
-    `${tab('Slot', 'slot')}${tab('Relations', 'relations')}`,
+    `${tab('Color', 'slot')}${tab('Relations', 'relations')}`,
     keyZone('g', `${p.bold('g')} ${p.dim('switch')}`),
     width,
   )
