@@ -826,6 +826,7 @@ const terminalApp = (): Kind => {
   }
 
   return {
+    delay: 0,
     launch(app) {
       for (const [name, profile] of Object.entries(prefsOf(app.place.home))) {
         const image =
