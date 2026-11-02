@@ -182,7 +182,7 @@ rest.
 
 ```sh
 ttheme update                  # ttheme itself, then every marketplace
-ttheme update alice@pastel     # one marketplace
+ttheme update alice@pastel     # ttheme itself, then one marketplace
 ```
 
 The built-in palettes change with a new ttheme release, which `ttheme update`

@@ -17,8 +17,8 @@ a window of 80×24; from 96×28 it becomes the builder, with the colors on the
 left and the mock terminal on the right.
 
 A blank palette starts on the seeds: the background and foreground lightness, a
-hue and tint for the neutrals and the cursor, and one lightness and chroma the
-accents share. Whatever you pick, the twenty colors they grow pass every
+hue and tint for the neutrals and the cursor, one lightness and chroma the
+accents share, and how far the brights sit from them. Whatever you pick, the twenty colors they grow pass every
 contrast check. `enter` moves on to the colors. `--from` and `edit` skip the
 seeds.
 
@@ -140,7 +140,7 @@ ttheme add https://ttheme.dev/builder/tt8:…   # install a link; the bare code 
 `share` prints the link, and in a terminal its QR code under it. One link can
 carry several palettes, each with its twenty colors, its other mode, the work or
 character it is of and the posts of its pictures, checked by a hash so a
-mistyped link is refused. A tuned palette goes out as `miku-tuned`, a palette of
+mistyped link is refused. A tuned palette goes out as `hatsune-miku-tuned`, a palette of
 no marketplace, so whoever adds the link keeps it in their own marketplace. A
 link to a palette you already have installs yours when the colors match and
 leaves it out when they differ. In the editor, pasting a link takes its colors
@@ -153,7 +153,7 @@ command, and what you push reaches them as an update they take. There is nothing
 to build: ttheme reads the files as you pushed them.
 
 ```sh
-ttheme share   # choose "a marketplace on GitHub"
+ttheme share   # choose "A marketplace on GitHub"
 ```
 
 `share` picks one of your local marketplaces, or makes one, and opens the palette
