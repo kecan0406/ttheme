@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { type Work, workToml } from '../core/commons.ts'
 import { readMarketplaceInfo } from '../store/sources.ts'
-import { proposalsFor, unsaved, withCharacter, withDescription } from './publish.ts'
+import { proposalsFor, remoteOf, unsaved, withCharacter, withDescription } from './publish.ts'
 
 const toml = `"$schema" = "https://www.schemastore.org/ttheme-marketplace.json"
 name = "pastel"
@@ -143,5 +143,22 @@ test('a set file git never committed, or changed since it was, is one share must
     assert.deepEqual(await unsaved(dir, []), { fresh: [], changed: [] })
   } finally {
     rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a remote counts as GitHub only on GitHub itself', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-remote-'))
+  const git = (...args: string[]) => execFileSync('git', args, { cwd: dir, stdio: 'ignore' })
+  git('init', '-b', 'main')
+
+  for (const [url, want] of [
+    ['https://github.com/Ann/ttheme-pastel.git', { owner: 'ann', name: 'ttheme-pastel' }],
+    ['git@github.com:ann/ttheme-pastel.git', { owner: 'ann', name: 'ttheme-pastel' }],
+    ['ssh://git@github.com/ann/ttheme-pastel', { owner: 'ann', name: 'ttheme-pastel' }],
+    ['https://notgithub.com/ann/ttheme-pastel.git', 'elsewhere'],
+    ['https://git.example.invalid/github.com/ann/ttheme-pastel', 'elsewhere'],
+  ] as const) {
+    git('config', 'remote.origin.url', url)
+    assert.deepEqual(await remoteOf(dir), want, url)
   }
 })

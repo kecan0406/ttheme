@@ -82,7 +82,8 @@ export async function remoteOf(dir: string): Promise<Repo | 'elsewhere' | undefi
     return undefined
   }
 
-  const [, owner, name] = /github\.com[:/]([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/i.exec(url) ?? []
+  const [, owner, name] =
+    /^(?:https?:\/\/|ssh:\/\/git@|git@)github\.com[:/]([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/i.exec(url) ?? []
 
   return owner && name ? { owner: owner.toLowerCase(), name } : 'elsewhere'
 }
