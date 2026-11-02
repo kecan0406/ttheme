@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { indexText } from '../cli/showcase.ts'
+import { indexText, listable } from '../cli/showcase.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { parseIndex, type Shown } from './marketplace-index.ts'
 
@@ -76,4 +76,26 @@ test('a listed marketplace comes back without the control and bidi characters it
     ['bob@neon'],
   )
   assert.equal(read[0]?.about, 'Pastel ]52;c;ZWNobyBoaQ== palettes [2J next line')
+})
+
+test('a listing keeps the most starred marketplaces that fit, and none too large to list on its own', () => {
+  const sized = (id: string, palettes: number): Shown => ({
+    ...shown(id, id, 1, ''),
+    palettes: Array.from({ length: palettes }, () => palette('glow')),
+    works: [],
+  })
+
+  const spoke: string[] = []
+
+  const kept = listable(
+    [sized('a@huge', 301), sized('b@big', 300), sized('c@big', 300), sized('d@big', 300), sized('e@small', 2)],
+    605,
+    (line) => spoke.push(line),
+  )
+
+  assert.deepEqual(
+    kept.map((m) => m.id),
+    ['b@big', 'c@big', 'e@small'],
+  )
+  assert.deepEqual(spoke.length, 2)
 })

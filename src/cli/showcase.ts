@@ -8,6 +8,10 @@ import type { Listed, ListedPalette, ListedWork, Shown } from '../store/marketpl
 import { TOPIC } from '../store/sources.ts'
 import { fetchArchive, fromArchive } from './refresh.ts'
 
+const ONE_LISTED_MOST = 300
+
+const LISTED_MOST = 2000
+
 interface Found {
   full_name: string
   name: string
@@ -93,8 +97,30 @@ async function shown(r: Found): Promise<Shown[]> {
   }
 }
 
+export function listable(
+  all: readonly Shown[],
+  most = LISTED_MOST,
+  say: (line: string) => void = (line) => process.stderr.write(line),
+): Shown[] {
+  let room = most
+
+  return all.filter((m) => {
+    const size = m.palettes.length + m.works.length
+
+    if (size > ONE_LISTED_MOST || size > room) {
+      say(`showcase: skipping ${m.add} — its ${size} palettes and works do not fit the listing\n`)
+
+      return false
+    }
+
+    room -= size
+
+    return true
+  })
+}
+
 export async function showcase(token?: string): Promise<Shown[]> {
-  return (await Promise.all((await found(token)).map(shown))).flat()
+  return listable((await Promise.all((await found(token)).map(shown))).flat())
 }
 
 function listedPalette(entry: PaletteEntry): ListedPalette & { signatureSlots: string[] } {

@@ -7,6 +7,7 @@
 - The builder's `Slot` tab reads `Color`.
 - In Contour, a tab keeps its palette when the system turns dark or light while `ttheme dark` or `ttheme light` is set, where it used to drop to the terminal's own colors until the next command.
 - A tag with a quote or a `$` in find's Hide tags no longer breaks config.zsh or runs as a command when a shell starts.
+- A marketplace of more than 300 palettes and works no longer shows in Browse's search or on the site, and is still added by its name.
 
 ## 1.2.85
 
