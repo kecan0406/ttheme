@@ -32,7 +32,7 @@ import { commit, sync } from './sync.ts'
 import { behindOf, conflictLine, takes, takeUpstream } from './upstreams.ts'
 
 export function reload(count: number): void {
-  say(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
+  say(`\n${count} ${count === 1 ? 'palette' : 'palettes'} installed — open a new tab, or reload your terminal config`)
 }
 
 export async function runAdd(asked: string[], into?: string): Promise<void> {
