@@ -114,3 +114,34 @@ test('the Lua reader reads a conf the way the TypeScript one does', { skip: !LUA
       .sort(),
   )
 })
+
+test('the WezTerm view takes only a picture, whatever a program prints to the pane', { skip: !LUA }, () => {
+  const dir = fixture()
+
+  const module = weztermModule({
+    path: join(dir, 'wezterm.lua'),
+    colors: dir,
+    backgrounds: dir,
+    mode: 'dark',
+    palettes: [],
+  })
+
+  const pattern = /view:match\('([^']+)'\)/.exec(module)?.[1] as string
+  const script = join(dir, 'view.lua')
+
+  writeFileSync(script, `for _, view in ipairs(arg) do print(view:match('${pattern}') and 'taken' or 'left') end\n`)
+
+  const shell = spawnSync(
+    'luajit',
+    [
+      script,
+      '#101010|/x/y.png|1|80|24|80|24|0|0|1',
+      '#101010|/x/fifo|1|80|24|80|24|0|0|1',
+      '#101010||1|80|24|0|0|0|0|5',
+    ],
+    { encoding: 'utf8' },
+  )
+
+  assert.equal(shell.status, 0, shell.stderr)
+  assert.deepEqual(shell.stdout.trimEnd().split('\n'), ['taken', 'left', 'left'])
+})
