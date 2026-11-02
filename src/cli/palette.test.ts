@@ -1,6 +1,6 @@
 import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -100,4 +100,46 @@ test('a picture fetched from an address stops at its limit, whatever the server 
     fetched.mockRestore()
     process.env.XDG_CACHE_HOME = was
   }
+})
+
+test('palette make leaves a work file it cannot read as it found it', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-palette-'))
+  const dir = join(home, 'mine')
+  mkdirSync(join(home, 'ttheme'), { recursive: true })
+  mkdirSync(join(dir, 'sets'), { recursive: true })
+  mkdirSync(join(dir, 'works'), { recursive: true })
+  writeFileSync(join(dir, 'ttheme-marketplace.toml'), 'name = "pastel"\n\n[owner]\nname = "ann"\n')
+  writeFileSync(
+    join(home, 'ttheme', 'installed.json'),
+    JSON.stringify({ terminals: [], palettes: [], marketplaces: [dir] }),
+  )
+  writeFileSync(join(home, 'anchors.json'), JSON.stringify({ wren: { slots: { cursor: ['Hair', '#ff8040'] } } }))
+  const typo = 'name = "Starfall\n\n[[character]]\nid = "orla"\n'
+  writeFileSync(join(dir, 'works', 'starfall.toml'), typo)
+
+  const fetched = spyOn(globalThis, 'fetch').mockRejectedValue(new Error('no network in a test'))
+  const log = spyOn(console, 'log').mockImplementation(() => {})
+  const was = { config: process.env.XDG_CONFIG_HOME, cache: process.env.XDG_CACHE_HOME }
+  process.env.XDG_CONFIG_HOME = home
+  process.env.XDG_CACHE_HOME = join(home, 'cache')
+
+  try {
+    await assert.rejects(
+      () =>
+        runPalette('make', undefined, {
+          anchors: join(home, 'anchors.json'),
+          in: dir,
+          work: 'starfall',
+          'work-name': 'Starfall',
+        }),
+      /cannot be made/,
+    )
+  } finally {
+    fetched.mockRestore()
+    log.mockRestore()
+    process.env.XDG_CONFIG_HOME = was.config
+    process.env.XDG_CACHE_HOME = was.cache
+  }
+
+  assert.equal(readFileSync(join(dir, 'works', 'starfall.toml'), 'utf8'), typo)
 })

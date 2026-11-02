@@ -579,6 +579,14 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
       const title = commonsWork?.name ?? flags['work-name']
       const native = commonsWork?.native ?? flags['work-native']
 
+      if (target && !was && !held(id) && existsSync(join(target.records, `${id}.toml`))) {
+        failed.push({
+          path: 'work',
+          problem: `${WORKS_DIR}/${id}.toml does not read — fix it first, or its cast is lost`,
+        })
+        continue
+      }
+
       if (!was && !held(id) && title === undefined) {
         failed.push({ path: 'work-name', problem: `${id} is a new work — name it with --work-name` })
         continue

@@ -24,6 +24,7 @@
 - Changing what find hides no longer overwrites your hidden tags in a config.zsh that has no line for it.
 - An empty `XDG_CONFIG_HOME`, `XDG_STATE_HOME`, `XDG_CACHE_HOME` or `XDG_DATA_HOME` now means the default folder, instead of the folder you ran ttheme in.
 - `ttheme share` refuses a link too large to open again and points to a marketplace, instead of printing one that fails for whoever opens it.
+- `ttheme palette make` no longer overwrites a work file that has a typo in it; it says which file to fix.
 
 ## 1.2.85
 
