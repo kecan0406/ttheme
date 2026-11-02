@@ -203,7 +203,7 @@ export async function castNamed(id: string, query: string, signal: AbortSignal):
 
   const held = listed?.held ?? []
   const tags = held.flatMap((holder) => holder.keys)
-  const found = membersFound(await index.find(query, slug, tags, signal), held, lang)
+  const found = membersFound(await index.find(query, slug, tags, MOST_CAST, signal), held, lang)
 
   const holding = found.flatMap((member) =>
     member.palette === null ? [] : [{ ...member, name: personOf(id, member.palette) ?? member.name }],

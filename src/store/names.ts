@@ -16,7 +16,7 @@ export interface NameIndex {
   search: NameSearch
   tagged(slug: string, signal: AbortSignal): Promise<TaggedWork[]>
   cast(slug: string, signal: AbortSignal, limit: number): Promise<CastMember[]>
-  find(query: string, slug: string, tags: readonly string[], signal: AbortSignal): Promise<CastMember[]>
+  find(query: string, slug: string, tags: readonly string[], limit: number, signal: AbortSignal): Promise<CastMember[]>
   person(tag: string, signal: AbortSignal): Promise<CastMember | undefined>
   open(signal: AbortSignal): Promise<void>
 }
@@ -229,17 +229,20 @@ export function nameIndex(source: Source): NameIndex {
 
       return castMembers(found)
     },
-    async find(query, slug, tags, signal) {
-      const [found, works]: unknown[] = await Promise.all([
+    async find(query, slug, tags, limit, signal) {
+      const [found, works, cast]: unknown[] = await Promise.all([
         names.search(query, { kind: 'character', limit: FIND_LIMIT, adult: false, signal }),
         names.tagged(slug, { kind: 'work', adult: false, prefix: cutSlug(slug), signal }),
+        names.cast(slug, { adult: false, limit, prefix: cutSlug(slug), signal }),
       ])
 
       const ids = new Set(cardsOf(works).flatMap((card) => (typeof card.id === 'string' ? [card.id] : [])))
+      const listed = new Set(cardsOf(cast).map((card) => card.id))
 
       return castMembers(
         cardsOf(found).filter(
           (card) =>
+            listed.has(card.id) ||
             (typeof card.home === 'string' && slugOfTag(card.home) === slug) ||
             strings(card.works, Boolean).some((id) => ids.has(id)) ||
             strings(card.danbooru, Boolean).some((tag) => tags.includes(tag)),
