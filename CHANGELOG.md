@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.89
+
 - ttheme keeps nothing in `~/.cache/ttheme` any more: no drawings of your pictures, no copies of booru posts, of the marketplace list or of name lookups. You can delete the folder, which can hold hundreds of megabytes.
 - Switching between dark and light no longer draws tinted pictures again: each one keeps its drawing for the other mode beside it.
 - Browse's marketplace search and its name lookups ask the network every time, so while offline they say they cannot reach it instead of showing an older list.
