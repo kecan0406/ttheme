@@ -303,9 +303,9 @@ async function styles(production: boolean, faces: string): Promise<string> {
   return result.css
 }
 
-async function client(production: boolean): Promise<{ js: string; builder: string }> {
+async function bundle(file: string, production: boolean): Promise<string> {
   const result = await Bun.build({
-    entrypoints: [join(SITE, 'client', 'main.ts'), join(SITE, 'client', 'palette-builder.tsx')],
+    entrypoints: [join(SITE, 'client', file)],
     outdir: ASSETS,
     naming: production ? '[name]-[hash].[ext]' : '[name].[ext]',
     target: 'browser',
@@ -313,16 +313,15 @@ async function client(production: boolean): Promise<{ js: string; builder: strin
     sourcemap: production ? 'none' : 'linked',
   })
 
-  const entry = (name: string) => {
-    const output = result.outputs.find((one) => one.kind === 'entry-point' && basename(one.path).startsWith(name))
+  const output = result.outputs.find((one) => one.kind === 'entry-point')
 
-    return output && `/assets/${basename(output.path)}`
-  }
+  if (!result.success || !output) throw new AggregateError(result.logs, `the client bundle ${file} did not build`)
 
-  const js = entry('main')
-  const builder = entry('palette-builder')
+  return `/assets/${basename(output.path)}`
+}
 
-  if (!result.success || !js || !builder) throw new AggregateError(result.logs, 'the client bundle did not build')
+async function client(production: boolean): Promise<{ js: string; builder: string }> {
+  const [js, builder] = await Promise.all([bundle('main.ts', production), bundle('palette-builder.tsx', production)])
 
   return { js, builder }
 }
