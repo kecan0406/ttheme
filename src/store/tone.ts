@@ -172,6 +172,10 @@ export function tunedNames(tone: Tone, entries: readonly PaletteEntry[]): string
   return entries.flatMap((entry) => (toneOf(tone, entry) === undefined ? [] : [entry.name]))
 }
 
+export function tunedIn(tone: Tone, entries: readonly Pick<PaletteEntry, 'name'>[], mode: Mode): string[] {
+  return entries.flatMap((entry) => (tone[entry.name]?.[mode] === undefined ? [] : [entry.name]))
+}
+
 export function withTone(tone: Tone, name: string, mode: Mode, over: Override): Tone {
   const modes: Moded = { ...tone[name] }
 

@@ -1,16 +1,17 @@
 import { isHex } from '../core/color.ts'
 import type { Sort } from '../core/commons.ts'
-import { inMode, type PaletteEntry } from '../core/manifest.ts'
+import { inMode, type Manifest, type PaletteEntry } from '../core/manifest.ts'
+import { type Mode, modeOf } from '../core/mode.ts'
 import { counted } from '../core/text.ts'
 import { BUILTIN, marketplaceId, publisherOf } from '../core/theme.ts'
-import { available, idOf, readKept, readMarketplaces, shown, updatesOf } from '../store/available.ts'
+import { available, idOf, type Read, readAll, readKept, readMarketplaces, untuned, updatesOf } from '../store/available.ts'
 import { type Installed, readInstalled, worn, writeInstalled } from '../store/installed.ts'
 import { readMarketplaceDir, warning } from '../store/local.ts'
 import { readIndex } from '../store/marketplace-index.ts'
 import { nameSearch } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
 import { autoUpdates, isLocal, isRemote, localIdentity, marketplacesOf, repoOf, shownSource } from '../store/sources.ts'
-import { readTone, tunedNames } from '../store/tone.ts'
+import { readTone, tunedIn } from '../store/tone.ts'
 import { modeFor } from '../store/wiring.ts'
 import { liveOf } from '../terminals/live.ts'
 import { colorless } from '../terminals/osc.ts'
@@ -26,7 +27,6 @@ import { dropCache, keptNote, lastUpdate, withMarketplaces } from './marketplace
 import { bringPictures } from './pictures.ts'
 import {
   AUTO_TIMEOUT,
-  cachedEntries,
   cachedMarketplace,
   dueSources,
   type Fetched,
@@ -41,18 +41,24 @@ import { commit, forget } from './sync.ts'
 import { updatable } from './upstreams.ts'
 import { visit } from './visit.ts'
 
-function inWear(home: string, entries: readonly PaletteEntry[]): PaletteEntry[] {
-  const mode = modeFor(home)
-
-  return entries.map((entry) => inMode(entry, mode))
+function inWear(mode: Mode, entries: readonly PaletteEntry[]): PaletteEntry[] {
+  return entries.map((entry) => (modeOf(entry) === mode ? entry : inMode(entry, mode)))
 }
 
 function sortOf(value: string | undefined): Sort {
   return value === 'cast' ? 'cast' : 'abc'
 }
 
-function marketplaceState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Marketplace {
-  const marketplace = source === BUILTIN ? undefined : cachedMarketplace(home, source)
+function marketplaceState(
+  home: string,
+  state: Installed,
+  source: string,
+  tries: Record<string, Tried>,
+  read: Read,
+  mode: Mode,
+): Marketplace {
+  const held = read.sourced.find((sourced) => sourced.source === source)?.read
+  const marketplace = source === BUILTIN ? undefined : (held ?? cachedMarketplace(home, source))
   let id: string
 
   try {
@@ -66,16 +72,14 @@ function marketplaceState(home: string, state: Installed, source: string, tries:
     id,
     ...(marketplace?.info.description ? { description: marketplace.info.description } : {}),
     shown: shownSource(source),
-    entries: inWear(home, source === BUILTIN ? cachedEntries(home, source) : (marketplace?.entries ?? [])),
+    entries: inWear(mode, source === BUILTIN ? read.bundled.builtin.palettes : (marketplace?.entries ?? [])),
     works: marketplace?.works ?? [],
     auto: autoUpdates(source, state.updates),
     status: lastUpdate(home, source, tries),
   }
 }
 
-function updateNames(home: string): string[] {
-  const manifest = readMarketplaces(home, false)
-
+function updateNames(home: string, manifest: Manifest): string[] {
   return [...updatesOf(home, manifest).map((e) => e.name), ...updatable(home, manifest)]
 }
 
@@ -94,9 +98,11 @@ function browseIo(
         await refreshMarketplace(home, source, AUTO_TIMEOUT)
       }
 
+      const read = readAll(home, false)
+
       return {
-        marketplace: marketplaceState(home, state, source, readTries()),
-        updates: updateNames(home),
+        marketplace: marketplaceState(home, state, source, readTries(), read, modeFor(home)),
+        updates: updateNames(home, read.manifest),
       }
     },
     fetch: async (source) => {
@@ -110,7 +116,7 @@ function browseIo(
           id,
           ...(info.description ? { description: info.description } : {}),
           shown: shownSource(source),
-          entries: inWear(home, entries),
+          entries: inWear(modeFor(home), entries),
           works,
           auto: false,
           status: 'always up to date',
@@ -125,7 +131,7 @@ function browseIo(
         id: got.id,
         ...('info' in got && got.info.description ? { description: got.info.description } : {}),
         shown: shownSource(source),
-        entries: inWear(home, got.entries),
+        entries: inWear(modeFor(home), got.entries),
         works: got.works,
         auto: autoUpdates(source, {}),
         status: 'not added yet',
@@ -265,15 +271,19 @@ export async function runBrowse(): Promise<number> {
   const was = readKept(home)
   const tries = readTries()
   const auto = autoWanted()
-  const manifest = readMarketplaces(home)
-  const view = shown(home, manifest, false)
+  const read = readAll(home)
+  const { manifest } = read
+  const mode = modeFor(home)
+  const view = untuned(home, manifest, false)
 
-  const marketplaces = marketplacesOf(state.marketplaces).map((source) => marketplaceState(home, state, source, tries))
+  const marketplaces = marketplacesOf(state.marketplaces).map((source) =>
+    marketplaceState(home, state, source, tries, read, mode),
+  )
 
   const names = new Set(marketplaces.flatMap((m) => m.entries.map((e) => e.name)))
 
   const kept = inWear(
-    home,
+    mode,
     was.filter((e) => state.palettes.includes(e.name) && !names.has(e.name)),
   )
 
@@ -294,8 +304,8 @@ export async function runBrowse(): Promise<number> {
     marketplaces,
     kept,
     installed: state.palettes,
-    updates: updateNames(home),
-    tuned: tunedNames(readTone(home), view.palettes),
+    updates: updateNames(home, manifest),
+    tuned: tunedIn(readTone(home), view.palettes, mode),
     works: view.works,
     sort: sortOf(process.env.TTHEME_SORT),
     ...(startup ? { startup } : {}),

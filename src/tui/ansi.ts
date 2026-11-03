@@ -1,4 +1,4 @@
-import { cells, graphemes } from '../core/text.ts'
+import { cells, graphemes, printable } from '../core/text.ts'
 import { closing } from './style.ts'
 
 export function linked(text: string, url: string | undefined): string {
@@ -54,8 +54,18 @@ export function pieces(text: string): Piece[] {
 
     const next = text.indexOf('\x1b', i + 1)
     const stop = next === -1 ? text.length : next
+    const run = text.slice(i, stop)
 
-    for (const { segment, index } of graphemes(text.slice(i, stop))) {
+    if (printable(run)) {
+      for (let at = 0; at < run.length; at++) {
+        out.push({ text: run.charAt(at), start: i + at, end: i + at + 1, width: 1, sequence: false })
+      }
+
+      i = stop
+      continue
+    }
+
+    for (const { segment, index } of graphemes(run)) {
       out.push({
         text: segment,
         start: i + index,
