@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.90
+
 - A new tab starts a little sooner: it reads only what a tab needs, and the rest waits until a `ttheme` command or a completion asks for it.
 - The first tab after a change to your palettes no longer pauses to compile ttheme's shell files: `init`, `ttheme update` and every change compile them as they write them.
 
