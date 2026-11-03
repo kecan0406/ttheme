@@ -161,7 +161,9 @@ function Total({ count, one }: { count: number; one: string }) {
   return (
     <span class="inline-flex items-baseline gap-1.5">
       <b class="font-display text-display-sm font-black tabular-nums">{count}</b>
-      <span class="text-sm text-muted-foreground">{count === 1 ? one : `${one}s`}</span>
+      <span class="text-sm text-muted-foreground" safe>
+        {count === 1 ? one : `${one}s`}
+      </span>
     </span>
   )
 }
@@ -253,7 +255,7 @@ function Elsewhere({ count }: { count: number }) {
     <li class="flex h-8.5 items-center gap-2.5 pl-2.5 text-sm text-muted-foreground">
       <Icon node={EllipsisVertical} class="size-3.5 flex-none text-faint-foreground" />
       <span aria-hidden="true" class="w-11 flex-none" />
-      {plural(count, 'more work')}
+      <span safe>{plural(count, 'more work')}</span>
     </li>
   )
 }
