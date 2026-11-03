@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.88
+
 - The list of works and characters now comes from names.ttheme.dev when you install and update, instead of inside the package, so a work added to it reaches you without a new ttheme. Until it has loaded, or with `TTHEME_NAME_LOOKUP=off`, palettes are listed without their works.
 - A request for a character from Browse's search now opens in aninames, where works and characters are added, and there is no more request for a palette: `Make one` is how you get one.
 - Key hints on a Mac now read `⌥ + u` and `⌃ + r`, where they read `⌥U` and `⌃R`.
