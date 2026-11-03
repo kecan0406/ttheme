@@ -9,6 +9,7 @@ import { Icon, NewTab } from '@/lib/icons'
 import { type Hit, lookStyle, type SearchMarket, type SearchPalette } from '@/lib/search'
 import { linesOf } from '@/lib/terminal'
 import { WORN_FACETS, workPath } from '@/lib/works'
+import { Dots } from './dots'
 import { TerminalScreen } from './terminal'
 import { TerminalFrame } from './terminal-frame'
 import { WorkArt } from './work-art'
@@ -25,17 +26,6 @@ const ROW =
   'flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2 text-sm outline-none data-highlighted:bg-muted max-[720px]:py-1.5'
 
 const NOTE = 'grid justify-items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground'
-
-function Dots({ look }: { look: readonly string[] }) {
-  return (
-    <span
-      aria-hidden="true"
-      data-slot="signature-dots"
-      class="max-[720px]:hidden"
-      style={`--sg0:${look[2]};--sg1:${look[3]};--sg2:${look[1]}`}
-    />
-  )
-}
 
 function Thumb({ hit }: { hit: { art: Hit['work']['art']; facets: string } }) {
   return (
@@ -74,7 +64,9 @@ function HitRow({ hit, lead }: { hit: Hit; lead: boolean }) {
       class={ROW}
     >
       <Thumb hit={work} />
-      <Dots look={palette.look} />
+      <span class="contents max-[720px]:hidden">
+        <Dots colors={[0, 2, 3, 1].map((at) => palette.look[at] ?? '')} />
+      </span>
       <span class="flex min-w-0 flex-1 items-baseline gap-2">
         <span class="max-w-full shrink-0 truncate font-display text-base font-extrabold" translate="no" safe>
           {work.name}

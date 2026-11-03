@@ -8,6 +8,8 @@ export const MOST_FOUND = 4
 
 export const SHOWN_CAST = 24
 
+export const SHOWN_FAMILY = 5
+
 export const MOST_CAST = 400
 
 const FEW_CAST = 6

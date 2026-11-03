@@ -20,6 +20,7 @@ import {
   Unlink,
   X,
 } from 'lucide'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -46,11 +47,12 @@ import { shortName } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { FORMATS, planeRows, type SlotView } from '@/lib/view-types'
 import { PLANE_BOTTOM, PLANE_TOP } from '../../src/core/plane.ts'
+import { Dots } from './dots'
 import { Mark } from './mark'
 import { ChecksHead, SectionLabel } from './palette-parts'
 import { PictureList } from './picture-list'
 import { GateRows, Group, Marks, Swatch, Verdict } from './slot-list'
-import { GateButton, TitleDots, TitleFacts, TitleLine, WorkspaceBar, WorkspaceTitle } from './workspace-shell'
+import { GateButton, TitleFacts, TitleLine, WorkspaceBar, WorkspaceTitle } from './workspace-shell'
 
 const PLANE_THUMB =
   'pointer-events-none absolute size-3.5 -translate-1/2 rounded-full border-2 border-white shadow-sm ring-1 ring-black/55'
@@ -164,7 +166,7 @@ export function BuilderBar({
             </p>
           </div>
           <span data-draft data-bar-dots aria-hidden="true" class="flex flex-none gap-1">
-            <TitleDots dots={dots} />
+            <Dots colors={dots} />
           </span>
         </TitleLine>
         <TitleFacts>
@@ -292,6 +294,9 @@ export function SeedsPanel({ seeds, list, gate }: { seeds: SeedRow[]; list: stri
         <Verdict ok={gate.passed === gate.lines.length} />
         <span data-seed-gate safe>{`${gate.passed} / ${gate.lines.length} pass`}</span>
         <span class="font-medium text-muted-foreground">at every seed</span>
+        <Badge data-seed-default class="ml-auto">
+          default
+        </Badge>
       </div>
       <div data-seed-fields class="grid gap-4 px-4">
         <SeedFields seeds={seeds} />

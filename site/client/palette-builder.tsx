@@ -23,8 +23,8 @@ import {
   Use,
 } from '@/components/builder-parts'
 import { StartEntries } from '@/components/builder-start'
+import { Dots } from '@/components/dots'
 import { PaneBody } from '@/components/mock-window'
-import { TitleDots } from '@/components/workspace-shell'
 import {
   askedDraft,
   type BuilderData,
@@ -55,6 +55,7 @@ import {
 } from '@/lib/builder'
 import {
   aboutOf,
+  DOTS,
   dotsOf,
   draftListOf,
   exportProblem,
@@ -71,6 +72,7 @@ import {
   type StartGroup,
   type StartList,
   seedRowsOf,
+  seedsAtDefault,
   setDrafts,
   slotVars,
   statusOf,
@@ -88,7 +90,7 @@ import { codeOf, type Draft, shareLink } from '../../src/core/draft.ts'
 import { PLANE_BOTTOM, PLANE_TOP, reach } from '../../src/core/plane.ts'
 import { marketplaceToml, readmeOf, repoFor } from '../../src/core/scaffold.ts'
 import { grow, SEED_FIELDS, SEEDS, type Seeds } from '../../src/core/seeds.ts'
-import { FACE, lchIn, listOf, misses, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
+import { lchIn, listOf, misses, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
 import {
   brightLinks,
   following,
@@ -474,7 +476,7 @@ class PaletteBuilder extends HTMLElement {
       mock?.style.setProperty(name, value)
     }
 
-    this.#fill(this.querySelector('[data-bar-dots]'), html(<TitleDots dots={dotsOf(list, FACE)} />))
+    this.#fill(this.querySelector('[data-bar-dots]'), html(<Dots colors={dotsOf(list, DOTS)} />))
     const edits = changes(edit)
     const shown = this.querySelector<HTMLElement>('[data-changed]')
     this.#fill(this.querySelector('[data-changed-label]'), html(<ChangedLabel count={edits} />))
@@ -619,6 +621,9 @@ class PaletteBuilder extends HTMLElement {
     if (colors) colors.hidden = seeds !== null
 
     if (!seeds) return
+    const fresh = this.querySelector<HTMLElement>('[data-seed-default]')
+
+    if (fresh) fresh.hidden = !seedsAtDefault(seeds)
 
     for (const row of seedRowsOf(seeds)) {
       const shown = this.querySelector(`[data-seed-value="${row.key}"]`)

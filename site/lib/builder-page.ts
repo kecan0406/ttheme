@@ -33,7 +33,7 @@ export function starts(): Start[] {
         publisher: theme.marketplace,
         lead: work !== null && theme === lead,
         words: searchText(theme),
-        dots: faceOf(theme),
+        dots: [theme.background, ...faceOf(theme)],
       }),
     )
   })

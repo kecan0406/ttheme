@@ -79,19 +79,6 @@ export function TitleFacts({ class: className, children, ...props }: Props) {
   )
 }
 
-export function TitleDots({ dots }: { dots: string[] }) {
-  return (
-    <>
-      {dots.map((color) => (
-        <i
-          class="size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none"
-          style={`background:${color}`}
-        />
-      ))}
-    </>
-  )
-}
-
 export function WorkspaceStage({ class: className, children, ...props }: Props) {
   return (
     <div

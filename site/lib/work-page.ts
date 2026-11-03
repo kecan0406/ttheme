@@ -3,12 +3,12 @@ import { commons } from '@/lib/builtin'
 import { castFor, personOf } from '@/lib/cast'
 import { type Place, placesOf } from '@/lib/categories'
 import type { FoundCast } from '@/lib/found'
-import type { Shelf } from '@/lib/gallery'
+import { marketplacePath, type Shelf } from '@/lib/gallery'
 import { artFor, placesFoundFor } from '@/lib/key-art'
 import { listedWorks } from '@/lib/marketplaces'
 import { langOf } from '@/lib/theme-entry'
 import { BUILTIN, type Theme, type WorkRef } from '@/lib/themes'
-import { byWork, facetStyle, leadOf, swatchStyle } from '@/lib/works'
+import { byWork, facetStyle, leadOf, swatchStyle, type WorkShelf, workPath } from '@/lib/works'
 import { mergeWorks, type Work, workOf, workOfListed } from '../../src/core/commons.ts'
 
 export interface CastSlot {
@@ -20,10 +20,30 @@ export interface CastSlot {
   lead: boolean
 }
 
+export interface Neighbor {
+  name: string
+  lead: Theme
+  palettes: Theme[]
+  path: string
+}
+
+export interface Catalog {
+  works: number
+  lead: Theme
+  before: number
+  previous: Neighbor[]
+  next: Neighbor[]
+  after: number
+  more: boolean
+}
+
 export interface WorkMarket {
   shelf: Shelf
   palettes: Theme[]
+  catalog: Catalog
 }
+
+const NEIGHBORS = 2
 
 export interface WorkPage {
   work: WorkRef
@@ -89,6 +109,39 @@ function orderOf(themes: readonly Theme[], cast: CastSlot[], lead: Theme): Theme
   return themes.toSorted((a, b) => Number(b === lead) - Number(a === lead) || at(a) - at(b) || cmp(a.name, b.name))
 }
 
+function worksIn(groups: readonly WorkShelf[]): number {
+  return groups.filter((group) => group.work !== null).length
+}
+
+function neighborOf(group: WorkShelf, shelf: Shelf): Neighbor {
+  return {
+    name: group.work?.name ?? 'originals',
+    lead: leadOf(group),
+    palettes: group.themes,
+    path: group.work ? workPath(group.work.id) : marketplacePath(shelf.id),
+  }
+}
+
+function catalogOf(shelf: Shelf, id: string): Catalog | null {
+  const groups = byWork(shelf.palettes)
+  const at = groups.findIndex((group) => group.work?.id === id)
+  const here = groups[at]
+
+  if (!here) return null
+  const first = Math.max(0, at - NEIGHBORS)
+  const last = Math.min(groups.length, at + 1 + NEIGHBORS)
+
+  return {
+    works: worksIn(groups),
+    lead: leadOf(here),
+    before: worksIn(groups.slice(0, first)),
+    previous: groups.slice(first, at).map((group) => neighborOf(group, shelf)),
+    next: groups.slice(at + 1, last).map((group) => neighborOf(group, shelf)),
+    after: worksIn(groups.slice(last)),
+    more: first > 0 || last < groups.length,
+  }
+}
+
 export function workPages(themes: readonly Theme[], shelves: readonly Shelf[]): Map<string, WorkPage> {
   const works = mergeWorks(commons.works, listedWorks.map(workOfListed))
   const pages = new Map<string, WorkPage>()
@@ -109,7 +162,9 @@ export function workPages(themes: readonly Theme[], shelves: readonly Shelf[]): 
           lead,
         )
 
-        return palettes.length > 0 ? [{ shelf, palettes }] : []
+        const catalog = palettes.length > 0 ? catalogOf(shelf, ref.id) : null
+
+        return catalog ? [{ shelf, palettes, catalog }] : []
       })
 
     pages.set(ref.id, {

@@ -6,7 +6,8 @@ import { Icon } from '@/lib/icons'
 import type { Shared } from '@/lib/share'
 import { pinned } from '@/lib/themes'
 import { CommandRow, InitRow } from './command-row'
-import { SectionLabel, Signature } from './palette-parts'
+import { Dots, dotColors } from './dots'
+import { SectionLabel } from './palette-parts'
 
 function bringing(count: number): string {
   return `It brings ${count === 1 ? 'a picture, downloaded from its post' : `${count} pictures, downloaded from their posts`} as it installs.`
@@ -50,7 +51,7 @@ export function LinkStrip({ shared }: { shared: Shared }) {
       </span>
       {shared.palettes.map((theme, at) => (
         <LinkButton variant="ghost" size="sm" href={`?i=${at}`} aria-current={at === shared.index ? 'page' : undefined}>
-          <Signature theme={pinned(theme)} />
+          <Dots colors={dotColors(pinned(theme))} />
           <span safe>{theme.name}</span>
         </LinkButton>
       ))}

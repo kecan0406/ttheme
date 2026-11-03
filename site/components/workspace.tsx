@@ -7,26 +7,27 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { Kbd } from '@/components/ui/kbd'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { RowLink } from '@/components/ui/row'
 import type { Facts, Repo } from '@/lib/facts'
 import { BROWSE_PATH, BUILTIN_URL, palettePath, REPO, repoUrl, searchText } from '@/lib/gallery'
 import { gatePassed } from '@/lib/gate'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { SCENES, type Scene, sceneLines, useOf } from '@/lib/sessions'
-import { faceOf, type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes'
+import type { GateRule, Marketplace, Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 import { byWork, leadOf, leadsOf, ribbon } from '@/lib/works'
 import type { Where, WorkspaceData } from '@/lib/workspace'
 import { ByMode } from './by-mode'
 import { CommandRow, InitRow } from './command-row'
+import { Dots, dotColors } from './dots'
 import { ChecksHead, GateList, SwatchGrid } from './palette-parts'
 import { RepoLink } from './repo-link'
 import { TerminalScreen } from './terminal'
 import { TerminalFrame } from './terminal-frame'
 import {
   GateButton,
-  TitleDots,
   TitleFacts,
   TitleLine,
   WorkspaceBar,
@@ -55,27 +56,8 @@ function InstallRow({ where }: { where: Where }) {
   )
 }
 
-function signs(theme: Theme): string[] {
-  return [0, 1, 2].map((index) => `--sg${index}:${paint(theme, (shade) => faceOf(shade)[index] as string)}`)
-}
-
-function Dots({ theme }: { theme: Theme }) {
-  return <span aria-hidden="true" data-slot="signature-dots" style={signs(theme).join(';')} />
-}
-
-function WorkTile({ theme }: { theme: Theme }) {
-  return (
-    <span
-      aria-hidden="true"
-      data-slot="work-tile"
-      style={[`--bg:${paint(theme, (shade) => shade.background)}`, ...signs(theme)].join(';')}
-    />
-  )
-}
-
 export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: string }) {
   const name = 'truncate font-display text-display-sm font-black'
-  const dots = [0, 1, 2].map((index) => paint(theme, (shade) => faceOf(shade)[index] as string))
 
   return (
     <>
@@ -94,9 +76,7 @@ export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: stri
             {theme.name}
           </h1>
         )}
-        <span aria-hidden="true" class="flex flex-none gap-1">
-          <TitleDots dots={dots} />
-        </span>
+        <Dots colors={dotColors(theme)} />
       </TitleLine>
     </>
   )
@@ -202,7 +182,7 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
     <nav
       aria-label="works"
       data-tree
-      class="grid max-h-80 min-h-0 content-start gap-px overflow-y-auto overscroll-contain px-3 pt-3 pb-2 app:max-h-none app:flex-1"
+      class="grid max-h-80 min-h-0 content-start overflow-y-auto overscroll-contain px-3 pt-3 pb-2 app:max-h-none app:flex-1"
     >
       {byWork(palettes).map((shelf) => {
         const { work, themes } = shelf
@@ -217,12 +197,12 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
             data-name={`${title} ${work?.native ?? ''}`.toLowerCase()}
             class="group/work"
           >
-            <CollapsibleTrigger class="flex h-9 w-full items-center gap-2.5 rounded-lg px-2 text-left text-sm font-semibold text-soft-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring group-data-open/work:text-foreground">
+            <CollapsibleTrigger row="md" class="group-data-open/work:text-foreground">
               <Icon
                 node={ChevronRight}
                 class="size-3.5 flex-none text-faint-foreground transition-transform duration-150 group-data-open/work:rotate-90 motion-reduce:transition-none"
               />
-              <WorkTile theme={lead} />
+              <Dots colors={dotColors(lead)} />
               <span class="min-w-0 flex-1 truncate" safe>
                 {title}
               </span>
@@ -231,7 +211,7 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
               </span>
             </CollapsibleTrigger>
             <CollapsiblePanel>
-              <ul class="grid gap-px pt-0.5 pb-2 pl-7.5">
+              <ul class="grid pt-0.5 pb-2 pl-7.5">
                 {work?.native ? (
                   <li class="px-2.5 pb-1 text-xs text-muted-foreground" lang={work.lang ?? undefined} safe>
                     {work.native}
@@ -239,13 +219,13 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
                 ) : null}
                 {themes.map((theme) => (
                   <li data-search={searchText(theme)}>
-                    <a
+                    <RowLink
+                      size="sm"
                       href={palettePath(theme)}
                       data-pick={theme.name}
                       aria-current={theme === current ? 'page' : undefined}
-                      class="flex h-8 items-center gap-2.5 rounded-md px-2.5 font-display text-sm font-extrabold text-soft-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-accent aria-[current=page]:text-foreground"
                     >
-                      <Dots theme={theme} />
+                      <Dots colors={dotColors(theme)} />
                       <span class="min-w-0 flex-1 truncate" translate="no" safe>
                         {theme.name}
                       </span>
@@ -255,7 +235,7 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
                           <span class="sr-only">, lead</span>
                         </>
                       ) : null}
-                    </a>
+                    </RowLink>
                   </li>
                 ))}
               </ul>

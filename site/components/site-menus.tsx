@@ -21,6 +21,7 @@ import { makePath } from '@/lib/names'
 import { linesOf } from '@/lib/terminal'
 import { WORN_FACETS } from '@/lib/works'
 import { CommandRow } from './command-row'
+import { Dots } from './dots'
 import { TerminalScreen } from './terminal'
 import { TerminalFrame } from './terminal-frame'
 import { WorkArt } from './work-art'
@@ -38,7 +39,7 @@ export const BUILDER_OPEN = '/builder#builder-open'
 export const BUILDER_DRAFTS = '/builder#builder-drafts'
 
 const ROW =
-  'flex min-w-0 items-center gap-3.5 rounded-2xl p-2.5 outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring'
+  'flex min-w-0 items-center gap-3.5 rounded-2xl border-y-2 border-transparent bg-clip-padding p-2.5 outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:inset-ring-2 focus-visible:inset-ring-ring'
 
 const HEAD = 'px-2.5 pt-2 pb-1 text-2xs font-bold tracking-caps text-muted-foreground uppercase'
 
@@ -122,7 +123,7 @@ export function InUseCard({
       </Badge>
       <span class="absolute inset-x-4.5 bottom-4 grid gap-1">
         <span class="flex min-w-0 items-center gap-2 text-sm">
-          <span aria-hidden="true" data-slot="signature-dots" />
+          <Dots />
           <span
             translate="no"
             class="min-w-0 truncate font-display font-extrabold text-soft-foreground after:content-(--wear-name)"
@@ -149,7 +150,9 @@ export function InUseCard({
 
 function PlaceRow({ place }: { place: MenuPlace }) {
   return (
-    <li class={ROW}>
+    <li
+      class={`${ROW} has-[>a:focus-visible]:bg-muted has-[>a:focus-visible]:inset-ring-2 has-[>a:focus-visible]:inset-ring-ring`}
+    >
       <a href={place.href} class="flex min-w-0 flex-1 items-center gap-3.5 outline-none">
         <Cover art={place.cover} />
         <Text title={place.label} />
@@ -200,7 +203,7 @@ export function BrowseMenu({ menu }: { menu: MenuFacts }) {
         <div data-feature="browse" class="contents">
           <InUseCard work={menu.inUse} href={menu.inUse?.path ?? BROWSE_PATH} />
         </div>
-        <ul class="grid min-w-0 flex-1 content-start gap-1">
+        <ul class="grid min-w-0 flex-1 content-start">
           {menu.places.map((place) => (
             <PlaceRow place={place} />
           ))}
@@ -333,7 +336,7 @@ export function BuilderMenu({ menu }: { menu: MenuFacts }) {
         <div data-feature="builder" class="contents">
           <BuilderCard />
         </div>
-        <ul class="grid min-w-0 flex-1 content-start gap-1">
+        <ul class="grid min-w-0 flex-1 content-start">
           <ToolRow
             href={makePath(null)}
             visual={<Tinted icon={Sprout} tone="bg-(--a2)/14 text-(--a2)" />}
@@ -425,13 +428,13 @@ export function DocsMenu({ menu }: { menu: MenuFacts }) {
         </div>
         <div class="grid min-w-0 flex-1 content-start">
           <p class={HEAD}>Guide</p>
-          <ul class="grid gap-0.5">
+          <ul class="grid">
             {menu.guide.map((doc) => (
               <DocRow doc={doc} />
             ))}
           </ul>
           <p class={`${HEAD} pt-3`}>Reference</p>
-          <ul class="grid gap-0.5">
+          <ul class="grid">
             {menu.reference.map((doc) => (
               <DocRow doc={doc} />
             ))}

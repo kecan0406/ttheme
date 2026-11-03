@@ -5,7 +5,8 @@ import { TabsPanel } from '@/components/ui/tabs'
 import type { DraftList } from '@/lib/builder-view'
 import { Icon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { Dots, HEAD, ITEM } from './builder-start'
+import { HEAD, ITEM } from './builder-start'
+import { Dots } from './dots'
 
 export function DraftRoom({ list }: { list: DraftList }) {
   const full = list.count >= list.most
@@ -48,7 +49,7 @@ export function DraftEntries({ list }: { list: DraftList }) {
                   aria-current={draft.current ? 'true' : undefined}
                   class={`${ITEM} aria-[current=true]:bg-accent`}
                 >
-                  <Dots dots={draft.dots} />
+                  <Dots colors={draft.dots} />
                   <span class="min-w-0 flex-1 truncate font-display font-extrabold" translate="no" safe>
                     {draft.name}
                   </span>

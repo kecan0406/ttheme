@@ -33,6 +33,7 @@ export interface Shelf {
   id: string
   repo: string
   url: string
+  add: string | null
   about: string
   stars: number | null
   pushedAt: string | null
@@ -100,6 +101,7 @@ export function shelvesOf(
       id: BUILTIN,
       repo: REPO,
       url: BUILTIN_URL,
+      add: null,
       about: BUILTIN_ABOUT,
       stars: facts.repo?.stars ?? null,
       pushedAt: facts.repo?.pushedAt ?? null,
@@ -110,6 +112,7 @@ export function shelvesOf(
       id: marketplace.id,
       repo: marketplace.repo,
       url: repoUrl(marketplace.repo),
+      add: marketplace.add,
       about: marketplace.about,
       stars: marketplace.stars,
       pushedAt: marketplace.pushedAt,

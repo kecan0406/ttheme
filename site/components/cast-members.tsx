@@ -1,4 +1,4 @@
-import { Search } from 'lucide'
+import { Plus, Search } from 'lucide'
 import { LinkButton } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { type FoundCast, type FoundMember, nativeLang } from '@/lib/found'
@@ -47,6 +47,10 @@ export function Member({ member, lang }: { member: FoundCast; lang: string | nul
               {member.native}
             </small>
           )}
+          <small class="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <Icon node={Plus} class="size-3" />
+            make a palette
+          </small>
         </span>
       </a>
     </li>

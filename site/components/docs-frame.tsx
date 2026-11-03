@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from '@kitajs/html'
+import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
 import { ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Menu, Search } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button } from '@/components/ui/button'
@@ -6,14 +6,14 @@ import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
+import { RowLink } from '@/components/ui/row'
 import { DOCS, DOCS_PATH, type DocLink, REPOSITORY } from '@/lib/docs'
 import type { Facts } from '@/lib/facts'
 import { BrandIcon, Icon } from '@/lib/icons'
 import type { Heading } from '@/lib/markdown'
+import { GLASS } from './glass'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
-
-const GLASS = 'border border-border bg-glass-panel backdrop-blur-[22px] backdrop-saturate-170'
 
 function termsOf(title: string, label: string, toc: Heading[]): string {
   return [title, label, ...toc.map((heading) => heading.text)].join(' ').toLowerCase()
@@ -61,17 +61,16 @@ function DocsNav({ path }: { path: string }) {
           <p class="mt-3 mb-1 px-2.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase" safe>
             {group.title}
           </p>
-          <ul class="grid gap-0.5">
+          <ul class="grid">
             {group.pages.map((page) => (
               <li data-terms={termsOf(page.title, page.label, page.toc)}>
-                <a
+                <RowLink
                   href={page.path}
                   aria-current={page.path === path ? 'page' : undefined}
-                  class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-soft-foreground transition-colors hover:bg-muted hover:text-foreground aria-[current=page]:bg-accent aria-[current=page]:text-foreground aria-[current=page]:after:ml-auto aria-[current=page]:after:size-1.5 aria-[current=page]:after:flex-none aria-[current=page]:after:rounded-full aria-[current=page]:after:bg-primary aria-[current=page]:after:content-['']"
-                  safe
+                  class="h-auto py-1.5 font-medium"
                 >
-                  {page.label}
-                </a>
+                  {escapeHtml(page.label)}
+                </RowLink>
               </li>
             ))}
           </ul>

@@ -3,6 +3,7 @@ import { TabsCount, TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tab
 import { type BuilderData, editOf, madeMode, nameTrouble } from '@/lib/builder'
 import {
   aboutOf,
+  DOTS,
   dotsOf,
   draftListOf,
   fileOf,
@@ -19,7 +20,7 @@ import { json } from '@/lib/render'
 import type { Shared } from '@/lib/share'
 import type { Pane } from '@/lib/view-types'
 import { grow, SEEDS } from '../../src/core/seeds.ts'
-import { FACE, listOf, misses, slotLabel } from '../../src/core/slots.ts'
+import { listOf, misses, slotLabel } from '../../src/core/slots.ts'
 import { brightLinks } from '../../src/core/tune.ts'
 import { DraftsPanel } from './builder-drafts'
 import { ExportDialog } from './builder-export'
@@ -120,7 +121,7 @@ export function BuilderPage({
           name={edit.name}
           problem={nameTrouble(edit.name)}
           source={data.first.name}
-          dots={dotsOf(list, FACE)}
+          dots={dotsOf(list, DOTS)}
           changed={0}
           gate={gate}
           link={shared?.link ?? null}

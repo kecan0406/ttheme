@@ -1,4 +1,5 @@
 import { FolderOpen, Search, Sprout, Star } from 'lucide'
+import { Dots } from '@/components/dots'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
@@ -14,21 +15,8 @@ import type { StartList } from '@/lib/builder-view'
 import { Icon } from '@/lib/icons'
 import { CODE, SHARE_URL } from '../../src/core/draft.ts'
 
-export function Dots({ dots }: { dots: string[] }) {
-  return (
-    <span aria-hidden="true" class="flex flex-none gap-0.75">
-      {dots.map((hex) => (
-        <i
-          class="size-2 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none"
-          style={`background:${hex}`}
-        />
-      ))}
-    </span>
-  )
-}
-
 export const ITEM =
-  'flex h-8 w-full min-w-0 items-center gap-2.5 rounded-lg px-2 text-left text-sm outline-none hover:bg-accent focus-visible:bg-accent focus-visible:ring-2 focus-visible:ring-ring'
+  'flex h-8 w-full min-w-0 items-center gap-2.5 rounded-lg px-2 text-left text-sm outline-none hover:bg-muted focus-visible:bg-muted focus-visible:inset-ring-2 focus-visible:inset-ring-ring'
 
 export const HEAD =
   'flex items-baseline gap-2 px-2 pt-3 pb-1 text-2xs font-bold tracking-caps text-muted-foreground uppercase'
@@ -65,7 +53,7 @@ export function StartEntries({ list }: { list: StartList }) {
           </p>
           {group.palettes.map((item) => (
             <ComboboxItem id={`builder-start-${item.name}`} value={item.name} text={item.words} class={ITEM}>
-              <Dots dots={item.dots} />
+              <Dots colors={item.dots} />
               <span class="min-w-0 flex-1 truncate" translate="no">
                 <span class="font-display font-extrabold" safe>
                   {item.label}

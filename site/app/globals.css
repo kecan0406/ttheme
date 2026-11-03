@@ -957,9 +957,7 @@ route-progress[data-state='done'],
     background: Highlight !important;
   }
 
-  [data-slot='signature-dots'],
-  [data-slot='work-tile'],
-  [data-slot='work-swatch'] {
+  [data-slot='signature-dots'] {
     forced-color-adjust: none;
   }
 }
@@ -1360,60 +1358,25 @@ route-progress[data-state='done'],
 }
 
 [data-slot='signature-dots'] {
-  flex: none;
-  width: calc(var(--spacing) * 2);
-  height: calc(var(--spacing) * 2);
-  margin-right: calc(var(--spacing) * 6);
-  border-radius: calc(infinity * 1px);
-  background: var(--sg0);
-  box-shadow:
-    calc(var(--spacing) * 3) 0 var(--sg1),
-    calc(var(--spacing) * 6) 0 var(--sg2);
-}
-
-[data-slot='work-tile'] {
   display: grid;
   flex: none;
   place-items: center;
-  width: calc(var(--spacing) * 6);
-  height: calc(var(--spacing) * 4.5);
-  border-radius: var(--radius-sm);
+  width: calc(var(--spacing) * 11);
+  height: calc(var(--spacing) * 5);
+  border-radius: calc(infinity * 1px);
   background: var(--bg);
   box-shadow: 0 0 0 1px var(--border);
 }
 
-[data-slot='work-tile']::before {
+[data-slot='signature-dots']::before {
   content: '';
-  width: var(--spacing);
-  height: var(--spacing);
+  width: calc(var(--spacing) * 2);
+  height: calc(var(--spacing) * 2);
   border-radius: calc(infinity * 1px);
   background: var(--sg1);
   box-shadow:
-    calc(var(--spacing) * -1.5) 0 var(--sg0),
-    calc(var(--spacing) * 1.5) 0 var(--sg2);
-}
-
-[data-slot='work-swatch'] {
-  display: flex;
-  flex: none;
-  align-items: center;
-  width: calc(var(--spacing) * 8);
-  height: calc(var(--spacing) * 8);
-  padding-inline: var(--spacing);
-  border-radius: var(--radius-md);
-  background: var(--bg);
-  box-shadow: 0 0 0 1px var(--border);
-}
-
-[data-slot='work-swatch']::before {
-  content: '';
-  width: calc(var(--spacing) * 1.5);
-  height: calc(var(--spacing) * 4);
-  border-radius: calc(infinity * 1px);
-  background: var(--sg0);
-  box-shadow:
-    calc(var(--spacing) * 2.25) 0 var(--sg1),
-    calc(var(--spacing) * 4.5) 0 var(--sg2);
+    calc(var(--spacing) * -3) 0 var(--sg0),
+    calc(var(--spacing) * 3) 0 var(--sg2);
 }
 
 [data-slot='rail'] {

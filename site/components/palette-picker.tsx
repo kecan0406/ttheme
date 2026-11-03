@@ -12,13 +12,13 @@ import { searchText } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import type { Theme } from '@/lib/themes'
 import { byWork } from '@/lib/works'
-import { Signature } from './palette-parts'
+import { Dots, dotColors } from './dots'
 
 export function PaletteOptions({ themes, current }: { themes: Theme[]; current: string }) {
   return (
     <>
       {byWork(themes).map((shelf) => (
-        <ComboboxGroup label={shelf.work?.name ?? 'originals'} class="grid gap-0.5">
+        <ComboboxGroup label={shelf.work?.name ?? 'originals'} class="grid">
           <p
             aria-hidden="true"
             translate="no"
@@ -33,11 +33,9 @@ export function PaletteOptions({ themes, current }: { themes: Theme[]; current: 
               value={theme.name}
               text={searchText(theme)}
               selected={theme.name === current}
-              class="group/option flex scroll-mt-8 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-[background-color] hover:bg-muted data-selected:bg-accent"
+              class="group/option flex scroll-mt-8 items-center gap-2.5 rounded-lg border-y border-transparent bg-clip-padding px-2.5 py-1.5 text-left text-sm transition-[background-color] hover:bg-muted data-selected:bg-accent"
             >
-              <span aria-hidden="true">
-                <Signature theme={theme} />
-              </span>
+              <Dots colors={dotColors(theme)} />
               <span class="min-w-0 flex-1 truncate font-display font-extrabold" translate="no" safe>
                 {theme.name}
               </span>
@@ -70,11 +68,7 @@ export function PalettePicker() {
               translate="no"
               class="relative min-w-0 flex-1 truncate text-left font-display text-sm font-extrabold after:content-(--wear-name)"
             />
-            <span aria-hidden="true" class="flex flex-none gap-1">
-              <i class="size-3 rounded-full bg-(--sg0) ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none" />
-              <i class="size-3 rounded-full bg-(--sg1) ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none" />
-              <i class="size-3 rounded-full bg-(--sg2) ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none" />
-            </span>
+            <Dots />
             <Icon node={ChevronDown} class="size-3.5 flex-none text-muted-foreground" />
           </button>
         )}

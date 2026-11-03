@@ -9,10 +9,6 @@ import { WorkArt } from './work-art'
 
 export const THUMB_SIZES = '(min-width: 1320px) 240px, (min-width: 640px) 25vw, 50vw'
 
-export function WorkSwatch({ style }: { style: string }) {
-  return <span aria-hidden="true" data-slot="work-swatch" style={style} />
-}
-
 export function LeadStar() {
   return (
     <>

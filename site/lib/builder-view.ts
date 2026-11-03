@@ -19,7 +19,7 @@ import { marksOf } from '../../src/core/mark.ts'
 import { otherOf } from '../../src/core/mode.ts'
 import { PLANE_BOTTOM, PLANE_TOP, shareOf } from '../../src/core/plane.ts'
 import { repoFor } from '../../src/core/scaffold.ts'
-import { SEED_FIELDS, type Seeds } from '../../src/core/seeds.ts'
+import { SEED_FIELDS, SEEDS, type Seeds } from '../../src/core/seeds.ts'
 import { readSet, setNameOf, setText } from '../../src/core/sets.ts'
 import { FACE, lchIn, lchTight, PAIRS, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
 import { ago } from '../../src/core/text.ts'
@@ -328,13 +328,15 @@ export function draftListOf(
       id: draft.id,
       name: draft.name,
       when: ago(draft.at, now),
-      dots: dotsOf(draft.made, FACE),
+      dots: dotsOf(draft.made, DOTS),
       current: draft.id === current,
     })),
   }))
 
   return { count: drafts.length, most: MOST_DRAFTS, query, groups, deleted }
 }
+
+export const DOTS = ['background', ...FACE] as const
 
 export function dotsOf(list: Hex[], slots: readonly string[]): Hex[] {
   return slots.map((slot) => list[SLOT_NAMES.indexOf(slot)] ?? (list[0] as Hex))
@@ -350,6 +352,10 @@ export function seedRowsOf(seeds: Seeds): SeedRow[] {
     value: seeds[field.key],
     shown: seeds[field.key].toFixed(field.digits),
   }))
+}
+
+export function seedsAtDefault(seeds: Seeds): boolean {
+  return SEED_FIELDS.every((field) => seeds[field.key] === SEEDS[field.key])
 }
 
 export function modesOf(edit: Edit): ModesView {
