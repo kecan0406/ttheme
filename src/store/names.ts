@@ -1,4 +1,3 @@
-
 import { httpSource, Names, type Source } from '@kecan0406/aninames'
 import { AGENT } from '../core/booru.ts'
 import { isTag } from '../core/commons.ts'

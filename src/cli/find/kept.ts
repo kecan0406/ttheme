@@ -13,14 +13,7 @@ import {
 import { shelfOf } from '../../core/commons.ts'
 import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
 import { origins } from '../../pictures/backdrop.ts'
-import {
-  fetchBytes,
-  fetchCredits,
-  fetchPost,
-  fetchProfiles,
-  headOf,
-  locate,
-} from '../../pictures/booru-net.ts'
+import { fetchBytes, fetchCredits, fetchPost, fetchProfiles, headOf, locate } from '../../pictures/booru-net.ts'
 import type { Pick } from '../../pictures/fit.ts'
 import { writeAtomic } from '../../store/edits.ts'
 

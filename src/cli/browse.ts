@@ -4,7 +4,16 @@ import { inMode, type Manifest, type PaletteEntry } from '../core/manifest.ts'
 import { type Mode, modeOf } from '../core/mode.ts'
 import { counted } from '../core/text.ts'
 import { BUILTIN, marketplaceId, publisherOf } from '../core/theme.ts'
-import { available, idOf, type Read, readAll, readKept, readMarketplaces, untuned, updatesOf } from '../store/available.ts'
+import {
+  available,
+  idOf,
+  type Read,
+  readAll,
+  readKept,
+  readMarketplaces,
+  untuned,
+  updatesOf,
+} from '../store/available.ts'
 import { type Installed, readInstalled, worn, writeInstalled } from '../store/installed.ts'
 import { readMarketplaceDir, warning } from '../store/local.ts'
 import { readIndex } from '../store/marketplace-index.ts'

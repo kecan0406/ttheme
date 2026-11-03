@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import type { Coloring } from '../core/backdrop-tone.ts'
 import { MAX_PIXELS } from '../core/booru.ts'
 import { decodeImage, decodePng, type Rgba, transparency } from '../core/png.ts'
-import { backgroundsDir, type Paint, type Picture, rackIn, readStore, redrawn, swapped, undrawn } from './backdrop.ts'
+import { backgroundsDir, type Paint, type Picture, rackIn, readStore, redrawn, undrawn } from './backdrop.ts'
 import { canRemoveBackground, removeBackground } from './cutout.ts'
 
 export const TIMEOUT = 90_000

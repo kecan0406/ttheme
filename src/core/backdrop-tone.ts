@@ -75,6 +75,7 @@ function fade(colors: Colors, color: Hex) {
     { name: colors.name, background: colors.background, foreground: colors.foreground, ansi: colors.ansi },
     false,
   )
+
   const under = rgbOf(colors.background)
   const over = rgbOf(color)
   const misses = (o: number) => readabilityFails(sheet, luminanceOf(mixOf(under, over, o)))

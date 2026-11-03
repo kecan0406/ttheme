@@ -5,14 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { inMode, type Manifest, type PaletteEntry } from '../core/manifest.ts'
 import { encodeRgba, type Rgba } from '../core/png.ts'
-import {
-  backgroundsDir,
-  colorsOf,
-  installBackdrop,
-  type Picture,
-  paintFor,
-  rackOf,
-} from '../pictures/backdrop.ts'
+import { backgroundsDir, colorsOf, installBackdrop, type Picture, paintFor, rackOf } from '../pictures/backdrop.ts'
 import { readAvailable, writeBundled } from '../store/available.ts'
 import { readInstalled, writeInstalled } from '../store/installed.ts'
 import { moveColors } from './init.ts'

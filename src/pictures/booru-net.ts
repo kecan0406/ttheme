@@ -1,4 +1,3 @@
-
 import { setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { profilesOf } from '../core/artists.ts'

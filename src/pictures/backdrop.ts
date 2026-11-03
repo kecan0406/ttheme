@@ -9,7 +9,6 @@ import {
   readSync,
   renameSync,
   rmSync,
-  statSync,
 } from 'node:fs'
 import { basename, join } from 'node:path'
 import { artworkOf, creditLine, linksOf, pagesOf } from '../core/artists.ts'
@@ -885,7 +884,9 @@ function thumbOfDrawing(drawing: Drawing, tone: Hex): Buffer {
 
   const { width, height } = shrunk(drawing.fill.width, drawing.fill.height)
 
-  return encodeRgba(resample(drawing.fill, { x: 0, y: 0, w: drawing.fill.width, h: drawing.fill.height }, width, height))
+  return encodeRgba(
+    resample(drawing.fill, { x: 0, y: 0, w: drawing.fill.width, h: drawing.fill.height }, width, height),
+  )
 }
 
 function thumbOf(fill: Uint8Array): Buffer {
@@ -922,7 +923,9 @@ function laid(
   return {
     stem,
     fill: named,
-    files: ink ? [...files, ...files.map(([file], at): [string, Uint8Array] => [inkFile(file), ink[at] as Uint8Array])] : files,
+    files: ink
+      ? [...files, ...files.map(([file], at): [string, Uint8Array] => [inkFile(file), ink[at] as Uint8Array])]
+      : files,
   }
 }
 
@@ -932,7 +935,11 @@ function made(name: string, key: string, drawing: Drawing, tone: Hex): Made {
 
   const ink: [Uint8Array, Uint8Array, Uint8Array] | undefined =
     drawing.coloring === 'tone'
-      ? [encodeMask(drawing.other.figure, tone), encodeMask(drawing.other.fill, tone), thumbOfMask(drawing.other.fill, tone)]
+      ? [
+          encodeMask(drawing.other.figure, tone),
+          encodeMask(drawing.other.fill, tone),
+          thumbOfMask(drawing.other.fill, tone),
+        ]
       : undefined
 
   return laid(
@@ -1260,6 +1267,7 @@ export function decodable(configHome: string, picture: Picture): boolean {
 
 function flipped(dir: string, name: string, picture: Picture, hue: Hue): Made | undefined {
   const names = [`${picture.stem}.png`, picture.fill, thumbFile(picture.stem)]
+
   const read = (file: string) => {
     try {
       return new Uint8Array(readFileSync(join(dir, file)))
@@ -1269,6 +1277,7 @@ function flipped(dir: string, name: string, picture: Picture, hue: Hue): Made | 
   }
 
   const shown = names.map(read)
+
   const inked = names.map((file) => {
     const bytes = read(inkFile(file))
 
@@ -1412,7 +1421,20 @@ export function swapped(
   const drawn = flipped(dir, name, picture, paint.hue)
 
   return drawn
-    ? adopted(dir, name, picture, drawn, paint, 'tone', undefined, windowOfPicture(dir, picture), picture.blur ?? 0, false, aligns, home)
+    ? adopted(
+        dir,
+        name,
+        picture,
+        drawn,
+        paint,
+        'tone',
+        undefined,
+        windowOfPicture(dir, picture),
+        picture.blur ?? 0,
+        false,
+        aligns,
+        home,
+      )
     : null
 }
 

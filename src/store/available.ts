@@ -356,6 +356,7 @@ export function viewOf(
   const plain = untuned(configHome, manifest, warn)
   const mode = modeFor(configHome)
   const wanted = names && new Set(names)
+
   const worn = (wanted ? plain.palettes.filter((entry) => wanted.has(entry.name)) : plain.palettes).map((entry) =>
     inMode(entry, mode),
   )

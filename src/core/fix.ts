@@ -103,9 +103,7 @@ export function edgeChroma(l: number, h: number, c: number): number {
 }
 
 function gamutOf(l: number, c: number, h: number): number {
-  const n = srgbOf(l, edgeChroma(l, h, c), h)
-
-  return n < 0 ? 0 : n
+  return Math.max(0, srgbOf(l, edgeChroma(l, h, c), h))
 }
 
 export function inGamut(l: number, c: number, h: number): Hex {

@@ -1,4 +1,3 @@
-
 import { isTag } from '../core/commons.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { containsText, inert } from '../core/text.ts'
