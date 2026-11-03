@@ -574,6 +574,7 @@ __tt_pv_bg_findable() {
 }
 
 __tt_pv_bg_find() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local name=$1 err var lab REPLY
   local -i rc n=${#TTHEME_SCENES}
   local -x TTHEME_SCENE="" TTHEME_BG_MARGIN=""

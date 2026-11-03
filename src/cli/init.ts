@@ -34,7 +34,7 @@ import {
   refreshCommons,
   writeBundled,
 } from '../store/available.ts'
-import { editUserFile, writeAtomic } from '../store/edits.ts'
+import { compileZsh, editUserFile, writeAtomic } from '../store/edits.ts'
 import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, startupPalette, worn, writeInstalled } from '../store/installed.ts'
 import { configHome as configDir } from '../store/paths.ts'
@@ -314,6 +314,10 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     }
   }
 
+  compileZsh(
+    plan.copies.flatMap((c) => (c.to.endsWith('.zsh') && !c.executable ? [c.to] : [])),
+    host,
+  )
   writeAtomic(plan.settings.file, plan.settings.content)
 
   for (const f of plan.forget) {

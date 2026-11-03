@@ -16,6 +16,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
+import type { Host } from './host.ts'
 
 export function backupPath(path: string): string {
   return `${path}.ttheme.bak`
@@ -60,6 +61,18 @@ export function writeAtomic(path: string, content: string | Uint8Array, aside?: 
 
   renameSync(tmp, real)
   traced(tmp, real)
+}
+
+const COMPILE =
+  'zmodload -F zsh/files b:zf_mv b:zf_rm || exit 1; for f; do zcompile -UR -- $f.$$.zwc $f && zf_mv -f -- $f.$$.zwc $f.zwc || zf_rm -f -- $f.$$.zwc; done'
+
+export function compileZsh(files: readonly string[], host: Host): void {
+  if (files.length === 0) {
+    return
+  }
+
+  host.run('zsh', ['-fc', COMPILE, 'zsh', ...files])
+  traced(...files.map((file) => `${file}.zwc`))
 }
 
 export function rewrite(from: string, to: string, content: Uint8Array): void {

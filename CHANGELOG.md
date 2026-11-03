@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- A new tab starts a little sooner: it reads only what a tab needs, and the rest waits until a `ttheme` command or a completion asks for it.
+- The first tab after a change to your palettes no longer pauses to compile ttheme's shell files: `init`, `ttheme update` and every change compile them as they write them.
+
 ## 1.2.89
 
 - ttheme keeps nothing in `~/.cache/ttheme` any more: no drawings of your pictures, no copies of booru posts, of the marketplace list or of name lookups. You can delete the folder, which can hold hundreds of megabytes.

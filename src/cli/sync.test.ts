@@ -163,19 +163,21 @@ test('sync names every marketplace the install holds in the zsh table, by the na
   assert.match(table, /^typeset -ga TTHEME_MARKETPLACES=\('ttheme' 'kai@dust' 'ann\/ttheme-pastel'\)$/m)
 })
 
-test('sync leaves palettes.zsh and its compiled copy alone when nothing it holds changed', () => {
+test('sync leaves palettes.zsh and its compiled copy alone when nothing it holds changed, and compiles the one it writes', () => {
   const home = fixture()
   const state: Installed = { terminals: ['ghostty'], palettes: ['ttheme/orla', 'ttheme/juno'] }
   sync(home, manifest, state)
   const table = join(home, 'ttheme', 'palettes.zsh')
-  writeFileSync(`${table}.zwc`, '')
+  const compiled = statSync(`${table}.zwc`)
+  assert.ok(compiled.size > 0)
   utimesSync(table, new Date(0), new Date(0))
   sync(home, manifest, state)
   assert.equal(statSync(table).mtimeMs, 0)
-  assert.ok(existsSync(`${table}.zwc`))
+  assert.equal(statSync(`${table}.zwc`).ino, compiled.ino)
   sync(home, manifest, { ...state, startup: 'ttheme/juno' })
   assert.ok(statSync(table).mtimeMs > 0)
-  assert.ok(!existsSync(`${table}.zwc`))
+  assert.notEqual(statSync(`${table}.zwc`).ino, compiled.ino)
+  assert.ok(statSync(`${table}.zwc`).mtimeMs >= statSync(table).mtimeMs)
 })
 
 test('sync moves palettes.zsh whenever it touches Windows Terminal settings, so open tabs repaint after the reset', () => {
@@ -399,6 +401,7 @@ test('sync drops Warp themes into its themes folder and wires nothing else', () 
     join(warpThemes(home), plain),
     join(warpThemes(home), light),
     join(configHome, 'ttheme', 'palettes.zsh'),
+    join(configHome, 'ttheme', 'start.zsh'),
   ])
 })
 

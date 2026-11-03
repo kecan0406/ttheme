@@ -25,7 +25,12 @@ __tt_appearance_of() {
   integer heard=0 was=0 now=0
   [[ -n $name ]] && (( ! TTHEME_ITERM_DYED )) || return 1
   [[ $name == default ]] && name=$TTHEME_STARTUP
-  worn=${TTHEME_PALETTE[$name]%% *} other=${TTHEME_PALETTE_OTHER[$name]%% *}
+  worn=${TTHEME_PALETTE[$name]%% *} other=$TTHEME_STARTUP_OTHER
+  if (( TTHEME_PALETTES_IN )) || [[ $name != "$TTHEME_STARTUP" ]]; then
+    (( TTHEME_PALETTES_IN )) || __tt_palettes
+    other=${TTHEME_PALETTE_OTHER[$name]}
+  fi
+  other=${other%% *}
   [[ $worn == '#'* && $other == '#'* ]] || return 1
   [[ $1 == dark ]] && heard=1
   __tt_iterm_dark $worn && was=1

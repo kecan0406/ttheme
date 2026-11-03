@@ -180,7 +180,7 @@ __tt_ghostty_tick() {
   local -F now=$EPOCHREALTIME
   integer seen
   [[ -n $TTHEME_GHOSTTY_CODE ]] && zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/adapters/ghostty.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_GHOSTTY_CODE" ]] && return 1
-  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_PALETTES_AT" ]] && __tt_palettes_load && TTHEME_GHOSTTY_WANT=$now
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/start.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_PALETTES_AT" ]] && __tt_palettes_load && TTHEME_GHOSTTY_WANT=$now
   at=("")
   zstat -F %s.%N -A at +mtime -- $TTHEME_PINS_FILE 2>/dev/null
   [[ $at[1] != "$TTHEME_PINS_AT" ]] && TTHEME_PINS_AT=$at[1] TTHEME_GHOSTTY_WANT=$now
@@ -268,7 +268,7 @@ __tt_ghostty_follower() {
   TTHEME_GHOSTTY_PID=$REPLY
   __tt_ghostty_check || return 0
   __tt_ghostty_watch
-  while [[ -e $TTHEME_HOME/palettes.zsh ]]; do
+  while [[ -e $TTHEME_HOME/start.zsh ]]; do
     __tt_ghostty_tick || break
     (( ++TTHEME_GHOSTTY_TICK % 50 )) || __tt_ghostty_live || break
     if (( TTHEME_GHOSTTY_WFD )); then

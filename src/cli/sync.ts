@@ -9,7 +9,7 @@ import { backgroundsDir, freshenConfs, paintFor, retint } from '../pictures/back
 import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
 import { forgetAppearance, knowAppearance } from '../store/appearance.ts'
 import { available, nameOf, nearest, type View, viewOf, writeKept } from '../store/available.ts'
-import { editUserFile, listing, writeAtomic } from '../store/edits.ts'
+import { compileZsh, editUserFile, listing, writeAtomic } from '../store/edits.ts'
 import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, worn, writeInstalled } from '../store/installed.ts'
 import { marketplacesOf } from '../store/sources.ts'
@@ -19,7 +19,7 @@ import { readText, themeFiles, tilde } from '../terminals/common.ts'
 import { wirings } from '../terminals/index.ts'
 import { settingsFor } from '../terminals/terminal.ts'
 import type { Ctx, Moment, Now, Out, Pointed } from '../terminals/types.ts'
-import { palettesZsh } from './emit-shell.ts'
+import { shellTables } from './emit-shell.ts'
 
 export function resolve(manifest: Manifest, names: string[]): PaletteEntry[] {
   const known = new Map(manifest.palettes.map((p) => [p.name, p]))
@@ -178,15 +178,15 @@ export function sync(
     wiring.sync(ctx, out)
   }
 
-  out.written.push(writeTable(ctx, view.untuned.works, host, out.repainted))
+  out.written.push(...writeTables(ctx, view.untuned.works, host, out.repainted))
 
   return out.written
 }
 
-function writeTable(ctx: Ctx, works: readonly Work[], host: Host, repainted: boolean): string {
-  const table = join(ctx.configHome, 'ttheme', 'palettes.zsh')
+function writeTables(ctx: Ctx, works: readonly Work[], host: Host, repainted: boolean): string[] {
+  const dir = join(ctx.configHome, 'ttheme')
 
-  const content = palettesZsh(ctx.entries, works, {
+  const tables = shellTables(ctx.entries, works, {
     startup: ctx.startup,
     terminals: ctx.state.terminals,
     layer: layer(ctx, host),
@@ -199,12 +199,27 @@ function writeTable(ctx: Ctx, works: readonly Work[], host: Host, repainted: boo
     },
   })
 
-  if (repainted || readText(table) !== content) {
-    writeAtomic(table, content)
-    rmSync(`${table}.zwc`, { force: true })
+  const files = [
+    { file: join(dir, 'palettes.zsh'), content: tables.palettes },
+    { file: join(dir, 'start.zsh'), content: tables.start },
+  ]
+
+  if (repainted || files.some(({ file, content }) => readText(file) !== content)) {
+    for (const { file } of files) {
+      rmSync(`${file}.zwc`, { force: true })
+    }
+
+    for (const { file, content } of files) {
+      writeAtomic(file, content)
+    }
+
+    compileZsh(
+      files.map(({ file }) => file),
+      host,
+    )
   }
 
-  return table
+  return files.map(({ file }) => file)
 }
 
 export function refreshPictures(configHome: string, home = homedir(), host: Host = systemHost(), settled?: View): void {
@@ -223,7 +238,7 @@ export function refreshPictures(configHome: string, home = homedir(), host: Host
     wiring.pictures?.(ctx, out)
   }
 
-  writeTable(ctx, view.works, host, false)
+  writeTables(ctx, view.works, host, false)
 }
 
 export function aligns(terminals: readonly Wired[]): boolean {

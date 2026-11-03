@@ -1,6 +1,7 @@
 __tt_pv_norm() { REPLY=${(L)1//[^[:alnum:]]/} }
 
 __tt_pv_seek() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local t s w part key REPLY
   for t in ${(k)TTHEME_PALETTE}; do
     key="" s=${TTHEME_SUBJECT[$t]}
@@ -26,6 +27,7 @@ __tt_pv_alias() {
 }
 
 __tt_pv_rows() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   rtype=() rval=() rcnt=() rtop=()
   local g t w ruled="" nflt="" REPLY
   local -a ts inside
@@ -88,6 +90,7 @@ __tt_pv_first() {
 }
 
 __tt_pv_home() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local w=${TTHEME_SUBJECT[$1]%%/*}
   case $TTHEME_GROUP in
     marketplace) REPLY=${1%%/*}${w:+/$w} ;;
@@ -250,6 +253,7 @@ __tt_pv_fit() {
 }
 
 __tt_pv_row() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local t=${rval[$1]} b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] r=$TTHEME_SGR[/match] z=$TTHEME_SGR[reset] on="" gut="  " base="" lead=$TTHEME_SGR[dim] mark=" " name arrow=$TTHEME_MARKS[closed] hl by="" extra part ind
   local -i w
   (( color )) || b= d= r= z= lead=
@@ -345,6 +349,7 @@ __tt_pv_bg_pickkey() {
 }
 
 __tt_pv_bg_credit() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local by=${bgby[$tpick]} ref=${bgfrom[$tpick]} url=${bgurl[$tpick]} page lab pu pmark="" smark="" sgr="" acc=""
   local -i room=$1
   local -a items
@@ -428,6 +433,7 @@ __tt_pv_bg_profiles() {
 }
 
 __tt_pv_bar() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] on=$pl line=" " title hint mk up mo
   local -a ink
   local -i i at=${TTHEME_HUB_TABS[(Ie)preview]} len=${#TTHEME_HUB_TITLES}
@@ -488,6 +494,7 @@ __tt_pv_head() {
 }
 
 __tt_pv_standing() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local -a reply
   local standing=unknown latest="" was=$vline
   integer now
@@ -515,6 +522,7 @@ __tt_pv_standing() {
 }
 
 __tt_pv_foot() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   setopt localoptions extendedglob
   local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] al=$TTHEME_SGR[alert] on=$pl badge="" pre="" lead="" note="" right="" rk="" ver="" text line plain hex tb=EDIT ke ku REPLY
   local -a kk=() kl=() seg=()
@@ -743,6 +751,7 @@ __tt_pv_wrap() {
 }
 
 __tt_pv_help() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] blank where=list
   (( te )) && where=panel
   (( gmenu )) && where=group
@@ -812,6 +821,7 @@ __tt_pv_help() {
 }
 
 __tt_pv_tabs() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local -a names=($TTHEME_SCENES)
   [[ $mode == pin ]] && names=(Pins $names)
   local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] b=$TTHEME_SGR[bold]
@@ -870,6 +880,7 @@ __tt_pv_pins() {
 }
 
 __tt_pv_specimen() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local -a sp=(${=applied}) lines parts
   (( ${#sp} >= 20 )) || return 0
   local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] cell hex fore line text piece role built="" key="$applied|$painted|$scene|$sw|$sc|$ph"
@@ -1396,6 +1407,7 @@ __tt_pv_reach() {
 }
 
 __tt_pv_draw() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local out line cnt ex ag="" ac="" gc="" pl="" hm="" sb="" dd="" zz="" state=on src="" wk="" nflt="" rsub="" REPLY
   local -i lw sw split sc se=$(( pw - 1 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
   local -a held
@@ -1618,6 +1630,7 @@ __tt_pv_markets() {
 }
 
 __tt_pv_tops() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local k s w p
   local -a by=()
   tops=() tmembers=()
@@ -1667,6 +1680,7 @@ __tt_pv_canpick() {
 }
 
 __tt_pv_strip() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local hex cell=""
   local -a sw=(${=TTHEME_SWATCH[$1]})
   local -i j
@@ -1690,6 +1704,7 @@ __tt_pv_init() {
 }
 
 __tt_pv_roll() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   gseed=$RANDOM exnext=$(( SECONDS + 3 ))
   (( ${#TTHEME_ORDER} )) || return 0
   local -a pool=($TTHEME_WORKS)
@@ -1968,6 +1983,7 @@ __tt_pv_press() {
 }
 
 __tt_pv_release() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   case $4 in
     key)
       __tt_pv_word $5 || return 0
@@ -2108,6 +2124,7 @@ __tt_pv_back() {
 }
 
 __tt_pv_screen() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local err REPLY q=$2
   local -i at=${TTHEME_HUB_TABS[(Ie)preview]} n=${#TTHEME_HUB_TABS} rc
   local -i to=$(( (at - 1 + $1 + n) % n + 1 ))
@@ -2135,6 +2152,7 @@ __tt_pv_screen() {
 }
 
 __tt_pv_to_search() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local -i at=${TTHEME_HUB_TABS[(Ie)preview]} to=${TTHEME_HUB_TABS[(Ie)browse]}
   (( hub && to && ! ${#rval} )) && [[ -n $flt ]] || return 0
   __tt_pv_screen $(( to - at )) "$flt"
@@ -2336,6 +2354,7 @@ __tt_te_resetting() {
 }
 
 __tt_te_palette() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local -i armed=$tearm
   tearm=0
   (( ${TTHEME_TUNED[(Ie)$tename]} )) || tbtn=0
@@ -2543,6 +2562,7 @@ __tt_pv_te_button() {
 }
 
 __tt_pv_te_editrow() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] b=$TTHEME_SGR[bold] note="changes its colors full screen"
   local -i y=$1 col=$2 end=$3 x=$(( $2 + 2 ))
   local reset="Reset palette"
@@ -2852,6 +2872,7 @@ __tt_pv_handle() {
 
 __tt_preview() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
   [[ $functions[TRAPURG] == *__tt_woken* ]] && trap '' URG
   local mode=$1 pdir=${2:-$PWD} hubwas=""

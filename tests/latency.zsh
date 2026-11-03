@@ -6,7 +6,7 @@ zmodload -F zsh/stat b:zstat
 
 typeset -g ROOT=${${(%):-%x}:A:h:h}
 typeset -g WORK=$(mktemp -d)
-typeset -g BUF="" FD="" MAIN="" TERMINAL=""
+typeset -g BUF="" FD="" MAIN="" TERMINAL="" BG=""
 typeset -gi MARK=0
 typeset -ga EXTRA=()
 typeset -gA ASKED=() SHOWN=()
@@ -39,15 +39,29 @@ home() {
   print -rl -- 'autoload -Uz compinit && compinit -u -d $HOME/.zcompdump' "PROMPT='bench> '" > $h/.zshrc
   [[ -n $tab ]] || return 0
   mkdir -p $h/.config/ttheme
-  cp -R $src/ttheme.zsh $src/preview.zsh(N) $src/adapters $ROOT/dist/shell/palettes.zsh $h/.config/ttheme/
-  print -rl -- 'typeset -ga TTHEME_TERMINALS=(konsole warp)' "typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'" 'typeset -g TTHEME_STARTUP=ttheme/izumi-konata' >> $h/.config/ttheme/palettes.zsh
+  cp -R $src/ttheme.zsh $src/preview.zsh(N) $src/adapters $ROOT/dist/shell/palettes.zsh $ROOT/dist/shell/start.zsh $h/.config/ttheme/
+  setting $h 'typeset -ga TTHEME_TERMINALS=(konsole warp)' "typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'" 'typeset -g TTHEME_STARTUP=ttheme/izumi-konata'
   mkdir -p $h/.warp/themes $h/.config/warp-terminal $h/.local/share/warp-terminal/themes
   print -rl -- '[appearance.themes]' 'theme = "dark"' | tee $h/.warp/settings.toml > $h/.config/warp-terminal/settings.toml
-  ( source $h/.config/ttheme/palettes.zsh; for n in $TTHEME_ORDER; do : > $h/.warp/themes/ttheme-${${n/@/--}/\//--}.yaml; done )
+  ( source $h/.config/ttheme/palettes.zsh
+    for n in $TTHEME_ORDER; do : > $h/.warp/themes/ttheme-${${n/@/--}/\//--}.yaml; done
+    setting $h "typeset -g TTHEME_STARTUP_OTHER=\"$TTHEME_PALETTE_OTHER[$TTHEME_STARTUP]\"" )
   cp $h/.warp/themes/*.yaml $h/.local/share/warp-terminal/themes/
   touch -t 202001010000 $h/.warp/themes/*.yaml $h/.local/share/warp-terminal/themes/*.yaml
   print -r -- ": \${TTHEME_TAB_PALETTE:=$tab}" > $h/.config/ttheme/config.zsh
   print -r -- 'source $XDG_CONFIG_HOME/ttheme/ttheme.zsh' >> $h/.zshrc
+}
+
+compiled() {
+  local f
+  for f in $1/*.zsh(N) $1/adapters/*.zsh(N); do
+    [[ $f == */config.zsh ]] || zcompile -UR -- $f.zwc $f
+  done
+}
+
+setting() {
+  local f
+  for f in $1/.config/ttheme/{palettes,start}.zsh; do print -rl -- ${@:2} >> $f; done
 }
 
 answer() {
@@ -55,7 +69,10 @@ answer() {
   for p in "${(@ps:\e:)1}"; do
     case $p in
       \](<->|4\;<->)\;\?*)
-        c=${${SHOWN[${${p#\]}%%\;\?*}]:-#1e1e2e}#\#}
+        k=${${p#\]}%%\;\?*}
+        c=${SHOWN[$k]}
+        [[ -z $c && $k == 11 ]] && c=$BG
+        c=${${c:-#1e1e2e}#\#}
         out+=$'\e'"${p%%\?*}rgb:${c[1,2]}${c[1,2]}/${c[3,4]}${c[3,4]}/${c[5,6]}${c[5,6]}"$'\e\\'
         ASKED[$2]=1 ;;
       \](<->|4\;<->)\;\#[[:xdigit:]](#c6)*) SHOWN[${${p#\]}%%\;\#*}]=\#${(L)${p##*\#}[1,6]} ;;
@@ -475,11 +492,11 @@ check() {
   home off off
   home seq seq
   home seq-off seq
-  print -r -- 'typeset -g TTHEME_STARTUP=' >> $WORK/seq-off/.config/ttheme/palettes.zsh
+  setting $WORK/seq-off 'typeset -g TTHEME_STARTUP='
   home terminal-app off
   home iterm2 off
   home iterm2-switch off
-  print -rl -- 'typeset -g TTHEME_ITERM_SWITCH=1' "typeset -g TTHEME_ITERM_PROFILES=$WORK/iterm2-switch/profiles.json" >> $WORK/iterm2-switch/.config/ttheme/palettes.zsh
+  setting $WORK/iterm2-switch 'typeset -g TTHEME_ITERM_SWITCH=1' "typeset -g TTHEME_ITERM_PROFILES=$WORK/iterm2-switch/profiles.json"
   print -r -- '{}' > $WORK/iterm2-switch/profiles.json
   touch -t 202001010000 $WORK/iterm2-switch/profiles.json
   for name in base off seq seq-off terminal-app; do
@@ -534,7 +551,9 @@ bench() {
   home base
   for name in ${names:#base}; do
     home $name ${${name#ref-}/terminal-app/off} ${${(M)name:#ref-*}:+$WORK/ref/shell}
+    compiled $WORK/$name/.config/ttheme
   done
+  BG=$(source $WORK/off/.config/ttheme/start.zsh && print -r -- ${TTHEME_PALETTE[$TTHEME_STARTUP]%% *})
   for name in $names; do measure $name "" 1 > /dev/null; done
   for i in {1..$runs}; do
     order=(${(Oa)names})
@@ -717,7 +736,7 @@ forks() {
     got[auto.$term]=-
   done
   home fork-auto off
-  print -r -- 'typeset -g TTHEME_MODE_AUTO=1' >> $WORK/fork-auto/.config/ttheme/palettes.zsh
+  setting $WORK/fork-auto 'typeset -g TTHEME_MODE_AUTO=1'
   appeared fork-auto || return 1
   got[auto.ghostty]=$(( REPLY - base[2] ))
   if (( $#upd )); then

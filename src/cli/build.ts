@@ -9,7 +9,7 @@ import { ROOT } from '../root.ts'
 import type { Emitter } from '../terminals/emit/types.ts'
 import { WIRINGS } from '../terminals/index.ts'
 import { bundleJson, bundleOf } from './emit-manifest.ts'
-import { palettesZsh } from './emit-shell.ts'
+import { shellTables } from './emit-shell.ts'
 
 export const BUILTIN_DIR = join(ROOT, 'builtin')
 export const AUTHORITY_PATH = join(ROOT, 'node_modules', '@kecan0406', 'aninames', 'lib', 'authority.json')
@@ -132,10 +132,12 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
   }
 
   const bundle = bundleOf(themes)
+  const tables = shellTables(bundle.palettes, commons.works)
 
   const shared = [
     { path: 'builtin.json', content: bundleJson(bundle) },
-    { path: 'shell/palettes.zsh', content: palettesZsh(bundle.palettes, commons.works) },
+    { path: 'shell/palettes.zsh', content: tables.palettes },
+    { path: 'shell/start.zsh', content: tables.start },
   ]
 
   for (const out of shared) {

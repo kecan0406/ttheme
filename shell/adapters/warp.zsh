@@ -369,7 +369,7 @@ __tt_warp_tick() {
       TTHEME_WARP_UP=0
     fi
   fi
-  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_PALETTES_AT" ]] && __tt_palettes_load
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/start.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_PALETTES_AT" ]] && __tt_palettes_load
   (( came )) && __tt_warp_poke
   [[ -n $TTHEME_WARP_ID && -r $TTHEME_WARP_TABS/$TTHEME_WARP_ID ]] && rec=(${=${"$(<$TTHEME_WARP_TABS/$TTHEME_WARP_ID)"}})
   line="$TTHEME_WARP_ID ${rec[1,4]}"
@@ -407,7 +407,7 @@ __tt_warp_follower() {
   trap '' HUP PIPE
   __tt_warp_code
   TTHEME_WARP_CODE=$REPLY TTHEME_WARP_LIVED=$EPOCHREALTIME
-  while [[ -e $TTHEME_HOME/palettes.zsh && -e $TTHEME_WARP_DB ]]; do
+  while [[ -e $TTHEME_HOME/start.zsh && -e $TTHEME_WARP_DB ]]; do
     __tt_warp_tick
     if (( EPOCHREALTIME - TTHEME_WARP_LIVED >= 5 )); then
       TTHEME_WARP_LIVED=$EPOCHREALTIME

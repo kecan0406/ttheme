@@ -4,7 +4,7 @@ export HOME=$XDG_CONFIG_HOME/home TTHEME_KEYS=text
 mkdir -p $HOME
 unset TERM_PROGRAM GHOSTTY_RESOURCES_DIR KITTY_WINDOW_ID WEZTERM_PANE ALACRITTY_WINDOW_ID KONSOLE_VERSION ITERM_SESSION_ID WT_SESSION WARP_TERMINAL_SESSION_UUID XDG_STATE_HOME
 mkdir -p $XDG_CONFIG_HOME/ttheme
-cp -R shell/ttheme.zsh shell/preview.zsh shell/adapters dist/shell/palettes.zsh $XDG_CONFIG_HOME/ttheme/
+cp -R shell/ttheme.zsh shell/preview.zsh shell/adapters dist/shell/palettes.zsh dist/shell/start.zsh $XDG_CONFIG_HOME/ttheme/
 source $XDG_CONFIG_HOME/ttheme/ttheme.zsh
 b64d() {
   local in=$(cat)
@@ -13,6 +13,27 @@ b64d() {
 }
 (( ${#TTHEME_PALETTE} > 0 )) || { print -u2 "no palettes loaded"; exit 1 }
 (( ${#TTHEME_ORDER} == ${#TTHEME_PALETTE} )) || { print -u2 "order/palette mismatch"; exit 1 }
+(( ! TTHEME_PALETTES_IN && ! ${+TTHEME_SWATCH} )) || { print -u2 "a new shell read palettes.zsh, where start.zsh holds what it needs"; exit 1 }
+() {
+  local line word f
+  local -a full=() start=() cold=() bad=()
+  for line in ${(f)"$(<$XDG_CONFIG_HOME/ttheme/palettes.zsh)"}; do
+    [[ $line == 'typeset -g'* ]] || continue
+    for word in ${(s: :)line}; do [[ $word == TTHEME_[A-Z0-9_]*=* ]] && full+=(${word%%=*}); done
+  done
+  for line in ${(f)"$(<$XDG_CONFIG_HOME/ttheme/start.zsh)"}; do
+    [[ $line == 'typeset -g'* ]] || continue
+    for word in ${(s: :)line}; do [[ $word == TTHEME_[A-Z0-9_]*=* ]] && start+=(${word%%=*}); done
+  done
+  cold=(${full:|start})
+  (( ${#cold} > 10 )) || { print -u2 "start.zsh holds nearly every table palettes.zsh does: ${(j: :)cold}"; exit 1 }
+  for f in ${(k)functions[(I)(__tt_*|ttheme|TRAP*)]}; do
+    [[ $f == __tt_palettes_load ]] && continue
+    [[ $functions[$f] =~ "(^|[^A-Z0-9_])(${(j:|:)cold})([^A-Z0-9_]|\$)|TTHEME_SCENE_" ]] || continue
+    [[ $functions[$f] == *__tt_palettes* ]] || bad+=($f)
+  done
+  (( ! ${#bad} )) || { print -u2 "a function reads a table only palettes.zsh holds without loading it first — start it with (( TTHEME_PALETTES_IN )) || __tt_palettes: ${(j:, :)bad}"; exit 1 }
+}
 (( $+functions[__tt_bg_hide] && $+functions[__tt_pv_bg_reset] )) || { print -u2 "preview's Edit palette calls a picture hook a terminal without pictures lacks"; exit 1 }
 __tt_menu > /dev/null || exit 1
 ttheme help > /dev/null || { print -u2 "ttheme help broke"; exit 1 }
@@ -22,10 +43,11 @@ REPLY=; __tt_resolve ttheme/akemi-homura && [[ $REPLY == ttheme/akemi-homura ]] 
 __tt_resolve ho 2>/dev/null && { print -u2 "the start of a palette's name resolved to it: $REPLY"; exit 1 }
 (
   TTHEME_PALETTE[kai@arcade/akemi-homura]=$TTHEME_PALETTE[ttheme/kita-ikuyo] TTHEME_SHORT[akemi-homura]="ttheme/akemi-homura kai@arcade/akemi-homura"
+  TTHEME_LABEL[ttheme/akemi-homura]=ttheme/akemi-homura TTHEME_LABEL[kai@arcade/akemi-homura]=kai@arcade/akemi-homura
   out=$(__tt_resolve akemi-homura 2>&1) && { print -u2 "a name two palettes share resolved to one of them"; exit 1 }
   [[ $out == "ttheme: akemi-homura is ttheme/akemi-homura, kai@arcade/akemi-homura — name the one you mean" ]] || { print -u2 "a name two palettes share did not name both: $out"; exit 1 }
   REPLY=; __tt_resolve kai@arcade/akemi-homura && [[ $REPLY == kai@arcade/akemi-homura ]] || { print -u2 "a palette typed in full was not found beside another of its name: $REPLY"; exit 1 }
-  TTHEME_PALETTE[user4127@arcade/lumi]=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_SHORT[lumi]=user4127@arcade/lumi
+  TTHEME_PALETTE[user4127@arcade/lumi]=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_SHORT[lumi]=user4127@arcade/lumi TTHEME_LABEL[user4127@arcade/lumi]=lumi
   for name want in ttheme/kita-ikuyo kita-ikuyo user4127@arcade/lumi lumi ttheme/akemi-homura ttheme/akemi-homura kai@arcade/akemi-homura kai@arcade/akemi-homura nosuchpalette nosuchpalette; do
     REPLY=; __tt_label $name
     [[ $REPLY == "$want" ]] || { print -u2 "$name was shown as $REPLY, not $want"; exit 1 }
@@ -382,10 +404,6 @@ plain=${out//$'\e[K'/}
     flt=エヴァ
     __tt_pv_rows
     [[ ${(j: :)rval} == "evangelion ttheme/ayanami-rei kai@arcade/rei ttheme/souryuu-asuka-langley" ]] || { print -u2 "preview's search did not match a work by its title: $rval"; exit 1 }
-    REPLY=; __tt_shelf kai@arcade/lumi
-    [[ $REPLY == "kai@arcade / Glass Arcade" ]] || { print -u2 "a palette's shelf was not its publisher and its work: $REPLY"; exit 1 }
-    REPLY=; __tt_shelf alice@pastel/mint
-    [[ $REPLY == alice@pastel ]] || { print -u2 "an original's shelf was not its publisher alone: $REPLY"; exit 1 }
     TTHEME_SORT=abc TTHEME_GROUP=marketplace flt= cur=0 exp=() rows=()
     __tt_pv_tops
     [[ $tops == "ttheme alice@pastel kai@arcade" ]] ||
@@ -1004,10 +1022,10 @@ TTHEME_STARTUP=
   [[ $out == *"ayanami-rei pinned to this directory and below"*"|$HOME/code/acme/docs/**|${TTHEME_PALETTE[ttheme/ayanami-rei]%% *}" ]] ||
     { print -u2 "a tab under its own pin took a pin above it: $out"; exit 1 }
 ) || exit 1
-print -r -- 'typeset -g TTHEME_STARTUP=ttheme/ayanami-rei' >> $TTHEME_HOME/palettes.zsh
-touch -t 203001010000 $TTHEME_HOME/palettes.zsh
+print -r -- 'typeset -g TTHEME_STARTUP=ttheme/ayanami-rei' >> $TTHEME_HOME/start.zsh
+touch -t 203001010000 $TTHEME_HOME/start.zsh
 __tt_fresh
-[[ $TTHEME_STARTUP == ttheme/ayanami-rei && -n ${TTHEME_PALETTE[ttheme/hatsune-miku]} ]] || { print -u2 "a rewritten palettes.zsh did not reload: startup=$TTHEME_STARTUP"; exit 1 }
+[[ $TTHEME_STARTUP == ttheme/ayanami-rei && -n ${TTHEME_PALETTE[ttheme/hatsune-miku]} ]] || { print -u2 "a rewritten start.zsh did not reload: startup=$TTHEME_STARTUP"; exit 1 }
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/windows-terminal.zsh
   integer asks=0 naps=0 paints=0

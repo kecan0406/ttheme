@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Work } from '../core/commons.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
-import { palettesZsh } from './emit-shell.ts'
+import { shellTables } from './emit-shell.ts'
 
 function entry(name: string, subject?: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
@@ -29,17 +29,18 @@ const WORKS: Work[] = [
   { id: 'starfall', name: 'Starfall', native: 'スターフォール', characters: [{ id: 'orla' }] },
 ]
 
+const PALETTES = [
+  entry('ttheme/ember'),
+  entry('kai@dust/glow'),
+  entry('kai@dust/orla', 'starfall/orla'),
+  entry('ttheme/lumi', 'glass-arcade/lumi', {
+    other: { background: '#f0f0f0', foreground: '#101010', cursor: '#806020', selection: '#c0c0e0', ansi: [] },
+  }),
+  entry('ttheme/orla', 'starfall/orla'),
+]
+
 test('palettes.zsh tells the shell what each palette is of, which works hold them, and which palettes a bare name means', () => {
-  const text = palettesZsh(
-    [
-      entry('ttheme/ember'),
-      entry('kai@dust/glow'),
-      entry('kai@dust/orla', 'starfall/orla'),
-      entry('ttheme/lumi', 'glass-arcade/lumi'),
-      entry('ttheme/orla', 'starfall/orla'),
-    ],
-    WORKS,
-  )
+  const text = shellTables(PALETTES, WORKS).palettes
 
   const line = (name: string) => text.split('\n').find((l) => l.startsWith(`typeset -ga ${name}=`))
   const table = (name: string) => text.slice(text.indexOf(`typeset -gA ${name}=(`)).split('\n)')[0] ?? ''
@@ -58,4 +59,22 @@ test('palettes.zsh tells the shell what each palette is of, which works hold the
   assert.match(table('TTHEME_SHORT'), /^ {2}ember +"ttheme\/ember"$/m)
   assert.match(table('TTHEME_NATIVE_NAMES'), /^ {2}ttheme\/lumi +"ルミ"$/m)
   assert.match(table('TTHEME_CHARACTER'), /^ {2}ttheme\/lumi +"lumi"$/m)
+})
+
+test('start.zsh holds what a new tab reads: the palettes, their order, and the startup palette in its other mode with the name and shelf it is shown with', () => {
+  const { palettes, start } = shellTables(PALETTES, WORKS, { startup: 'ttheme/lumi' })
+  const block = (text: string, name: string) => text.slice(text.indexOf(`typeset -gA ${name}=(`)).split('\n)')[0] ?? ''
+  const line = (text: string, name: string) => text.split('\n').find((l) => l.startsWith(`typeset -ga ${name}=`))
+
+  assert.equal(block(start, 'TTHEME_PALETTE'), block(palettes, 'TTHEME_PALETTE'))
+  assert.equal(line(start, 'TTHEME_ORDER'), line(palettes, 'TTHEME_ORDER'))
+  assert.match(start, /^typeset -g TTHEME_STARTUP=ttheme\/lumi$/m)
+  assert.match(start, /^typeset -g TTHEME_STARTUP_OTHER="#f0f0f0 #101010 #806020 #c0c0e0"$/m)
+  assert.match(start, /^typeset -g TTHEME_STARTUP_LABEL="lumi" TTHEME_STARTUP_SHELF="ttheme \/ Glass Arcade"$/m)
+  assert.match(block(palettes, 'TTHEME_LABEL'), /^ {2}ttheme\/ember +"ember"$/m)
+  assert.match(block(palettes, 'TTHEME_LABEL'), /^ {2}ttheme\/orla +"ttheme\/orla"$/m)
+  assert.match(block(palettes, 'TTHEME_LABEL'), /^ {2}kai@dust\/orla +"kai@dust\/orla"$/m)
+  assert.match(block(palettes, 'TTHEME_SHELF'), /^ {2}kai@dust\/orla +"kai@dust \/ Starfall"$/m)
+  assert.match(block(palettes, 'TTHEME_SHELF'), /^ {2}kai@dust\/glow +"kai@dust"$/m)
+  assert.doesNotMatch(start, /TTHEME_SUBJECT|TTHEME_SWATCH|TTHEME_SHORT|TTHEME_LABEL=/)
 })

@@ -64,7 +64,7 @@ paths:
 - Inside tmux the layer never tells tmux its colors, and `__tt_out` wraps every color OSC in `\ePtmux;…\e\\`.
 - An ssh pin is worn from preexec, never from the remote side.
 - Every reader of `TTHEME_PINS` as paths skips a key that does not start with `/`.
-- Whatever rewrites a file the layer sources deletes its `.zwc`.
+- Whatever writes a file the layer sources deletes its `.zwc` first and compiles a new one after it (`compileZsh`).
 - Steer a Ghostty-launched shell with `ZDOTDIR` and `XDG_*`, never `HOME`.
 - Preview's search row starts with ECH, never `\e[K`.
 - The parity harness answers every query from the PTY data callback, never from xterm's parser.

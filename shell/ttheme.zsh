@@ -1,4 +1,5 @@
 typeset -g TTHEME_HOME=${${(%):-%x}:A:h} TTHEME_PALETTES_AT="" TTHEME_APPEARANCE_AT=""
+typeset -gi TTHEME_PALETTES_IN=0
 
 zmodload -F zsh/stat b:zstat 2>/dev/null
 
@@ -37,11 +38,21 @@ typeset -ga TTHEME_KEYMODS=(ctrl ⌃ alt ⌥ shift ⇧ cmd ⌘)
 
 __tt_palettes_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  local -a at
+  local -a at=("")
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/start.zsh 2>/dev/null
   unset TTHEME_PALETTE TTHEME_SUBJECT TTHEME_ALSO TTHEME_SHORT
-  source $TTHEME_HOME/palettes.zsh || return 1
-  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null
+  (( ! TTHEME_PALETTES_IN )) || source $TTHEME_HOME/palettes.zsh || TTHEME_PALETTES_IN=0
+  source $TTHEME_HOME/start.zsh || return 1
   TTHEME_PALETTES_AT=$at[1]
+}
+
+__tt_palettes() {
+  local -a at=("")
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/start.zsh 2>/dev/null
+  [[ $at[1] == "$TTHEME_PALETTES_AT" ]] || __tt_fresh
+  (( TTHEME_PALETTES_IN )) && return 0
+  source $TTHEME_HOME/palettes.zsh || return 1
+  TTHEME_PALETTES_IN=1
 }
 
 __tt_specs_named() {
@@ -69,7 +80,7 @@ __tt_fresh() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local -a at reply
   local was=$TTHEME_STARTUP start="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" held=$TTHEME_PAINTED
-  if ! zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null; then
+  if ! zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/start.zsh 2>/dev/null; then
     [[ -e $TTHEME_HOME ]] || __tt_gone
     return 0
   fi
@@ -134,10 +145,10 @@ __tt_off_here() {
   __tt_reset_reloaded $bg
 }
 
-if [[ -r $TTHEME_HOME/palettes.zsh ]]; then
+if [[ -r $TTHEME_HOME/start.zsh ]]; then
   __tt_palettes_load
 else
-  print -u2 "ttheme: palettes.zsh not found — run \`npx @kecan0406/ttheme@latest init\`"
+  print -u2 "ttheme: start.zsh not found — run \`npx @kecan0406/ttheme@latest init\`"
   return 1
 fi
 
@@ -334,9 +345,11 @@ __tt_wearing() {
 }
 
 __tt_stale() {
-  local k
+  local k other=$TTHEME_STARTUP_OTHER
   [[ -n $1 ]] || return 1
-  [[ -n $TTHEME_STARTUP && ${TTHEME_PALETTE_OTHER[$TTHEME_STARTUP]%% *} == "$1" && -n ${TTHEME_PALETTE[$TTHEME_STARTUP]} ]] && { REPLY=$TTHEME_PALETTE[$TTHEME_STARTUP]; return 0 }
+  [[ -n $TTHEME_STARTUP ]] && (( TTHEME_PALETTES_IN )) && other=${TTHEME_PALETTE_OTHER[$TTHEME_STARTUP]}
+  [[ -n $TTHEME_STARTUP && ${other%% *} == "$1" && -n ${TTHEME_PALETTE[$TTHEME_STARTUP]} ]] && { REPLY=$TTHEME_PALETTE[$TTHEME_STARTUP]; return 0 }
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   for k in ${(k)TTHEME_PALETTE_OTHER[(R)${(b)1} *]}; do
     [[ -n ${TTHEME_PALETTE[$k]} ]] && { REPLY=$TTHEME_PALETTE[$k]; return 0 }
   done
@@ -1701,7 +1714,7 @@ __tt_pins_map() {
 __tt_keep() {
   local note was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" followed=""
   note=$(__tt_cli default "$1") || return 1
-  [[ -r $TTHEME_HOME/palettes.zsh ]] && __tt_palettes_load && __tt_reloaded
+  [[ -r $TTHEME_HOME/start.zsh ]] && __tt_palettes_load && __tt_reloaded
   __tt_hold "$was"
   __tt_follow "$was" && followed=1 && [[ -n $TTHEME_PAINTED ]] && __tt_reloaded
   __tt_worn_shown $2
@@ -1715,6 +1728,7 @@ __tt_keep() {
 }
 
 __tt_order() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   if [[ $TTHEME_SORT == cast ]]; then
     reply=($TTHEME_ORDER)
   else
@@ -1723,19 +1737,27 @@ __tt_order() {
 }
 
 __tt_work_of() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local w=${TTHEME_SUBJECT[$1]%%/*}
   REPLY=${w:+${TTHEME_WORK_NAME[$w]:-$w}}
 }
 
 __tt_shelf() {
-  __tt_work_of $1
-  REPLY=${1%%/*}${REPLY:+ / $REPLY}
+  if (( ! TTHEME_PALETTES_IN )) && [[ -n $1 && $1 == "$TTHEME_STARTUP" ]]; then
+    REPLY=$TTHEME_STARTUP_SHELF
+    return 0
+  fi
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
+  REPLY=${TTHEME_SHELF[$1]:-${1%%/*}}
 }
 
 __tt_label() {
-  REPLY=$1
-  [[ ${TTHEME_SHORT[${1##*/}]} == "$1" ]] && REPLY=${1##*/}
-  return 0
+  if (( ! TTHEME_PALETTES_IN )) && [[ -n $1 && $1 == "$TTHEME_STARTUP" ]]; then
+    REPLY=$TTHEME_STARTUP_LABEL
+    return 0
+  fi
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
+  REPLY=${TTHEME_LABEL[$1]:-$1}
 }
 
 __tt_menu() {
@@ -1749,6 +1771,7 @@ __tt_menu() {
 }
 
 __tt_help() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local text=$TTHEME_HELP
   [[ $1 == all ]] && text=$TTHEME_HELP_ALL
   __tt_color && text=$TTHEME_HELP_HEAD$'\n'${text#*$'\n'}
@@ -1756,10 +1779,12 @@ __tt_help() {
 }
 
 __tt_usage() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   print -r -- "Usage: ttheme ${${:-$1 $TTHEME_VERB_ARGS[$1]}% }"$'\n\n'"$TTHEME_VERB_ABOUT[$1]"
 }
 
 __tt_verb_help() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   if [[ -z $1 || $1 == (all|help) ]]; then
     __tt_help $1
   elif (( ${TTHEME_SHELL_VERBS[(Ie)$1]} )); then
@@ -1787,6 +1812,7 @@ __tt_misuse() {
 }
 
 __tt_arity() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local verb=$1
   shift
   local -a want=(${=TTHEME_VERB_ARGS[$verb]})
@@ -1797,6 +1823,7 @@ __tt_arity() {
 }
 
 __tt_cli() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local k
   local -a pass=()
   [[ -n $HTTPS_PROXY$HTTP_PROXY$https_proxy$http_proxy ]] && pass+=(NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1)
@@ -1818,7 +1845,7 @@ __tt_installs() {
 }
 
 __tt_installs_done() {
-  [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
+  [[ -r $TTHEME_HOME/start.zsh ]] || return 0
   local was=$TTHEME_PALETTES_AT followed=""
   local -a reply
   __tt_specs_named
@@ -1838,7 +1865,7 @@ __tt_installs_done() {
 __tt_switch() {
   __tt_cli "$@" || return
   [[ $1 == off ]] && __tt_unpictured
-  [[ -r $TTHEME_HOME/palettes.zsh ]] && __tt_palettes_load && __tt_reloaded
+  [[ -r $TTHEME_HOME/start.zsh ]] && __tt_palettes_load && __tt_reloaded
   if ! __tt_active; then
     __tt_reload
     return 0
@@ -1851,6 +1878,7 @@ __tt_switch() {
 }
 
 __tt_config() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local blur tab mode
   if [[ ! -e $TTHEME_CONFIG ]]; then
     mkdir -p ${TTHEME_CONFIG:h} || return 1
@@ -1871,6 +1899,7 @@ __tt_config() {
 }
 
 __tt_mode() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local want=$1
   local -a lines=()
   if (( ! ${TTHEME_MODE_SETTINGS[(Ie)$want]} )); then
@@ -1911,11 +1940,13 @@ __tt_redraw() {
 }
 
 __tt_config_line() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   REPLY=": \${$1:=$2}"
   [[ -n ${(M)${(@f)TTHEME_CONFIG_TEMPLATE}:#"# $REPLY"} ]] && REPLY="# $REPLY"
 }
 
 __tt_config_write() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local line name doc
   local -a out=()
   local -A want=("$@")
@@ -1950,6 +1981,7 @@ __tt_config_write() {
 }
 
 __tt_resolve() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local name=$1
   local -a m=(${=TTHEME_SHORT[$name]})
   if [[ -n ${TTHEME_PALETTE[$name]} ]]; then
@@ -2013,7 +2045,7 @@ __tt_bye() {
 
 __tt_stamp() {
   local -a at=("") pins=("")
-  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/start.zsh 2>/dev/null
   zstat -F %s.%N -A pins +mtime -- $TTHEME_PINS_FILE 2>/dev/null
   REPLY="$at[1] $pins[1]"
 }
@@ -2069,6 +2101,7 @@ ttheme() {
 
 __tt_verb() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   if (( $# > 1 && ${argv[2,-1][(I)(-h|--help)]} )); then
     __tt_verb_help $1
     return
@@ -2149,6 +2182,7 @@ __tt_verb() {
 
 if (( ${+functions[compdef]} )); then
   __tt_complete_names() {
+    (( TTHEME_PALETTES_IN )) || __tt_palettes
     local n
     reply=()
     if [[ $PREFIX == *[/@]* ]]; then
@@ -2166,6 +2200,7 @@ if (( ${+functions[compdef]} )); then
 
   __tt_complete() {
     emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+    (( TTHEME_PALETTES_IN )) || __tt_palettes
     local -a reply
     if (( CURRENT == 2 )); then
       compadd -- $TTHEME_VERBS help
@@ -2262,14 +2297,4 @@ fi
   }
   __tt_hook
   __tt_announce
-}
-
-() {
-  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  local f
-  for f in $TTHEME_HOME/ttheme.zsh $TTHEME_HOME/preview.zsh $TTHEME_HOME/palettes.zsh $TTHEME_HOME/adapters/_osc.zsh $TTHEME_HOME/adapters/_wired.zsh $TTHEME_HOME/adapters/_bg.zsh $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh; do
-    [[ -r $f && ! $f.zwc -nt $f ]] || continue
-    zcompile -UR -- $f.$$.zwc $f 2>/dev/null && command mv -f -- $f.$$.zwc $f.zwc 2>/dev/null
-    [[ ! -e $f.$$.zwc ]] || command rm -f -- $f.$$.zwc
-  done
 }

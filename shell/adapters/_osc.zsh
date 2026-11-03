@@ -111,7 +111,7 @@ __tt_prompted() { : }
 
 __tt_cli_env() { : }
 
-__tt_links() { (( ${TTHEME_LINKS[(Ie)$TTHEME_ADAPTER]} )) }
+__tt_links() { (( TTHEME_PALETTES_IN )) || __tt_palettes; (( ${TTHEME_LINKS[(Ie)$TTHEME_ADAPTER]} )) }
 
 __tt_cell() { return 1 }
 
