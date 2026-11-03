@@ -40,6 +40,7 @@ While a change goes back and forth with the person you work for, run no check un
 - Every setting has one owner. `installed.json` owns the install state and `sync` derives the terminals' config blocks from it, so the zsh layer never edits them. `images.json` owns the pictures and only the CLI writes it. `config.zsh` owns the runtime settings.
 - Every palette has a full name, `<publisher>/<slug>`; the bare slug is never stored.
 - A format that released copies of ttheme read only gains fields; a breaking change goes under another file or prefix name (marketplace files, share codes `tt8:`, the marketplace index, `--json` output).
+- Works and characters live in aninames' `authority/`, never here: ttheme's copy is what `init` and `update` fetch, and the build reads the npm package's.
 - A change to the keys of a palette, marketplace or work file updates `schemas/`; `schemas.test.ts` holds them to the code.
 - A change to a verb, a setting or a terminal's support updates its page in `docs/` in the same commit.
 - Shell code works with both GNU and BSD tools; CI runs GNU's.
@@ -50,7 +51,7 @@ While a change goes back and forth with the person you work for, run no check un
 
 - `mise.toml` scripts are tera templates: wrap one with `${#VAR}` in `{% raw %}` and `{% endraw %}`. A task that hands the terminal to a TUI or a shell needs `interactive = true`.
 - `init` copies the CLI bundle next to the shell layer and the layer runs only that copy, so installing from a checkout needs `mise run bin:build` first. `bin/` and `dist/` are generated, never committed.
-- The package ships `dist/builtin.json` and `dist/commons.json`, the only dist files the CLI reads; a new runtime read of `dist/` fails `bin:check`. `init` must stay runnable under plain node.
+- The package ships `dist/builtin.json`, the only dist file the CLI reads; a new runtime read of `dist/` fails `bin:check`. `init` must stay runnable under plain node.
 - The bundle runs on node 22 and up. A regex with modifiers or a repeated group name stops the whole bundle loading there, and `Promise.try`, `RegExp.escape`, `Error.isError`, `Iterator.concat`, `Map#getOrInsert`, `Uint8Array.fromBase64` and `Math.sumPrecise` are missing, while tsc and `bun test` accept them; only `bin:check` catches one.
 - Iterator helpers are slower than array methods on V8 and JSC: use them for laziness or to feed `new Set`, `new Map` or `Object.fromEntries`, never in a `src/core` module the site's browser code reaches. Biome breaks a chain of three or more calls one call to a line.
 - `ROOT` (`src/root.ts`) reaches the package root through `import.meta.dirname` and so sits directly under `src/`; every other file under `src/` joins from `ROOT`.
@@ -68,12 +69,12 @@ While a change goes back and forth with the person you work for, run no check un
 | find, the picture search | `.claude/rules/find.md` |
 | `tests/`, the parity, compat and cost harnesses | `tests/AGENTS.md`, `HACKING.md` |
 | `site/`, `docs/` | `site/AGENTS.md`, `.claude/rules/site.md` |
-| `builtin/`, `commons/`: palettes, works, characters | the `AGENTS.md` in that folder, `CONTRIBUTING.md` ("Works and characters"), the `palette` skill (`.agents/skills/palette/SKILL.md`) |
+| `builtin/`: palettes | `builtin/AGENTS.md`, `CONTRIBUTING.md` ("Works and characters"), the `palette` skill (`.agents/skills/palette/SKILL.md`) |
 | the wording of a screen, a message or a docs page | `.claude/rules/text.md` |
 
 ## Commits
 
-- A subject is `<area>: <summary>` in 72 characters at most, the summary lowercase, imperative and without a full stop. The area is where most of the change is: `core`, `store`, `pictures`, `terminals`, `tui` or `cli` under `src/`; `shell`, `site`, `docs`, `builtin`, `commons`, `schemas`, `skills` or `tests` for that folder; `ci` for `.github` and `mise.toml`; `agents` for `AGENTS.md`, `.agents` and `.claude`; `docs` also for the other Markdown at the root. `mise run ci` checks every commit `origin/main` lacks.
+- A subject is `<area>: <summary>` in 72 characters at most, the summary lowercase, imperative and without a full stop. The area is where most of the change is: `core`, `store`, `pictures`, `terminals`, `tui` or `cli` under `src/`; `shell`, `site`, `docs`, `builtin`, `schemas`, `skills` or `tests` for that folder; `ci` for `.github` and `mise.toml`; `agents` for `AGENTS.md`, `.agents` and `.claude`; `docs` also for the other Markdown at the root. `mise run ci` checks every commit `origin/main` lacks.
 - The body says how things were, how they are now and why.
 - A change a user would notice adds a line for that user under `## Unreleased` in `CHANGELOG.md`, in the same commit. `mise run release` refuses an empty section and turns its heading into the version in its own `release: <version>` commit; the GitHub release posts that section.
 
@@ -81,5 +82,5 @@ While a change goes back and forth with the person you work for, run no check un
 
 ## Maintainers only
 
-- Release only with `mise run release <x.y.z | patch | minor | major>`; never tag, publish or edit a release by hand. A built-in palette or a commons change reaches users only as a release, so each is a patch release.
+- Release only with `mise run release <x.y.z | patch | minor | major>`; never tag, publish or edit a release by hand. A built-in palette reaches users only as a release, so each is a patch release.
 - Actions are pinned to full SHAs, which the repository requires; Dependabot moves the pins.

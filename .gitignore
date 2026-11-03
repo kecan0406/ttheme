@@ -11,6 +11,7 @@ site/art.json
 site/cast.json
 site/people.json
 site/places.json
+site/commons.json
 site/commands.json
 pages/
 .vercel/

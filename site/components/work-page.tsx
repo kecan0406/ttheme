@@ -47,7 +47,7 @@ function Who({ slot }: { slot: CastSlot }) {
             'bg-muted transition-[translate,box-shadow] duration-200 group-focus-visible/who:ring-2 group-focus-visible/who:ring-ring group-focus-visible/who:ring-offset-2 group-focus-visible/who:ring-offset-background group-aria-pressed/who:ring-2 group-aria-pressed/who:ring-primary group-aria-pressed/who:ring-offset-2 group-aria-pressed/who:ring-offset-background motion-safe:group-hover/who:-translate-y-0.5',
           )}
         >
-          <SlotArt picture={slot.picture} />
+          <SlotArt picture={slot.picture} tones={slot.tones} />
         </span>
         <span class="grid w-full min-w-0 justify-items-center gap-px">
           <b class="flex max-w-full min-w-0 items-center gap-1.5 font-display text-base leading-snug font-extrabold transition-colors group-hover/who:text-primary">
@@ -252,17 +252,7 @@ function WorkHead({
   )
 }
 
-function RestOfCast({
-  rest,
-  total,
-  lang,
-  work,
-}: {
-  rest: FoundCast[]
-  total: number
-  lang: string | null
-  work: string
-}) {
+function RestOfCast({ rest, total, lang }: { rest: FoundCast[]; total: number; lang: string | null }) {
   return rest.length === 0 ? null : (
     <Collapsible class="group/more grid grid-cols-[minmax(0,1fr)] gap-5">
       <CollapsibleTrigger class="justify-self-start rounded-sm text-sm font-medium text-primary outline-none group-open/more:hidden hover:underline focus-visible:ring-2 focus-visible:ring-ring">
@@ -271,7 +261,7 @@ function RestOfCast({
       <CollapsiblePanel>
         <ul class={CAST}>
           {rest.map((member) => (
-            <Member member={member} lang={lang} work={work} />
+            <Member member={member} lang={lang} />
           ))}
         </ul>
       </CollapsiblePanel>
@@ -279,15 +269,15 @@ function RestOfCast({
   )
 }
 
-function Members({ cast, lang, work }: { cast: FoundCast[]; lang: string | null; work: string }) {
+function Members({ cast, lang }: { cast: FoundCast[]; lang: string | null }) {
   return (
     <>
       <ul class={CAST}>
         {cast.slice(0, SHOWN_CAST).map((member) => (
-          <Member member={member} lang={lang} work={work} />
+          <Member member={member} lang={lang} />
         ))}
       </ul>
-      <RestOfCast rest={cast.slice(SHOWN_CAST)} total={cast.length} lang={lang} work={work} />
+      <RestOfCast rest={cast.slice(SHOWN_CAST)} total={cast.length} lang={lang} />
     </>
   )
 }
@@ -317,17 +307,11 @@ function NoPalettes({ work }: { work: FoundWork }) {
         <span translate="no" class="font-semibold text-foreground" safe>
           {work.name}
         </span>{' '}
-        yet — ask for one, or make it yourself.
+        yet — make one yourself.
       </p>
-      <span class="flex flex-wrap gap-2">
-        <LinkButton variant="outline" size="sm" href={requestUrl(work.name)} target="_blank" rel="noopener">
-          request a palette
-          <NewTab />
-        </LinkButton>
-        <LinkButton size="sm" href={makePath(work.id)}>
-          make one
-        </LinkButton>
-      </span>
+      <LinkButton size="sm" href={makePath(work.id)}>
+        make one
+      </LinkButton>
     </div>
   )
 }
@@ -348,7 +332,7 @@ export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts
                 <h2 id="characters" class={HEADING}>
                   characters <span class={COUNT}>{cast.length}</span>
                 </h2>
-                <Members cast={cast} lang={work.lang} work={work.name} />
+                <Members cast={cast} lang={work.lang} />
                 <CastSearch id={work.id} work={work.name} lang={work.lang} />
               </section>
             )}
@@ -407,11 +391,11 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
                   <Who slot={slot} />
                 ))}
                 {more.slice(0, room).map((member) => (
-                  <Member member={member} lang={work.lang} work={work.name} />
+                  <Member member={member} lang={work.lang} />
                 ))}
                 <Request work={work.name} />
               </ul>
-              <RestOfCast rest={more.slice(room)} total={cast.length + more.length} lang={work.lang} work={work.name} />
+              <RestOfCast rest={more.slice(room)} total={cast.length + more.length} lang={work.lang} />
               {page.findable ? <CastSearch id={work.id} work={work.name} lang={work.lang} /> : null}
             </section>
             <section aria-labelledby="palettes" class={SECTION}>

@@ -28,6 +28,16 @@ const FACETS: [points: string, tone: number, opacity?: number][] = [
   ['300,150 300,200 250,200', 0],
 ]
 
+const PALETTE_FACETS: [points: string, tone: string, opacity?: number][] = [
+  ['0,0 70,0 0,60', 'sg1'],
+  ['70,0 120,0 120,50 55,45', 'sg0'],
+  ['0,60 55,45 30,110 0,115', 'sg1', 0.6],
+  ['55,45 120,50 90,105 30,110', 'sg0', 0.82],
+  ['120,50 120,120 90,105', 'sg2', 0.55],
+  ['30,110 90,105 70,160 0,160 0,115', 'bg'],
+  ['90,105 120,120 120,160 70,160', 'sg1', 0.85],
+]
+
 const SLOT_FACETS: [points: string, tint: string][] = [
   ['0,0 70,0 0,60', 'fill-foreground/4'],
   ['70,0 120,0 120,50 55,45', 'fill-foreground/8'],
@@ -100,6 +110,24 @@ export function WorkArt({
   )
 }
 
+function HeroArt({ art, facets, sizes }: { art: KeyArt | null; facets: string; sizes: string }) {
+  if (!art) return <FacetArt style={facets} />
+
+  if (!art.cover) return <ArtImage art={art} sizes={sizes} eager class="object-(--art-focus)" />
+
+  return (
+    <>
+      <ArtImage art={art} sizes={sizes} eager class="-inset-10 size-[calc(100%+5rem)] blur-2xl saturate-125" />
+      <img
+        src={art.src}
+        alt=""
+        decoding="async"
+        class="absolute top-21 right-[6%] h-100 w-auto max-w-[40%] rounded-xl object-contain shadow-2xl max-sm:top-17 max-sm:h-44"
+      />
+    </>
+  )
+}
+
 export function WorkHero({ art, facets, sizes }: { art: KeyArt | null; facets: string; sizes: string }) {
   return (
     <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 -z-10">
@@ -109,22 +137,43 @@ export function WorkHero({ art, facets, sizes }: { art: KeyArt | null; facets: s
         </div>
       ) : null}
       <div data-slot="work-hero" class="absolute inset-x-0 top-0 h-175 overflow-hidden max-sm:h-135">
-        {art ? <ArtImage art={art} sizes={sizes} eager class="object-(--art-focus)" /> : <FacetArt style={facets} />}
+        <HeroArt art={art} facets={facets} sizes={sizes} />
       </div>
     </div>
   )
 }
 
-export function SlotArt({ picture }: { picture: string | null }) {
-  return picture ? (
-    <img
-      src={picture}
-      alt=""
-      loading="lazy"
-      decoding="async"
-      class="absolute inset-0 size-full object-cover object-[50%_16%]"
-    />
-  ) : (
+export function SlotArt({ picture, tones = null }: { picture: string | null; tones?: string | null }) {
+  if (picture) {
+    return (
+      <img
+        src={picture}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        class="absolute inset-0 size-full object-cover object-[50%_16%]"
+      />
+    )
+  }
+
+  if (tones) {
+    return (
+      <svg
+        viewBox="0 0 120 160"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+        class="absolute inset-0 size-full forced-color-adjust-none"
+        style={tones}
+      >
+        <rect width="120" height="160" style="fill:var(--bg)" />
+        {PALETTE_FACETS.map(([points, tone, opacity]) => (
+          <polygon points={points} style={`fill:var(--${tone})${opacity === undefined ? '' : `;opacity:${opacity}`}`} />
+        ))}
+      </svg>
+    )
+  }
+
+  return (
     <svg
       viewBox="0 0 120 160"
       preserveAspectRatio="xMidYMid slice"

@@ -117,7 +117,7 @@ test('marketplace check holds the palettes and the works they propose to the com
     said.filter((line) => line.startsWith('  ✗') || line.startsWith('  !')),
     [
       '  ✗ sets/Lantern Row!/wren.toml: ttheme reads sets/ alone, not the folders in it — move it up',
-      '  ✗ sets/nowhere.toml: dawn: nowhere/dawn is in neither the commons nor works/ — propose it in works/nowhere.toml',
+      '  ✗ sets/nowhere.toml: dawn: nowhere/dawn is in neither the list of works nor works/ — propose it in works/nowhere.toml',
       '  ✗ works/lantern-row.toml: lantern-row is "starfall" on danbooru, which is starfall already — name starfall instead',
       '  ✗ works/starfall.toml: starfall/orla2 is "orla_(starfall)" on danbooru, which is starfall/orla already — name starfall/orla instead',
       '  ✗ works/starfall.toml: starfall/orla2 lists "lost" in also, which is not another work',

@@ -1,3 +1,4 @@
+import { anilistCharacter, bangumiCharacter, characterPicture } from '@kecan0406/aninames/pictures'
 import type { KeyArt } from '@/lib/art'
 import { GENRES, type Place } from '@/lib/categories'
 import { type CastMember, type NameHit, slugOfTag, type TaggedWork, type WorkName } from '../../src/core/names.ts'
@@ -21,18 +22,6 @@ const ORIGIN_LANGS = new Map<string, readonly string[]>([
   ['HK', ['zh-Hant', 'zh', 'zh-Hans']],
   ['MO', ['zh-Hant', 'zh', 'zh-Hans']],
 ])
-
-const ANIME = /^anilist:(\d+)$/
-
-const MANGA = /^anilist:manga\/(\d+)$/
-
-const STEAM = /^steam:(\d+)$/
-
-const IGDB = /^igdb:([a-z0-9-]+)$/
-
-const BANGUMI = /^bangumi:(\d+)$/
-
-const BANGUMI_IMAGES = 'https://api.bgm.tv/v0/characters'
 
 const HANGUL = /\p{Script=Hangul}/u
 
@@ -220,52 +209,8 @@ export function nativeLang(text: string, work: string | null): string | null {
   return work !== null && HAN_LANG.test(work) ? work : null
 }
 
-export function tmdbOf(members: readonly TaggedWork[]): string | null {
-  const refs = members.flatMap((member) => member.refs)
-  const ref = refs.find((each) => each.startsWith('tmdb:tv/')) ?? refs.find((each) => each.startsWith('tmdb:movie/'))
-
-  return ref ? ref.slice('tmdb:'.length) : null
-}
-
-export function anilistOf(members: readonly TaggedWork[]): number | null {
-  const series = (member: TaggedWork) => member.refs.some((ref) => ref.startsWith('tmdb:tv/'))
-  const refs = members.toSorted((a, b) => Number(series(b)) - Number(series(a))).flatMap((member) => member.refs)
-  const found = refs.map((ref) => ANIME.exec(ref)).find(Boolean) ?? refs.map((ref) => MANGA.exec(ref)).find(Boolean)
-
-  return found?.[1] ? Number(found[1]) : null
-}
-
-function first(members: readonly { refs: string[] }[], pattern: RegExp): string | null {
-  return (
-    members
-      .flatMap((member) => member.refs)
-      .map((ref) => pattern.exec(ref)?.[1])
-      .find(Boolean) ?? null
-  )
-}
-
-export function steamOf(members: readonly TaggedWork[]): string | null {
-  return first(members, STEAM)
-}
-
-export function igdbOf(members: readonly TaggedWork[]): string | null {
-  return first(members, IGDB)
-}
-
-function anilistCharacterOf(member: CastMember): number | null {
-  const id = first([member], ANIME)
-
-  return id ? Number(id) : null
-}
-
-function bangumiPictureOf(member: CastMember): string | null {
-  const id = first([member], BANGUMI)
-
-  return id ? `${BANGUMI_IMAGES}/${id}/image?type=medium` : null
-}
-
 export function anilistIdsOf(members: readonly CastMember[]): number[] {
-  return members.flatMap((member) => (bangumiPictureOf(member) === null ? (anilistCharacterOf(member) ?? []) : []))
+  return members.flatMap((member) => (bangumiCharacter(member) === null ? (anilistCharacter(member) ?? []) : []))
 }
 
 function mediumLabel(member: TaggedWork): string | null {
@@ -366,13 +311,15 @@ export function castFrom(
 
     if (seen.has(key)) return []
     seen.add(key)
-    const id = anilistCharacterOf(member)
+    const bangumi = bangumiCharacter(member)
+    const anilist = anilistCharacter(member)
 
     return [
       {
         name,
         native: native === undefined || native === name ? null : native,
-        picture: bangumiPictureOf(member) ?? (id === null ? null : (pictures.get(id) ?? null)),
+        picture:
+          bangumi === null ? (anilist === null ? null : (pictures.get(anilist) ?? null)) : characterPicture(bangumi),
       },
     ]
   })

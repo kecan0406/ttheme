@@ -1,4 +1,4 @@
-import { type KeyArt, keyArtOf, type WorkArt } from '@/lib/art'
+import type { KeyArt, WorkArt } from '@/lib/art'
 import { type Place, placesOf } from '@/lib/categories'
 import { BUILTIN, faceOf, paint, type Shade, type Theme, type WorkRef } from '@/lib/themes'
 import { slugOf } from '../../src/core/theme.ts'
@@ -126,7 +126,7 @@ export function workEntries(
         native,
         lang,
         path: workPath(id),
-        art: keyArtOf(artOf(id)),
+        art: artOf(id)?.art ?? null,
         facets: facetStyle(leadOf(shelf)),
         palettes: shelf.themes.length,
         search: [id, name, native ?? ''].join('\n').toLowerCase(),

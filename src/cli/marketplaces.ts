@@ -2,16 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { basename, join, relative } from 'node:path'
 import { parse } from 'smol-toml'
-import {
-  aboutOf,
-  type Commons,
-  mergeWorks,
-  parseCommons,
-  WORKS_DIR,
-  type Work,
-  workKeys,
-  workOf,
-} from '../core/commons.ts'
+import { aboutOf, type Commons, mergeWorks, WORKS_DIR, type Work, workKeys, workOf } from '../core/commons.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { gateLines } from '../core/own.ts'
 import { marketplaceNameProblem, marketplaceToml, readmeOf } from '../core/scaffold.ts'
@@ -26,8 +17,7 @@ import {
   slugOf,
   workIdOf,
 } from '../core/theme.ts'
-import { ROOT } from '../root.ts'
-import { commonsPath, nameOf, readMarketplaces } from '../store/available.ts'
+import { nameOf, readCommons, readMarketplaces, refreshCommons } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { type Installed, readInstalled, writeInstalled } from '../store/installed.ts'
 import {
@@ -121,9 +111,7 @@ async function handle(home: string, state: Installed, owner?: string): Promise<s
 }
 
 export function commonsFor(home: string): Commons {
-  const path = [join(ROOT, 'dist', 'commons.json'), commonsPath(home)].find((at) => existsSync(at))
-
-  return path ? parseCommons(readFileSync(path, 'utf8')) : { works: [] }
+  return readCommons(home)
 }
 
 export function withMarketplaces(
@@ -511,11 +499,15 @@ function againstCommons(
     const file = sets.get(slug) ?? slug
     const { subject } = entry
 
-    if (!aboutOf(known, subject)?.known) {
+    if (commons.works.length > 0 && !aboutOf(known, subject)?.known) {
       findings.errors.push(
-        `${file}: ${subject} is in neither the commons nor works/ — propose it in works/${workIdOf(subject)}.toml`,
+        `${file}: ${subject} is in neither the list of works nor works/ — propose it in works/${workIdOf(subject)}.toml`,
       )
     }
+  }
+
+  if (commons.works.length === 0) {
+    findings.warnings.push('the list of works did not load — subjects were not checked against it')
   }
 
   const owners = new Map(
@@ -670,6 +662,8 @@ export async function runMarketplace(
 
       return
     case 'check':
+      await refreshCommons(configHome()).catch(() => false)
+
       return checkMarketplace(arg)
     default:
       throw new InputError(`unknown marketplace action ${action} — ${ACTIONS.join(', ')}`)

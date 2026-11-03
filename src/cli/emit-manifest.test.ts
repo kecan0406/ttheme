@@ -1,17 +1,16 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { aboutOf, parseCommons } from '../core/commons.ts'
+import { aboutOf } from '../core/commons.ts'
 import { parseBuiltin, swatch } from '../core/manifest.ts'
-import { BUILTIN_DIR, COMMONS_DIR, loadBuiltin, loadCommons } from './build.ts'
-import { bundleJson, bundleOf, commonsJson } from './emit-manifest.ts'
+import { BUILTIN_DIR, loadBuiltin, loadCommons } from './build.ts'
+import { bundleJson, bundleOf } from './emit-manifest.ts'
 
-const commons = loadCommons(COMMONS_DIR)
+const commons = loadCommons()
 const bundle = bundleOf(loadBuiltin(BUILTIN_DIR, commons))
 const { palettes: entries } = bundle
 
-test('the built-in palettes and the commons the build writes are ones every reader accepts', () => {
+test('the built-in palettes the build writes are ones every reader accepts', () => {
   assert.equal(parseBuiltin(bundleJson(bundle)).palettes.length, entries.length)
-  assert.deepEqual(parseCommons(commonsJson(commons)), commons)
 })
 
 test('every work that holds a built-in palette has its original-language title', () => {

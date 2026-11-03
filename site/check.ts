@@ -1,18 +1,10 @@
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { commons } from './lib/builtin'
-import { uncategorized } from './lib/categories'
 
 const SITE = import.meta.dirname
 const stand = mkdtempSync(join(tmpdir(), 'ttheme-site-check-'))
-const loose = uncategorized(commons.works)
 let failed = 0
-
-if (loose.length > 0) {
-  process.stderr.write(`site/lib/categories.ts has no place for ${loose.join(', ')}\n`)
-  failed = 1
-}
 
 try {
   writeFileSync(
@@ -25,6 +17,7 @@ try {
   writeFileSync(join(stand, 'cast.json'), '{}')
   writeFileSync(join(stand, 'people.json'), '{}')
   writeFileSync(join(stand, 'places.json'), '{}')
+  writeFileSync(join(stand, 'commons.json'), '{"works":[]}')
   writeFileSync(join(stand, 'commands.json'), JSON.stringify({ sections: [], exits: [] }))
   writeFileSync(
     join(stand, 'tsconfig.json'),
@@ -40,6 +33,7 @@ try {
           '@/cast.json': [join(stand, 'cast.json')],
           '@/people.json': [join(stand, 'people.json')],
           '@/places.json': [join(stand, 'places.json')],
+          '@/commons.json': [join(stand, 'commons.json')],
           '@/commands.json': [join(stand, 'commands.json')],
           '@/*': [join(SITE, '*')],
         },

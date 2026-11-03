@@ -9,11 +9,11 @@ drawn and keyed. How every screen and message is worded is in
 A ttheme palette is someone's reading of a character or a work, in twenty
 colors. The built-in palettes are the `ttheme` marketplace, which ships inside
 the package: `builtin/ttheme-marketplace.toml` and `builtin/sets/<work>.toml`,
-one set of palettes per work. What they are of lives apart from them, in the
-commons: `commons/works/<work>.toml`, one file per work with its characters,
-which every marketplace's palettes name and no marketplace owns. A merged
-palette ships with the next release, and `ttheme update` makes it available to
-everyone.
+one set of palettes per work. What they are of lives apart from them, in
+[aninames](https://github.com/kecan0406/aninames): `authority/works/<work>.toml`,
+one file per work with its characters, which every marketplace's palettes name
+and no marketplace owns. A merged palette ships with the next release, and
+`ttheme update` makes it available to everyone.
 
 ## Issues
 
@@ -23,9 +23,11 @@ Every issue starts from a form:
   happened (`npx @kecan0406/ttheme@latest info` when ttheme is not set up or
   `init` failed), and any error text, or what `TTHEME_DEBUG=1 ttheme …` prints.
 - **Feature request** — the situation you are in, before any solution.
-- **Palette request** — a character you would like a built-in palette of, and
-  the colors fans know them by: color values and post numbers, never pictures.
 - **Something else** — a question or a note.
+
+A work or a character the lists lack, or a picture of one, is asked for in
+[aninames' issues](https://github.com/kecan0406/aninames/issues/new/choose), and
+added there once it has been talked over.
 
 Report a vulnerability privately, as [SECURITY.md](SECURITY.md) says, never in
 a public issue.
@@ -55,71 +57,18 @@ then has to pass the contrast checks and everything below.
 
 ## Works and characters
 
-The commons is the list of works and characters palettes are of:
-`commons/works/<work>.toml`, one file per work. Every built-in palette's
-subject is in it — `mise run build` refuses one that is not — so a palette of a
-new work or character comes in the same pull request as the record that adds
-it:
+The list of works and characters palettes are of is
+[aninames' authority](https://github.com/kecan0406/aninames/blob/main/authority/README.md),
+`authority/works/<work>.toml`, one file per work. Every built-in palette's subject
+is in it — `mise run build` refuses one that is not — so a palette of a new work
+or character waits until the record is there and ttheme takes a version of
+aninames that holds it. Ask for the record with
+[an issue](https://github.com/kecan0406/aninames/issues/new/choose); it is added
+once it has been talked over. ttheme reads the list when it installs and updates,
+so a marketplace's palettes find a new record without a new ttheme.
 
-```toml
-"$schema" = "https://www.schemastore.org/ttheme-work.json"
-name = "Madoka Magica"                     # as lists show it; they sort the works by it
-native = "魔法少女まどか☆マギカ"              # its title in the original language, shown dim beside it
-danbooru = "mahou_shoujo_madoka_magica"    # its danbooru copyright tag: what the work is
-lead = "madoka-magica/kaname-madoka"              # optional: who stands for the work, the first character by default
-
-[[character]]                              # in cast order
-id = "kaname-madoka"                       # her danbooru tag's full name; her palettes' subject is madoka-magica/kaname-madoka
-native = ["鹿目まどか"]                      # her names in the original language, the full name first
-danbooru = "kaname_madoka"                 # her danbooru tag: who she is
-
-[[character]]
-id = "sakura-kyoko"
-native = ["佐倉杏子"]
-danbooru = "sakura_kyoko"
-sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakura_kyouko" }
-```
-
-- One work per franchise: the file's name is the work's id (`madoka-magica`), in
-  lowercase letters, digits and single hyphens, at most 40 characters and never
-  `ttheme`, and `name` is its English title as fans write it. A sequel, a
-  spin-off or a game of the same franchise joins its work's file rather than
-  starting another. A new work also takes a row in `site/lib/categories.ts`,
-  which says where the site's browse pages list it.
-- The `[[character]]` tables come in cast order — the order the work's own
-  materials list its cast, the leads first — which `TTHEME_SORT=cast` lists a
-  work's palettes in. A place, an object or an idea from the work is one of its
-  `[[character]]` tables too (`undertale/determination`, `evangelion/magi`), so
-  it keeps its native name and its place in the cast; a palette of the work as a
-  whole names the work alone (`subject = "undertale"`).
-- `lead` names who stands for the work where one palette stands for all of it:
-  the character it is known by, whatever their colors, or the work itself.
-- `danbooru` is who the character is: its danbooru tag (`kaname_madoka`,
-  `lucy_(cyberpunk)`), checked on danbooru first — a character tag with posts.
-  No two characters in the commons share one, so a character is never added
-  twice under two works. `find` searches it for pictures. A work's own
-  `danbooru` is what the work is: its copyright tag, the whole franchise's
-  rather than one season's (`mahou_shoujo_madoka_magica`), which no other work
-  holds and `find` does not search.
-- `native` lists the character's names in its original language (or the Japanese
-  release's), which search matches alongside the palette's name: the full name
-  first, then any other it goes by — a code name, an avatar name, a civilian one
-  (`["雨宮蓮", "来栖暁", "ジョーカー"]`). Check them against the tag's danbooru wiki, whose
-  other names list them; a name may not contain `|`.
-- `also` names the other works a character appears in, whose shelves list its
-  palettes too (`also = ["pop-n-music"]` for a jubeat character who is in pop'n
-  music as well). The character stays in its home work alone.
-- `sites` gives the tag on a site that names the character otherwise, so it
-  needs `danbooru`: one tag, or a list `find` searches together where the site
-  can (any number on konachan and yande.re, two on danbooru, one on zerochan),
-  and `[]` for a site that has none, which `find` then skips. A site it leaves
-  out is searched for the danbooru tag. It is a search term; posts go in a
-  palette's `[[palette.picture]]`, by number.
-- A character with a `danbooru` tag takes that tag's full name for its `id`, without
-  a qualifier and in the tag's own order (`gotoh_hitori` is `gotoh-hitori`,
-  `lucy_(cyberpunk)` is `lucy`), and `mise run build` refuses another. One without a
-  tag, a place or an idea from the work, takes a name of its own. The `id` is told
-  apart inside its work: a subject is `<work>/<id>`, and two works may share one.
+A new work needs no row in `site/lib/categories.ts`: the site places it by what
+the index knows, and a row is for a place the index gets wrong.
 
 ## What this project accepts
 
@@ -187,8 +136,8 @@ background = "#fff8f7"
 
 The tables after a `[[palette]]` that start with `palette.` belong to it, up to
 the next one. The folder holds sets only — the shelf a palette sits on is its
-subject's work, whose title, cast and lead live once, in
-`commons/works/<work>.toml`, never in a set.
+subject's work, whose title, cast and lead live once, in aninames' authority,
+never in a set.
 
 ## Rules
 
@@ -199,9 +148,8 @@ One palette per pull request. At most three open at a time.
   to. Its `slug` is lowercase letters, digits and single hyphens, at most 40
   characters, and no other built-in palette has it. A palette of a character takes
   the character's `id` for its `slug`.
-- `subject` names a work or a character the commons holds: a new one comes
-  with its record in `commons/works/` in the same pull request, and
-  `mise run build` refuses a subject the commons lacks.
+- `subject` names a work or a character aninames' authority holds, and
+  `mise run build` refuses a subject it lacks.
 - The character's colors go in `cursor`, `selection` and `foreground`, which
   every screen and card draws a palette by; an ANSI color holds one only where
   its hue fits that color's role.

@@ -11,6 +11,7 @@ import {
   nameOf,
   readKept,
   readMarketplaces,
+  refreshCommons,
   untuned,
   updatesOf,
   writeKept,
@@ -261,6 +262,12 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   const kept = (source: string, failure: Error): string =>
     `${failureLine(source, failure)} — kept the copy from the last update`
 
+  const works = await refreshCommons(home).catch((failure: Error) => {
+    console.log(`  the list of works: ${failure.message} — kept the copy from the last update`)
+
+    return false
+  })
+
   const remote = marketplaces.filter((source) => !isLocal(source))
   const waiting = new Set(remote)
   const line = pending()
@@ -294,6 +301,10 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
 
   if (!existsSync(installedPath(home))) {
     return code
+  }
+
+  if (works) {
+    sync(home, readMarketplaces(home, false), readInstalled(home))
   }
 
   const updates = updatesLine(home)

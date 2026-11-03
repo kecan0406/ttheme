@@ -2,7 +2,7 @@
 
 The showcase site (Elysia 2 on Bun, deployed to Vercel). `.claude/rules/site.md` holds its rules.
 
-- The site renders from `src/core`, `src/store` and `src/pictures` alone, and builds from `dist/builtin.json` and `dist/commons.json`.
+- The site renders from `src/core`, `src/store` and `src/pictures` alone, and builds from `dist/builtin.json` and `site/commons.json`, the works and characters: the build seeds it from the aninames package, and the site's build takes the live `authority.json` over it.
 - `site:dev` and `site:build` share `site/public` and `site/assets.json`: stop the dev server before a build. `site:check` typechecks the server and browser code and runs `xss-scan` over both, without building and without the network.
 - Browser code is typed against the browsers the site supports (`client/tsconfig.json`), so it uses no iterator helpers: Safari before 18.4 lacks them.
 - The marketplaces and the repository's star count are read from GitHub once, at build. A push to `main` deploys.

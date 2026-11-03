@@ -100,7 +100,6 @@ function makeFixture(): InitPaths {
     'dist/alacritty/themes/ember.toml': 'ember alacritty',
     'dist/alacritty/themes/juno.toml': 'juno alacritty',
     'dist/builtin.json': JSON.stringify(bundleFixture()),
-    'dist/commons.json': JSON.stringify(commonsFixture),
     'skills/ttheme-palette/SKILL.md': '---\nname: ttheme-palette\n---\n',
   } satisfies Record<string, string>
 
@@ -110,9 +109,11 @@ function makeFixture(): InitPaths {
   }
 
   const home = join(base, 'home')
-  mkdirSync(home, { recursive: true })
+  const configHome = join(home, '.config')
+  mkdirSync(join(configHome, 'ttheme'), { recursive: true })
+  writeFileSync(join(configHome, 'ttheme', 'commons.json'), JSON.stringify(commonsFixture))
 
-  return { root, home, configHome: join(home, '.config'), zdotdir: home }
+  return { root, home, configHome, zdotdir: home }
 }
 
 function options(partial: Partial<InitOptions> = {}): InitOptions {

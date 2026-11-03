@@ -1,18 +1,14 @@
 import { expect, test } from 'bun:test'
 import {
   anilistIdsOf,
-  anilistOf,
   castFrom,
   familyOf,
   foundSlugs,
   heldNamed,
-  igdbOf,
   MOST_FOUND,
   membersOf,
   nativeLang,
-  steamOf,
   titleOf,
-  tmdbOf,
 } from '@/lib/found'
 import type { CastMember, NameHit, TaggedWork } from '../../src/core/names.ts'
 
@@ -224,28 +220,6 @@ test("a cast member's native name is Korean by its Hangul, Japanese by its kana,
   expect(nativeLang('星野', 'ja')).toBe('ja')
   expect(nativeLang('星野', 'ko')).toBeNull()
   expect(nativeLang('星野', null)).toBeNull()
-})
-
-test('the picture ids prefer a series to a film and an anime to a manga', () => {
-  const members = [
-    tagged('w/1', [], { refs: ['anilist:manga/7', 'tmdb:movie/5'] }),
-    tagged('w/2', [], { refs: ['anilist:11', 'tmdb:movie/6'] }),
-    tagged('w/3', [], { refs: ['anilist:9', 'tmdb:tv/3'] }),
-  ]
-
-  expect([tmdbOf(members), anilistOf(members)]).toEqual(['tv/3', 9])
-  expect([tmdbOf(members.slice(0, 1)), anilistOf(members.slice(0, 1))]).toEqual(['movie/5', 7])
-  expect([tmdbOf([]), anilistOf([])]).toEqual([null, null])
-})
-
-test('a game takes its Steam app and IGDB slug from whichever member has them', () => {
-  const members = [
-    tagged('w/1', [], { refs: ['igdb:starfall-arena', 'wikidata:Q1'] }),
-    tagged('w/2', [], { refs: ['igdb:starfall-arena--1', 'steam:420'] }),
-  ]
-
-  expect([steamOf(members), igdbOf(members)]).toEqual(['420', 'starfall-arena'])
-  expect([steamOf([]), igdbOf([])]).toEqual([null, null])
 })
 
 test("a cast member shows a Latin name and its name in the work's language, a Danbooru name without its qualifier, and once, pictured by Bangumi before AniList, named by the name aninames prefers", () => {

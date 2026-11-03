@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { BUILTIN_DIR, COMMONS_DIR, loadBuiltin, loadCommons } from '../cli/build.ts'
+import { BUILTIN_DIR, loadBuiltin, loadCommons } from '../cli/build.ts'
 import { contrast, luminance } from './color.ts'
 import { check } from './contrast.ts'
 import { inOther } from './theme.ts'
 
-const themes = loadBuiltin(BUILTIN_DIR, loadCommons(COMMONS_DIR))
+const themes = loadBuiltin(BUILTIN_DIR, loadCommons())
 
 test('color math matches known WCAG values', () => {
   assert.equal(luminance('#000000'), 0)

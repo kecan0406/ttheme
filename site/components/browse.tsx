@@ -19,7 +19,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { Kbd } from '@/components/ui/kbd'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Toggle } from '@/components/ui/toggle'
-import { type KeyArt, keyArtOf } from '@/lib/art'
+import type { KeyArt } from '@/lib/art'
 import {
   alsoIn,
   type Category,
@@ -108,7 +108,7 @@ function stacksIn(shelf: Shelf): Stack[] {
       lang: work?.lang ?? undefined,
       themes,
       lead,
-      art: work ? keyArtOf(artFor(work.id)) : null,
+      art: work ? (artFor(work.id)?.art ?? null) : null,
       facets: facetStyle(lead),
     }
   })
@@ -240,7 +240,7 @@ function Empty({ everyWork = false }: { everyWork?: boolean }) {
       <span data-empty-text>ask for one, or make it yourself.</span>
       <span data-empty-ask hidden class="mt-3 flex flex-wrap justify-center gap-2">
         <LinkButton variant="outline" size="sm" href={requestUrl('')} target="_blank" rel="noopener" data-request>
-          request a palette
+          request a character
           <NewTab />
         </LinkButton>
         <LinkButton size="sm" href={makePath(null)} data-make>

@@ -85,7 +85,7 @@ ttheme adds one block to each config it wires and sets colors only.
 
 ## Contributing
 
-The built-in palettes and the commons (the shared list of works and characters)
+The built-in palettes
 take pull requests. [CONTRIBUTING.md](CONTRIBUTING.md) has their rules,
 [HACKING.md](HACKING.md) says how the code is put together, and the docs are
 Markdown in [`docs/`](docs).

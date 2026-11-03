@@ -17,7 +17,7 @@ Exit codes: 0 done, 1 failed, 2 nothing changed, 3 your input is invalid (the JS
 
 One character, or a work's cast (5–7: the protagonists and the characters the work is known by), all from one production's design. A palette of the same character that ttheme ships or another marketplace has does not stop you. `ttheme check <name>` says whether a palette by that name exists; one of the user's own by that name would be written over, so pick another name or ask.
 
-When `make`'s dry run shows a palette with no `subject`, the commons does not hold the character: read `references/new-work.md`.
+When `make`'s dry run shows a palette with no `subject`, the list of works does not hold the character: read `references/new-work.md`.
 
 Name a palette the character's full name, its danbooru tag without a qualifier and with hyphens for underscores (`gojo_satoru` is `gojo-satoru`, `lucy_(cyberpunk)` is `lucy`). Search and the character's name on the site read from this, so never a nickname or a codename.
 

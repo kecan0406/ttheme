@@ -1,22 +1,11 @@
+import { type Keys, keyArtOf, type Live, livePictures, picksOf } from '@kecan0406/aninames/pictures'
 import { answerOf } from '@/lib/answer'
-import { heroArtOf, igdbArtOf, keyArtOf } from '@/lib/art'
-import {
-  castWorks,
-  type Live,
-  liveArtwork,
-  liveBackdrop,
-  liveHero,
-  liveMedia,
-  livePictures,
-  type Media,
-  type Twitch,
-} from '@/lib/art-source'
+import { castWorks, LIVE } from '@/lib/art-source'
 import { commons, themes } from '@/lib/builtin'
 import { personOf } from '@/lib/cast'
 import { placesFrom, placesOf } from '@/lib/categories'
 import {
   anilistIdsOf,
-  anilistOf,
   castFrom,
   castLeads,
   type FamilyWork,
@@ -27,14 +16,11 @@ import {
   familyOf,
   foundSlugs,
   heldNamed,
-  igdbOf,
   MOST_CAST,
   membersFound,
   membersOf,
   slugLike,
-  steamOf,
   titleOf,
-  tmdbOf,
 } from '@/lib/found'
 import { listedWorks, marketplaces } from '@/lib/marketplaces'
 import type { NamesAnswer } from '@/lib/names'
@@ -48,14 +34,12 @@ const MOST_KEPT = 500
 
 const FOUND_MS = 6000
 
-const TOKEN = process.env.TMDB_TOKEN
-
-const TWITCH: Twitch | undefined =
-  process.env.TWITCH_CLIENT_ID && process.env.TWITCH_CLIENT_SECRET
-    ? { id: process.env.TWITCH_CLIENT_ID, secret: process.env.TWITCH_CLIENT_SECRET }
-    : undefined
-
-const NONE: Live<string | null> = { value: null, settled: true }
+const KEYS: Keys = {
+  ...(process.env.TMDB_TOKEN ? { tmdb: process.env.TMDB_TOKEN } : {}),
+  ...(process.env.TWITCH_CLIENT_ID && process.env.TWITCH_CLIENT_SECRET
+    ? { twitch: { id: process.env.TWITCH_CLIENT_ID, secret: process.env.TWITCH_CLIENT_SECRET } }
+    : {}),
+}
 
 const index = nameIndex(liveSource())
 
@@ -63,7 +47,7 @@ const works = mergeWorks(commons.works, listedWorks.map(workOfListed))
 
 const taken = new Set(works.flatMap((work) => [work.id, slugOfTag(work.danbooru ?? '') ?? work.id]))
 
-const castable = new Map(castWorks(commons.works).map((work) => [work.id, work]))
+const castable = new Map(castWorks(works).map((work) => [work.id, work]))
 
 const shelved = new Set(
   [...themes, ...marketplaces.flatMap((marketplace) => marketplace.palettes)].flatMap((theme) =>
@@ -83,8 +67,6 @@ interface Resolved {
 }
 
 const resolved = new Map<string, Kept<Resolved | null>>()
-
-const media = new Map<number, Kept<Live<Media>>>()
 
 const casts = new Map<string, Kept<Live<FoundCast[]>>>()
 
@@ -110,15 +92,6 @@ function kept<K, T>(store: Map<K, Kept<T>>, key: K, make: () => Promise<T>, sett
   return value
 }
 
-function mediaOf(id: number): Promise<Live<Media>> {
-  return kept(
-    media,
-    id,
-    () => liveMedia(id),
-    (done) => done.settled,
-  )
-}
-
 function resolve(slug: string): Promise<Resolved | null> {
   return kept(
     resolved,
@@ -127,25 +100,12 @@ function resolve(slug: string): Promise<Resolved | null> {
       const members = membersOf(slug, await index.tagged(slug, AbortSignal.timeout(FOUND_MS)))
 
       if (members.length === 0) return null
-      const tmdb = tmdbOf(members)
-      const anilist = anilistOf(members)
-      const steam = steamOf(members)
-      const igdb = igdbOf(members)
-      const backdrop = tmdb && TOKEN ? await liveBackdrop(tmdb, TOKEN) : NONE
-      const banner = !backdrop.value && anilist ? await mediaOf(anilist) : undefined
-      const found = backdrop.value ?? banner?.value.banner ?? null
-      const hero = !found && steam ? await liveHero(steam) : NONE
-      const artwork = !found && !hero.value && igdb && TWITCH ? await liveArtwork(igdb, TWITCH) : NONE
-
-      const art =
-        keyArtOf({ backdrop: backdrop.value, banner: banner?.value.banner ?? null, cast: {} }) ??
-        (hero.value ? heroArtOf(hero.value) : null) ??
-        (artwork.value ? igdbArtOf(artwork.value) : null)
+      const art = await keyArtOf([picksOf(members)], KEYS, LIVE)
 
       return {
-        work: { id: slug, ...titleOf(slug, members), art, places: placesOf(slug, placesFrom(members)) },
+        work: { id: slug, ...titleOf(slug, members), art: art.value, places: placesOf(slug, placesFrom(members)) },
         family: familyOf(members),
-        settled: backdrop.settled && (banner?.settled ?? true) && hero.settled && artwork.settled,
+        settled: art.settled,
       }
     },
     (done) => done === null || done.settled,
@@ -176,7 +136,9 @@ function castOf(slug: string, lang: string | null): Promise<Live<FoundCast[]>> {
     async () => {
       const members = castLeads(await index.cast(slug, AbortSignal.timeout(FOUND_MS), MOST_CAST))
       const ids = anilistIdsOf(members)
-      const pictures = ids.length > 0 ? await livePictures(ids) : { value: new Map<number, string>(), settled: true }
+
+      const pictures =
+        ids.length > 0 ? await livePictures(ids, LIVE) : { value: new Map<number, string>(), settled: true }
 
       return { value: castFrom(members, pictures.value, lang), settled: pictures.settled }
     },

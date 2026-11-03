@@ -1,4 +1,4 @@
-import { type KeyArt, keyArtOf, pictureOf } from '@/lib/art'
+import { type KeyArt, pictureOf } from '@/lib/art'
 import { commons } from '@/lib/builtin'
 import { castFor, personOf } from '@/lib/cast'
 import { type Place, placesOf } from '@/lib/categories'
@@ -8,7 +8,7 @@ import { artFor, placesFoundFor } from '@/lib/key-art'
 import { listedWorks } from '@/lib/marketplaces'
 import { langOf } from '@/lib/theme-entry'
 import { BUILTIN, type Theme, type WorkRef } from '@/lib/themes'
-import { byWork, facetStyle, leadOf } from '@/lib/works'
+import { byWork, facetStyle, leadOf, swatchStyle } from '@/lib/works'
 import { mergeWorks, type Work, workOf, workOfListed } from '../../src/core/commons.ts'
 
 export interface CastSlot {
@@ -16,6 +16,7 @@ export interface CastSlot {
   native: string | null
   lang: string | null
   picture: string | null
+  tones: string | null
   lead: boolean
 }
 
@@ -55,6 +56,10 @@ function castOf(work: Work | undefined, ref: WorkRef, themes: readonly Theme[]):
 
   const known = workOf(commons.works, ref.id) !== undefined
 
+  const tones = new Map(
+    themes.flatMap((theme) => (theme.character ? [[theme.character.id, swatchStyle(theme)] as const] : [])),
+  )
+
   const slots = [
     ...listed.map((character) => ({ id: character.id, native: character.native?.[0] ?? null })),
     ...[...strays].map(([id, native]) => ({ id, native })),
@@ -66,6 +71,7 @@ function castOf(work: Work | undefined, ref: WorkRef, themes: readonly Theme[]):
       native: person ?? native,
       lang: !person && native ? langOf(native, known) : null,
       picture: pictureOf(art, id),
+      tones: tones.get(id) ?? null,
       lead: ref.lead === `${ref.id}/${id}`,
     }
   })
@@ -109,11 +115,11 @@ export function workPages(themes: readonly Theme[], shelves: readonly Shelf[]): 
     pages.set(ref.id, {
       work: ref,
       lead,
-      art: keyArtOf(artFor(ref.id)),
+      art: artFor(ref.id)?.art ?? null,
       facets: facetStyle(lead),
       cast,
       more: castFor(ref.id),
-      findable: commons.works.some((work) => work.id === ref.id && Boolean(work.danbooru)),
+      findable: works.some((work) => work.id === ref.id && Boolean(work.danbooru)),
       markets,
       places: placesOf(ref.id, placesFoundFor(ref.id)),
     })

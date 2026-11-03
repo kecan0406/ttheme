@@ -12,7 +12,7 @@ paths:
 
 ## Search
 
-- find searches for the palette's character by its tags in the commons (`siteTags`); a palette of a whole work, or an original, has no tag.
+- find searches for the palette's character by its tags in the list of works (`siteTags`); a palette of a whole work, or an original, has no tag.
 - A palette names a post only by site and number, never an image URL or file.
 - danbooru is asked at `shima.donmai.us`, and a pasted `danbooru.donmai.us` link still opens.
 - Tags and danbooru's copy are borrowed with one `md5:` list per page, never a request per post.

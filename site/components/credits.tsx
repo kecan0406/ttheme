@@ -32,7 +32,7 @@ const SOURCES: Source[] = [
     name: 'Bangumi',
     home: BANGUMI_HOME,
     icon: null,
-    what: "The characters' pictures on a work's page.",
+    what: "The characters' pictures on a work's page, and a work's cover where it has no key art.",
     notice: null,
   },
   {
@@ -48,6 +48,13 @@ const SOURCES: Source[] = [
     icon: siIgdb,
     what: "A game's key art where Steam has none either.",
     notice: null,
+  },
+  {
+    name: 'Crypton Future Media',
+    home: 'https://piapro.net/intl/en.html',
+    icon: null,
+    what: 'Hatsune Miku, Kagamine Rin, Kagamine Len, Megurine Luka, MEIKO and KAITO, whose pictures are shared under CC BY-NC.',
+    notice: '© Crypton Future Media, INC. www.piapro.net',
   },
 ]
 

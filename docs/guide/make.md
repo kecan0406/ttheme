@@ -124,7 +124,7 @@ marketplace ready to push.
 
 When a search on [ttheme.dev/browse](https://ttheme.dev/browse) finds
 no palette of a work, **make one** opens the builder on blank
-seeds under its name, and **request a palette** asks for one on GitHub.
+seeds under its name, and **request a character** asks for it on GitHub.
 
 ## Share a link
 
@@ -212,7 +212,7 @@ ttheme mirrors one. `[[palette.picture]]` tables list background posts by
 number. The schema names every field, and `ttheme add evangelion.toml` installs
 every palette of a set into your own marketplace.
 
-When a palette is of a work the commons (ttheme's list of works and characters)
+When a palette is of a work the list of works (ttheme's list of works and characters)
 lacks, describe it in `works/<work>.toml`, and name a character of it as
 `subject = "starfall-academy/mira"`:
 
@@ -228,13 +228,13 @@ native = ["星野ミラ"]
 danbooru = "mira_(starfall_academy)"   # the character's danbooru tag, which find searches
 ```
 
-For everything the commons already holds, the commons wins.
+For everything the list of works already holds, the list wins.
 
 ```sh
 ttheme marketplace check ./ttheme-pastel
 ```
 
 It reads the folder as an install would and lists every problem, such as a set
-that does not parse, a slug two palettes share, a subject neither the commons nor
+that does not parse, a slug two palettes share, a subject neither the list of works nor
 your `works/` holds, a key ttheme does not know, and the contrast checks for each
 palette. It writes nothing.

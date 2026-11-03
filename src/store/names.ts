@@ -16,6 +16,7 @@ interface NameIndex {
   cast(slug: string, signal: AbortSignal, limit: number): Promise<CastMember[]>
   find(query: string, slug: string, tags: readonly string[], limit: number, signal: AbortSignal): Promise<CastMember[]>
   person(tag: string, signal: AbortSignal): Promise<CastMember | undefined>
+  title(text: string, signal: AbortSignal): Promise<TaggedWork | undefined>
   open(signal: AbortSignal): Promise<void>
 }
 
@@ -46,6 +47,13 @@ function strings(value: unknown, keep: (s: string) => boolean): string[] {
 }
 
 const LATIN_QUERY = /^[\x20-\x7e]+$/
+
+function titleKey(text: string): string {
+  return text
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '')
+}
 
 const SURE = new Set(['name', 'family', 'prefix'])
 
@@ -266,6 +274,14 @@ export function nameIndex(source: Source): NameIndex {
       const found: unknown = await names.tagged(tag, { kind: 'character', adult: false, signal })
 
       return castMembers(found).find((member) => member.tags.includes(tag))
+    },
+    async title(text, signal) {
+      const found: unknown = await names.search(text, { kind: 'work', limit: FIND_LIMIT, adult: false, signal })
+      const wanted = titleKey(text)
+
+      return taggedWorks(found).find((work) =>
+        [work.label, ...work.names.map((name) => name.text)].some((name) => titleKey(name) === wanted),
+      )
     },
     async open(signal) {
       await names.lookup([], signal)

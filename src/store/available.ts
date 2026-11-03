@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, statSync, utimesSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { AGENT } from '../core/booru.ts'
 import { aboutOf, type Commons, mergeWorks, parseCommons, shelfOf, type Work, wordsOf } from '../core/commons.ts'
 import { boundOf, GATE_RULES, measure, missedRules, shownOf } from '../core/contrast.ts'
@@ -33,6 +33,12 @@ import { modeFor } from './wiring.ts'
 
 const TIMEOUT = 20_000
 
+const COMMONS_URL = 'https://names.ttheme.dev/authority.json'
+
+const COMMONS_MOST = 8 * 1024 * 1024
+
+const COMMONS_EVERY = 24 * 60 * 60 * 1000
+
 export function builtinPath(configHome: string): string {
   return join(configHome, 'ttheme', 'builtin.json')
 }
@@ -48,26 +54,71 @@ export interface Bundled {
 
 export function writeBundled(configHome: string, { builtin, commons }: Bundled): void {
   writeAtomic(builtinPath(configHome), `${JSON.stringify(builtin, null, 2)}\n`)
-  writeAtomic(commonsPath(configHome), `${JSON.stringify(commons, null, 2)}\n`)
+
+  if (commons.works.length > 0) {
+    writeAtomic(commonsPath(configHome), `${JSON.stringify(commons, null, 2)}\n`)
+  }
 }
 
-export function readPackaged(root: string): Bundled {
+export function readCommons(configHome: string): Commons {
+  try {
+    return parseCommons(readFileSync(commonsPath(configHome), 'utf8'))
+  } catch {
+    return { works: [] }
+  }
+}
+
+export function commonsDue(configHome: string): boolean {
+  try {
+    return Date.now() - statSync(commonsPath(configHome)).mtimeMs >= COMMONS_EVERY
+  } catch {
+    return true
+  }
+}
+
+export async function refreshCommons(configHome: string, timeout?: number): Promise<boolean> {
+  if (process.env.TTHEME_NAME_LOOKUP === 'off') {
+    return false
+  }
+
+  const path = commonsPath(configHome)
+
+  try {
+    const bytes = await bodyWithin(await reach(COMMONS_URL, timeout), COMMONS_MOST, 'the list of works is over 8 MB')
+    const next = `${JSON.stringify(parseCommons(new TextDecoder().decode(bytes)), null, 2)}\n`
+    const changed = !existsSync(path) || readFileSync(path, 'utf8') !== next
+
+    mkdirSync(dirname(path), { recursive: true })
+    writeAtomic(path, next)
+
+    return changed
+  } catch (error) {
+    if (existsSync(path)) {
+      const now = new Date()
+      utimesSync(path, now, now)
+    }
+
+    throw error
+  }
+}
+
+export function readPackaged(root: string, configHome?: string): Bundled {
   return {
     builtin: parseBuiltin(readFileSync(join(root, 'dist', 'builtin.json'), 'utf8')),
-    commons: parseCommons(readFileSync(join(root, 'dist', 'commons.json'), 'utf8')),
+    commons: configHome === undefined ? { works: [] } : readCommons(configHome),
   }
 }
 
 export function readBundled(configHome: string): Bundled {
   const path = builtinPath(configHome)
 
-  if (!existsSync(path) || !existsSync(commonsPath(configHome))) {
+  if (!existsSync(path)) {
     throw new Error(`no built-in palettes at ${path} — run \`npx @kecan0406/ttheme@latest init\` first`)
   }
 
   return {
     builtin: parseBuiltin(readFileSync(path, 'utf8')),
-    commons: parseCommons(readFileSync(commonsPath(configHome), 'utf8')),
+    commons: readCommons(configHome),
   }
 }
 

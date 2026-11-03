@@ -6,7 +6,7 @@ cd ${${(%):-%x}:A:h:h}
 
 git rev-parse --verify -q origin/main > /dev/null || return 0
 
-local -a areas=(core store pictures terminals tui cli shell site docs builtin commons schemas skills tests ci agents)
+local -a areas=(core store pictures terminals tui cli shell site docs builtin schemas skills tests ci agents)
 local -a bad
 local hash subject area
 

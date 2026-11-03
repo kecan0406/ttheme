@@ -3,8 +3,9 @@ import { LinkButton } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { type FoundCast, type FoundMember, nativeLang } from '@/lib/found'
 import { Icon, NewTab } from '@/lib/icons'
+import { makePath } from '@/lib/names'
 import { cn } from '@/lib/utils'
-import { requestUrl } from '../../src/core/names.ts'
+import { paletteNameOf, requestUrl } from '../../src/core/names.ts'
 import { SlotArt } from './work-art'
 
 export const CIRCLE = 'relative grid size-24 place-items-center overflow-hidden rounded-full max-sm:size-19'
@@ -14,13 +15,11 @@ export const CAST =
 
 const NOTE = 'text-soft-foreground'
 
-export function Member({ member, lang, work }: { member: FoundCast; lang: string | null; work: string }) {
+export function Member({ member, lang }: { member: FoundCast; lang: string | null }) {
   return (
     <li class="grid w-27 flex-none max-sm:w-21 max-sm:snap-start">
       <a
-        href={requestUrl(`${member.name}, ${work}`)}
-        target="_blank"
-        rel="noopener"
+        href={makePath(paletteNameOf(member.name) ?? null)}
         data-member
         class="group/who grid content-start justify-items-center gap-2 text-center outline-none transition-opacity duration-200 data-dim:opacity-45"
       >
@@ -37,7 +36,6 @@ export function Member({ member, lang, work }: { member: FoundCast; lang: string
             <span translate="no" class="truncate" safe>
               {member.name}
             </span>
-            <NewTab class="size-3 flex-none opacity-0 transition-opacity group-hover/who:opacity-100 group-focus-visible/who:opacity-100" />
           </b>
           {member.native === null ? null : (
             <small
@@ -147,7 +145,7 @@ export function CastFound({
       <ul class={CAST}>
         {cast.map((member) =>
           member.palette === null ? (
-            <Member member={member} lang={lang} work={work} />
+            <Member member={member} lang={lang} />
           ) : (
             <Holding member={member} palette={member.palette} />
           ),
@@ -170,7 +168,7 @@ export function CastFound({
         <span aria-hidden="true">( ˘ω˘ )</span>
       </p>
       <LinkButton variant="outline" size="sm" href={requestUrl(`${query}, ${work}`)} target="_blank" rel="noopener">
-        request a palette
+        request a character
         <NewTab />
       </LinkButton>
     </div>

@@ -76,6 +76,7 @@ jobs:
           mkdir built
           curl -fsS https://index.ttheme.dev/marketplaces.json -o built/marketplaces.json
           curl -fsS https://index.ttheme.dev/stars.json -o built/stars.json
+          curl -fsS https://names.ttheme.dev/authority.json -o built/authority.json
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: rebuilt

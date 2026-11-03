@@ -1,8 +1,8 @@
+import published from '@/commons.json' with { type: 'json' }
 import { type Shelves, toTheme } from '@/lib/theme-entry'
 import type { Theme } from '@/lib/themes'
 import { leadsOf } from '@/lib/works'
 import bundled from '../../dist/builtin.json' with { type: 'json' }
-import published from '../../dist/commons.json' with { type: 'json' }
 import { parseCommons, worldOrder } from '../../src/core/commons.ts'
 import { parseBuiltin } from '../../src/core/manifest.ts'
 

@@ -1,4 +1,3 @@
-import pkg from '../../package.json' with { type: 'json' }
 import type { Work } from './commons.ts'
 import { searchKey } from './text.ts'
 
@@ -6,8 +5,10 @@ export const MAKE_URL = 'https://ttheme.dev/docs/guide/make'
 
 const SLUG_MOST = 40
 
+const REQUEST_URL = 'https://github.com/kecan0406/aninames/issues/new'
+
 export function requestUrl(asked: string): string {
-  return `${pkg.bugs}/new?${new URLSearchParams({ template: 'palette.yml', character: asked })}`
+  return `${REQUEST_URL}?${new URLSearchParams({ template: 'character.yml', character: asked })}`
 }
 
 export interface NameHit {

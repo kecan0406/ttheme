@@ -1,6 +1,6 @@
 import { SITES } from './booru.ts'
 import { memo } from './memo.ts'
-import { slugOfTag, unqualified } from './names.ts'
+import { unqualified } from './names.ts'
 import { escaped, quoted } from './text.ts'
 import {
   BUILTIN,
@@ -318,51 +318,10 @@ function readCommonsJson(source: string): Commons {
       throw new Error(`the commons' work ${JSON.stringify(id)} does not read`)
     }
 
-    return readWork(`commons/${id}`, text, id)
+    return readWork(`commons/${id}`, text, id, true)
   })
 
   return { works }
-}
-
-export function commonsProblems(works: readonly Work[]): string[] {
-  const ids = new Set(works.map((w) => w.id))
-  const tags = new Map<string, string>()
-  const problems: string[] = []
-
-  for (const work of works) {
-    const held = work.danbooru === undefined ? undefined : tags.get(work.danbooru)
-
-    if (work.danbooru !== undefined && held !== undefined) {
-      problems.push(`${work.id}: danbooru ${quoted(work.danbooru)} is ${held} already — one work, one subject`)
-    } else if (work.danbooru !== undefined) {
-      tags.set(work.danbooru, work.id)
-    }
-
-    for (const c of work.characters) {
-      const subject = `${work.id}/${c.id}`
-      const full = c.danbooru === undefined ? c.id : slugOfTag(c.danbooru)
-
-      if (full !== c.id) {
-        problems.push(`${subject}: a character's id is its danbooru tag's full name, ${quoted(full ?? '')}`)
-      }
-
-      for (const other of c.also ?? []) {
-        if (other === work.id || !ids.has(other)) {
-          problems.push(`${subject}: also names ${quoted(other)}, which is not another work`)
-        }
-      }
-
-      const seen = c.danbooru === undefined ? undefined : tags.get(c.danbooru)
-
-      if (c.danbooru !== undefined && seen !== undefined) {
-        problems.push(`${subject}: danbooru ${quoted(c.danbooru)} is ${seen} already — one character, one subject`)
-      } else if (c.danbooru !== undefined) {
-        tags.set(c.danbooru, subject)
-      }
-    }
-  }
-
-  return problems
 }
 
 export function mergeWorks(commons: readonly Work[], proposals: readonly Work[]): Work[] {

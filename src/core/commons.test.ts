@@ -4,7 +4,6 @@ import { test } from 'node:test'
 import {
   aboutOf,
   castIndex,
-  commonsProblems,
   isTag,
   leadOf,
   mergeWorks,
@@ -219,40 +218,6 @@ test("a character's also never repeats a work or names its own, so no list shows
   )
 
   assert.equal(alone.characters[0]?.also, undefined)
-})
-
-test('the commons holds together: also names another work, and one danbooru tag is one subject', () => {
-  const glassArcade: Work = {
-    id: 'glass-arcade',
-    name: 'Glass Arcade',
-    characters: [{ id: 'lumi', danbooru: 'lumi_(glass_arcade)', also: ['night-parade'] }],
-  }
-
-  const nightParade: Work = {
-    id: 'night-parade',
-    name: 'Night Parade',
-    characters: [{ id: 'lumi2', danbooru: 'lumi_(glass_arcade)', also: ['glass-arcade'] }],
-  }
-
-  assert.deepEqual(commonsProblems([starfall]), [])
-  assert.equal(commonsProblems([glassArcade]).length, 1)
-  assert.match(commonsProblems([glassArcade, nightParade]).join('\n'), /one character, one subject/)
-  const tidewater: Work = { id: 'tidewater', name: 'Tidewater', danbooru: 'starfall', characters: [] }
-  assert.deepEqual(commonsProblems([starfall, tidewater]), [
-    'tidewater: danbooru "starfall" is starfall already — one work, one subject',
-  ])
-})
-
-test("a character with a tag takes the tag's full name for an id", () => {
-  const work: Work = { id: 'tide', name: 'Tide', characters: [{ id: 'nell', danbooru: 'harbor_nell' }] }
-
-  assert.deepEqual(commonsProblems([work]), [
-    'tide/nell: a character\'s id is its danbooru tag\'s full name, "harbor-nell"',
-  ])
-  assert.deepEqual(
-    commonsProblems([{ ...work, characters: [{ id: 'harbor-nell', danbooru: 'harbor_nell' }, { id: 'lighthouse' }] }]),
-    [],
-  )
 })
 
 test('the commons reads back from the JSON init writes, and refuses another shape', () => {

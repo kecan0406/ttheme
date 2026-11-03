@@ -2,6 +2,7 @@ import { Database } from 'bun:sqlite'
 import { chmodSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { rm } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
+import { loadCommons } from '../../src/cli/build.ts'
 import { find, readPackaged } from '../../src/store/available.ts'
 import { TERMINAL_DOMAIN } from '../../src/terminals/terminal-app.ts'
 import { installTestPicture } from '../picture.ts'
@@ -356,6 +357,7 @@ export async function build(
     rmSync(join(place.configHome, 'ghostty'), { recursive: true, force: true })
   }
 
+  write(join(place.configHome, 'ttheme', 'commons.json'), JSON.stringify(loadCommons()))
   await cli(place, 'add', ...PALETTES)
   const { palettes } = readPackaged(repo).builtin
   PICTURED.forEach((name, i) => {

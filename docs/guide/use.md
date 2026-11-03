@@ -174,8 +174,9 @@ lists every public marketplace on GitHub. Type a work's title there, in any
 language you know it by, or a palette's whole name, and it lists the works it
 means, each with the marketplaces that have palettes of it; once you stop typing
 it asks names.ttheme.dev what the title means, which `TTHEME_NAME_LOOKUP=off`
-stops. A character is found on its work's page at ttheme.dev. When
-no marketplace has one yet, `Request a palette` opens a request on GitHub. In
+stops. The same setting stops `init` and `update` reading the list of works from
+there, and palettes are then listed without their works. A character is found on its work's page at ttheme.dev. When
+no marketplace has one yet, `Request a character` opens a request on GitHub. In
 Preview, a filter that finds nothing offers the same search, and `enter` takes
 it there. [ttheme.dev/browse](https://ttheme.dev/browse) searches the
 same way. A palette is colors in a TOML file,

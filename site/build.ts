@@ -6,9 +6,16 @@ import subsetFont from 'subset-font'
 import { EXIT_CODES } from '../src/cli/answer.ts'
 import { repoFacts, showcase } from '../src/cli/showcase.ts'
 import { DOCS_URL, docsOf, flagRows, headOf, SECTIONS, usageOf, VERB_SPECS } from '../src/cli/verbs.ts'
-import { artProblems, castWorks, fetchArt, fetchCasts, fetchPeople, fetchPlaces } from './lib/art-source'
-import { commons, themes } from './lib/builtin'
-import { uncategorized } from './lib/categories'
+import {
+  castWorks,
+  fetchArt,
+  fetchCasts,
+  fetchPeople,
+  fetchPlaces,
+  type Recorded,
+  recordedWorks,
+} from './lib/art-source'
+import { themes } from './lib/builtin'
 import type { Commands } from './lib/commands'
 import { REPO } from './lib/gallery'
 
@@ -33,6 +40,12 @@ const SNAPSHOT = join(SITE, 'marketplaces.json')
 const REPO_FILE = join(SITE, 'repo.json')
 
 const ART_FILE = join(SITE, 'art.json')
+
+const COMMONS_FILE = join(SITE, 'commons.json')
+
+const AUTHORITY_URL = 'https://names.ttheme.dev/authority.json'
+
+const AUTHORITY_COPY = join(SITE, '..', 'node_modules', '@kecan0406', 'aninames', 'lib', 'authority.json')
 
 const CAST_FILE = join(SITE, 'cast.json')
 
@@ -389,44 +402,48 @@ async function fetched<T>(path: string, what: string, load: () => Promise<T>, em
   }
 }
 
-export async function snapshot(fresh: boolean): Promise<void> {
-  const token = process.env.GITHUB_TOKEN
+async function authority(): Promise<{ works: unknown[] }> {
+  try {
+    const response = await fetch(AUTHORITY_URL, { signal: AbortSignal.timeout(15000) })
 
-  await fetched(SNAPSHOT, 'marketplaces', () => showcase(token), [], fresh)
-  await fetched(REPO_FILE, `stars of ${REPO}`, () => repoFacts(REPO, token), null, fresh)
-  await fetched(
-    ART_FILE,
-    'key art',
-    () => fetchArt(process.env.TMDB_TOKEN, (message) => process.stderr.write(`site: ${message}\n`)),
-    {},
-    fresh,
-  )
-  await fetched(
-    CAST_FILE,
-    'casts',
-    () => fetchCasts(castWorks(commons.works), (message) => process.stderr.write(`site: ${message}\n`)),
-    {},
-    fresh,
-  )
-  await fetched(PEOPLE_FILE, 'people', () => fetchPeople(commons.works), {}, fresh)
-  const known = new Set(commons.works.map((work) => work.id))
-  const shown = JSON.parse(readFileSync(SNAPSHOT, 'utf8')) as { works: { id: string; danbooru?: string }[] }[]
+    if (response.ok) return (await response.json()) as { works: unknown[] }
+    process.stderr.write(`site: ${AUTHORITY_URL} answered ${response.status}, so the works are the package's\n`)
+  } catch (error) {
+    process.stderr.write(`site: ${AUTHORITY_URL} — ${(error as Error).message}, so the works are the package's\n`)
+  }
+
+  return JSON.parse(readFileSync(AUTHORITY_COPY, 'utf8')) as { works: unknown[] }
+}
+
+function worksOf(): Recorded[] {
+  const recorded = recordedWorks(JSON.parse(readFileSync(COMMONS_FILE, 'utf8')))
+  const known = new Set(recorded.map((work) => work.id))
+  const shown = JSON.parse(readFileSync(SNAPSHOT, 'utf8')) as { works: Recorded[] }[]
   const proposed = shown.flatMap((one) => one.works).filter((work) => !known.has(work.id))
 
-  await fetched(PLACES_FILE, 'places of proposed works', () => fetchPlaces(proposed), {}, fresh)
+  return [...recorded, ...proposed.map((work) => ({ ...work, characters: work.characters ?? [] }))]
 }
 
-function artChecked(): void {
-  const problems = artProblems(commons.works)
+export async function snapshot(fresh: boolean): Promise<void> {
+  const token = process.env.GITHUB_TOKEN
+  const say = (message: string) => process.stderr.write(`site: ${message}\n`)
 
-  if (problems.length > 0)
-    throw new Error(`site/lib/art-source.ts names what the commons lacks:\n  ${problems.join('\n  ')}`)
-}
+  await fetched(COMMONS_FILE, 'works', authority, { works: [] }, fresh)
+  await fetched(SNAPSHOT, 'marketplaces', () => showcase(token), [], fresh)
+  await fetched(REPO_FILE, `stars of ${REPO}`, () => repoFacts(REPO, token), null, fresh)
+  const works = worksOf()
 
-function categoriesChecked(): void {
-  const loose = uncategorized(commons.works)
+  const keys = {
+    ...(process.env.TMDB_TOKEN ? { tmdb: process.env.TMDB_TOKEN } : {}),
+    ...(process.env.TWITCH_CLIENT_ID && process.env.TWITCH_CLIENT_SECRET
+      ? { twitch: { id: process.env.TWITCH_CLIENT_ID, secret: process.env.TWITCH_CLIENT_SECRET } }
+      : {}),
+  }
 
-  if (loose.length > 0) throw new Error(`site/lib/categories.ts has no place for ${loose.join(', ')}`)
+  await fetched(ART_FILE, 'key art', () => fetchArt(works, keys, say), {}, fresh)
+  await fetched(CAST_FILE, 'casts', () => fetchCasts(castWorks(works), say), {}, fresh)
+  await fetched(PEOPLE_FILE, 'people', () => fetchPeople(works), {}, fresh)
+  await fetched(PLACES_FILE, 'places', () => fetchPlaces(works), {}, fresh)
 }
 
 async function prerender(bundle: string): Promise<Record<string, { path: string; contentType: string }>> {
@@ -518,8 +535,6 @@ async function docsChecked(): Promise<void> {
 }
 
 if (import.meta.main) {
-  artChecked()
-  categoriesChecked()
   await snapshot(true)
   commands()
   await docsChecked()

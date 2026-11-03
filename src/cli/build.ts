@@ -1,6 +1,6 @@
-import { readdirSync, readFileSync, rmSync } from 'node:fs'
+import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
-import { aboutOf, type Commons, commonsProblems, readWork, WORKS_DIR } from '../core/commons.ts'
+import { aboutOf, type Commons, parseCommons } from '../core/commons.ts'
 import { checkAll } from '../core/contrast.ts'
 import { readSet, SETS_DIR, setNameOf } from '../core/sets.ts'
 import { BUILTIN, fail, inOther, MARKETPLACE_FILE, type Theme, themeOf, toml } from '../core/theme.ts'
@@ -8,11 +8,11 @@ import { WIRED } from '../core/wired.ts'
 import { ROOT } from '../root.ts'
 import type { Emitter } from '../terminals/emit/types.ts'
 import { WIRINGS } from '../terminals/index.ts'
-import { bundleJson, bundleOf, commonsJson } from './emit-manifest.ts'
+import { bundleJson, bundleOf } from './emit-manifest.ts'
 import { palettesZsh } from './emit-shell.ts'
 
 export const BUILTIN_DIR = join(ROOT, 'builtin')
-export const COMMONS_DIR = join(ROOT, 'commons')
+export const AUTHORITY_PATH = join(ROOT, 'node_modules', '@kecan0406', 'aninames', 'lib', 'authority.json')
 const DIST = join(ROOT, 'dist')
 
 const TERMINAL_EMITTERS: Emitter[] = WIRED.map((id) => WIRINGS[id].emitter)
@@ -30,18 +30,8 @@ function tomlFiles(dir: string, at: string): string[] {
     .sort()
 }
 
-export function loadCommons(dir: string): Commons {
-  const works = tomlFiles(join(dir, WORKS_DIR), WORKS_DIR).map((file) =>
-    readWork(`${WORKS_DIR}/${file}`, readFileSync(join(dir, WORKS_DIR, file), 'utf8'), basename(file, '.toml')),
-  )
-
-  const problems = commonsProblems(works)
-
-  if (problems.length > 0) {
-    throw new Error(`the commons does not hold together:\n  ${problems.join('\n  ')}`)
-  }
-
-  return { works }
+export function loadCommons(path = AUTHORITY_PATH): Commons {
+  return parseCommons(readFileSync(path, 'utf8'))
 }
 
 export function loadBuiltin(dir: string, commons: Commons): Theme[] {
@@ -67,7 +57,7 @@ export function loadBuiltin(dir: string, commons: Commons): Theme[] {
       const theme = themeOf(`${at}: ${slug}`, doc, { name: `${BUILTIN}/${slug}`, builtin: true })
 
       if (theme.subject !== undefined && !aboutOf(commons.works, theme.subject)?.known) {
-        fail(`${at}: ${slug}`, `subject "${theme.subject}" is not in the commons — add it to commons/works first`)
+        fail(`${at}: ${slug}`, `subject "${theme.subject}" is not in the authority — add it to aninames first`)
       }
 
       const about = aboutOf(commons.works, theme.subject)
@@ -96,7 +86,7 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
   }
 
   const terminals = only && only.length > 0 ? TERMINAL_EMITTERS.filter((e) => only.includes(e.id)) : TERMINAL_EMITTERS
-  const commons = loadCommons(COMMONS_DIR)
+  const commons = loadCommons()
   const themes = loadBuiltin(BUILTIN_DIR, commons)
 
   const violations = [
@@ -145,7 +135,6 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
 
   const shared = [
     { path: 'builtin.json', content: bundleJson(bundle) },
-    { path: 'commons.json', content: commonsJson(commons) },
     { path: 'shell/palettes.zsh', content: palettesZsh(bundle.palettes, commons.works) },
   ]
 
@@ -153,6 +142,8 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
     await Bun.write(join(DIST, out.path), out.content)
     count++
   }
+
+  writeFileSync(join(ROOT, 'site', 'commons.json'), readFileSync(AUTHORITY_PATH))
 
   console.log(`  ${'shared'.padEnd(16)} ${shared.map((out) => out.path).join(' ')}`)
 

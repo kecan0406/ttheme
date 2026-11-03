@@ -189,7 +189,3 @@ export function alsoIn(places: readonly Place[], shown: CategorySlug | null): st
 
   return others.length > 0 ? `+ ${others.map((one) => one.label).join(', ')}` : null
 }
-
-export function uncategorized(works: readonly { id: string }[]): string[] {
-  return works.flatMap((work) => (WORK_PLACES.has(work.id) ? [] : [work.id]))
-}

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
@@ -16,12 +16,16 @@ import {
   available,
   bodyWithin,
   booruTags,
+  commonsDue,
   find,
   firstBytes,
   gateFailures,
   reach,
+  readBundled,
+  readCommons,
   readKept,
   readMarketplaces,
+  refreshCommons,
   search,
   untuned,
   updatesOf,
@@ -450,4 +454,70 @@ test('a request says who is asking unless the caller names someone', async () =>
 
   assert.match(seen[0] ?? '', /^ttheme\//)
   assert.equal(seen[1], 'orla')
+})
+
+function answering(answer: () => Promise<Response>): () => void {
+  const real = globalThis.fetch
+
+  globalThis.fetch = Object.assign(answer, { preconnect: real.preconnect })
+
+  return () => {
+    globalThis.fetch = real
+  }
+}
+
+test('palettes read without the list of works, which is due until it has come', () => {
+  const at = home()
+  writeFileSync(join(at, 'ttheme', 'builtin.json'), builtinJson([entry()]))
+
+  assert.deepEqual(readBundled(at).commons, { works: [] })
+  assert.equal(commonsDue(at), true)
+})
+
+test('the list of works is fetched as a whole, and says whether it changed', async () => {
+  const at = home()
+  const done = answering(async () => new Response(JSON.stringify({ works: [{ ...TIDEWATER, art: { steam: '420' } }] })))
+
+  try {
+    assert.equal(await refreshCommons(at), true)
+    assert.equal(await refreshCommons(at), false)
+  } finally {
+    done()
+  }
+
+  assert.deepEqual(readCommons(at), { works: [TIDEWATER] })
+  assert.equal(commonsDue(at), false)
+})
+
+test('a list of works that fails or does not read keeps the copy, and is not asked for again that day', async () => {
+  const at = home()
+  writeFileSync(join(at, 'ttheme', 'commons.json'), JSON.stringify({ works: [TIDEWATER] }))
+  utimesSync(join(at, 'ttheme', 'commons.json'), new Date(0), new Date(0))
+  const done = answering(async () => new Response('<html>'))
+
+  try {
+    await assert.rejects(refreshCommons(at), /not valid JSON/)
+  } finally {
+    done()
+  }
+
+  assert.deepEqual(readCommons(at), { works: [TIDEWATER] })
+  assert.equal(commonsDue(at), false)
+})
+
+test('TTHEME_NAME_LOOKUP=off asks nothing for the list of works', async () => {
+  const at = home()
+
+  const done = answering(async () => {
+    throw new Error('asked')
+  })
+
+  process.env.TTHEME_NAME_LOOKUP = 'off'
+
+  try {
+    assert.equal(await refreshCommons(at), false)
+  } finally {
+    delete process.env.TTHEME_NAME_LOOKUP
+    done()
+  }
 })

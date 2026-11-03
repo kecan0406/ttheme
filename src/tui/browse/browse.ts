@@ -1367,7 +1367,7 @@ export class BrowsePanel {
           group: 'Add',
           keys: 'enter on ⧉',
           does: 'Ask for a palette or read how to make one',
-          more: 'Request a palette and Make one show when no marketplace has what you typed.',
+          more: 'Request a character and Make one show when no marketplace has what you typed.',
           run: () => this.take(true),
         },
         {

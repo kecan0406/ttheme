@@ -32,11 +32,11 @@ test('a hit no work matches is kept apart, and a work found twice is listed once
   assert.deepEqual(named.unknown, [lost])
 })
 
-test('a request names what was asked for in the palette form', () => {
+test('a request names what was asked for in the name index form', () => {
   const url = new URL(requestUrl('Moonlit Harbor'))
-  assert.equal(url.searchParams.get('template'), 'palette.yml')
+  assert.equal(url.searchParams.get('template'), 'character.yml')
   assert.equal(url.searchParams.get('character'), 'Moonlit Harbor')
-  assert.match(url.pathname, /\/issues\/new$/)
+  assert.equal(url.pathname, '/kecan0406/aninames/issues/new')
 })
 
 test("a slug is a tag without its qualifier and with hyphens, in the tag's own order", () => {

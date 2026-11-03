@@ -401,15 +401,13 @@ async function targetOf(into: string | undefined, dry: boolean): Promise<Target 
   const dir = into === undefined ? undefined : expand(into)
 
   if (dir && builtinIn(dir)) {
-    const commons = join(dir, '..', 'commons')
-
     return {
       dir,
       id: BUILTIN,
       builtin: true,
-      commons: loadCommons(commons),
+      commons: loadCommons(),
       proposals: [],
-      records: join(commons, WORKS_DIR),
+      records: '',
     }
   }
 
@@ -571,6 +569,11 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
 
     const about = aboutOf(known, subject)
     const nativeNames = !subject ? undefined : about?.known ? about.character?.native : anchors.nativeNames
+
+    if (target?.builtin && subject && !about?.known) {
+      failed.push({ path: 'work', problem: `${subject} is not in the authority — add it to aninames first` })
+      continue
+    }
 
     if (subject && !about?.known) {
       const id = workIdOf(subject)

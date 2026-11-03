@@ -545,7 +545,7 @@ test('a search nothing answers offers a request and the guide, and enter on the 
   })
 
   assert.match(frames, /⌕ No marketplaces match 'moonlit'/)
-  assert.match(frames, /Request a palette\]? +ask for one on GitHub/)
+  assert.match(frames, /Request a character\]? +ask for one on GitHub/)
   assert.match(frames, /Make one\]? +make it and publish it yourself/)
   assert.equal(visited.length, 1)
   assert.equal(new URL(visited[0] ?? '').searchParams.get('character'), 'moonlit')
@@ -559,7 +559,7 @@ test('where no browser can open, enter on the request shows the address instead'
     io: io({ names, visit: () => false }),
   })
 
-  assert.match(frames, /issues\/new\?template=palette\.yml&character=moonlit/)
+  assert.match(frames, /issues\/new\?template=character\.yml&character=moonlit/)
 })
 
 test('a search taken back while its longer name is asked keeps the works it found', async () => {

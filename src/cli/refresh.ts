@@ -10,6 +10,7 @@ import {
   type Archive,
   bodyWithin,
   builtinPath,
+  commonsDue,
   Missing,
   type ReadMarketplace,
   reach,
@@ -17,6 +18,7 @@ import {
   readBundled,
   readCachedArchive,
   readMarketplaces,
+  refreshCommons,
   updatesOf,
 } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
@@ -309,13 +311,19 @@ export async function autoRefresh(home = configHome()): Promise<void> {
     }
 
     const due = dueSources(home, readInstalled(home))
+    const works = commonsDue(home)
 
-    if (due.length === 0) {
+    if (due.length === 0 && !works) {
       return
     }
 
-    const line = pending(`Checking ${due.map(shownSource).join(', ')} for updates`)
-    await Promise.all(due.map((source) => attempt(home, source, AUTO_TIMEOUT)))
+    const named = [...due.map(shownSource), ...(works ? ['the list of works'] : [])]
+    const line = pending(`Checking ${named.join(', ')} for updates`)
+
+    await Promise.all([
+      ...due.map((source) => attempt(home, source, AUTO_TIMEOUT)),
+      ...(works ? [refreshCommons(home, AUTO_TIMEOUT).catch(() => false)] : []),
+    ])
     line.done()
   } catch {
     return

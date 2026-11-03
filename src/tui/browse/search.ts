@@ -420,7 +420,7 @@ export class Search {
     }
 
     if (found.kind === 'request') {
-      return button(p, at, focused, MARKS.link, 'Request a palette', after('ask for one on GitHub'))
+      return button(p, at, focused, MARKS.link, 'Request a character', after('ask for one on GitHub'))
     }
 
     if (found.kind === 'make') {
@@ -491,7 +491,7 @@ export class Search {
     if (found.kind === 'request') {
       const what = `Asks for a built-in palette of ${found.asked} on GitHub, in a form your browser opens`
 
-      return this.opening('Request a palette', what, requestUrl(found.asked), 'enter opens the form', width)
+      return this.opening('Request a character', what, requestUrl(found.asked), 'enter opens the form', width)
     }
 
     if (found.kind === 'make') {

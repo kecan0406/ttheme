@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://www.schemastore.org/ttheme-work.json",
   "title": "ttheme work",
-  "description": "One work — a series, a game, a franchise — and its characters, in the order its cast is listed: commons/works/<work>.toml in the ttheme repository, or works/<work>.toml in a marketplace that proposes a work or a character the commons does not hold yet. Its file name is the work's id\nhttps://github.com/kecan0406/ttheme/blob/main/CONTRIBUTING.md#works-and-characters",
+  "description": "One work — a series, a game, a franchise — and its characters, in the order its cast is listed: works/<work>.toml in a marketplace that proposes a work or a character the commons does not hold yet. Its file name is the work's id\nhttps://github.com/kecan0406/ttheme/blob/main/CONTRIBUTING.md#works-and-characters",
   "type": "object",
   "definitions": {
     "id": {

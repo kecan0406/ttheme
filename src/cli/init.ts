@@ -25,7 +25,15 @@ import {
   skillPath,
 } from '../store/agent-skills.ts'
 import { readAppearance, systemAppearance } from '../store/appearance.ts'
-import { available, type Bundled, readMarketplaces, readPackaged, writeBundled } from '../store/available.ts'
+import {
+  available,
+  type Bundled,
+  readCommons,
+  readMarketplaces,
+  readPackaged,
+  refreshCommons,
+  writeBundled,
+} from '../store/available.ts'
 import { editUserFile, writeAtomic } from '../store/edits.ts'
 import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, startupPalette, worn, writeInstalled } from '../store/installed.ts'
@@ -61,6 +69,7 @@ import * as p from './ask.ts'
 import { build } from './build.ts'
 import { pickPalettes } from './installs.ts'
 import { redrawPictures } from './redraw.ts'
+import { AUTO_TIMEOUT } from './refresh.ts'
 import { launch } from './release.ts'
 import { pointDefaults, sync, wiringNext, wiringNotes, wiringPlan, withBases } from './sync.ts'
 
@@ -182,7 +191,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     writes,
     settings,
     forget,
-    bundled: readPackaged(paths.root),
+    bundled: readPackaged(paths.root, paths.configHome),
     installed,
     notes,
   }
@@ -205,7 +214,7 @@ function currentView(configHome: string, bundled: Bundled): Manifest {
 }
 
 export function againManifest(state: Installed, paths: InitPaths): Manifest {
-  const bundled = readPackaged(paths.root)
+  const bundled = readPackaged(paths.root, paths.configHome)
   const builtin = marketplacesOf(state.marketplaces).includes(BUILTIN) ? bundled.builtin.palettes : []
   const names = new Set(builtin.map((e) => e.name))
   const current = currentView(paths.configHome, bundled)
@@ -652,6 +661,12 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     throw new Error(`ttheme runs on Node.js ${LEAST_NODE} or newer, not ${node} — update Node.js first`)
   }
 
+  await refreshCommons(configHome, AUTO_TIMEOUT).catch(() => {
+    if (readCommons(configHome).works.length === 0) {
+      console.log('The list of works did not load: palettes are listed without their works until `ttheme update`\n')
+    }
+  })
+
   const runner = runnerOf(host.env.npm_config_user_agent)
   const wtHome = windowsAppData(host)
   const wtProfile = process.env.WT_PROFILE_ID
@@ -726,7 +741,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)
   const mode = await askMode(configHome, terminals, existing !== undefined)
   const worn: Mode = mode === 'auto' ? (readAppearance() ?? systemAppearance(host) ?? 'dark') : mode
-  const made = existing ? againManifest(existing, paths) : manifestOf(readPackaged(ROOT))
+  const made = existing ? againManifest(existing, paths) : manifestOf(readPackaged(ROOT, configHome))
   const manifest = { ...made, palettes: made.palettes.map((entry) => inMode(entry, worn)) }
 
   const palettes = existing
