@@ -439,18 +439,20 @@ export function DocsMenu({ menu }: { menu: MenuFacts }) {
         </div>
       </div>
       <MenuFoot>
-        <span>
-          <b class="font-mono font-medium text-foreground" safe>
-            {menu.release.version}
-          </b>{' '}
-          is out,{' '}
+        <span class="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+          <span>
+            <b class="font-mono font-medium text-foreground" safe>
+              {menu.release.version}
+            </b>{' '}
+            is out
+          </span>
           <a
             href={menu.release.url}
             target="_blank"
             rel="noopener"
             class="inline-flex items-center gap-1 text-soft-foreground underline underline-offset-3 hover:text-foreground"
           >
-            what changed
+            See What Changed
             <NewTab class="size-3.5" />
           </a>
         </span>

@@ -144,7 +144,7 @@ export function Home({
             </div>
             <div class="flex w-full flex-wrap items-end gap-3">
               <LinkButton variant="pop" size="lg" href={marketplacePath(BUILTIN)}>
-                browse the palettes
+                Browse Palettes
                 <Icon node={ArrowRight} />
               </LinkButton>
               <InitRow class="min-w-70 flex-1 bg-card" />
