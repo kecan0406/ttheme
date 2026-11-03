@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readFileSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { backdropTone } from '../core/backdrop-tone.ts'
 import {
   blockSet,
@@ -39,10 +39,9 @@ import {
   tuneOf,
   writeTune,
 } from '../pictures/backdrop.ts'
-import { cacheDir, fetchBytes, fetchCredits, fetchLent, fetchPost, fetchProfiles } from '../pictures/booru-net.ts'
+import { fetchBytes, fetchCredits, fetchLent, fetchPost, fetchProfiles } from '../pictures/booru-net.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../pictures/cutout.ts'
 import { TIMEOUT } from '../pictures/redrawing.ts'
-import { writeAtomic } from '../store/edits.ts'
 import { blurOf, coloringFor } from '../store/wiring.ts'
 import { colorless } from '../terminals/osc.ts'
 import { linkable } from '../terminals/terminal.ts'
@@ -200,30 +199,21 @@ async function install(
     throw new Error('too large to use')
   }
 
-  const orig = join(cacheDir(site), 'orig', `${shared.id}.${version.ext}`)
-  let bytes: Uint8Array
-
-  if (existsSync(orig)) {
-    bytes = new Uint8Array(readFileSync(orig))
-  } else {
-    step('Downloading')
-    const from = fileOf(site, post, version)
-    bytes = await fetchBytes(from.site, from.url, signal, (got, size) => step('Downloading', progress(got, size)))
-    writeAtomic(orig, bytes)
-  }
-
+  step('Downloading')
+  const from = fileOf(site, post, version)
+  const bytes = await fetchBytes(from.site, from.url, signal, (got, size) => step('Downloading', progress(got, size)))
   let image = decodeImage(bytes, MAX_PIXELS)
   let cut = false
 
   if (transparency(image) === 0 && canRemoveBackground() && process.env.TTHEME_FIND_REMOVE_BG !== 'off') {
-    const path = join(cacheDir(site), 'cut', `${shared.id}.png`)
+    const scratch = mkdtempSync(join(tmpdir(), 'ttheme-cut-'))
 
     try {
-      if (!existsSync(path)) {
-        step('Cutting out')
-        mkdirSync(dirname(path), { recursive: true })
-        await removeBackground(orig, path, signal)
-      }
+      const orig = join(scratch, `orig.${version.ext}`)
+      const path = join(scratch, 'cut.png')
+      writeFileSync(orig, bytes)
+      step('Cutting out')
+      await removeBackground(orig, path, signal)
 
       const figure = decodeImage(new Uint8Array(readFileSync(path)), MAX_PIXELS)
 
@@ -231,7 +221,10 @@ async function install(
         image = figure
         cut = true
       }
-    } catch {}
+    } catch {
+    } finally {
+      rmSync(scratch, { recursive: true, force: true })
+    }
   }
 
   await credited

@@ -1,7 +1,4 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { test } from 'node:test'
 import { castMembers, hitsOf, nameSearch } from './names.ts'
 
@@ -53,9 +50,6 @@ test('a generated name is never the preferred one', () => {
 
 test('a lookup the server never answers ends as a failure, so the screen stops saying it is looking', async () => {
   const fetching = globalThis.fetch
-  const cache = process.env.XDG_CACHE_HOME
-  const dir = mkdtempSync(join(tmpdir(), 'ttheme-names-'))
-  process.env.XDG_CACHE_HOME = dir
 
   globalThis.fetch = ((_url: string, init?: RequestInit) =>
     new Promise((_resolve, reject) => {
@@ -70,13 +64,5 @@ test('a lookup the server never answers ends as a failure, so the screen stops s
     })
   } finally {
     globalThis.fetch = fetching
-
-    if (cache === undefined) {
-      delete process.env.XDG_CACHE_HOME
-    } else {
-      process.env.XDG_CACHE_HOME = cache
-    }
-
-    rmSync(dir, { recursive: true, force: true })
   }
 })

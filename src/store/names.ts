@@ -1,10 +1,9 @@
-import { join } from 'node:path'
-import { cachedSource, httpSource, Names, type Source } from '@kecan0406/aninames'
+
+import { httpSource, Names, type Source } from '@kecan0406/aninames'
 import { AGENT } from '../core/booru.ts'
 import { isTag } from '../core/commons.ts'
 import { type CastMember, cutSlug, type NameHit, slugOfTag, type TaggedWork, type WorkName } from '../core/names.ts'
 import { inert } from '../core/text.ts'
-import { cacheRoot } from './paths.ts'
 
 const NAMES_URL = 'https://names.ttheme.dev'
 
@@ -294,7 +293,7 @@ export function nameSearch(provider: string | undefined, base = NAMES_URL, most 
     return undefined
   }
 
-  const { search } = nameIndex(cachedSource(liveSource(base), join(cacheRoot(), 'names')))
+  const { search } = nameIndex(liveSource(base))
 
   return async (query, signal) => {
     const limit = AbortSignal.timeout(most)

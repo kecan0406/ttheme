@@ -1,10 +1,10 @@
 import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { syncSchemes } from './schemes.ts'
+import { corpusOf, fetchCorpus, readCorpus, schemesPath } from './schemes.ts'
 
 function answering(listing: { name: string; type: string }[]) {
   return spyOn(globalThis, 'fetch').mockImplementation(
@@ -16,9 +16,8 @@ function answering(listing: { name: string; type: string }[]) {
   )
 }
 
-test('a scheme stays in its folder whatever name the listing gives it', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'ttheme-schemes-'))
-  const dir = join(root, 'cache', 'schemes')
+test('a scheme keeps only a plain name whatever name the listing gives it', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-schemes-'))
 
   const fetched = answering([
     { name: '../../escaped', type: 'file' },
@@ -29,28 +28,30 @@ test('a scheme stays in its folder whatever name the listing gives it', async ()
   ])
 
   try {
-    const corpus = await syncSchemes(dir)
+    const corpus = await fetchCorpus(home)
 
-    assert.deepEqual(corpus.names, ['Dusk Harbor'])
+    assert.deepEqual(
+      corpus.schemes.map(([name]) => name),
+      ['Dusk Harbor'],
+    )
     assert.deepEqual(corpus.notes, [])
-    assert.equal(existsSync(join(root, 'escaped')), false)
-    assert.deepEqual(readdirSync(root), ['cache'])
+    assert.deepEqual(readdirSync(home), ['ttheme'])
+    assert.deepEqual(readdirSync(join(home, 'ttheme')), ['schemes.json'])
   } finally {
     fetched.mockRestore()
   }
 })
 
-test('a kept listing is held to the same names', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'ttheme-schemes-'))
-  const dir = join(root, 'cache', 'schemes')
-  mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, '.index'), '../../escaped\nDusk Harbor\n')
-  const fetched = answering([])
+test('a kept corpus is held to the same names', () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-schemes-'))
+  mkdirSync(join(home, 'ttheme'), { recursive: true })
+  writeFileSync(
+    schemesPath(home),
+    JSON.stringify({ schemes: { '../../escaped': 'x', 'odd\x1b[2J': 'x', 'Dusk Harbor': 'background = #000000\n' } }),
+  )
 
-  try {
-    assert.deepEqual((await syncSchemes(dir)).names, ['Dusk Harbor'])
-    assert.equal(existsSync(join(root, 'escaped')), false)
-  } finally {
-    fetched.mockRestore()
-  }
+  assert.deepEqual(
+    corpusOf(readCorpus(home))?.map(([name]) => name),
+    ['Dusk Harbor'],
+  )
 })

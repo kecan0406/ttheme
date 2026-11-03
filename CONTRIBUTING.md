@@ -84,8 +84,7 @@ character art, wallpapers, vector traces or any other asset made of a character
 the project's own files, not contributions.) `.gitignore` blocks the common
 image formats and a PR that adds one will be closed. Terminal background images
 are built on your own machine by a local tool and written to
-`~/.config/ttheme/backgrounds/`, with the posts they come from cached under
-`~/.cache/ttheme/`; they never enter this repository or the npm package.
+`~/.config/ttheme/backgrounds/`; they never enter this repository or the npm package.
 
 That line is deliberate. Color values carry no copyright, so a palette named
 after a character is safe to share. A character image is a different thing

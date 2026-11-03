@@ -1,9 +1,8 @@
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { bodyWithin, reach } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
-import { cacheRoot } from '../store/paths.ts'
 
 const BROWSER =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'
@@ -20,7 +19,7 @@ const SIGNATURES: [number[], string][] = [
 ]
 
 export function artDir(): string {
-  return join(cacheRoot(), 'art')
+  return join(tmpdir(), 'ttheme-measure')
 }
 
 export function artKey(ref: string): string {
@@ -45,9 +44,6 @@ function isPicture(bytes: Uint8Array): boolean {
 
 export async function fetchArt(ref: string): Promise<{ bytes: Uint8Array; path: string }> {
   const path = join(artDir(), artKey(ref))
-
-  if (existsSync(path)) return { bytes: new Uint8Array(readFileSync(path)), path }
-
   const url = new URL(ref)
 
   if (url.host === WIKIA) url.searchParams.set('format', 'original')

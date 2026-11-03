@@ -1,7 +1,7 @@
 import { aboutIn, mergeWorks, type Shelves, shelvesOf, type Work, workOfListed, worksFor } from '../../core/commons.ts'
 import { swatch } from '../../core/manifest.ts'
 import { MAKE_URL, type NameHit, namedWorks, requestUrl } from '../../core/names.ts'
-import { ago, cells, containsText, counted, inert } from '../../core/text.ts'
+import { cells, containsText, counted, inert } from '../../core/text.ts'
 import { slugOf } from '../../core/theme.ts'
 import { type Listed, type Listing, listedMatches, namesPalette } from '../../store/marketplace-index.ts'
 import { sameMarketplace, TOPIC } from '../../store/sources.ts'
@@ -153,7 +153,6 @@ export class Search {
         : this.listing
           ? [`${markets} found`]
           : []),
-      ...(this.listing?.offline ? [`offline, from ${ago(this.listing.at)}`] : []),
     ]
 
     return parts.length > 0 ? parts.join(SEP) : 'on GitHub'

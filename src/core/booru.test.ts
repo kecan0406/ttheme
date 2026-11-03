@@ -1,10 +1,7 @@
 import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
 import { test } from 'node:test'
-import { fetchBytes, fetchPosts, redirected, retryAfter, sweepCache } from '../pictures/booru-net.ts'
+import { fetchBytes, fetchPosts, redirected, retryAfter } from '../pictures/booru-net.ts'
 import {
   blockSet,
   cutoutMap,
@@ -438,30 +435,6 @@ test('postRef turns a pasted post page, a site:id or a bare number into one post
   assert.deepEqual(postRef('7100001', dan), { site: dan, id: 7100001 })
   assert.equal(postRef('orla_(starfall)', dan), undefined)
   assert.equal(postRef('https://safebooru.org/index.php?page=post&s=view&id=7100001', dan), undefined)
-})
-
-test('sweepCache drops the oldest cached files until the tree fits its budget', () => {
-  const root = mkdtempSync(join(tmpdir(), 'ttheme-sweep-'))
-  const made = ['orig/old.png', 'tile/middle.png', 'thumb/new.jpg']
-  made.forEach((name, age) => {
-    const path = join(root, 'danbooru', name)
-    mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, new Uint8Array(100))
-    utimesSync(path, 0, age)
-  })
-  const kept = join(root, 'danbooru', 'probes.json')
-  writeFileSync(kept, '{}')
-
-  sweepCache(250, root)
-  assert.equal(existsSync(join(root, 'danbooru', 'orig/old.png')), false, 'the oldest goes first')
-  assert.equal(existsSync(join(root, 'danbooru', 'tile/middle.png')), true)
-  assert.equal(existsSync(join(root, 'danbooru', 'thumb/new.jpg')), true)
-  assert.equal(existsSync(kept), true, 'probes and owners are not image cache')
-
-  sweepCache(0, root)
-  assert.equal(existsSync(join(root, 'danbooru', 'thumb/new.jpg')), false, 'a zero budget clears the images')
-  assert.equal(existsSync(kept), true)
-  rmSync(root, { recursive: true, force: true })
 })
 
 test('parseSuggestions keeps each completed tag with its post count', () => {

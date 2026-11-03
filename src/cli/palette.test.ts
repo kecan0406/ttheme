@@ -45,17 +45,15 @@ test('a marketplace of your own named ttheme is yours, not the built-in one', as
     return true
   })
 
-  const was = { config: process.env.XDG_CONFIG_HOME, cache: process.env.XDG_CACHE_HOME }
+  const was = process.env.XDG_CONFIG_HOME
   process.env.XDG_CONFIG_HOME = home
-  process.env.XDG_CACHE_HOME = join(home, 'cache')
 
   try {
     await runPalette('make', undefined, { anchors: join(home, 'anchors.json'), in: dir, 'dry-run': true, json: true })
   } finally {
     fetched.mockRestore()
     written.mockRestore()
-    process.env.XDG_CONFIG_HOME = was.config
-    process.env.XDG_CACHE_HOME = was.cache
+    process.env.XDG_CONFIG_HOME = was
   }
 
   assert.equal(JSON.parse(said.join('')).marketplace, 'ann@ttheme')
@@ -87,9 +85,6 @@ test('a picture fetched from an address stops at its limit, whatever the server 
     ),
   )
 
-  const was = process.env.XDG_CACHE_HOME
-  process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'ttheme-palette-'))
-
   try {
     await assert.rejects(() => fetchArt('https://art.example.invalid/orla.png'), /sent a picture over 32 MB/)
     assert.ok(sent < 40, `read ${sent} MB`)
@@ -98,7 +93,6 @@ test('a picture fetched from an address stops at its limit, whatever the server 
     assert.ok(sent < 72, `read ${sent} MB`)
   } finally {
     fetched.mockRestore()
-    process.env.XDG_CACHE_HOME = was
   }
 })
 
@@ -119,9 +113,8 @@ test('palette make leaves a work file it cannot read as it found it', async () =
 
   const fetched = spyOn(globalThis, 'fetch').mockRejectedValue(new Error('no network in a test'))
   const log = spyOn(console, 'log').mockImplementation(() => {})
-  const was = { config: process.env.XDG_CONFIG_HOME, cache: process.env.XDG_CACHE_HOME }
+  const was = process.env.XDG_CONFIG_HOME
   process.env.XDG_CONFIG_HOME = home
-  process.env.XDG_CACHE_HOME = join(home, 'cache')
 
   try {
     await assert.rejects(
@@ -137,8 +130,7 @@ test('palette make leaves a work file it cannot read as it found it', async () =
   } finally {
     fetched.mockRestore()
     log.mockRestore()
-    process.env.XDG_CONFIG_HOME = was.config
-    process.env.XDG_CACHE_HOME = was.cache
+    process.env.XDG_CONFIG_HOME = was
   }
 
   assert.equal(readFileSync(join(dir, 'works', 'starfall.toml'), 'utf8'), typo)

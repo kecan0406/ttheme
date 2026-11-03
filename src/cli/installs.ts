@@ -20,6 +20,7 @@ import {
 import { systemHost } from '../store/host.ts'
 import { readInstalled, startupPalette } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
+import { fetchCorpus, hasCorpus } from '../store/schemes.ts'
 import { installedPath, isLocal, marketplaceSources, shownSource } from '../store/sources.ts'
 import { wirings } from '../terminals/index.ts'
 import { liveOf } from '../terminals/live.ts'
@@ -272,6 +273,12 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
 
     return false
   })
+
+  if (hasCorpus(home)) {
+    await fetchCorpus(home).catch((failure: Error) => {
+      console.log(`  the base schemes: ${failure.message} — kept the copy from the last update`)
+    })
+  }
 
   const remote = marketplaces.filter((source) => !isLocal(source))
   const waiting = new Set(remote)

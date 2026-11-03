@@ -62,7 +62,7 @@ function listedOf(
 }
 
 function listing(...marketplaces: Listed[]): Listing {
-  return { marketplaces, at: Date.now() }
+  return { marketplaces }
 }
 
 const builtin = marketplace('ttheme', 'ttheme', ['orla', 'quill'])
@@ -590,7 +590,7 @@ test('a search handed in by preview opens Search marketplace on it and asks at o
   assert.match(frames, /^ ▌ {2}Starfall {2}/m)
 })
 
-test('a list that did not load says so and space loads it again, and a copy from before shows while offline', async () => {
+test('a list that did not load says so and space loads it again', async () => {
   let calls = 0
   const neon = listing(listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow']))
 

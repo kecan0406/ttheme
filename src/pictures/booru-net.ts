@@ -1,6 +1,5 @@
-import { rmSync, statSync } from 'node:fs'
+
 import { setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net'
-import { join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { profilesOf } from '../core/artists.ts'
 import {
@@ -27,10 +26,6 @@ import {
 } from '../core/booru.ts'
 import { pngHead } from '../core/png.ts'
 import { bodyWithin, firstBytes } from '../store/available.ts'
-import { listing } from '../store/edits.ts'
-import { cacheRoot } from '../store/paths.ts'
-
-const CACHE_BYTES = 512 * 1024 * 1024
 
 const HEAD = 8191
 
@@ -58,51 +53,11 @@ const TRIES = 3
 
 const HOPS = 3
 
-const HELD = ['orig', 'tile', 'thumb', 'cut']
-
 const WEB = /^https?:/i
 
 const paused = new Map<string, number>()
 
 setDefaultAutoSelectFamilyAttemptTimeout(CONNECT)
-
-export function cacheDir(site: Site): string {
-  return join(cacheRoot(), site.key)
-}
-
-export function sweepCache(limit = CACHE_BYTES, root = cacheRoot()): void {
-  const files: { path: string; size: number; at: number }[] = []
-  let total = 0
-
-  for (const site of listing(root)) {
-    for (const kind of HELD) {
-      const dir = join(root, site, kind)
-
-      for (const name of listing(dir)) {
-        const path = join(dir, name)
-
-        try {
-          const { size, mtimeMs } = statSync(path)
-          files.push({ path, size, at: mtimeMs })
-          total += size
-        } catch {}
-      }
-    }
-  }
-
-  files.sort((a, b) => a.at - b.at)
-
-  for (const file of files) {
-    if (total <= limit) {
-      return
-    }
-
-    try {
-      rmSync(file.path, { force: true })
-      total -= file.size
-    } catch {}
-  }
-}
 
 export function retryAfter(value: string | null, now: number): number {
   if (value !== null && /^\s*\d+\s*$/.test(value)) {

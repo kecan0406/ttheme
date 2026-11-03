@@ -41,7 +41,7 @@ import { reach, readMarketplaces } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { ownIn, readMarketplaceDir, setsDir, warning, worksDir, writeOwnIn } from '../store/local.ts'
 import { configHome } from '../store/paths.ts'
-import { readSchemes, schemesDir, syncSchemes } from '../store/schemes.ts'
+import { corpusOf, fetchCorpus, readCorpus } from '../store/schemes.ts'
 import { normalize } from '../tui/find/attach.ts'
 import { EXIT, emit, InputError } from './answer.ts'
 import { loadCommons } from './build.ts'
@@ -188,10 +188,7 @@ function previewOf(key: string, image: Rgba): Preview {
   const width = Math.max(1, Math.round(image.width * scale))
   const height = Math.max(1, Math.round(image.height * scale))
   const path = join(artDir(), `${key}.preview.png`)
-
-  if (!existsSync(path)) {
-    writeAtomic(path, encodeRgba(resample(image, { x: 0, y: 0, w: image.width, h: image.height }, width, height)))
-  }
+  writeAtomic(path, encodeRgba(resample(image, { x: 0, y: 0, w: image.width, h: image.height }, width, height)))
 
   return { path, width, height }
 }
@@ -478,15 +475,25 @@ function baseFor(
   }
 }
 
-async function corpus(notes: string[]): Promise<(readonly [string, Shade | undefined])[]> {
+async function heldCorpus(home: string, notes: string[]): Promise<[string, string][]> {
+  const kept = corpusOf(readCorpus(home))
+
+  if (kept) {
+    return kept
+  }
+
+  const fetched = await fetchCorpus(home)
+  notes.push(...fetched.notes)
+
+  return fetched.schemes
+}
+
+async function corpus(home: string, notes: string[]): Promise<(readonly [string, Shade | undefined])[]> {
   try {
-    const synced = await syncSchemes()
-    notes.push(...synced.notes)
+    const held = await heldCorpus(home, notes)
 
-    if (synced.names.length > 0) {
-      const read = await readSchemes(schemesDir(), synced.names)
-
-      return [...read.map(([name, text]) => [name, parseScheme(text)] as const), [ROLE_BASE, roleBase()] as const]
+    if (held.length > 0) {
+      return [...held.map(([name, text]) => [name, parseScheme(text)] as const), [ROLE_BASE, roleBase()] as const]
     }
   } catch (error) {
     notes.push(`base schemes unavailable (${(error as Error).message})`)
@@ -541,7 +548,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
   const held = (id: string) => workOf(target?.builtin ? commons.works : (target?.proposals ?? []), id)
   const owned = target ? ownIn(target.dir) : undefined
   const notes: string[] = []
-  const schemes = await corpus(notes)
+  const schemes = await corpus(configHome(), notes)
   const made: Made[] = []
   const failed: Problem[] = []
   const records = new Map<string, { work: Work; characters: string[] }>()

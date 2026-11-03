@@ -1,5 +1,4 @@
-import { existsSync, readFileSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, statSync } from 'node:fs'
 import {
   type Credit,
   credit,
@@ -8,7 +7,6 @@ import {
   mates,
   type Post,
   postKey,
-  SITES,
   type Site,
   uncredited,
 } from '../../core/booru.ts'
@@ -16,7 +14,6 @@ import { shelfOf } from '../../core/commons.ts'
 import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
 import { origins } from '../../pictures/backdrop.ts'
 import {
-  cacheDir,
   fetchBytes,
   fetchCredits,
   fetchPost,
@@ -27,26 +24,9 @@ import {
 import type { Pick } from '../../pictures/fit.ts'
 import { writeAtomic } from '../../store/edits.ts'
 
-function readCache<T>(site: Site, name: string): Record<string, T> {
-  const known: Record<string, T> = Object.create(null)
-
-  try {
-    return Object.assign(known, JSON.parse(readFileSync(join(cacheDir(site), name), 'utf8')))
-  } catch {
-    return known
-  }
-}
-
-function writeCache(site: Site, name: string, data: Record<string, unknown>): void {
-  writeAtomic(join(cacheDir(site), name), `${JSON.stringify(data)}\n`)
-}
-
 interface Known {
-  at: number
   urls: string[]
 }
-
-const FRESH = 7 * 24 * 60 * 60 * 1000
 
 interface Shelf {
   home: string
@@ -57,8 +37,7 @@ interface Shelf {
 }
 
 export class Kept {
-  private readonly caches = new Map<string, Record<string, unknown>>()
-  private readonly unsaved = new Set<string>()
+  private readonly answers = new Map<string, Record<string, unknown>>()
   private readonly owners = new Map<string, Map<string, string[]>>()
   private readonly crediting = new Map<number, Promise<void>>()
   private readonly inflight = new Map<string, Promise<number>>()
@@ -95,7 +74,6 @@ export class Kept {
       const from = fileOf(site, post)
       const alpha = (found === undefined ? await headOf(from.site, from.url, this.signal) : found)?.alpha === true
       known[post.id] = alpha
-      this.unsaved.add(`${site.key}/probes.json`)
 
       return alpha
     } catch {
@@ -103,22 +81,8 @@ export class Kept {
     }
   }
 
-  save(): void {
-    for (const at of this.unsaved) {
-      const [key, name] = at.split('/') as [string, string]
-      const site = SITES.find((s) => s.key === key)
-
-      if (site) {
-        writeCache(site, name, this.keep(site, name))
-      }
-    }
-
-    this.unsaved.clear()
-  }
-
   owned(site: Site, id: number, owner: string): void {
     this.keep<string>(site, 'owners.json')[id] = owner
-    this.unsaved.add(`${site.key}/owners.json`)
   }
 
   credit(pick: Pick, signal: AbortSignal): Promise<void> {
@@ -201,7 +165,6 @@ export class Kept {
       }
     }
 
-    this.unsaved.add(`${site.key}/owners.json`)
     const owners = mates(byPalette)
     this.owners.set(site.key, owners)
 
@@ -237,11 +200,11 @@ export class Kept {
 
   private keep<T>(site: Site, name: string): Record<string, T> {
     const at = `${site.key}/${name}`
-    let known = this.caches.get(at)
+    let known = this.answers.get(at)
 
     if (!known) {
-      known = readCache<T>(site, name)
-      this.caches.set(at, known)
+      known = Object.create(null) as Record<string, T>
+      this.answers.set(at, known)
     }
 
     return known as Record<string, T>
@@ -249,18 +212,16 @@ export class Kept {
 
   private async profiles(names: readonly string[], signal: AbortSignal): Promise<void> {
     const known = this.keep<Known>(LENDER, 'profiles.json')
-    const now = Date.now()
-    const due = names.filter((name) => !this.asking.has(name) && now - (known[name]?.at ?? 0) >= FRESH)
+    const due = names.filter((name) => !this.asking.has(name) && known[name] === undefined)
 
     if (due.length > 0) {
       const job = fetchProfiles(due, signal)
         .then(
           (found) => {
             for (const name of due) {
-              known[name] = { at: Date.now(), urls: found.get(name) ?? [] }
+              known[name] = { urls: found.get(name) ?? [] }
             }
 
-            this.unsaved.add(`${LENDER.key}/profiles.json`)
             this.credited()
           },
           () => {},
@@ -295,7 +256,6 @@ export class Kept {
       }
 
       known[post.id] = found
-      this.unsaved.add(`${site.key}/credits.json`)
     }
 
     credit(post, found)

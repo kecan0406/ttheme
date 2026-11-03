@@ -1,12 +1,9 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+
 import { isTag } from '../core/commons.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { containsText, inert } from '../core/text.ts'
 import { nameProblem, slugOf, slugProblem, subjectProblem, textProblem } from '../core/theme.ts'
 import { bodyWithin, reach } from './available.ts'
-import { writeAtomic } from './edits.ts'
-import { cacheRoot } from './paths.ts'
 import { isRemote, parseSource } from './sources.ts'
 
 export const INDEX_URL = 'https://index.ttheme.dev/marketplaces.json'
@@ -50,14 +47,6 @@ export interface ListedCharacter {
 
 export interface Listing {
   marketplaces: Listed[]
-  at: number
-  offline?: string
-}
-
-interface Cached {
-  etag: string
-  at: number
-  text: string
 }
 
 function word(value: unknown): string | undefined {
@@ -217,56 +206,11 @@ export function parseIndex(text: string): Listed[] {
   })
 }
 
-function indexCache(): string {
-  return join(cacheRoot(), 'marketplace-index.json')
-}
+export async function readIndex(signal?: AbortSignal, url = INDEX_URL): Promise<Listing> {
+  const response = await reach(url, undefined, signal)
+  const bytes = await bodyWithin(response, INDEX_MOST, `the marketplace index is over ${INDEX_MOST / 1024 / 1024} MB`)
 
-function readCached(path: string): Cached | undefined {
-  try {
-    const doc: unknown = JSON.parse(readFileSync(path, 'utf8'))
-    const v = typeof doc === 'object' && doc !== null ? (doc as Record<string, unknown>) : {}
-
-    return typeof v.etag === 'string' && typeof v.at === 'number' && typeof v.text === 'string'
-      ? { etag: v.etag, at: v.at, text: v.text }
-      : undefined
-  } catch {
-    return undefined
-  }
-}
-
-export async function readIndex(signal?: AbortSignal, path = indexCache(), url = INDEX_URL): Promise<Listing> {
-  const cached = readCached(path)
-  let marketplaces: Listed[] | undefined
-
-  try {
-    marketplaces = cached ? parseIndex(cached.text) : undefined
-  } catch {
-    marketplaces = undefined
-  }
-
-  try {
-    const response = await reach(url, undefined, signal, cached && marketplaces ? { 'if-none-match': cached.etag } : {})
-    const at = Date.now()
-
-    if (response.status === 304 && cached && marketplaces) {
-      writeAtomic(path, JSON.stringify({ ...cached, at }))
-
-      return { marketplaces, at }
-    }
-
-    const bytes = await bodyWithin(response, INDEX_MOST, `the marketplace index is over ${INDEX_MOST / 1024 / 1024} MB`)
-    const text = new TextDecoder().decode(bytes)
-    const fresh = parseIndex(text)
-    writeAtomic(path, JSON.stringify({ etag: response.headers.get('etag') ?? '', at, text }))
-
-    return { marketplaces: fresh, at }
-  } catch (error) {
-    if (!cached || !marketplaces) {
-      throw error
-    }
-
-    return { marketplaces, at: cached.at, offline: error instanceof Error ? error.message : String(error) }
-  }
+  return { marketplaces: parseIndex(new TextDecoder().decode(bytes)) }
 }
 
 export function namesPalette(name: string, query: string): boolean {

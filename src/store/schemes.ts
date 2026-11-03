@@ -1,70 +1,72 @@
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { reach } from './available.ts'
-import { cacheRoot } from './paths.ts'
+import { writeAtomic } from './edits.ts'
 
-interface Corpus {
-  names: string[]
-  fetched: number
-  missing: number
+export interface Corpus {
+  schemes: [string, string][]
   notes: string[]
 }
 
 const REPO = 'mbadolato/iTerm2-Color-Schemes'
 const LIST_URL = `https://api.github.com/repos/${REPO}/contents/ghostty`
 const RAW_URL = `https://raw.githubusercontent.com/${REPO}/master/ghostty/`
-const INDEX = '.index'
-const INDEX_TTL = 24 * 60 * 60 * 1000
 const CONCURRENCY = 16
 const FILE_NAME = /^[^./\\\p{Cc}\p{Bidi_Control}][^/\\\p{Cc}\p{Bidi_Control}]*$/u
 
-export function schemesDir(): string {
-  return join(cacheRoot(), 'schemes')
+export function schemesPath(configHome: string): string {
+  return join(configHome, 'ttheme', 'schemes.json')
 }
 
-async function listing(dir: string, notes: string[]): Promise<string[]> {
-  const index = join(dir, INDEX)
+export function hasCorpus(configHome: string): boolean {
+  return existsSync(schemesPath(configHome))
+}
 
-  const kept = await readFile(index, 'utf8').then(
-    (text) => text.split('\n').filter(Boolean),
-    () => [],
-  )
-
-  const age = await stat(index).then(
-    (s) => Date.now() - s.mtimeMs,
-    () => Number.POSITIVE_INFINITY,
-  )
-
-  if (kept.length > 0 && age < INDEX_TTL) return kept
-
+export function readCorpus(configHome: string): unknown {
   try {
-    const response = await reach(LIST_URL, undefined, undefined, { accept: 'application/vnd.github+json' })
-    const entries = (await response.json()) as { name: string; type: string }[]
-    const names = entries.filter((e) => e.type === 'file').map((e) => e.name)
-
-    await writeFile(index, names.join('\n'))
-
-    return names
-  } catch (error) {
-    notes.push(
-      `scheme listing unavailable (${error instanceof Error ? error.message : String(error)}), using what ${dir} holds`,
-    )
-
-    return kept
+    return JSON.parse(readFileSync(schemesPath(configHome), 'utf8'))
+  } catch {
+    return undefined
   }
 }
 
-async function download(dir: string, names: string[], notes: string[]): Promise<number> {
+export function corpusOf(doc: unknown): [string, string][] | undefined {
+  const held = typeof doc === 'object' && doc !== null ? (doc as Record<string, unknown>).schemes : undefined
+
+  if (typeof held !== 'object' || held === null) {
+    return undefined
+  }
+
+  return Object.entries(held)
+    .flatMap(([name, text]): [string, string][] =>
+      FILE_NAME.test(name) && typeof text === 'string' ? [[name, text]] : [],
+    )
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+}
+
+async function listed(): Promise<string[]> {
+  const response = await reach(LIST_URL, undefined, undefined, { accept: 'application/vnd.github+json' })
+  const entries: unknown = await response.json()
+
+  return (Array.isArray(entries) ? entries : [])
+    .flatMap((entry: unknown) => {
+      const v = typeof entry === 'object' && entry !== null ? (entry as Record<string, unknown>) : {}
+
+      return v.type === 'file' && typeof v.name === 'string' ? [v.name] : []
+    })
+    .filter((name) => FILE_NAME.test(name))
+}
+
+export async function fetchCorpus(configHome: string): Promise<Corpus> {
+  const names = await listed()
   const queue = [...names]
-  let fetched = 0
+  const texts = new Map<string, string>()
+  const notes: string[] = []
 
   const worker = async () => {
     for (let name = queue.shift(); name !== undefined; name = queue.shift()) {
       try {
-        const response = await reach(RAW_URL + encodeURIComponent(name))
-
-        await writeFile(join(dir, name), await response.text())
-        fetched++
+        texts.set(name, await (await reach(RAW_URL + encodeURIComponent(name))).text())
       } catch (error) {
         notes.push(`skipped ${name}: ${error instanceof Error ? error.message : String(error)}`)
       }
@@ -73,24 +75,15 @@ async function download(dir: string, names: string[], notes: string[]): Promise<
 
   await Promise.all(Array.from({ length: CONCURRENCY }, worker))
 
-  return fetched
-}
+  const schemes = names.toSorted().flatMap((name): [string, string][] => {
+    const text = texts.get(name)
 
-export async function syncSchemes(dir = schemesDir()): Promise<Corpus> {
-  await mkdir(dir, { recursive: true })
+    return text === undefined ? [] : [[name, text]]
+  })
 
-  const notes: string[] = []
-  const listed = (await listing(dir, notes)).filter((name) => FILE_NAME.test(name))
-  const present = new Set(await readdir(dir))
-  const missing = listed.filter((name) => !present.has(name))
-  const fetched = missing.length > 0 ? await download(dir, missing, notes) : 0
-  const names = (await readdir(dir)).filter((name) => !name.startsWith('.')).sort()
+  if (schemes.length > 0) {
+    writeAtomic(schemesPath(configHome), `${JSON.stringify({ schemes: Object.fromEntries(schemes) })}\n`)
+  }
 
-  return { names, fetched, missing: missing.length, notes }
-}
-
-export function readSchemes(dir: string, names: readonly string[]): Promise<[string, string][]> {
-  return Promise.all(
-    names.map(async (name): Promise<[string, string]> => [name, await readFile(join(dir, name), 'utf8')]),
-  )
+  return { schemes, notes }
 }

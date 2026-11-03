@@ -1798,7 +1798,7 @@ __tt_arity() {
 
 __tt_cli() {
   local k
-  local -a pass=(NODE_COMPILE_CACHE=${XDG_CACHE_HOME:-$HOME/.cache}/ttheme/node)
+  local -a pass=()
   [[ -n $HTTPS_PROXY$HTTP_PROXY$https_proxy$http_proxy ]] && pass+=(NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1)
   for k in $TTHEME_SETTINGS; do
     (( $+parameters[$k] )) && pass+=("$k=${(P)k}")

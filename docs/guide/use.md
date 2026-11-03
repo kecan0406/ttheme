@@ -254,7 +254,7 @@ bunx @kecan0406/ttheme@latest uninstall
 Uninstall lists what it will do, then takes every ttheme block out of your
 configs and startup files, gives Warp, iTerm2, Konsole and Terminal.app their own
 themes and default profiles back, and deletes `~/.config/ttheme`, the
-`ttheme-*` theme files and the cache. A config you did not touch since `init`
+`ttheme-*` theme files and `~/.cache/ttheme`, which older versions kept. A config you did not touch since `init`
 comes back byte for byte; one you edited keeps its backup.
 
 > [!WARNING]

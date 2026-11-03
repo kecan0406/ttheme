@@ -47,7 +47,6 @@ import { FACE } from '../../core/slots.ts'
 import { POSITIONS } from '../../core/theme.ts'
 import { backgroundsDir, fillSize, rackOf, rescaled, type Tune } from '../../pictures/backdrop.ts'
 import {
-  cacheDir,
   fetchCount,
   fetchLent,
   fetchPost,
@@ -56,7 +55,6 @@ import {
   fetchSuggestions,
   locate,
   pausedUntil,
-  sweepCache,
 } from '../../pictures/booru-net.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../../pictures/cutout.ts'
 import { type Frame, fitOrder, interleave, type Pick } from '../../pictures/fit.ts'
@@ -706,14 +704,18 @@ class Finder {
     return `${this.site?.key ?? 'all'}|${this.view.preset}|${this.view.order}`
   }
 
+  private held(site: Site, kind: string, file: string): string {
+    return join(this.scratch, site.key, kind, file)
+  }
+
   private origPath(site: Site, id: number, ext: string): string {
-    return join(cacheDir(site), 'orig', `${id}.${ext}`)
+    return this.held(site, 'orig', `${id}.${ext}`)
   }
 
   private previewPath(pick: Pick): string {
     const { url } = previewOf(pick.site, pick.post)
 
-    return join(cacheDir(pick.site), 'thumb', `${previewStem(pick.post.id, url)}.${extension(url)}`)
+    return this.held(pick.site, 'thumb', `${previewStem(pick.post.id, url)}.${extension(url)}`)
   }
 
   private tileOf(pick: Pick, variants: number): Tile {
@@ -847,10 +849,8 @@ class Finder {
         clearInterval(clock)
         this.paint.stop()
         terminal.write(`\x1b_Ga=d,d=A,q=2\x1b\\${CLEAR}`)
-        this.kept.save()
         this.renders.close()
         rmSync(this.scratch, { recursive: true, force: true })
-        sweepCache()
       }
     })
   }
@@ -2935,8 +2935,6 @@ class Finder {
     } catch (error) {
       this.fail(gen, error instanceof Error ? error : String(error))
     } finally {
-      this.kept.save()
-
       if (this.pumping === gen) {
         this.pumping = 0
       }
@@ -3091,7 +3089,7 @@ class Finder {
     const w = TILE.cols * this.cell.w
     const h = TILE.rows * this.cell.h
     const from = previewOf(site, post)
-    const path = join(cacheDir(site), 'tile', `${previewStem(post.id, from.url)}-${w}x${h}.png`)
+    const path = this.held(site, 'tile', `${previewStem(post.id, from.url)}-${w}x${h}.png`)
 
     if (!existsSync(path)) {
       const thumb = this.previewPath(pick)
@@ -3357,7 +3355,7 @@ class Finder {
   }
 
   private async cutOut(site: Site, id: number, path: string, signal: AbortSignal): Promise<string | undefined> {
-    const out = join(cacheDir(site), 'cut', `${id}.png`)
+    const out = this.held(site, 'cut', `${id}.png`)
 
     if (existsSync(out)) {
       return out

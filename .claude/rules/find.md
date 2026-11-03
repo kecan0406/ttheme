@@ -41,4 +41,4 @@ paths:
 - Only PNG and JPEG decode; anything else goes through `sips` on macOS with `--matchTo` the sRGB profile, and `-Z` only for a picture over `MAX_PIXELS`.
 - Never widen the crop box past the image: the frame blits instead.
 - Cut-outs use the operating system's Vision: never add an ONNX runtime, a model or a `rembg` dependency.
-- The cut kept in the cache is Vision's own, before matting.
+- The cut a picture keeps is Vision's own, before matting.
