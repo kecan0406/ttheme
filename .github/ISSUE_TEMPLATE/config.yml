@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Ask for a work, a character or a picture
+    url: https://github.com/kecan0406/aninames/issues/new/choose
+    about: Works and characters are added in aninames, where a request is talked over first.
   - name: Report a vulnerability
     url: https://github.com/kecan0406/ttheme/security/advisories/new
     about: Report it privately here, not in a public issue. See SECURITY.md.
