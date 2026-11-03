@@ -263,7 +263,7 @@ export function SearchFoot({ href }: { href: string }) {
         href={href}
         class="group/go inline-flex items-center gap-1.5 rounded-sm font-semibold text-foreground outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
       >
-        see all on browse
+        See All Results
         <Icon node={ArrowRight} class="size-4 transition-transform duration-150 group-hover/go:translate-x-0.5" />
       </a>
     </div>

@@ -54,11 +54,11 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
           <site-menus class="contents">
             <nav id={NAV_ANCHOR} aria-label="site" data-glide class="flex flex-wrap items-stretch">
               {NAV.map((item) => (
-                <>
+                <span data-menu-item={MENUS[item.key]} class="group/item flex items-stretch">
                   <a
                     href={item.href}
                     aria-current={item.href === current ? 'page' : undefined}
-                    class={cn(ITEM, 'hidden header-menu:inline-block')}
+                    class={cn(ITEM, 'header-wide:pr-0')}
                   >
                     <Icon node={item.icon} class="mr-1.5 inline-block size-4 align-middle header-icons:hidden" />
                     <span class="header-icons:inline-flex header-icons:align-middle">
@@ -70,19 +70,16 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
                     type="button"
                     popovertarget={MENUS[item.key]}
                     popovertargetaction="show"
-                    data-menu-trigger={item.key}
-                    data-href={item.href}
-                    aria-current={item.href === current ? 'page' : undefined}
-                    class={cn(ITEM, 'group/trigger cursor-pointer header-menu:hidden')}
+                    data-menu-trigger
+                    aria-label={`${item.label} menu`}
+                    class="group/chevron hidden h-8 cursor-pointer place-items-center self-center rounded-md px-2 text-muted-foreground outline-none group-hover/item:text-foreground focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-popup-open:text-foreground header-wide:grid"
                   >
-                    <Icon node={item.icon} class="mr-1.5 inline-block size-4 align-middle" />
-                    <span>{item.label}</span>
                     <Icon
                       node={ChevronDown}
-                      class="ml-1 inline-block size-3.5 align-middle text-muted-foreground transition-transform duration-200 group-data-popup-open/trigger:rotate-180 group-data-popup-open/trigger:text-foreground"
+                      class="size-3.5 transition-transform duration-200 group-data-popup-open/chevron:rotate-180"
                     />
                   </button>
-                </>
+                </span>
               ))}
             </nav>
           </site-menus>

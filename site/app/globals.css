@@ -571,25 +571,25 @@ facet-ground .t2 {
   isolation: isolate;
 }
 
-[data-glide] :is(a, button) {
+[data-glide] a {
   transition:
     color 0.18s ease,
     text-decoration-color 0.18s ease;
 }
 
-[data-glide] :is(a, button):focus-visible {
+[data-glide] a:focus-visible {
   color: var(--foreground);
 }
 
-[data-glide]:has(:is(a, button):focus-visible) :is(a, button):not(:focus-visible) {
+[data-glide]:has(a:focus-visible) a:not(:focus-visible) {
   color: var(--muted-foreground);
 }
 
-[data-site-header] [data-glide] :is(a, button):focus-visible {
+[data-site-header] [data-glide] a:focus-visible {
   outline-offset: -2px;
 }
 
-[data-glide] button[data-popup-open] {
+[data-glide] [data-menu-item]:has(> [data-popup-open]) > a {
   color: var(--foreground);
 }
 
@@ -627,18 +627,18 @@ facet-ground .t2 {
 }
 
 @media (hover: hover) {
-  [data-glide]:not(:has(:is(a, button):focus-visible)) :is(a, button):hover {
+  [data-glide]:not(:has(a:focus-visible)) a:hover {
     color: var(--foreground);
   }
 
-  [data-glide]:not(:has(:is(a, button):focus-visible)):has(:is(a, button):hover) :is(a, button):not(:hover) {
+  [data-glide]:not(:has(a:focus-visible)):has(a:hover) a:not(:hover) {
     color: var(--muted-foreground);
   }
 }
 
 @supports not (anchor-name: --glide) {
   @media (hover: hover) {
-    [data-site-footer] [data-glide] :is(a, button):not([aria-current='page']):hover {
+    [data-site-footer] [data-glide] a:not([aria-current='page']):hover {
       text-decoration-color: var(--key);
     }
   }
@@ -669,56 +669,56 @@ facet-ground .t2 {
     background: var(--key);
   }
 
-  [data-glide] :is(a, button) {
+  [data-glide] a {
     text-decoration-line: none;
   }
 
-  [data-glide] :is(a, button) > span {
+  [data-glide] a > span {
     transition: anchor-name 0s calc(var(--glide-linger) + var(--glide-fade)) allow-discrete;
   }
 
-  [data-glide] :is(a, button)[aria-current='page'] > span,
-  [data-glide] :is(a, button):focus-visible > span {
+  [data-glide] a[aria-current='page'] > span,
+  [data-glide] a:focus-visible > span {
     anchor-name: --glide;
   }
 
-  [data-glide]:has(:is(a, button):focus-visible) :is(a, button)[aria-current='page']:not(:focus-visible) > span {
+  [data-glide]:has(a:focus-visible) a[aria-current='page']:not(:focus-visible) > span {
     anchor-name: none;
   }
 
-  [data-glide]:has(:is(a, button)[aria-current='page']) :is(a, button) > span,
-  [data-glide]:has(:is(a, button):focus-visible) :is(a, button) > span {
+  [data-glide]:has(a[aria-current='page']) a > span,
+  [data-glide]:has(a:focus-visible) a > span {
     transition: none;
   }
 
-  [data-glide]:has(:is(a, button)[aria-current='page'])::before,
-  [data-glide]:has(:is(a, button):focus-visible)::before {
+  [data-glide]:has(a[aria-current='page'])::before,
+  [data-glide]:has(a:focus-visible)::before {
     opacity: 1;
     scale: 1;
   }
 
-  [data-glide]:has(:is(a, button):focus-visible)::before {
+  [data-glide]:has(a:focus-visible)::before {
     transition-delay: 0s;
   }
 
-  [data-site-footer] [data-glide]:has(:is(a, button)[aria-current='page'])::before {
+  [data-site-footer] [data-glide]:has(a[aria-current='page'])::before {
     background: var(--primary);
   }
 
-  [data-site-footer] [data-glide]:has(:is(a, button):not([aria-current='page']):focus-visible)::before {
+  [data-site-footer] [data-glide]:has(a:not([aria-current='page']):focus-visible)::before {
     background: var(--key);
   }
 
-  [data-glide] :is(a, button)[data-glide-from] > span {
+  [data-glide] a[data-glide-from] > span {
     anchor-name: --glide-from;
     transition: none;
   }
 
-  [data-glide]:not(:has(:is(a, button)[aria-current='page'])) :is(a, button)[data-glide-from] > span {
+  [data-glide]:not(:has(a[aria-current='page'])) a[data-glide-from] > span {
     anchor-name: --glide, --glide-from;
   }
 
-  [data-glide]:has(:is(a, button)[data-glide-from])::before {
+  [data-glide]:has(a[data-glide-from])::before {
     animation: glide-from var(--glide-fade) ease var(--glide-linger) backwards;
   }
 
@@ -727,42 +727,42 @@ facet-ground .t2 {
   }
 
   @media (hover: hover) {
-    [data-glide]:not(:has(:is(a, button):focus-visible)) :is(a, button):hover > span {
+    [data-glide]:not(:has(a:focus-visible)) a:hover > span {
       anchor-name: --glide;
     }
 
-    [data-glide]:not(:has(:is(a, button):focus-visible)):has(:is(a, button):hover) :is(a, button)[aria-current='page']:not(:hover) > span {
+    [data-glide]:not(:has(a:focus-visible)):has(a:hover) a[aria-current='page']:not(:hover) > span {
       anchor-name: none;
     }
 
-    [data-glide]:has(:is(a, button):hover) :is(a, button) > span {
+    [data-glide]:has(a:hover) a > span {
       transition: none;
     }
 
-    [data-glide]:has(:is(a, button):hover)::before {
+    [data-glide]:has(a:hover)::before {
       opacity: 1;
       scale: 1;
       transition-delay: 0s;
     }
 
-    [data-site-footer] [data-glide]:not(:has(:is(a, button):focus-visible)):has(:is(a, button):not([aria-current='page']):hover)::before {
+    [data-site-footer] [data-glide]:not(:has(a:focus-visible)):has(a:not([aria-current='page']):hover)::before {
       background: var(--key);
     }
   }
 
-  [data-glide] button[data-popup-open] > span {
+  [data-glide] [data-menu-item]:has(> [data-popup-open]) > a > span {
     anchor-name: --glide;
   }
 
-  [data-glide]:has(button[data-popup-open]) :is(a, button):not([data-popup-open]) > span {
+  [data-glide]:has([data-popup-open]) [data-menu-item]:not(:has(> [data-popup-open])) > a > span {
     anchor-name: none;
   }
 
-  [data-glide]:has(button[data-popup-open]) :is(a, button) > span {
+  [data-glide]:has([data-popup-open]) a > span {
     transition: none;
   }
 
-  [data-glide]:has(button[data-popup-open])::before {
+  [data-glide]:has([data-popup-open])::before {
     opacity: 1;
     scale: 1;
     transition-delay: 0s;

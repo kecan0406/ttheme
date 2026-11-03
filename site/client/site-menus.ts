@@ -21,8 +21,10 @@ const CLOSE_MS = 260
 
 const POPUPS = Object.values(MENUS)
 
-function popupOf(trigger: Element): HTMLElement | null {
-  return document.getElementById(trigger.getAttribute('popovertarget') ?? '')
+function popupOf(target: EventTarget | null): HTMLElement | null {
+  const id = target instanceof Element ? target.closest<HTMLElement>('[data-menu-item]')?.dataset.menuItem : undefined
+
+  return id ? document.getElementById(id) : null
 }
 
 function isOpen(popup: HTMLElement): boolean {
@@ -45,36 +47,48 @@ class SiteMenus extends HTMLElement {
   #opening = 0
   #closing = 0
   #pinned: HTMLElement | null = null
+  #pending: HTMLElement | null = null
 
-  #over = (event: PointerEvent) => {
+  #moved = (event: PointerEvent) => {
     if (event.pointerType !== 'mouse') return
-    const trigger = (event.target as Element).closest('[data-menu-trigger]')
-    const popup = trigger && popupOf(trigger)
+    const popup = popupOf(event.target)
 
-    if (!popup) return
+    if (!popup || popup === this.#pending) return
     window.clearTimeout(this.#closing)
-    window.clearTimeout(this.#opening)
 
     if (isOpen(popup)) return
+    window.clearTimeout(this.#opening)
     const switching = this.#open() !== null && this.#pinned === null
 
     if (switching) this.#show(popup)
-    else this.#opening = window.setTimeout(() => this.#show(popup), OPEN_MS)
+    else {
+      this.#pending = popup
+      this.#opening = window.setTimeout(() => this.#show(popup), OPEN_MS)
+    }
   }
 
   #out = (event: PointerEvent) => {
     if (event.pointerType !== 'mouse') return
     window.clearTimeout(this.#opening)
+    this.#pending = null
     this.#later()
   }
 
   #press = (event: MouseEvent) => {
-    const trigger = (event.target as Element).closest('[data-menu-trigger]')
-    const popup = trigger && popupOf(trigger)
+    const popup = popupOf(event.target)
 
     if (!popup) return
     window.clearTimeout(this.#opening)
     window.clearTimeout(this.#closing)
+    this.#pending = null
+
+    if (!(event.target as Element).closest('[data-menu-trigger]')) {
+      const open = this.#open()
+
+      if (open) hide(open, 'trigger-press')
+
+      return
+    }
 
     if (!isOpen(popup)) {
       this.#pinned = popup
@@ -111,7 +125,7 @@ class SiteMenus extends HTMLElement {
   #wore = (event: Event) => this.#inUse((event as CustomEvent<Theme>).detail)
 
   connectedCallback() {
-    this.addEventListener('pointerover', this.#over)
+    this.addEventListener('pointermove', this.#moved)
     this.addEventListener('pointerout', this.#out)
     this.addEventListener('click', this.#press)
     document.addEventListener('openchange', this.#changed)
@@ -127,7 +141,7 @@ class SiteMenus extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.removeEventListener('pointerover', this.#over)
+    this.removeEventListener('pointermove', this.#moved)
     this.removeEventListener('pointerout', this.#out)
     this.removeEventListener('click', this.#press)
     document.removeEventListener('openchange', this.#changed)
@@ -155,6 +169,7 @@ class SiteMenus extends HTMLElement {
   }
 
   #show(popup: HTMLElement) {
+    this.#pending = null
     this.#pinned = null
     show(popup, 'trigger-hover')
   }

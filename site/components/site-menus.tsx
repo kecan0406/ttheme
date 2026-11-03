@@ -209,7 +209,7 @@ export function BrowseMenu({ menu }: { menu: MenuFacts }) {
       </div>
       <MenuFoot>
         <span>palettes of your favorite characters</span>
-        <MenuGo href={BROWSE_PATH} label="all works" />
+        <MenuGo href={BROWSE_PATH} label="Browse Works" />
       </MenuFoot>
     </Popover>
   )
@@ -374,7 +374,7 @@ export function BuilderMenu({ menu }: { menu: MenuFacts }) {
         <span>
           share it as a link, install it with <code class="font-mono text-code text-foreground">ttheme add</code>
         </span>
-        <MenuGo href="/builder" label="open builder" />
+        <MenuGo href="/builder" label="Open Builder" />
       </MenuFoot>
     </Popover>
   )
@@ -454,7 +454,7 @@ export function DocsMenu({ menu }: { menu: MenuFacts }) {
             <NewTab class="size-3.5" />
           </a>
         </span>
-        <MenuGo href="/docs" label="all docs" />
+        <MenuGo href="/docs" label="Read Docs" />
       </MenuFoot>
     </Popover>
   )
