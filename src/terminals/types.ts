@@ -1,6 +1,7 @@
 import type { PaletteEntry } from '../core/manifest.ts'
 import type { Theme } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
+import type { ProfileBackground } from '../pictures/conf.ts'
 import type { Host } from '../store/host.ts'
 import type { Installed } from '../store/installed.ts'
 import type { Emitter } from './emit/types.ts'
@@ -23,11 +24,13 @@ export interface Now extends At {
 export interface Ctx extends Now {
   entries: PaletteEntry[]
   themes: Theme[]
+  backdrops: ReadonlyMap<string, ProfileBackground>
   host: Host
 }
 
 export interface Out {
   write(path: string, content: string, aside?: string): boolean
+  place(path: string, content: string): void
   wire(path: string, content: string): void
   note(path: string): void
   remove(path: string): void
@@ -59,6 +62,7 @@ export interface Defaults {
 export interface Shelf {
   from: string
   dir(at: At): string
+  addressed?: true
 }
 
 export interface Wiring {

@@ -1,7 +1,5 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { backgroundsDir } from '../pictures/backdrop.ts'
-import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
 import type { Host } from '../store/host.ts'
 import type { Installed } from '../store/installed.ts'
 import { modeSetting } from '../store/wiring.ts'
@@ -24,20 +22,9 @@ function keeps(state: Installed): boolean {
 }
 
 function profiles(ctx: Ctx): string {
-  const dir = backgroundsDir(ctx.configHome)
-  const pictures = new Map<string, ProfileBackground>()
-
-  for (const theme of ctx.themes) {
-    const picture = readBackdrop(dir, theme.name, ctx.home)
-
-    if (picture) {
-      pictures.set(theme.name, picture)
-    }
-  }
-
   return itermProfiles(
     ctx.themes,
-    pictures,
+    ctx.backdrops,
     ctx.themes.find((theme) => theme.name === ctx.startup),
     ctx.state.itermBase,
     keeps(ctx.state),

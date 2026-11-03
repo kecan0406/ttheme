@@ -1,6 +1,6 @@
 import { availableParallelism, homedir } from 'node:os'
 import type { Coloring } from '../core/backdrop-tone.ts'
-import { inMode, type Manifest } from '../core/manifest.ts'
+import { inMode } from '../core/manifest.ts'
 import { modeOf, otherOf } from '../core/mode.ts'
 import {
   applyRedraw,
@@ -22,7 +22,7 @@ import { MATTING } from '../pictures/cutout.ts'
 import { prune, writable } from '../pictures/drawn.ts'
 import { prepareOne, redrawOne } from '../pictures/redrawing.ts'
 import { Pool } from '../pictures/render.ts'
-import { available, readAvailable } from '../store/available.ts'
+import { type View, viewOf } from '../store/available.ts'
 import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { blurOf } from '../store/wiring.ts'
@@ -39,7 +39,7 @@ interface Job {
 
 interface Redrawing {
   emit?: boolean
-  manifest?: Manifest
+  view?: View
   step?: (done: number, of: number) => void
   ownColors?: boolean
 }
@@ -52,7 +52,7 @@ export async function redrawPictures(
   home: string,
   say: (line: string) => void,
   user = homedir(),
-  { emit = true, manifest, step, ownColors = false }: Redrawing = {},
+  { emit = true, view, step, ownColors = false }: Redrawing = {},
 ): Promise<number> {
   const store = readStore(backgroundsDir(home))
 
@@ -61,7 +61,7 @@ export async function redrawPictures(
   }
 
   const blurring = blurOf(home)
-  const shown = manifest ? available(home, manifest) : readAvailable(home)
+  const shown = (view ?? viewOf(home, undefined, true, Object.keys(store.palettes))).available
   const entries = new Map(shown.palettes.map((entry) => [entry.name, entry]))
   const hits: Job[] = []
   const misses: Job[] = []
@@ -196,7 +196,7 @@ export async function redrawPictures(
   await shrinkBare(home)
 
   if (emit && drawn.length > 0) {
-    refreshPictures(home, user)
+    refreshPictures(home, user, undefined, view)
   }
 
   return drawn.length
@@ -236,7 +236,8 @@ export async function redrawColoring(
     return { key: picture.key, changed: false }
   }
 
-  const entry = readAvailable(home).palettes.find((held) => held.name === name)
+  const view = viewOf(home)
+  const entry = view.available.palettes.find((held) => held.name === name)
 
   if (!entry) {
     throw new Error(`no palette called ${name}`)
@@ -250,7 +251,7 @@ export async function redrawColoring(
   }
 
   applyRedraw(home, [{ name, picture: drawn }])
-  refreshPictures(home, user)
+  refreshPictures(home, user, undefined, view)
 
   return { key: picture.key, changed: true }
 }
@@ -263,7 +264,7 @@ export function prepareColoring(home: string, name: string, key?: string) {
     throw new Error(`${name} has no picture ${key ?? 'shown'}`)
   }
 
-  const entry = readAvailable(home).palettes.find((held) => held.name === name)
+  const entry = viewOf(home).available.palettes.find((held) => held.name === name)
 
   if (!entry) {
     throw new Error(`no palette called ${name}`)

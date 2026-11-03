@@ -240,16 +240,11 @@ interface PanelMasks {
   divider: Mask | undefined
 }
 
-const panels = new Map<string, PanelMasks>()
+function panelLayout(art: Art, cell: Cell): string {
+  return `${cell.w}x${cell.h} ${panelKey({ ...art, ground: '#000000', ink: '#000000', accent: '#000000' })}`
+}
 
 function panelMasks(art: Art, cell: Cell, width: number, height: number): PanelMasks {
-  const key = `${cell.w}x${cell.h} ${panelKey({ ...art, ground: '#000000', ink: '#000000', accent: '#000000' })}`
-  const held = panels.get(key)
-
-  if (held) {
-    return held
-  }
-
   const { panel } = art
   const body = { x: cell.w, y: 0, w: panel.cols * cell.w, h: panel.rows * cell.h }
   const radius = Math.round(cell.h * 0.45)
@@ -292,12 +287,6 @@ function panelMasks(art: Art, cell: Cell, width: number, height: number): PanelM
     divider: divider && maskOf(width, height, () => 1, divider),
   }
 
-  if (panels.size > 8) {
-    panels.clear()
-  }
-
-  panels.set(key, masks)
-
   return masks
 }
 
@@ -307,9 +296,11 @@ function surfaceOf(art: Pick<Art, 'ground' | 'ink'>) {
   return { dark, surface: mix(art.ground, art.ink, dark ? 0.07 : 0.04) }
 }
 
-function panelPixels(art: Art, cell: Cell): Rgba {
+type MasksOf = (width: number, height: number) => PanelMasks
+
+function panelPixels(art: Art, cell: Cell, masksOf: MasksOf): Rgba {
   const image = canvas((art.panel.cols + 2) * cell.w, (art.panel.rows + 1) * cell.h)
-  const masks = panelMasks(art, cell, image.width, image.height)
+  const masks = masksOf(image.width, image.height)
   const { dark, surface } = surfaceOf(art)
   paint(image, masks.shadow, [0, 0, 0, dark ? 0.45 : 0.18])
   paint(image, masks.fill, rgbaOf(surface))
@@ -490,7 +481,7 @@ function panelKey(art: Art): string {
   return `${panel.cols}x${panel.rows} ${art.ground} ${art.ink} ${art.accent} ${at(art.tabs)},${art.tabs.active}/${art.tabs.count} ${at(art.field)} ${divider}`
 }
 
-function piecesOf(art: Art, cell: Cell): Piece[] {
+function piecesOf(art: Art, cell: Cell, masksOf: MasksOf): Piece[] {
   const size = `${cell.w}x${cell.h}`
   const radius = Math.max(4, Math.round(cell.h * 0.34))
   const along = (box: Box, at: number) => (box.col + 0.5 + at * (box.cols - 1)) * cell.w
@@ -511,7 +502,7 @@ function piecesOf(art: Art, cell: Cell): Piece[] {
       key: `${size} ${panelKey(art)}`,
       box: { row: art.panel.row, col: art.panel.col - 1, cols: art.panel.cols + 2, rows: art.panel.rows + 1 },
       z: PANEL_Z,
-      paint: () => panelPixels(art, cell),
+      paint: () => panelPixels(art, cell, masksOf),
     },
     {
       name: 'plane',
@@ -1000,6 +991,7 @@ export class PickerLayer {
   private cell: Cell = { w: 0, h: 0 }
   private readonly shown = new Map<Name, Shown>()
   private stale = false
+  private layout: { key: string; masks: PanelMasks } | undefined
 
   static of(env: Env, terminals: readonly string[]): PickerLayer | undefined {
     return colorless(env) || !showsPictures(env, terminals) || !layersUnderCells(env) ? undefined : new PickerLayer()
@@ -1025,7 +1017,7 @@ export class PickerLayer {
     }
 
     const pieces = [
-      ...(art ? piecesOf(art, this.cell) : []),
+      ...(art ? piecesOf(art, this.cell, this.masksOf(art)) : []),
       ...(mock ? mockPieces(mock, this.cell) : []),
       ...chartPieces(charts, this.cell),
     ]
@@ -1046,6 +1038,18 @@ export class PickerLayer {
     }
 
     return out
+  }
+
+  private masksOf(art: Art): MasksOf {
+    return (width, height) => {
+      const key = panelLayout(art, this.cell)
+
+      if (this.layout?.key !== key) {
+        this.layout = { key, masks: panelMasks(art, this.cell, width, height) }
+      }
+
+      return this.layout.masks
+    }
   }
 
   clear(): string {

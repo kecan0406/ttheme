@@ -18,9 +18,8 @@ import type { Hex } from '../core/color.ts'
 import { decodePng, encodeRgb, flatIndexed, flatten } from '../core/png.ts'
 import type { Theme } from '../core/theme.ts'
 import { inOther, owned, stem } from '../core/theme.ts'
-import { backgroundsDir } from '../pictures/backdrop.ts'
-import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
-import { backupOnce, editUserFile, relink, spareBackup, symlinked, writeAtomic } from '../store/edits.ts'
+import { type ProfileBackground, } from '../pictures/conf.ts'
+import { backupOnce, editUserFile, listing, relink, spareBackup, symlinked, writeAtomic } from '../store/edits.ts'
 import { dataHome, readText, tilde } from './common.ts'
 import { warp as emitter, WARP_PART, type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from './emit/warp.ts'
 import type { At, Ctx, Out, Unwired, Wiring } from './types.ts'
@@ -326,17 +325,17 @@ function laidOf(dir: string, theme: Theme, picture: ProfileBackground): WarpPict
 }
 
 function laidFiles(ctx: Ctx, dir: string): Laid {
-  const pictures = backgroundsDir(ctx.configHome)
+  const there = new Set(listing(dir))
   const files = new Map<string, string>()
   const fresh = new Set<string>()
 
   for (const theme of ctx.themes) {
-    const picture = readBackdrop(pictures, theme.name, ctx.home)
+    const picture = ctx.backdrops.get(theme.name)
     const file = warpThemeFile(theme, picture && laidOf(dir, theme, picture))
     files.set(theme.name, file)
 
     for (const name of new Set([file, warpThemeFile(theme)])) {
-      if (!existsSync(join(dir, name))) {
+      if (!there.has(name)) {
         fresh.add(name)
       }
     }
@@ -370,12 +369,10 @@ function indexed(path: string): boolean {
 
 function writePictures(ctx: Ctx, out: Out, files: Map<string, string>, shelf: WarpShelf): void {
   const { dir } = shelf
-  const pictures = backgroundsDir(ctx.configHome)
 
-  const kept = new Set([
-    ...files.values(),
-    ...ctx.themes.flatMap((theme) => [theme, ...inOther(theme)].map((shade) => warpThemeFile(shade))),
-  ])
+  const plain = new Set(ctx.themes.flatMap((theme) => [theme, ...inOther(theme)].map((shade) => warpThemeFile(shade))))
+  const kept = new Set([...files.values(), ...plain])
+  const produced = new Map<string, string>()
 
   const current = shelf.channels
     .map((channel) => readText(warpSettings(ctx.home, ctx.configHome, channel)))
@@ -385,7 +382,7 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>, shelf: Wa
   const others = new Set<string>()
 
   for (const theme of ctx.themes) {
-    const picture = readBackdrop(pictures, theme.name, ctx.home)
+    const picture = ctx.backdrops.get(theme.name)
     const file = files.get(theme.name)
 
     if (picture && file) {
@@ -400,7 +397,9 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>, shelf: Wa
         }
       }
 
-      out.write(join(dir, file), warpTheme(theme, laid))
+      const content = warpTheme(theme, laid)
+      produced.set(file, content)
+      out.place(join(dir, file), content)
 
       for (const shade of inOther(theme)) {
         const other: WarpPicture = {
@@ -423,8 +422,10 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>, shelf: Wa
         }
 
         const name = warpThemeFile(shade, other)
+        const content = warpTheme(shade, other)
         kept.add(name)
-        out.write(join(dir, name), warpTheme(shade, other))
+        produced.set(name, content)
+        out.place(join(dir, name), content)
       }
     }
   }
@@ -446,7 +447,10 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>, shelf: Wa
     readdirSync(dir)
       .values()
       .filter((file) => file.startsWith(owned('')) && file.endsWith('.yaml'))
-      .map((file) => /^ {2}path: "(.+)"$/m.exec(readText(join(dir, file)))?.[1])
+      .map(
+        (file) =>
+          /^ {2}path: "(.+)"$/m.exec(produced.get(file) ?? (plain.has(file) ? '' : readText(join(dir, file))))?.[1],
+      )
       .filter((image) => image !== undefined),
   )
 
@@ -530,7 +534,7 @@ export const warp: Wiring = {
   id: 'warp',
   name: 'Warp',
   emitter,
-  shelf: { from: 'themes', dir: (at) => (shelvesOf(at.home)[0] as WarpShelf).dir },
+  shelf: { from: 'themes', dir: (at) => (shelvesOf(at.home)[0] as WarpShelf).dir, addressed: true },
   bakes: true,
   offered: (_, host) => host.platform !== 'win32',
   present: (setup) => warpChannels(setup.home).length > 0,
@@ -541,7 +545,7 @@ export const warp: Wiring = {
       if (i > 0) {
         for (const theme of ctx.themes) {
           for (const { path, content } of emitter.emit?.(theme) ?? []) {
-            out.write(join(shelf.dir, basename(path)), content)
+            out.place(join(shelf.dir, basename(path)), content)
           }
         }
       }

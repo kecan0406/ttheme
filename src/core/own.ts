@@ -18,7 +18,6 @@ import {
   UNPACKED,
 } from './draft.ts'
 import { type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
-import { memo } from './memo.ts'
 import type { Colors } from './seeds.ts'
 import { readSet, SETS_DIR, type SetPalette } from './sets.ts'
 import { quoted } from './text.ts'
@@ -122,9 +121,7 @@ export function readMarketplaceFiles(
       return []
     }
 
-    const shelf = memo('set', JSON.stringify([foreign, id, file.path, text]), () =>
-      shelfOf(file.path, text, id, foreign),
-    )
+    const shelf = shelfOf(file.path, text, id, foreign)
 
     for (const [where, message] of shelf.problems) {
       report(where, message)
@@ -157,7 +154,7 @@ export function readWorkFiles(
     try {
       const text = read(file)
 
-      return [memo('work', JSON.stringify([foreign, file.id, text]), () => readWork(file.path, text, file.id, foreign))]
+      return [readWork(file.path, text, file.id, foreign)]
     } catch (error) {
       report(file.path, (error as Error).message)
 

@@ -1,5 +1,4 @@
 import { SITES } from './booru.ts'
-import { memo } from './memo.ts'
 import { unqualified } from './names.ts'
 import { escaped, quoted } from './text.ts'
 import {
@@ -286,10 +285,6 @@ export function workToml(work: Work): string {
 }
 
 export function parseCommons(source: string): Commons {
-  return memo('commons', source, () => readCommonsJson(source))
-}
-
-function readCommonsJson(source: string): Commons {
   let doc: { works?: unknown } | null
 
   try {
@@ -358,51 +353,48 @@ export function workOfListed(
   }
 }
 
-const INDEXES = new WeakMap<readonly Work[], Map<string, Work>>()
-
-function indexOf(works: readonly Work[]): Map<string, Work> {
-  let index = INDEXES.get(works)
-
-  if (!index) {
-    index = new Map(works.map((w) => [w.id, w]))
-    INDEXES.set(works, index)
-  }
-
-  return index
+export interface Shelves {
+  works: readonly Work[]
+  byId: ReadonlyMap<string, Work>
+  castAt: ReadonlyMap<Work, ReadonlyMap<string, number>>
 }
 
-export function workOf(works: readonly Work[], id: string): Work | undefined {
-  return indexOf(works).get(id)
-}
+export function shelvesOf(works: readonly Work[]): Shelves {
+  const byId = new Map<string, Work>()
+  const castAt = new Map<Work, Map<string, number>>()
 
-const CASTS = new WeakMap<Work, Map<string, number>>()
+  for (const work of works) {
+    byId.set(work.id, work)
 
-function castOf(work: Work): Map<string, number> {
-  let cast = CASTS.get(work)
+    if (castAt.has(work)) {
+      continue
+    }
 
-  if (!cast) {
-    cast = new Map()
+    const at = new Map<string, number>()
 
-    for (const [at, { id }] of work.characters.entries()) {
-      if (!cast.has(id)) {
-        cast.set(id, at)
+    for (const [i, { id }] of work.characters.entries()) {
+      if (!at.has(id)) {
+        at.set(id, i)
       }
     }
 
-    CASTS.set(work, cast)
+    castAt.set(work, at)
   }
 
-  return cast
+  return { works, byId, castAt }
 }
 
-export function aboutOf(works: readonly Work[], subject: string | undefined): About | undefined {
-  if (subject === undefined) {
-    return undefined
-  }
+export function workOf(works: readonly Work[], id: string): Work | undefined {
+  return works.findLast((w) => w.id === id)
+}
 
+function aboutFrom(
+  subject: string,
+  work: Work | undefined,
+  characterIn: (work: Work, id: string) => Character | undefined,
+): About {
   const id = workIdOf(subject)
   const cid = characterIdOf(subject)
-  const work = workOf(works, id)
 
   if (!work) {
     return { subject, work: { id, name: id, characters: [] }, ...(cid ? { character: { id: cid } } : {}), known: false }
@@ -412,9 +404,25 @@ export function aboutOf(works: readonly Work[], subject: string | undefined): Ab
     return { subject, work, known: true }
   }
 
-  const character = work.characters[castOf(work).get(cid) ?? -1]
+  const character = characterIn(work, cid)
 
   return character ? { subject, work, character, known: true } : { subject, work, character: { id: cid }, known: false }
+}
+
+export function aboutOf(works: readonly Work[], subject: string | undefined): About | undefined {
+  return subject === undefined
+    ? undefined
+    : aboutFrom(subject, workOf(works, workIdOf(subject)), (work, cid) => work.characters.find((c) => c.id === cid))
+}
+
+export function aboutIn(shelves: Shelves, subject: string | undefined): About | undefined {
+  return subject === undefined
+    ? undefined
+    : aboutFrom(
+        subject,
+        shelves.byId.get(workIdOf(subject)),
+        (work, cid) => work.characters[shelves.castAt.get(work)?.get(cid) ?? -1],
+      )
 }
 
 export function worksFor(about: About): string[] {
@@ -457,14 +465,14 @@ export function wordsOf(about: About | undefined): string[] {
   ]
 }
 
-export function castIndex(about: About | undefined): number {
+export function castIn(shelves: Shelves, about: About | undefined): number {
   if (!about) {
     return Number.POSITIVE_INFINITY
   }
 
-  const at = about.character ? castOf(about.work).get(about.character.id) : undefined
+  const id = about.character?.id
 
-  return at ?? about.work.characters.length
+  return (id === undefined ? undefined : shelves.castAt.get(about.work)?.get(id)) ?? about.work.characters.length
 }
 
 function cmp(a: string, b: string): number {
@@ -480,7 +488,13 @@ export function worldOrder<T extends { name: string; subject?: string }>(
   works: readonly Work[],
   sort: Sort = 'abc',
 ): T[] {
-  const keyed = items.map((item) => ({ item, about: aboutOf(works, item.subject) }))
+  const shelves = shelvesOf(works)
+
+  const keyed = items.map((item) => {
+    const about = aboutIn(shelves, item.subject)
+
+    return { item, about, cast: castIn(shelves, about) }
+  })
 
   return keyed
     .toSorted((a, b) => {
@@ -495,14 +509,14 @@ export function worldOrder<T extends { name: string; subject?: string }>(
 
       const within =
         sort === 'cast'
-          ? castIndex(a.about) - castIndex(b.about)
+          ? a.cast - b.cast
           : cmp(a.about.character?.id ?? `~${slugOf(a.item.name)}`, b.about.character?.id ?? `~${slugOf(b.item.name)}`)
 
       return (
         cmp(a.about.work.name.toLowerCase(), b.about.work.name.toLowerCase()) ||
         cmp(a.about.work.id, b.about.work.id) ||
         within ||
-        castIndex(a.about) - castIndex(b.about) ||
+        a.cast - b.cast ||
         publisherRank(a.item.name) - publisherRank(b.item.name) ||
         cmp(publisherOf(a.item.name), publisherOf(b.item.name)) ||
         cmp(slugOf(a.item.name), slugOf(b.item.name))
@@ -511,8 +525,14 @@ export function worldOrder<T extends { name: string; subject?: string }>(
     .map(({ item }) => item)
 }
 
-export function shelfOf(item: { name: string; subject?: string }, works: readonly Work[]): string {
-  const about = aboutOf(works, item.subject)
-
+function shelfName(item: { name: string }, about: About | undefined): string {
   return about ? `${publisherOf(item.name)} / ${about.work.name}` : publisherOf(item.name)
+}
+
+export function shelfOf(item: { name: string; subject?: string }, works: readonly Work[]): string {
+  return shelfName(item, aboutOf(works, item.subject))
+}
+
+export function shelfIn(item: { name: string; subject?: string }, shelves: Shelves): string {
+  return shelfName(item, aboutIn(shelves, item.subject))
 }

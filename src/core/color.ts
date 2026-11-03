@@ -6,56 +6,60 @@ export function isHex(value: string): value is Hex {
   return HEX.test(value)
 }
 
+export function rgbOf(hex: Hex): number {
+  return Number.parseInt(hex.slice(1), 16)
+}
+
+export function hexOf(n: number): Hex {
+  return `#${n.toString(16).padStart(6, '0')}`
+}
+
 export function rgb(hex: Hex): [number, number, number] {
-  const n = Number.parseInt(hex.slice(1), 16)
+  const n = rgbOf(hex)
 
   return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]
 }
 
-export function mix(a: Hex, b: Hex, t: number): Hex {
-  const from = rgb(a)
-  const to = rgb(b)
+export function mixOf(a: number, b: number, t: number): number {
+  const r = (a >> 16) & 0xff
+  const g = (a >> 8) & 0xff
+  const bl = a & 0xff
 
-  return `#${from
-    .map((c, i) =>
-      Math.round(c + ((to[i] ?? 0) - c) * t)
-        .toString(16)
-        .padStart(2, '0'),
-    )
-    .join('')}`
+  return (
+    (Math.round(r + (((b >> 16) & 0xff) - r) * t) << 16) |
+    (Math.round(g + (((b >> 8) & 0xff) - g) * t) << 8) |
+    Math.round(bl + ((b & 0xff) - bl) * t)
+  )
 }
 
-const LINEAR = Float64Array.from({ length: 256 }, (_, channel) => {
+export function mix(a: Hex, b: Hex, t: number): Hex {
+  return hexOf(mixOf(rgbOf(a), rgbOf(b), t))
+}
+
+export const LINEAR = Float64Array.from({ length: 256 }, (_, channel) => {
   const s = channel / 255
 
   return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
 })
 
-const SEEN_MOST = 65_536
-
-const OKLCHS = new Map<Hex, Oklch>()
-
-const LABS = new Map<Hex, Lab>()
-
-const DEUTERANOPES = new Map<Hex, Lab>()
-
-function linearOf(hex: Hex): Linear {
-  const n = Number.parseInt(hex.slice(1), 16)
-
-  return [LINEAR[(n >> 16) & 0xff] as number, LINEAR[(n >> 8) & 0xff] as number, LINEAR[n & 0xff] as number]
+export function luminanceOf(n: number): number {
+  return (
+    0.2126 * (LINEAR[(n >> 16) & 0xff] as number) +
+    0.7152 * (LINEAR[(n >> 8) & 0xff] as number) +
+    0.0722 * (LINEAR[n & 0xff] as number)
+  )
 }
 
 export function luminance(hex: Hex): number {
-  const [r, g, b] = linearOf(hex)
+  return luminanceOf(rgbOf(hex))
+}
 
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+export function contrastOf(la: number, lb: number): number {
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
 }
 
 export function contrast(a: Hex, b: Hex): number {
-  const la = luminance(a)
-  const lb = luminance(b)
-
-  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
+  return contrastOf(luminance(a), luminance(b))
 }
 
 export function ratio(a: Hex, b: Hex): number {
@@ -68,33 +72,31 @@ export interface Oklch {
   h: number
 }
 
-function oklchOf([r, g, b]: Linear): Oklch {
+export function oklchInto(n: number, out: Float64Array, at: number): void {
+  const r = LINEAR[(n >> 16) & 0xff] as number
+  const g = LINEAR[(n >> 8) & 0xff] as number
+  const b = LINEAR[n & 0xff] as number
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
   const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
   const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
   const x = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s
   const y = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s
 
-  return Object.freeze({
-    l: 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
-    c: Math.hypot(x, y),
-    h: ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360,
-  })
+  out[at] = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s
+  out[at + 1] = Math.hypot(x, y)
+  out[at + 2] = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360
+}
+
+const SCRATCH = new Float64Array(3)
+
+export function oklchOf(n: number): Oklch {
+  oklchInto(n, SCRATCH, 0)
+
+  return { l: SCRATCH[0] as number, c: SCRATCH[1] as number, h: SCRATCH[2] as number }
 }
 
 export function oklch(hex: Hex): Oklch {
-  let found = OKLCHS.get(hex)
-
-  if (found === undefined) {
-    if (OKLCHS.size >= SEEN_MOST) {
-      OKLCHS.clear()
-    }
-
-    found = oklchOf(linearOf(hex))
-    OKLCHS.set(hex, found)
-  }
-
-  return found
+  return oklchOf(rgbOf(hex))
 }
 
 export interface Lab {
@@ -103,30 +105,51 @@ export interface Lab {
   b: number
 }
 
-type Linear = [number, number, number]
+const labF = (t: number) => (t > 216 / 24389 ? Math.cbrt(t) : (t * 841) / 108 + 4 / 29)
 
-function labOf([r, g, b]: Linear): Lab {
-  const f = (t: number) => (t > 216 / 24389 ? Math.cbrt(t) : (t * 841) / 108 + 4 / 29)
-  const x = f((0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / 0.95047)
-  const y = f(0.2126729 * r + 0.7151522 * g + 0.072175 * b)
-  const z = f((0.0193339 * r + 0.119192 * g + 0.9503041 * b) / 1.08883)
+function labFrom(r: number, g: number, b: number, out: Float64Array, at: number): void {
+  const x = labF((0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / 0.95047)
+  const y = labF(0.2126729 * r + 0.7151522 * g + 0.072175 * b)
+  const z = labF((0.0193339 * r + 0.119192 * g + 0.9503041 * b) / 1.08883)
 
-  return Object.freeze({ l: 116 * y - 16, a: 500 * (x - y), b: 200 * (y - z) })
+  out[at] = 116 * y - 16
+  out[at + 1] = 500 * (x - y)
+  out[at + 2] = 200 * (y - z)
+}
+
+export function labInto(n: number, out: Float64Array, at: number): void {
+  labFrom(LINEAR[(n >> 16) & 0xff] as number, LINEAR[(n >> 8) & 0xff] as number, LINEAR[n & 0xff] as number, out, at)
+}
+
+export function labOf(n: number): Lab {
+  labInto(n, SCRATCH, 0)
+
+  return { l: SCRATCH[0] as number, a: SCRATCH[1] as number, b: SCRATCH[2] as number }
 }
 
 export function lab(hex: Hex): Lab {
-  let found = LABS.get(hex)
+  return labOf(rgbOf(hex))
+}
 
-  if (found === undefined) {
-    if (LABS.size >= SEEN_MOST) {
-      LABS.clear()
-    }
+const clip = (v: number) => Math.min(1, Math.max(0, v))
 
-    found = labOf(linearOf(hex))
-    LABS.set(hex, found)
-  }
+export function deuteranopeInto(n: number, out: Float64Array, at: number): void {
+  const r = LINEAR[(n >> 16) & 0xff] as number
+  const g = LINEAR[(n >> 8) & 0xff] as number
+  const b = LINEAR[n & 0xff] as number
+  const seen = clip(0.2903053213 * r + 0.7096946787 * g)
 
-  return found
+  labFrom(seen, seen, clip(b + 0.0219735394 * (g - r)), out, at)
+}
+
+export function deuteranopeOf(n: number): Lab {
+  deuteranopeInto(n, SCRATCH, 0)
+
+  return { l: SCRATCH[0] as number, a: SCRATCH[1] as number, b: SCRATCH[2] as number }
+}
+
+export function deuteranope(hex: Hex): Lab {
+  return deuteranopeOf(rgbOf(hex))
 }
 
 const RAD = Math.PI / 180
@@ -175,26 +198,4 @@ export function deltaE(from: Hex, to: Hex): number {
   const dhh = dH / sh
 
   return Math.sqrt(dl ** 2 + dc ** 2 + dhh ** 2 + rt * dc * dhh)
-}
-
-function deuteranopeOf([r, g, b]: Linear): Lab {
-  const clip = (v: number) => Math.min(1, Math.max(0, v))
-  const seen = clip(0.2903053213 * r + 0.7096946787 * g)
-
-  return labOf([seen, seen, clip(b + 0.0219735394 * (g - r))])
-}
-
-export function deuteranope(hex: Hex): Lab {
-  let found = DEUTERANOPES.get(hex)
-
-  if (found === undefined) {
-    if (DEUTERANOPES.size >= SEEN_MOST) {
-      DEUTERANOPES.clear()
-    }
-
-    found = deuteranopeOf(linearOf(hex))
-    DEUTERANOPES.set(hex, found)
-  }
-
-  return found
 }

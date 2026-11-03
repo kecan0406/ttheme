@@ -40,7 +40,7 @@ import {
   tagList,
   tagsOf,
 } from '../../core/booru.ts'
-import { type About, aboutOf, siteTags, type Work } from '../../core/commons.ts'
+import { type About, aboutIn, aboutOf, shelvesOf, siteTags, type Work } from '../../core/commons.ts'
 import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
 import { SCENES } from '../../core/scenes.ts'
 import { FACE } from '../../core/slots.ts'
@@ -337,10 +337,11 @@ function tagOf(works: readonly Work[], entry: PaletteEntry): string {
 
 function charactersOf(works: readonly Work[]): Map<string, About> {
   const known = new Map<string, About>()
+  const index = shelvesOf(works)
 
   for (const work of works) {
     for (const character of work.characters) {
-      const about = aboutOf(works, `${work.id}/${character.id}`)
+      const about = aboutIn(index, `${work.id}/${character.id}`)
 
       if (character.danbooru && about && !known.has(character.danbooru)) {
         known.set(character.danbooru, about)

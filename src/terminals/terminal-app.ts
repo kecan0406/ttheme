@@ -5,8 +5,8 @@ import type { Hex } from '../core/color.ts'
 import { type Canvas, decodePng, encodeRgb, flatten, pngHead, type Rgba } from '../core/png.ts'
 import type { Theme } from '../core/theme.ts'
 import { owned, POSITIONS, stem } from '../core/theme.ts'
-import { backgroundsDir, frameAt } from '../pictures/backdrop.ts'
-import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
+import { frameAt } from '../pictures/backdrop.ts'
+import { type ProfileBackground, } from '../pictures/conf.ts'
 import { rewrite, writeAtomic } from '../store/edits.ts'
 import type { Host } from '../store/host.ts'
 import { readText } from './common.ts'
@@ -334,7 +334,7 @@ function lay(ctx: Ctx): Map<string, string> {
   for (const theme of ctx.themes) {
     const files = held.get(stem(theme.name)) ?? []
     held.delete(stem(theme.name))
-    const picture = readBackdrop(backgroundsDir(ctx.configHome), theme.name, ctx.home)
+    const picture = ctx.backdrops.get(theme.name)
     const bytes = picture && existsSync(picture.image) ? new Uint8Array(readFileSync(picture.image)) : undefined
     const head = bytes && pngHead(bytes)
 

@@ -1,4 +1,4 @@
-import { aboutOf, mergeWorks, type Work, workOf, workOfListed, worksFor } from '../../core/commons.ts'
+import { aboutIn, mergeWorks, type Shelves, shelvesOf, type Work, workOfListed, worksFor } from '../../core/commons.ts'
 import { swatch } from '../../core/manifest.ts'
 import { MAKE_URL, type NameHit, namedWorks, requestUrl } from '../../core/names.ts'
 import { ago, cells, containsText, counted, inert } from '../../core/text.ts'
@@ -282,11 +282,11 @@ export class Search {
     )
   }
 
-  private offers(works: readonly Work[], id: string): Offer[] {
+  private offers(index: Shelves, id: string): Offer[] {
     const { staged } = this.host
 
     const has = (subject: string | undefined) => {
-      const about = aboutOf(works, subject)
+      const about = aboutIn(index, subject)
 
       return about !== undefined && worksFor(about).includes(id)
     }
@@ -314,6 +314,7 @@ export class Search {
     }
 
     const works = this.works()
+    const index = shelvesOf(works)
     const named = this.named?.query === query ? namedWorks(this.named.hits, works).works : []
     const local = works.filter((w) => containsText([w.name, w.native ?? ''], query)).map((w) => w.id)
 
@@ -325,14 +326,14 @@ export class Search {
     const exact = palettes
       .filter((e) => namesPalette(e.name, query))
       .flatMap((e) => {
-        const about = aboutOf(works, e.subject)
+        const about = aboutIn(index, e.subject)
 
         return about ? worksFor(about) : []
       })
 
     return [...new Set([...exact, ...named, ...local])].flatMap((id) => {
-      const work = workOf(works, id)
-      const offers = work ? this.offers(works, id) : []
+      const work = index.byId.get(id)
+      const offers = work ? this.offers(index, id) : []
 
       return work && offers.length > 0 ? [{ work, offers }] : []
     })
@@ -624,14 +625,15 @@ export class Search {
       m.works.map((w) => ({ ...w, characters: [] })),
     )
 
-    const shelves = Map.groupBy(m.palettes, (e) => aboutOf(works, e.subject)?.work.id ?? '')
+    const index = shelvesOf(works)
+    const shelves = Map.groupBy(m.palettes, (e) => aboutIn(index, e.subject)?.work.id ?? '')
     const ids = [...shelves.keys()].filter(Boolean).sort(byWorkName(works))
 
     const line = (e: Listed['palettes'][number]) =>
       `  ${fit(e.name, pad)}${this.host.color ? `  ${ansiSquares(swatch(e))}` : ''}`
 
     return [
-      ...ids.flatMap((id) => [p.dim(workOf(works, id)?.name ?? id), ...(shelves.get(id) ?? []).map(line)]),
+      ...ids.flatMap((id) => [p.dim(index.byId.get(id)?.name ?? id), ...(shelves.get(id) ?? []).map(line)]),
       ...(shelves.get('') ?? []).map(line),
     ]
   }

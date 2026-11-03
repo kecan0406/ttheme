@@ -16,12 +16,6 @@ The pure model. It does no I/O: no `process`, `fetch` or `Bun`, and of node only
 - A palette is made in one mode (`modeOf`), and its other mode is the mirror (`mirror.ts`, the one implementation), the same whether a set keeps it or the runtime makes it.
 - Every rule reads a palette's colors alone: no key of a palette changes how the gate, `fixGate` or the mirror treat it.
 
-## Memo and caches
-
-- Whatever the CLI derives from a palette's or a work's text goes through `memo` (`memo.ts`), keyed by a hash of everything the computation reads; never key it on less.
-- Never `memo` a derivation whose input changes while a screen is up (a draft, a hover, a frame): the memo never evicts.
-- The color math keeps bounded in-process caches (`oklch`, `lab` and `deuteranope` in `color.ts`; `hctOf` and `hctHex` in `hct.ts`, the one place that reads or solves HCT). They are never written to disk and hold frozen values, since every caller shares them.
-
 ## Share codes
 
 - A share code is `tt8:`. A change to its layout goes under another prefix, and an older prefix is refused, never read.

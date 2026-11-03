@@ -1,5 +1,5 @@
-import { type Hex, luminance, mix, rgb } from './color.ts'
-import { checkReadability, isLight } from './contrast.ts'
+import { type Hex, luminance, luminanceOf, mix, mixOf, rgb, rgbOf } from './color.ts'
+import { isLight, readabilityFails, sheetOf } from './contrast.ts'
 import { FACE } from './slots.ts'
 
 const FAINT = 0.1
@@ -71,20 +71,19 @@ function highest(ok: (o: number) => boolean): number {
 }
 
 function fade(colors: Colors, color: Hex) {
-  const misses = (o: number) =>
-    checkReadability({
-      name: colors.name,
-      background: mix(colors.background, color, o),
-      foreground: colors.foreground,
-      ansi: colors.ansi,
-    }).map((miss) => miss.rule)
-
-  const already = new Set(misses(0))
-  const cap = highest((o) => misses(o).every((rule) => already.has(rule)))
+  const sheet = sheetOf(
+    { name: colors.name, background: colors.background, foreground: colors.foreground, ansi: colors.ansi },
+    false,
+  )
+  const under = rgbOf(colors.background)
+  const over = rgbOf(color)
+  const misses = (o: number) => readabilityFails(sheet, luminanceOf(mixOf(under, over, o)))
+  const already = misses(0)
+  const cap = highest((o) => (misses(o) & ~already) === 0)
   const light = isLight(colors)
 
   const matched = highest((o) =>
-    light ? luminance(mix(colors.background, color, o)) >= FLOOR : luminance(mix(colors.background, color, o)) <= PEAK,
+    light ? luminanceOf(mixOf(under, over, o)) >= FLOOR : luminanceOf(mixOf(under, over, o)) <= PEAK,
   )
 
   return { cap, matched, opacity: Math.floor(Math.min(cap, matched) * 100) / 100 }

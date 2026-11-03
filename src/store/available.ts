@@ -1,7 +1,16 @@
 import { existsSync, mkdirSync, readFileSync, statSync, utimesSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { AGENT } from '../core/booru.ts'
-import { aboutOf, type Commons, mergeWorks, parseCommons, shelfOf, type Work, wordsOf } from '../core/commons.ts'
+import {
+  aboutIn,
+  type Commons,
+  mergeWorks,
+  parseCommons,
+  shelfIn,
+  shelvesOf,
+  type Work,
+  wordsOf,
+} from '../core/commons.ts'
 import { boundOf, GATE_RULES, measure, missedRules, shownOf } from '../core/contrast.ts'
 import {
   type Bundle,
@@ -127,21 +136,44 @@ export interface Archive {
   files: Record<string, string>
 }
 
-export function readMarketplaces(configHome: string, warn = true, bundled?: Bundled): Manifest {
-  const sources = marketplaceSources(configHome)
-  const { builtin, commons } = bundled ?? readBundled(configHome)
-  const remote = sources.filter(isRemote).flatMap((source) => readCached(configHome, source, warn) ?? [])
-  const palettes = [...(sources.includes(BUILTIN) ? builtin.palettes : []), ...remote.flatMap((m) => m.entries)]
+export interface Sourced {
+  source: string
+  read?: ReadMarketplace
+}
 
-  return {
+export interface Read {
+  bundled: Bundled
+  sourced: Sourced[]
+  manifest: Manifest
+}
+
+export function readAll(configHome: string, warn = true, bundled = readBundled(configHome)): Read {
+  const sources = marketplaceSources(configHome)
+
+  const sourced = sources.map((source) => {
+    const read = isRemote(source) ? readCached(configHome, source, warn) : undefined
+
+    return read ? { source, read } : { source }
+  })
+
+  const remote = sourced.flatMap(({ read }) => read ?? [])
+  const { builtin, commons } = bundled
+
+  const manifest = {
     version: builtin.version,
     gate: builtin.gate,
-    palettes,
+    palettes: [...(sources.includes(BUILTIN) ? builtin.palettes : []), ...remote.flatMap((m) => m.entries)],
     works: mergeWorks(
       commons.works,
       remote.flatMap((m) => m.works),
     ),
   }
+
+  return { bundled, sourced, manifest }
+}
+
+export function readMarketplaces(configHome: string, warn = true, bundled?: Bundled): Manifest {
+  return readAll(configHome, warn, bundled).manifest
 }
 
 function parseArchive(source: string): Archive {
@@ -309,6 +341,28 @@ export function untuned(configHome: string, manifest: Manifest, warn = true): Ma
   }
 }
 
+export interface View {
+  manifest: Manifest
+  untuned: Manifest
+  available: Manifest
+}
+
+export function viewOf(
+  configHome: string,
+  manifest = readMarketplaces(configHome),
+  warn = true,
+  names?: readonly string[],
+): View {
+  const plain = untuned(configHome, manifest, warn)
+  const mode = modeFor(configHome)
+  const wanted = names && new Set(names)
+  const worn = (wanted ? plain.palettes.filter((entry) => wanted.has(entry.name)) : plain.palettes).map((entry) =>
+    inMode(entry, mode),
+  )
+
+  return { manifest, untuned: plain, available: { ...plain, palettes: tuned(worn, readTone(configHome)) } }
+}
+
 export function shown(configHome: string, manifest: Manifest, warn = true): Manifest {
   const view = untuned(configHome, manifest, warn)
   const mode = modeFor(configHome)
@@ -317,13 +371,11 @@ export function shown(configHome: string, manifest: Manifest, warn = true): Mani
 }
 
 export function available(configHome: string, manifest: Manifest, warn = true): Manifest {
-  const view = shown(configHome, manifest, warn)
-
-  return { ...view, palettes: tuned(view.palettes, readTone(configHome)) }
+  return viewOf(configHome, manifest, warn).available
 }
 
 export function readAvailable(configHome: string): Manifest {
-  return available(configHome, readMarketplaces(configHome))
+  return viewOf(configHome).available
 }
 
 export class Missing extends Error {}
@@ -476,10 +528,12 @@ export function nearest(palettes: PaletteEntry[], names: string[]): string {
 }
 
 export function search(palettes: PaletteEntry[], works: readonly Work[], query: string): PaletteEntry[] {
-  return palettes.filter((p) => {
-    const about = aboutOf(works, p.subject)
+  const shelves = shelvesOf(works)
 
-    return containsText([p.name, shelfOf(p, works), ...wordsOf(about)], query)
+  return palettes.filter((p) => {
+    const about = aboutIn(shelves, p.subject)
+
+    return containsText([p.name, shelfIn(p, shelves), ...wordsOf(about)], query)
   })
 }
 
@@ -490,10 +544,11 @@ export function booruTags(
   token: string,
 ): PaletteEntry[] {
   const needle = token.toLowerCase()
-  const home = aboutOf(works, near.subject)?.work.id
-  const rank = (p: PaletteEntry) => (p.name === near.name ? 0 : aboutOf(works, p.subject)?.work.id === home ? 1 : 2)
+  const shelves = shelvesOf(works)
+  const home = aboutIn(shelves, near.subject)?.work.id
+  const rank = (p: PaletteEntry) => (p.name === near.name ? 0 : aboutIn(shelves, p.subject)?.work.id === home ? 1 : 2)
 
   return palettes
-    .filter((p) => aboutOf(works, p.subject)?.character?.danbooru?.toLowerCase().includes(needle))
+    .filter((p) => aboutIn(shelves, p.subject)?.character?.danbooru?.toLowerCase().includes(needle))
     .sort((a, b) => rank(a) - rank(b))
 }

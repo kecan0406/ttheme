@@ -1,11 +1,11 @@
-import { contrast, deuteranope, type Hex, lab, luminance, oklch } from './color.ts'
+import { contrastOf, deuteranopeInto, type Hex, hexOf, labInto, luminanceOf, oklchInto, rgbOf } from './color.ts'
 import {
   ACCENT_MIN,
   ACCENT_SLOTS,
   ANSI0_MAX_LUMINANCE,
   ANSI7_ON_ANSI8_MIN,
   ANSI8_MIN,
-  apart,
+  apartAt,
   BODY_MIN,
   BRIGHT_GAP,
   brightDrift,
@@ -17,6 +17,7 @@ import {
   lookalikes,
   ON_ACCENT_MIN,
   offRole,
+  passes,
   type Readable,
   ROLE_HUES,
   ROLES,
@@ -47,32 +48,40 @@ const encoded = (v: number) => {
   return Math.round(255 * (u <= 0.0031308 ? 12.92 * u : 1.055 * u ** (1 / 2.4) - 0.055))
 }
 
-const byte = (v: number) => v.toString(16).padStart(2, '0')
-
-function linearOf(l: number, a: number, b: number): [number, number, number] {
+function fits(l: number, a: number, b: number): boolean {
   const x = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3
   const y = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3
   const z = (l - 0.0894841775 * a - 1.291485548 * b) ** 3
+  const r = 4.0767416621 * x - 3.3077115913 * y + 0.2309699292 * z
 
-  return [
-    4.0767416621 * x - 3.3077115913 * y + 0.2309699292 * z,
-    -1.2684380046 * x + 2.6097574011 * y - 0.3413193965 * z,
-    -0.0041960863 * x - 0.7034186147 * y + 1.707614701 * z,
-  ]
+  if (outside(r)) return false
+
+  const g = -1.2684380046 * x + 2.6097574011 * y - 0.3413193965 * z
+
+  if (outside(g)) return false
+
+  return !outside(-0.0041960863 * x - 0.7034186147 * y + 1.707614701 * z)
 }
 
-function fits(l: number, a: number, b: number): boolean {
-  const [r, g, bl] = linearOf(l, a, b)
+function srgbOf(l: number, c: number, h: number): number {
+  const a = c * Math.cos((h * Math.PI) / 180)
+  const b = c * Math.sin((h * Math.PI) / 180)
+  const x = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3
+  const y = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3
+  const z = (l - 0.0894841775 * a - 1.291485548 * b) ** 3
+  const r = 4.0767416621 * x - 3.3077115913 * y + 0.2309699292 * z
+  const g = -1.2684380046 * x + 2.6097574011 * y - 0.3413193965 * z
+  const bl = -0.0041960863 * x - 0.7034186147 * y + 1.707614701 * z
 
-  return !(outside(r) || outside(g) || outside(bl))
+  if (outside(r) || outside(g) || outside(bl)) return -1
+
+  return (encoded(r) << 16) | (encoded(g) << 8) | encoded(bl)
 }
 
 export function srgb(l: number, c: number, h: number): number[] | undefined {
-  const [r, g, b] = linearOf(l, c * Math.cos((h * Math.PI) / 180), c * Math.sin((h * Math.PI) / 180))
+  const n = srgbOf(l, c, h)
 
-  if (outside(r) || outside(g) || outside(b)) return undefined
-
-  return [encoded(r), encoded(g), encoded(b)]
+  return n < 0 ? undefined : [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]
 }
 
 export function edgeChroma(l: number, h: number, c: number): number {
@@ -93,24 +102,42 @@ export function edgeChroma(l: number, h: number, c: number): number {
   return lo
 }
 
-export function inGamut(l: number, c: number, h: number): Hex {
-  const [r, g, b] = srgb(l, edgeChroma(l, h, c), h) ?? [0, 0, 0]
+function gamutOf(l: number, c: number, h: number): number {
+  const n = srgbOf(l, edgeChroma(l, h, c), h)
 
-  return `#${byte(r as number)}${byte(g as number)}${byte(b as number)}`
+  return n < 0 ? 0 : n
+}
+
+export function inGamut(l: number, c: number, h: number): Hex {
+  return hexOf(gamutOf(l, c, h))
+}
+
+const OK = new Float64Array(3)
+
+function lchOf(hex: Hex): [number, number, number] {
+  oklchInto(rgbOf(hex), OK, 0)
+
+  return [OK[0] as number, OK[1] as number, OK[2] as number]
 }
 
 function rehue(hex: Hex, hue: number): Hex {
-  const { l, c } = oklch(hex)
+  const [l, c] = lchOf(hex)
 
-  return inGamut(l, c, (hue + 360) % 360)
+  return hexOf(gamutOf(l, c, (hue + 360) % 360))
 }
 
-function relight(hex: Hex, against: Hex, min: number, up = luminance(against) < 0.18): Hex {
-  const { l, c, h } = oklch(hex)
-  const at = (t: number) => inGamut(up ? l + (1 - l) * t : l * (1 - t), c, h)
+const lumOf = (hex: Hex) => luminanceOf(rgbOf(hex))
 
-  if (contrast(at(1), against) < min + HEADROOM) {
-    return at(1)
+const ratio = (a: Hex, b: Hex) => contrastOf(lumOf(a), lumOf(b))
+
+function relight(hex: Hex, against: Hex, min: number, up = lumOf(against) < 0.18): Hex {
+  const [l, c, h] = lchOf(hex)
+  const under = lumOf(against)
+  const at = (t: number) => gamutOf(up ? l + (1 - l) * t : l * (1 - t), c, h)
+  const top = at(1)
+
+  if (contrastOf(luminanceOf(top), under) < min + HEADROOM) {
+    return hexOf(top)
   }
 
   let lo = 0
@@ -119,69 +146,118 @@ function relight(hex: Hex, against: Hex, min: number, up = luminance(against) < 
   for (let i = 0; i < 30; i++) {
     const mid = (lo + hi) / 2
 
-    if (contrast(at(mid), against) >= min + HEADROOM) hi = mid
+    if (contrastOf(luminanceOf(at(mid)), under) >= min + HEADROOM) hi = mid
     else lo = mid
   }
 
-  return at(hi)
+  return hexOf(at(hi))
 }
 
 function darken(hex: Hex, max: number): Hex {
-  const { l, c, h } = oklch(hex)
+  const [l, c, h] = lchOf(hex)
   let lo = 0
   let hi = l
 
   for (let i = 0; i < 30; i++) {
     const mid = (lo + hi) / 2
 
-    if (luminance(inGamut(mid, c, h)) <= max - 0.005) lo = mid
+    if (luminanceOf(gamutOf(mid, c, h)) <= max - 0.005) lo = mid
     else hi = mid
   }
 
-  return inGamut(lo, c, h)
+  return hexOf(gamutOf(lo, c, h))
 }
+
+const MINE = new Float64Array(3)
 
 function place(ansi: Hex[], role: number): [number, number] | undefined {
   const band = ROLE_HUES.get(role) as { center: number; width: number }
-  const [n, b] = [oklch(ansi[role] as Hex), oklch(ansi[role + 8] as Hex)]
+  const labs = new Float64Array(48)
 
-  const span = Array.from({ length: 2 * band.width + 1 }, (_, i) => (band.center - band.width + i + 360) % 360)
-
-  const clear = (slot: number, hue: number) => {
-    const mine = lab(rehue(ansi[slot] as Hex, hue))
-
-    return ROLES.every((j) => {
-      const other = (slot > 8 ? 8 : 0) + j
-
-      return other === slot || apart(mine, lab(ansi[other] as Hex)) >= CLEAR
-    })
+  for (const j of ROLES) {
+    labInto(rgbOf(ansi[j] as Hex), labs, j * 3)
+    labInto(rgbOf(ansi[j + 8] as Hex), labs, (j + 8) * 3)
   }
 
-  const normals = span.filter((hue) => clear(role, hue))
-  const brights = span.filter((hue) => clear(role + 8, hue))
-  let best: [number, number] | undefined
+  const [nl, nc, nh] = lchOf(ansi[role] as Hex)
+  const [bl, bc, bh] = lchOf(ansi[role + 8] as Hex)
+  const count = 2 * band.width + 1
+  const hues = new Float64Array(count)
+  const near = new Float64Array(count)
+  const reach = new Float64Array(count)
+
+  for (let i = 0; i < count; i++) {
+    const hue = (band.center - band.width + i + 360) % 360
+    hues[i] = hue
+    near[i] = hueGap(hue, nh)
+    reach[i] = hueGap(hue, bh)
+  }
+
+  const clear = (slot: number, l: number, c: number, hue: number) => {
+    labInto(gamutOf(l, c, (hue + 360) % 360), MINE, 0)
+    const base = slot > 8 ? 8 : 0
+
+    for (const j of ROLES) {
+      const other = base + j
+
+      if (other !== slot && apartAt(MINE, 0, labs, other * 3) < CLEAR) return false
+    }
+
+    return true
+  }
+
+  const normal = new Int8Array(count).fill(-1)
+  const bright = new Int8Array(count).fill(-1)
+
+  const normalClear = (i: number) => {
+    if (normal[i] === -1) normal[i] = clear(role, nl, nc, hues[i] as number) ? 1 : 0
+
+    return normal[i] === 1
+  }
+
+  const brightClear = (j: number) => {
+    if (bright[j] === -1) bright[j] = clear(role + 8, bl, bc, hues[j] as number) ? 1 : 0
+
+    return bright[j] === 1
+  }
+
+  const indices = Array.from({ length: count }, (_, i) => i)
+  const byNear = indices.toSorted((a, b) => (near[a] as number) - (near[b] as number))
+  const byReach = indices.toSorted((a, b) => (reach[a] as number) - (reach[b] as number))
   let cost = Number.POSITIVE_INFINITY
+  let first = -1
+  let second = -1
 
-  for (const hn of normals) {
-    for (const hb of brights) {
-      if (hueGap(hn, hb) > BRIGHT_GAP - MARGIN) continue
-      const moved = hueGap(hn, n.h) + hueGap(hb, b.h)
+  for (const i of byNear) {
+    const moved = near[i] as number
 
-      if (moved < cost) {
-        cost = moved
-        best = [hn, hb]
+    if (moved > cost) break
+
+    if (!normalClear(i)) continue
+
+    for (const j of byReach) {
+      const total = moved + (reach[j] as number)
+
+      if (total > cost) break
+
+      if (hueGap(hues[i] as number, hues[j] as number) > BRIGHT_GAP - MARGIN || !brightClear(j)) continue
+
+      if (total < cost || i < first || (i === first && j < second)) {
+        cost = total
+        first = i
+        second = j
       }
     }
   }
 
-  return best
+  return first < 0 ? undefined : [hues[first] as number, hues[second] as number]
 }
 
-function shade(hex: Hex, t: number, up: boolean): Hex {
-  const { l, c, h } = oklch(hex)
-
-  return inGamut(up ? l + (1 - l) * t : l * (1 - t), c, h)
+function shadeOf(l: number, c: number, h: number, t: number, up: boolean): number {
+  return gamutOf(up ? l + (1 - l) * t : l * (1 - t), c, h)
 }
+
+const DEUT = new Float64Array(6)
 
 class Fixer<T extends Fixable> {
   theme: T
@@ -225,8 +301,8 @@ class Fixer<T extends Fixable> {
 
     for (const { normal, gap } of brightDrift(this.theme)) {
       if (gap <= BRIGHT_GAP) continue
-      const a = oklch(this.theme.ansi[normal] as Hex).h
-      const m = oklch(this.theme.ansi[normal + 8] as Hex).h
+      const a = lchOf(this.theme.ansi[normal] as Hex)[2]
+      const m = lchOf(this.theme.ansi[normal + 8] as Hex)[2]
       this.rehue(normal + 8, 'bright-follows', a + toward(a, m) * (BRIGHT_GAP - MARGIN))
     }
 
@@ -246,7 +322,7 @@ class Fixer<T extends Fixable> {
 
     const lift = (rule: string, slots: string[], min: number, against = background) => {
       for (const slot of slots) {
-        if (contrast(this.get(slot), against) < min) this.set(slot, rule, relight(this.get(slot), against, min))
+        if (ratio(this.get(slot), against) < min) this.set(slot, rule, relight(this.get(slot), against, min))
       }
     }
 
@@ -259,19 +335,19 @@ class Fixer<T extends Fixable> {
     lift('light-ansi', ['ansi7', 'ansi15'], BODY_MIN)
     lift('ansi8-visible', ['ansi8'], ANSI8_MIN)
 
-    if (!light && luminance(this.get('ansi0')) > ANSI0_MAX_LUMINANCE) {
+    if (!light && lumOf(this.get('ansi0')) > ANSI0_MAX_LUMINANCE) {
       this.set('ansi0', 'ansi0-dark', darken(this.get('ansi0'), ANSI0_MAX_LUMINANCE))
     }
 
     const weakest = ROLES.map((i) => this.get(`ansi${i}`)).reduce((a, b) =>
-      contrast(this.get('ansi0'), a) <= contrast(this.get('ansi0'), b) ? a : b,
+      ratio(this.get('ansi0'), a) <= ratio(this.get('ansi0'), b) ? a : b,
     )
 
-    if (contrast(this.get('ansi0'), weakest) < ON_ACCENT_MIN) {
+    if (ratio(this.get('ansi0'), weakest) < ON_ACCENT_MIN) {
       this.set('ansi0', 'ansi0-on-accents', relight(this.get('ansi0'), weakest, ON_ACCENT_MIN, light))
     }
 
-    if (contrast(this.get('ansi7'), this.get('ansi8')) < ANSI7_ON_ANSI8_MIN) {
+    if (ratio(this.get('ansi7'), this.get('ansi8')) < ANSI7_ON_ANSI8_MIN) {
       this.set('ansi7', 'ansi7-on-ansi8', relight(this.get('ansi7'), this.get('ansi8'), ANSI7_ON_ANSI8_MIN, !light))
     }
 
@@ -291,20 +367,25 @@ class Fixer<T extends Fixable> {
   pull(mover: number, other: number): boolean {
     const from = this.get(`ansi${mover}`)
     const against = this.get(`ansi${other}`)
-    const up = oklch(from).l >= oklch(against).l
+    const [l, c, h] = lchOf(from)
+    const up = l >= lchOf(against)[0]
+    const under = lumOf(this.theme.background)
+    const ink = lumOf(this.get('ansi0'))
+
+    deuteranopeInto(rgbOf(against), DEUT, 3)
 
     for (let step = 1; step <= 40; step++) {
-      const to = shade(from, step / 100, up)
+      const to = shadeOf(l, c, h, step / 100, up)
+      const lum = luminanceOf(to)
 
-      if (
-        contrast(to, this.theme.background) < ACCENT_MIN ||
-        (mover < 8 && contrast(to, this.get('ansi0')) < ON_ACCENT_MIN)
-      ) {
+      if (contrastOf(lum, under) < ACCENT_MIN || (mover < 8 && contrastOf(lum, ink) < ON_ACCENT_MIN)) {
         return false
       }
 
-      if (apart(deuteranope(to), deuteranope(against)) >= CLEAR) {
-        this.set(`ansi${mover}`, 'cvd-red-green', to)
+      deuteranopeInto(to, DEUT, 0)
+
+      if (apartAt(DEUT, 0, DEUT, 3) >= CLEAR) {
+        this.set(`ansi${mover}`, 'cvd-red-green', hexOf(to))
 
         return true
       }
@@ -329,7 +410,7 @@ export function fixRoles<T extends Fixable>(theme: T) {
   for (let pass = 0; pass < PASSES; pass++) {
     fixer.roles()
 
-    if (check(fixer.theme).length === 0) break
+    if (passes(fixer.theme)) break
   }
 
   return { theme: fixer.theme, moves: fixer.net() }
@@ -343,7 +424,7 @@ export function fixGate<T extends Fixable>(theme: T) {
     fixer.separate()
     fixer.roles()
 
-    if (check(fixer.theme).length === 0) break
+    if (passes(fixer.theme)) break
   }
 
   return { theme: fixer.theme, moves: fixer.net(), left: check(fixer.theme) }

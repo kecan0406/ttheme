@@ -1,6 +1,6 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { SITES } from '../core/booru.ts'
-import { aboutOf, spoken, type Work, workOf, worksFor, worldOrder } from '../core/commons.ts'
+import { aboutIn, shelvesOf, spoken, type Work, worksFor, worldOrder } from '../core/commons.ts'
 import { type PaletteEntry, swatch } from '../core/manifest.ts'
 import { marksOf } from '../core/mark.ts'
 import type { Mode, Setting } from '../core/mode.ts'
@@ -42,7 +42,8 @@ export function palettesZsh(palettes: PaletteEntry[], works: readonly Work[], co
     mode = { worn: 'dark', auto: false, settings: ['light', 'dark'] },
   } = context
 
-  const abouts = new Map(palettes.map((p) => [p.name, aboutOf(works, p.subject)]))
+  const shelves = shelvesOf(works)
+  const abouts = new Map(palettes.map((p) => [p.name, aboutIn(shelves, p.subject)]))
 
   for (const p of palettes) {
     const about = abouts.get(p.name)
@@ -75,7 +76,7 @@ export function palettesZsh(palettes: PaletteEntry[], works: readonly Work[], co
       }),
     ),
   ]
-    .map((id) => workOf(works, id) ?? { id, name: id, characters: [] })
+    .map((id) => shelves.byId.get(id) ?? { id, name: id, characters: [] })
     .toSorted(byWorkName)
 
   const workPad = Math.max(0, ...shelved.map((w) => w.id.length))

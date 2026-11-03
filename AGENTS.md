@@ -29,6 +29,7 @@ While a change goes back and forth with the person you work for, run no check un
 
 - First-party code carries no comments.
 - No backwards-compat shims, deprecated aliases or legacy fallbacks.
+- Nothing is cached, in memory or on disk: a derived value is computed again where it is read, or written by the change to its input.
 - Every screen, message and docs page follows `.claude/rules/text.md`.
 - Source is layered by folder, each layer importing only those before it: `src/core` (pure, no I/O), `src/store`, `src/pictures`, `src/terminals`, `src/tui`, `src/cli`, then `src/bin.ts`; `src/root.ts` and `src/embed.ts` sit outside. `.oxlintrc.json` enforces it. A module that mixes layers is split, its pure part going down.
 - A module that reads a file or a response into ttheme's types takes and returns `unknown` and goes on the decoder list in `.oxlintrc.json`.

@@ -1,5 +1,5 @@
 import type { Readable, Writable } from 'node:stream'
-import { aboutOf, leadOf, type Work, wordsOf, workOf, worksFor } from '../core/commons.ts'
+import { aboutIn, aboutOf, leadOf, type Shelves, shelvesOf, type Work, wordsOf, worksFor } from '../core/commons.ts'
 import { type PaletteEntry, swatch } from '../core/manifest.ts'
 import { cells, containsText } from '../core/text.ts'
 import { BUILTIN, isBuiltin, publisherOf, slugOf } from '../core/theme.ts'
@@ -64,8 +64,8 @@ interface Seat {
   original?: true
 }
 
-function seatsOf(entry: PaletteEntry, works: readonly Work[], layout: PickerLayout): Seat[] {
-  const about = aboutOf(works, entry.subject)
+function seatsOf(entry: PaletteEntry, index: Shelves, layout: PickerLayout): Seat[] {
+  const about = aboutIn(index, entry.subject)
   const publisher = publisherOf(entry.name)
 
   if (!about) {
@@ -85,10 +85,14 @@ function cmp(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0
 }
 
-export function byWorkName(works: readonly Work[]): (a: string, b: string) => number {
-  const name = (id: string) => (workOf(works, id)?.name ?? id).toLowerCase()
+function byNameIn(index: Shelves): (a: string, b: string) => number {
+  const name = (id: string) => (index.byId.get(id)?.name ?? id).toLowerCase()
 
   return (a, b) => cmp(name(a), name(b)) || cmp(a, b)
+}
+
+export function byWorkName(works: readonly Work[]): (a: string, b: string) => number {
+  return byNameIn(shelvesOf(works))
 }
 
 function byPublisher(a: string, b: string): number {
@@ -119,10 +123,12 @@ function passed(row: Row | undefined): boolean {
   return row?.kind === 'rule'
 }
 
-export function matchesPalette(entry: PaletteEntry, works: readonly Work[], search: string): boolean {
-  const about = aboutOf(works, entry.subject)
+function matchesIn(entry: PaletteEntry, index: Shelves, search: string): boolean {
+  return containsText([entry.name, ...wordsOf(aboutIn(index, entry.subject))], search)
+}
 
-  return containsText([entry.name, ...wordsOf(about)], search)
+export function matchesPalette(entry: PaletteEntry, works: readonly Work[], search: string): boolean {
+  return containsText([entry.name, ...wordsOf(aboutOf(works, entry.subject))], search)
 }
 
 function leadIn(members: readonly PaletteEntry[], work: Work | undefined): PaletteEntry | undefined {
@@ -131,25 +137,30 @@ function leadIn(members: readonly PaletteEntry[], work: Work | undefined): Palet
   return members.find((m) => subject !== undefined && m.subject === subject) ?? members[0]
 }
 
+function indexOf(works: readonly Work[] | Shelves): Shelves {
+  return 'byId' in works ? works : shelvesOf(works)
+}
+
 function distinct(entries: readonly PaletteEntry[]): PaletteEntry[] {
   return [...new Map(entries.map((e) => [e.name, e])).values()]
 }
 
 export function pickerRows(
   entries: PaletteEntry[],
-  works: readonly Work[],
+  works: readonly Work[] | Shelves,
   expanded: ReadonlySet<string>,
   filter: string,
   layout: PickerLayout = 'world',
   tops: readonly string[] = [],
   mode: PickerMode = 'tree',
 ): PickerRow[] {
+  const index = indexOf(works)
   const q = filter.trim()
-  const hit = new Set(q ? entries.filter((e) => matchesPalette(e, works, q)) : entries)
+  const hit = new Set(q ? entries.filter((e) => matchesIn(e, index, q)) : entries)
   const rows: PickerRow[] = []
 
   const groups = Map.groupBy(
-    entries.flatMap((entry) => seatsOf(entry, works, layout).map((seat) => ({ entry, ...seat }))),
+    entries.flatMap((entry) => seatsOf(entry, index, layout).map((seat) => ({ entry, ...seat }))),
     (seated) => seated.top,
   )
 
@@ -160,7 +171,7 @@ export function pickerRows(
   const order =
     layout === 'world'
       ? [
-          ...[...groups.keys()].filter((top) => !originals.has(top)).sort(byWorkName(works)),
+          ...[...groups.keys()].filter((top) => !originals.has(top)).sort(byNameIn(index)),
           ...[...originals].sort(byPublisher),
         ]
       : [...new Set([...tops, ...groups.keys()])]
@@ -184,7 +195,7 @@ export function pickerRows(
     }
 
     const open = mode === 'inside' || (mode === 'tree' && (q.length > 0 || expanded.has(top)))
-    const work = layout === 'world' && !originals.has(top) ? workOf(works, top) : undefined
+    const work = layout === 'world' && !originals.has(top) ? index.byId.get(top) : undefined
     const lead = leadIn(members, work)
 
     if (mode !== 'inside') {
@@ -211,9 +222,9 @@ export function pickerRows(
       (s) => s.shelf as string,
     )
 
-    for (const name of [...shelved.keys()].sort(byWorkName(works))) {
+    for (const name of [...shelved.keys()].sort(byNameIn(index))) {
       const inside = distinct((shelved.get(name) ?? []).map((s) => s.entry))
-      const shelf = workOf(works, name)
+      const shelf = index.byId.get(name)
       const unfolded = q.length > 0 || expanded.has(shelfKey(top, name))
 
       rows.push({
@@ -240,16 +251,17 @@ export function pickerRows(
   return rows
 }
 
-export function workRows(entries: PaletteEntry[], works: readonly Work[], filter: string): PickerRow[] {
+export function workRows(entries: PaletteEntry[], works: readonly Work[] | Shelves, filter: string): PickerRow[] {
+  const index = indexOf(works)
   const q = filter.trim()
 
   const hit = new Set(
     entries
-      .filter((e) => q === '' || matchesPalette(e, works, q))
-      .flatMap((e) => seatsOf(e, works, 'world').map((seat) => seat.top)),
+      .filter((e) => q === '' || matchesIn(e, index, q))
+      .flatMap((e) => seatsOf(e, index, 'world').map((seat) => seat.top)),
   )
 
-  return pickerRows(entries, works, new Set(), '').filter((r) => r.kind === 'top' && hit.has(r.name))
+  return pickerRows(entries, index, new Set(), '').filter((r) => r.kind === 'top' && hit.has(r.name))
 }
 
 export function stepRow(at: number, delta: number, count: number, rule: (i: number) => boolean, wrap = true): number {
@@ -370,6 +382,7 @@ export class PaletteList<X extends Extra = Extra> {
   private readonly extras?: () => X[]
   private readonly pinned?: () => X[]
   private works: readonly Work[] = []
+  private index: Shelves = shelvesOf([])
   private seats = new Map<string, Seat[]>()
   private topNames: string[] = []
   private titlePad = 0
@@ -409,10 +422,11 @@ export class PaletteList<X extends Extra = Extra> {
   private load(entries: PaletteEntry[], works: readonly Work[]): void {
     this.entries = entries
     this.works = works
-    this.seats = new Map(this.entries.map((e) => [e.name, seatsOf(e, works, this.layout)]))
+    this.index = shelvesOf(works)
+    this.seats = new Map(this.entries.map((e) => [e.name, seatsOf(e, this.index, this.layout)]))
     this.topNames = [...new Set(this.entries.flatMap((e) => this.seatsOf(e).map((seat) => seat.top)))]
-    this.titlePad = Math.max(0, ...this.topNames.map((top) => cells(workOf(works, top)?.name ?? top)))
-    this.workTitles = [...new Set(this.entries.flatMap((e) => aboutOf(works, e.subject)?.work.name ?? []))]
+    this.titlePad = Math.max(0, ...this.topNames.map((top) => cells(this.index.byId.get(top)?.name ?? top)))
+    this.workTitles = [...new Set(this.entries.flatMap((e) => aboutIn(this.index, e.subject)?.work.name ?? []))]
     this.namePad = Math.max(0, ...this.entries.map((e) => this.indent(e).length + this.labelWidth(e)))
   }
 
@@ -496,7 +510,7 @@ export class PaletteList<X extends Extra = Extra> {
   private members(top: string, shelf?: string): PaletteEntry[] {
     const filter = this.scope === 'palette' ? this.filter.trim() : ''
 
-    return this.under(top, shelf).filter((e) => filter === '' || matchesPalette(e, this.works, filter))
+    return this.under(top, shelf).filter((e) => filter === '' || matchesIn(e, this.index, filter))
   }
 
   private under(top: string, shelf?: string): PaletteEntry[] {
@@ -571,7 +585,7 @@ export class PaletteList<X extends Extra = Extra> {
       return this.rows.filter((r) => r.kind === 'top').length
     }
 
-    return filter ? this.entries.filter((e) => matchesPalette(e, this.works, filter)).length : this.entries.length
+    return filter ? this.entries.filter((e) => matchesIn(e, this.index, filter)).length : this.entries.length
   }
 
   private sync(): void {
@@ -591,8 +605,8 @@ export class PaletteList<X extends Extra = Extra> {
 
     const body =
       this.scope === 'work'
-        ? workRows(this.entries, this.works, this.filter)
-        : pickerRows(this.entries, this.works, this.expanded, this.filter, this.layout, this.tops?.() ?? [], this.mode)
+        ? workRows(this.entries, this.index, this.filter)
+        : pickerRows(this.entries, this.index, this.expanded, this.filter, this.layout, this.tops?.() ?? [], this.mode)
 
     const tree: Row<X>[] =
       this.layout === 'marketplaces' || body.length === 0

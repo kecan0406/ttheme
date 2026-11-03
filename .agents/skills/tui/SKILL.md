@@ -37,7 +37,7 @@ What `sync` carries into `palettes.zsh` for preview comes from `src/cli/emit-she
 
 **Handing the tab between preview and a Node screen.** The contract is in `.claude/rules/terminals.md`; parity's `hub-back` and `browse-back` journeys hold it.
 
-**A slow frame.** A frame costs its `view()`. Profile with `node --cpu-prof` on an unminified bundle; memoize widths through `cells`, never a derivation of a draft through `memo`.
+**A slow frame.** A frame costs its `view()`. Profile with `node --cpu-prof` on an unminified bundle.
 
 **Pictures** are kitty graphics sent through `graphic` (`src/terminals/graphics.ts`), which `look` does not draw: use the `sandbox` skill.
 

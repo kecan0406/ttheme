@@ -2,7 +2,6 @@ import { backdropTone } from './backdrop-tone.ts'
 import { isHex } from './color.ts'
 import type { Work } from './commons.ts'
 import { type GateRule, measure } from './contrast.ts'
-import { memo } from './memo.ts'
 import { mirror } from './mirror.ts'
 import { type Mode, modeOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
@@ -97,9 +96,7 @@ export function otherColors(entry: PaletteEntry): Colors {
     return entry.other
   }
 
-  const theme = toTheme(entry)
-
-  return memo('mirror', JSON.stringify(theme), () => colorsOfTheme(mirror(theme)))
+  return colorsOfTheme(mirror(toTheme(entry)))
 }
 
 export function inMode(entry: PaletteEntry, mode: Mode): PaletteEntry {
@@ -123,7 +120,7 @@ export function inMode(entry: PaletteEntry, mode: Mode): PaletteEntry {
     ansi: entry.ansi,
   }
 
-  return memo('mode', JSON.stringify([entry, other]), () => withColors({ ...entry, other: own }, other))
+  return withColors({ ...entry, other: own }, other)
 }
 
 export function paletteEntry(t: Theme): PaletteEntry {

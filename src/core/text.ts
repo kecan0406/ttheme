@@ -2,12 +2,6 @@ import measure from 'fast-string-width'
 
 const PRINTABLE = /^[\x20-\x7e]*$/
 
-const WIDTHS = new Map<string, number>()
-
-const WIDTHS_MOST = 8192
-
-const WIDTH_LONGEST = 512
-
 export function printable(text: string): boolean {
   return PRINTABLE.test(text)
 }
@@ -42,22 +36,7 @@ export function cells(text: string): number {
     }
   }
 
-  if (text.length > WIDTH_LONGEST) {
-    return PRINTABLE.test(text) ? text.length : measure(text)
-  }
-
-  let width = WIDTHS.get(text)
-
-  if (width === undefined) {
-    if (WIDTHS.size >= WIDTHS_MOST) {
-      WIDTHS.clear()
-    }
-
-    width = PRINTABLE.test(text) ? text.length : measure(text)
-    WIDTHS.set(text, width)
-  }
-
-  return width
+  return PRINTABLE.test(text) ? text.length : measure(text)
 }
 
 let segmenter: Intl.Segmenter | undefined

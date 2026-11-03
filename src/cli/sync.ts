@@ -2,17 +2,18 @@ import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { Work } from '../core/commons.ts'
-import { inMode, type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
-import { owned, publisherOf } from '../core/theme.ts'
+import { type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
+import { owned, publisherOf, stem, type Theme } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
-import { freshenConfs, paintFor, retint } from '../pictures/backdrop.ts'
+import { backgroundsDir, freshenConfs, paintFor, retint } from '../pictures/backdrop.ts'
+import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
 import { forgetAppearance, knowAppearance } from '../store/appearance.ts'
-import { available, nameOf, nearest, readAvailable, untuned, writeKept } from '../store/available.ts'
-import { editUserFile, writeAtomic } from '../store/edits.ts'
+import { available, nameOf, nearest, type View, viewOf, writeKept } from '../store/available.ts'
+import { editUserFile, listing, writeAtomic } from '../store/edits.ts'
 import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, worn, writeInstalled } from '../store/installed.ts'
 import { marketplacesOf } from '../store/sources.ts'
-import { readTone, tuned, tunedNames } from '../store/tone.ts'
+import { readTone, tunedNames } from '../store/tone.ts'
 import { modeFor, modeSetting } from '../store/wiring.ts'
 import { readText, themeFiles, tilde } from '../terminals/common.ts'
 import { wirings } from '../terminals/index.ts'
@@ -45,8 +46,34 @@ function now(configHome: string, state: Installed, home: string): Now {
   return { configHome, home, state, startup: worn(state) }
 }
 
+function backdropsOf(configHome: string, themes: readonly Theme[], home: string): Map<string, ProfileBackground> {
+  const dir = backgroundsDir(configHome)
+  const files = new Set(listing(dir))
+  const found = new Map<string, ProfileBackground>()
+
+  for (const theme of themes) {
+    const picture = files.has(`${stem(theme.name)}.conf`) ? readBackdrop(dir, theme.name, home) : undefined
+
+    if (picture) {
+      found.set(theme.name, picture)
+    }
+  }
+
+  return found
+}
+
 function context(configHome: string, entries: PaletteEntry[], state: Installed, home: string, host: Host): Ctx {
-  return { ...now(configHome, state, home), entries, themes: entries.map(toTheme), host }
+  const themes = entries.map(toTheme)
+
+  return { ...now(configHome, state, home), entries, themes, backdrops: backdropsOf(configHome, themes, home), host }
+}
+
+function readOr(path: string): string | undefined {
+  try {
+    return readFileSync(path, 'utf8')
+  } catch {
+    return undefined
+  }
 }
 
 function writer(ctx: Ctx): Out & { written: string[]; repainted: boolean } {
@@ -58,13 +85,20 @@ function writer(ctx: Ctx): Out & { written: string[]; repainted: boolean } {
     write(path: string, content: string, aside?: string): boolean {
       written.push(path)
 
-      if (existsSync(path) && readFileSync(path, 'utf8') === content) {
+      if (readOr(path) === content) {
         return false
       }
 
       writeAtomic(path, content, aside)
 
       return true
+    },
+    place(path: string, content: string): void {
+      written.push(path)
+
+      if (!existsSync(path)) {
+        writeAtomic(path, content)
+      }
     },
     wire(path: string, content: string): void {
       written.push(path)
@@ -83,9 +117,21 @@ function writer(ctx: Ctx): Out & { written: string[]; repainted: boolean } {
         return
       }
 
+      const there = new Set(listing(dir))
+      const addressed = wiring.shelf?.addressed === true
+
       for (const theme of ctx.themes) {
         for (const { file, content } of themeFiles(wiring, theme)) {
-          out.write(join(dir, file), content)
+          const path = join(dir, file)
+
+          if (!there.has(file)) {
+            written.push(path)
+            writeAtomic(path, content)
+          } else if (addressed) {
+            written.push(path)
+          } else {
+            out.write(path, content)
+          }
         }
       }
     },
@@ -101,28 +147,26 @@ function layer(ctx: Ctx, host: Host): Record<string, string> {
   return Object.assign({}, ...wirings(ctx.state.terminals).map((wiring) => wiring.layer?.(ctx, host) ?? {}))
 }
 
+export function settle(configHome: string, state: Installed, host: Host): void {
+  if (modeSetting(configHome) === 'auto') {
+    knowAppearance(host, !settingsFor(state.terminals).includes('auto'))
+  } else {
+    forgetAppearance()
+  }
+}
+
 export function sync(
   configHome: string,
   manifest: Manifest,
   state: Installed,
   home = homedir(),
   host: Host = systemHost(),
+  settled?: View,
 ): string[] {
-  const view = untuned(configHome, manifest)
-  const kept = resolve(view, state.palettes)
-
-  if (modeSetting(configHome) === 'auto') {
-    knowAppearance(host, !settingsFor(state.terminals).includes('auto'))
-  } else {
-    forgetAppearance()
-  }
-
-  const mode = modeFor(configHome)
-
-  const entries = tuned(
-    kept.map((entry) => inMode(entry, mode)),
-    readTone(configHome),
-  )
+  settle(configHome, state, host)
+  const view = settled ?? viewOf(configHome, manifest)
+  const kept = resolve(view.untuned, state.palettes)
+  const entries = resolve(view.available, state.palettes)
 
   retint(configHome, new Map(entries.map((entry) => [entry.name, paintFor(entry)])))
   freshenConfs(configHome)
@@ -134,7 +178,7 @@ export function sync(
     wiring.sync(ctx, out)
   }
 
-  out.written.push(writeTable(ctx, view.works, host, out.repainted))
+  out.written.push(writeTable(ctx, view.untuned.works, host, out.repainted))
 
   return out.written
 }
@@ -163,7 +207,7 @@ function writeTable(ctx: Ctx, works: readonly Work[], host: Host, repainted: boo
   return table
 }
 
-export function refreshPictures(configHome: string, home = homedir(), host: Host = systemHost()): void {
+export function refreshPictures(configHome: string, home = homedir(), host: Host = systemHost(), settled?: View): void {
   const state = readInstalled(configHome)
   const pictured = wirings(state.terminals).filter((wiring) => wiring.pictures)
 
@@ -171,7 +215,7 @@ export function refreshPictures(configHome: string, home = homedir(), host: Host
     return
   }
 
-  const view = readAvailable(configHome)
+  const view = (settled ?? viewOf(configHome)).available
   const ctx = context(configHome, resolve(view, state.palettes), state, home, host)
   const out = writer(ctx)
 

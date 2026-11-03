@@ -1,4 +1,4 @@
-import { contrast, deuteranope, type Hex, type Lab, lab, luminance, type Oklch, oklch, ratio } from './color.ts'
+import { contrastOf, deuteranopeInto, type Hex, labInto, luminanceOf, oklchInto, rgbOf } from './color.ts'
 import type { Theme } from './theme.ts'
 
 export const BODY_MIN = 7
@@ -56,102 +56,97 @@ export interface GateRule {
   max?: number
 }
 
-interface Check<T extends Readable = Readable> extends GateRule {
-  measure(theme: T): number
-  check(theme: T): string[]
+const BG = 16
+const FG = 17
+const CURSOR = 18
+const SELECTION = 19
+
+export interface Sheet {
+  rgb: Int32Array
+  lum: Float64Array
+  ok: Float64Array
+  lab: Float64Array
+  deut: Float64Array
 }
 
-function at(theme: Readable, index: number): Hex {
-  const color = theme.ansi[index]
+export function sheetOf(theme: Readable, full = true): Sheet {
+  const rgb = new Int32Array(20)
+  const lum = new Float64Array(20)
+  const ok = new Float64Array(48)
+  const lab = new Float64Array(48)
+  const deut = new Float64Array(48)
 
-  if (color === undefined) throw new Error(`${theme.name}: missing ANSI ${index}`)
+  for (let i = 0; i < 16; i++) {
+    const color = theme.ansi[i]
 
-  return color
+    if (color === undefined) throw new Error(`${theme.name}: missing ANSI ${i}`)
+
+    const n = rgbOf(color)
+    rgb[i] = n
+    lum[i] = luminanceOf(n)
+
+    if (full) {
+      oklchInto(n, ok, i * 3)
+      labInto(n, lab, i * 3)
+    }
+  }
+
+  if (full) {
+    for (const [red, green] of RED_GREEN) {
+      deuteranopeInto(rgb[red] as number, deut, red * 3)
+      deuteranopeInto(rgb[green] as number, deut, green * 3)
+    }
+  }
+
+  const named = [theme.background, theme.foreground, theme.cursor, theme.selectionBackground]
+
+  for (let k = 0; k < 4; k++) {
+    const color = named[k]
+
+    if (color === undefined) {
+      rgb[BG + k] = -1
+      lum[BG + k] = Number.NaN
+    } else {
+      const n = rgbOf(color)
+      rgb[BG + k] = n
+      lum[BG + k] = luminanceOf(n)
+    }
+  }
+
+  return { rgb, lum, ok, lab, deut }
 }
 
-function belowMin(theme: Readable, indices: number[], min: number): string[] {
+const ratioOf = (s: Sheet, a: number, b: number) => contrastOf(s.lum[a] as number, s.lum[b] as number)
+
+const shownRatio = (s: Sheet, a: number, b: number) => Math.round(ratioOf(s, a, b) * 100) / 100
+
+const lightSheet = (s: Sheet) => (s.lum[BG] as number) > (s.lum[FG] as number)
+
+function weakestOf(s: Sheet, indices: readonly number[]): number {
+  let weakest = Number.POSITIVE_INFINITY
+
+  for (const i of indices) {
+    const r = ratioOf(s, i, BG)
+
+    if (r < weakest) weakest = r
+  }
+
+  return weakest
+}
+
+function belowMin(theme: Readable, s: Sheet, indices: readonly number[], min: number): string[] {
   const bg = theme.background
 
   return indices.flatMap((i) => {
-    const color = at(theme, i)
+    const color = theme.ansi[i] as Hex
 
-    return contrast(color, bg) < min ? [`ANSI ${i} ${color} on ${bg} is ${ratio(color, bg)}:1, needs ${min}:1`] : []
+    return ratioOf(s, i, BG) < min ? [`ANSI ${i} ${color} on ${bg} is ${shownRatio(s, i, BG)}:1, needs ${min}:1`] : []
   })
 }
 
-function weakest(theme: Readable, indices: number[]): number {
-  return Math.min(...indices.map((i) => contrast(at(theme, i), theme.background)))
-}
-
 export function isLight(theme: Pick<Readable, 'background' | 'foreground'>): boolean {
-  return luminance(theme.background) > luminance(theme.foreground)
+  return luminanceOf(rgbOf(theme.background)) > luminanceOf(rgbOf(theme.foreground))
 }
-
-const READABILITY: Check[] = [
-  {
-    rule: 'foreground',
-    label: 'foreground on background',
-    unit: 'ratio',
-    min: BODY_MIN,
-    measure: ({ foreground, background }) => contrast(foreground, background),
-    check: ({ foreground, background }) =>
-      contrast(foreground, background) < BODY_MIN
-        ? [`foreground ${foreground} on ${background} is ${ratio(foreground, background)}:1, needs ${BODY_MIN}:1`]
-        : [],
-  },
-  {
-    rule: 'accents',
-    label: 'weakest accent on background',
-    unit: 'ratio',
-    min: ACCENT_MIN,
-    measure: (theme) => weakest(theme, ACCENT_SLOTS),
-    check: (theme) => belowMin(theme, ACCENT_SLOTS, ACCENT_MIN),
-  },
-  {
-    rule: 'ansi0-dark',
-    label: 'ansi0 luminance',
-    unit: 'luminance',
-    max: ANSI0_MAX_LUMINANCE,
-    measure: (theme) => (isLight(theme) ? Number.NaN : luminance(at(theme, 0))),
-    check: (theme) => {
-      const ansi0 = at(theme, 0)
-
-      return !isLight(theme) && luminance(ansi0) > ANSI0_MAX_LUMINANCE
-        ? [`ANSI 0 ${ansi0} has luminance ${luminance(ansi0).toFixed(3)}, needs <= ${ANSI0_MAX_LUMINANCE}`]
-        : []
-    },
-  },
-  {
-    rule: 'light-ansi',
-    label: 'ansi7 and ansi15 on background',
-    unit: 'ratio',
-    min: BODY_MIN,
-    measure: (theme) => weakest(theme, LIGHT_SLOTS),
-    check: (theme) => belowMin(theme, LIGHT_SLOTS, BODY_MIN),
-  },
-  {
-    rule: 'ansi8-visible',
-    label: 'ansi8 on background',
-    unit: 'ratio',
-    min: ANSI8_MIN,
-    measure: (theme) => contrast(at(theme, 8), theme.background),
-    check: (theme) => belowMin(theme, [8], ANSI8_MIN),
-  },
-  {
-    rule: 'selection',
-    label: 'foreground on selection',
-    unit: 'ratio',
-    min: BODY_MIN,
-    measure: ({ foreground, selectionBackground }) =>
-      selectionBackground === undefined ? Number.NaN : contrast(foreground, selectionBackground),
-    check: ({ foreground, selectionBackground }) =>
-      selectionBackground !== undefined && contrast(foreground, selectionBackground) < BODY_MIN
-        ? [
-            `foreground ${foreground} on selection ${selectionBackground} is ${ratio(foreground, selectionBackground)}:1, needs ${BODY_MIN}:1`,
-          ]
-        : [],
-  },
-]
 
 export function hueGap(a: number, b: number): number {
   const d = Math.abs(a - b) % 360
@@ -161,36 +156,46 @@ export function hueGap(a: number, b: number): number {
 
 export const roleOf = (slot: number) => (slot > 8 ? slot - 8 : slot)
 
-function chromatic(theme: Readable, slot: number): Oklch | undefined {
-  const color = oklch(at(theme, slot))
+const chromaticAt = (s: Sheet, slot: number) => (s.ok[slot * 3 + 1] as number) >= ACHROMATIC
 
-  return color.c < ACHROMATIC ? undefined : color
-}
+function offRoleOf(s: Sheet): { slot: number; hue: number; over: number }[] {
+  const found: { slot: number; hue: number; over: number }[] = []
 
-export function offRole(theme: Readable): { slot: number; hue: number; over: number }[] {
-  return ACCENT_SLOTS.flatMap((slot) => {
-    const color = chromatic(theme, slot)
+  for (const slot of ACCENT_SLOTS) {
     const band = ROLE_HUES.get(roleOf(slot))
 
-    if (color === undefined || band === undefined) return []
-    const over = hueGap(color.h, band.center) - band.width
+    if (!chromaticAt(s, slot) || band === undefined) continue
 
-    return over > 0 ? [{ slot, hue: color.h, over }] : []
-  })
+    const hue = s.ok[slot * 3 + 2] as number
+    const over = hueGap(hue, band.center) - band.width
+
+    if (over > 0) found.push({ slot, hue, over })
+  }
+
+  return found
 }
 
-export function brightDrift(theme: Readable): { normal: number; gap: number }[] {
-  return ROLES.flatMap((normal) => {
-    const n = chromatic(theme, normal)
-    const b = chromatic(theme, normal + 8)
+function brightDriftOf(s: Sheet): { normal: number; gap: number }[] {
+  const found: { normal: number; gap: number }[] = []
 
-    if (n === undefined || b === undefined) return []
+  for (const normal of ROLES) {
+    if (chromaticAt(s, normal) && chromaticAt(s, normal + 8)) {
+      found.push({ normal, gap: hueGap(s.ok[normal * 3 + 2] as number, s.ok[(normal + 8) * 3 + 2] as number) })
+    }
+  }
 
-    return [{ normal, gap: hueGap(n.h, b.h) }]
-  })
+  return found
 }
 
-export function apart(x: Lab, y: Lab): number {
+export function apartAt(x: Float64Array, i: number, y: Float64Array, j: number): number {
+  return Math.max(
+    Math.abs((x[i] as number) - (y[j] as number)) / NOTICEABLE.l,
+    Math.abs((x[i + 1] as number) - (y[j + 1] as number)) / NOTICEABLE.a,
+    Math.abs((x[i + 2] as number) - (y[j + 2] as number)) / NOTICEABLE.b,
+  )
+}
+
+export function apart(x: { l: number; a: number; b: number }, y: { l: number; a: number; b: number }): number {
   return Math.max(
     Math.abs(x.l - y.l) / NOTICEABLE.l,
     Math.abs(x.a - y.a) / NOTICEABLE.a,
@@ -198,21 +203,105 @@ export function apart(x: Lab, y: Lab): number {
   )
 }
 
-export function lookalikes(theme: Readable): [number, number][] {
-  return [0, 8].flatMap((base) =>
-    ROLES.flatMap((i) =>
-      ROLES.filter((j) => j > i).flatMap((j): [number, number][] => {
-        const [a, b] = [base + i, base + j]
+function lookalikesOf(s: Sheet): [number, number][] {
+  const found: [number, number][] = []
 
-        return apart(lab(at(theme, a)), lab(at(theme, b))) < 1 ? [[a, b]] : []
-      }),
-    ),
-  )
+  for (const base of [0, 8]) {
+    for (const i of ROLES) {
+      for (const j of ROLES) {
+        if (j > i && apartAt(s.lab, (base + i) * 3, s.lab, (base + j) * 3) < 1) found.push([base + i, base + j])
+      }
+    }
+  }
+
+  return found
 }
 
-export function confusions(theme: Readable): [number, number][] {
-  return RED_GREEN.filter(([red, green]) => apart(deuteranope(at(theme, red)), deuteranope(at(theme, green))) < 1)
+function confusionsOf(s: Sheet): [number, number][] {
+  return RED_GREEN.filter(([red, green]) => apartAt(s.deut, red * 3, s.deut, green * 3) < 1)
 }
+
+export const offRole = (theme: Readable) => offRoleOf(sheetOf(theme))
+
+export const brightDrift = (theme: Readable) => brightDriftOf(sheetOf(theme))
+
+export const lookalikes = (theme: Readable) => lookalikesOf(sheetOf(theme))
+
+export const confusions = (theme: Readable) => confusionsOf(sheetOf(theme))
+
+interface Check extends GateRule {
+  measure(s: Sheet): number
+  fails(s: Sheet): boolean
+  details(theme: Readable, s: Sheet): string[]
+}
+
+const READABILITY: Check[] = [
+  {
+    rule: 'foreground',
+    label: 'foreground on background',
+    unit: 'ratio',
+    min: BODY_MIN,
+    measure: (s) => ratioOf(s, FG, BG),
+    fails: (s) => ratioOf(s, FG, BG) < BODY_MIN,
+    details: ({ foreground, background }, s) =>
+      ratioOf(s, FG, BG) < BODY_MIN
+        ? [`foreground ${foreground} on ${background} is ${shownRatio(s, FG, BG)}:1, needs ${BODY_MIN}:1`]
+        : [],
+  },
+  {
+    rule: 'accents',
+    label: 'weakest accent on background',
+    unit: 'ratio',
+    min: ACCENT_MIN,
+    measure: (s) => weakestOf(s, ACCENT_SLOTS),
+    fails: (s) => weakestOf(s, ACCENT_SLOTS) < ACCENT_MIN,
+    details: (theme, s) => belowMin(theme, s, ACCENT_SLOTS, ACCENT_MIN),
+  },
+  {
+    rule: 'ansi0-dark',
+    label: 'ansi0 luminance',
+    unit: 'luminance',
+    max: ANSI0_MAX_LUMINANCE,
+    measure: (s) => (lightSheet(s) ? Number.NaN : (s.lum[0] as number)),
+    fails: (s) => !lightSheet(s) && (s.lum[0] as number) > ANSI0_MAX_LUMINANCE,
+    details: (theme, s) =>
+      !lightSheet(s) && (s.lum[0] as number) > ANSI0_MAX_LUMINANCE
+        ? [`ANSI 0 ${theme.ansi[0]} has luminance ${(s.lum[0] as number).toFixed(3)}, needs <= ${ANSI0_MAX_LUMINANCE}`]
+        : [],
+  },
+  {
+    rule: 'light-ansi',
+    label: 'ansi7 and ansi15 on background',
+    unit: 'ratio',
+    min: BODY_MIN,
+    measure: (s) => weakestOf(s, LIGHT_SLOTS),
+    fails: (s) => weakestOf(s, LIGHT_SLOTS) < BODY_MIN,
+    details: (theme, s) => belowMin(theme, s, LIGHT_SLOTS, BODY_MIN),
+  },
+  {
+    rule: 'ansi8-visible',
+    label: 'ansi8 on background',
+    unit: 'ratio',
+    min: ANSI8_MIN,
+    measure: (s) => ratioOf(s, 8, BG),
+    fails: (s) => ratioOf(s, 8, BG) < ANSI8_MIN,
+    details: (theme, s) => belowMin(theme, s, [8], ANSI8_MIN),
+  },
+  {
+    rule: 'selection',
+    label: 'foreground on selection',
+    unit: 'ratio',
+    min: BODY_MIN,
+    measure: (s) => ((s.rgb[SELECTION] as number) < 0 ? Number.NaN : ratioOf(s, FG, SELECTION)),
+    fails: (s) => (s.rgb[SELECTION] as number) >= 0 && ratioOf(s, FG, SELECTION) < BODY_MIN,
+    details: ({ foreground, selectionBackground }, s) =>
+      selectionBackground !== undefined && ratioOf(s, FG, SELECTION) < BODY_MIN
+        ? [
+            `foreground ${foreground} on selection ${selectionBackground} is ${shownRatio(s, FG, SELECTION)}:1, needs ${BODY_MIN}:1`,
+          ]
+        : [],
+  },
+]
 
 const ROLE_CHECKS: Check[] = [
   {
@@ -220,12 +309,13 @@ const ROLE_CHECKS: Check[] = [
     label: 'accent hue outside its ANSI role',
     unit: 'degrees',
     max: 0,
-    measure: (theme) => Math.max(0, ...offRole(theme).map((o) => o.over)),
-    check: (theme) =>
-      offRole(theme).map(({ slot, hue, over }) => {
+    measure: (s) => Math.max(0, ...offRoleOf(s).map((o) => o.over)),
+    fails: (s) => offRoleOf(s).length > 0,
+    details: (theme, s) =>
+      offRoleOf(s).map(({ slot, hue, over }) => {
         const band = ROLE_HUES.get(roleOf(slot)) as { name: string; center: number; width: number }
 
-        return `ANSI ${slot} ${at(theme, slot)} has hue ${hue.toFixed(0)}°, ${over.toFixed(0)}° outside ${band.name} (${band.center}±${band.width}°)`
+        return `ANSI ${slot} ${theme.ansi[slot]} has hue ${hue.toFixed(0)}°, ${over.toFixed(0)}° outside ${band.name} (${band.center}±${band.width}°)`
       }),
   },
   {
@@ -233,9 +323,10 @@ const ROLE_CHECKS: Check[] = [
     label: 'widest normal to bright hue gap',
     unit: 'degrees',
     max: BRIGHT_GAP,
-    measure: (theme) => Math.max(0, ...brightDrift(theme).map((d) => d.gap)),
-    check: (theme) =>
-      brightDrift(theme)
+    measure: (s) => Math.max(0, ...brightDriftOf(s).map((d) => d.gap)),
+    fails: (s) => brightDriftOf(s).some((d) => d.gap > BRIGHT_GAP),
+    details: (_, s) =>
+      brightDriftOf(s)
         .filter((d) => d.gap > BRIGHT_GAP)
         .map(
           ({ normal, gap }) => `ANSI ${normal + 8} is ${gap.toFixed(0)}° from ANSI ${normal}, needs <= ${BRIGHT_GAP}°`,
@@ -246,13 +337,26 @@ const ROLE_CHECKS: Check[] = [
     label: 'accent pairs that read as one color',
     unit: 'pairs',
     max: 0,
-    measure: (theme) => lookalikes(theme).length,
-    check: (theme) =>
-      lookalikes(theme).map(
-        ([a, b]) => `ANSI ${a} ${at(theme, a)} and ANSI ${b} ${at(theme, b)} read as one color at text size`,
+    measure: (s) => lookalikesOf(s).length,
+    fails: (s) => lookalikesOf(s).length > 0,
+    details: (theme, s) =>
+      lookalikesOf(s).map(
+        ([a, b]) => `ANSI ${a} ${theme.ansi[a]} and ANSI ${b} ${theme.ansi[b]} read as one color at text size`,
       ),
   },
 ]
+
+function onAccents(s: Sheet): number {
+  let weakest = Number.POSITIVE_INFINITY
+
+  for (const i of ROLES) {
+    const r = ratioOf(s, 0, i)
+
+    if (r < weakest) weakest = r
+  }
+
+  return weakest
+}
 
 const PAIR_CHECKS: Check[] = [
   {
@@ -260,43 +364,42 @@ const PAIR_CHECKS: Check[] = [
     label: 'ansi0 on the weakest accent',
     unit: 'ratio',
     min: ON_ACCENT_MIN,
-    measure: (theme) => Math.min(...ROLES.map((i) => contrast(at(theme, 0), at(theme, i)))),
-    check: (theme) => {
-      const ansi0 = at(theme, 0)
-
-      return ROLES.flatMap((i) => {
-        const color = at(theme, i)
-
-        return contrast(ansi0, color) < ON_ACCENT_MIN
-          ? [`ANSI 0 ${ansi0} on ANSI ${i} ${color} is ${ratio(ansi0, color)}:1, needs ${ON_ACCENT_MIN}:1`]
-          : []
-      })
-    },
+    measure: onAccents,
+    fails: (s) => onAccents(s) < ON_ACCENT_MIN,
+    details: (theme, s) =>
+      ROLES.flatMap((i) =>
+        ratioOf(s, 0, i) < ON_ACCENT_MIN
+          ? [
+              `ANSI 0 ${theme.ansi[0]} on ANSI ${i} ${theme.ansi[i]} is ${shownRatio(s, 0, i)}:1, needs ${ON_ACCENT_MIN}:1`,
+            ]
+          : [],
+      ),
   },
   {
     rule: 'ansi7-on-ansi8',
     label: 'ansi7 on ansi8',
     unit: 'ratio',
     min: ANSI7_ON_ANSI8_MIN,
-    measure: (theme) => contrast(at(theme, 7), at(theme, 8)),
-    check: (theme) => {
-      const [white, grey] = [at(theme, 7), at(theme, 8)]
-
-      return contrast(white, grey) < ANSI7_ON_ANSI8_MIN
-        ? [`ANSI 7 ${white} on ANSI 8 ${grey} is ${ratio(white, grey)}:1, needs ${ANSI7_ON_ANSI8_MIN}:1`]
-        : []
-    },
+    measure: (s) => ratioOf(s, 7, 8),
+    fails: (s) => ratioOf(s, 7, 8) < ANSI7_ON_ANSI8_MIN,
+    details: (theme, s) =>
+      ratioOf(s, 7, 8) < ANSI7_ON_ANSI8_MIN
+        ? [
+            `ANSI 7 ${theme.ansi[7]} on ANSI 8 ${theme.ansi[8]} is ${shownRatio(s, 7, 8)}:1, needs ${ANSI7_ON_ANSI8_MIN}:1`,
+          ]
+        : [],
   },
   {
     rule: 'cvd-red-green',
     label: 'red and green a deuteranope confuses',
     unit: 'pairs',
     max: 0,
-    measure: (theme) => confusions(theme).length,
-    check: (theme) =>
-      confusions(theme).map(
+    measure: (s) => confusionsOf(s).length,
+    fails: (s) => confusionsOf(s).length > 0,
+    details: (theme, s) =>
+      confusionsOf(s).map(
         ([red, green]) =>
-          `ANSI ${red} ${at(theme, red)} and ANSI ${green} ${at(theme, green)} read as one color to a deuteranope at text size`,
+          `ANSI ${red} ${theme.ansi[red]} and ANSI ${green} ${theme.ansi[green]} read as one color to a deuteranope at text size`,
       ),
   },
   {
@@ -304,10 +407,11 @@ const PAIR_CHECKS: Check[] = [
     label: 'cursor on background',
     unit: 'ratio',
     min: CURSOR_MIN,
-    measure: ({ cursor, background }) => (cursor === undefined ? Number.NaN : contrast(cursor, background)),
-    check: ({ cursor, background }) =>
-      cursor !== undefined && contrast(cursor, background) < CURSOR_MIN
-        ? [`cursor ${cursor} on ${background} is ${ratio(cursor, background)}:1, needs ${CURSOR_MIN}:1`]
+    measure: (s) => ((s.rgb[CURSOR] as number) < 0 ? Number.NaN : ratioOf(s, CURSOR, BG)),
+    fails: (s) => (s.rgb[CURSOR] as number) >= 0 && ratioOf(s, CURSOR, BG) < CURSOR_MIN,
+    details: ({ cursor, background }, s) =>
+      cursor !== undefined && ratioOf(s, CURSOR, BG) < CURSOR_MIN
+        ? [`cursor ${cursor} on ${background} is ${shownRatio(s, CURSOR, BG)}:1, needs ${CURSOR_MIN}:1`]
         : [],
   },
 ]
@@ -322,14 +426,37 @@ export const GATE_RULES: GateRule[] = CHECKS.map(({ rule, label, unit, min, max 
   ...(max === undefined ? {} : { max }),
 }))
 
+export function readabilityFails(s: Sheet, background: number): number {
+  s.lum[BG] = background
+  let mask = 0
+
+  for (let i = 0; i < READABILITY.length; i++) {
+    if ((READABILITY[i] as Check).fails(s)) mask |= 1 << i
+  }
+
+  return mask
+}
+
+export function measureSheet(s: Sheet): number[] {
+  return CHECKS.map((c) => Math.round(c.measure(s) * 1000) / 1000)
+}
+
 export function measure(theme: Readable): number[] {
-  return CHECKS.map((c) => Math.round(c.measure(theme) * 1000) / 1000)
+  return measureSheet(sheetOf(theme))
+}
+
+export function passesSheet(s: Sheet): boolean {
+  return CHECKS.every((c) => !c.fails(s))
+}
+
+export function passes(theme: Readable): boolean {
+  return passesSheet(sheetOf(theme))
 }
 
 export function missedRules(theme: Readable): GateRule[] {
-  const missed = new Set(check(theme).map((violation) => violation.rule))
+  const s = sheetOf(theme)
 
-  return GATE_RULES.filter((rule) => missed.has(rule.rule))
+  return GATE_RULES.filter((_, i) => (CHECKS[i] as Check).fails(s))
 }
 
 export function shownOf(value: number): string {
@@ -340,8 +467,10 @@ export function boundOf(rule: GateRule): string {
   return rule.min !== undefined ? `≥ ${rule.min}` : rule.max !== undefined ? `≤ ${rule.max}` : ''
 }
 
-function run<T extends Readable>(checks: Check<T>[], theme: T): Violation[] {
-  return checks.flatMap((c) => c.check(theme).map((detail) => ({ theme: theme.name, rule: c.rule, detail })))
+function run(checks: Check[], theme: Readable): Violation[] {
+  const s = sheetOf(theme)
+
+  return checks.flatMap((c) => c.details(theme, s).map((detail) => ({ theme: theme.name, rule: c.rule, detail })))
 }
 
 export function check(theme: Readable): Violation[] {

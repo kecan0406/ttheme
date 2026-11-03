@@ -14,8 +14,10 @@ import {
   refreshCommons,
   untuned,
   updatesOf,
+  viewOf,
   writeKept,
 } from '../store/available.ts'
+import { systemHost } from '../store/host.ts'
 import { readInstalled, startupPalette } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { installedPath, isLocal, marketplaceSources, shownSource } from '../store/sources.ts'
@@ -31,7 +33,7 @@ import { bringPictures, followPictures } from './pictures.ts'
 import { redrawPictures } from './redraw.ts'
 import { attempt, failureLine, updatesLine } from './refresh.ts'
 import { initCommand, newerRelease, upgradeTo } from './release.ts'
-import { commit, sync } from './sync.ts'
+import { commit, settle, sync } from './sync.ts'
 import { behindOf, conflictLine, takes, takeUpstream } from './upstreams.ts'
 
 export function reload(count: number): void {
@@ -134,14 +136,17 @@ export function runDefault(asked: string): void {
 
 export async function runSync(): Promise<void> {
   const home = configHome()
-  const manifest = readMarketplaces(home)
+  const state = readInstalled(home)
+  const host = systemHost()
+  settle(home, state, host)
+  const view = viewOf(home)
   const wait = pending('Drawing the background pictures')
   let failed: unknown
 
   try {
     await redrawPictures(home, wait.say, undefined, {
       emit: false,
-      manifest,
+      view,
       step: (done, of) => wait.set(`Drawing the background pictures  ${done}/${of}`),
     })
   } catch (error) {
@@ -150,7 +155,7 @@ export async function runSync(): Promise<void> {
     wait.done()
   }
 
-  sync(home, manifest, readInstalled(home))
+  sync(home, view.manifest, state, undefined, host, view)
 
   if (failed !== undefined) {
     throw failed

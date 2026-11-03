@@ -59,15 +59,7 @@ interface Keys {
   names: Map<string, string>
 }
 
-const KEYS = new WeakMap<readonly Work[], Keys>()
-
 function keysOf(works: readonly Work[]): Keys {
-  const cached = KEYS.get(works)
-
-  if (cached) {
-    return cached
-  }
-
   const keys: Keys = { works: new Map(), names: new Map() }
 
   for (const work of works) {
@@ -83,8 +75,6 @@ function keysOf(works: readonly Work[]): Keys {
       }
     }
   }
-
-  KEYS.set(works, keys)
 
   return keys
 }

@@ -4,8 +4,6 @@ import { basename, isAbsolute, join } from 'node:path'
 import { type Hex, isHex, rgb } from '../core/color.ts'
 import type { Theme } from '../core/theme.ts'
 import { owned } from '../core/theme.ts'
-import { backgroundsDir } from '../pictures/backdrop.ts'
-import { readBackdrop } from '../pictures/conf.ts'
 import { editUserFile, spareBackup } from '../store/edits.ts'
 import type { Host } from '../store/host.ts'
 import { dataHome, ownedIn, readText, tilde } from './common.ts'
@@ -171,11 +169,10 @@ function versionOf(text: string): string {
 
 function schemes(ctx: Ctx, out: Out): void {
   const dir = konsoleData(ctx.home)
-  const pictures = backgroundsDir(ctx.configHome)
   const keep = new Set<string>()
 
   for (const theme of ctx.themes) {
-    const text = konsoleScheme(theme, readBackdrop(pictures, theme.name, ctx.home))
+    const text = konsoleScheme(theme, ctx.backdrops.get(theme.name))
     const versioned = join(dir, `${owned(theme.name)}.${versionOf(text)}.colorscheme`)
     keep.add(versioned)
     out.write(join(dir, `${owned(theme.name)}.colorscheme`), text)

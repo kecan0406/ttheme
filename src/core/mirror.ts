@@ -1,7 +1,7 @@
 import type { Hex } from './color.ts'
-import { check, roleOf } from './contrast.ts'
+import { passes, roleOf } from './contrast.ts'
 import { fixRoles, type Move } from './fix.ts'
-import { hctHex, hctOf } from './hct.ts'
+import { type Hued, hctHex, hctOf, type Solved, solve } from './hct.ts'
 import { type Mode, modeOf, otherOf } from './mode.ts'
 import type { Shade, Theme } from './theme.ts'
 
@@ -62,18 +62,16 @@ const own = (value: Hex, tone: number, chroma = Number.POSITIVE_INFINITY) => {
   return hctHex(o.hue, Math.min(o.chroma, chroma), tone)
 }
 
-const edge = (hue: number, tone: number) => hctOf(hctHex(hue, 200, tone)).chroma
+const edge = (hue: number, tone: number) => solve(hue, 200, tone).chroma
 
-function carried(value: Hex, tone: number): Hex {
-  const o = hctOf(value)
+function carried(o: Hued, tone: number): Solved {
   const room = edge(o.hue, o.tone)
   const share = room > 0 ? Math.min(1, o.chroma / room) : 0
 
-  return hctHex(o.hue, Math.min(o.chroma * CHROMA_LIFT, Math.max(o.chroma, share * edge(o.hue, tone))), tone)
+  return solve(o.hue, Math.min(o.chroma * CHROMA_LIFT, Math.max(o.chroma, share * edge(o.hue, tone))), tone)
 }
 
-export function olive(value: Hex): boolean {
-  const o = hctOf(value)
+function oliveOf(o: Hued): boolean {
   const hue = Math.round(o.hue)
 
   return (
@@ -84,13 +82,16 @@ export function olive(value: Hex): boolean {
   )
 }
 
-function cleared(value: Hex, role: number): Hex {
-  if (!olive(value)) return value
+export function olive(value: Hex): boolean {
+  return oliveOf(hctOf(value))
+}
 
-  const o = hctOf(value)
-  const gold = role === 3 || (role !== 2 && o.hue < (OLIVE.hue.min + OLIVE.hue.max) / 2)
+function cleared(made: Solved, role: number): Hex {
+  if (!oliveOf(made)) return made.hex
 
-  return hctHex(gold ? OLIVE_EXIT.yellow : OLIVE_EXIT.green, o.chroma, o.tone)
+  const gold = role === 3 || (role !== 2 && made.hue < (OLIVE.hue.min + OLIVE.hue.max) / 2)
+
+  return hctHex(gold ? OLIVE_EXIT.yellow : OLIVE_EXIT.green, made.chroma, made.tone)
 }
 
 const NAMED = new Map<string, Exclude<keyof Shade, 'ansi'>>([
@@ -116,7 +117,7 @@ function flip(theme: Mirrored): Shade {
   return {
     background: surface(SURFACE_TONE[to]),
     foreground: own(theme.foreground, TEXT_TONE[to], FOREGROUND_CHROMA),
-    cursor: carried(theme.cursor, clamp(across(cursor.tone, CURSOR_SPREAD[from], CURSOR_SPREAD[to]), CURSOR_TONE[to])),
+    cursor: carried(cursor, clamp(across(cursor.tone, CURSOR_SPREAD[from], CURSOR_SPREAD[to]), CURSOR_TONE[to])).hex,
     selectionBackground: own(theme.selectionBackground, SELECTION_TONE[to], SELECTION_CHROMA),
     ansi: theme.ansi.map((value, i) => {
       const tone = TONES[to][i] as number
@@ -125,7 +126,7 @@ function flip(theme: Mirrored): Shade {
 
       if (i === 15) return text(tone)
 
-      return cleared(carried(value, tone), roleOf(i))
+      return cleared(carried(hctOf(value), tone), roleOf(i))
     }),
   }
 }
@@ -141,7 +142,7 @@ export function withSlot(shade: Shade, slot: string, value: Hex): Shade {
 function fixed(theme: Mirrored, shade: Shade): Mirroring {
   const gated = { ...theme, ...shade }
 
-  if (check(gated).length === 0) return { shade, moves: [] }
+  if (passes(gated)) return { shade, moves: [] }
 
   const { theme: turned, moves } = fixRoles(gated)
 

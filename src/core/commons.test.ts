@@ -2,8 +2,9 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import {
+  aboutIn,
   aboutOf,
-  castIndex,
+  castIn,
   isTag,
   leadOf,
   mergeWorks,
@@ -11,6 +12,7 @@ import {
   readSites,
   readWork,
   shelfOf,
+  shelvesOf,
   siteTags,
   type Work,
   workToml,
@@ -271,8 +273,10 @@ test('a work with a long cast reads and answers in time linear in its cast', () 
 
   const asked = performance.now()
 
+  const shelves = shelvesOf([work])
+
   for (let round = 0; round < 8000; round++) {
-    assert.equal(castIndex(aboutOf([work], 'w/c63999')), 63_999)
+    assert.equal(castIn(shelves, aboutIn(shelves, 'w/c63999')), 63_999)
   }
 
   assert.ok(performance.now() - asked < 1000)
