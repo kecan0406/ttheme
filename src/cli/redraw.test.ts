@@ -72,7 +72,7 @@ test('a mode switch lays the other ink drawn with the picture, with no original 
   assert.equal(lines.length, 0)
   const dark = readAvailable(configHome).palettes.find((entry) => entry.name === 'ttheme/orla') as PaletteEntry
   const light = paintFor(inMode(dark, 'light'))
-  assert.ok(existsSync(join(backgroundsDir(configHome), `${before.stem}.ink.png`)))
+  assert.ok(existsSync(join(backgroundsDir(configHome), 'inks', `ttheme--orla-${before.key}.light.png`)))
 
   writeFileSync(join(configHome, 'ttheme', 'config.zsh'), ': ${TTHEME_MODE:=light}\n')
   const original = join(backgroundsDir(configHome), before.original as string)

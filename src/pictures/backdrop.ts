@@ -15,6 +15,7 @@ import { artworkOf, creditLine, linksOf, pagesOf } from '../core/artists.ts'
 import { type Coloring, type Colors, type Hue, originalOpacity } from '../core/backdrop-tone.ts'
 import { type Hex, rgb } from '../core/color.ts'
 import { isLight } from '../core/contrast.ts'
+import type { Mode } from '../core/mode.ts'
 import {
   alphaBox,
   alphaOf,
@@ -370,7 +371,7 @@ interface Inks {
 }
 
 type Drawing =
-  | ({ coloring: 'tone'; focus: number; other: Inks } & Inks)
+  | ({ coloring: 'tone'; focus: number; dark: Inks; light: Inks } & Inks)
   | { coloring: 'original'; figure: Rgba; fill: Rgba; focus: number; peak: Hex }
 
 function draw(
@@ -408,7 +409,10 @@ function draw(
     }
   }
 
-  return { coloring, ...inks(light), focus: frame.focus, other: inks(!light) }
+  const dark = inks(false)
+  const lit = inks(true)
+
+  return { coloring, ...(light ? lit : dark), focus: frame.focus, dark, light: lit }
 }
 
 function shade(mask: Mask, background: Hex, tone: Hex, opacity: number): Rgba {
@@ -707,8 +711,9 @@ function forget(dir: string, stem: string): void {
   }
 }
 
-function discard(dir: string, picture: Picture): void {
+function discard(dir: string, name: string, picture: Picture): void {
   forget(dir, picture.stem)
+  dropInks(dir, name, picture.key)
 
   for (const kept of [picture.original, picture.cut]) {
     if (kept) {
@@ -837,7 +842,7 @@ export function dropImage(configHome: string, name: string, key?: string) {
   }
 
   const [gone] = rack.pictures.splice(at, 1) as [Picture]
-  discard(dir, gone)
+  discard(dir, name, gone)
   const next = rack.pictures[at % Math.max(rack.pictures.length, 1)]
 
   if (!next) {
@@ -855,6 +860,7 @@ interface Made {
   stem: string
   fill: string
   files: [string, Uint8Array][]
+  inks: [string, Uint8Array][]
 }
 
 function stemOf(name: string, key: string, figure: Uint8Array, fill: Uint8Array): string {
@@ -900,56 +906,57 @@ function thumbOf(fill: Uint8Array): Buffer {
     : encodeRgba(resample(image, box, width, height))
 }
 
-function inkFile(file: string): string {
-  return file.replace(/\.png$/, '.ink.png')
+const INKS = 'inks'
+
+function inkFiles(name: string, key: string, mode: Mode): [string, string, string] {
+  const at = join(INKS, `${fileStem(name)}-${key}.${mode}`)
+
+  return [`${at}.png`, `${at}.fill.png`, `${at}.thumb.png`]
 }
 
-function laid(
-  stem: string,
-  focus: number,
-  figure: Uint8Array,
-  fill: Uint8Array,
-  thumb: Uint8Array,
-  ink?: [Uint8Array, Uint8Array, Uint8Array],
-): Made {
+function laid(stem: string, focus: number, figure: Uint8Array, fill: Uint8Array, thumb: Uint8Array): Made {
   const named = `${stem}@fill-${focus}.png`
-
-  const files: [string, Uint8Array][] = [
-    [`${stem}.png`, figure],
-    [named, fill],
-    [thumbFile(stem), thumb],
-  ]
 
   return {
     stem,
     fill: named,
-    files: ink
-      ? [...files, ...files.map(([file], at): [string, Uint8Array] => [inkFile(file), ink[at] as Uint8Array])]
-      : files,
+    files: [
+      [`${stem}.png`, figure],
+      [named, fill],
+      [thumbFile(stem), thumb],
+    ],
+    inks: [],
   }
+}
+
+function inksOf(name: string, key: string, mode: Mode, inks: Inks, tone: Hex): [string, Uint8Array][] {
+  const [figure, fill, thumb] = inkFiles(name, key, mode)
+
+  return [
+    [figure, encodeMask(inks.figure, tone)],
+    [fill, encodeMask(inks.fill, tone)],
+    [thumb, thumbOfMask(inks.fill, tone)],
+  ]
 }
 
 function made(name: string, key: string, drawing: Drawing, tone: Hex): Made {
   const figure = drawing.coloring === 'original' ? encodeRgba(drawing.figure) : encodeMask(drawing.figure, tone)
   const fill = drawing.coloring === 'original' ? encodeRgba(drawing.fill) : encodeMask(drawing.fill, tone)
 
-  const ink: [Uint8Array, Uint8Array, Uint8Array] | undefined =
-    drawing.coloring === 'tone'
-      ? [
-          encodeMask(drawing.other.figure, tone),
-          encodeMask(drawing.other.fill, tone),
-          thumbOfMask(drawing.other.fill, tone),
-        ]
-      : undefined
-
-  return laid(
+  const result = laid(
     stemOf(name, key, figure, fill),
     Math.round(drawing.focus * 100),
     figure,
     fill,
     thumbOfDrawing(drawing, tone),
-    ink,
   )
+
+  return drawing.coloring === 'tone'
+    ? {
+        ...result,
+        inks: [...inksOf(name, key, 'dark', drawing.dark, tone), ...inksOf(name, key, 'light', drawing.light, tone)],
+      }
+    : result
 }
 
 export function thumbless(configHome: string): { name: string; key: string }[] {
@@ -1042,13 +1049,14 @@ export function installBackdrop(
   const old = rack.pictures.find((held) => held.key === key)
 
   if (old) {
-    discard(dir, old)
+    discard(dir, name, old)
   }
 
   mkdirSync(join(dir, ORIGINALS), { recursive: true })
 
   const written = lay(dir, [
     ...drawn.files,
+    ...drawn.inks,
     [picture.original as string, source.bytes],
     ...(picture.cut ? [[picture.cut, encodeGray(alphaOf(image))] as [string, Uint8Array]] : []),
   ])
@@ -1265,29 +1273,18 @@ export function decodable(configHome: string, picture: Picture): boolean {
   }
 }
 
-function flipped(dir: string, name: string, picture: Picture, hue: Hue): Made | undefined {
-  const names = [`${picture.stem}.png`, picture.fill, thumbFile(picture.stem)]
+function flipped(dir: string, name: string, picture: Picture, paint: Paint): Made | undefined {
+  const mode: Mode = isLight(paint.colors) ? 'light' : 'dark'
 
-  const read = (file: string) => {
+  const [figure, fill, thumb] = inkFiles(name, picture.key, mode).map((file) => {
     try {
-      return new Uint8Array(readFileSync(join(dir, file)))
+      return retone(new Uint8Array(readFileSync(join(dir, file))), paint.hue.color)
     } catch {
       return undefined
     }
-  }
-
-  const shown = names.map(read)
-
-  const inked = names.map((file) => {
-    const bytes = read(inkFile(file))
-
-    return bytes && retone(bytes, hue.color)
   })
 
-  const [figure, fill, thumb] = inked
-  const [was, wasFill, wasThumb] = shown
-
-  if (!figure || !fill || !thumb || !was || !wasFill || !wasThumb) {
+  if (!figure || !fill || !thumb) {
     return undefined
   }
 
@@ -1297,8 +1294,15 @@ function flipped(dir: string, name: string, picture: Picture, hue: Hue): Made | 
     figure,
     fill,
     thumb,
-    [was, wasFill, wasThumb],
   )
+}
+
+function dropInks(dir: string, name: string, key: string): void {
+  for (const mode of ['dark', 'light'] as const) {
+    for (const file of inkFiles(name, key, mode)) {
+      rmSync(join(dir, file), { force: true })
+    }
+  }
 }
 
 function adopted(
@@ -1337,17 +1341,21 @@ function adopted(
     delete next.light
   }
 
+  if (coloring === 'original') {
+    dropInks(dir, name, picture.key)
+  }
+
   if (drawn.stem === picture.stem) {
     lay(
       dir,
-      drawn.files.filter(([file]) => file.endsWith('.ink.png') && !existsSync(join(dir, file))),
+      drawn.inks.filter(([file]) => !existsSync(join(dir, file))),
     )
 
     return next
   }
 
   const same = coloringOf(picture) === coloring && picture.light === next.light
-  lay(dir, drawn.files)
+  lay(dir, [...drawn.files, ...drawn.inks])
   const tune = tuneOf(dir, picture)
 
   const moved =
@@ -1418,7 +1426,7 @@ export function swapped(
   home: string,
 ): Picture | null {
   const dir = backgroundsDir(configHome)
-  const drawn = flipped(dir, name, picture, paint.hue)
+  const drawn = flipped(dir, name, picture, paint)
 
   return drawn
     ? adopted(

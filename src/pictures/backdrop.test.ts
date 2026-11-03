@@ -424,7 +424,7 @@ test('dropping a picture takes its files, tuning and original with it', () => {
   assert.ok(!existsSync(gone))
   assert.equal(shown(dir), 'safebooru_1')
   assert.deepEqual(readdirSync(join(dir, 'originals')), ['tamsin-safebooru_1.png'])
-  assert.equal(readdirSync(dir).filter((file) => file.startsWith('tamsin.') && file.endsWith('.png')).length, 6)
+  assert.equal(readdirSync(dir).filter((file) => file.startsWith('tamsin.') && file.endsWith('.png')).length, 3)
 })
 
 test('the conf lists every picture preview can switch to with its artist, and one not shown drops by key', () => {
