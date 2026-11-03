@@ -1,6 +1,6 @@
 import { tally } from '../dom'
 import { composing } from '../keys'
-import { emit } from './change'
+import { emit, type ItemHighlighted } from './change'
 
 const PAGE = 8
 
@@ -31,21 +31,33 @@ function chosenIn(root: HTMLElement): HTMLElement | undefined {
   return shownIn(root).find((item) => item.dataset.value === root.dataset.value)
 }
 
-function light(root: HTMLElement, item: HTMLElement | undefined, block?: ScrollLogicalPosition) {
+function filtering(root: HTMLElement): boolean {
+  return root.dataset.filter !== 'off'
+}
+
+function light(
+  root: HTMLElement,
+  item: HTMLElement | undefined,
+  block?: ScrollLogicalPosition,
+  reason: ItemHighlighted['reason'] = 'none',
+) {
+  const before = root.querySelector<HTMLElement>('[data-highlighted]')
+
   for (const one of root.querySelectorAll('[data-highlighted]'))
     if (one !== item) one.removeAttribute('data-highlighted')
   const input = inputOf(root)
 
-  if (!item) {
-    input?.removeAttribute('aria-activedescendant')
+  root.toggleAttribute('data-pointed', reason === 'pointer')
 
-    return
+  if (!item) input?.removeAttribute('aria-activedescendant')
+  else {
+    item.setAttribute('data-highlighted', '')
+    input?.setAttribute('aria-activedescendant', item.id)
+
+    if (block) item.scrollIntoView({ block })
   }
 
-  item.setAttribute('data-highlighted', '')
-  input?.setAttribute('aria-activedescendant', item.id)
-
-  if (block) item.scrollIntoView({ block })
+  if (before !== (item ?? null)) emit(root, 'itemhighlighted', { value: item?.dataset.value ?? null, reason }, false)
 }
 
 function mark(root: HTMLElement) {
@@ -60,7 +72,8 @@ function narrow(root: HTMLElement, block?: ScrollLogicalPosition): number {
   const query = (inputOf(root)?.value ?? '').trim().toLowerCase()
   const items = itemsOf(root)
 
-  for (const item of items) item.hidden = query !== '' && !(item.dataset.text ?? '').includes(query)
+  if (filtering(root))
+    for (const item of items) item.hidden = query !== '' && !(item.dataset.text ?? '').includes(query)
 
   for (const group of root.querySelectorAll<HTMLElement>('[data-slot="combobox-group"]'))
     group.hidden = group.querySelector('[data-slot="combobox-item"]:not([hidden])') === null
@@ -87,7 +100,10 @@ function pick(root: HTMLElement, item: HTMLElement) {
 function typed(event: Event) {
   const root = rootOf(event.target)
 
-  if (root && event.target === inputOf(root)) tally(narrow(root, 'nearest'))
+  if (!root || event.target !== inputOf(root)) return
+  const count = narrow(root, 'nearest')
+
+  if (filtering(root)) tally(count)
 }
 
 document.addEventListener('input', typed)
@@ -103,10 +119,13 @@ document.addEventListener('keydown', (event) => {
   const current = root.querySelector<HTMLElement>('[data-highlighted]:not([hidden])') ?? undefined
 
   if (event.key === 'Enter') {
-    event.preventDefault()
     const item = current ?? shown[0]
 
-    if (item) pick(root, item)
+    if (!item) return
+    event.preventDefault()
+
+    if (item instanceof HTMLAnchorElement) item.click()
+    else pick(root, item)
 
     return
   }
@@ -115,7 +134,15 @@ document.addEventListener('keydown', (event) => {
 
   if (!move || shown.length === 0) return
   event.preventDefault()
-  light(root, shown[move(current ? shown.indexOf(current) : -1, shown.length - 1)], 'nearest')
+  light(root, shown[move(current ? shown.indexOf(current) : -1, shown.length - 1)], 'nearest', 'keyboard')
+})
+
+document.addEventListener('pointermove', (event) => {
+  if (event.pointerType !== 'mouse' || !(event.target instanceof Element)) return
+  const item = event.target.closest<HTMLElement>('[data-slot="combobox-item"]')
+  const root = rootOf(item)
+
+  if (item && root && !item.hasAttribute('data-highlighted') && !item.hidden) light(root, item, undefined, 'pointer')
 })
 
 document.addEventListener('mousedown', (event) => {

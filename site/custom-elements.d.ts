@@ -23,6 +23,8 @@ declare namespace JSX {
     'palette-picker': HtmlTag
     'pins-player': HtmlTag
     'route-progress': HtmlTag
+    'site-menus': HtmlTag
+    'site-search': HtmlTag
     'sparkle-burst': HtmlTag
     'tab-showcase': HtmlTag
     'work-page': HtmlTag

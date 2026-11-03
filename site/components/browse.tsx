@@ -10,13 +10,11 @@ import {
   type IconNode,
   LayoutGrid,
   Plus,
-  Search,
   Star,
+  X,
 } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
-import { Kbd } from '@/components/ui/kbd'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Toggle } from '@/components/ui/toggle'
 import type { KeyArt } from '@/lib/art'
@@ -141,9 +139,9 @@ function Head({
   lens,
   heading,
   counts,
-  placeholder,
+  clear,
   children,
-}: PropsWithChildren<{ lens: Lens; heading: string; counts: Record<Lens, number>; placeholder: string }>) {
+}: PropsWithChildren<{ lens: Lens; heading: string; counts: Record<Lens, number>; clear: string }>) {
   return (
     <div class="grid grid-cols-[minmax(0,1fr)] gap-5">
       <h1 class="sr-only" safe>
@@ -151,31 +149,11 @@ function Head({
       </h1>
       <div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-5">
         <Lenses lens={lens} counts={counts} />
-        <search class="max-w-[540px] flex-[1_1_22rem]">
-          <InputGroup class="h-11">
-            <InputGroupAddon>
-              <Icon node={Search} />
-            </InputGroupAddon>
-            <InputGroupInput
-              type="search"
-              name="query"
-              placeholder={placeholder}
-              aria-label={placeholder}
-              aria-keyshortcuts="Meta+K Control+K"
-              spellcheck="false"
-              autocomplete="off"
-              autocapitalize="none"
-              autocorrect="off"
-              enterkeyhint="search"
-            />
-            <InputGroupAddon align="inline-end">
-              <Kbd>
-                <span data-key="apple">⌘</span>
-                <span data-key="other">ctrl</span>k
-              </Kbd>
-            </InputGroupAddon>
-          </InputGroup>
-        </search>
+        <LinkButton variant="outline" size="sm" href={clear} data-clear hidden class="mb-2.5">
+          <span data-clear-text translate="no"></span>
+          <Icon node={X} />
+          <span class="sr-only">clear the search</span>
+        </LinkButton>
       </div>
       <div class="flex flex-wrap items-end">{children}</div>
     </div>
@@ -357,7 +335,7 @@ export function BrowseWorks({
           lens="works"
           heading={category ? `browse ${category.label} works` : 'browse works'}
           counts={{ works: entries.length, marketplaces: shelves.length }}
-          placeholder="search works"
+          clear={category ? categoryPath(category.slug) : BROWSE_PATH}
         >
           <Categories categories={categories} current={category?.slug} />
           <Choice name="sort" options={WORK_SORTS} first="name" />
@@ -645,7 +623,7 @@ export function BrowseMarketplaces({ shelves, works, facts }: { shelves: Shelf[]
           lens="marketplaces"
           heading="browse marketplaces"
           counts={{ works, marketplaces: shelves.length }}
-          placeholder="search marketplaces, works, palettes"
+          clear={MARKETPLACES_PATH}
         >
           <Choice name="sort" options={MARKET_SORTS} first={FIRST_SORT} />
           <Choice name="view" options={VIEWS} first="shelves" class="flex-none pl-6" />

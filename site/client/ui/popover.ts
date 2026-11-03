@@ -27,7 +27,14 @@ function invokers(popup: HTMLElement): Element[] {
   return [...document.querySelectorAll(`[popovertarget="${popup.id}"]`)]
 }
 
+function fixedAnchor(popup: HTMLElement): HTMLElement | null {
+  return popup.dataset.anchor ? document.getElementById(popup.dataset.anchor) : null
+}
+
 function anchorOf(popup: HTMLElement): Element | undefined {
+  const fixed = fixedAnchor(popup)
+
+  if (fixed && shown(fixed)) return fixed
   const last = anchors.get(popup)
 
   return last && shown(last) ? last : invokers(popup).find(shown)
@@ -47,10 +54,19 @@ function reasonFor(popup: HTMLElement): Reason {
   return pressed && !popup.contains(pressed) ? 'outside-press' : 'none'
 }
 
-function hide(popup: HTMLElement, reason: Reason) {
+export function hide(popup: HTMLElement, reason: Reason) {
+  if (!popup.matches(':popover-open')) return
   const before = cause
   cause = { reason, popup }
   popup.hidePopover()
+  cause = before
+}
+
+export function show(popup: HTMLElement, reason: Reason) {
+  if (popup.matches(':popover-open')) return
+  const before = cause
+  cause = { reason, popup }
+  popup.showPopover()
   cause = before
 }
 
@@ -171,7 +187,7 @@ document.addEventListener('focusout', (event) => {
 
   if (!popup?.matches(':popover-open') || !(next instanceof Element) || popup.contains(next)) return
 
-  if (next.closest(`[popovertarget="${popup.id}"]`)) return
+  if (next.closest(`[popovertarget="${popup.id}"]`) || fixedAnchor(popup)?.contains(next)) return
   hide(popup, 'focus-out')
 })
 

@@ -16,7 +16,7 @@ import { fallback, gate, themes } from '@/lib/builtin'
 import { type Card, cardAlt, cardPng } from '@/lib/card'
 import { CATEGORIES, categoriesFrom, categoryPath } from '@/lib/categories'
 import { creditsOf } from '@/lib/credits'
-import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
+import { DOC_PAGES, DOCS_PATH, docAt, menuDocs } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
 import {
   ASKED_SCRIPT,
@@ -25,12 +25,16 @@ import {
   marketplacePath,
   palettePath,
   palettesPath,
+  REPO_URL,
   shelvesOf,
 } from '@/lib/gallery'
 import { artFor, placesFoundFor } from '@/lib/key-art'
 import { castNamed, foundPage, lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
+import { menuCovers, menuPlaces, menuWork, releaseUrl } from '@/lib/menu'
 import { CAST_FILE, type CastAnswer, MOST_ASKED, NAMES_PATH, type NamesAnswer } from '@/lib/names'
+import { SEARCH_PATH, type SearchIndex } from '@/lib/search'
+import { searchPalette } from '@/lib/search-data'
 import { crumbs, ROBOTS, siteGraph, sitemapXml } from '@/lib/seo'
 import { readShared, type Shared } from '@/lib/share'
 import { faviconIco, touchIconPng } from '@/lib/tab-icon'
@@ -51,12 +55,12 @@ import {
   workMeta,
 } from '@/lib/titles'
 import { workPages } from '@/lib/work-page'
-import { leadsOf, WORK_PATH, workEntries, workPath } from '@/lib/works'
+import { byWork, leadOf, leadsOf, ribbon, WORK_PATH, workEntries, workPath } from '@/lib/works'
 import repo from '@/repo.json' with { type: 'json' }
 import pkg from '../../package.json' with { type: 'json' }
 import { type Page, page } from './document'
 
-const facts: Facts = {
+const known = {
   version: pkg.version,
   repo: repo as Repo | null,
 }
@@ -150,7 +154,7 @@ async function primed(signal: AbortSignal): Promise<Response> {
 
 const everyTheme = [...themes, ...marketplaces.flatMap((marketplace) => marketplace.palettes)]
 
-const listings = shelvesOf(themes, marketplaces, facts)
+const listings = shelvesOf(themes, marketplaces, known)
 
 const works = workPages(everyTheme, listings)
 
@@ -159,6 +163,47 @@ const entries = workEntries(everyTheme, artFor, placesFoundFor)
 const heldCategories = CATEGORIES.filter((category) =>
   entries.some((entry) => categoriesFrom(entry.places).includes(category.slug)),
 )
+
+const fallbackWork = entries.find((entry) => entry.id === fallback.work?.id)
+
+const facts: Facts = {
+  ...known,
+  menu: {
+    places: menuPlaces(entries, heldCategories),
+    markets: { ids: listings.map((shelf) => shelf.id), covers: menuCovers(entries) },
+    ribbons: leadsOf(themes).slice(0, 3).map(ribbon),
+    inUse: fallbackWork ? menuWork(fallbackWork) : null,
+    ...menuDocs(),
+    release: { version: known.version, url: releaseUrl(REPO_URL, known.version) },
+  },
+}
+
+const searchIndex: SearchIndex = {
+  works: byWork(everyTheme).flatMap((shelf) => {
+    const entry = shelf.work && entries.find((one) => one.id === shelf.work?.id)
+
+    if (!entry) return []
+    const lead = leadOf(shelf)
+
+    return [
+      {
+        id: entry.id,
+        name: entry.name,
+        native: entry.native,
+        lang: entry.lang,
+        path: entry.path,
+        art: entry.art,
+        facets: entry.facets,
+        search: entry.search,
+        palettes: [lead, ...shelf.themes.filter((theme) => theme !== lead)].map(searchPalette),
+      },
+    ]
+  }),
+  markets: listings.map((shelf) => ({
+    id: shelf.id,
+    text: [shelf.id, shelf.repo, shelf.about].join(' ').toLowerCase(),
+  })),
+}
 
 type Stock = {
   marketplace: Marketplace | null
@@ -190,6 +235,7 @@ export const PRERENDERED: string[] = [
 export const DATA: string[] = [
   palettesPath(BUILTIN),
   '/builder/palettes.json',
+  SEARCH_PATH,
   ...marketplaces.map((marketplace) => palettesPath(marketplace.id)),
 ]
 
@@ -350,6 +396,11 @@ export const site = new Elysia({ name: 'site' })
       },
       <Home themes={themes} facts={facts} terminals={assets.terminals} />,
     ),
+  )
+  .get(
+    SEARCH_PATH,
+    { fixed: true },
+    () => new Response(JSON.stringify(searchIndex), { headers: { 'content-type': 'application/json; charset=utf-8' } }),
   )
   .get(BROWSE_PATH, () =>
     page(

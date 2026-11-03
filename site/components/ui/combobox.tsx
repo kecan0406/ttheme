@@ -3,8 +3,21 @@ import { cn } from '@/lib/utils'
 
 type PartProps = PropsWithChildren<Omit<JSX.HtmlTag, 'class'> & { class?: string }>
 
-function Combobox({ class: className, value, ...props }: PartProps & { value?: string }) {
-  return <div data-slot="combobox" data-value={value} class={cn('contents', className)} {...props} />
+function Combobox({
+  class: className,
+  value,
+  filter = true,
+  ...props
+}: PartProps & { value?: string; filter?: boolean }) {
+  return (
+    <div
+      data-slot="combobox"
+      data-value={value}
+      data-filter={filter ? undefined : 'off'}
+      class={cn('contents', className)}
+      {...props}
+    />
+  )
 }
 
 function ComboboxInput({ list, label, ...props }: Omit<JSX.HtmlInputTag, 'list'> & { list: string; label: string }) {
@@ -64,8 +77,26 @@ function ComboboxItem({
   )
 }
 
+function ComboboxLink({
+  value,
+  text,
+  ...props
+}: PropsWithChildren<Omit<JSX.HtmlAnchorTag, 'value'> & { id: string; href: string; value: string; text: string }>) {
+  return (
+    <a
+      role="option"
+      tabindex="-1"
+      aria-selected="false"
+      data-slot="combobox-item"
+      data-value={value}
+      data-text={text}
+      {...props}
+    />
+  )
+}
+
 function ComboboxEmpty(props: PartProps) {
   return <p data-slot="combobox-empty" hidden {...props} />
 }
 
-export { Combobox, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList }
+export { Combobox, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxLink, ComboboxList }

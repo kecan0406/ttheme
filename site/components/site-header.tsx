@@ -1,4 +1,4 @@
-import { BookOpen, Compass, Menu, Paintbrush } from 'lucide'
+import { BookOpen, ChevronDown, Compass, Menu, Paintbrush } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
@@ -8,13 +8,18 @@ import { BrandIcon, GitHubStar, Icon, NewTab } from '@/lib/icons'
 import { cn, plural } from '@/lib/utils'
 import { HeaderBar } from './header-bar'
 import { Mark } from './mark'
+import { BrowseMenu, BuilderMenu, DocsMenu, MENUS, type MenuKey, NAV_ANCHOR } from './site-menus'
+import { SiteSearch } from './site-search'
 import { Wordmark } from './wordmark'
 
 const NAV = [
-  { href: BROWSE_PATH, label: 'browse', icon: Compass },
-  { href: '/builder', label: 'builder', icon: Paintbrush },
-  { href: '/docs', label: 'docs', icon: BookOpen },
-] as const
+  { key: 'browse', href: BROWSE_PATH, label: 'browse', icon: Compass },
+  { key: 'builder', href: '/builder', label: 'builder', icon: Paintbrush },
+  { key: 'docs', href: '/docs', label: 'docs', icon: BookOpen },
+] as const satisfies readonly { key: MenuKey; href: string; label: string; icon: typeof Compass }[]
+
+const ITEM =
+  'rounded-sm px-3 text-sm leading-13 font-medium whitespace-nowrap text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary header-tight:px-2.5 header-icons:px-2'
 
 export function SiteHeader({ current, facts, fixed = false }: { current: string; facts: Facts; fixed?: boolean }) {
   const stars = facts.repo?.stars ?? null
@@ -28,7 +33,7 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
     >
       <div
         class={cn(
-          'mx-auto flex min-h-13 flex-wrap items-stretch justify-between gap-x-4 header-icons:gap-x-3',
+          'relative mx-auto flex min-h-13 flex-wrap items-stretch justify-between gap-x-4',
           fixed ? 'w-full px-5' : 'w-[min(1280px,calc(100%-40px))]',
         )}
       >
@@ -46,43 +51,66 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
             <Mark />
             <Wordmark />
           </a>
-          <nav aria-label="site" data-glide class="flex flex-wrap items-stretch">
-            {NAV.map((item) => (
-              <a
-                href={item.href}
-                aria-current={item.href === current ? 'page' : undefined}
-                class="rounded-sm px-3 text-sm leading-13 font-medium whitespace-nowrap text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary header-tight:px-2.5 header-icons:px-2"
-              >
-                <Icon node={item.icon} class="mr-1.5 inline-block size-4 align-middle header-icons:hidden" />
-                <span class="header-icons:inline-flex header-icons:align-middle">
-                  <Icon node={item.icon} class="hidden size-4 header-icons:block" />
-                  <span class="header-icons:sr-only">{item.label}</span>
-                </span>
-              </a>
-            ))}
-          </nav>
+          <site-menus class="contents">
+            <nav id={NAV_ANCHOR} aria-label="site" data-glide class="flex flex-wrap items-stretch">
+              {NAV.map((item) => (
+                <>
+                  <a
+                    href={item.href}
+                    aria-current={item.href === current ? 'page' : undefined}
+                    class={cn(ITEM, 'hidden header-menu:inline-block')}
+                  >
+                    <Icon node={item.icon} class="mr-1.5 inline-block size-4 align-middle header-icons:hidden" />
+                    <span class="header-icons:inline-flex header-icons:align-middle">
+                      <Icon node={item.icon} class="hidden size-4 header-icons:block" />
+                      <span class="header-icons:sr-only">{item.label}</span>
+                    </span>
+                  </a>
+                  <button
+                    type="button"
+                    popovertarget={MENUS[item.key]}
+                    popovertargetaction="show"
+                    data-menu-trigger={item.key}
+                    data-href={item.href}
+                    aria-current={item.href === current ? 'page' : undefined}
+                    class={cn(ITEM, 'group/trigger cursor-pointer header-menu:hidden')}
+                  >
+                    <Icon node={item.icon} class="mr-1.5 inline-block size-4 align-middle" />
+                    <span>{item.label}</span>
+                    <Icon
+                      node={ChevronDown}
+                      class="ml-1 inline-block size-3.5 align-middle text-muted-foreground transition-transform duration-200 group-data-popup-open/trigger:rotate-180 group-data-popup-open/trigger:text-foreground"
+                    />
+                  </button>
+                </>
+              ))}
+            </nav>
+          </site-menus>
         </div>
-        <PopoverTrigger
-          popover="site-menu"
-          dialog={false}
-          render={(props) => (
-            <Button
-              {...props}
-              variant="outline"
-              size="icon-sm"
-              aria-label="menu"
-              class="ml-auto hidden self-center header-menu:inline-flex"
-            >
-              <Icon node={Menu} />
-            </Button>
-          )}
-        />
+        <div class="ml-auto flex min-w-0 flex-1 items-center justify-end gap-1.5 header-search:flex-none">
+          <SiteSearch />
+          <PopoverTrigger
+            popover="site-menu"
+            dialog={false}
+            render={(props) => (
+              <Button
+                {...props}
+                variant="outline"
+                size="icon-sm"
+                aria-label="menu"
+                class="hidden self-center header-menu:inline-flex"
+              >
+                <Icon node={Menu} />
+              </Button>
+            )}
+          />
+        </div>
         <Popover
           id="site-menu"
           render={(props) => (
             <div
               {...props}
-              class="top-15 right-5 m-0 w-64 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid header-wide:static header-wide:my-2.5 header-wide:ml-auto header-wide:flex header-wide:w-auto header-wide:flex-wrap header-wide:items-center header-wide:justify-end header-wide:self-center header-wide:gap-2.5 header-wide:overflow-visible header-wide:border-0 header-wide:bg-transparent header-wide:p-0 header-wide:text-inherit header-wide:shadow-none"
+              class="top-15 right-5 m-0 w-64 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid header-wide:static header-wide:my-2.5 header-wide:flex header-wide:w-auto header-wide:flex-wrap header-wide:items-center header-wide:justify-end header-wide:self-center header-wide:gap-2.5 header-wide:overflow-visible header-wide:border-0 header-wide:bg-transparent header-wide:p-0 header-wide:text-inherit header-wide:shadow-none"
             />
           )}
         >
@@ -118,6 +146,9 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
           </LinkButton>
         </Popover>
       </div>
+      <BrowseMenu menu={facts.menu} />
+      <BuilderMenu menu={facts.menu} />
+      <DocsMenu menu={facts.menu} />
     </header>
   )
 }

@@ -50,6 +50,7 @@
         "site/client/handoff.ts",
         "site/client/wear.ts",
         "site/lib/art-source.ts",
+        "site/lib/drafts.ts",
         "src/cli/find/kept.ts",
         "src/cli/marketplaces.ts",
         "src/cli/refresh.ts",

@@ -46,11 +46,15 @@ function underlined(): string | null {
 
   if (Number(getComputedStyle(nav, '::before').opacity) < 0.5) return ''
 
-  for (const link of nav.querySelectorAll('a')) {
-    const label = link.querySelector(':scope > span')
+  for (const item of nav.querySelectorAll<HTMLElement>('a, button[data-href]')) {
+    const label = item.querySelector(':scope > span')
 
-    if (label && getComputedStyle(label).getPropertyValue('anchor-name') === '--glide')
-      return link.getAttribute('href') ?? ''
+    if (
+      label &&
+      item.getClientRects().length > 0 &&
+      getComputedStyle(label).getPropertyValue('anchor-name') === '--glide'
+    )
+      return item.getAttribute('href') ?? item.dataset.href ?? ''
   }
 
   return ''

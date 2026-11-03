@@ -1,5 +1,6 @@
 export type Reason =
   | 'trigger-press'
+  | 'trigger-hover'
   | 'item-press'
   | 'outside-press'
   | 'close-press'
@@ -20,6 +21,11 @@ export interface ValueChange {
   trigger: Element
 }
 
+export interface ItemHighlighted {
+  value: string | null
+  reason: 'keyboard' | 'pointer' | 'none'
+}
+
 export interface PressedChange {
   pressed: boolean
   reason: Reason
@@ -31,16 +37,18 @@ declare global {
     openchange: CustomEvent<OpenChange>
     valuechange: CustomEvent<ValueChange>
     pressedchange: CustomEvent<PressedChange>
+    itemhighlighted: CustomEvent<ItemHighlighted>
   }
 
   interface DocumentEventMap {
     openchange: CustomEvent<OpenChange>
     valuechange: CustomEvent<ValueChange>
     pressedchange: CustomEvent<PressedChange>
+    itemhighlighted: CustomEvent<ItemHighlighted>
   }
 }
 
-export function emit<K extends 'openchange' | 'valuechange' | 'pressedchange'>(
+export function emit<K extends 'openchange' | 'valuechange' | 'pressedchange' | 'itemhighlighted'>(
   target: Element,
   type: K,
   detail: HTMLElementEventMap[K]['detail'],

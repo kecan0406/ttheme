@@ -2,20 +2,17 @@ import { THUMB_SIZES, WorkThumb } from '@/components/work-parts'
 import { alsoIn, type CategorySlug, categoriesFrom, GENRE_KEY, GENRES, genresFrom, placesLabel } from '@/lib/categories'
 import type { FoundWork } from '@/lib/found'
 import { type Filters, matches, ORDERS, type Ranked, type Searchable, type Sort, START } from '@/lib/gallery'
-import { makePath, NAME_PAUSE, NAMES_PATH, type NamesAnswer, namesPath } from '@/lib/names'
+import { makePath, type NamesAnswer } from '@/lib/names'
 import { html } from '@/lib/render'
+import { said } from '@/lib/search'
 import { plural } from '@/lib/utils'
 import { WORN_FACETS, workPath } from '@/lib/works'
 import { paletteNameOf } from '../../src/core/names.ts'
 import { announce, fill, readJson, reducedMotion } from './dom'
-import { composing, letter, typing } from './keys'
+import { NameLookup } from './names'
 import { afterPaint } from './palettes'
 import type { PressedChange } from './ui/change'
 import { press } from './ui/pressed'
-
-const STALL_MS = 300
-
-const SAY_MS = 500
 
 const EDGE = 2
 
@@ -36,44 +33,8 @@ function rankOf(card: HTMLElement): Ranked {
 
 abstract class Browse extends HTMLElement {
   protected filters: Filters = { ...START }
-  protected answers = new Map<string, NamesAnswer>()
-  protected naming = ''
-  protected stalled = false
-  #asking: AbortController | null = null
-  #asked = ''
-  #failed = ''
-  #pause = 0
-  #primed = false
+  protected names = new NameLookup((asked) => this.#answered(asked))
   #request = ''
-  #stall = 0
-  #saying = 0
-
-  #input = (event: Event) => {
-    const target = event.target as HTMLInputElement
-
-    if (target.name !== 'query') return
-    this.filters = { ...this.filters, query: target.value, named: this.#namedFor(target.value) }
-    this.#carry()
-    this.#later()
-    this.render()
-    this.#say()
-  }
-
-  #enter = (event: KeyboardEvent) => {
-    if (event.key !== 'Enter' || (event.target as HTMLInputElement).name !== 'query' || composing(event)) return
-    event.preventDefault()
-    this.#ask(this.query)
-  }
-
-  #focus = (event: FocusEvent) => {
-    if ((event.target as HTMLInputElement).name === 'query') this.#warm()
-  }
-
-  #warm = () => {
-    if (this.#primed) return
-    this.#primed = true
-    fetch(NAMES_PATH, { priority: 'low' }).catch(() => undefined)
-  }
 
   #change = (event: Event) => {
     const { name, value } = event.target as HTMLInputElement
@@ -81,54 +42,24 @@ abstract class Browse extends HTMLElement {
     if (name === 'sort') this.order(value)
   }
 
-  #find = (event: KeyboardEvent) => {
-    if (!letter(event, 'k') || event.metaKey === event.ctrlKey || event.altKey || event.shiftKey) return
-
-    if (event.defaultPrevented || composing(event) || typing(event.target)) return
-    const field = this.querySelector<HTMLInputElement>('input[name="query"]')
-
-    if (!field) return
-    event.preventDefault()
-    field.focus()
-    field.select()
-  }
-
   connectedCallback() {
-    this.addEventListener('input', this.#input)
     this.addEventListener('change', this.#change)
-    this.addEventListener('keydown', this.#enter)
-    this.addEventListener('focusin', this.#focus)
-    window.addEventListener('keydown', this.#find)
-    const field = this.querySelector<HTMLInputElement>('input[name="query"]')
-    const asked = new URLSearchParams(location.search).get('q')
-
-    if (field && asked) field.value = asked
-    const query = field?.value ?? ''
+    const query = (new URLSearchParams(location.search).get('q') ?? '').trim()
     const order = this.querySelector<HTMLInputElement>('input[name="sort"]')
 
     if (order) order.checked = true
     this.filters = { ...START, query }
     this.#request = this.querySelector('[data-request]')?.getAttribute('href') ?? ''
 
-    if (query.trim()) {
-      this.#primed = true
-      this.#ask(query.trim())
-    } else afterPaint(this.#warm)
-
+    if (query) this.names.ask(query)
     this.#carry()
+    this.#chip()
     this.render()
   }
 
   disconnectedCallback() {
-    this.removeEventListener('input', this.#input)
     this.removeEventListener('change', this.#change)
-    this.removeEventListener('keydown', this.#enter)
-    this.removeEventListener('focusin', this.#focus)
-    window.removeEventListener('keydown', this.#find)
-    window.clearTimeout(this.#pause)
-    window.clearTimeout(this.#stall)
-    window.clearTimeout(this.#saying)
-    this.#asking?.abort()
+    this.names.stop()
   }
 
   protected abstract render(): void
@@ -139,6 +70,18 @@ abstract class Browse extends HTMLElement {
 
   protected get query(): string {
     return this.filters.query.trim()
+  }
+
+  protected get naming(): string {
+    return this.names.naming
+  }
+
+  protected get stalled(): boolean {
+    return this.names.stalled
+  }
+
+  protected get answers(): Map<string, NamesAnswer> {
+    return this.names.answers
   }
 
   protected hint(text: string | null) {
@@ -190,7 +133,7 @@ abstract class Browse extends HTMLElement {
     if (text) {
       text.hidden = naming || within !== ''
       text.textContent =
-        query && this.#failed === query
+        query && this.names.failed === query
           ? 'the name lookup did not answer — ask for one, or make it yourself.'
           : 'look for its work by title, ask for one, or make it yourself.'
     }
@@ -213,10 +156,6 @@ abstract class Browse extends HTMLElement {
     return url.href
   }
 
-  #namedFor(value: string): string[] {
-    return this.answers.get(value.trim())?.works ?? []
-  }
-
   #carry() {
     const query = this.query
 
@@ -229,90 +168,22 @@ abstract class Browse extends HTMLElement {
     }
   }
 
-  #remember() {
-    const url = new URL(location.href)
-    const query = this.query
+  #chip() {
+    const chip = this.querySelector<HTMLElement>('[data-clear]')
 
-    if (query) url.searchParams.set('q', query)
-    else url.searchParams.delete('q')
+    if (!chip) return
+    chip.hidden = this.query === ''
+    const text = chip.querySelector('[data-clear-text]')
 
-    if (url.href !== location.href) history.replaceState(history.state, '', url)
+    if (text) text.textContent = `“${this.query}”`
   }
 
-  #later() {
-    window.clearTimeout(this.#pause)
-    const query = this.query
-
-    if (this.#asked && this.#asked !== query) {
-      this.#asking?.abort()
-      window.clearTimeout(this.#stall)
-      this.stalled = false
-    }
-
-    this.naming = query && !this.answers.has(query) ? query : ''
-    this.#pause = window.setTimeout(() => {
-      this.#remember()
-
-      if (this.naming === query && this.#asked !== query) this.#ask(query)
-    }, NAME_PAUSE)
-  }
-
-  #ask(query: string) {
-    window.clearTimeout(this.#pause)
-    this.#remember()
-
-    if (!query || this.answers.has(query) || this.#asked === query) return
-    this.#asking?.abort()
-    const asking = new AbortController()
-    this.#asking = asking
-    this.#asked = query
-    this.naming = query
-    window.clearTimeout(this.#stall)
-    this.stalled = false
-    this.#stall = window.setTimeout(() => {
-      this.stalled = true
-      this.render()
-    }, STALL_MS)
-    fetch(namesPath(query), { signal: asking.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error(String(response.status))
-
-        return response.json() as Promise<NamesAnswer>
-      })
-      .then(
-        (answer) => {
-          this.answers.set(query, answer)
-          this.#answered(asking, query, '')
-        },
-        () => this.#answered(asking, query, asking.signal.aborted ? '' : query),
-      )
-  }
-
-  #answered(asking: AbortController, query: string, failed: string) {
-    if (this.#asking === asking) {
-      this.#asking = null
-      this.#asked = ''
-      window.clearTimeout(this.#stall)
-      this.stalled = false
-    }
-
-    if (asking.signal.aborted || this.query !== query) return
-    this.naming = ''
-    this.#failed = failed
-    this.filters = { ...this.filters, named: this.#namedFor(query) }
+  #answered(asked: string) {
+    if (asked !== this.query) return
+    this.filters = { ...this.filters, named: this.names.named(asked) }
     this.render()
-    this.#say(true)
-  }
 
-  #say(now = false) {
-    window.clearTimeout(this.#saying)
-    const query = this.query
-
-    if (query && this.naming === query) return
-    const speak = () => announce(this.summary())
-
-    if (now) speak()
-    else this.#saying = window.setTimeout(speak, SAY_MS)
+    if (this.naming !== asked) announce(this.summary())
   }
 }
 
@@ -431,9 +302,7 @@ class BrowseWorks extends Browse {
   #said(item: HTMLElement): boolean {
     const query = this.query.toLowerCase()
 
-    return (
-      !query || (item.dataset.search ?? '').includes(query) || (item.dataset.names ?? '').split('\n').includes(query)
-    )
+    return !query || said(item.dataset.search ?? '', (item.dataset.names ?? '').split('\n'), query)
   }
 
   #hit(item: HTMLElement): boolean {

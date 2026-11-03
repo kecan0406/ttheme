@@ -2,13 +2,13 @@ import {
   draftFrom,
   type Edit,
   listIn,
-  MOST_DRAFTS,
   madeMode,
   nameTrouble,
   subjectTrouble,
   type View,
   writesOther,
 } from '@/lib/builder'
+import { MOST_DRAFTS } from '@/lib/drafts'
 import type { Mode } from '@/lib/mode'
 import { pictureOf } from '@/lib/pictures'
 import { gateLinesOf, slotViewOf } from '@/lib/slot-view'

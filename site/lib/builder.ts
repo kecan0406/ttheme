@@ -1,3 +1,4 @@
+import { DRAFT_KEY, MOST_DRAFTS, STORE } from '@/lib/drafts'
 import { NEW_KEY } from '@/lib/names'
 import type { WorkRef } from '@/lib/themes'
 import type { Hex } from '../../src/core/color.ts'
@@ -8,11 +9,7 @@ import { type Mode, modeOf, otherOf } from '../../src/core/mode.ts'
 import { colorsOf, listOf } from '../../src/core/slots.ts'
 import { type SharedPicture, slugOf, slugProblem, subjectProblem } from '../../src/core/theme.ts'
 
-export const STORE = 'ttheme-builder'
-
 export const TAB_KEY = 'ttheme-builder-tab'
-
-export const MOST_DRAFTS = 30
 
 export const RETURNS = ['reload', 'back_forward']
 
@@ -286,4 +283,10 @@ export function restored(stored: Stored, at: number, edit: Edit): Stored {
 
 const RETURNING = RETURNS.map((type) => `n.type==='${type}'`).join('||')
 
-export const RESTORE_SCRIPT = `(()=>{try{const n=performance.getEntriesByType('navigation')[0],i=sessionStorage.getItem('${TAB_KEY}'),s=JSON.parse(localStorage.getItem('${STORE}')||'null');if(n&&(${RETURNING})&&i&&s&&Array.isArray(s.drafts)&&s.drafts.some((d)=>d&&d.id===i)||new URLSearchParams(location.search).has('${NEW_KEY}'))document.documentElement.dataset.restoring=''}catch{}})()`
+export const RESTORE_SCRIPT = `(()=>{try{const n=performance.getEntriesByType('navigation')[0],i=sessionStorage.getItem('${TAB_KEY}'),s=JSON.parse(localStorage.getItem('${STORE}')||'null'),a=new URLSearchParams(location.search),k=(x)=>x&&s&&Array.isArray(s.drafts)&&s.drafts.some((d)=>d&&d.id===x);if(n&&(${RETURNING})&&k(i)||k(a.get('${DRAFT_KEY}'))||a.has('${NEW_KEY}'))document.documentElement.dataset.restoring=''}catch{}})()`
+
+export function askedDraft(search: string, stored: Stored | null): Edit | undefined {
+  const id = new URLSearchParams(search).get(DRAFT_KEY)
+
+  return id ? stored?.drafts.find((draft) => draft.id === id) : undefined
+}

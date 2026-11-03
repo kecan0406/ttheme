@@ -26,6 +26,7 @@ import { StartEntries } from '@/components/builder-start'
 import { PaneBody } from '@/components/mock-window'
 import { TitleDots } from '@/components/workspace-shell'
 import {
+  askedDraft,
   type BuilderData,
   blankEdit,
   changedIn,
@@ -45,7 +46,6 @@ import {
   RETURNS,
   resetAll,
   restored,
-  STORE,
   type Start,
   type Stored,
   storedOf,
@@ -75,6 +75,7 @@ import {
   slotVars,
   statusOf,
 } from '@/lib/builder-view'
+import { DRAFT_KEY, STORE } from '@/lib/drafts'
 import type { Mode } from '@/lib/mode'
 import { html } from '@/lib/render'
 import { scenePanes } from '@/lib/scene-panes'
@@ -220,7 +221,8 @@ class PaletteBuilder extends HTMLElement {
     this.#data = readJson<BuilderData>(this, 'script[data-builder]')
     this.#stored = readStore()
     const link = this.#data.link !== null
-    const back = link ? undefined : tabDraft(this.#stored)
+    const asked = link ? undefined : askedDraft(location.search, this.#stored)
+    const back = link ? undefined : (asked ?? tabDraft(this.#stored))
     const fresh = link || back ? null : newName(location.search)
     this.#edit = back ?? editOf(this.#data.first.draft, this.#data.first.name, link, freshId(), Date.now())
 
@@ -260,6 +262,7 @@ class PaletteBuilder extends HTMLElement {
     if (colors) this.#follow.observe(colors)
     this.#fit()
     this.#render()
+    this.#arrive(asked !== undefined)
     this.#renderDrafts()
     this.#tail()
     document.documentElement.removeAttribute('data-restoring')
@@ -812,6 +815,30 @@ class PaletteBuilder extends HTMLElement {
     this.#drawPane(term.querySelector<HTMLElement>('[data-pane-panel]:not([hidden])')?.dataset.panePanel ?? '')
     term.dataset.sized = ''
     this.#renderPicker()
+  }
+
+  #arrive(asked: boolean) {
+    const hash = location.hash
+
+    if (!asked && !hash) return
+    const url = new URL(location.href)
+
+    url.searchParams.delete(DRAFT_KEY)
+    url.hash = ''
+    history.replaceState(history.state, '', url)
+
+    if (hash === '#builder-drafts') return this.#select('drafts')
+
+    if (hash !== '#builder-start' && hash !== '#builder-open') return
+    requestAnimationFrame(() => {
+      this.querySelector<HTMLElement>('#builder-start')?.showPopover()
+
+      if (hash !== '#builder-open') return
+      const box = this.querySelector<HTMLDetailsElement>('details[data-open-box]')
+
+      if (box) box.open = true
+      this.querySelector<HTMLElement>('[data-open-text]')?.focus({ preventScroll: true })
+    })
   }
 
   #select(panel: string) {

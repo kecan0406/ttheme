@@ -1,6 +1,7 @@
 import { themes } from '@/lib/builtin'
 import { COMMANDS, commandsToc } from '@/lib/commands'
 import { type Doc, type Heading, renderDoc } from '@/lib/markdown'
+import type { DocIcon, MenuDoc, MenuDocs } from '@/lib/menu'
 import { SETTING_GROUPS } from '@/lib/settings'
 import make from '../../docs/guide/make.md' with { type: 'text' }
 import quickstart from '../../docs/guide/quickstart.md' with { type: 'text' }
@@ -17,6 +18,7 @@ interface Entry {
   label: string
   text: string
   made?: Made
+  menu?: { blurb: string; icon: DocIcon }
 }
 
 interface Group {
@@ -58,17 +60,44 @@ const NAV: Group[] = [
     title: 'Guide',
     pages: [
       { slug: 'quickstart', label: 'Quick start', text: quickstart },
-      { slug: 'use', label: 'Use ttheme', text: use },
-      { slug: 'make', label: 'Make a palette', text: make },
+      {
+        slug: 'use',
+        label: 'Use ttheme',
+        text: use,
+        menu: { blurb: 'Try palettes on, pin one to a folder, switch light and dark', icon: 'use' },
+      },
+      {
+        slug: 'make',
+        label: 'Make a palette',
+        text: make,
+        menu: { blurb: 'Tune twenty colors and share them as a link', icon: 'make' },
+      },
     ],
   },
   {
     slug: 'reference',
     title: 'Reference',
     pages: [
-      { slug: 'terminals', label: 'Terminal support', text: terminals },
-      { slug: 'commands', label: 'Commands', text: commands, made: 'commands' },
-      { slug: 'settings', label: 'Settings', text: settings, made: 'settings' },
+      {
+        slug: 'terminals',
+        label: 'Terminal support',
+        text: terminals,
+        menu: { blurb: 'What each terminal shows, and what it cannot', icon: 'terminals' },
+      },
+      {
+        slug: 'commands',
+        label: 'Commands',
+        text: commands,
+        made: 'commands',
+        menu: { blurb: 'Every command, its arguments and its options', icon: 'commands' },
+      },
+      {
+        slug: 'settings',
+        label: 'Settings',
+        text: settings,
+        made: 'settings',
+        menu: { blurb: 'Every setting in config.zsh and its default', icon: 'settings' },
+      },
     ],
   },
 ]
@@ -206,4 +235,22 @@ export function guideOf(verb: string): DocPage | undefined {
     (best, page) => (mentionsOf(page, verb) > (best ? mentionsOf(best, verb) : 0) ? page : best),
     undefined,
   )
+}
+
+function menuOf(group: string): MenuDoc[] {
+  return (NAV.find((one) => one.slug === group)?.pages ?? []).flatMap((entry) =>
+    entry.menu ? [{ label: entry.label, path: pathOf(group, entry.slug), ...entry.menu }] : [],
+  )
+}
+
+export function menuDocs(): MenuDocs {
+  const quick = docAt('guide', 'quickstart')
+
+  if (!quick) throw new Error('docs/guide/quickstart.md is missing from the nav table')
+
+  return {
+    quick: { label: quick.label, path: quick.path, lede: quick.description },
+    guide: menuOf('guide'),
+    reference: menuOf('reference'),
+  }
 }

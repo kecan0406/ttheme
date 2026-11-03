@@ -90,7 +90,11 @@ export function initOf(runner: Runner): string {
 
 export const BUILTIN_ABOUT = 'The palettes that come with ttheme, one for each character.'
 
-export function shelvesOf(themes: Theme[], marketplaces: readonly Marketplace[], facts: Facts): Shelf[] {
+export function shelvesOf(
+  themes: Theme[],
+  marketplaces: readonly Marketplace[],
+  facts: Pick<Facts, 'version' | 'repo'>,
+): Shelf[] {
   const shelves: Shelf[] = [
     {
       id: BUILTIN,

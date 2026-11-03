@@ -11,6 +11,9 @@ const popoverVariants = cva('m-0 border border-border bg-popover text-popover-fo
         'hidden max-h-[min(640px,calc(100dvh-120px))] w-[min(400px,calc(100vw-32px))] flex-col overflow-hidden rounded-3xl open:flex',
       card: 'hidden w-[min(440px,calc(100vw-32px))] gap-2.5 rounded-3xl p-4 open:grid',
       picker: 'w-(--anchor-width) max-w-[calc(100vw-2rem)] flex-col gap-2 overflow-hidden rounded-xl p-2 open:flex',
+      menu: 'hidden max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-3xl bg-glass-panel backdrop-blur-[24px] backdrop-saturate-130 open:flex',
+      search:
+        'hidden max-h-[min(560px,calc(100dvh-96px))] w-[min(820px,calc(100vw-32px))] flex-col overflow-hidden rounded-3xl bg-glass-panel backdrop-blur-[24px] backdrop-saturate-130 open:flex',
     },
     inset: {
       none: '',
@@ -28,13 +31,14 @@ type Align = 'start' | 'end'
 type PopupAttrs = Omit<JSX.HtmlTag, 'class'> & {
   id: string
   children?: Children
-  popover: 'auto'
+  popover: 'auto' | 'manual'
   'aria-label'?: string
   'data-slot': 'popover'
   'data-closed': true
   'data-side'?: 'bottom'
   'data-align'?: Align
   'data-offset'?: string
+  'data-anchor'?: string
 }
 
 type TriggerAttrs = Omit<JSX.HtmlButtonTag, 'class'> & {
@@ -52,6 +56,8 @@ type PopoverProps = PropsWithChildren<
       label?: string
       align?: Align
       offset?: number
+      anchor?: string
+      manual?: boolean
       render?: (props: PopupAttrs) => JSX.Element
     }
 >
@@ -64,13 +70,15 @@ function Popover({
   label,
   align,
   offset,
+  anchor,
+  manual = false,
   render,
   ...props
 }: PopoverProps) {
   const popup: PopupAttrs = {
     ...props,
     id,
-    popover: 'auto',
+    popover: manual ? 'manual' : 'auto',
     role: label ? 'dialog' : undefined,
     'aria-label': label,
     'data-slot': 'popover',
@@ -78,6 +86,7 @@ function Popover({
     'data-side': align ? 'bottom' : undefined,
     'data-align': align,
     'data-offset': offset === undefined ? undefined : String(offset),
+    'data-anchor': anchor,
   }
 
   return render ? (
