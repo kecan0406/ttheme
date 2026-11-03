@@ -634,19 +634,6 @@ __tt_pv_img() {
   [[ -z $2 || $2 == "${bgact[$1]}" ]] || REPLY=$1:$2
 }
 
-__tt_pv_bg_prepare() {
-  local key=${tpick##*:} want REPLY
-  [[ $tpick == *:* ]] || key=${bgact[$tune]}
-  [[ -n $key ]] || return 0
-  __tt_bg_coloring $tpick
-  want=$tune:$key:$REPLY
-  (( ${+bgprep[$want]} )) && return 0
-  (( bgprepid )) && kill -0 $bgprepid 2>/dev/null && return 0
-  bgprep[$want]=1
-  __tt_cli image $tune prepare $key </dev/null >/dev/null 2>&1 &!
-  bgprepid=$!
-}
-
 __tt_pv_tune_open() {
   local REPLY
   __tt_bg_load $1
@@ -654,7 +641,6 @@ __tt_pv_tune_open() {
   tpick=$REPLY tune=$1 tf=1 tsnaps=()
   __tt_bg_load $tpick
   tsnaps[$tpick]="${bgsize[$tpick]} ${bgpos[$tpick]} ${bgop[$tpick]} ${bgoff[$tpick]}"
-  __tt_pv_bg_prepare
 }
 
 __tt_pv_bg_pick() {
@@ -675,7 +661,6 @@ __tt_pv_bg_pick() {
   __tt_bg_load $tpick
   (( ${+tsnaps[$tpick]} )) || tsnaps[$tpick]="${bgsize[$tpick]} ${bgpos[$tpick]} ${bgop[$tpick]} ${bgoff[$tpick]}"
   bgname=""
-  __tt_pv_bg_prepare
 }
 
 __tt_pv_bg_drop() {
@@ -722,7 +707,6 @@ __tt_pv_bg_recolor() {
   __tt_label $name
   msg=${err:-"Background  $REPLY"} msgt=$(( rc ? 300 : 200 ))
   [[ -r ${TTHEME_CONFIG:h}/backgrounds/${${name/@/--}/\//--}.conf ]] || return 0
-  (( rc )) || bgprep[$name:$key:$want]=1
   __tt_pv_tune_open $name
   if [[ $was != "$tpick" ]]; then
     tpick=$was

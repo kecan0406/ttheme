@@ -1,26 +1,22 @@
 import { availableParallelism, homedir } from 'node:os'
 import type { Coloring } from '../core/backdrop-tone.ts'
-import { inMode } from '../core/manifest.ts'
-import { modeOf, otherOf } from '../core/mode.ts'
 import {
   applyRedraw,
   backgroundsDir,
-  cached,
   coloringOf,
-  decodable,
   inkDue,
   type Paint,
   type Picture,
   paintFor,
   rackIn,
   readStore,
+  swapped,
   thumbless,
   undrawn,
   writeThumb,
 } from '../pictures/backdrop.ts'
 import { MATTING } from '../pictures/cutout.ts'
-import { prune, writable } from '../pictures/drawn.ts'
-import { prepareOne, redrawOne } from '../pictures/redrawing.ts'
+import { redrawOne } from '../pictures/redrawing.ts'
 import { Pool } from '../pictures/render.ts'
 import { type View, viewOf } from '../store/available.ts'
 import { readInstalled } from '../store/installed.ts'
@@ -63,10 +59,8 @@ export async function redrawPictures(
   const blurring = blurOf(home)
   const shown = (view ?? viewOf(home, undefined, true, Object.keys(store.palettes))).available
   const entries = new Map(shown.palettes.map((entry) => [entry.name, entry]))
-  const hits: Job[] = []
-  const misses: Job[] = []
-  const primes: Job[] = []
-  const keeping = writable()
+  const swaps: (Job & { picture: Picture })[] = []
+  const draws: Job[] = []
 
   for (const [name, rack] of Object.entries(store.palettes)) {
     const entry = entries.get(name)
@@ -76,39 +70,26 @@ export async function redrawPictures(
     }
 
     const paint = paintFor(entry)
-    let other: Paint | undefined
 
     for (const picture of rack.pictures) {
       if (ownColors && coloringOf(picture) === 'tone') {
-        const into = cached(home, name, picture, paint, blurring, 'original') ? hits : misses
-        into.push({ name, key: picture.key, paint, coloring: 'original' })
+        draws.push({ name, key: picture.key, paint, coloring: 'original' })
         continue
       }
 
       const flips = inkDue(picture, paint)
+      const blurred = (picture.blur ?? 0) !== blurring
+      const matted = picture.cut !== undefined && picture.matte !== MATTING
 
-      const due =
-        undrawn(picture) ||
-        flips ||
-        (picture.blur ?? 0) !== blurring ||
-        (picture.cut !== undefined && picture.matte !== MATTING)
-
-      if (due) {
-        const into = cached(home, name, picture, paint, blurring) ? hits : misses
-        into.push({ name, key: picture.key, paint })
-      }
-
-      if (keeping && !flips && !undrawn(picture) && coloringOf(picture) === 'tone' && decodable(home, picture)) {
-        other ??= paintFor(inMode(entry, otherOf(modeOf(entry))))
-
-        if (!cached(home, name, picture, other, blurring, 'tone')) {
-          primes.push({ name, key: picture.key, paint: other })
-        }
+      if (undrawn(picture) || blurred || matted) {
+        draws.push({ name, key: picture.key, paint })
+      } else if (flips) {
+        swaps.push({ name, key: picture.key, paint, picture })
       }
     }
   }
 
-  const total = hits.length + misses.length + primes.length
+  const total = swaps.length + draws.length
 
   if (total === 0) {
     await shrinkBare(home)
@@ -120,34 +101,26 @@ export async function redrawPictures(
   const drawn: { name: string; picture: Picture }[] = []
   let done = 0
 
-  for (const { name, key, paint, coloring } of hits) {
-    try {
-      const picture = await redrawOne(home, name, key, paint, blurring, aligns, user, coloring)
+  for (const { name, key, paint, picture } of swaps) {
+    const next = swapped(home, name, picture, paint, aligns, user)
 
-      if (picture) {
-        drawn.push({ name, picture })
-      }
-    } catch (error) {
-      say(`  ▢ ${name} ${key} — ${error instanceof Error ? error.message : String(error)}, left as it was`)
+    if (next) {
+      drawn.push({ name, picture: next })
+      step?.(++done, total)
+    } else {
+      draws.push({ name, key, paint })
     }
-
-    step?.(++done, total)
   }
 
-  if (misses.length + primes.length > 0) {
-    if (misses.length > 0) {
-      const how = ownColors ? `in ${misses.length === 1 ? 'its' : 'their'} own colors` : 'again'
+  if (draws.length > 0) {
+    const how = ownColors ? `in ${draws.length === 1 ? 'its' : 'their'} own colors` : 'again'
 
-      say(`Drawing ${plural(misses.length)} ${how}${blurring ? `  blur ${blurring}px` : ''}`)
-    } else {
-      say(`Drawing ${plural(primes.length)} for the other mode`)
-    }
+    say(`Drawing ${plural(draws.length)} ${how}${blurring ? `  blur ${blurring}px` : ''}`)
 
-    const pool = new Pool(Math.min(WORKERS, availableParallelism() - 1, misses.length + primes.length))
-    const tick = () => step?.(++done, total)
+    const pool = new Pool(Math.min(WORKERS, availableParallelism() - 1, draws.length))
 
     const results = await pool.map(
-      misses.map(({ name, key, paint, coloring }) => ({
+      draws.map(({ name, key, paint, coloring }) => ({
         job: 'redraw' as const,
         home,
         user,
@@ -158,25 +131,12 @@ export async function redrawPictures(
         aligns,
         ...(coloring ? { coloring } : {}),
       })),
-      tick,
-    )
-
-    await pool.map(
-      primes.map(({ name, key, paint }) => ({
-        job: 'prepare' as const,
-        home,
-        name,
-        key,
-        paint,
-        blur: blurring,
-        coloring: 'tone' as const,
-      })),
-      tick,
+      () => step?.(++done, total),
     )
 
     pool.close()
 
-    misses.forEach(({ name, key }, at) => {
+    draws.forEach(({ name, key }, at) => {
       const result = results[at]
 
       if (result instanceof Error || !result) {
@@ -192,7 +152,6 @@ export async function redrawPictures(
   }
 
   applyRedraw(home, drawn)
-  prune()
   await shrinkBare(home)
 
   if (emit && drawn.length > 0) {
@@ -254,29 +213,6 @@ export async function redrawColoring(
   refreshPictures(home, user, undefined, view)
 
   return { key: picture.key, changed: true }
-}
-
-export function prepareColoring(home: string, name: string, key?: string) {
-  const rack = rackIn(readStore(backgroundsDir(home)), name)
-  const picture = rack?.pictures.find((held) => held.key === (key ?? rack.active))
-
-  if (!rack || !picture) {
-    throw new Error(`${name} has no picture ${key ?? 'shown'}`)
-  }
-
-  const entry = viewOf(home).available.palettes.find((held) => held.name === name)
-
-  if (!entry) {
-    throw new Error(`no palette called ${name}`)
-  }
-
-  const coloring = coloringOf(picture) === 'original' ? 'tone' : 'original'
-
-  if (!prepareOne(home, name, picture.key, paintFor(entry), blurOf(home), coloring)) {
-    throw new Error(`${name} ${picture.key} has no original to draw it from`)
-  }
-
-  return { key: picture.key, coloring }
 }
 
 export async function runRedraw(): Promise<number> {

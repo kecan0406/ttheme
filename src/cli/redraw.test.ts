@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -7,7 +7,6 @@ import { inMode, type Manifest, type PaletteEntry } from '../core/manifest.ts'
 import { encodeRgba, type Rgba } from '../core/png.ts'
 import {
   backgroundsDir,
-  cached,
   colorsOf,
   installBackdrop,
   type Picture,
@@ -18,8 +17,6 @@ import { readAvailable, writeBundled } from '../store/available.ts'
 import { readInstalled, writeInstalled } from '../store/installed.ts'
 import { moveColors } from './init.ts'
 import { redrawColoring, redrawPictures } from './redraw.ts'
-
-process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'ttheme-redraw-cache-'))
 
 const ORLA: PaletteEntry = {
   name: 'ttheme/orla',
@@ -74,15 +71,15 @@ function install(configHome: string, id = 7, original?: Uint8Array): Picture {
   return rackOf(configHome, 'ttheme/orla')[0] as Picture
 }
 
-test('a mode switch lays the drawing of the other ink that was got ready, with no original to read, and it is the one a fresh install gives', async () => {
+test('a mode switch lays the other ink drawn with the picture, with no original to read, and it is the one a fresh install gives', async () => {
   const configHome = home('dark')
   const before = install(configHome)
   const lines: string[] = []
   assert.equal(await redrawPictures(configHome, (line) => lines.push(line), configHome, { emit: false }), 0)
-  assert.deepEqual(lines, ['Drawing 1 background picture for the other mode'])
+  assert.equal(lines.length, 0)
   const dark = readAvailable(configHome).palettes.find((entry) => entry.name === 'ttheme/orla') as PaletteEntry
   const light = paintFor(inMode(dark, 'light'))
-  assert.equal(cached(configHome, 'ttheme/orla', before, light, 0, 'tone'), true)
+  assert.ok(existsSync(join(backgroundsDir(configHome), `${before.stem}.ink.png`)))
 
   writeFileSync(join(configHome, 'ttheme', 'config.zsh'), ': ${TTHEME_MODE:=light}\n')
   const original = join(backgroundsDir(configHome), before.original as string)

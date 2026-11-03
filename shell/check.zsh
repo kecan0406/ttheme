@@ -91,10 +91,7 @@ REPLY=; __tt_bg_place 2560 1550 -40 -36 2944 1773 16 34 100 3 cover -1 1
 [[ $REPLY == "-3 -2 185 0 8 32 0 0 2560 1550" ]] || { print -u2 "__tt_bg_place did not lay a fill on Ghostty's padded window to the pixel: $REPLY"; exit 1 }
 REPLY=; __tt_bg_frame 2056 2560 1600 1000 199 5 contain 62
 [[ $REPLY == "1598 1990 1 -733" ]] || { print -u2 "__tt_bg_frame broke on a zoom around the face: $REPLY"; exit 1 }
-typeset -A bgfrom=() bgurl=() bgby=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgdim=() bgtunef=() bgofff=() bgimages=() bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() bgedit=() bgcolors=() bgcred=() bgpage=() bgprof=() bgprep=()
-typeset -i bgprepid=0
-functions[__tt_pv_bg_prepare_run]=$functions[__tt_pv_bg_prepare]
-__tt_pv_bg_prepare() { : }
+typeset -A bgfrom=() bgurl=() bgby=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgdim=() bgtunef=() bgofff=() bgimages=() bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() bgedit=() bgcolors=() bgcred=() bgpage=() bgprof=()
 bgd=$XDG_CONFIG_HOME/ttheme/backgrounds
 mkdir -p $bgd && : > $bgd/ttheme--hiiragi-kagami@fill-42.png && : > $bgd/ttheme--hiiragi-kagami@60-bottom-right.png && : > $bgd/ttheme--hiiragi-kagami@130-bottom-right-1600x1000.png
 base=("# by inkwell,paperboat" "# from safebooru 400001 https://safebooru.org/index.php?page=post&s=view&id=400001" "# image safebooru_400001 1/1" "background-image = ttheme--hiiragi-kagami@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2"
@@ -546,27 +543,6 @@ te=0 tune= tpick= bgcw=0 out=
     { print -u2 "the Colors row did not switch back on an arrow key: $(<$bgd/cli.log) tf=$tf"; exit 1 }
 ) || exit 1
 tune= tpick= bgcw=0 out=
-(
-  functions[__tt_pv_bg_prepare]=$functions[__tt_pv_bg_prepare_run]
-  __tt_cli() { print -r -- "$*" >> $bgd/prep.log }
-  rm -f $bgd/prep.log
-  print -l "# image safebooru_2 1/1" "# picture safebooru_2 ttheme--hiiragi-kagami.1a2b3c4d ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png 0.2 -" \
-    "background-image = ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
-    "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.off.conf" > $bgd/ttheme--hiiragi-kagami.conf
-  bgsrc=() bgcolors=() bgprep=() bgview=() bgswap=() bgedit=() tsnaps=() bgprepid=0 tune= tpick=
-  __tt_pv_tune_open ttheme/hiiragi-kagami
-  for i in {1..30}; do [[ -s $bgd/prep.log ]] && break; sleep 0.1; done
-  __tt_pv_tune_open ttheme/hiiragi-kagami
-  sleep 0.3
-  [[ "$(<$bgd/prep.log)" == "image ttheme/hiiragi-kagami prepare safebooru_2" ]] ||
-    { print -u2 "opening a picture's tuning did not get its other coloring ready exactly once: $(<$bgd/prep.log)"; exit 1 }
-  bgprep[ttheme/hiiragi-kagami:safebooru_2:original]=1 bgcolors[ttheme/hiiragi-kagami:safebooru_2]=original
-  rm -f $bgd/prep.log
-  __tt_pv_tune_open ttheme/hiiragi-kagami
-  sleep 0.3
-  [[ ! -e $bgd/prep.log ]] ||
-    { print -u2 "a coloring marked as prepared was prepared again: $(<$bgd/prep.log)"; exit 1 }
-) || exit 1
 TTHEME_STARTUP=ttheme/hatsune-miku
 proj=$XDG_CONFIG_HOME/proj
 mkdir -p $proj/sub/deep $proj-sibling

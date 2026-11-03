@@ -42,10 +42,8 @@ import { stem as fileStem, POSITIONS, type SharedPicture } from '../core/theme.t
 import { listing, writeAtomic } from '../store/edits.ts'
 import { CONF_FIT, CONF_IMAGE, CONF_INCLUDE, CONF_OPACITY, CONF_OPTIONAL, CONF_POSITION } from './conf.ts'
 import { MATTING, matte } from './cutout.ts'
-import { type Held, keyOf, known, recall, remember } from './drawn.ts'
 
 const FILL = { width: 2560, height: 1550 }
-const DRAWING = 3
 const FIGURE = 2560
 const THUMB = 160
 
@@ -367,8 +365,13 @@ export function inked(source: Rgba, cut = false): Inked {
   }
 }
 
+interface Inks {
+  figure: Mask
+  fill: Mask
+}
+
 type Drawing =
-  | { coloring: 'tone'; figure: Mask; fill: Mask; focus: number }
+  | ({ coloring: 'tone'; focus: number; other: Inks } & Inks)
   | { coloring: 'original'; figure: Rgba; fill: Rgba; focus: number; peak: Hex }
 
 function draw(
@@ -382,7 +385,6 @@ function draw(
 ): Drawing {
   const held = inked(source, cut)
   const { box, clear, image } = held
-  const ink = held.ink(light)
   const frame = fillFrame(box, width, height, clear)
   const k = Math.min(1, FIGURE / Math.max(box.w, box.h))
   const at = { x: 0, y: 0, w: Math.round(box.w * k), h: Math.round(box.h * k) }
@@ -398,15 +400,16 @@ function draw(
     }
   }
 
-  const figure = place(ink, { crop: box, at, focus: frame.focus }, at.w, at.h)
-  const fill = place(ink, frame, width, height)
+  const inks = (lit: boolean): Inks => {
+    const ink = held.ink(lit)
 
-  return {
-    coloring,
-    figure: quantize(blur(figure, across)),
-    fill: quantize(blur(fill, blurring)),
-    focus: frame.focus,
+    return {
+      figure: quantize(blur(place(ink, { crop: box, at, focus: frame.focus }, at.w, at.h), across)),
+      fill: quantize(blur(place(ink, frame, width, height), blurring)),
+    }
   }
+
+  return { coloring, ...inks(light), focus: frame.focus, other: inks(!light) }
 }
 
 function shade(mask: Mask, background: Hex, tone: Hex, opacity: number): Rgba {
@@ -852,7 +855,7 @@ export function dropImage(configHome: string, name: string, key?: string) {
 interface Made {
   stem: string
   fill: string
-  files: [string, Buffer][]
+  files: [string, Uint8Array][]
 }
 
 function stemOf(name: string, key: string, figure: Uint8Array, fill: Uint8Array): string {
@@ -869,13 +872,20 @@ function shrunk(width: number, height: number): { width: number; height: number 
     : { width: Math.max(1, Math.round((width * THUMB) / height)), height: THUMB }
 }
 
-function thumbOfDrawing(drawing: Drawing, tone: Hex): Buffer {
-  const { width, height } = shrunk(drawing.fill.width, drawing.fill.height)
-  const box = { x: 0, y: 0, w: drawing.fill.width, h: drawing.fill.height }
+function thumbOfMask(mask: Mask, tone: Hex): Buffer {
+  const { width, height } = shrunk(mask.width, mask.height)
 
-  return drawing.coloring === 'original'
-    ? encodeRgba(resample(drawing.fill, box, width, height))
-    : encodeMask(quantize(resamplePlane(drawing.fill, box, width, height)), tone)
+  return encodeMask(quantize(resamplePlane(mask, { x: 0, y: 0, w: mask.width, h: mask.height }, width, height)), tone)
+}
+
+function thumbOfDrawing(drawing: Drawing, tone: Hex): Buffer {
+  if (drawing.coloring === 'tone') {
+    return thumbOfMask(drawing.fill, tone)
+  }
+
+  const { width, height } = shrunk(drawing.fill.width, drawing.fill.height)
+
+  return encodeRgba(resample(drawing.fill, { x: 0, y: 0, w: drawing.fill.width, h: drawing.fill.height }, width, height))
 }
 
 function thumbOf(fill: Uint8Array): Buffer {
@@ -889,17 +899,30 @@ function thumbOf(fill: Uint8Array): Buffer {
     : encodeRgba(resample(image, box, width, height))
 }
 
-function laid(stem: string, focus: number, figure: Buffer, fill: Buffer, thumb: Buffer): Made {
+function inkFile(file: string): string {
+  return file.replace(/\.png$/, '.ink.png')
+}
+
+function laid(
+  stem: string,
+  focus: number,
+  figure: Uint8Array,
+  fill: Uint8Array,
+  thumb: Uint8Array,
+  ink?: [Uint8Array, Uint8Array, Uint8Array],
+): Made {
   const named = `${stem}@fill-${focus}.png`
+
+  const files: [string, Uint8Array][] = [
+    [`${stem}.png`, figure],
+    [named, fill],
+    [thumbFile(stem), thumb],
+  ]
 
   return {
     stem,
     fill: named,
-    files: [
-      [`${stem}.png`, figure],
-      [named, fill],
-      [thumbFile(stem), thumb],
-    ],
+    files: ink ? [...files, ...files.map(([file], at): [string, Uint8Array] => [inkFile(file), ink[at] as Uint8Array])] : files,
   }
 }
 
@@ -907,12 +930,18 @@ function made(name: string, key: string, drawing: Drawing, tone: Hex): Made {
   const figure = drawing.coloring === 'original' ? encodeRgba(drawing.figure) : encodeMask(drawing.figure, tone)
   const fill = drawing.coloring === 'original' ? encodeRgba(drawing.fill) : encodeMask(drawing.fill, tone)
 
+  const ink: [Uint8Array, Uint8Array, Uint8Array] | undefined =
+    drawing.coloring === 'tone'
+      ? [encodeMask(drawing.other.figure, tone), encodeMask(drawing.other.fill, tone), thumbOfMask(drawing.other.fill, tone)]
+      : undefined
+
   return laid(
     stemOf(name, key, figure, fill),
     Math.round(drawing.focus * 100),
     figure,
     fill,
     thumbOfDrawing(drawing, tone),
+    ink,
   )
 }
 
@@ -1207,95 +1236,6 @@ function sizeOf(path: string): { width: number; height: number } | undefined {
   }
 }
 
-function drawnKey(
-  dir: string,
-  name: string,
-  picture: Picture,
-  size: { width: number; height: number },
-  blurring: number,
-  coloring: Coloring,
-  light: boolean,
-): string | undefined {
-  const files = [picture.original, picture.cut].map((file) => {
-    if (!file) {
-      return ''
-    }
-
-    try {
-      const { size: bytes, mtimeMs } = statSync(join(dir, file))
-
-      return `${file}:${bytes}:${mtimeMs}`
-    } catch {
-      return undefined
-    }
-  })
-
-  if (!picture.original || files.includes(undefined)) {
-    return undefined
-  }
-
-  return keyOf([
-    DRAWING,
-    fileStem(name),
-    picture.key,
-    ...(files as string[]),
-    picture.cut ? MATTING : '',
-    size.width,
-    size.height,
-    blurring,
-    coloring,
-    coloring === 'tone' && light ? 'light' : '',
-  ])
-}
-
-function remembered(dir: string, name: string, picture: Picture): void {
-  if (!picture.window || picture.blur === undefined || undrawn(picture)) {
-    return
-  }
-
-  const key = drawnKey(dir, name, picture, picture.window, picture.blur, coloringOf(picture), picture.light === true)
-
-  if (!key || known(key)) {
-    return
-  }
-
-  try {
-    const thumb = join(dir, thumbFile(picture.stem))
-
-    remember(key, {
-      stem: picture.stem,
-      fill: picture.fill,
-      ...(picture.peak ? { peak: picture.peak } : {}),
-      ...(picture.tone ? { tone: picture.tone } : {}),
-      figure: readFileSync(join(dir, `${picture.stem}.png`)),
-      picture: readFileSync(join(dir, picture.fill)),
-      ...(existsSync(thumb) ? { thumb: readFileSync(thumb) } : {}),
-    })
-  } catch {}
-}
-
-function toned(name: string, key: string, held: Held & { thumb: Buffer }, tone: Hex | undefined): Made | undefined {
-  if (tone === undefined || held.tone === tone) {
-    return {
-      stem: held.stem,
-      fill: held.fill,
-      files: [
-        [`${held.stem}.png`, held.figure],
-        [held.fill, held.picture],
-        [thumbFile(held.stem), held.thumb],
-      ],
-    }
-  }
-
-  const figure = held.tone === undefined ? undefined : retone(held.figure, tone)
-  const fill = held.tone === undefined ? undefined : retone(held.picture, tone)
-  const thumb = held.tone === undefined ? undefined : retone(held.thumb, tone)
-
-  return figure && fill && thumb
-    ? laid(stemOf(name, key, figure, fill), Number(/@fill-(\d+)\.png$/.exec(held.fill)?.[1] ?? 50), figure, fill, thumb)
-    : undefined
-}
-
 export function decodable(configHome: string, picture: Picture): boolean {
   if (!picture.original) {
     return false
@@ -1318,118 +1258,54 @@ export function decodable(configHome: string, picture: Picture): boolean {
   }
 }
 
-export function cached(
-  configHome: string,
-  name: string,
-  picture: Picture,
-  paint: Paint,
-  blurring: number,
-  coloring: Coloring = coloringOf(picture),
-): boolean {
-  const dir = backgroundsDir(configHome)
-  const size = picture.window ?? sizeOf(join(dir, picture.fill)) ?? FILL
-  const key = drawnKey(dir, name, picture, size, blurring, coloring, isLight(paint.colors))
+function flipped(dir: string, name: string, picture: Picture, hue: Hue): Made | undefined {
+  const names = [`${picture.stem}.png`, picture.fill, thumbFile(picture.stem)]
+  const read = (file: string) => {
+    try {
+      return new Uint8Array(readFileSync(join(dir, file)))
+    } catch {
+      return undefined
+    }
+  }
 
-  return key !== undefined && known(key)
+  const shown = names.map(read)
+  const inked = names.map((file) => {
+    const bytes = read(inkFile(file))
+
+    return bytes && retone(bytes, hue.color)
+  })
+
+  const [figure, fill, thumb] = inked
+  const [was, wasFill, wasThumb] = shown
+
+  if (!figure || !fill || !thumb || !was || !wasFill || !wasThumb) {
+    return undefined
+  }
+
+  return laid(
+    stemOf(name, picture.key, figure, fill),
+    Number(/@fill-(\d+)\.png$/.exec(picture.fill)?.[1] ?? 50),
+    figure,
+    fill,
+    thumb,
+    [was, wasFill, wasThumb],
+  )
 }
 
-interface Drawn {
-  made: Made
-  peak: Hex | undefined
-  image: Rgba | undefined
-}
-
-function drawnFor(
+function adopted(
   dir: string,
   name: string,
   picture: Picture,
-  size: { width: number; height: number },
-  load: () => Rgba | null,
+  drawn: Made,
   paint: Paint,
-  blurring: number,
   coloring: Coloring,
-  cut: boolean,
-): Drawn | null {
-  const key = cut ? undefined : drawnKey(dir, name, picture, size, blurring, coloring, isLight(paint.colors))
-  const recalled = key ? recall(key) : undefined
-  const held = key && recalled ? thumbed(key, recalled) : undefined
-  const hit = held && toned(name, picture.key, held, coloring === 'tone' ? paint.hue.color : undefined)
-
-  if (held && hit) {
-    return { made: hit, peak: held.peak, image: undefined }
-  }
-
-  const image = load()
-
-  if (!image) {
-    return null
-  }
-
-  const drawing = draw(
-    image,
-    size.width,
-    size.height,
-    blurring,
-    coloring,
-    cut || picture.cut !== undefined,
-    isLight(paint.colors),
-  )
-
-  const result = made(name, picture.key, drawing, paint.hue.color)
-  const peak = drawing.coloring === 'original' ? drawing.peak : undefined
-
-  if (key) {
-    remember(key, {
-      stem: result.stem,
-      fill: result.fill,
-      ...(peak ? { peak } : {}),
-      ...(coloring === 'tone' ? { tone: paint.hue.color } : {}),
-      figure: result.files[0]?.[1] as Buffer,
-      picture: result.files[1]?.[1] as Buffer,
-      thumb: result.files[2]?.[1] as Buffer,
-    })
-  }
-
-  return { made: result, peak, image }
-}
-
-function thumbed(key: string, held: Held): (Held & { thumb: Buffer }) | undefined {
-  if (held.thumb) {
-    return { ...held, thumb: held.thumb }
-  }
-
-  try {
-    const whole = { ...held, thumb: thumbOf(held.picture) }
-    remember(key, whole)
-
-    return whole
-  } catch {
-    return undefined
-  }
-}
-
-export function redrawn(
-  configHome: string,
-  name: string,
-  picture: Picture,
-  load: () => Rgba | null,
-  paint: Paint,
+  peak: Hex | undefined,
+  size: { width: number; height: number },
   blurring: number,
+  cut: boolean,
   aligns: boolean,
   home: string,
-  cut: boolean,
-  coloring: Coloring = coloringOf(picture),
-): Picture | null {
-  const dir = backgroundsDir(configHome)
-  const size = picture.window ?? sizeOf(join(dir, picture.fill)) ?? FILL
-  const got = drawnFor(dir, name, picture, size, load, paint, blurring, coloring, cut)
-
-  if (!got) {
-    return null
-  }
-
-  const { made: drawn, peak, image } = got
-
+): Picture {
   const next: Picture = {
     ...picture,
     stem: drawn.stem,
@@ -1452,20 +1328,16 @@ export function redrawn(
     delete next.light
   }
 
-  if (cut && image) {
-    writeAtomic(join(dir, `${kept(name, picture.key)}.cut.png`), encodeGray(alphaOf(image)))
-  }
-
   if (drawn.stem === picture.stem) {
+    lay(
+      dir,
+      drawn.files.filter(([file]) => file.endsWith('.ink.png') && !existsSync(join(dir, file))),
+    )
+
     return next
   }
 
   const same = coloringOf(picture) === coloring && picture.light === next.light
-
-  if (!same) {
-    remembered(dir, name, picture)
-  }
-
   lay(dir, drawn.files)
   const tune = tuneOf(dir, picture)
 
@@ -1484,20 +1356,64 @@ export function redrawn(
   return next
 }
 
-export function prepared(
+function windowOfPicture(dir: string, picture: Picture): { width: number; height: number } {
+  return picture.window ?? sizeOf(join(dir, picture.fill)) ?? FILL
+}
+
+export function redrawn(
   configHome: string,
   name: string,
   picture: Picture,
   load: () => Rgba | null,
   paint: Paint,
   blurring: number,
-  coloring: Coloring,
-): boolean {
+  aligns: boolean,
+  home: string,
+  cut: boolean,
+  coloring: Coloring = coloringOf(picture),
+): Picture | null {
   const dir = backgroundsDir(configHome)
-  const size = picture.window ?? sizeOf(join(dir, picture.fill)) ?? FILL
-  remembered(dir, name, picture)
+  const size = windowOfPicture(dir, picture)
+  const image = load()
 
-  return drawnFor(dir, name, picture, size, load, paint, blurring, coloring, false) !== null
+  if (!image) {
+    return null
+  }
+
+  const drawing = draw(
+    image,
+    size.width,
+    size.height,
+    blurring,
+    coloring,
+    cut || picture.cut !== undefined,
+    isLight(paint.colors),
+  )
+
+  if (cut) {
+    writeAtomic(join(dir, `${kept(name, picture.key)}.cut.png`), encodeGray(alphaOf(image)))
+  }
+
+  const peak = drawing.coloring === 'original' ? drawing.peak : undefined
+  const result = made(name, picture.key, drawing, paint.hue.color)
+
+  return adopted(dir, name, picture, result, paint, coloring, peak, size, blurring, cut, aligns, home)
+}
+
+export function swapped(
+  configHome: string,
+  name: string,
+  picture: Picture,
+  paint: Paint,
+  aligns: boolean,
+  home: string,
+): Picture | null {
+  const dir = backgroundsDir(configHome)
+  const drawn = flipped(dir, name, picture, paint.hue)
+
+  return drawn
+    ? adopted(dir, name, picture, drawn, paint, 'tone', undefined, windowOfPicture(dir, picture), picture.blur ?? 0, false, aligns, home)
+    : null
 }
 
 export function applyRedraw(configHome: string, drawn: { name: string; picture: Picture }[]): void {

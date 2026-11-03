@@ -2868,14 +2868,14 @@ __tt_preview() {
   local -i scene=0
   local -a bgorder=()
   local -A bgfrom=() bgurl=() bgby=() bgsent=() bgcost=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
-  local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgcred=() bgpage=() bgprof=() bgprep=()
+  local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgcred=() bgpage=() bgprof=()
   local conf=0 cf=1
   local -i gmenu=0 gm=1
   local -a gitems=(TTHEME_GROUP:work TTHEME_GROUP:marketplace TTHEME_SORT:abc TTHEME_SORT:cast)
   local -A gshow=(abc A-Z cast "Cast order")
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
   local te=0 tfocus=0 tetop=0 tewide=0 tbtn=0 tearm=0 tename=""
-  local -i pvgone=0 bgprepid=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
+  local -i pvgone=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
   local -F mlast=0 pvsized=0
   local mact="" mzone="" pvmouse="" pasted="" pvrest=""
   local -a pvz=()

@@ -56,9 +56,8 @@ import {
   writeTune,
 } from './backdrop.ts'
 import { readBackdrop } from './conf.ts'
-import { prepareOne, redrawOne } from './redrawing.ts'
+import { redrawOne } from './redrawing.ts'
 
-process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'ttheme-cache-'))
 
 const TAMSIN: Colors = {
   name: 'tamsin',
@@ -435,7 +434,7 @@ test('dropping a picture takes its files, tuning and original with it', () => {
   assert.ok(!existsSync(gone))
   assert.equal(shown(dir), 'safebooru_1')
   assert.deepEqual(readdirSync(join(dir, 'originals')), ['tamsin-safebooru_1.png'])
-  assert.equal(readdirSync(dir).filter((file) => file.startsWith('tamsin.') && file.endsWith('.png')).length, 3)
+  assert.equal(readdirSync(dir).filter((file) => file.startsWith('tamsin.') && file.endsWith('.png')).length, 6)
 })
 
 test('the conf lists every picture preview can switch to with its artist, and one not shown drops by key', () => {
@@ -926,70 +925,6 @@ test('drawing a picture in its other colors keeps its tuning, its opacity as the
   assert.deepEqual([tinted.coloring, tinted.tone, tinted.peak, tinted.opacity], ['tone', '#9b86c8', undefined, 0.2])
   assert.equal(tuneOf(dir, tinted).opacity, rescaled(scaled, own.opacity, tinted.opacity))
   assert.ok(!readFileSync(join(dir, 'tamsin.conf'), 'utf8').includes('# colors'))
-})
-
-test('a coloring drawn once is kept, so the other one can be got ready and going back needs no original', async () => {
-  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-drawn-'))
-  const dir = backgroundsDir(configHome)
-  const before = installFigure(configHome, 31)
-  const original = join(dir, before.original as string)
-  assert.equal(prepareOne(configHome, 'tamsin', before.key, PAINT, 0, 'original'), true)
-  chmodSync(original, 0o000)
-
-  try {
-    const own = await redrawOne(configHome, 'tamsin', before.key, PAINT, 0, true, configHome, 'original')
-    assert.ok(own)
-    assert.equal(own.coloring, 'original')
-    applyRedraw(configHome, [{ name: 'tamsin', picture: own }])
-    const back = await redrawOne(configHome, 'tamsin', before.key, PAINT, 0, true, configHome, 'tone')
-    assert.ok(back)
-    assert.deepEqual([back.stem, back.fill, back.coloring], [before.stem, before.fill, 'tone'])
-    applyRedraw(configHome, [{ name: 'tamsin', picture: back }])
-    assert.ok(existsSync(join(dir, `${before.stem}.png`)) && existsSync(join(dir, before.fill)))
-    assert.ok(!existsSync(join(dir, `${own.stem}.png`)))
-  } finally {
-    chmodSync(original, 0o644)
-  }
-
-  const own = await redrawOne(configHome, 'tamsin', before.key, PAINT, 0, true, configHome, 'original')
-  assert.ok(own)
-  applyRedraw(configHome, [{ name: 'tamsin', picture: own }])
-  const bluer = { ...PAINT, hue: { color: '#336699', opacity: 0.2 } }
-  const recolored = await redrawOne(configHome, 'tamsin', before.key, bluer, 0, true, configHome, 'tone')
-  assert.ok(recolored)
-  assert.deepEqual([recolored.tone, recolored.stem === before.stem], ['#336699', false])
-})
-
-test('a drawing kept for one tone serves a palette whose tone moved, as the picture a fresh drawing gives', async () => {
-  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-drawn-tone-'))
-  const dir = backgroundsDir(configHome)
-  const before = installFigure(configHome, 32)
-  const bluer = { ...PAINT, hue: { color: '#336699', opacity: 0.2 } }
-  assert.equal(prepareOne(configHome, 'tamsin', before.key, PAINT, 0, 'tone'), true)
-  const original = join(dir, before.original as string)
-  chmodSync(original, 0o000)
-
-  try {
-    const moved = await redrawOne(configHome, 'tamsin', before.key, bluer, 0, true, configHome, 'tone')
-    assert.ok(moved)
-    assert.deepEqual([moved.tone, moved.stem === before.stem], ['#336699', false])
-    const fresh = mkdtempSync(join(tmpdir(), 'ttheme-drawn-fresh-'))
-    const image = figure()
-
-    installBackdrop(
-      fresh,
-      TAMSIN,
-      bluer.hue,
-      image,
-      { site: 'safebooru', id: 32, ext: 'png', bytes: encodeRgba(image) },
-      { width: 40, height: 20 },
-      0,
-    )
-
-    assert.equal((rackOf(fresh, 'tamsin')[0] as Picture).stem, moved.stem)
-  } finally {
-    chmodSync(original, 0o644)
-  }
 })
 
 test('trying a picture on in its own colors lays it over the background at the default opacity, straight alpha', () => {

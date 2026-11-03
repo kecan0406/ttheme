@@ -1,28 +1,29 @@
-import { existsSync, mkdirSync, readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import type { Coloring } from '../core/backdrop-tone.ts'
 import { MAX_PIXELS } from '../core/booru.ts'
 import { decodeImage, decodePng, type Rgba, transparency } from '../core/png.ts'
-import { cacheRoot } from '../store/paths.ts'
-import { backgroundsDir, type Paint, type Picture, prepared, rackIn, readStore, redrawn, undrawn } from './backdrop.ts'
+import { backgroundsDir, type Paint, type Picture, rackIn, readStore, redrawn, swapped, undrawn } from './backdrop.ts'
 import { canRemoveBackground, removeBackground } from './cutout.ts'
 
 export const TIMEOUT = 90_000
 
-async function cutOut(key: string, source: string): Promise<Rgba | undefined> {
-  const [, site, id] = /^(.+)_(\d+)$/.exec(key) ?? []
-  const path = join(cacheRoot(), site ?? 'local', 'cut', `${id ?? key}.png`)
-
-  if (!existsSync(path)) {
-    if (!canRemoveBackground()) {
-      return undefined
-    }
-
-    mkdirSync(dirname(path), { recursive: true })
-    await removeBackground(source, path, AbortSignal.timeout(TIMEOUT))
+async function cutOut(source: string): Promise<Rgba | undefined> {
+  if (!canRemoveBackground()) {
+    return undefined
   }
 
-  return decodeImage(new Uint8Array(readFileSync(path)), MAX_PIXELS)
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-cut-'))
+
+  try {
+    const path = join(dir, 'cut.png')
+    await removeBackground(source, path, AbortSignal.timeout(TIMEOUT))
+
+    return decodeImage(new Uint8Array(readFileSync(path)), MAX_PIXELS)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 }
 
 function wasCut(dir: string, picture: Picture): boolean {
@@ -73,7 +74,7 @@ export async function redrawOne(
     const image = originalOf(dir, picture)()
 
     if (transparency(image) === 0 && wasCut(dir, picture)) {
-      const cut = await cutOut(key, join(dir, picture.original))
+      const cut = await cutOut(join(dir, picture.original))
 
       if (!cut || !cutAlpha(image, cut, 3)) {
         return null
@@ -86,26 +87,6 @@ export async function redrawOne(
   }
 
   return redrawn(configHome, name, picture, originalOf(dir, picture), paint, blurring, aligns, home, false, coloring)
-}
-
-export function prepareOne(
-  configHome: string,
-  name: string,
-  key: string,
-  paint: Paint,
-  blurring: number,
-  coloring: Coloring,
-): boolean {
-  const dir = backgroundsDir(configHome)
-  const picture = rackIn(readStore(dir), name)?.pictures.find((held) => held.key === key)
-
-  if (!picture?.original || undrawn(picture)) {
-    return false
-  }
-
-  const load = picture.cut ? cutOf(dir, picture) : originalOf(dir, picture)
-
-  return prepared(configHome, name, picture, load, paint, blurring, coloring)
 }
 
 function cutAlpha(image: Rgba, cut: Rgba, channel: number): boolean {

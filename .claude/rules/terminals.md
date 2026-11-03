@@ -19,8 +19,6 @@ paths:
 ## Pictures
 
 - A picture's files are never moved, and a changed picture always gets a new file name.
-- Bump `DRAWING` whenever `draw`, `made` or the encoders change what they produce.
-- The drawing cache is never keyed by the tone color, and a drawing that writes a cut-out is never cached.
 - No adapter names a picture's coloring, and a coloring change is a redraw, never staged or undone with esc.
 - The CLI reads `TTHEME_BG_BLUR` from `config.zsh`, never from the environment.
 - Every file a terminal or another shell reads is written to a temp file and renamed over (`writeAtomic`, `__tt_put`).

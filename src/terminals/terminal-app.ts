@@ -33,10 +33,6 @@ function terminalWindow(env: Host['env'], home: string): string {
   return join(env.XDG_STATE_HOME || join(home, '.local', 'state'), 'ttheme', 'terminal-app.window')
 }
 
-function laidAhead(env: Host['env'], home: string): string {
-  return join(env.XDG_CACHE_HOME || join(home, '.cache'), 'ttheme', 'terminal-app')
-}
-
 export const TERMINAL_JS = `ObjC.import('AppKit')
 
 const OURS = '${OURS}'
@@ -319,7 +315,7 @@ function versions(ctx: Ctx): string {
 
 function lay(ctx: Ctx): Map<string, string> {
   const dir = terminalPictures(ctx.configHome)
-  const ahead = laidAhead(ctx.host.env, ctx.home)
+  const ahead = join(dir, 'other')
   const held = heldIn(dir)
   const window = windowOf(ctx.host.env, ctx.home)
   const laid = new Map<string, string>()
@@ -361,14 +357,14 @@ function lay(ctx: Ctx): Map<string, string> {
 
     const file = nameOf(theme.background)
     const path = join(dir, file)
-    const cached = join(ahead, file)
+    const both = join(ahead, file)
     kept.add(file)
 
     if (!files.includes(file)) {
       let content: Buffer
 
       try {
-        content = existsSync(cached) ? readFileSync(cached) : drawn(theme.background)
+        content = existsSync(both) ? readFileSync(both) : drawn(theme.background)
       } catch {
         drop(files)
         continue
@@ -387,8 +383,8 @@ function lay(ctx: Ctx): Map<string, string> {
       drop(files.filter((other) => other !== file))
     }
 
-    if (!existsSync(cached)) {
-      writeAtomic(cached, readFileSync(path))
+    if (!existsSync(both)) {
+      writeAtomic(both, readFileSync(path))
     }
 
     if (theme.other) {

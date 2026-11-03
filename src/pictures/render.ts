@@ -22,7 +22,7 @@ import {
   writeTune,
 } from './backdrop.ts'
 import { paletteMatch } from './fit.ts'
-import { prepareOne, redrawOne } from './redrawing.ts'
+import { redrawOne } from './redrawing.ts'
 import { dhash, sameArtwork } from './works.ts'
 
 interface Thumb {
@@ -110,16 +110,6 @@ interface Redraw {
   coloring?: Coloring
 }
 
-interface Prepare {
-  job: 'prepare'
-  home: string
-  name: string
-  key: string
-  paint: Paint
-  blur: number
-  coloring: Coloring
-}
-
 interface Shrink {
   job: 'shrink'
   home: string
@@ -132,7 +122,7 @@ export interface Look {
   hash: string
 }
 
-type Task = Thumb | Band | Match | Twin | Show | Backdrop | Redraw | Prepare | Shrink
+type Task = Thumb | Band | Match | Twin | Show | Backdrop | Redraw | Shrink
 
 type Lane = 'tile' | 'band' | 'view'
 
@@ -144,7 +134,7 @@ type Result<T extends Task> = T extends Match
     ? boolean
     : T extends Redraw
       ? Picture | null
-      : T extends Prepare | Shrink
+      : T extends Shrink
         ? boolean
         : T extends Show
           ? Shown
@@ -158,7 +148,6 @@ const LANES: Record<Task['job'], Lane> = {
   show: 'view',
   backdrop: 'view',
   redraw: 'view',
-  prepare: 'view',
   shrink: 'view',
 }
 
@@ -174,10 +163,6 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
 
   if (task.job === 'redraw') {
     return redrawOne(task.home, task.name, task.key, task.paint, task.blur, task.aligns, task.user, task.coloring)
-  }
-
-  if (task.job === 'prepare') {
-    return prepareOne(task.home, task.name, task.key, task.paint, task.blur, task.coloring)
   }
 
   if (task.job === 'shrink') {

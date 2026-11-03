@@ -19,7 +19,7 @@ import { rewrite, writeAtomic } from '../store/edits.ts'
 import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { InputError } from './answer.ts'
-import { prepareColoring, redrawColoring } from './redraw.ts'
+import { redrawColoring } from './redraw.ts'
 import { refreshPictures } from './sync.ts'
 
 export async function runImage(asked: string, action: string, key?: string): Promise<number> {
@@ -53,20 +53,13 @@ export async function runImage(asked: string, action: string, key?: string): Pro
     return 0
   }
 
-  if (action === 'prepare') {
-    const { key: ready, coloring } = prepareColoring(home, name, key)
-    process.stderr.write(`Background  ${name} ${ready} ready ${coloring === 'tone' ? 'tinted' : 'in its own colors'}\n`)
-
-    return 0
-  }
-
   if (action === 'tuned') {
     refreshPictures(home)
 
     return 0
   }
 
-  throw new InputError(`unknown image action ${action} — show, drop, original, tone, prepare or tuned`)
+  throw new InputError(`unknown image action ${action} — show, drop, original, tone or tuned`)
 }
 
 function geometry(canvas: string, place: string): Canvas {
