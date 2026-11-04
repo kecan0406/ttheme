@@ -10,7 +10,7 @@ const popoverVariants = cva('m-0 border border-border bg-popover text-popover-fo
       sheet:
         'hidden max-h-[min(640px,calc(100dvh-120px))] w-[min(400px,calc(100vw-32px))] flex-col overflow-hidden rounded-3xl open:flex',
       card: 'hidden w-[min(440px,calc(100vw-32px))] gap-2.5 rounded-3xl p-4 open:grid',
-      picker: 'w-(--anchor-width) max-w-[calc(100vw-2rem)] flex-col gap-2 overflow-hidden rounded-xl p-2 open:flex',
+      picker: 'w-99 max-w-[calc(100vw-2rem)] flex-col gap-2 overflow-hidden rounded-3xl p-2 open:flex',
       menu: 'hidden max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-3xl bg-glass-panel backdrop-blur-[24px] backdrop-saturate-130 open:flex',
       search:
         'hidden max-h-[min(560px,calc(100dvh-96px))] w-[min(820px,calc(100vw-32px))] flex-col overflow-hidden rounded-3xl bg-glass-panel backdrop-blur-[24px] backdrop-saturate-130 open:flex',

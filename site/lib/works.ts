@@ -21,6 +21,41 @@ export function focusOf(work: string): string | null {
   return FOCUS.get(work) ?? null
 }
 
+const SHELF_FOCUS = new Map([
+  ['black-bullet', '45% 50%'],
+  ['bocchi-the-rock', '52% 50%'],
+  ['call-of-the-night', '64% 50%'],
+  ['chuunibyou', '0% 50%'],
+  ['code-geass', '41% 50%'],
+  ['cyberpunk-edgerunners', '41% 50%'],
+  ['doki-doki-literature-club', '77% 50%'],
+  ['evangelion', '35% 50%'],
+  ['higurashi', '35% 50%'],
+  ['jujutsu-kaisen', '72% 50%'],
+  ['k-on', '41% 50%'],
+  ['lain', '100% 50%'],
+  ['lucky-star', '79% 50%'],
+  ['madoka-magica', '41% 50%'],
+  ['monogatari', '18% 50%'],
+  ['nichijou', '25% 50%'],
+  ['no-game-no-life', '60% 50%'],
+  ['oregairu', '64% 50%'],
+  ['persona-5', '25% 50%'],
+  ['sailor-moon', '60% 50%'],
+  ['steins-gate', '8% 50%'],
+  ['sword-art-online', '75% 50%'],
+  ['the-devil-is-a-part-timer', '25% 50%'],
+  ['touhou-project', '46% 50%'],
+  ['umineko', '25% 50%'],
+  ['undertale', '63% 50%'],
+  ['va-11-hall-a', '42% 50%'],
+  ['vocaloid', '63% 50%'],
+])
+
+export function shelfFocusOf(work: string): string | null {
+  return SHELF_FOCUS.get(work) ?? null
+}
+
 export interface WorkShelf {
   key: string
   work: WorkRef | null

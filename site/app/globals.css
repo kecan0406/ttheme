@@ -1405,6 +1405,14 @@ route-progress[data-state='done'],
   mask-image: linear-gradient(to bottom, #000 52%, rgb(0 0 0 / 82%) 64%, rgb(0 0 0 / 58%) 74%, rgb(0 0 0 / 33%) 83%, rgb(0 0 0 / 16%) 90%, rgb(0 0 0 / 5%) 96%, transparent);
 }
 
+[data-melt-side] {
+  mask-image: linear-gradient(to right, transparent, #000 58%);
+}
+
+[data-shelf]:not(:has([data-selected])) [data-shelf-use] {
+  display: none;
+}
+
 [data-melt-lines] {
   mask-image: linear-gradient(to bottom, #000 45%, transparent 82%);
 }

@@ -70,6 +70,7 @@ function ArtImage({
   sizes,
   eager,
   sync = false,
+  late = false,
   focus,
   class: className,
 }: {
@@ -77,13 +78,16 @@ function ArtImage({
   sizes: string
   eager: boolean
   sync?: boolean
+  late?: boolean
   focus?: string | null
   class?: string
 }) {
   return (
     <img
-      src={art.src}
-      srcset={art.srcset ?? undefined}
+      src={late ? undefined : art.src}
+      srcset={late ? undefined : (art.srcset ?? undefined)}
+      data-src={late ? art.src : undefined}
+      data-srcset={late ? (art.srcset ?? undefined) : undefined}
       sizes={art.srcset ? sizes : undefined}
       alt=""
       loading={eager ? 'eager' : 'lazy'}
@@ -101,6 +105,7 @@ export function WorkArt({
   sizes,
   eager = false,
   sync = false,
+  late = false,
   melt = false,
   focus,
   class: className,
@@ -111,6 +116,7 @@ export function WorkArt({
   sizes: string
   eager?: boolean
   sync?: boolean
+  late?: boolean
   melt?: boolean
   focus?: string | null
   class?: string
@@ -123,7 +129,11 @@ export function WorkArt({
       data-melt={melt ? '' : undefined}
       class={cn('overflow-hidden bg-muted', className)}
     >
-      {art ? <ArtImage art={art} sizes={sizes} eager={eager} sync={sync} focus={focus} /> : <FacetArt style={facets} />}
+      {art ? (
+        <ArtImage art={art} sizes={sizes} eager={eager} sync={sync} late={late} focus={focus} />
+      ) : (
+        <FacetArt style={facets} />
+      )}
     </div>
   )
 }

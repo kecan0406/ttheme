@@ -12,6 +12,7 @@ const meltCardVariants = cva(
         panel: 'rounded-3xl shadow-sm',
         feature: 'min-h-80 w-75 flex-none rounded-xl max-[880px]:hidden',
         preview: 'h-full min-h-64 rounded-xl',
+        shelf: 'rounded-xl px-1.5 pt-2.5 pb-1.5 transition-colors duration-200 motion-reduce:transition-none',
       },
       lift: {
         true: 'transition-[translate,box-shadow,background-color] duration-200 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:hover:-translate-y-0.5',
