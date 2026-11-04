@@ -1,5 +1,5 @@
 import { LeadUse } from '@/components/home'
-import { isCast } from '@/lib/lead-cast'
+import { isCast, OTHER_ART } from '@/lib/lead-cast'
 import { html } from '@/lib/render'
 import { inMode, type Theme } from '@/lib/themes'
 import { announce, fadeThrough, fill, readJson, reducedMotion } from './dom'
@@ -64,6 +64,10 @@ class LeadShowcase extends HTMLElement {
 
   #leave = () => this.#hold('pointer', false)
 
+  #creditEnter = () => this.#hold('credit', true)
+
+  #creditLeave = () => this.#hold('credit', false)
+
   #stacked = () => this.#hold('stacked', !this.#wide?.matches)
 
   #focus = (event: FocusEvent) => {
@@ -124,6 +128,10 @@ class LeadShowcase extends HTMLElement {
     return [...this.querySelectorAll<HTMLImageElement>('[data-lead-sticker]')]
   }
 
+  get #credits(): HTMLElement | null {
+    return this.querySelector('[data-lead-credits]')
+  }
+
   connectedCallback() {
     this.#leads = readJson<Theme[]>(this, 'script[data-leads]')
     this.#worn = this.#leads[0] ?? null
@@ -135,6 +143,14 @@ class LeadShowcase extends HTMLElement {
 
     if (stored && stored.name !== this.#worn?.name) this.#draw(stored, true)
     delete document.documentElement.dataset.picked
+    const hero = this.#hero
+
+    if (hero) {
+      this.#view = new IntersectionObserver(([entry]) => this.#away((entry?.intersectionRatio ?? 0) < IN_VIEW), {
+        threshold: IN_VIEW,
+      })
+      this.#view.observe(hero)
+    }
 
     if (reducedMotion()) return
     this.addEventListener('pointermove', this.#point)
@@ -143,18 +159,11 @@ class LeadShowcase extends HTMLElement {
     this.#window?.addEventListener('pointerenter', this.#enter)
     this.#window?.addEventListener('pointerleave', this.#leave)
     this.#hero?.addEventListener('focusin', this.#focus)
+    this.#credits?.addEventListener('pointerenter', this.#creditEnter)
+    this.#credits?.addEventListener('pointerleave', this.#creditLeave)
+    this.#credits?.addEventListener('focusin', this.#focus)
     this.#wide = matchMedia(WIDE)
     this.#wide.addEventListener('change', this.#stacked)
-    const hero = this.#hero
-
-    if (hero) {
-      this.#view = new IntersectionObserver(
-        ([entry]) => this.#hold('away', (entry?.intersectionRatio ?? 0) < IN_VIEW),
-        { threshold: IN_VIEW },
-      )
-      this.#view.observe(hero)
-    }
-
     this.#hidden()
     this.#stacked()
     this.#turn(stored === null)
@@ -177,6 +186,9 @@ class LeadShowcase extends HTMLElement {
     this.#window?.removeEventListener('pointerenter', this.#enter)
     this.#window?.removeEventListener('pointerleave', this.#leave)
     this.#hero?.removeEventListener('focusin', this.#focus)
+    this.#credits?.removeEventListener('pointerenter', this.#creditEnter)
+    this.#credits?.removeEventListener('pointerleave', this.#creditLeave)
+    this.#credits?.removeEventListener('focusin', this.#focus)
   }
 
   get #at(): number {
@@ -201,6 +213,19 @@ class LeadShowcase extends HTMLElement {
     if (on) this.#holds.add(reason)
     else this.#holds.delete(reason)
     this.#schedule()
+  }
+
+  #away(away: boolean) {
+    this.#hold('away', away)
+    const credits = this.#credits
+
+    if (credits) credits.inert = away
+  }
+
+  #credit(name: string | null) {
+    for (const row of this.querySelectorAll<HTMLElement>('[data-lead-credit]')) {
+      row.dataset.on = String(row.dataset.leadCredit === name)
+    }
   }
 
   #schedule() {
@@ -272,9 +297,14 @@ class LeadShowcase extends HTMLElement {
       if (turn !== this.#stickerTurn) return
 
       for (const sticker of stickers) sticker.dataset.on = String(sticker === shown)
+
+      if (shown) this.#credit(theme.name)
     }
 
-    if (still) for (const sticker of stickers) sticker.dataset.on = 'false'
+    if (still) {
+      for (const sticker of stickers) sticker.dataset.on = 'false'
+      this.#credit(null)
+    }
 
     if (shown) {
       wake(shown)
@@ -297,6 +327,7 @@ class LeadShowcase extends HTMLElement {
       return
     }
 
+    this.#credit(photo.hidden ? null : OTHER_ART)
     searchIndex().then(
       (index) => {
         const art = index.works.find((work) => work.id === theme.work?.id)?.art
@@ -306,6 +337,7 @@ class LeadShowcase extends HTMLElement {
         if (!art) {
           photo.hidden = true
           photo.replaceChildren()
+          this.#credit(null)
 
           return
         }
@@ -328,6 +360,7 @@ class LeadShowcase extends HTMLElement {
 
           photo.hidden = false
           photo.append(image)
+          this.#credit(OTHER_ART)
           Promise.allSettled(image.getAnimations().map((animation) => animation.finished)).then(() => {
             for (const old of before) old.remove()
           })

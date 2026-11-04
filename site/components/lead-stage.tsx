@@ -1,9 +1,10 @@
 import { ArrowRight } from 'lucide'
 import { LinkButton } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { CREDITS_PATH } from '@/lib/art'
 import { marketplacePath } from '@/lib/gallery'
-import { Icon } from '@/lib/icons'
-import { CAST, STICKER_SIZES, stickerSet } from '@/lib/lead-cast'
+import { Icon, NewTab } from '@/lib/icons'
+import { CAST, OTHER_ART, STICKER_CREDITS, STICKER_SIZES, stickerSet } from '@/lib/lead-cast'
 import { OWN_NAME } from '@/lib/sessions'
 import { type Line, linesOf } from '@/lib/terminal'
 import { BUILTIN, paint, type Theme } from '@/lib/themes'
@@ -55,6 +56,47 @@ export function LeadWorld({ stickers }: { stickers: Record<string, string> }) {
         ))}
       </div>
       <div data-lead-photo hidden />
+    </div>
+  )
+}
+
+export function LeadCredits() {
+  return (
+    <div data-lead-credits>
+      {STICKER_CREDITS.map((credit, at) => (
+        <p data-lead-credit={credit.name} data-on={String(at === 0)}>
+          <span safe>{credit.verb}</span>{' '}
+          <a href={credit.post} target="_blank" rel="noopener">
+            <b lang={credit.japanese ? 'ja' : undefined} translate="no" safe>
+              {credit.artist}
+            </b>{' '}
+            <span safe>{`on ${credit.site}`}</span>
+            <NewTab />
+          </a>
+          {credit.license === null ? null : (
+            <a data-lead-license href={credit.license.url} target="_blank" rel="noopener">
+              <span safe>{credit.license.label}</span>
+              <NewTab />
+            </a>
+          )}
+          {credit.after === null ? null : (
+            <span data-lead-after>
+              <span safe>{`After the ${credit.after.work} cover by `}</span>
+              <a href={credit.after.url} target="_blank" rel="noopener">
+                <b lang="ja" translate="no" safe>
+                  {credit.after.artist}
+                </b>
+                <NewTab />
+              </a>
+            </span>
+          )}
+        </p>
+      ))}
+      <p data-lead-credit={OTHER_ART} data-on="false">
+        <a href={CREDITS_PATH}>
+          <b>Art credits</b>
+        </a>
+      </p>
     </div>
   )
 }

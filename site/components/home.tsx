@@ -7,7 +7,7 @@ import type { Theme } from '@/lib/themes'
 import { leadsOf } from '@/lib/works'
 import { CommandRow, InitRow } from './command-row'
 import { CharacterCard, CommunityCard, FreeCard, MakeCard, PictureCard } from './home-features'
-import { LeadHero, LeadWorld } from './lead-stage'
+import { LeadCredits, LeadHero, LeadWorld } from './lead-stage'
 import { LandingFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { FIRST_TABS, TabWindow } from './tab-window'
@@ -79,6 +79,7 @@ export function Home({
       <main id="content" class="grid grid-cols-[minmax(0,1fr)]">
         <div data-lead-stage>
           <LeadWorld stickers={stickers} />
+          <LeadCredits />
           <LeadHero cast={cast} />
           <div data-lead-sheet>
             <section

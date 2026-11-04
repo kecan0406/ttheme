@@ -1,7 +1,9 @@
+import type { PropsWithChildren } from '@kitajs/html'
 import { type SimpleIcon, siAnilist, siIgdb, siSteam, siThemoviedatabase } from 'simple-icons'
 import { ANILIST_HOME, BANGUMI_HOME, CREDITS_PATH, IGDB_HOME, STEAM_HOME, TMDB_HOME } from '@/lib/art'
 import type { Facts } from '@/lib/facts'
 import { BrandIcon, NewTab } from '@/lib/icons'
+import { STICKER_CREDITS } from '@/lib/lead-cast'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 
@@ -58,16 +60,19 @@ const SOURCES: Source[] = [
   },
 ]
 
-const STICKERS = [
-  { who: 'Souryuu Asuka Langley', by: 'kmym on X', url: 'https://x.com/kmym97457689/status/2099432694958719085' },
-  { who: 'Ayanami Rei', by: 'ADA☆ on X', url: 'https://x.com/HikawaHomura/status/1987474871451091180' },
-  {
-    who: 'Izumi Konata',
-    by: 'lllP3lll on DeviantArt, CC BY-NC-SA 3.0',
-    url: 'https://www.deviantart.com/lllp3lll/art/Konata-53704375',
-  },
-  { who: 'Shinonome Nano', by: 'Arawi Keiichi on X', url: 'https://x.com/himaraya/status/1829803478711177647' },
-]
+function StickerLink({ href, children }: PropsWithChildren<{ href: string }>) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener"
+      class="inline-flex items-center gap-1 rounded-sm text-soft-foreground underline underline-offset-4 hover:text-foreground"
+    >
+      {children}
+      <NewTab class="size-3" />
+    </a>
+  )
+}
 
 export function Credits({ facts }: { facts: Facts }) {
   return (
@@ -113,18 +118,33 @@ export function Credits({ facts }: { facts: Facts }) {
               The four characters on the landing, cut out of these pictures and kept with the site.
             </p>
             <ul class="grid gap-1">
-              {STICKERS.map((sticker) => (
+              {STICKER_CREDITS.map((credit) => (
                 <li class="text-sm text-muted-foreground">
-                  <span safe>{`${sticker.who}: `}</span>
-                  <a
-                    href={sticker.url}
-                    target="_blank"
-                    rel="noopener"
-                    class="inline-flex items-center gap-1 rounded-sm text-soft-foreground underline underline-offset-4 hover:text-foreground"
-                  >
-                    <span safe>{sticker.by}</span>
-                    <NewTab class="size-3" />
-                  </a>
+                  <span safe>{`${credit.who}: `}</span>
+                  <StickerLink href={credit.post}>
+                    <span lang={credit.japanese ? 'ja' : undefined} translate="no" safe>
+                      {credit.artist}
+                    </span>
+                    <span safe>{`on ${credit.site}`}</span>
+                  </StickerLink>
+                  {credit.license === null ? null : (
+                    <>
+                      {', '}
+                      <StickerLink href={credit.license.url}>
+                        <span safe>{credit.license.label}</span>
+                      </StickerLink>
+                    </>
+                  )}
+                  {credit.after === null ? null : (
+                    <>
+                      <span safe>{`, after the ${credit.after.work} cover by `}</span>
+                      <StickerLink href={credit.after.url}>
+                        <span lang="ja" translate="no" safe>
+                          {credit.after.artist}
+                        </span>
+                      </StickerLink>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
