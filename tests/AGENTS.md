@@ -8,3 +8,4 @@ The harnesses that hold the shell layer and the terminals to a spec. `HACKING.md
 - `mise run walk` walks the model at random and is not part of `ci`. A failure is shrunk and printed as a journey to paste into `journeys.ts`.
 - The harnesses keep every process off the user's real terminals: shims for `ps`, `pkill`, `defaults` and `dbus-send` stand in. Never exercise ttheme end to end against the real `~/.config` or `~/.zshrc`; use `mise run sandbox`, a throwaway home. `--warp` and `--terminal-app` wire the user's own apps, so they refuse `--mine`.
 - `mise run bench` and `tests/latency.zsh` measure shell latency through a pty and are not part of `ci`; `shell:check` runs the same harness and asserts only orders. Never measure with `time zsh -lic exit`. A pty session ends through `stop`, never a bare `zpty -d`.
+- A harness step waits for what the shell or the screen shows, a prompt, a marker it printed or a frame, never for a pause that usually suffices.

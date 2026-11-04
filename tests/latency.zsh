@@ -408,13 +408,14 @@ ahead() {
 }
 
 late() {
-  local name=$1
+  local name=$1 REPLY
   home $name off
   LATE=0.5
   start $name
-  upto '[[ $BUF == *"bench> "* ]]' 5 $name || { LATE=0; fail "$name: no prompt within 5s"; return 1 }
-  upto '(( ! ${#LATER} ))' 2 $name || :
+  upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 && ! ${#LATER} ))' 5 $name ||
+    { LATE=0; fail "$name: no prompt after the command typed ahead and the answers sent late"; return 1 }
   LATE=0
+  (( ASKED[$name] )) || { fail "$name: the layer asked the terminal nothing, so no answer came late"; return 1 }
   step $'print -r -- AFTER_$((5*5))\r' $name
   [[ $BUF == *AFTER_25* && $BUF != *(command not found|no such file or directory)* ]] ||
     { fail "$name: an answer the terminal sent after the layer stopped waiting reached the command line"; return 1 }
@@ -465,7 +466,7 @@ urged() {
 }
 
 releasing() {
-  local term=$1 name=release-$1 h=$WORK/release-$1 log
+  local term=$1 name=release-$1 h=$WORK/release-$1 log REPLY
   local -a runs
   log=$h/node.log
   home $name off
@@ -475,7 +476,7 @@ releasing() {
   print -r -- "{\"checked\":$(( EPOCHSECONDS * 1000 - 172800000 )),\"latest\":\"99.0.0\"}" > $h/.state/ttheme/release.json
   TERMINAL=$term EXTRA=(TTHEME_AUTO_UPDATE=on PATH=$h/bin:$PATH)
   start $name || return 1
-  upto '[[ $BUF == *"bench> "* ]]' 5 $name || { fail "$term: no prompt within 5s"; return 1 }
+  upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$term: no prompt after the command typed ahead"; return 1 }
   upto '[[ -r $log ]]' 3 $name || { fail "$term: a first tab two days after the last check did not start the update check"; return 1 }
   upto '[[ $BUF == *"is out, you have"* ]]' 3 $name || { fail "$term: a newer release known from the stamp was not told at the first prompt"; return 1 }
   step $'print -r -- NEXT_$((6*7))\r' $name
