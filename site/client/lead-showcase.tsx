@@ -18,6 +18,16 @@ const PICKS = 'input[name="lead-tab"], input[name="lead-pill"]'
 
 const PHOTO_SIZES = '(min-width: 1180px) 50vw, 86vw'
 
+function wake(sticker: HTMLImageElement) {
+  const { src, srcset } = sticker.dataset
+
+  if (!src || !srcset) return
+  delete sticker.dataset.src
+  delete sticker.dataset.srcset
+  sticker.srcset = srcset
+  sticker.src = src
+}
+
 class LeadShowcase extends HTMLElement {
   #leads: Theme[] = []
   #worn: Theme | null = null
@@ -27,6 +37,7 @@ class LeadShowcase extends HTMLElement {
   #view: IntersectionObserver | null = null
   #wide: MediaQueryList | null = null
   #photoTurn = 0
+  #stickerTurn = 0
   #pointer: [number, number] = [0, 0]
   #frame = 0
   #off = () => {}
@@ -45,7 +56,11 @@ class LeadShowcase extends HTMLElement {
 
   #hidden = () => this.#hold('hidden', document.hidden)
 
-  #enter = () => this.#hold('pointer', true)
+  #enter = () => {
+    this.#hold('pointer', true)
+
+    for (const sticker of this.#stickers) wake(sticker)
+  }
 
   #leave = () => this.#hold('pointer', false)
 
@@ -103,6 +118,10 @@ class LeadShowcase extends HTMLElement {
 
   get #photo(): HTMLElement | null {
     return this.querySelector('[data-lead-photo]')
+  }
+
+  get #stickers(): HTMLImageElement[] {
+    return [...this.querySelectorAll<HTMLImageElement>('[data-lead-sticker]')]
   }
 
   connectedCallback() {
@@ -196,6 +215,10 @@ class LeadShowcase extends HTMLElement {
 
     this.#run?.cancel()
     line.style.opacity = '1'
+    const coming = this.#leads[(this.#at + 1) % this.#leads.length]
+    const sticker = this.#stickers.find((one) => one.dataset.leadSticker === coming?.name)
+
+    if (sticker) wake(sticker)
     const run = line.animate({ scale: ['0 1', '1 1'] }, { duration: CYCLE_MS, easing: 'linear', fill: 'forwards' })
     this.#run = run
     run.finished.then(
@@ -238,11 +261,25 @@ class LeadShowcase extends HTMLElement {
     solid.dataset.turn = solid.dataset.turn === 'a' ? 'b' : 'a'
   }
 
-  #dress(theme: Theme) {
+  #dress(theme: Theme, still: boolean) {
     for (const input of this.querySelectorAll<HTMLInputElement>(PICKS)) input.checked = input.value === theme.name
 
-    for (const sticker of this.querySelectorAll<HTMLElement>('[data-lead-sticker]'))
-      sticker.dataset.on = String(sticker.dataset.leadSticker === theme.name)
+    const stickers = this.#stickers
+    const shown = stickers.find((sticker) => sticker.dataset.leadSticker === theme.name)
+    const turn = ++this.#stickerTurn
+
+    const wear = () => {
+      if (turn !== this.#stickerTurn) return
+
+      for (const sticker of stickers) sticker.dataset.on = String(sticker === shown)
+    }
+
+    if (still) for (const sticker of stickers) sticker.dataset.on = 'false'
+
+    if (shown) {
+      wake(shown)
+      shown.decode().then(wear, wear)
+    } else wear()
 
     this.#frameArt(theme)
   }
@@ -309,7 +346,7 @@ class LeadShowcase extends HTMLElement {
 
     if (before && !still) this.#wipe(before, theme)
     show(theme)
-    this.#dress(theme)
+    this.#dress(theme, still)
     const name = this.querySelector('[data-lead-name] > span')
 
     if (name) name.textContent = theme.name

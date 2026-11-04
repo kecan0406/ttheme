@@ -13,6 +13,12 @@ export const CAST: readonly CastMember[] = [
   { name: 'shinonome-nano', face: 1086 / 756, scale: 1 },
 ]
 
+export const STICKER_SIZES = '(min-width: 1180px) min(148.4vh, 104.4vw, 1679px), 199vw'
+
+export function stickerSet(stickers: Record<string, string>, name: string): string {
+  return `${stickers[name]} 1410w, ${stickers[`${name}-2x`]} 2820w`
+}
+
 export function castOf(themes: readonly Theme[]): Theme[] {
   return CAST.flatMap((member) => themes.find((theme) => theme.name === member.name) ?? [])
 }

@@ -3,7 +3,7 @@ import { LinkButton } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { marketplacePath } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
-import { CAST } from '@/lib/lead-cast'
+import { CAST, STICKER_SIZES, stickerSet } from '@/lib/lead-cast'
 import { OWN_NAME } from '@/lib/sessions'
 import { type Line, linesOf } from '@/lib/terminal'
 import { BUILTIN, paint, type Theme } from '@/lib/themes'
@@ -40,12 +40,16 @@ export function LeadWorld({ stickers }: { stickers: Record<string, string> }) {
           <img
             data-lead-sticker={member.name}
             data-on={String(at === 0)}
-            src={stickers[member.name]}
+            src={at === 0 ? stickers[member.name] : undefined}
+            srcset={at === 0 ? stickerSet(stickers, member.name) : undefined}
+            data-src={at === 0 ? undefined : stickers[member.name]}
+            data-srcset={at === 0 ? undefined : stickerSet(stickers, member.name)}
+            sizes={STICKER_SIZES}
             alt=""
             width="1410"
             height="756"
             decoding="async"
-            fetchpriority={at === 0 ? 'high' : 'low'}
+            fetchpriority={at === 0 ? 'high' : undefined}
             style={`--face:${member.face.toFixed(4)};--scale:${member.scale.toFixed(4)}`}
           />
         ))}

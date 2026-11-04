@@ -30,7 +30,7 @@ import {
 } from '@/lib/gallery'
 import { homeFeatures } from '@/lib/home-features'
 import { artFor, placesFoundFor } from '@/lib/key-art'
-import { castOf } from '@/lib/lead-cast'
+import { castOf, STICKER_SIZES, stickerSet } from '@/lib/lead-cast'
 import { castNamed, foundPage, lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
 import { menuCovers, menuPlaces, menuWork, releaseUrl } from '@/lib/menu'
@@ -404,7 +404,7 @@ export const site = new Elysia({ name: 'site' })
         wear: lead,
         flat: true,
         head: firstScript(lead),
-        preload: { src: stickers[lead.name] as string, srcset: null, sizes: '' },
+        preload: { src: stickers[lead.name] as string, srcset: stickerSet(stickers, lead.name), sizes: STICKER_SIZES },
       },
       <Home themes={themes} features={features} facts={facts} terminals={assets.terminals} stickers={stickers} />,
     )
