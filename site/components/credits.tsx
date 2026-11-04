@@ -125,13 +125,16 @@ export function Credits({ facts }: { facts: Facts }) {
                     <span lang={credit.japanese ? 'ja' : undefined} translate="no" safe>
                       {credit.artist}
                     </span>
-                    <span safe>{`on ${credit.site}`}</span>
+                    <BrandIcon icon={credit.siteIcon} class="size-3 flex-none" />
+                    <span class="sr-only" safe>{` on ${credit.site}`}</span>
                   </StickerLink>
                   {credit.license === null ? null : (
                     <>
                       {', '}
                       <StickerLink href={credit.license.url}>
-                        <span safe>{credit.license.label}</span>
+                        <BrandIcon icon={credit.license.icon} class="size-3 flex-none" />
+                        <span class="sr-only" safe>{`${credit.license.brand} `}</span>
+                        <span safe>{credit.license.terms}</span>
                       </StickerLink>
                     </>
                   )}
@@ -142,6 +145,8 @@ export function Credits({ facts }: { facts: Facts }) {
                         <span lang="ja" translate="no" safe>
                           {credit.after.artist}
                         </span>
+                        <BrandIcon icon={credit.after.icon} class="size-3 flex-none" />
+                        <span class="sr-only" safe>{` on ${credit.after.site}`}</span>
                       </StickerLink>
                     </>
                   )}

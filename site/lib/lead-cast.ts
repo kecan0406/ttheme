@@ -1,3 +1,4 @@
+import { type SimpleIcon, siCreativecommons, siDeviantart, siX } from 'simple-icons'
 import type { Theme } from '@/lib/themes'
 
 export interface CastMember {
@@ -20,9 +21,10 @@ export interface StickerCredit {
   artist: string
   japanese: boolean
   site: string
+  siteIcon: SimpleIcon
   post: string
-  license: { label: string; url: string } | null
-  after: { work: string; artist: string; url: string } | null
+  license: { brand: string; icon: SimpleIcon; terms: string; url: string } | null
+  after: { work: string; artist: string; icon: SimpleIcon; site: string; url: string } | null
 }
 
 export const STICKER_CREDITS: readonly StickerCredit[] = [
@@ -33,6 +35,7 @@ export const STICKER_CREDITS: readonly StickerCredit[] = [
     artist: 'kmym',
     japanese: false,
     site: 'X',
+    siteIcon: siX,
     post: 'https://x.com/kmym97457689/status/2099432694958719085',
     license: null,
     after: null,
@@ -44,6 +47,7 @@ export const STICKER_CREDITS: readonly StickerCredit[] = [
     artist: 'ADA☆',
     japanese: false,
     site: 'X',
+    siteIcon: siX,
     post: 'https://x.com/HikawaHomura/status/1987474871451091180',
     license: null,
     after: null,
@@ -55,9 +59,15 @@ export const STICKER_CREDITS: readonly StickerCredit[] = [
     artist: 'lllP3lll',
     japanese: false,
     site: 'DeviantArt',
+    siteIcon: siDeviantart,
     post: 'https://www.deviantart.com/lllp3lll/art/Konata-53704375',
-    license: { label: 'CC BY-NC-SA 3.0', url: 'https://creativecommons.org/licenses/by-nc-sa/3.0/' },
-    after: { work: "Comp H's Vol.3", artist: '堀口悠紀子', url: 'https://x.com/dochibibi' },
+    license: {
+      brand: 'CC',
+      icon: siCreativecommons,
+      terms: 'BY-NC-SA 3.0',
+      url: 'https://creativecommons.org/licenses/by-nc-sa/3.0/',
+    },
+    after: { work: "Comp H's Vol.3", artist: '堀口悠紀子', icon: siX, site: 'X', url: 'https://x.com/dochibibi' },
   },
   {
     name: 'shinonome-nano',
@@ -66,6 +76,7 @@ export const STICKER_CREDITS: readonly StickerCredit[] = [
     artist: 'あらゐけいいち',
     japanese: true,
     site: 'X',
+    siteIcon: siX,
     post: 'https://x.com/himaraya/status/1829803478711177647',
     license: null,
     after: null,

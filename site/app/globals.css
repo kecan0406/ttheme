@@ -1239,7 +1239,16 @@ lead-showcase > [data-site-header] {
   transition: translate 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-[data-lead-credit] a:hover svg {
+[data-lead-credit] svg[fill='currentColor'] {
+  margin-inline-start: 0.4em;
+  color: var(--fg);
+}
+
+[data-lead-license] svg[fill='currentColor'] {
+  margin-inline: 0 0.45em;
+}
+
+[data-lead-credit] a:hover svg[fill='none'] {
   translate: 1px -1px;
 }
 

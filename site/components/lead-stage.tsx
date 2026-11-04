@@ -3,7 +3,7 @@ import { LinkButton } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { CREDITS_PATH } from '@/lib/art'
 import { marketplacePath } from '@/lib/gallery'
-import { Icon, NewTab } from '@/lib/icons'
+import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { CAST, OTHER_ART, STICKER_CREDITS, STICKER_SIZES, stickerSet } from '@/lib/lead-cast'
 import { OWN_NAME } from '@/lib/sessions'
 import { type Line, linesOf } from '@/lib/terminal'
@@ -69,13 +69,16 @@ export function LeadCredits() {
           <a href={credit.post} target="_blank" rel="noopener">
             <b lang={credit.japanese ? 'ja' : undefined} translate="no" safe>
               {credit.artist}
-            </b>{' '}
-            <span safe>{`on ${credit.site}`}</span>
+            </b>
+            <BrandIcon icon={credit.siteIcon} />
+            <span class="sr-only" safe>{` on ${credit.site}`}</span>
             <NewTab />
           </a>
           {credit.license === null ? null : (
             <a data-lead-license href={credit.license.url} target="_blank" rel="noopener">
-              <span safe>{credit.license.label}</span>
+              <BrandIcon icon={credit.license.icon} />
+              <span class="sr-only" safe>{`${credit.license.brand} `}</span>
+              <span safe>{credit.license.terms}</span>
               <NewTab />
             </a>
           )}
@@ -86,6 +89,8 @@ export function LeadCredits() {
                 <b lang="ja" translate="no" safe>
                   {credit.after.artist}
                 </b>
+                <BrandIcon icon={credit.after.icon} />
+                <span class="sr-only" safe>{` on ${credit.after.site}`}</span>
                 <NewTab />
               </a>
             </span>
