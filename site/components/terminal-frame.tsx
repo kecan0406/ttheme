@@ -24,6 +24,7 @@ export function TerminalFrame({
   mode = false,
   raised = false,
   recolor = false,
+  roomy = false,
   class: className,
   children,
   ...props
@@ -36,6 +37,7 @@ export function TerminalFrame({
     mode?: boolean
     raised?: boolean
     recolor?: boolean
+    roomy?: boolean
     class?: string
   }
 >) {
@@ -51,7 +53,7 @@ export function TerminalFrame({
       )}
     >
       {tabs ? (
-        <div class="flex h-10 flex-none items-center gap-3 pr-1.5 pl-3.5">
+        <div class={cn('flex h-10 flex-none items-center gap-3 pr-1.5 pl-3.5', roomy && 'h-12 pr-3 pl-5')}>
           <Lights class="flex-none" />
           {tabs}
           {controls ? controls : null}

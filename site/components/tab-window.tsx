@@ -5,6 +5,7 @@ import { Icon } from '@/lib/icons'
 import { tabLines } from '@/lib/sessions'
 import { paint, type Theme } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
+import { CommandRow } from './command-row'
 import { TerminalScreen } from './terminal'
 import { TerminalFrame } from './terminal-frame'
 
@@ -22,7 +23,17 @@ export function newTabLabel(next: Theme): string {
 }
 
 export function TabSession({ theme }: { theme: Theme }) {
-  return <TerminalScreen lines={tabLines(theme)} decorative class="overflow-hidden px-4.5 pt-3 pb-4 text-code" />
+  return (
+    <TerminalScreen
+      lines={tabLines(theme)}
+      decorative
+      class="overflow-hidden px-5.5 pt-1.5 text-base [--term-leading:1.7] max-[640px]:text-code"
+    />
+  )
+}
+
+export function TabUse({ theme }: { theme: Theme }) {
+  return <CommandRow command={`ttheme use ${theme.name}`} look="bright" />
 }
 
 export function WindowTabs({ tabs, active }: { tabs: WindowTab[]; active: number }) {
@@ -51,8 +62,9 @@ export function TabWindow({ tabs, active, next }: { tabs: WindowTab[]; active: n
     <TerminalFrame
       data-tab-window
       style={wearStyle(shown.theme)}
-      raised
       recolor
+      roomy
+      class="flex min-h-0 flex-1 flex-col rounded-3xl shadow-sm"
       tabs={
         <div class="flex min-w-0 flex-1 items-center gap-1.5">
           <WindowTabs tabs={tabs} active={active} />
@@ -62,8 +74,17 @@ export function TabWindow({ tabs, active, next }: { tabs: WindowTab[]; active: n
         </div>
       }
     >
-      <div data-tab-session>
+      <div data-tab-session data-melt-lines class="min-h-0 flex-1 overflow-hidden">
         <TabSession theme={shown.theme} />
+      </div>
+      <div class="flex flex-none flex-wrap items-end justify-between gap-x-6 gap-y-3 px-5.5 pb-5.5">
+        <div class="grid gap-1">
+          <h3 class="font-display text-display-md font-black">a different one per tab</h3>
+          <p class="text-sm text-(--fg)/80">This tab only. Every other tab keeps its own.</p>
+        </div>
+        <div data-tab-use class="w-80 max-w-full">
+          <TabUse theme={shown.theme} />
+        </div>
       </div>
     </TerminalFrame>
   )

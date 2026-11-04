@@ -1,4 +1,4 @@
-import { type Children, escapeHtml } from '@kitajs/html'
+import type { Children } from '@kitajs/html'
 import {
   ArrowRight,
   History,
@@ -13,17 +13,16 @@ import {
 } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { LinkButton } from '@/components/ui/button'
+import { MeltCard, MeltLink } from '@/components/ui/melt-card'
 import { Popover } from '@/components/ui/popover'
 import { BROWSE_PATH, initOf, MARKETPLACES_PATH } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
 import type { DocIcon, MenuArt, MenuDoc, MenuFacts, MenuPlace, MenuWork } from '@/lib/menu'
 import { makePath } from '@/lib/names'
-import { linesOf } from '@/lib/terminal'
-import { WORN_FACETS } from '@/lib/works'
+import { focusOf, WORN_FACETS } from '@/lib/works'
 import { CommandRow } from './command-row'
 import { Dots } from './dots'
-import { TerminalScreen } from './terminal'
-import { TerminalFrame } from './terminal-frame'
+import { Mark } from './mark'
 import { WorkArt } from './work-art'
 
 export const NAV_ANCHOR = 'site-nav'
@@ -45,10 +44,13 @@ const HEAD = 'px-2.5 pt-2 pb-1 text-2xs font-bold tracking-caps text-muted-foreg
 
 const TILE = 'relative grid size-15 flex-none place-items-center overflow-hidden rounded-xl'
 
-const FEATURE =
-  'relative flex min-h-80 w-75 flex-none flex-col overflow-hidden rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring max-[880px]:hidden'
+const BODY = 'relative grid min-w-0 gap-1 px-4.5 pb-4'
 
-const PROMPT = '«2»~ «B5»❯ «»'
+const CORNER = 'absolute top-3.5 left-3.5'
+
+const NAME = 'truncate font-display text-display-sm font-black'
+
+const STRIPES = 'absolute inset-x-0 top-0 -z-10 h-[84%]'
 
 const DOC_ICONS: Record<DocIcon, { icon: IconNode; tone: string }> = {
   use: { icon: Palette, tone: 'bg-(--a6)/14 text-(--a6)' },
@@ -105,37 +107,37 @@ export function InUseCard({
   held?: boolean
 }) {
   return (
-    <a
+    <MeltLink
+      size="feature"
       href={href}
       data-in-use
       data-work={work?.id ?? ''}
       data-ready={ready ? '' : undefined}
       data-held={held ? '' : undefined}
-      class={FEATURE}
     >
-      <WorkArt art={work?.art ?? null} facets={WORN_FACETS} sizes="300px" class="absolute inset-0" />
-      <span
-        aria-hidden="true"
-        class="absolute inset-0 bg-linear-to-b from-transparent from-35% to-background/90 to-85%"
+      <WorkArt
+        art={work?.art ?? null}
+        facets={WORN_FACETS}
+        focus={work ? focusOf(work.id) : null}
+        sizes="300px"
+        melt
+        class="absolute inset-x-0 top-0 -z-10 h-[86%]"
       />
-      <Badge variant="preview" class="absolute top-3.5 left-3.5">
+      <Badge variant="glass" class={CORNER}>
         in use
       </Badge>
-      <span class="absolute inset-x-4.5 bottom-4 grid gap-1">
+      <span class={BODY}>
         <span class="flex min-w-0 items-center gap-2 text-sm">
           <Dots />
-          <span
-            translate="no"
-            class="min-w-0 truncate font-display font-extrabold text-soft-foreground after:content-(--wear-name)"
-          />
+          <span translate="no" class="min-w-0 truncate font-display font-extrabold after:content-(--wear-name)" />
         </span>
-        <span data-in-use-work translate="no" class="truncate font-display text-display-sm font-black" safe>
+        <span data-in-use-work translate="no" class={NAME} safe>
           {work?.name ?? 'originals'}
         </span>
         {work?.native ? (
           <span
             data-in-use-work
-            class="truncate font-display text-xs font-extrabold text-muted-foreground"
+            class="truncate font-display text-xs font-extrabold text-soft-foreground"
             lang={work.lang ?? undefined}
             translate="no"
             safe
@@ -144,7 +146,7 @@ export function InUseCard({
           </span>
         ) : null}
       </span>
-    </a>
+    </MeltLink>
   )
 }
 
@@ -218,49 +220,18 @@ export function BrowseMenu({ menu }: { menu: MenuFacts }) {
   )
 }
 
-function Caption({
-  badge,
-  title,
-  named = false,
-  children,
-}: {
-  badge: string
-  title: string
-  named?: boolean
-  children: Children
-}) {
-  return (
-    <span class="mt-auto grid gap-1.5 border-t border-(--fg)/14 px-4.5 pt-3.5 pb-4">
-      <Badge variant="preview" class="justify-self-start">
-        {escapeHtml(badge)}
-      </Badge>
-      <span translate={named ? 'no' : undefined} class="truncate font-display text-display-sm font-black" safe>
-        {title}
-      </span>
-      <span class="text-sm text-(--fg)/65">{children}</span>
-    </span>
-  )
-}
-
-const SWATCHES = [
-  Array.from({ length: 8 }, (_, at) => `«${at}»███ `).join(''),
-  Array.from({ length: 8 }, (_, at) => `«${at + 8}»███ `).join(''),
-]
-
 export function BuilderCard() {
   return (
-    <a href="/builder" class={FEATURE}>
-      <TerminalFrame title="palette builder" class="flex flex-1 flex-col rounded-xl">
-        <TerminalScreen
-          decorative
-          lines={linesOf([`${PROMPT}ttheme new my-palette`, ...SWATCHES, `${PROMPT}«c» `])}
-          class="px-4 pb-3 text-code leading-relaxed"
-        />
-        <Caption badge="start" title="palette builder">
-          Tune twenty colors, checked as you go
-        </Caption>
-      </TerminalFrame>
-    </a>
+    <MeltLink size="feature" href="/builder">
+      <span data-slot="stripes" data-melt aria-hidden="true" class={STRIPES} />
+      <Badge variant="glass" class={CORNER}>
+        start
+      </Badge>
+      <span class={BODY}>
+        <span class={NAME}>palette builder</span>
+        <span class="text-sm text-soft-foreground">Tune twenty colors, checked as you go</span>
+      </span>
+    </MeltLink>
   )
 }
 
@@ -278,18 +249,20 @@ export function DraftCard({
   const slots = colors.map((color, at) => `${at < 4 ? ['--bg', '--fg', '--cu', '--se'][at] : `--a${at - 4}`}:${color}`)
 
   return (
-    <a href={href} class={FEATURE}>
-      <TerminalFrame title={name} style={slots.join(';')} class="flex flex-1 flex-col rounded-xl">
-        <TerminalScreen
-          decorative
-          lines={linesOf([`${PROMPT}ttheme use ${name}`, '«8»this tab only', ...SWATCHES, `${PROMPT}«c» `])}
-          class="px-4 pb-3 text-code leading-relaxed"
-        />
-        <Caption badge="draft" title={name} named>
-          <span safe>{when}</span>
-        </Caption>
-      </TerminalFrame>
-    </a>
+    <MeltLink size="feature" href={href} style={slots.join(';')}>
+      <span data-slot="stripes" data-melt aria-hidden="true" class={STRIPES} />
+      <Badge variant="glass" class={CORNER}>
+        draft
+      </Badge>
+      <span class={BODY}>
+        <span translate="no" class={NAME} safe>
+          {name}
+        </span>
+        <span class="text-sm text-soft-foreground" safe>
+          {when}
+        </span>
+      </span>
+    </MeltLink>
   )
 }
 
@@ -411,21 +384,31 @@ export function DocsMenu({ menu }: { menu: MenuFacts }) {
       class="w-[min(800px,calc(100vw-32px))]"
     >
       <div class="flex gap-2.5 p-2.5">
-        <div class="flex w-75 flex-none flex-col justify-between gap-4 rounded-xl bg-card p-4.5 inset-ring inset-ring-border max-[880px]:hidden">
-          <a
-            href={menu.quick.path}
-            class="group/quick grid gap-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        <MeltCard size="feature" lift>
+          <span
+            data-melt
+            aria-hidden="true"
+            class="absolute inset-x-0 top-0 -z-10 grid h-1/2 place-items-center bg-accent [&_svg]:w-37"
           >
-            <Badge class="justify-self-start">start here</Badge>
-            <span class="font-display text-display-sm font-black group-hover/quick:text-primary" safe>
+            <Mark />
+          </span>
+          <Badge variant="glass" class={CORNER}>
+            start here
+          </Badge>
+          <div class="grid min-w-0 gap-1 px-4.5 pb-4">
+            <a
+              href={menu.quick.path}
+              class={`${NAME} outline-none after:absolute after:inset-0 after:rounded-xl hover:text-primary focus-visible:after:inset-ring-2 focus-visible:after:inset-ring-ring`}
+              safe
+            >
               {menu.quick.label}
-            </span>
-            <span class="text-sm text-soft-foreground" safe>
+            </a>
+            <p class="text-sm text-pretty text-soft-foreground" safe>
               {menu.quick.lede}
-            </span>
-          </a>
-          <CommandRow command={initOf('npx')} class="bg-background" />
-        </div>
+            </p>
+            <CommandRow command={initOf('npx')} look="bright" class="mt-2.5" />
+          </div>
+        </MeltCard>
         <div class="grid min-w-0 flex-1 content-start">
           <p class={HEAD}>Guide</p>
           <ul class="grid">

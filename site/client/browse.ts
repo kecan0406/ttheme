@@ -11,6 +11,7 @@ import { paletteNameOf } from '../../src/core/names.ts'
 import { announce, fill, readJson, reducedMotion } from './dom'
 import { NameLookup } from './names'
 import { afterPaint } from './palettes'
+import { tileScrub } from './tile-scrub'
 import type { PressedChange } from './ui/change'
 import { press } from './ui/pressed'
 
@@ -35,6 +36,7 @@ abstract class Browse extends HTMLElement {
   protected filters: Filters = { ...START }
   protected names = new NameLookup((asked) => this.#answered(asked))
   #request = ''
+  #unscrub = () => {}
 
   #change = (event: Event) => {
     const { name, value } = event.target as HTMLInputElement
@@ -44,6 +46,7 @@ abstract class Browse extends HTMLElement {
 
   connectedCallback() {
     this.addEventListener('change', this.#change)
+    this.#unscrub = tileScrub(this)
     const query = (new URLSearchParams(location.search).get('q') ?? '').trim()
     const order = this.querySelector<HTMLInputElement>('input[name="sort"]')
 
@@ -59,6 +62,7 @@ abstract class Browse extends HTMLElement {
 
   disconnectedCallback() {
     this.removeEventListener('change', this.#change)
+    this.#unscrub()
     this.names.stop()
   }
 

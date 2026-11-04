@@ -15,6 +15,7 @@ declare namespace JSX {
     'cast-search': HtmlTag
     'docs-page': HtmlTag
     'facet-ground': HtmlTag
+    'feature-cards': HtmlTag
     'kaomoji-rain': HtmlTag
     'lead-showcase': HtmlTag
     'marketplace-workspace': HtmlTag

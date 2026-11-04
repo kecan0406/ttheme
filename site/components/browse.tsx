@@ -14,7 +14,9 @@ import {
   X,
 } from 'lucide'
 import { siGithub } from 'simple-icons'
+import { Badge } from '@/components/ui/badge'
 import { Button, LinkButton } from '@/components/ui/button'
+import { MeltCard } from '@/components/ui/melt-card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Toggle } from '@/components/ui/toggle'
 import type { KeyArt } from '@/lib/art'
@@ -31,6 +33,7 @@ import type { Facts } from '@/lib/facts'
 import {
   BROWSE_PATH,
   FIRST_SORT,
+  initOf,
   MARKETPLACES_PATH,
   marketplacePath,
   palettePath,
@@ -44,7 +47,8 @@ import { makePath } from '@/lib/names'
 import { json } from '@/lib/render'
 import { BUILTIN, type Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
-import { byWork, facetStyle, leadOf, type WorkEntry } from '@/lib/works'
+import { wearStyle } from '@/lib/wear'
+import { byWork, facetStyle, focusOf, leadOf, tileLook, WORN_FACETS, type WorkEntry } from '@/lib/works'
 import { requestUrl } from '../../src/core/names.ts'
 import { CommandRow } from './command-row'
 import { MarketplaceFrame } from './marketplace-frame'
@@ -92,6 +96,8 @@ interface Stack {
   lead: Theme
   art: KeyArt | null
   facets: string
+  look: string
+  focus: string | null
 }
 
 function stacksIn(shelf: Shelf): Stack[] {
@@ -108,6 +114,8 @@ function stacksIn(shelf: Shelf): Stack[] {
       lead,
       art: work ? (artFor(work.id)?.art ?? null) : null,
       facets: facetStyle(lead),
+      look: tileLook(lead),
+      focus: work ? focusOf(work.id) : null,
     }
   })
 }
@@ -241,7 +249,7 @@ function Count({ value }: { value: number }) {
 }
 
 const TILES =
-  'grid grid-cols-[repeat(auto-fill,minmax(min(100%,13.75rem),1fr))] gap-x-4 gap-y-6.5 max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:gap-y-5'
+  'grid grid-cols-[repeat(auto-fill,minmax(min(100%,13.75rem),1fr))] gap-4 max-sm:grid-cols-2 max-sm:gap-2.5'
 
 interface WorkGroup {
   id: string
@@ -390,6 +398,8 @@ export function BrowseWorks({
                     count={entry.palettes}
                     art={entry.art}
                     facets={entry.facets}
+                    look={entry.look}
+                    focus={entry.focus}
                     sizes={THUMB_SIZES}
                     eager={at === 0 && index < 5}
                     also={alsoIn(entry.places, group.slug)}
@@ -494,6 +504,8 @@ function MarketShelf({ shelf, stacks, first }: { shelf: Shelf; stacks: Stack[]; 
               count={stack.themes.length}
               art={stack.art}
               facets={stack.facets}
+              look={stack.look}
+              focus={stack.focus}
               sizes="(min-width: 640px) 236px, 200px"
               eager={first && index < RAIL_EAGER}
             />
@@ -506,40 +518,57 @@ function MarketShelf({ shelf, stacks, first }: { shelf: Shelf; stacks: Stack[]; 
 
 function MarketCover({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
   const tiles = stacks.length >= 4 ? stacks.slice(0, 4) : stacks.slice(0, 1)
+  const lead = stacks[0]?.lead
 
   return (
-    <a
-      href={marketplacePath(shelf.id)}
+    <MeltCard
+      size="cover"
+      lift
       data-shelf={shelf.id}
       data-stars={shelf.stars ?? 0}
       data-pushed={shelf.pushedAt ?? ''}
-      class="group/cover grid min-w-0 content-start gap-3.5 outline-none"
+      style={lead ? wearStyle(lead) : undefined}
+      class="group/cover"
     >
       <span
+        data-melt
+        aria-hidden="true"
         class={cn(
-          'grid aspect-video gap-0.75 overflow-hidden rounded-2xl bg-muted transition-[translate,box-shadow] duration-200 group-hover/cover:shadow-md group-focus-visible/cover:ring-2 group-focus-visible/cover:ring-ring group-focus-visible/cover:ring-offset-2 group-focus-visible/cover:ring-offset-background motion-safe:group-hover/cover:-translate-y-0.5',
+          'absolute inset-x-0 top-0 -z-10 grid h-[68%] gap-0.5',
           tiles.length > 1 ? 'grid-cols-2 grid-rows-2' : null,
         )}
       >
         {tiles.map((stack) => (
-          <WorkArt art={stack.art} facets={stack.facets} sizes="(min-width: 640px) 200px, 50vw" class="relative" />
+          <WorkArt
+            art={stack.art}
+            facets={stack.facets}
+            focus={stack.focus}
+            sizes="(min-width: 640px) 200px, 50vw"
+            class="relative"
+          />
         ))}
       </span>
-      <span class="grid min-w-0 gap-1.5">
-        <span class="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1.5">
-          <h2
-            translate="no"
-            class="font-display text-display-sm font-black transition-colors [overflow-wrap:anywhere] group-hover/cover:text-primary"
-            safe
-          >
-            {shelf.id}
-          </h2>
-          <MarketBadge builtin={shelf.id === BUILTIN} />
+      <a
+        href={marketplacePath(shelf.id)}
+        class="absolute inset-0 rounded-[inherit] outline-none focus-visible:inset-ring-2 focus-visible:inset-ring-ring"
+      >
+        <span class="sr-only" safe>
+          {`open ${shelf.id}`}
         </span>
-        <span class="text-sm text-pretty text-soft-foreground" safe>
+      </a>
+      <MarketBadge builtin={shelf.id === BUILTIN} variant="glass" class="pointer-events-none absolute top-3 left-3" />
+      <div class="pointer-events-none relative grid min-w-0 gap-1.5 px-4 pb-4">
+        <h2
+          translate="no"
+          class="font-display text-display-sm font-black transition-colors [overflow-wrap:anywhere] group-hover/cover:text-primary"
+          safe
+        >
+          {shelf.id}
+        </h2>
+        <p class="text-sm text-pretty text-soft-foreground" safe>
           {shelf.about}
-        </span>
-        <span class="flex flex-wrap items-center gap-x-4 gap-y-1">
+        </p>
+        <span class="flex flex-wrap items-center gap-x-4">
           <span translate="no" class="inline-flex min-w-0 items-center gap-2 font-mono text-xs text-soft-foreground">
             <BrandIcon icon={siGithub} class="size-3 flex-none" />
             <span class="truncate" safe>
@@ -552,33 +581,45 @@ function MarketCover({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
         <span class="text-xs text-muted-foreground">
           <Count value={shelf.palettes.length} /> palettes, <Count value={stacks.length} /> works
         </span>
-      </span>
-    </a>
+        <CommandRow
+          command={shelf.add ? `ttheme marketplace add ${shelf.add}` : initOf('npx')}
+          look="quiet"
+          class="mt-1.5 [&_pre]:text-2xs"
+        />
+      </div>
+    </MeltCard>
   )
 }
 
 function PublishCover() {
   return (
-    <div class="grid min-w-0 content-start gap-3.5">
+    <MeltCard size="cover" lift>
+      <WorkArt
+        art={null}
+        facets={WORN_FACETS}
+        sizes="400px"
+        melt
+        class="absolute inset-x-0 top-0 -z-10 h-[68%] opacity-55"
+      />
       <span
         aria-hidden="true"
-        class="grid aspect-video place-content-center justify-items-center gap-2.5 rounded-2xl bg-muted/55 text-soft-foreground inset-ring inset-ring-border"
+        class="absolute top-30 left-1/2 grid size-14 -translate-x-1/2 place-items-center rounded-full border border-input bg-glass text-foreground backdrop-blur-[14px]"
       >
-        <span class="grid size-12 place-items-center rounded-full border border-input">
-          <Icon node={Plus} class="size-5.5" />
-        </span>
-        <span class="font-display text-sm font-extrabold">your marketplace here</span>
+        <Icon node={Plus} class="size-6" />
       </span>
-      <div class="grid min-w-0 gap-1.5">
+      <Badge variant="glass" class="absolute top-3 left-3">
+        your marketplace here
+      </Badge>
+      <div class="relative grid min-w-0 gap-1.5 px-4 pb-4">
         <h2 class="font-display text-display-sm font-black">publish your own</h2>
         <p class="text-sm text-pretty text-soft-foreground">
           A GitHub repository of palettes, a file for each work. Give it the{' '}
           <code class="font-mono text-xs text-foreground">ttheme-marketplace</code> topic and it shows up here within
           about an hour.
         </p>
-        <CommandRow command={PUBLISH[0] as string} class="mt-1" />
+        <CommandRow command={PUBLISH[0] as string} look="quiet" class="mt-1.5" />
       </div>
-    </div>
+    </MeltCard>
   )
 }
 
@@ -640,7 +681,7 @@ export function BrowseMarketplaces({ shelves, works, facts }: { shelves: Shelf[]
         <div
           data-covers
           class={cn(
-            'hidden grid-cols-[repeat(auto-fill,minmax(min(100%,18.75rem),1fr))] gap-x-5 gap-y-8 pt-3',
+            'hidden grid-cols-[repeat(auto-fill,minmax(min(100%,18.75rem),1fr))] gap-5 pt-3',
             'group-has-[[value=covers]:checked]/browse:grid',
           )}
         >

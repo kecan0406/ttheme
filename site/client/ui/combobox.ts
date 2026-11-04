@@ -68,7 +68,7 @@ function mark(root: HTMLElement) {
   }
 }
 
-function narrow(root: HTMLElement, block?: ScrollLogicalPosition): number {
+function narrow(root: HTMLElement, block?: ScrollLogicalPosition, keep = false): number {
   const query = (inputOf(root)?.value ?? '').trim().toLowerCase()
   const items = itemsOf(root)
 
@@ -81,7 +81,11 @@ function narrow(root: HTMLElement, block?: ScrollLogicalPosition): number {
   const empty = root.querySelector<HTMLElement>('[data-slot="combobox-empty"]')
 
   if (empty) empty.hidden = shown.length > 0 || items.length === 0
-  light(root, query === '' ? (chosenIn(root) ?? shown[0]) : shown[0], block)
+  const active = keep ? inputOf(root)?.getAttribute('aria-activedescendant') : null
+  const kept = shown.find((item) => item.id === active)
+
+  if (kept) light(root, kept, undefined, root.hasAttribute('data-pointed') ? 'pointer' : 'none')
+  else light(root, query === '' ? (chosenIn(root) ?? shown[0]) : shown[0], block)
 
   return shown.length
 }
@@ -190,7 +194,7 @@ const lists = new MutationObserver((records) => {
 
   for (const root of roots) {
     mark(root)
-    narrow(root, 'center')
+    narrow(root, 'center', true)
   }
 })
 

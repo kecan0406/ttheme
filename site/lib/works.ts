@@ -7,6 +7,20 @@ const FIRST = 'ttheme/hatsune-miku'
 
 export const WORN_FACETS = '--k0:var(--bg);--k1:var(--a0);--k2:var(--se);--k3:var(--cu);--k4:var(--a1);--k5:var(--a5)'
 
+const FOCUS = new Map([
+  ['doki-doki-literature-club', '95% 50%'],
+  ['jubeat', '50% 73%'],
+  ['pop-n-music', '50% 9%'],
+  ['sound-voltex', '36% 50%'],
+  ['undertale', '75% 50%'],
+  ['va-11-hall-a', '44% 50%'],
+  ['vocaloid', '75% 50%'],
+])
+
+export function focusOf(work: string): string | null {
+  return FOCUS.get(work) ?? null
+}
+
 export interface WorkShelf {
   key: string
   work: WorkRef | null
@@ -22,6 +36,8 @@ export interface WorkEntry {
   path: string
   art: KeyArt | null
   facets: string
+  look: string
+  focus: string | null
   palettes: number
   search: string
   names: string
@@ -91,6 +107,17 @@ export function facetStyle(theme: Theme): string {
   return tones.map((tone, index) => `--k${index}:${paint(theme, tone)}`).join(';')
 }
 
+export function tileLook(theme: Theme): string {
+  const slots: [string, (shade: Shade) => string][] = [
+    ['--bg', (shade) => shade.background],
+    ['--fg', (shade) => shade.foreground],
+    ['--cu', (shade) => shade.cursor],
+    ['--se', (shade) => shade.selectionBackground],
+  ]
+
+  return slots.map(([slot, pick]) => `${slot}:${paint(theme, pick)}`).join(';')
+}
+
 export function swatchStyle(theme: Theme): string {
   return [
     `--bg:${paint(theme, (shade) => shade.background)}`,
@@ -128,6 +155,8 @@ export function workEntries(
         path: workPath(id),
         art: artOf(id)?.art ?? null,
         facets: facetStyle(leadOf(shelf)),
+        look: tileLook(leadOf(shelf)),
+        focus: focusOf(id),
         palettes: shelf.themes.length,
         search: [id, name, native ?? ''].join('\n').toLowerCase(),
         names: shelf.themes.flatMap((theme) => [theme.id, slugOf(theme.id)]).join('\n'),

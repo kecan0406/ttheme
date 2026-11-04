@@ -1,8 +1,16 @@
-import { FIRST_TABS, MOST_TABS, newTabLabel, TabSession, type WindowTab, WindowTabs } from '@/components/tab-window'
+import {
+  FIRST_TABS,
+  MOST_TABS,
+  newTabLabel,
+  TabSession,
+  TabUse,
+  type WindowTab,
+  WindowTabs,
+} from '@/components/tab-window'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
-import { announce, fill, readJson, swap } from './dom'
+import { announce, morph, readJson, swap } from './dom'
 
 interface OpenTab {
   id: number
@@ -62,7 +70,8 @@ class TabShowcase extends HTMLElement {
   #paint() {
     const theme = this.#leads[this.#shown.index] as Theme
     this.querySelector('[data-tab-window]')?.setAttribute('style', wearStyle(theme))
-    fill(this.querySelector('[data-tab-session]'), html(<TabSession theme={theme} />))
+    morph(this.querySelector('[data-tab-session]'), html(<TabSession theme={theme} />))
+    morph(this.querySelector('[data-tab-use]'), html(<TabUse theme={theme} />))
   }
 }
 

@@ -21,6 +21,47 @@ export function swap(target: Element | null, markup: string) {
   target.replaceWith(template.content)
 }
 
+export function parsed(markup: string): HTMLElement {
+  const template = document.createElement('template')
+  template.innerHTML = markup
+
+  return template.content.firstElementChild as HTMLElement
+}
+
+function alike(one: Node, other: Node): boolean {
+  if (one.nodeName !== other.nodeName || one.childNodes.length !== other.childNodes.length) return false
+
+  return [...one.childNodes].every((child, at) => alike(child, other.childNodes[at] as Node))
+}
+
+function follow(one: Node, other: Node) {
+  if (one instanceof Text) {
+    one.data = (other as Text).data
+
+    return
+  }
+
+  if (one instanceof Element && other instanceof Element)
+    for (const { name, value } of [...other.attributes])
+      if (one.getAttribute(name) !== value) one.setAttribute(name, value)
+
+  for (const [at, child] of [...one.childNodes].entries()) follow(child, other.childNodes[at] as Node)
+}
+
+export function morph(target: Element | null, markup: string) {
+  if (!target) return
+  const template = document.createElement('template')
+  template.innerHTML = markup
+  const next = template.content
+
+  if (
+    target.childNodes.length === next.childNodes.length &&
+    [...target.childNodes].every((child, at) => alike(child, next.childNodes[at] as Node))
+  )
+    for (const [at, child] of [...target.childNodes].entries()) follow(child, next.childNodes[at] as Node)
+  else target.innerHTML = markup
+}
+
 export function announce(text: string) {
   const region = document.querySelector('[data-announce]')
 

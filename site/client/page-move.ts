@@ -17,7 +17,7 @@ const ART = 'data-move-art'
 
 const FRAME = 'data-move-frame'
 
-const TILE = 16 / 9
+const TILE = 8 / 5
 
 const LENSES: Page[] = ['works', 'marketplaces']
 

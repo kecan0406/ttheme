@@ -2,16 +2,15 @@ import { ArrowRight, Search, Store, X } from 'lucide'
 import { LinkButton } from '@/components/ui/button'
 import { Combobox, ComboboxInput, ComboboxLink, ComboboxList } from '@/components/ui/combobox'
 import { Kbd } from '@/components/ui/kbd'
+import { MeltCard } from '@/components/ui/melt-card'
 import { Popover } from '@/components/ui/popover'
 import type { FoundWork } from '@/lib/found'
 import { BROWSE_PATH, MARKETPLACES_PATH, marketplacePath } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
-import { type Hit, lookStyle, type SearchMarket, type SearchPalette } from '@/lib/search'
-import { linesOf } from '@/lib/terminal'
-import { WORN_FACETS, workPath } from '@/lib/works'
+import { type Hit, lookStyle, type SearchMarket } from '@/lib/search'
+import { focusOf, WORN_FACETS, workPath } from '@/lib/works'
+import { CommandRow } from './command-row'
 import { Dots } from './dots'
-import { TerminalScreen } from './terminal'
-import { TerminalFrame } from './terminal-frame'
 import { WorkArt } from './work-art'
 
 export const SEARCH_POPUP = 'site-search'
@@ -20,10 +19,10 @@ export const SEARCH_BOX = 'site-search-box'
 
 export const SEARCH_LIST = 'site-search-list'
 
-const PROMPT = '«2»~/dotfiles «4»main «B5»❯ «»'
+const PREVIEW_ART = 'absolute inset-x-0 top-0 -z-10 h-[62%]'
 
 const ROW =
-  'flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2 text-sm outline-none data-highlighted:bg-muted max-[720px]:py-1.5'
+  'flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2 text-sm outline-none transition-colors duration-150 data-highlighted:bg-muted max-[720px]:py-1.5'
 
 const NOTE = 'grid justify-items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground'
 
@@ -196,22 +195,12 @@ export function SearchRows({ view }: { view: SearchView }) {
   )
 }
 
-function previewLines(palette: SearchPalette) {
-  return linesOf([
-    `${PROMPT}ttheme use ${palette.slug}`,
-    '«8»this tab only',
-    `${PROMPT}ls -F`,
-    '«B4»shell/«»  «B4»themes/«»  «B2»setup.sh*«»  «6»zshrc@«»  todo.md',
-    `${PROMPT}«c» `,
-  ])
-}
-
 export function SearchPreview({ hit }: { hit: Hit | null }) {
   if (!hit) {
     return (
-      <TerminalFrame title="ttheme" class="h-full">
-        <TerminalScreen decorative lines={linesOf([`${PROMPT}«c» `])} class="px-4 pb-4 text-code leading-relaxed" />
-      </TerminalFrame>
+      <MeltCard size="preview">
+        <WorkArt art={null} facets={WORN_FACETS} sizes="320px" melt class={`${PREVIEW_ART} opacity-55`} />
+      </MeltCard>
     )
   }
 
@@ -219,32 +208,29 @@ export function SearchPreview({ hit }: { hit: Hit | null }) {
   const others = work.palettes.filter((one) => one !== palette).map((one) => one.slug)
 
   return (
-    <div class="grid h-full grid-rows-[minmax(0,1fr)_auto] gap-2.5">
-      <TerminalFrame title={`${palette.slug} / ${work.name}`} style={lookStyle(palette.look)} class="flex flex-col">
-        <div class="relative isolate min-h-0 flex-1 overflow-hidden">
-          {work.art ? (
-            <img
-              src={work.art.src}
-              srcset={work.art.srcset ?? undefined}
-              sizes={work.art.srcset ? '320px' : undefined}
-              alt=""
-              decoding="async"
-              class="absolute inset-0 -z-10 size-full object-cover opacity-55"
-            />
-          ) : null}
-          <span aria-hidden="true" class="absolute inset-0 -z-10 bg-linear-to-r from-(--bg) from-35% to-(--bg)/25" />
-          <TerminalScreen decorative lines={previewLines(palette)} class="px-4 pb-4 text-code leading-relaxed" />
+    <MeltCard size="preview" style={lookStyle(palette.look)}>
+      <WorkArt
+        art={work.art}
+        facets={work.facets}
+        focus={focusOf(work.id)}
+        sizes="320px"
+        eager
+        sync
+        melt
+        class={PREVIEW_ART}
+      />
+      <div class="relative grid min-w-0 gap-1 px-4 pb-4">
+        <div data-preview-words class="grid min-w-0 gap-1">
+          <span class="truncate font-display text-display-sm font-black" translate="no" safe>
+            {work.name}
+          </span>
+          <span class="truncate text-xs text-soft-foreground" translate="no" safe>
+            {[palette.slug, ...others].join(', ')}
+          </span>
         </div>
-      </TerminalFrame>
-      <div class="grid gap-1 px-1.5">
-        <span class="truncate font-display text-base font-extrabold" translate="no" safe>
-          {work.name}
-        </span>
-        <span class="truncate text-xs text-muted-foreground" translate="no" safe>
-          {[palette.slug, ...others].join(', ')}
-        </span>
+        <CommandRow command={`ttheme use ${palette.slug}`} look="bright" class="mt-2" />
       </div>
-    </div>
+    </MeltCard>
   )
 }
 
@@ -307,7 +293,10 @@ export function SiteSearch() {
         </search>
         <Popover id={SEARCH_POPUP} manual variant="search" align="end" anchor={SEARCH_BOX} label="search results">
           <div class="grid min-h-0 flex-1 grid-cols-[320px_minmax(0,1fr)] gap-2.5 p-2.5 max-[720px]:grid-cols-[minmax(0,1fr)]">
-            <div data-search-preview class="min-h-64 max-[720px]:hidden">
+            <div
+              data-search-preview
+              class="grid min-h-64 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] [&>*]:[grid-area:1/1] max-[720px]:hidden"
+            >
               <SearchPreview hit={null} />
             </div>
             <ComboboxList

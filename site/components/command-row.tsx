@@ -9,6 +9,8 @@ import { BrandIcon, Icon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { RUNNERS, type Runner } from '../../src/core/runner.ts'
 
+export type CommandLook = 'bright' | 'quiet'
+
 const BOX = 'min-w-0 rounded-lg border bg-muted/65'
 
 const BAR = 'flex h-11 min-w-0 items-center gap-0.5 pr-1.5 pl-4'
@@ -38,11 +40,11 @@ const MARKS: Record<Runner, SimpleIcon> = { npx: siNpm, bunx: siBun }
 
 const INITS: Record<Runner, string> = { npx: initOf('npx'), bunx: initOf('bunx') }
 
-function Line({ command, class: className }: { command: string; class?: string }) {
+function Line({ command, still = false, class: className }: { command: string; still?: boolean; class?: string }) {
   const safeCommand = highlightHtml('sh', command)
 
   return (
-    <pre tabindex="0" translate="no" class={cn(LINE, className)}>
+    <pre tabindex={still ? undefined : '0'} translate="no" class={cn(LINE, className)}>
       <code class="select-all">{safeCommand}</code>
     </pre>
   )
@@ -65,44 +67,75 @@ function CopyButton({ command, class: className }: { command: string; class?: st
   )
 }
 
-export function CommandRow({ command, class: className }: { command: string; class?: string }) {
+export function CommandRow({
+  command,
+  look,
+  class: className,
+}: {
+  command: string
+  look?: CommandLook
+  class?: string
+}) {
   return (
-    <div data-slot="command-row" data-highlight class={cn(BOX, BAR, className)}>
-      <Line command={command} />
+    <div data-slot="command-row" data-look={look} data-highlight class={look ? className : cn(BOX, BAR, className)}>
+      <Line command={command} still={look !== undefined} />
       <CopyButton command={command} />
     </div>
   )
 }
 
+function RunnerTabs({ class: className }: { class?: string }) {
+  return (
+    <ToggleGroup label="run with" data-runners class={cn('flex h-8 min-w-0 items-stretch gap-1 px-2.5', className)}>
+      {RUNNERS.map((runner) => (
+        <Toggle value={runner} pressed={runner === 'npx'} class={cn(TAB, TAB_ON[runner])}>
+          <BrandIcon icon={MARKS[runner]} class="size-3" />
+          <span>{runner}</span>
+        </Toggle>
+      ))}
+    </ToggleGroup>
+  )
+}
+
+function RunnerLines({ commands, still = false }: { commands: Readonly<Record<Runner, string>>; still?: boolean }) {
+  return (
+    <>
+      {RUNNERS.map((runner) => (
+        <Line command={commands[runner]} still={still} class={LINE_SHOWN[runner]} />
+      ))}
+      {RUNNERS.map((runner) => (
+        <CopyButton command={commands[runner]} class={COPY_SHOWN[runner]} />
+      ))}
+    </>
+  )
+}
+
 export function RunnerRow({
   commands,
+  look,
   class: className,
 }: {
   commands: Readonly<Record<Runner, string>>
+  look?: CommandLook
   class?: string
 }) {
-  return (
+  return look ? (
+    <div class={cn('grid min-w-0 gap-1.5', className)}>
+      <RunnerTabs />
+      <div data-slot="command-row" data-look={look} data-highlight>
+        <RunnerLines commands={commands} still />
+      </div>
+    </div>
+  ) : (
     <div data-slot="command-row" data-highlight class={cn(BOX, className)}>
-      <ToggleGroup label="run with" data-runners class="flex h-8 min-w-0 items-stretch gap-1 border-b px-2.5">
-        {RUNNERS.map((runner) => (
-          <Toggle value={runner} pressed={runner === 'npx'} class={cn(TAB, TAB_ON[runner])}>
-            <BrandIcon icon={MARKS[runner]} class="size-3" />
-            <span>{runner}</span>
-          </Toggle>
-        ))}
-      </ToggleGroup>
+      <RunnerTabs class="border-b" />
       <div class={BAR}>
-        {RUNNERS.map((runner) => (
-          <Line command={commands[runner]} class={LINE_SHOWN[runner]} />
-        ))}
-        {RUNNERS.map((runner) => (
-          <CopyButton command={commands[runner]} class={COPY_SHOWN[runner]} />
-        ))}
+        <RunnerLines commands={commands} />
       </div>
     </div>
   )
 }
 
-export function InitRow({ class: className }: { class?: string }) {
-  return <RunnerRow commands={INITS} class={className} />
+export function InitRow({ look, class: className }: { look?: CommandLook; class?: string }) {
+  return <RunnerRow commands={INITS} look={look} class={className} />
 }

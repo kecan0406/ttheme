@@ -100,6 +100,10 @@ export function tabLines(theme: Theme): Line[] {
         plain(` = "${cursor}"`),
       ],
     ),
-    ...linesOf([`${TAB_PROMPT}«c» `]),
+    ...linesOf([
+      `${TAB_PROMPT}ls -F`,
+      '«B4»shell/«»  «B4»themes/«»  «B2»setup.sh*«»  «6»zshrc@«»  todo.md',
+      `${TAB_PROMPT}«c» `,
+    ]),
   ]
 }

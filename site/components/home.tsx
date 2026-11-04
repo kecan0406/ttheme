@@ -3,6 +3,7 @@ import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide'
 import { Button, LinkButton } from '@/components/ui/button'
 import type { Facts } from '@/lib/facts'
 import { marketplacePath } from '@/lib/gallery'
+import type { HomeFeatures } from '@/lib/home-features'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { BUILTIN, type Theme } from '@/lib/themes'
@@ -10,6 +11,7 @@ import { headlineEm } from '@/lib/wear'
 import { leadsOf } from '@/lib/works'
 import { HeroScenes } from './cli-scenes'
 import { CommandRow, InitRow } from './command-row'
+import { CharacterCard, CommunityCard, FreeCard, MakeCard, PictureCard } from './home-features'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { FIRST_TABS, TabWindow } from './tab-window'
@@ -19,34 +21,6 @@ import { TerminalList } from './terminal-list'
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
 const LEAD = 'use'
-
-const FEATURES = [
-  {
-    emoji: '🎨',
-    title: 'a palette per character',
-    text: "Each one built around the character, with three signature colors you'll recognise at a glance.",
-  },
-  {
-    emoji: '🛍️',
-    title: 'more from the community',
-    text: 'Browse palettes other fans publish, and add a whole marketplace with one command.',
-  },
-  {
-    emoji: '🖼️',
-    title: 'a picture behind the text',
-    text: "Tint a picture into the palette's background and set how strongly it shows behind the text.",
-  },
-  {
-    emoji: '🛠️',
-    title: 'make your own',
-    text: 'ttheme new opens a palette editor in your terminal, and ttheme share turns the result into a link anyone can open.',
-  },
-  {
-    emoji: '🍀',
-    title: 'free and open',
-    text: 'MIT licensed, free to use and to change.',
-  },
-]
 
 const STEPS = [
   {
@@ -62,51 +36,43 @@ const STEPS = [
 
 function Step({ number, title, text, children }: PropsWithChildren<{ number: number; title: string; text: string }>) {
   return (
-    <li class="row-span-3 grid grid-rows-subgrid gap-3 rounded-3xl border bg-muted p-6">
-      <span class="flex items-center gap-3">
-        <span class="grid size-8 place-items-center rounded-full bg-primary font-display text-sm font-black text-primary-foreground">
-          {number}
-        </span>
-        <span class="font-display text-base font-extrabold" safe>
+    <li class="flex min-w-0 flex-col gap-2.5 p-6 not-first:border-l max-[1080px]:not-first:border-t max-[1080px]:not-first:border-l-0">
+      <span class="flex items-baseline gap-2.5">
+        <span class="font-mono text-sm text-muted-foreground">{number}</span>
+        <span class="font-display text-display-sm font-black" safe>
           {title}
         </span>
       </span>
-      <p class="text-sm text-soft-foreground" safe>
+      <p class="text-sm text-pretty text-soft-foreground" safe>
         {text}
       </p>
-      {children}
+      <div class="mt-auto pt-1">{children}</div>
     </li>
   )
 }
 
 export function LeadUse({ theme }: { theme: Theme }) {
-  return <CommandRow command={`ttheme use ${theme.name}`} class="self-end bg-card" />
+  return <CommandRow command={`ttheme use ${theme.name}`} look="quiet" />
 }
 
 function PerTab({ leads }: { leads: Theme[] }) {
   const tabs = leads.slice(0, FIRST_TABS).map((theme, id) => ({ id, theme }))
 
   return (
-    <article class="col-span-2 row-span-2 grid content-start gap-4.5 rounded-3xl border bg-muted p-6 max-[640px]:col-span-1">
-      <div class="grid gap-2">
-        <span class="text-3xl" role="img" aria-hidden="true">
-          🗂️
-        </span>
-        <h3 class="font-display text-base font-extrabold">a different one per tab</h3>
-      </div>
-      <tab-showcase class="grid gap-2.5">
-        <TabWindow tabs={tabs} active={0} next={leads[FIRST_TABS % leads.length] as Theme} />
-      </tab-showcase>
-    </article>
+    <tab-showcase class="col-span-2 row-span-2 flex min-w-0 flex-col max-[640px]:col-span-1">
+      <TabWindow tabs={tabs} active={0} next={leads[FIRST_TABS % leads.length] as Theme} />
+    </tab-showcase>
   )
 }
 
 export function Home({
   themes,
+  features,
   facts,
   terminals,
 }: {
   themes: Theme[]
+  features: HomeFeatures
   facts: Facts
   terminals: Record<string, string>
 }) {
@@ -203,22 +169,14 @@ export function Home({
           <h2 id="features" class="font-display text-display-lg font-black">
             everything a tab needs
           </h2>
-          <div class="grid grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
+          <feature-cards class="grid auto-rows-[16.75rem] grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
             <PerTab leads={leads} />
-            {FEATURES.map((feature) => (
-              <article class="grid content-start gap-2 rounded-3xl border bg-muted p-6 max-[960px]:last:col-span-2 max-[640px]:last:col-span-1">
-                <span class="text-3xl" role="img" aria-hidden="true" safe>
-                  {feature.emoji}
-                </span>
-                <h3 class="font-display text-base font-extrabold" safe>
-                  {feature.title}
-                </h3>
-                <p class="text-sm text-soft-foreground" safe>
-                  {feature.text}
-                </p>
-              </article>
-            ))}
-          </div>
+            <CharacterCard characters={features.characters} />
+            <CommunityCard community={features.community} />
+            <PictureCard picture={features.picture} />
+            <MakeCard />
+            <FreeCard />
+          </feature-cards>
         </section>
 
         <TerminalList icons={terminals} />
@@ -227,14 +185,10 @@ export function Home({
           <h2 id="install" class="font-display text-display-lg font-black">
             three commands
           </h2>
-          <ol class="grid grid-cols-3 gap-4 max-[1080px]:grid-cols-1">
+          <ol data-steps class="grid grid-cols-3 rounded-3xl border bg-card shadow-sm max-[1080px]:grid-cols-1">
             {STEPS.map((step, index) => (
               <Step number={index + 1} title={step.title} text={step.text}>
-                {step.command ? (
-                  <CommandRow command={step.command} class="self-end bg-card" />
-                ) : (
-                  <InitRow class="bg-card" />
-                )}
+                {step.command ? <CommandRow command={step.command} look="quiet" /> : <InitRow look="quiet" />}
               </Step>
             ))}
             <Step number={3} title="use" text="This tab only. Every other tab keeps its own.">

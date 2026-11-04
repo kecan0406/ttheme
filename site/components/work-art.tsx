@@ -69,11 +69,15 @@ function ArtImage({
   art,
   sizes,
   eager,
+  sync = false,
+  focus,
   class: className,
 }: {
   art: KeyArt
   sizes: string
   eager: boolean
+  sync?: boolean
+  focus?: string | null
   class?: string
 }) {
   return (
@@ -84,7 +88,8 @@ function ArtImage({
       alt=""
       loading={eager ? 'eager' : 'lazy'}
       fetchpriority={eager ? 'high' : undefined}
-      decoding="async"
+      decoding={sync ? 'sync' : 'async'}
+      style={focus ? `object-position:${focus}` : undefined}
       class={cn('absolute inset-0 size-full object-cover', className)}
     />
   )
@@ -95,17 +100,30 @@ export function WorkArt({
   facets,
   sizes,
   eager = false,
+  sync = false,
+  melt = false,
+  focus,
   class: className,
-}: {
+  ...props
+}: Omit<JSX.HtmlTag, 'class'> & {
   art: KeyArt | null
   facets: string
   sizes: string
   eager?: boolean
+  sync?: boolean
+  melt?: boolean
+  focus?: string | null
   class?: string
 }) {
   return (
-    <div aria-hidden="true" data-slot="work-art" class={cn('overflow-hidden bg-muted', className)}>
-      {art ? <ArtImage art={art} sizes={sizes} eager={eager} /> : <FacetArt style={facets} />}
+    <div
+      {...props}
+      aria-hidden="true"
+      data-slot="work-art"
+      data-melt={melt ? '' : undefined}
+      class={cn('overflow-hidden bg-muted', className)}
+    >
+      {art ? <ArtImage art={art} sizes={sizes} eager={eager} sync={sync} focus={focus} /> : <FacetArt style={facets} />}
     </div>
   )
 }

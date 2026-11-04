@@ -28,6 +28,7 @@ import {
   REPO_URL,
   shelvesOf,
 } from '@/lib/gallery'
+import { homeFeatures } from '@/lib/home-features'
 import { artFor, placesFoundFor } from '@/lib/key-art'
 import { castNamed, foundPage, lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
@@ -163,6 +164,8 @@ const entries = workEntries(everyTheme, artFor, placesFoundFor)
 const heldCategories = CATEGORIES.filter((category) =>
   entries.some((entry) => categoriesFrom(entry.places).includes(category.slug)),
 )
+
+const features = homeFeatures(themes, listings, artFor)
 
 const fallbackWork = entries.find((entry) => entry.id === fallback.work?.id)
 
@@ -394,7 +397,7 @@ export const site = new Elysia({ name: 'site' })
         ld: [siteGraph(facts)],
         cache: FIXED,
       },
-      <Home themes={themes} facts={facts} terminals={assets.terminals} />,
+      <Home themes={themes} features={features} facts={facts} terminals={assets.terminals} />,
     ),
   )
   .get(
