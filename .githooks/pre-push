@@ -1,0 +1,2 @@
+#!/usr/bin/env zsh
+exec zsh ${0:A:h:h}/tests/checked.zsh push

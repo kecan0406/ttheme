@@ -12,6 +12,8 @@ Every dev command is a `mise` task (`mise tasks`); `package.json` has no scripts
 
 Run `mise run format`, then `mise run ci`, once, right before a change leaves your hands: a pull request, a merge, a push to `main` or `mise run release`. `ci` is exactly what CI runs and takes a minute or two, and `format` first fixes most of what lint would fail on. A push to `main` is itself a deploy (the site on Vercel, Pages).
 
+The pre-push hook (`.githooks/pre-push`, on once `git config core.hooksPath .githooks` runs, as every Claude Code session does on start) lets a push to `main` through only on a tree `ci` passed, or on a change to `site/`, `docs/`, Markdown and the instruction files alone once `mise run ci:site` passes. Never push with `--no-verify`.
+
 While a change goes back and forth with the person you work for, run no check unless a round asks to see something, and say the round is unchecked. The `PostToolUse` hooks in `.claude/settings.json` fix a file an edit tool touched (oxlint, biome) and measure the instruction files against their budgets; an edit made through Bash never reaches them.
 
 | Task | Use it when |
@@ -75,7 +77,7 @@ While a change goes back and forth with the person you work for, run no check un
 
 ## Commits
 
-- A subject is `<area>: <summary>` in 72 characters at most, the summary lowercase, imperative and without a full stop. The area is where most of the change is: `core`, `store`, `pictures`, `terminals`, `tui` or `cli` under `src/`; `shell`, `site`, `docs`, `builtin`, `schemas`, `skills` or `tests` for that folder; `ci` for `.github` and `mise.toml`; `agents` for `AGENTS.md`, `.agents` and `.claude`; `docs` also for the other Markdown at the root. `mise run ci` checks every commit `origin/main` lacks.
+- A subject is `<area>: <summary>` in 72 characters at most, the summary lowercase, imperative and without a full stop. The area is where most of the change is: `core`, `store`, `pictures`, `terminals`, `tui` or `cli` under `src/`; `shell`, `site`, `docs`, `builtin`, `schemas`, `skills` or `tests` for that folder; `ci` for `.github`, `.githooks` and `mise.toml`; `agents` for `AGENTS.md`, `.agents` and `.claude`; `docs` also for the other Markdown at the root. `mise run ci` checks every commit `origin/main` lacks.
 - The body says how things were, how they are now and why.
 - A change a user would notice adds a line for that user under `## Unreleased` in `CHANGELOG.md`, in the same commit. `mise run release` refuses an empty section and turns its heading into the version in its own `release: <version>` commit; the GitHub release posts that section.
 

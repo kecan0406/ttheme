@@ -186,6 +186,7 @@ git clone https://github.com/kecan0406/ttheme
 cd ttheme
 mise install   # bun 1.3 and node 22
 bun install
+git config core.hooksPath .githooks   # a push to main runs the checks CI would
 ```
 
 Every task is `mise run <task>`; `package.json` has no scripts, and takes none.

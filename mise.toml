@@ -314,6 +314,10 @@ run = "zsh tests/checked.zsh begin"
 description = "the ci workflow's commit, lint, type, unit, bundle and site checks, the job that compiles; ci:shells and the parity walk run in jobs of their own"
 depends = ["commits", "lint", "check", "test", "bin:check", "site:check"]
 
+[tasks."ci:site"]
+description = "what the pre-push hook checks in place of ci when a push to main changes only site/, docs/, Markdown and the instruction files: the commit subjects, lint, site:check and the tests that read those files"
+depends = ["commits", "lint", "site:check", "test ./site ./tests/agents.test.ts ./src/terminals/index.test.ts"]
+
 [tasks."ci:shells"]
 description = "the ci workflow's checks that drive a real zsh through a pty or tmux and wait on what it draws: shell:check, the TUI screens and the cost ratchet, in a job of its own so the compilers in ci:checks never starve their waits"
 depends = ["shell:check", "tui", "costs"]
