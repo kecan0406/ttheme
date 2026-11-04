@@ -119,6 +119,8 @@ document.addEventListener('keydown', (event) => {
 
   if (!root || event.target !== inputOf(root) || composing(event) || event.altKey || event.metaKey || event.ctrlKey)
     return
+
+  if (root.querySelector('[popover]:not(:popover-open)')) return
   const shown = shownIn(root)
   const current = root.querySelector<HTMLElement>('[data-highlighted]:not([hidden])') ?? undefined
 

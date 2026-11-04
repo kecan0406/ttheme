@@ -1,4 +1,5 @@
 import type { KeyArt } from '@/lib/art'
+import type { Theme } from '@/lib/themes'
 
 export const SEARCH_PATH = '/browse/search.json'
 
@@ -92,6 +93,20 @@ export function searchWorks(works: readonly SearchWork[], query: string, named: 
     })
     .sort((a, b) => a.rank - b.rank || a.at - b.at)
     .map(({ hit }) => hit)
+}
+
+export function isWorn(hit: Hit, worn: Theme | null): boolean {
+  return hit.work.id === worn?.work?.id && hit.palette.slug === worn.name
+}
+
+export function allWorks(works: readonly SearchWork[], worn: Theme | null): Hit[] {
+  const hits = works.map((work) => ({ work, palette: work.palettes[0] as SearchPalette }))
+  const mine = hits.find(({ work }) => work.id === worn?.work?.id)
+
+  if (!mine) return hits
+  const palette = mine.work.palettes.find((one) => one.slug === worn?.name) ?? mine.palette
+
+  return [{ work: mine.work, palette }, ...hits.filter((hit) => hit !== mine)]
 }
 
 export function marketsFor(markets: readonly SearchMarket[], query: string): SearchMarket[] {

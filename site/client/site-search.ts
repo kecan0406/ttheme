@@ -3,7 +3,8 @@ import type { KeyArt } from '@/lib/art'
 import { BROWSE_PATH } from '@/lib/gallery'
 import { makePath } from '@/lib/names'
 import { html } from '@/lib/render'
-import { type Hit, marketsFor, type SearchIndex, SHOWN, searchWorks } from '@/lib/search'
+import { allWorks, type Hit, isWorn, marketsFor, type SearchIndex, SHOWN, searchWorks } from '@/lib/search'
+import type { Theme } from '@/lib/themes'
 import { paletteNameOf, requestUrl } from '../../src/core/names.ts'
 import { announce, fill, parsed, reducedMotion } from './dom'
 import { composing, letter, typing } from './keys'
@@ -11,6 +12,7 @@ import { NameLookup } from './names'
 import { heldIndex, searchIndex } from './search-index'
 import type { ItemHighlighted } from './ui/change'
 import { hide, show } from './ui/popover'
+import { fallback, recall } from './wear'
 
 const SAY_MS = 600
 
@@ -22,16 +24,24 @@ const LEAVE_MS = 100
 
 const DECODE_MS = 160
 
+const SETTLE_MS = 60
+
 const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)'
+
+const PREVIEWS = '(min-width: 720px)'
 
 const warmed = new Set<string>()
 
-function keyOf(hit: Hit | null): string {
-  return hit ? `${hit.work.id}:${hit.palette.name}` : ''
+function keyOf(hit: Hit | null, worn: Theme | null): string {
+  return hit ? `${hit.work.id}:${hit.palette.name}:${isWorn(hit, worn)}` : ''
 }
 
-function decoded(card: HTMLElement): Promise<void> {
-  const image = card.querySelector('img')
+function previewing(): boolean {
+  return matchMedia(PREVIEWS).matches
+}
+
+function decoded(card: Element | null | undefined): Promise<void> {
+  const image = card?.querySelector('img')
 
   if (!image) return Promise.resolve()
 
@@ -70,7 +80,7 @@ function enter(card: HTMLElement, way: number) {
 }
 
 function warm(art: KeyArt | null) {
-  if (!art || warmed.has(art.src)) return
+  if (!art || warmed.has(art.src) || !previewing()) return
   warmed.add(art.src)
   const image = new Image()
   image.sizes = '320px'
@@ -86,7 +96,7 @@ function onBrowse(): boolean {
 function allPath(query: string): string {
   const path = onBrowse() ? location.pathname : BROWSE_PATH
 
-  return query ? `${path}?${new URLSearchParams({ q: query })}` : path
+  return `${path}?${new URLSearchParams({ q: query })}`
 }
 
 class SiteSearch extends HTMLElement {
@@ -98,7 +108,9 @@ class SiteSearch extends HTMLElement {
   #shown = ''
   #turn = 0
   #saying = 0
+  #settling = 0
   #failed = false
+  #wanted = false
   #names = new NameLookup((asked) => {
     if (asked === this.#query()) this.#render()
   })
@@ -106,15 +118,12 @@ class SiteSearch extends HTMLElement {
   #typed = () => {
     const query = this.#query()
 
-    if (!query) {
-      this.#close()
-
-      return
-    }
-
     this.#names.later(query)
-    this.#render()
-    this.#open()
+
+    if (query || heldIndex()) {
+      this.#render()
+      this.#open()
+    } else this.#close()
   }
 
   #focused = () => {
@@ -127,13 +136,23 @@ class SiteSearch extends HTMLElement {
     }
   }
 
+  #near = () => this.#load()
+
   #key = (event: KeyboardEvent) => {
     if (composing(event)) return
 
+    if (event.key === 'ArrowDown' && !this.#isOpen()) {
+      event.preventDefault()
+      this.#begin()
+
+      return
+    }
+
     if (event.key === 'Escape') {
       event.preventDefault()
+      this.#wanted = false
 
-      if (this.#popup?.matches(':popover-open')) this.#close()
+      if (this.#isOpen()) this.#close()
       else if (this.#input?.value) this.#input.value = ''
       else this.#collapse()
 
@@ -178,19 +197,24 @@ class SiteSearch extends HTMLElement {
     else if (target.closest('[data-search-close]')) {
       this.#close()
       this.#collapse()
-    }
+    } else if (target.closest('[data-search-field]')) this.#begin()
   }
 
   #lit = (event: CustomEvent<ItemHighlighted>) => {
-    const hit = this.#hits.find((one) => one.work.id === event.detail.value)
+    const { value, reason } = event.detail
+    const hit = this.#hits.find((one) => one.work.id === value)
 
-    if (hit || event.detail.value === null) this.#preview(hit ?? null)
+    if (!hit && value !== null) return
+    window.clearTimeout(this.#settling)
+
+    if (reason === 'none') this.#preview(hit ?? null)
+    else this.#settling = window.setTimeout(() => this.#preview(hit ?? null), SETTLE_MS)
   }
 
   #picked = () => this.#close()
 
   #keep = (event: MouseEvent) => {
-    if ((event.target as Element).closest('[data-search-preview]')) event.preventDefault()
+    if (this.#popup?.contains(event.target as Node)) event.preventDefault()
   }
 
   connectedCallback() {
@@ -203,6 +227,7 @@ class SiteSearch extends HTMLElement {
     this.#input?.addEventListener('focus', this.#focused)
     this.#input?.addEventListener('keydown', this.#key)
     this.#input?.addEventListener('blur', this.#left)
+    this.#box?.addEventListener('pointerenter', this.#near)
     this.addEventListener('click', this.#press)
     this.addEventListener('mousedown', this.#keep)
     this.addEventListener('itemhighlighted', this.#lit)
@@ -216,6 +241,7 @@ class SiteSearch extends HTMLElement {
     this.#input?.removeEventListener('focus', this.#focused)
     this.#input?.removeEventListener('keydown', this.#key)
     this.#input?.removeEventListener('blur', this.#left)
+    this.#box?.removeEventListener('pointerenter', this.#near)
     this.removeEventListener('click', this.#press)
     this.removeEventListener('mousedown', this.#keep)
     this.removeEventListener('itemhighlighted', this.#lit)
@@ -223,6 +249,7 @@ class SiteSearch extends HTMLElement {
     window.removeEventListener('keydown', this.#find)
     document.removeEventListener('pointerdown', this.#outside, true)
     window.clearTimeout(this.#saying)
+    window.clearTimeout(this.#settling)
     this.#names.stop()
   }
 
@@ -234,26 +261,61 @@ class SiteSearch extends HTMLElement {
     if (heldIndex()) return
     this.#failed = false
     searchIndex().then(
-      () => this.#render(),
+      () => {
+        if (this.#isOpen()) this.#render()
+        else if (this.#wanted) this.#reveal()
+      },
       () => {
         this.#failed = true
-        this.#render()
+        this.#wanted = false
+
+        if (this.#isOpen()) this.#render()
       },
     )
+  }
+
+  #begin() {
+    if (this.#isOpen()) return
+    this.#wanted = true
+    this.#load()
+
+    if (heldIndex()) this.#reveal()
+  }
+
+  #reveal() {
+    const list = this.querySelector('[data-search-list]')
+
+    this.#drawn = ''
+    this.#input?.removeAttribute('aria-activedescendant')
+    fill(list, '')
+    this.#render()
+    this.#preview(this.#hits[0] ?? null)
+    decoded(document.querySelector('[data-search-preview]')?.lastElementChild).then(() => {
+      if (!this.#wanted) return
+      this.#open()
+      list?.scrollTo(0, 0)
+    })
   }
 
   #expand() {
     this.#box?.setAttribute('data-expanded', '')
     this.#input?.focus()
     this.#input?.select()
+    this.#begin()
   }
 
   #collapse() {
     this.#box?.removeAttribute('data-expanded')
   }
 
+  #isOpen(): boolean {
+    return this.#popup?.matches(':popover-open') ?? false
+  }
+
   #open() {
     const popup = this.#popup
+
+    this.#wanted = false
 
     if (!popup) return
     show(popup, 'none')
@@ -261,6 +323,8 @@ class SiteSearch extends HTMLElement {
   }
 
   #close() {
+    this.#wanted = false
+
     if (this.#popup) hide(this.#popup, 'none')
     this.#input?.setAttribute('aria-expanded', 'false')
   }
@@ -270,10 +334,15 @@ class SiteSearch extends HTMLElement {
     const answer = this.#names.answers.get(query)
     const naming = this.#names.naming === query && query !== ''
 
-    const all = index ? searchWorks(index.works, query, this.#names.named(query)) : []
+    const all = !index
+      ? []
+      : query
+        ? searchWorks(index.works, query, this.#names.named(query))
+        : allWorks(index.works, recall() ?? fallback())
+
     const known = new Set(all.map((hit) => hit.work.id))
 
-    this.#hits = all.slice(0, SHOWN)
+    this.#hits = !query && previewing() ? all : all.slice(0, SHOWN)
 
     return {
       query,
@@ -287,7 +356,7 @@ class SiteSearch extends HTMLElement {
           : 'loading'
         : naming && this.#names.stalled
           ? 'naming'
-          : this.#names.failed === query
+          : query !== '' && this.#names.failed === query
             ? 'failed'
             : 'done',
       label: answer?.label ?? query,
@@ -312,29 +381,43 @@ class SiteSearch extends HTMLElement {
     if (drawn !== this.#drawn) {
       this.#drawn = drawn
       const lit = list?.querySelector<HTMLElement>('[data-highlighted]')?.dataset.value
+      list?.toggleAttribute('data-long', view.hits.length > SHOWN)
       fill(list, html(SearchRows({ view })))
       this.#preview(this.#hits.find((hit) => hit.work.id === lit) ?? this.#hits[0] ?? null)
 
-      for (const hit of this.#hits) warm(hit.work.art)
+      if (view.query) for (const hit of this.#hits) warm(hit.work.art)
     }
 
     const count = view.state === 'unloaded' ? null : view.hits.length + view.more
-    fill(foot, count === 0 ? '' : html(SearchFoot({ href: allPath(view.query) })))
+    const bare = count === 0 || (!view.query && location.pathname === BROWSE_PATH)
+    fill(
+      foot,
+      bare ? '' : html(SearchFoot({ href: view.query ? allPath(view.query) : BROWSE_PATH, query: view.query })),
+    )
     this.#say(view, count)
   }
 
   #preview(hit: Hit | null) {
-    const key = keyOf(hit)
+    window.clearTimeout(this.#settling)
+    const worn = recall() ?? fallback()
+    const key = keyOf(hit, worn)
     const host = document.querySelector('[data-search-preview]')
 
-    if (key === this.#shown || !host) return
-    const from = this.#hits.findIndex((one) => keyOf(one) === this.#shown)
+    if (key === this.#shown || !host || !previewing()) return
+    const from = this.#hits.findIndex((one) => keyOf(one, worn) === this.#shown)
     const to = hit ? this.#hits.indexOf(hit) : -1
     const way = from >= 0 && to >= 0 && to < from ? -1 : 1
-    const card = parsed(html(SearchPreview({ hit })))
+    const card = parsed(html(SearchPreview({ hit, inUse: hit !== null && isWorn(hit, worn) })))
     const turn = ++this.#turn
 
     this.#shown = key
+
+    if (!this.#isOpen()) {
+      host.replaceChildren(card)
+
+      return
+    }
+
     card.style.opacity = '0'
     host.append(card)
     decoded(card).then(() => {

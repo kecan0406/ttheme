@@ -1,11 +1,12 @@
 import { ArrowRight, Search, Store, X } from 'lucide'
+import { Badge } from '@/components/ui/badge'
 import { LinkButton } from '@/components/ui/button'
 import { Combobox, ComboboxInput, ComboboxLink, ComboboxList } from '@/components/ui/combobox'
 import { Kbd } from '@/components/ui/kbd'
 import { MeltCard } from '@/components/ui/melt-card'
 import { Popover } from '@/components/ui/popover'
 import type { FoundWork } from '@/lib/found'
-import { BROWSE_PATH, MARKETPLACES_PATH, marketplacePath } from '@/lib/gallery'
+import { MARKETPLACES_PATH, marketplacePath } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
 import { type Hit, lookStyle, type SearchMarket } from '@/lib/search'
 import { focusOf, WORN_FACETS, workPath } from '@/lib/works'
@@ -134,17 +135,13 @@ export interface SearchView {
   more: number
   found: FoundWork[]
   markets: SearchMarket[]
-  state: 'idle' | 'loading' | 'unloaded' | 'naming' | 'done' | 'failed'
+  state: 'loading' | 'unloaded' | 'naming' | 'done' | 'failed'
   label: string
   make: string
   request: string
 }
 
 export function SearchRows({ view }: { view: SearchView }) {
-  if (view.state === 'idle') {
-    return <p class={NOTE}>a work, a character or a palette</p>
-  }
-
   if (view.state === 'loading') {
     return <p class={NOTE}>loading the works…</p>
   }
@@ -195,7 +192,7 @@ export function SearchRows({ view }: { view: SearchView }) {
   )
 }
 
-export function SearchPreview({ hit }: { hit: Hit | null }) {
+export function SearchPreview({ hit, inUse = false }: { hit: Hit | null; inUse?: boolean }) {
   if (!hit) {
     return (
       <MeltCard size="preview">
@@ -219,6 +216,11 @@ export function SearchPreview({ hit }: { hit: Hit | null }) {
         melt
         class={PREVIEW_ART}
       />
+      {inUse ? (
+        <Badge variant="glass" class="absolute top-3.5 left-3.5">
+          in use
+        </Badge>
+      ) : null}
       <div class="relative grid min-w-0 gap-1 px-4 pb-4">
         <div data-preview-words class="grid min-w-0 gap-1">
           <span class="truncate font-display text-display-sm font-black" translate="no" safe>
@@ -234,14 +236,14 @@ export function SearchPreview({ hit }: { hit: Hit | null }) {
   )
 }
 
-export function SearchFoot({ href }: { href: string }) {
+export function SearchFoot({ href, query }: { href: string; query: string }) {
   return (
     <div class="flex items-center justify-end border-t border-border px-5 py-3 text-sm">
       <a
         href={href}
         class="group/go inline-flex items-center gap-1.5 rounded-sm font-semibold text-foreground outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
       >
-        See All Results
+        {query ? 'See All Results' : 'Browse Works'}
         <Icon node={ArrowRight} class="size-4 transition-transform duration-150 group-hover/go:translate-x-0.5" />
       </a>
     </div>
@@ -292,7 +294,7 @@ export function SiteSearch() {
           </label>
         </search>
         <Popover id={SEARCH_POPUP} manual variant="search" align="end" anchor={SEARCH_BOX} label="search results">
-          <div class="grid min-h-0 flex-1 grid-cols-[320px_minmax(0,1fr)] gap-2.5 p-2.5 max-[720px]:grid-cols-[minmax(0,1fr)]">
+          <div class="grid min-h-0 flex-1 grid-cols-[320px_minmax(0,1fr)] grid-rows-[minmax(0,1fr)] gap-2.5 p-2.5 max-[720px]:grid-cols-[minmax(0,1fr)]">
             <div
               data-search-preview
               class="grid min-h-64 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] [&>*]:[grid-area:1/1] max-[720px]:hidden"
@@ -303,26 +305,10 @@ export function SiteSearch() {
               id={SEARCH_LIST}
               label="works"
               data-search-list
-              class="grid min-h-0 content-start gap-0.5 overflow-y-auto overscroll-contain"
-            >
-              <SearchRows
-                view={{
-                  query: '',
-                  hits: [],
-                  more: 0,
-                  found: [],
-                  markets: [],
-                  state: 'idle',
-                  label: '',
-                  make: '',
-                  request: '',
-                }}
-              />
-            </ComboboxList>
+              class="grid min-h-0 content-start gap-0.5 overflow-y-auto overscroll-contain data-long:max-h-88"
+            />
           </div>
-          <div data-search-foot>
-            <SearchFoot href={BROWSE_PATH} />
-          </div>
+          <div data-search-foot />
         </Popover>
       </Combobox>
     </site-search>
