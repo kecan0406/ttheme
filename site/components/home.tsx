@@ -1,26 +1,17 @@
 import type { PropsWithChildren } from '@kitajs/html'
-import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide'
-import { Button, LinkButton } from '@/components/ui/button'
 import type { Facts } from '@/lib/facts'
-import { marketplacePath } from '@/lib/gallery'
 import type { HomeFeatures } from '@/lib/home-features'
-import { Icon } from '@/lib/icons'
+import { castOf } from '@/lib/lead-cast'
 import { json } from '@/lib/render'
-import { BUILTIN, type Theme } from '@/lib/themes'
-import { headlineEm } from '@/lib/wear'
+import type { Theme } from '@/lib/themes'
 import { leadsOf } from '@/lib/works'
-import { HeroScenes } from './cli-scenes'
 import { CommandRow, InitRow } from './command-row'
 import { CharacterCard, CommunityCard, FreeCard, MakeCard, PictureCard } from './home-features'
-import { SiteFooter } from './site-footer'
+import { LeadHero, LeadWorld } from './lead-stage'
+import { LandingFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { FIRST_TABS, TabWindow } from './tab-window'
-import { TerminalFrame, WINDOW_TITLE } from './terminal-frame'
 import { TerminalList } from './terminal-list'
-
-const SLOTS = Array.from({ length: 16 }, (_, index) => index)
-
-const LEAD = 'use'
 
 const STEPS = [
   {
@@ -70,141 +61,73 @@ export function Home({
   features,
   facts,
   terminals,
+  stickers,
 }: {
   themes: Theme[]
   features: HomeFeatures
   facts: Facts
   terminals: Record<string, string>
+  stickers: Record<string, string>
 }) {
   const leads = leadsOf(themes)
-  const theme = leads[0] as Theme
+  const cast = castOf(themes)
+  const theme = cast[0] as Theme
 
   return (
-    <lead-showcase class="ground flex min-h-dvh flex-col">
+    <lead-showcase class="flex min-h-dvh flex-col">
       <SiteHeader current="/" facts={facts} />
-      <main id="content" class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5 pt-5">
-        <section
-          aria-label="ttheme"
-          data-lead-hero
-          class="grid grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] items-center gap-12 pt-14 pb-10 max-[960px]:grid-cols-[minmax(0,1fr)] max-[960px]:pt-8"
-        >
-          <div class="@container grid justify-items-start gap-6">
-            <h1 class="font-display text-display-xl font-black" style={`--lead-prefix:${headlineEm(`${LEAD} `)}`}>
-              {LEAD}{' '}
-              <sparkle-burst class="relative inline-block">
-                <span data-lead-name translate="no" class="text-primary">
-                  <span class="sr-only" safe>
-                    {theme.name}
-                  </span>
-                </span>
-              </sparkle-burst>
-              <br />
-              in your terminal
-            </h1>
-            <div class="grid max-w-[52ch] gap-2">
-              <p class="text-base text-soft-foreground">
-                Who's your favorite? The one from the game you keep replaying, or the anime you rewatch every year? Now
-                you can be together in your terminal!
-              </p>
-              <p class="text-xs text-muted-foreground">Waifu, husbando, best girl: all welcome.</p>
-            </div>
-            <div class="flex w-full flex-wrap items-end gap-3">
-              <LinkButton variant="pop" size="lg" href={marketplacePath(BUILTIN)}>
-                Browse Palettes
-                <Icon node={ArrowRight} />
-              </LinkButton>
-              <InitRow class="min-w-70 flex-1 bg-card" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-[minmax(0,1fr)] gap-4">
-            <TerminalFrame
-              data-lead-window
-              raised
-              heading={
-                <span data-lead-title aria-hidden="true" translate="no" class={WINDOW_TITLE}>
-                  ttheme / <span data-text="name" /> / <span data-text="work" />
-                </span>
-              }
-              controls={
-                <>
-                  <Button variant="ghost" size="icon-sm" data-lead-rotate data-cycle="on" class="motion-reduce:hidden">
-                    <span data-when="on" class="contents">
-                      <Icon node={Pause} />
-                      <span class="sr-only">stop the palette cycle</span>
-                    </span>
-                    <span data-when="off" class="contents">
-                      <Icon node={Play} />
-                      <span class="sr-only">start the palette cycle</span>
-                    </span>
-                  </Button>
-                  <Button variant="ghost" size="icon-sm" aria-label="previous palette" data-pick="-1">
-                    <Icon node={ChevronLeft} />
-                  </Button>
-                  <Button variant="ghost" size="icon-sm" aria-label="next palette" data-pick="1">
-                    <Icon node={ChevronRight} />
-                  </Button>
-                  <i
-                    data-lead-progress
-                    aria-hidden="true"
-                    class="pointer-events-none absolute inset-x-0 -bottom-px h-0.5 origin-left scale-x-0 bg-primary opacity-0 transition-opacity duration-150 ease-[ease]"
-                  />
-                </>
-              }
+      <main id="content" class="grid grid-cols-[minmax(0,1fr)]">
+        <div data-lead-stage>
+          <LeadWorld stickers={stickers} />
+          <LeadHero cast={cast} />
+          <div data-lead-sheet>
+            <section
+              aria-labelledby="features"
+              class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-12 py-12 lead-stacked:gap-4 lead-stacked:pt-18"
             >
-              <HeroScenes />
-            </TerminalFrame>
-            <div aria-hidden="true" class="flex items-center justify-center gap-1.5 px-1">
-              {SLOTS.map((slot) => (
-                <i
-                  class="block h-2.5 min-w-1.5 rounded-full inset-ring inset-ring-foreground/16 forced-color-adjust-none motion-safe:animate-dance"
-                  style={`background:var(--a${slot});width:${slot % 3 === 0 ? 28 : 12}px;animation-delay:${slot * -0.6}s`}
-                />
-              ))}
-            </div>
+              <h2 id="features" class="font-display text-display-lg font-black">
+                everything a tab needs
+              </h2>
+              <feature-cards class="grid auto-rows-[16.75rem] grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
+                <PerTab leads={leads} />
+                <CharacterCard characters={features.characters} />
+                <CommunityCard community={features.community} />
+                <PictureCard picture={features.picture} />
+                <MakeCard />
+                <FreeCard />
+              </feature-cards>
+            </section>
           </div>
-        </section>
+        </div>
 
-        <section aria-labelledby="features" class="grid gap-6 py-12">
-          <h2 id="features" class="font-display text-display-lg font-black">
-            everything a tab needs
-          </h2>
-          <feature-cards class="grid auto-rows-[16.75rem] grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
-            <PerTab leads={leads} />
-            <CharacterCard characters={features.characters} />
-            <CommunityCard community={features.community} />
-            <PictureCard picture={features.picture} />
-            <MakeCard />
-            <FreeCard />
-          </feature-cards>
-        </section>
+        <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5">
+          <TerminalList icons={terminals} />
 
-        <TerminalList icons={terminals} />
-
-        <section aria-labelledby="install" class="grid gap-6 py-12">
-          <h2 id="install" class="font-display text-display-lg font-black">
-            three commands
-          </h2>
-          <ol data-steps class="grid grid-cols-3 rounded-3xl border bg-card shadow-sm max-[1080px]:grid-cols-1">
-            {STEPS.map((step, index) => (
-              <Step number={index + 1} title={step.title} text={step.text}>
-                {step.command ? <CommandRow command={step.command} look="quiet" /> : <InitRow look="quiet" />}
+          <section aria-labelledby="install" class="grid gap-6 py-12">
+            <h2 id="install" class="font-display text-display-lg font-black">
+              three commands
+            </h2>
+            <ol data-steps class="grid grid-cols-3 rounded-3xl border bg-card shadow-sm max-[1080px]:grid-cols-1">
+              {STEPS.map((step, index) => (
+                <Step number={index + 1} title={step.title} text={step.text}>
+                  {step.command ? <CommandRow command={step.command} look="quiet" /> : <InitRow look="quiet" />}
+                </Step>
+              ))}
+              <Step number={3} title="use" text="This tab only. Every other tab keeps its own.">
+                <div data-lead-use class="contents">
+                  <LeadUse theme={theme} />
+                </div>
               </Step>
-            ))}
-            <Step number={3} title="use" text="This tab only. Every other tab keeps its own.">
-              <div data-lead-use class="contents">
-                <LeadUse theme={theme} />
-              </div>
-            </Step>
-          </ol>
-        </section>
+            </ol>
+          </section>
+        </div>
       </main>
-      <SiteFooter facts={facts} current="/" landing />
+      <LandingFooter facts={facts} />
       <kaomoji-rain>
         <div aria-hidden="true" class="pointer-events-none fixed inset-0 z-50 overflow-hidden" />
       </kaomoji-rain>
       <script type="application/json" data-leads>
-        {json(leads)}
+        {json(cast)}
       </script>
     </lead-showcase>
   )

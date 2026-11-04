@@ -1,7 +1,10 @@
 import { LeadUse } from '@/components/home'
+import { isCast } from '@/lib/lead-cast'
 import { html } from '@/lib/render'
-import type { Theme } from '@/lib/themes'
+import { inMode, type Theme } from '@/lib/themes'
 import { announce, fadeThrough, fill, readJson, reducedMotion } from './dom'
+import { mode } from './mode'
+import { searchIndex } from './search-index'
 import { SparkleBurst } from './sparkle-burst'
 import { choose, onMode, onWear, recall, show } from './wear'
 
@@ -9,30 +12,35 @@ const CYCLE_MS = 7000
 
 const IN_VIEW = 0.25
 
+const WIDE = '(min-width: 1180px)'
+
+const PICKS = 'input[name="lead-tab"], input[name="lead-pill"]'
+
+const PHOTO_SIZES = '(min-width: 1180px) 50vw, 86vw'
+
 class LeadShowcase extends HTMLElement {
   #leads: Theme[] = []
-  #shown = ''
+  #worn: Theme | null = null
   #run: Animation | null = null
   #cycling = false
-  #chosen = false
   #holds = new Set<string>()
   #view: IntersectionObserver | null = null
+  #wide: MediaQueryList | null = null
+  #photoTurn = 0
+  #pointer: [number, number] = [0, 0]
+  #frame = 0
   #off = () => {}
   #offMode = () => {}
 
   #click = (event: MouseEvent) => {
-    const target = event.target as Element
+    const input = (event.target as Element).closest<HTMLInputElement>(PICKS)
 
-    if (target.closest('[data-lead-rotate]')) {
-      this.#chosen = true
-      this.#turn(!this.#cycling)
+    if (!input) return
+    const theme = this.#leads.find((lead) => lead.name === input.value)
 
-      return
-    }
-
-    const step = target.closest<HTMLElement>('[data-pick]')
-
-    if (step) this.#step(Number(step.dataset.pick))
+    if (!theme) return
+    choose(theme)
+    announce(`wearing ${theme.name}`)
   }
 
   #hidden = () => this.#hold('hidden', document.hidden)
@@ -41,12 +49,36 @@ class LeadShowcase extends HTMLElement {
 
   #leave = () => this.#hold('pointer', false)
 
+  #stacked = () => this.#hold('stacked', !this.#wide?.matches)
+
   #focus = (event: FocusEvent) => {
-    if (!this.#chosen && (event.target as Element).matches(':focus-visible')) this.#turn(false)
+    if ((event.target as Element).matches(':focus-visible')) this.#turn(false)
   }
 
-  #keydown = (event: KeyboardEvent) => {
-    if (event.repeat && (event.target as Element).matches('[data-pick]')) event.preventDefault()
+  #point = (event: PointerEvent) => {
+    if (event.pointerType !== 'mouse' || this.#holds.has('away')) return
+    this.#pointer = [event.clientX / window.innerWidth - 0.5, event.clientY / window.innerHeight - 0.5]
+
+    if (this.#frame) return
+    this.#frame = requestAnimationFrame(() => {
+      this.#frame = 0
+      this.#lean(this.#pointer)
+    })
+  }
+
+  #unpoint = () => {
+    cancelAnimationFrame(this.#frame)
+    this.#frame = 0
+    this.#lean([0, 0])
+  }
+
+  #wiped = () => {
+    const solid = this.#solid
+    const world = this.#world
+
+    if (solid) delete solid.dataset.turn
+    world?.style.removeProperty('--lead-was')
+    world?.style.removeProperty('--lead-field')
   }
 
   get #hero(): HTMLElement | null {
@@ -61,28 +93,39 @@ class LeadShowcase extends HTMLElement {
     return this.querySelector('[data-lead-progress]')
   }
 
-  get #control(): HTMLElement | null {
-    return this.querySelector('[data-lead-rotate]')
+  get #world(): HTMLElement | null {
+    return this.querySelector('[data-lead-world]')
+  }
+
+  get #solid(): HTMLElement | null {
+    return this.querySelector('[data-lead-solid]')
+  }
+
+  get #photo(): HTMLElement | null {
+    return this.querySelector('[data-lead-photo]')
   }
 
   connectedCallback() {
     this.#leads = readJson<Theme[]>(this, 'script[data-leads]')
-    this.#shown = (this.#leads[0] as Theme).name
+    this.#worn = this.#leads[0] ?? null
     this.addEventListener('click', this.#click)
-    this.addEventListener('keydown', this.#keydown)
+    this.#solid?.addEventListener('animationend', this.#wiped)
     this.#off = onWear((theme) => this.#pick(theme))
     this.#offMode = onMode(() => this.#remode())
     const stored = recall()
 
-    if (stored && stored.name !== this.#shown) this.#draw(stored)
-    this.#mark(stored === null)
+    if (stored && stored.name !== this.#worn?.name) this.#draw(stored, true)
     delete document.documentElement.dataset.picked
 
     if (reducedMotion()) return
+    this.addEventListener('pointermove', this.#point)
+    this.addEventListener('pointerleave', this.#unpoint)
     document.addEventListener('visibilitychange', this.#hidden)
     this.#window?.addEventListener('pointerenter', this.#enter)
     this.#window?.addEventListener('pointerleave', this.#leave)
     this.#hero?.addEventListener('focusin', this.#focus)
+    this.#wide = matchMedia(WIDE)
+    this.#wide.addEventListener('change', this.#stacked)
     const hero = this.#hero
 
     if (hero) {
@@ -94,18 +137,23 @@ class LeadShowcase extends HTMLElement {
     }
 
     this.#hidden()
+    this.#stacked()
     this.#turn(stored === null)
   }
 
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
-    this.removeEventListener('keydown', this.#keydown)
+    this.removeEventListener('pointermove', this.#point)
+    this.removeEventListener('pointerleave', this.#unpoint)
+    this.#solid?.removeEventListener('animationend', this.#wiped)
     this.#off()
     this.#offMode()
     this.#cycling = false
     this.#run?.cancel()
     this.#view?.disconnect()
     this.#view = null
+    this.#wide?.removeEventListener('change', this.#stacked)
+    cancelAnimationFrame(this.#frame)
     document.removeEventListener('visibilitychange', this.#hidden)
     this.#window?.removeEventListener('pointerenter', this.#enter)
     this.#window?.removeEventListener('pointerleave', this.#leave)
@@ -113,18 +161,18 @@ class LeadShowcase extends HTMLElement {
   }
 
   get #at(): number {
-    return this.#leads.findIndex((lead) => lead.name === this.#shown)
+    return this.#leads.findIndex((lead) => lead.name === this.#worn?.name)
   }
 
-  #mark(on: boolean) {
-    const control = this.#control
+  #lean([x, y]: [number, number]) {
+    const world = this.#world
 
-    if (control) control.dataset.cycle = on ? 'on' : 'off'
+    world?.style.setProperty('--px', x.toFixed(3))
+    world?.style.setProperty('--py', y.toFixed(3))
   }
 
   #turn(on: boolean) {
     this.#cycling = on
-    this.#mark(on)
     this.#schedule()
   }
 
@@ -160,21 +208,14 @@ class LeadShowcase extends HTMLElement {
     )
   }
 
-  #step(delta: number) {
-    const count = this.#leads.length
-    const from = this.#at === -1 && delta < 0 ? 0 : this.#at
-    const theme = this.#leads[(((from + delta) % count) + count) % count] as Theme
-    choose(theme)
-    announce(`wearing ${theme.name}`)
-  }
-
   #cycle() {
     const next = this.#leads[(this.#at + 1) % this.#leads.length] as Theme
+
     fadeThrough(() => this.#draw(next))
   }
 
   #remode() {
-    const theme = this.#leads.find((lead) => lead.name === this.#shown) ?? recall()
+    const theme = this.#worn ?? recall()
 
     if (theme) show(theme)
   }
@@ -182,18 +223,99 @@ class LeadShowcase extends HTMLElement {
   #pick(theme: Theme) {
     if (this.#cycling) this.#turn(false)
 
-    if (theme.name !== this.#shown) fadeThrough(() => this.#draw(theme))
+    if (theme.name !== this.#worn?.name) fadeThrough(() => this.#draw(theme))
   }
 
-  #draw(theme: Theme) {
-    this.#shown = theme.name
+  #wipe(from: Theme, to: Theme) {
+    const world = this.#world
+    const solid = this.#solid
+
+    if (!world || !solid || reducedMotion()) return
+    const shade = mode()
+
+    world.style.setProperty('--lead-was', inMode(from, shade).cursor)
+    world.style.setProperty('--lead-field', inMode(to, shade).cursor)
+    solid.dataset.turn = solid.dataset.turn === 'a' ? 'b' : 'a'
+  }
+
+  #dress(theme: Theme) {
+    for (const input of this.querySelectorAll<HTMLInputElement>(PICKS)) input.checked = input.value === theme.name
+
+    for (const sticker of this.querySelectorAll<HTMLElement>('[data-lead-sticker]'))
+      sticker.dataset.on = String(sticker.dataset.leadSticker === theme.name)
+
+    this.#frameArt(theme)
+  }
+
+  #frameArt(theme: Theme) {
+    const photo = this.#photo
+    const turn = ++this.#photoTurn
+
+    if (!photo) return
+
+    if (isCast(theme.name)) {
+      photo.hidden = true
+      photo.replaceChildren()
+
+      return
+    }
+
+    searchIndex().then(
+      (index) => {
+        const art = index.works.find((work) => work.id === theme.work?.id)?.art
+
+        if (turn !== this.#photoTurn) return
+
+        if (!art) {
+          photo.hidden = true
+          photo.replaceChildren()
+
+          return
+        }
+
+        const image = new Image()
+
+        image.alt = ''
+        image.decoding = 'async'
+
+        if (art.srcset) {
+          image.srcset = art.srcset
+          image.sizes = PHOTO_SIZES
+        }
+
+        image.src = art.src
+
+        const place = () => {
+          if (turn !== this.#photoTurn) return
+          const before = [...photo.children]
+
+          photo.hidden = false
+          photo.append(image)
+          Promise.allSettled(image.getAnimations().map((animation) => animation.finished)).then(() => {
+            for (const old of before) old.remove()
+          })
+        }
+
+        image.decode().then(place, place)
+      },
+      () => {},
+    )
+  }
+
+  #draw(theme: Theme, still = false) {
+    const before = this.#worn
+
+    this.#worn = theme
+
+    if (before && !still) this.#wipe(before, theme)
     show(theme)
+    this.#dress(theme)
     const name = this.querySelector('[data-lead-name] > span')
 
     if (name) name.textContent = theme.name
     const sparkles = this.querySelector('sparkle-burst')
 
-    if (sparkles instanceof SparkleBurst) sparkles.burst()
+    if (!still && sparkles instanceof SparkleBurst) sparkles.burst()
     fill(this.querySelector('[data-lead-use]'), html(<LeadUse theme={theme} />))
   }
 }

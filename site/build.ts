@@ -337,15 +337,16 @@ export async function buildAssets(production: boolean): Promise<void> {
     css: shelf.url('site'),
     ...(await client(production)),
     fonts: PRELOAD.map((name) => shelf.url(name)),
-    terminals: terminalIcons(shelf),
+    terminals: picturesIn(shelf, 'terminals'),
+    stickers: picturesIn(shelf, 'stickers'),
     reload: production ? '' : '/__reload',
   }
 
   kept(join(SITE, 'assets.json'), `${JSON.stringify(manifest, null, 2)}\n`)
 }
 
-function terminalIcons(shelf: Shelf): Record<string, string> {
-  const folder = join(SITE, 'app', 'terminals')
+function picturesIn(shelf: Shelf, name: string): Record<string, string> {
+  const folder = join(SITE, 'app', name)
 
   return Object.fromEntries(
     readdirSync(folder)

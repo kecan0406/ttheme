@@ -9,7 +9,7 @@ let failed = 0
 try {
   writeFileSync(
     join(stand, 'assets.json'),
-    JSON.stringify({ css: '', js: '', builder: '', fonts: [], terminals: {}, reload: '' }),
+    JSON.stringify({ css: '', js: '', builder: '', fonts: [], terminals: {}, stickers: {}, reload: '' }),
   )
   writeFileSync(join(stand, 'marketplaces.json'), '[]')
   writeFileSync(join(stand, 'repo.json'), 'null')

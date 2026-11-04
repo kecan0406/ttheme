@@ -58,6 +58,17 @@ const SOURCES: Source[] = [
   },
 ]
 
+const STICKERS = [
+  { who: 'Souryuu Asuka Langley', by: 'kmym on X', url: 'https://x.com/kmym97457689/status/2099432694958719085' },
+  { who: 'Ayanami Rei', by: 'ADA☆ on X', url: 'https://x.com/HikawaHomura/status/1987474871451091180' },
+  {
+    who: 'Izumi Konata',
+    by: 'lllP3lll on DeviantArt, CC BY-NC-SA 3.0',
+    url: 'https://www.deviantart.com/lllp3lll/art/Konata-53704375',
+  },
+  { who: 'Shinonome Nano', by: 'Arawi Keiichi on X', url: 'https://x.com/himaraya/status/1829803478711177647' },
+]
+
 export function Credits({ facts }: { facts: Facts }) {
   return (
     <div class="ground flex min-h-dvh flex-col">
@@ -70,7 +81,7 @@ export function Credits({ facts }: { facts: Facts }) {
           <h1 class="font-display text-display-lg font-black">credits</h1>
           <p class="max-w-[68ch] text-pretty text-soft-foreground">
             Where the pictures on this site come from. Each one is shown from its source's own servers, and ttheme keeps
-            none of them.
+            none of them but the landing's stickers.
           </p>
         </div>
         <ul class="grid max-w-[68ch] gap-6">
@@ -96,6 +107,28 @@ export function Credits({ facts }: { facts: Facts }) {
               )}
             </li>
           ))}
+          <li class="grid gap-2 border-t pt-6">
+            <h2 class="font-display text-display-sm font-black">The landing's stickers</h2>
+            <p class="text-pretty text-soft-foreground">
+              The four characters on the landing, cut out of these pictures and kept with the site.
+            </p>
+            <ul class="grid gap-1">
+              {STICKERS.map((sticker) => (
+                <li class="text-sm text-muted-foreground">
+                  <span safe>{`${sticker.who}: `}</span>
+                  <a
+                    href={sticker.url}
+                    target="_blank"
+                    rel="noopener"
+                    class="inline-flex items-center gap-1 rounded-sm text-soft-foreground underline underline-offset-4 hover:text-foreground"
+                  >
+                    <span safe>{sticker.by}</span>
+                    <NewTab class="size-3" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </li>
         </ul>
       </main>
       <SiteFooter facts={facts} current={CREDITS_PATH} />

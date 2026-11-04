@@ -57,21 +57,6 @@ function OutLabel({ label }: { label: string }) {
 
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
-const SIGNS = [0, 1, 2]
-
-function Signs() {
-  return (
-    <span aria-hidden="true" class="flex gap-0.75">
-      {SIGNS.map((sign) => (
-        <i
-          class="size-2 rounded-full ring-1 ring-border forced-color-adjust-none"
-          style={`background:var(--sg${sign})`}
-        />
-      ))}
-    </span>
-  )
-}
-
 function Brand() {
   return (
     <div class="grid content-start justify-items-start gap-2.5 max-[640px]:col-span-2">
@@ -89,20 +74,16 @@ function Brand() {
   )
 }
 
-function Tagline() {
-  return (
-    <div class="grid content-start justify-items-start gap-2.5 max-[640px]:col-span-2">
-      <p class="max-w-[18ch] font-display text-display-sm font-extrabold">use your favorite character</p>
-      <Signs />
-    </div>
-  )
-}
-
-function Columns({ current }: { current: string }) {
+function Columns({ current, plain = false }: { current: string; plain?: boolean }) {
   return (
     <nav
       aria-label="more"
-      class="col-span-3 grid grid-cols-3 gap-8 max-[640px]:col-span-2 max-[640px]:grid-cols-2 max-[640px]:gap-6"
+      class={cn(
+        'grid max-[640px]:grid-cols-2 max-[640px]:gap-6',
+        plain
+          ? 'grid-cols-[repeat(3,auto)] justify-start gap-14 lead-stacked:gap-8'
+          : 'col-span-3 grid-cols-3 gap-8 max-[640px]:col-span-2',
+      )}
     >
       {COLUMNS.map((column, index) => (
         <div
@@ -110,10 +91,10 @@ function Columns({ current }: { current: string }) {
             'grid content-start gap-3',
             column.title === 'your own' && 'max-[640px]:order-3 max-[640px]:col-span-2',
           )}
-          style={`--key:var(--sg${index})`}
+          style={plain ? undefined : `--key:var(--sg${index})`}
         >
           <h2 class="flex items-center gap-2 text-2xs font-bold tracking-caps text-muted-foreground uppercase">
-            <i aria-hidden="true" class="h-1 w-3 rounded-full bg-(--key)" />
+            {plain ? null : <i aria-hidden="true" class="h-1 w-3 rounded-full bg-(--key)" />}
             <span safe>{column.title}</span>
           </h2>
           <ul data-glide class="grid gap-2">
@@ -126,7 +107,7 @@ function Columns({ current }: { current: string }) {
                   aria-current={link.href === current ? 'page' : undefined}
                   class="rounded-sm text-sm text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary"
                 >
-                  {link.brand ? (
+                  {link.brand && !plain ? (
                     <BrandIcon icon={link.brand} class="mr-1.5 inline-block size-3.5 align-middle" />
                   ) : null}
                   <span>{outside(link.href) ? <OutLabel label={link.label} /> : <span safe>{link.label}</span>}</span>
@@ -140,31 +121,51 @@ function Columns({ current }: { current: string }) {
   )
 }
 
-function Mega() {
+export function LandingFooter({ facts }: { facts: Facts }) {
   return (
-    <div aria-hidden="true" translate="no" class="relative h-[0.63em] overflow-hidden text-mega select-none">
-      <Wordmark leading={0.85} class="absolute top-0 left-1/2 -translate-x-1/2 text-primary opacity-16" />
-      <div class="absolute inset-x-0 bottom-6 flex justify-center gap-2 max-[640px]:bottom-3.5 max-[640px]:gap-1">
+    <footer data-site-footer data-lead-footer>
+      <div data-lead-footer-top>
+        <div aria-hidden="true" data-lead-footer-field>
+          <i data-lead-footer-echo />
+          <i data-lead-footer-solid />
+        </div>
+        <div aria-hidden="true" translate="no" data-lead-footer-mega class="text-mega select-none">
+          <Wordmark leading={0.85} />
+        </div>
+        <div data-lead-footer-body>
+          <div class="grid content-start justify-items-start gap-3">
+            <a
+              href="/"
+              translate="no"
+              data-slot="lockup"
+              class="rounded-sm text-display-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Mark />
+              <Wordmark />
+            </a>
+            <p class="text-base font-medium">use your favorite character</p>
+          </div>
+          <Columns current="/" plain />
+        </div>
+      </div>
+      <div aria-hidden="true" data-lead-footer-pills>
         {SLOTS.map((slot) => (
           <i
-            class="block h-5 w-11 rounded-full inset-ring inset-ring-foreground/16 forced-color-adjust-none motion-safe:animate-dance max-[640px]:h-3 max-[640px]:w-4"
-            style={`background:var(--a${slot});animation-delay:${slot * -0.6}s`}
+            class="block h-2.5 min-w-1.5 rounded-full inset-ring inset-ring-foreground/16 forced-color-adjust-none motion-safe:animate-dance"
+            style={`background:var(--a${slot});width:${slot % 3 === 0 ? 28 : 12}px;animation-delay:${slot * -0.6}s`}
           />
         ))}
       </div>
-    </div>
+      <div data-lead-footer-line class="text-xs text-muted-foreground">
+        <span>MIT</span>
+        <span translate="no" safe>{`v${facts.version}`}</span>
+        <span>a palette is colors and post numbers, never code</span>
+      </div>
+    </footer>
   )
 }
 
-export function SiteFooter({
-  facts,
-  current = '',
-  landing = false,
-}: {
-  facts: Facts
-  current?: string
-  landing?: boolean
-}) {
+export function SiteFooter({ facts, current = '' }: { facts: Facts; current?: string }) {
   return (
     <footer
       data-site-footer
@@ -172,10 +173,9 @@ export function SiteFooter({
     >
       <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-6">
         <div class="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 max-[640px]:grid-cols-2 max-[640px]:gap-6">
-          {landing ? <Tagline /> : <Brand />}
+          <Brand />
           <Columns current={current} />
         </div>
-        {landing ? <Mega /> : null}
         <div class="flex flex-wrap justify-between gap-x-4 gap-y-1.5 border-t pt-5 text-xs text-muted-foreground">
           <span safe>{`free and open, MIT, v${facts.version}`}</span>
           <span>a palette is colors and post numbers, never code</span>

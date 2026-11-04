@@ -24,10 +24,12 @@ const buttonVariants = cva(
         destructive: 'bg-destructive/16 text-destructive hover:bg-destructive/24',
         link: 'font-medium text-primary underline-offset-4 hover:underline',
         pop: 'bg-primary text-primary-foreground shadow-[0_4px_0_color-mix(in_oklab,var(--primary)_62%,black)] transition-[transform,box-shadow] duration-75 hover:bg-[color-mix(in_oklab,var(--primary)_88%,var(--fg))] active:translate-y-1 active:scale-100 active:shadow-none',
+        lead: 'bg-primary text-primary-foreground shadow-[0_3px_0_color-mix(in_oklab,var(--primary)_58%,black)] transition-[translate,box-shadow] duration-150 hover:-translate-y-px active:translate-y-0.5 active:scale-100 active:shadow-[0_1px_0_color-mix(in_oklab,var(--primary)_58%,black)] lead-stacked:bg-background lead-stacked:text-foreground lead-stacked:shadow-[0_3px_0_color-mix(in_oklab,var(--bg)_62%,black)] lead-stacked:active:shadow-[0_1px_0_color-mix(in_oklab,var(--bg)_62%,black)]',
       },
       size: {
         default: 'h-9 px-4.5',
         lg: 'h-11 px-6 text-base',
+        xl: 'h-12.5 px-5.5 text-base',
         sm: 'h-7.5 px-3',
         xs: 'h-7 gap-1.5 px-2.5 text-xs',
         chip: "h-6.5 gap-1.5 px-2.5 text-xs font-medium [&_svg:not([class*='size-'])]:size-3.5",

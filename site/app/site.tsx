@@ -30,6 +30,7 @@ import {
 } from '@/lib/gallery'
 import { homeFeatures } from '@/lib/home-features'
 import { artFor, placesFoundFor } from '@/lib/key-art'
+import { castOf } from '@/lib/lead-cast'
 import { castNamed, foundPage, lookUp, prime } from '@/lib/lookup'
 import { marketplaces } from '@/lib/marketplaces'
 import { menuCovers, menuPlaces, menuWork, releaseUrl } from '@/lib/menu'
@@ -55,6 +56,7 @@ import {
   siteMeta,
   workMeta,
 } from '@/lib/titles'
+import { firstScript } from '@/lib/wear'
 import { workPages } from '@/lib/work-page'
 import { byWork, leadOf, leadsOf, ribbon, WORK_PATH, workEntries, workPath } from '@/lib/works'
 import repo from '@/repo.json' with { type: 'json' }
@@ -388,18 +390,25 @@ export const site = new Elysia({ name: 'site' })
       },
     },
   })
-  .get('/', () =>
-    page(
+  .get('/', () => {
+    const lead = castOf(themes)[0] as Theme
+    const stickers: Record<string, string> = assets.stickers
+
+    return page(
       {
         ...siteMeta(),
         path: '/',
         ...CARD,
         ld: [siteGraph(facts)],
         cache: FIXED,
+        wear: lead,
+        flat: true,
+        head: firstScript(lead),
+        preload: { src: stickers[lead.name] as string, srcset: null, sizes: '' },
       },
-      <Home themes={themes} features={features} facts={facts} terminals={assets.terminals} />,
-    ),
-  )
+      <Home themes={themes} features={features} facts={facts} terminals={assets.terminals} stickers={stickers} />,
+    )
+  })
   .get(
     SEARCH_PATH,
     { fixed: true },
