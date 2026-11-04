@@ -25,7 +25,7 @@ push() {
   setopt extended_glob
   local lane='(site/*|docs/*|[^/]#.md|*/AGENTS.md|.claude/rules/*.md|.agents/skills/*.md)'
   local checked="" ref sha remote base tree now log
-  local -a changed outside differ
+  local -a changed outside differ rest
   [[ -r $stamp ]] && checked=$(<$stamp)
   while read -r ref sha remote base; do
     [[ $remote == refs/heads/main && -n ${sha//0} ]] || continue
@@ -36,7 +36,8 @@ push() {
     fi
     if [[ -n $checked && $(git log -1 --format=%s $sha) == 'release: '* && $(git rev-parse -q --verify "$sha^^{tree}") == "$checked" ]]; then
       changed=(${(f)"$(git diff --name-only "$sha^" $sha)"})
-      if (( ! ${#${changed:#(package.json|CHANGELOG.md)}} )); then
+      rest=(${changed:#(package.json|CHANGELOG.md)})
+      if (( ! $#rest )); then
         print -u2 "pre-push: a release commit over the tree mise run ci passed"
         continue
       fi
@@ -51,7 +52,7 @@ push() {
       changed=(${(f)"$(git ls-tree -r --name-only $sha)"})
     fi
     outside=(${changed:#$~lane})
-    if (( $#outside )) && [[ -n $checked ]] && differ=(${(f)"$(git diff --name-only $checked $sha 2>/dev/null)"}) && (( ! ${#${differ:#$~lane}} )); then
+    if (( $#outside )) && [[ -n $checked ]] && differ=(${(f)"$(git diff --name-only $checked $sha 2>/dev/null)"}) && rest=(${differ:#$~lane}) && (( ! $#rest )); then
       outside=()
     fi
     if (( $#outside )); then
