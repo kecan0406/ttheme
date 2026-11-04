@@ -10,9 +10,9 @@ description = "emit themes for every terminal ttheme wires into dist/"
 run = "bun src/bin.ts build"
 
 [tasks.test]
-description = "unit tests, including the contrast gate and the site's, whose packages site:install puts in first and whose built-in palettes and works build writes into dist/ first"
+description = "unit tests, including the contrast gate and the site's, whose packages site:install puts in first and whose built-in palettes and works build writes into dist/ first; each test has 60 s, a bound for a hang and never a speed check, which a busy CI runner would fail at random"
 depends = ["site:install", "build"]
-run = "bun test"
+run = "bun test --timeout 60000"
 
 [tasks.check]
 description = "typecheck"

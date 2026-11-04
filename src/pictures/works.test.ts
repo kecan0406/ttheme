@@ -78,9 +78,7 @@ test('a set is one uploader posting pictures of one size in a row', () => {
   assert.equal(sameSet(post({}), post({})), false, 'no credit, no set')
 })
 
-test('a transparent post stands for an opaque one only where its solid pixels are that picture, cropped or scaled', {
-  timeout: 60_000,
-}, () => {
+test('a transparent post stands for an opaque one only where its solid pixels are that picture, cropped or scaled', () => {
   const paint = (x: number, y: number): number[] => [
     Math.round(128 + 100 * Math.sin(x / 9)),
     Math.round(128 + 100 * Math.cos(y / 11)),
