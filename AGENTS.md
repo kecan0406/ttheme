@@ -14,7 +14,7 @@ Run `mise run format`, then `mise run ci`, once, right before a change leaves yo
 
 The pre-push hook (`.githooks/pre-push`, on once `git config core.hooksPath .githooks` runs, as every Claude Code session does on start) lets a push to `main` through only on a tree `ci` passed, or on a change to `site/`, `docs/`, Markdown and the instruction files alone once `mise run ci:site` passes. Never push with `--no-verify`.
 
-While a change goes back and forth with the person you work for, run no check unless a round asks to see something, and say the round is unchecked. The `PostToolUse` hooks in `.claude/settings.json` fix a file an edit tool touched (oxlint, biome) and measure the instruction files against their budgets; an edit made through Bash never reaches them.
+While a change goes back and forth with the person you work for, run no check unless a round asks to see something, and say the round is unchecked. A report on a terminal-side change says real terminals are unchecked until the `sandbox` skill has run. The `PostToolUse` hooks in `.claude/settings.json` fix a file an edit tool touched (oxlint, biome) and measure the instruction files against their budgets; an edit made through Bash never reaches them.
 
 | Task | Use it when |
 |---|---|
