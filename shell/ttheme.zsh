@@ -221,6 +221,8 @@ __tt_pins_load
 
 : ${TTHEME_BG_BLUR:=0}
 
+: ${TTHEME_BG_STICKER:=on}
+
 : ${TTHEME_BG_COLORS:=original}
 
 : ${TTHEME_MARKETPLACE_LOOKUP:=on}
@@ -1879,16 +1881,17 @@ __tt_switch() {
 
 __tt_config() {
   (( TTHEME_PALETTES_IN )) || __tt_palettes
-  local blur tab mode
+  local blur sticker tab mode
   if [[ ! -e $TTHEME_CONFIG ]]; then
     mkdir -p ${TTHEME_CONFIG:h} || return 1
     __tt_put $TTHEME_CONFIG "$TTHEME_CONFIG_TEMPLATE"
   fi
   blur=${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*}
+  sticker=${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_STICKER:='*}
   tab=${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_TAB_PALETTE:='*}
   mode=${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_MODE:='*}
   ${=${VISUAL:-${EDITOR:-vi}}} $TTHEME_CONFIG || return
-  [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*} == "$blur" ]] || __tt_redraw
+  [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*} == "$blur" && ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_STICKER:='*} == "$sticker" ]] || __tt_redraw
   [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_TAB_PALETTE:='*} == "$tab" ]] || { __tt_cli sync && __tt_reload }
   if [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_MODE:='*} != "$mode" ]]; then
     __tt_resync here

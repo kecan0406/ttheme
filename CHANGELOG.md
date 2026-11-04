@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- A background picture that stands on its own now gets a white edge like a sticker, with hair and other thin ends drawn finer, and at the full size a top, right or bottom side the picture itself cuts off runs off the window instead of showing a straight edge. Your pictures are drawn again once. `TTHEME_BG_STICKER=off`, or **Sticker** in `alt+c`, leaves the edge as it was cut.
+- On a light palette a new picture in its own colors opens as faint as its darkest colors need; it used to open fully opaque and cover the text.
+
 ## 1.2.90
 
 - A new tab starts a little sooner: it reads only what a tab needs, and the rest waits until a `ttheme` command or a completion asks for it.

@@ -222,6 +222,12 @@ In `ttheme`, put the cursor on a palette and press `tab` to open its panel. The
 - Drop a picture file on the window while find is open, or paste one: a file, its
   path, a link, or a screenshot with `ctrl+v`. PNG and JPEG work everywhere.
 
+A picture that stands on its own, cut out or already transparent, gets a white
+edge like a sticker. At the full size, a top, right or bottom side the picture
+itself cuts off runs off the window instead of showing a straight edge. **Sticker** in `alt+c` or
+`TTHEME_BG_STICKER=off` leaves the edge as it was cut, and either way every
+picture is drawn again once.
+
 The panel tunes a picture row by row with `←` `→`: **Colors**, **Size** (up to
 **fill**), **Position** (nine anchors, `1`–`9`) and **Opacity**. `=` resets a row
 and `+` every row, `space` hides the picture, `s` saves and `esc` drops what you
@@ -233,7 +239,7 @@ A palette keeps every picture you install on it. `,` and `.` move along the
 Pictures row, `s` makes the one you land on the palette's picture, and `D`
 removes it, files and all. `y` copies a line that credits the artist, ready to
 paste beside a screenshot.
-[Settings](../reference/settings.md) lists `TTHEME_BG_COLORS`, `TTHEME_BG_BLUR`
+[Settings](../reference/settings.md) lists `TTHEME_BG_COLORS`, `TTHEME_BG_STICKER`, `TTHEME_BG_BLUR`
 and every `TTHEME_FIND_*` filter.
 
 ## What init changes

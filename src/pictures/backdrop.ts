@@ -37,6 +37,7 @@ import {
   toneOf,
   transparency,
 } from '../core/png.ts'
+import { CLOSED, paperOf, type Sides, STICKERING, sidesOf, stickered } from '../core/sticker.ts'
 import { inert } from '../core/text.ts'
 import { stem as fileStem, POSITIONS, type SharedPicture } from '../core/theme.ts'
 import { listing, writeAtomic } from '../store/edits.ts'
@@ -50,6 +51,7 @@ const THUMB = 160
 const WHITE = 0.99
 const LIFT = 2
 const PLACEMENT = { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 }
+const BAND = 12 / 1008
 
 const SHELF = 'shelf'
 const ORIGINALS = 'originals'
@@ -98,7 +100,7 @@ interface Frame {
   focus: number
 }
 
-export function fillFrame(box: Box, width: number, height: number, clear: number): Frame {
+export function fillFrame(box: Box, width: number, height: number, clear: number, open: Sides = CLOSED): Frame {
   if (clear < PLACEMENT.stands) {
     const crop =
       box.w * height > box.h * width
@@ -116,13 +118,14 @@ export function fillFrame(box: Box, width: number, height: number, clear: number
     h = (w * box.h) / box.w
   }
 
-  const y = PLACEMENT.headroom * height
+  const headroom = open.top ? 0 : PLACEMENT.headroom * height
+  const y = open.bottom ? Math.max(headroom, height - h) : headroom
   const shown = Math.min(1, (height - y) / h)
 
   return {
     crop: { x: box.x, y: box.y, w: box.w, h: box.h * shown },
-    at: { x: width * (1 - PLACEMENT.margin) - w, y, w, h: h * shown },
-    focus: Math.min(1, (height / 2 - y) / h),
+    at: { x: open.right ? width - w : width * (1 - PLACEMENT.margin) - w, y, w, h: h * shown },
+    focus: Math.max(0, Math.min(1, (height / 2 - y) / h)),
   }
 }
 
@@ -168,7 +171,7 @@ function hexOf(r: number, g: number, b: number): Hex {
   return `#${[r, g, b].map((c) => Math.round(c).toString(16).padStart(2, '0')).join('')}`
 }
 
-export function peakOf(image: Rgba, box: Box): Hex {
+export function peakOf(image: Rgba, box: Box, light = false): Hex {
   const counts = new Uint32Array(256)
   const sums = new Float64Array(256 * 3)
   const step = Math.max(1, Math.floor((box.w * box.h) / 400_000))
@@ -182,9 +185,11 @@ export function peakOf(image: Rgba, box: Box): Hex {
       const g = image.data[at + 1] ?? 0
       const b = image.data[at + 2] ?? 0
 
-      const level = Math.round(
+      const bright = Math.round(
         255 * Math.sqrt(0.2126 * (LINEAR[r] ?? 0) + 0.7152 * (LINEAR[g] ?? 0) + 0.0722 * (LINEAR[b] ?? 0)),
       )
+
+      const level = light ? 255 - bright : bright
 
       counts[level] = (counts[level] ?? 0) + 1
       sums[level * 3] = (sums[level * 3] ?? 0) + r
@@ -206,7 +211,7 @@ export function peakOf(image: Rgba, box: Box): Hex {
     }
   }
 
-  return '#ffffff'
+  return light ? '#000000' : '#ffffff'
 }
 
 function inkOf(image: Rgba, lift: number, light: boolean): Mask {
@@ -338,30 +343,53 @@ export interface Inked {
   clear: number
   ink: (light: boolean) => Mask
   image: Rgba
-  peak: Hex
+  plain: Rgba
+  peak: (light: boolean) => Hex
+  open: Sides
 }
 
-export function inked(source: Rgba, cut = false): Inked {
-  const image = cut ? matte(source) : source
-  const box = figureBox(image)
+function bandOf(box: Box, clear: number, open: Sides): number {
+  const frame = fillFrame(box, FILL.width, FILL.height, clear, open)
+
+  return (BAND * FILL.height * frame.crop.w) / frame.at.w
+}
+
+export function inked(source: Rgba, cut = false, sticker = false): Inked {
+  const plain = cut ? matte(source) : source
+  const bare = figureBox(plain)
+  const clear = transparency(plain, bare)
   const inks = new Map<boolean, Mask>()
-  let peak: Hex | undefined
+  const peaks = new Map<boolean, Hex>()
+
+  const peak = (light: boolean) => {
+    const held = peaks.get(light) ?? peakOf(plain, bare, light)
+    peaks.set(light, held)
+
+    return held
+  }
+
+  const sides = sticker && clear >= PLACEMENT.stands ? sidesOf(plain, bare) : CLOSED
+
+  const drawn =
+    sticker && clear >= PLACEMENT.stands
+      ? stickered(plain, bare, bandOf(bare, clear, sides), sides, { paper: paperOf(peak(false)), erase: cut })
+      : undefined
+
+  const image = drawn ?? plain
 
   return {
-    box,
-    clear: transparency(image, box),
+    box: drawn ? figureBox(drawn) : bare,
+    clear,
     ink: (light) => {
-      const held = inks.get(light) ?? inkOf(image, liftOf(image, box, light), light)
+      const held = inks.get(light) ?? inkOf(image, liftOf(plain, bare, light), light)
       inks.set(light, held)
 
       return held
     },
     image,
-    get peak() {
-      peak ??= peakOf(image, box)
-
-      return peak
-    },
+    plain,
+    peak,
+    open: drawn ? sides : CLOSED,
   }
 }
 
@@ -382,10 +410,11 @@ function draw(
   coloring: Coloring,
   cut: boolean,
   light: boolean,
+  sticker: boolean,
 ): Drawing {
-  const held = inked(source, cut)
-  const { box, clear, image } = held
-  const frame = fillFrame(box, width, height, clear)
+  const held = inked(source, cut, sticker)
+  const { box, clear, image, open } = held
+  const frame = fillFrame(box, width, height, clear, open)
   const k = Math.min(1, FIGURE / Math.max(box.w, box.h))
   const at = { x: 0, y: 0, w: Math.round(box.w * k), h: Math.round(box.h * k) }
   const across = (blurring * at.w * frame.crop.w) / (box.w * frame.at.w)
@@ -396,7 +425,7 @@ function draw(
       figure: blurColors(resample(image, box, at.w, at.h), across),
       fill: blurColors(placeColors(image, frame, width, height), blurring),
       focus: frame.focus,
-      peak: held.peak,
+      peak: held.peak(light),
     }
   }
 
@@ -466,9 +495,9 @@ export function tryOn(
   framing?: Partial<Framing> & { scale?: number },
   coloring: Coloring = 'tone',
 ) {
-  const { box, clear } = held
+  const { box, clear, open } = held
   const ink = held.ink(isLight(colors))
-  const frame = fillFrame(box, width, height, clear)
+  const frame = fillFrame(box, width, height, clear, open)
   const fill = Math.round((100 * frame.at.w) / frame.crop.w / Math.min(width / box.w, height / box.h))
   const size = framing?.size ?? 'fill'
 
@@ -490,7 +519,7 @@ export function tryOn(
           focus: frame.focus,
         }
 
-  const fallback = coloring === 'original' ? originalOpacity(colors, held.peak) : tone.opacity
+  const fallback = coloring === 'original' ? originalOpacity(colors, held.peak(isLight(colors))) : tone.opacity
   const opacity = framing?.opacity ?? (framing?.scale === undefined ? fallback : rescaled(framing.scale, 1, fallback))
 
   return {
@@ -524,6 +553,7 @@ export interface Picture {
   original?: string
   cut?: string
   matte?: number
+  sticker?: number
   light?: true
 }
 
@@ -1020,6 +1050,7 @@ export function installBackdrop(
   window: { width: number; height: number },
   blurring: number,
   coloring: Coloring = 'tone',
+  sticker = false,
 ): string[] {
   const dir = backgroundsDir(configHome)
   const name = colors.name
@@ -1027,7 +1058,18 @@ export function installBackdrop(
   const store = readStore(dir)
   const rack = rackIn(store, name) ?? { active: key, pictures: [] }
   const size = fillSize(window.width, window.height)
-  const drawing = draw(image, size.width, size.height, blurring, coloring, source.cut === true, isLight(colors))
+
+  const drawing = draw(
+    image,
+    size.width,
+    size.height,
+    blurring,
+    coloring,
+    source.cut === true,
+    isLight(colors),
+    sticker,
+  )
+
   const drawn = made(name, key, drawing, tone.color)
   const original = kept(name, key)
 
@@ -1044,6 +1086,7 @@ export function installBackdrop(
     ...(source.source ? { source: source.source } : {}),
     original: `${original}.${source.ext}`,
     ...(source.cut ? { cut: `${original}.cut.png`, matte: MATTING } : {}),
+    ...(sticker ? { sticker: STICKERING } : {}),
   }
 
   const old = rack.pictures.find((held) => held.key === key)
@@ -1318,6 +1361,7 @@ function adopted(
   cut: boolean,
   aligns: boolean,
   home: string,
+  sticker: number | undefined,
 ): Picture {
   const next: Picture = {
     ...picture,
@@ -1328,6 +1372,12 @@ function adopted(
     window: size,
     ...(cut ? { cut: `${kept(name, picture.key)}.cut.png` } : {}),
     ...(cut || picture.cut ? { matte: MATTING } : {}),
+  }
+
+  if (sticker) {
+    next.sticker = sticker
+  } else {
+    delete next.sticker
   }
 
   if (coloring === 'original') {
@@ -1388,6 +1438,7 @@ export function redrawn(
   home: string,
   cut: boolean,
   coloring: Coloring = coloringOf(picture),
+  sticker = false,
 ): Picture | null {
   const dir = backgroundsDir(configHome)
   const size = windowOfPicture(dir, picture)
@@ -1405,6 +1456,7 @@ export function redrawn(
     coloring,
     cut || picture.cut !== undefined,
     isLight(paint.colors),
+    sticker,
   )
 
   if (cut) {
@@ -1414,7 +1466,21 @@ export function redrawn(
   const peak = drawing.coloring === 'original' ? drawing.peak : undefined
   const result = made(name, picture.key, drawing, paint.hue.color)
 
-  return adopted(dir, name, picture, result, paint, coloring, peak, size, blurring, cut, aligns, home)
+  return adopted(
+    dir,
+    name,
+    picture,
+    result,
+    paint,
+    coloring,
+    peak,
+    size,
+    blurring,
+    cut,
+    aligns,
+    home,
+    sticker ? STICKERING : undefined,
+  )
 }
 
 export function swapped(
@@ -1442,6 +1508,7 @@ export function swapped(
         false,
         aligns,
         home,
+        picture.sticker,
       )
     : null
 }

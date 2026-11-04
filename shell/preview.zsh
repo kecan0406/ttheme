@@ -1210,7 +1210,7 @@ __tt_pv_conf_save() {
     (( ${pairs[(Ie)TTHEME_TAB_PALETTE]} )) && __tt_cli sync > /dev/null 2>&1 && __tt_reload
     if (( ${pairs[(Ie)TTHEME_MODE]} )); then
       __tt_pv_redraw remode
-    elif (( ${pairs[(Ie)TTHEME_BG_BLUR]} )); then
+    elif (( ${pairs[(Ie)TTHEME_BG_BLUR]} || ${pairs[(Ie)TTHEME_BG_STICKER]} )); then
       __tt_pv_redraw
     fi
   else
@@ -2900,8 +2900,8 @@ __tt_preview() {
   local -F mlast=0 pvsized=0
   local mact="" mzone="" pvmouse="" pasted="" pvrest=""
   local -a pvz=()
-  local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=(Mode "New tabs" Announce "Search fx" Mouse Blur Pictures)
-  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "on off" "0 1 2 3 4" "original tone") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "on off" "off 1px 2px 3px 4px" "original tinted")
+  local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS TTHEME_BG_STICKER) clabel=(Mode "New tabs" Announce "Search fx" Mouse Blur Pictures Sticker)
+  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "on off" "0 1 2 3 4" "original tone" "on off") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "on off" "off 1px 2px 3px 4px" "original tinted" "on off")
   local -A cnote=(
     TTHEME_MODE:auto "Every palette in the system's mode, following it as it changes"
     TTHEME_MODE:light "Every palette in its light mode" TTHEME_MODE:dark "Every palette in its dark mode"
@@ -2912,6 +2912,8 @@ __tt_preview() {
     TTHEME_BG_BLUR:0 "Pictures stay sharp" TTHEME_BG_BLUR:1 "Pictures soften a little behind the text"
     TTHEME_BG_BLUR:2 "Pictures soften behind the text" TTHEME_BG_BLUR:3 "Pictures blur behind the text"
     TTHEME_BG_BLUR:4 "Pictures blur well behind the text"
+    TTHEME_BG_STICKER:on "Pictures that stand alone get a white edge, like a sticker"
+    TTHEME_BG_STICKER:off "Pictures keep the edge they were cut with"
     TTHEME_BG_COLORS:original "New pictures keep their own colors"
     TTHEME_BG_COLORS:tone "New pictures are tinted in the palette's color"
   )

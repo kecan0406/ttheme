@@ -42,7 +42,7 @@ import {
 import { fetchBytes, fetchCredits, fetchLent, fetchPost, fetchProfiles } from '../pictures/booru-net.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../pictures/cutout.ts'
 import { TIMEOUT } from '../pictures/redrawing.ts'
-import { blurOf, coloringFor } from '../store/wiring.ts'
+import { blurOf, coloringFor, stickerOf } from '../store/wiring.ts'
 import { colorless } from '../terminals/osc.ts'
 import { linkable } from '../terminals/terminal.ts'
 import { linked } from '../tui/ansi.ts'
@@ -249,6 +249,7 @@ async function install(
     { width: 0, height: 0 },
     blurOf(configHome),
     coloringFor(configHome),
+    stickerOf(configHome),
   )
   const picture = rackOf(configHome, entry.name).find((p) => p.key === imageKey(shared))
 

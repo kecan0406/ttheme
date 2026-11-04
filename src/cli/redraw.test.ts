@@ -5,7 +5,16 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { inMode, type Manifest, type PaletteEntry } from '../core/manifest.ts'
 import { encodeRgba, type Rgba } from '../core/png.ts'
-import { backgroundsDir, colorsOf, installBackdrop, type Picture, paintFor, rackOf } from '../pictures/backdrop.ts'
+import { STICKERING } from '../core/sticker.ts'
+import {
+  backgroundsDir,
+  colorsOf,
+  installBackdrop,
+  type Picture,
+  paintFor,
+  rackOf,
+  readStore,
+} from '../pictures/backdrop.ts'
 import { readAvailable, writeBundled } from '../store/available.ts'
 import { readInstalled, writeInstalled } from '../store/installed.ts'
 import { moveColors } from './init.ts'
@@ -59,6 +68,8 @@ function install(configHome: string, id = 7, original?: Uint8Array): Picture {
     { site: 'safebooru', id, ext: 'png', bytes: original ?? encodeRgba(image) },
     { width: 40, height: 20 },
     0,
+    'tone',
+    true,
   )
 
   return rackOf(configHome, 'ttheme/orla')[0] as Picture
@@ -139,4 +150,56 @@ test('a picture whose original cannot be read stays in its tone without keeping 
   await redrawColoring(configHome, 'ttheme/orla', 'tone', 'safebooru_7', configHome)
   await moveColors(configHome, () => {}, configHome)
   assert.equal(coloring('safebooru_7'), 'tone')
+})
+
+test('turning the sticker off draws each picture again once, and a picture with no original is left alone', async () => {
+  const configHome = home('dark')
+  const before = install(configHome)
+  const lines: string[] = []
+  const again = () => redrawPictures(configHome, (line) => lines.push(line), configHome, { emit: false })
+  assert.equal(before.sticker, STICKERING)
+  assert.equal(await again(), 0)
+
+  writeFileSync(join(configHome, 'ttheme', 'config.zsh'), ': ${TTHEME_MODE:=dark}\n: ${TTHEME_BG_STICKER:=off}\n')
+  assert.equal(await again(), 1)
+
+  const off = rackOf(configHome, 'ttheme/orla')[0]
+  assert.equal(off?.sticker, undefined)
+  assert.equal(await again(), 0)
+
+  const dir = backgroundsDir(configHome)
+  const stored = readStore(dir)
+  const held = stored.palettes['ttheme/orla']?.pictures[0]
+  assert.ok(held)
+  delete held.original
+  writeFileSync(join(dir, 'images.json'), JSON.stringify(stored))
+  writeFileSync(join(configHome, 'ttheme', 'config.zsh'), ': ${TTHEME_MODE:=dark}\n')
+  lines.length = 0
+  assert.equal(await again(), 0)
+  assert.deepEqual(lines, [])
+})
+
+test('a picture the sticker cannot be drawn on says so once, and is not tried again on every sync', async () => {
+  const configHome = home('dark')
+  const worn = readAvailable(configHome).palettes.find((entry) => entry.name === 'ttheme/orla') as PaletteEntry
+
+  installBackdrop(
+    configHome,
+    colorsOf(worn),
+    worn.backdrop,
+    figure(),
+    { site: 'safebooru', id: 9, ext: 'png', bytes: new Uint8Array([9]) },
+    { width: 40, height: 20 },
+    0,
+  )
+
+  const lines: string[] = []
+  const again = () => redrawPictures(configHome, (line) => lines.push(line), configHome, { emit: false })
+  await again()
+  assert.equal(lines.filter((line) => line.includes('left as it was')).length, 1)
+  assert.equal(rackOf(configHome, 'ttheme/orla')[0]?.sticker, STICKERING)
+
+  lines.length = 0
+  assert.equal(await again(), 0)
+  assert.deepEqual(lines, [])
 })

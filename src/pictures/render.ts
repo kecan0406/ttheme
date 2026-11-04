@@ -63,6 +63,7 @@ interface Show {
   colors: Colors
   tone: Tone
   blur: number
+  sticker: boolean
   coloring: Coloring
   tune?: Partial<Framing> & { scale?: number }
 }
@@ -86,6 +87,7 @@ interface Backdrop {
   width: number
   height: number
   blur: number
+  sticker: boolean
   coloring: Coloring
   tune?: Tune
   aligns?: boolean
@@ -106,6 +108,7 @@ interface Redraw {
   key: string
   paint: Paint
   blur: number
+  sticker: boolean
   aligns: boolean
   coloring?: Coloring
 }
@@ -156,13 +159,23 @@ let held: { from: string; clear: number; inked: Inked } | undefined
 async function work(task: Task): Promise<number | boolean | Look | Picture | Shown | null> {
   if (task.job === 'twin') {
     const whole =
-      held?.from === task.whole ? held.inked.image : decodeImage(new Uint8Array(readFileSync(task.whole)), MAX_PIXELS)
+      held?.from === task.whole ? held.inked.plain : decodeImage(new Uint8Array(readFileSync(task.whole)), MAX_PIXELS)
 
     return sameArtwork(decodeImage(new Uint8Array(readFileSync(task.cut)), MAX_PIXELS), whole)
   }
 
   if (task.job === 'redraw') {
-    return redrawOne(task.home, task.name, task.key, task.paint, task.blur, task.aligns, task.user, task.coloring)
+    return redrawOne(
+      task.home,
+      task.name,
+      task.key,
+      task.paint,
+      task.blur,
+      task.aligns,
+      task.user,
+      task.coloring,
+      task.sticker,
+    )
   }
 
   if (task.job === 'shrink') {
@@ -172,7 +185,7 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
   if (task.job === 'show') {
     if (held?.from !== task.from) {
       const image = decodeImage(new Uint8Array(readFileSync(task.from)), MAX_PIXELS)
-      held = { from: task.from, clear: transparency(image), inked: inked(image, task.cut) }
+      held = { from: task.from, clear: transparency(image), inked: inked(image, task.cut, task.sticker) }
     }
 
     const { image, fill, opacity } = tryOn(
@@ -208,6 +221,7 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
       task,
       task.blur,
       task.coloring,
+      task.sticker,
     )
     const picture = task.tune && rackOf(task.home, task.colors.name).find((p) => p.key === imageKey(task.origin))
 

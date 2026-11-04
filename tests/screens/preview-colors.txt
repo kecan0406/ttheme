@@ -10,7 +10,6 @@
 
 
 
-
 Settings
   Mode        auto   light  [dark]
   New tabs   [off]  seq
@@ -19,6 +18,7 @@ Settings
   Mouse      [on]  off
   Blur       [off]  1px   2px   3px   4px
 ▶ Pictures    original  [tinted]
+  Sticker    [on]  off
 
 New pictures are tinted in the palette's color
  [SETTINGS] ↑↓ move   ←→ change   enter save                                             esc cancel

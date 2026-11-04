@@ -389,7 +389,8 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'redraw',
     args: [],
-    about: 'Draw the background pictures again after TTHEME_BG_BLUR changed — ttheme config and preview call this',
+    about:
+      'Draw the background pictures again after TTHEME_BG_BLUR or TTHEME_BG_STICKER changed — ttheme config and preview call this',
     section: 'setup',
     hidden: true,
   },

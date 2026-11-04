@@ -64,7 +64,7 @@ import { booruTags, find, readAvailable } from '../../store/available.ts'
 import { writeAtomic } from '../../store/edits.ts'
 import { readInstalled } from '../../store/installed.ts'
 import { configHome } from '../../store/paths.ts'
-import { blurOf, coloringFor, settingDefault, withSetting } from '../../store/wiring.ts'
+import { blurOf, coloringFor, settingDefault, stickerOf, withSetting } from '../../store/wiring.ts'
 import { CLEAR, viewsInWindow, viewVar } from '../../terminals/terminal.ts'
 import type { Tone as NoticeTone } from '../../tui/bar.ts'
 import { edit, plain } from '../../tui/field.ts'
@@ -558,6 +558,7 @@ class Finder {
   private readonly about: About | undefined
   private readonly characters: ReadonlyMap<string, About>
   private readonly blurring: number
+  private readonly sticker: boolean
   private readonly start: Start | undefined
   private readonly paint: Paint
   private readonly kept: Kept
@@ -571,6 +572,7 @@ class Finder {
     this.characters = charactersOf(manifest.works)
     this.tone = backdropTone(entry)
     this.blurring = blurOf(home)
+    this.sticker = stickerOf(home)
     const untuned: Tuning = { size: 'fill', at: TOP_RIGHT, opacity: this.tone.opacity }
     this.view = {
       palette: entry.name,
@@ -3470,6 +3472,7 @@ class Finder {
       colors: this.entry,
       tone: this.tone,
       blur: (this.blurring * width) / fillSize(W, H).width,
+      sticker: this.sticker,
       coloring,
       ...(tuned
         ? {
@@ -3622,6 +3625,7 @@ class Finder {
         width: this.cols * this.cell.w,
         height: this.rows * this.cell.h,
         blur: this.blurring,
+        sticker: this.sticker,
         coloring: view.coloring,
         ...(tune ? { tune, aligns: alignsFor(readInstalled(this.home).terminals), user: homedir() } : {}),
       })

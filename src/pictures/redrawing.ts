@@ -58,6 +58,7 @@ export async function redrawOne(
   aligns: boolean,
   home: string,
   coloring?: Coloring,
+  sticker = false,
 ): Promise<Picture | null> {
   const dir = backgroundsDir(configHome)
   const picture = rackIn(readStore(dir), name)?.pictures.find((held) => held.key === key)
@@ -66,8 +67,11 @@ export async function redrawOne(
     return null
   }
 
+  const again = (load: () => Rgba | null, cut: boolean) =>
+    redrawn(configHome, name, picture, load, paint, blurring, aligns, home, cut, coloring, sticker)
+
   if (picture.cut) {
-    return redrawn(configHome, name, picture, cutOf(dir, picture), paint, blurring, aligns, home, false, coloring)
+    return again(cutOf(dir, picture), false)
   }
 
   if (undrawn(picture)) {
@@ -80,13 +84,13 @@ export async function redrawOne(
         return null
       }
 
-      return redrawn(configHome, name, picture, () => image, paint, blurring, aligns, home, true, coloring)
+      return again(() => image, true)
     }
 
-    return redrawn(configHome, name, picture, () => image, paint, blurring, aligns, home, false, coloring)
+    return again(() => image, false)
   }
 
-  return redrawn(configHome, name, picture, originalOf(dir, picture), paint, blurring, aligns, home, false, coloring)
+  return again(originalOf(dir, picture), false)
 }
 
 function cutAlpha(image: Rgba, cut: Rgba, channel: number): boolean {

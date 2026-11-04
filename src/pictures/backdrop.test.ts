@@ -19,6 +19,7 @@ import {
   type Rgba,
   retone,
 } from '../core/png.ts'
+import { STICKERING } from '../core/sticker.ts'
 import { ROOT } from '../root.ts'
 import {
   applyRedraw,
@@ -989,4 +990,162 @@ test('a damaged images.json says so, whatever shape it is in', () => {
 
   writeFileSync(join(dir, 'images.json'), '{"version":1,"palettes":{}}')
   assert.deepEqual(readStore(dir).palettes, {})
+})
+
+const FROST: Colors = {
+  name: 'frost',
+  background: '#faf8fb',
+  foreground: '#1e1b22',
+  cursor: '#6b5a9a',
+  ansi: [
+    '#f4f1f6',
+    '#a14648',
+    '#2c5a31',
+    '#815d00',
+    '#306797',
+    '#874e8b',
+    '#005a5b',
+    '#2b2c2e',
+    '#777779',
+    '#8c3a3d',
+    '#1c4b25',
+    '#6f4f00',
+    '#1e5888',
+    '#793e7e',
+    '#004a4b',
+    '#1f2021',
+  ],
+}
+
+function standing(): Rgba {
+  const data = new Uint8Array(800 * 1200 * 4)
+
+  for (let y = 240; y < 960; y++) {
+    for (let x = 200; x < 600; x++) {
+      if (((x - 400) / 200) ** 2 + ((y - 600) / 360) ** 2 <= 1) {
+        data.set(y < 600 ? [245, 240, 235, 255] : [40, 30, 25, 255], (y * 800 + x) * 4)
+      }
+    }
+  }
+
+  return { width: 800, height: 1200, data }
+}
+
+function dusk(): Rgba {
+  const image = standing()
+
+  for (let at = 0; at < image.data.length; at += 4) {
+    if (image.data[at + 3]) {
+      image.data.set([60, 30, 90, 255], at)
+    }
+  }
+
+  return image
+}
+
+test('on a light palette a picture is as faint as its darkest pixel needs, so a fresh one does not cover the text', () => {
+  const black = standing()
+
+  for (let at = 0; at < black.data.length; at += 4) {
+    if (black.data[at + 3]) {
+      black.data.set([8, 8, 8, 255], at)
+    }
+  }
+
+  const held = inked(black)
+  const shown = tryOn(held, FROST, backdropTone(FROST), 80, 40, 0, undefined, 'original')
+  assert.equal(held.peak(true), '#080808')
+  assert.ok(shown.opacity < 0.5, `opacity ${shown.opacity}`)
+  assert.equal(originalOpacity(TAMSIN, held.peak(false)), originalOpacity(TAMSIN, '#080808'))
+})
+
+test('a sticker is one drawing for both modes: dark ink shows the paper and light ink shows the rim', () => {
+  const held = inked(standing(), false, true)
+  const y = Math.floor(held.image.height / 2)
+  const row = Array.from({ length: held.image.width }, (_, x) => x)
+  const dark = held.ink(false)
+  const light = held.ink(true)
+  const first = row.find((x) => (held.image.data[(y * held.image.width + x) * 4 + 3] ?? 0) > 0) ?? 0
+
+  const paper =
+    row.find((x) => {
+      const pixel = (y * held.image.width + x) * 4
+
+      return (held.image.data[pixel] ?? 0) > 240 && held.image.data[pixel + 3] === 255
+    }) ?? 0
+
+  const at = y * held.image.width
+
+  assert.ok((dark.data[at + paper] ?? 0) > 230, 'the paper takes full ink on a dark palette')
+  assert.ok((light.data[at + paper] ?? 255) < 40, 'the paper takes almost none on a light one')
+  assert.ok(
+    Math.max(...row.slice(first, paper).map((x) => light.data[at + x] ?? 0)) > 100,
+    'the rim shows on a light one',
+  )
+})
+
+test('a sticker never moves how strong a picture is drawn, on a dark palette or a light one', () => {
+  for (const image of [standing(), dusk()]) {
+    const bare = inked(image)
+    const held = inked(image, false, true)
+    assert.notEqual(held.image, image)
+    assert.equal(held.plain, image)
+    assert.equal(held.peak(false), bare.peak(false))
+    assert.equal(held.peak(true), bare.peak(true))
+    assert.equal(
+      tryOn(held, TAMSIN, backdropTone(TAMSIN), 80, 40, 0, undefined, 'original').opacity,
+      tryOn(bare, TAMSIN, backdropTone(TAMSIN), 80, 40, 0, undefined, 'original').opacity,
+    )
+  }
+})
+
+test('the paper of a dark picture is no brighter than the picture', () => {
+  const held = inked(dusk(), false, true)
+  const brightest = Math.max(...held.image.data.filter((_, at) => at % 4 === 0))
+  assert.ok(brightest <= 70, `brightest red ${brightest}`)
+})
+
+test('a sticker goes only on a picture that stands on its own', () => {
+  const opaque = { width: 40, height: 20, data: new Uint8Array(40 * 20 * 4).fill(200) }
+  const held = inked(opaque, false, true)
+  assert.equal(held.image, opaque)
+  assert.deepEqual(held.open, { top: false, right: false, bottom: false })
+})
+
+test('a stickered figure the picture cut off runs off that edge of the window', () => {
+  const box = { x: 0, y: 0, w: 800, h: 600 }
+  const closed = fillFrame(box, 1880, 1008, 40)
+  const top = fillFrame(box, 1880, 1008, 40, { top: true, right: false, bottom: false })
+  const right = fillFrame(box, 1880, 1008, 40, { top: false, right: true, bottom: false })
+  assert.equal(closed.at.y > 0, true)
+  assert.equal(top.at.y, 0)
+  assert.equal(right.at.x + right.at.w, 1880)
+
+  const short = { x: 0, y: 0, w: 1600, h: 400 }
+  const bottom = fillFrame(short, 1880, 1008, 40, { top: false, right: false, bottom: true })
+  assert.equal(Math.round(bottom.at.y + bottom.at.h), 1008)
+})
+
+test('an install records that it drew the sticker, and the file holds the band', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-sticker-'))
+  const dir = backgroundsDir(configHome)
+  const image = standing()
+
+  installBackdrop(
+    configHome,
+    TAMSIN,
+    backdropTone(TAMSIN),
+    image,
+    { site: 'safebooru', id: 31, ext: 'png', bytes: encodeRgba(image) },
+    { width: 400, height: 200 },
+    0,
+    'original',
+    true,
+  )
+
+  const [picture] = rackOf(configHome, TAMSIN.name)
+  assert.equal(picture?.sticker, STICKERING)
+
+  const file = decodePng(new Uint8Array(readFileSync(join(dir, `${picture?.stem}.png`))))
+  assert.ok(file.width > 400 && file.height > 720, `${file.width}×${file.height} holds the band`)
 })

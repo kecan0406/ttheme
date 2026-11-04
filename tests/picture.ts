@@ -36,6 +36,8 @@ export function installTestPicture(
     },
     window,
     0,
+    'tone',
+    true,
   )
 }
 

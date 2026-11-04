@@ -89,6 +89,10 @@ export const CONFIG_SETTINGS = {
     doc: '# soften the background pictures behind the text: a blur radius in screen pixels, 0 keeps them sharp — changing it draws every picture again (default 0)',
     default: '0',
   },
+  TTHEME_BG_STICKER: {
+    doc: '# the white edge around a picture that stands on its own: on cuts it like a sticker, off leaves the edge as it is — changing it draws every picture again (default on)',
+    default: 'on',
+  },
   TTHEME_BG_COLORS: {
     doc: '# the colors new background pictures are drawn in: original keeps its own, tone tints a picture in one color of its palette — preview switches each picture later (default original)',
     default: 'original',
@@ -217,6 +221,10 @@ export function blurOf(configHome: string): number {
   const value = Number(settingValue(configHome, 'TTHEME_BG_BLUR'))
 
   return Number.isFinite(value) ? Math.min(BLUR_MOST, Math.max(0, value)) : 0
+}
+
+export function stickerOf(configHome: string): boolean {
+  return settingValue(configHome, 'TTHEME_BG_STICKER') !== 'off'
 }
 
 export function modeSetting(configHome: string): Setting {
