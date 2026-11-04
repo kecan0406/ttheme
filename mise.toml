@@ -311,8 +311,12 @@ hide = true
 run = "zsh tests/checked.zsh begin"
 
 [tasks."ci:checks"]
-description = "every check the ci workflow runs but the parity walk, which it walks in parallel jobs, a few terminals each"
-depends = ["commits", "lint", "check", "test", "shell:check", "bin:check", "tui", "site:check", "costs"]
+description = "the ci workflow's commit, lint, type, unit, bundle and site checks, the job that compiles; ci:shells and the parity walk run in jobs of their own"
+depends = ["commits", "lint", "check", "test", "bin:check", "site:check"]
+
+[tasks."ci:shells"]
+description = "the ci workflow's checks that drive a real zsh through a pty or tmux and wait on what it draws: shell:check, the TUI screens and the cost ratchet, in a job of its own so the compilers in ci:checks never starve their waits"
+depends = ["shell:check", "tui", "costs"]
 
 [tasks.commits]
 description = "every commit origin/main lacks has a subject of `<area>: <summary>` in 72 characters at most, an area AGENTS.md (\"Commits\") lists and no full stop"
@@ -320,5 +324,5 @@ run = "zsh tests/commits.zsh"
 
 [tasks.ci]
 description = "everything the ci workflow runs, the parity walk after the rest — and, once it passes, marks the tree it checked, which `mise run release` then does not check again"
-depends = ["ci:begin", "ci:checks", "parity"]
+depends = ["ci:begin", "ci:checks", "ci:shells", "parity"]
 run = "zsh tests/checked.zsh end"
