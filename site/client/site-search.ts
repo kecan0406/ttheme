@@ -3,8 +3,7 @@ import type { KeyArt } from '@/lib/art'
 import { BROWSE_PATH } from '@/lib/gallery'
 import { makePath } from '@/lib/names'
 import { html } from '@/lib/render'
-import { allWorks, type Hit, isWorn, marketsFor, type SearchIndex, SHOWN, searchWorks } from '@/lib/search'
-import type { Theme } from '@/lib/themes'
+import { allWorks, type Hit, isWorn, marketsFor, type SearchIndex, SHOWN, searchWorks, type Worn } from '@/lib/search'
 import { paletteNameOf, requestUrl } from '../../src/core/names.ts'
 import { announce, fill, parsed, reducedMotion } from './dom'
 import { composing, letter, typing } from './keys'
@@ -12,7 +11,7 @@ import { NameLookup } from './names'
 import { heldIndex, searchIndex } from './search-index'
 import type { ItemHighlighted } from './ui/change'
 import { hide, show } from './ui/popover'
-import { fallback, recall } from './wear'
+import { current, fallback, recall } from './wear'
 
 const SAY_MS = 600
 
@@ -32,7 +31,14 @@ const PREVIEWS = '(min-width: 720px)'
 
 const warmed = new Set<string>()
 
-function keyOf(hit: Hit | null, worn: Theme | null): string {
+function wornNow(): Worn {
+  const name = current()
+  const kept = recall() ?? fallback()
+
+  return { name, work: kept?.name === name ? (kept.work?.id ?? null) : null }
+}
+
+function keyOf(hit: Hit | null, worn: Worn): string {
   return hit ? `${hit.work.id}:${hit.palette.name}:${isWorn(hit, worn)}` : ''
 }
 
@@ -338,7 +344,7 @@ class SiteSearch extends HTMLElement {
       ? []
       : query
         ? searchWorks(index.works, query, this.#names.named(query))
-        : allWorks(index.works, recall() ?? fallback())
+        : allWorks(index.works, wornNow())
 
     const known = new Set(all.map((hit) => hit.work.id))
 
@@ -399,7 +405,7 @@ class SiteSearch extends HTMLElement {
 
   #preview(hit: Hit | null) {
     window.clearTimeout(this.#settling)
-    const worn = recall() ?? fallback()
+    const worn = wornNow()
     const key = keyOf(hit, worn)
     const host = document.querySelector('[data-search-preview]')
 

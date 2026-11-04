@@ -1,5 +1,4 @@
 import type { KeyArt } from '@/lib/art'
-import type { Theme } from '@/lib/themes'
 
 export const SEARCH_PATH = '/browse/search.json'
 
@@ -95,18 +94,23 @@ export function searchWorks(works: readonly SearchWork[], query: string, named: 
     .map(({ hit }) => hit)
 }
 
-export function isWorn(hit: Hit, worn: Theme | null): boolean {
-  return hit.work.id === worn?.work?.id && hit.palette.slug === worn.name
+export interface Worn {
+  name: string
+  work: string | null
 }
 
-export function allWorks(works: readonly SearchWork[], worn: Theme | null): Hit[] {
+export function isWorn(hit: Hit, worn: Worn): boolean {
+  return hit.palette.slug === worn.name && (worn.work === null || hit.work.id === worn.work)
+}
+
+export function allWorks(works: readonly SearchWork[], worn: Worn): Hit[] {
   const hits = works.map((work) => ({ work, palette: work.palettes[0] as SearchPalette }))
-  const mine = hits.find(({ work }) => work.id === worn?.work?.id)
 
-  if (!mine) return hits
-  const palette = mine.work.palettes.find((one) => one.slug === worn?.name) ?? mine.palette
+  const mine = works
+    .flatMap((work) => work.palettes.map((palette) => ({ work, palette })))
+    .find((hit) => isWorn(hit, worn))
 
-  return [{ work: mine.work, palette }, ...hits.filter((hit) => hit !== mine)]
+  return mine ? [mine, ...hits.filter((hit) => hit.work !== mine.work)] : hits
 }
 
 export function marketsFor(markets: readonly SearchMarket[], query: string): SearchMarket[] {
