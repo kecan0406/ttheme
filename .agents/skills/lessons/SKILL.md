@@ -28,14 +28,14 @@ A lesson is written once, in the smallest place that holds it. Most lessons go i
 | A rule for one folder, once the same mistake happened twice | the `AGENTS.md` in that folder |
 | A trap the code cannot show in files across folders, once it cost a mistake twice | the `.claude/rules` file whose `paths` cover them |
 | A procedure with steps and commands | a skill in `.agents/skills/` |
-| A measurement, a date, a version, a reason, how it used to be | the commit body |
+| A measurement, a date, a version, how it used to be, a reason the rule works without | the commit body |
 
 "Twice" is read from the commit bodies, or the person you work for asks for the line.
 
 ## 3. Write it as a rule
 
 - One sentence that says what to do or not do.
-- No reason, number, version, date, issue or history.
+- No number, version, date, issue or history. A reason only where a case the rule does not name cannot be judged without it, as one clause on the same line.
 - The principle, not the incident: no symbol, path or line number unless the rule is about it.
 - One rule lives in one file; anywhere else points to it.
 - A budget in `tests/agents.ts` is a ceiling: near it, merge or drop lines before adding one.
