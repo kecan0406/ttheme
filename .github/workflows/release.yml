@@ -74,7 +74,16 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
-      - run: npm publish ./npm/*.tgz
+      - name: npm publish
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          published() { [ "$(npm view "@kecan0406/ttheme@$version" version --prefer-online 2>/dev/null)" = "$version" ]; }
+          for pause in 20 40 60; do
+            published && exit 0
+            npm publish ./npm/*.tgz && exit 0
+            sleep "$pause"
+          done
+          published
 
       - name: github release
         env:
