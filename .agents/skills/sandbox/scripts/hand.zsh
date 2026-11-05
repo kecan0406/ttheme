@@ -21,7 +21,7 @@ main() {
     "  SB_TTY=\$TTY python3 \$SB_HERE/drive.py --hand ${(j: :)${(q)@}}" \
     '}' \
     'precmd_functions+=(__sb_hand)' > $hook
-  ( cd $ROOT && mise run sandbox --mine $size --zshenv $hook ) || rc=$?
+  ( cd $ROOT && mise run sandbox --behind --mine $size --zshenv $hook ) || rc=$?
   rm -f $hook
   return $rc
 }

@@ -301,14 +301,19 @@ open_terminal_app() {
   env -i /usr/bin/open ${behind:+-g} -a Terminal $SANDBOX/sandbox.command --args -ApplePersistenceIgnoreState YES
 }
 
+activate() {
+  osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($1).activateWithOptions(0)" > /dev/null
+}
+
 hand_back() {
-  local front=$1 parent=$2 pid i
+  local front=$1 parent=$2 raise=$3 pid i
   for i in {1..50}; do
-    pid=$(pgrep -f -- $parent) && pgrep -P ${pid%%$'\n'*} > /dev/null && break
+    pid=$(pgrep -f -- $parent) && pid=${pid%%$'\n'*} && pgrep -P $pid > /dev/null && break
+    [[ -n $raise && -n $pid ]] && (( i % 5 == 1 )) && activate $pid
     sleep 0.1
   done
   [[ $front == <-> ]] || return 0
-  osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($front).activateWithOptions(0)" > /dev/null
+  activate $front
 }
 
 absent() {
@@ -444,7 +449,7 @@ main() {
   fi
   GHOSTTY_RESOURCES_DIR=${GHOSTTY_RESOURCES_DIR:-x} wire $label $palettes
   open_ghostty "${behind:+1}" || { absent ghostty "no Ghostty to open — \`mise run sandbox --here\` runs it in this tab"; return 1 }
-  (( $#behind )) && hand_back "$front" "--config-file=$SANDBOX/"
+  (( $#behind )) && hand_back "$front" "--config-file=$SANDBOX/" raise
   told Ghostty "${behind:+1}"
 }
 
