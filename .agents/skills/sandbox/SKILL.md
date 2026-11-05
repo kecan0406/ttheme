@@ -25,6 +25,7 @@ Check in this order, each step only as wide as the change:
 
 | Needs | Mode | Read |
 |---|---|---|
+| a window for the person to check themselves | `hand.zsh` | below |
 | keystrokes, command output, files the flow writes | shell | below |
 | colors the terminal shows, Ghostty reloads, a new tab's look, a screenshot | Ghostty | `references/ghostty.md` |
 | anything iTerm2 | iTerm2 | `references/iterm2.md` |
@@ -32,6 +33,20 @@ Check in this order, each step only as wide as the change:
 | Terminal.app, kitty, Alacritty, WezTerm, Warp | `window.zsh --<terminal>` | `references/window-zsh.md`, and `references/warp.md` for Warp |
 
 Read `references/ghostty.md` before any window run: its commands and report are every window mode's. A flow that needs keys and a reload count is two runs: the keys in shell mode, then the same functions in Ghostty mode.
+
+## A window for the person
+
+When the person asks to check something themselves, open it on a copy of their own install, already on the screen in question, and leave the keys to them:
+
+```zsh
+H=.agents/skills/sandbox/scripts/hand.zsh
+zsh $H ttheme wait:Preview
+zsh $H ttheme wait:Preview shift-tab wait:Browse
+zsh $H --size 100x30 ttheme wait:Preview alt-c
+zsh $H ttheme wait:Preview text:kita-ikuyo 0.5 tab f 'wait:try on' enter 'wait:PICTURE PREVIEW'
+```
+
+A step is what `sb_drive` takes (`references/ghostty.md`). The window takes the person's keys once the steps are done, and a new tab in it is an ordinary one. The list may open on a palette or on a shelf, where `tab` goes to Browse and `→` opens the shelf: type a palette's name first to land on its row.
 
 ## Shell mode: keys and text (tmux, no window)
 
@@ -49,7 +64,7 @@ A Ghostty reload is logged as a line in `~/reload.log` in the sandbox home inste
 
 ## Rules of the road
 
-- Go through the scripts, never `mise run sandbox` bare, which opens a window in front of the user.
+- Go through the scripts, never `mise run sandbox` bare, which opens a window in front of the user on no screen in particular.
 - One sandbox at a time, subagents included: every start wipes the directory and closes a previous sandbox window, the user's own `mise run sandbox` included.
 - A leftover instance: `pkill -f -- "--config-file=${TMPDIR%/}/ttheme-sandbox/"` for Ghostty; `pkill -f -- '^[^ ]*/iTerm2 -suite ttheme-sandbox( |$)'`, then `pkill -f -- "^$HOME/Library/Application Support/ttheme-sandbox/iTermServer"` for iTerm2. Keep the `^` anchors.
 - `pgrep ghostty` from Claude's shell misses the user's Ghostty.

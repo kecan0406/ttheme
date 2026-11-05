@@ -106,6 +106,7 @@ class Screen:
             self.proc.wait(timeout=2)
         except (OSError, subprocess.TimeoutExpired):
             self.proc.kill()
+        self.proc = None
 
 
 def spawn(command, size):
@@ -126,18 +127,28 @@ def spawn(command, size):
 
 
 def main():
-    if len(sys.argv) < 2:
-        raise SystemExit('usage: drive.py COMMAND [STEP…]  — a step is a key, text:…, paste:…, seconds, wait:TEXT or shot:NAME')
-    command, steps = sys.argv[1], sys.argv[2:]
+    args = sys.argv[1:]
+    hand = args[:1] == ['--hand']
+    if hand:
+        args = args[1:]
+    if not args:
+        raise SystemExit('usage: drive.py [--hand] COMMAND [STEP…]  — a step is a key, text:…, paste:…, seconds, wait:TEXT or shot:NAME; --hand leaves the keys to the person once the steps are done')
+    command, steps = args[0], args[1:]
     shots = os.path.join(os.environ.get('ZDOTDIR') or os.environ['HOME'], 'shots')
     term = os.open('/dev/tty', os.O_RDWR)
     size = fcntl.ioctl(term, termios.TIOCGWINSZ, b'\0' * 8)
     pid, master = spawn(command, size)
     screen = Screen(size)
     failed = False
+    late = ''
     saved = termios.tcgetattr(term)
     tty.setraw(term)
     status = None
+    if hand:
+        signal.signal(
+            signal.SIGWINCH,
+            lambda *_: fcntl.ioctl(master, termios.TIOCSWINSZ, fcntl.ioctl(term, termios.TIOCGWINSZ, b'\0' * 8)),
+        )
     try:
         at = time.monotonic() + GAP
         pending = []
@@ -163,11 +174,14 @@ def main():
                     at = now
                 elif seen is None or now >= waiting[1]:
                     why = f'not on the screen after {WAIT:g} s' if seen is not None else 'no screen text (node or @xterm/headless missing)'
-                    sys.stderr.write(f'drive.py: wait:{waiting[0]} — {why}\n{seen or ""}\n')
+                    if hand:
+                        late = f'drive.py: wait:{waiting[0]} — {why}\n'
+                    else:
+                        sys.stderr.write(f'drive.py: wait:{waiting[0]} — {why}\n{seen or ""}\n')
+                        done = now - LINGER
                     failed = True
                     waiting = None
                     steps, pending = [], []
-                    done = now - LINGER
                 else:
                     poll = now + 0.1
             elif waiting:
@@ -191,10 +205,12 @@ def main():
                         pending, gap = keys(step)
             elif not steps and not pending and not shot and not waiting and done is None:
                 done = now
-            if done is not None and now - done > LINGER:
+                if hand:
+                    screen.close()
+            if not hand and done is not None and now - done > LINGER:
                 os.kill(pid, signal.SIGHUP)
                 done = now
-            readable, _, _ = select.select([master, term], [], [], 0.02)
+            readable, _, _ = select.select([master, term], [], [], 1 if hand and done is not None else 0.02)
             if master in readable:
                 try:
                     data = os.read(master, 65536)
@@ -218,6 +234,7 @@ def main():
     finally:
         termios.tcsetattr(term, termios.TCSADRAIN, saved)
         screen.close()
+    sys.stderr.write(late)
     return 1 if failed else status or 0
 
 

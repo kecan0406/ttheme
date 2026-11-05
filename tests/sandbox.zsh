@@ -24,6 +24,7 @@ typeset -g WARP_LAUNCH=$HOME/.warp/launch_configurations/ttheme-sandbox.yaml
 typeset -g KONSOLE_GUI="konsole --separate --workdir $SANDBOX"
 typeset -g XVFB=${TTHEME_XVFB_DISPLAY:-:77}
 typeset -gi PICTURED=0 BRING=0 LINUX=0
+typeset -ga GHOSTTY_SIZE=()
 [[ $OSTYPE == linux* ]] && LINUX=1
 typeset -ga FOREIGN=(GHOSTTY_RESOURCES_DIR GHOSTTY_BIN_DIR GHOSTTY_SHELL_FEATURES TERM_PROGRAM TERM_PROGRAM_VERSION
   COLORTERM TERMINFO KITTY_WINDOW_ID ITERM_SESSION_ID ITERM_PROFILE WEZTERM_PANE WEZTERM_EXECUTABLE WEZTERM_UNIX_SOCKET
@@ -147,14 +148,15 @@ open_ghostty() {
   if (( LINUX )); then
     (( $+commands[ghostty] )) || return 1
     open_linux "$1" ghostty --config-default-files=false --config-file=$SANDBOX/.config/ghostty/config \
-      --window-save-state=never --working-directory=$SANDBOX --gtk-single-instance=false
+      --window-save-state=never --working-directory=$SANDBOX --gtk-single-instance=false $GHOSTTY_SIZE
     return
   fi
   open -na Ghostty --args \
     --config-default-files=false \
     --config-file=$SANDBOX/.config/ghostty/config \
     --window-save-state=never \
-    --working-directory=$SANDBOX
+    --working-directory=$SANDBOX \
+    $GHOSTTY_SIZE
 }
 
 iterm_suite() {
@@ -325,12 +327,12 @@ told() {
   fi
 }
 
-usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole | --rio | --contour] [--pictured] [--zshenv FILE] [--empty | --mine | palette…]" }
+usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole | --rio | --contour] [--pictured] [--size COLSxROWS] [--zshenv FILE] [--empty | --mine | palette…]" }
 
 main() {
-  local -a here behind iterm wezterm kitty alacritty warp tapp konsole rio contour legacy trust empty mine pictured zshenv
+  local -a here behind iterm wezterm kitty alacritty warp tapp konsole rio contour legacy trust empty mine pictured zshenv size
   zparseopts -D -E -F -- -here=here -behind=behind -iterm=iterm -wezterm=wezterm -kitty=kitty -alacritty=alacritty -warp=warp -terminal-app=tapp \
-    -konsole=konsole -rio=rio -contour=contour -legacy=legacy -trust=trust -empty=empty -mine=mine -pictured=pictured -zshenv:=zshenv || { usage; return 1 }
+    -konsole=konsole -rio=rio -contour=contour -legacy=legacy -trust=trust -empty=empty -mine=mine -pictured=pictured -zshenv:=zshenv -size:=size || { usage; return 1 }
   local -i other=$(( $#iterm + $#wezterm + $#kitty + $#alacritty + $#warp + $#tapp + $#konsole + $#rio + $#contour ))
   (( other > 1 || $#here && ($#behind || other) || ($#legacy || $#trust) && ! $#iterm || ($#empty || $#mine) && $# || $#empty && $#mine )) && { usage; return 1 }
   if (( $#mine )); then
@@ -339,6 +341,10 @@ main() {
   fi
   local -a palettes=($@)
   PICTURED=$#pictured BRING=$#mine
+  if (( $#size )); then
+    [[ $size[-1] == <->x<-> ]] || { usage; return 1 }
+    GHOSTTY_SIZE=(--window-width=${size[-1]%x*} --window-height=${size[-1]#*x})
+  fi
   local label=${(j: :)palettes}
   if (( $#mine )); then
     label="yours, from ${MINE/#$REAL_HOME/~}"
