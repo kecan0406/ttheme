@@ -3,7 +3,7 @@ import { LinkButton } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { CREDITS_PATH } from '@/lib/art'
 import { marketplacePath } from '@/lib/gallery'
-import { BrandIcon, Icon, NewTab } from '@/lib/icons'
+import { BrandIcon, Icon } from '@/lib/icons'
 import { CAST, OTHER_ART, STICKER_CREDITS, STICKER_SIZES, stickerSet } from '@/lib/lead-cast'
 import { OWN_NAME } from '@/lib/sessions'
 import { type Line, linesOf } from '@/lib/terminal'
@@ -65,33 +65,47 @@ export function LeadCredits() {
     <div data-lead-credits>
       {STICKER_CREDITS.map((credit, at) => (
         <p data-lead-credit={credit.name} data-on={String(at === 0)}>
-          <span safe>{credit.verb}</span>{' '}
-          <a href={credit.post} target="_blank" rel="noopener">
-            <b lang={credit.japanese ? 'ja' : undefined} translate="no" safe>
-              {credit.artist}
+          <span class="sr-only" safe>{`${credit.verb} `}</span>
+          {credit.artist === null ? null : (
+            <>
+              <span lang={credit.japanese ? 'ja' : undefined} translate="no" safe>
+                {credit.artist}
+              </span>{' '}
+            </>
+          )}
+          <a href={credit.profile} target="_blank" rel="noopener">
+            <b translate="no" safe>
+              {credit.handle}
             </b>
-            <BrandIcon icon={credit.siteIcon} />
             <span class="sr-only" safe>{` on ${credit.site}`}</span>
-            <NewTab />
+            <span class="sr-only">, opens in a new tab</span>
+          </a>
+          <a href={credit.post} target="_blank" rel="noopener">
+            <BrandIcon icon={credit.siteIcon} />
+            <span class="sr-only" safe>{`Original post on ${credit.site}`}</span>
+            <span class="sr-only">, opens in a new tab</span>
           </a>
           {credit.license === null ? null : (
             <a data-lead-license href={credit.license.url} target="_blank" rel="noopener">
               <BrandIcon icon={credit.license.icon} />
               <span class="sr-only" safe>{`${credit.license.brand} `}</span>
               <span safe>{credit.license.terms}</span>
-              <NewTab />
+              <span class="sr-only">, opens in a new tab</span>
             </a>
           )}
           {credit.after === null ? null : (
             <span data-lead-after>
-              <span safe>{`After the ${credit.after.work} cover by `}</span>
+              <span>After </span>
+              <span class="sr-only" safe>{`the ${credit.after.work} cover by `}</span>
+              <span lang="ja" translate="no" safe>
+                {credit.after.artist}
+              </span>{' '}
               <a href={credit.after.url} target="_blank" rel="noopener">
-                <b lang="ja" translate="no" safe>
-                  {credit.after.artist}
+                <b translate="no" safe>
+                  {credit.after.handle}
                 </b>
-                <BrandIcon icon={credit.after.icon} />
                 <span class="sr-only" safe>{` on ${credit.after.site}`}</span>
-                <NewTab />
+                <span class="sr-only">, opens in a new tab</span>
               </a>
             </span>
           )}

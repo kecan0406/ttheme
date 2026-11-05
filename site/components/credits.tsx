@@ -121,12 +121,22 @@ export function Credits({ facts }: { facts: Facts }) {
               {STICKER_CREDITS.map((credit) => (
                 <li class="text-sm text-muted-foreground">
                   <span safe>{`${credit.who}: `}</span>
-                  <StickerLink href={credit.post}>
-                    <span lang={credit.japanese ? 'ja' : undefined} translate="no" safe>
-                      {credit.artist}
+                  {credit.artist === null ? null : (
+                    <>
+                      <span lang={credit.japanese ? 'ja' : undefined} translate="no" safe>
+                        {credit.artist}
+                      </span>{' '}
+                    </>
+                  )}
+                  <StickerLink href={credit.profile}>
+                    <span class="font-medium text-foreground" translate="no" safe>
+                      {credit.handle}
                     </span>
-                    <BrandIcon icon={credit.siteIcon} class="size-3 flex-none" />
                     <span class="sr-only" safe>{` on ${credit.site}`}</span>
+                  </StickerLink>{' '}
+                  <StickerLink href={credit.post}>
+                    <BrandIcon icon={credit.siteIcon} class="size-3 flex-none" />
+                    <span class="sr-only" safe>{`Original post on ${credit.site}`}</span>
                   </StickerLink>
                   {credit.license === null ? null : (
                     <>
@@ -141,11 +151,13 @@ export function Credits({ facts }: { facts: Facts }) {
                   {credit.after === null ? null : (
                     <>
                       <span safe>{`, after the ${credit.after.work} cover by `}</span>
+                      <span lang="ja" translate="no" safe>
+                        {credit.after.artist}
+                      </span>{' '}
                       <StickerLink href={credit.after.url}>
-                        <span lang="ja" translate="no" safe>
-                          {credit.after.artist}
+                        <span class="font-medium text-foreground" translate="no" safe>
+                          {credit.after.handle}
                         </span>
-                        <BrandIcon icon={credit.after.icon} class="size-3 flex-none" />
                         <span class="sr-only" safe>{` on ${credit.after.site}`}</span>
                       </StickerLink>
                     </>

@@ -11,20 +11,22 @@ export const CAST: readonly CastMember[] = [
   { name: 'souryuu-asuka-langley', face: 930 / 756, scale: 1 },
   { name: 'ayanami-rei', face: 946 / 756, scale: 1 },
   { name: 'izumi-konata', face: 860 / 756, scale: 0.5 / 0.55 },
-  { name: 'shinonome-nano', face: 1086 / 756, scale: 1 },
+  { name: 'shinonome-nano', face: 1051 / 756, scale: 1 },
 ]
 
 export interface StickerCredit {
   name: string
   who: string
   verb: string
-  artist: string
+  artist: string | null
+  handle: string
+  profile: string
   japanese: boolean
   site: string
   siteIcon: SimpleIcon
   post: string
   license: { brand: string; icon: SimpleIcon; terms: string; url: string } | null
-  after: { work: string; artist: string; icon: SimpleIcon; site: string; url: string } | null
+  after: { work: string; artist: string; handle: string; site: string; url: string } | null
 }
 
 export const STICKER_CREDITS: readonly StickerCredit[] = [
@@ -33,6 +35,8 @@ export const STICKER_CREDITS: readonly StickerCredit[] = [
     who: 'Souryuu Asuka Langley',
     verb: 'Art by',
     artist: 'kmym',
+    handle: '@kmym97457689',
+    profile: 'https://x.com/kmym97457689',
     japanese: false,
     site: 'X',
     siteIcon: siX,
@@ -45,6 +49,8 @@ export const STICKER_CREDITS: readonly StickerCredit[] = [
     who: 'Ayanami Rei',
     verb: 'Art by',
     artist: 'ADA☆',
+    handle: '@HikawaHomura',
+    profile: 'https://x.com/HikawaHomura',
     japanese: false,
     site: 'X',
     siteIcon: siX,
@@ -56,7 +62,9 @@ export const STICKER_CREDITS: readonly StickerCredit[] = [
     name: 'izumi-konata',
     who: 'Izumi Konata',
     verb: 'Vector by',
-    artist: 'lllP3lll',
+    artist: null,
+    handle: 'lllP3lll',
+    profile: 'https://www.deviantart.com/lllp3lll',
     japanese: false,
     site: 'DeviantArt',
     siteIcon: siDeviantart,
@@ -67,13 +75,21 @@ export const STICKER_CREDITS: readonly StickerCredit[] = [
       terms: 'BY-NC-SA 3.0',
       url: 'https://creativecommons.org/licenses/by-nc-sa/3.0/',
     },
-    after: { work: "Comp H's Vol.3", artist: '堀口悠紀子', icon: siX, site: 'X', url: 'https://x.com/dochibibi' },
+    after: {
+      work: "Comp H's Vol.3",
+      artist: '堀口悠紀子',
+      handle: '@dochibibi',
+      site: 'X',
+      url: 'https://x.com/dochibibi',
+    },
   },
   {
     name: 'shinonome-nano',
     who: 'Shinonome Nano',
     verb: 'Art by',
     artist: 'あらゐけいいち',
+    handle: '@himaraya',
+    profile: 'https://x.com/himaraya',
     japanese: true,
     site: 'X',
     siteIcon: siX,
