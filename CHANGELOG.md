@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.92
+
 - A Help box keeps the keys no bar names on screen in Preview, Browse and the picture preview, and in the edit panel and the palette editor where the window is tall enough; the picture search names its own on the line above the key bar. Preview showed its keys only until the first key press, and the others only behind `?`, which still lists every key. `TTHEME_HELP_BOX=off`, or **Help** in `alt+c`, turns them off.
 - Preview's sample, settings and pin choices now sit in boxes as tall as what they hold, as the edit panel's do.
 - `?` in Preview's settings lists the keys of the settings; it listed the keys of the palette list.
