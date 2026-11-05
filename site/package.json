@@ -8,7 +8,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "elysia": "2.0.0-rc.0",
-    "lucide": "^1.62.0",
+    "lucide": "^1.63.0",
     "marked": "18.1.2",
     "simple-icons": "^16.36.0",
     "tailwind-merge": "^3.6.0"
