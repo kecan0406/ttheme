@@ -535,10 +535,19 @@ async function docsChecked(): Promise<void> {
 }
 
 if (import.meta.main) {
+  if (process.argv[2] === 'output') {
+    await docsChecked()
+    await buildAssets(true)
+    await output()
+    process.exit(0)
+  }
+
   await snapshot(true)
   commands()
-  await docsChecked()
-  await buildAssets(true)
-  await output()
-  process.exit(0)
+
+  const { exitCode } = Bun.spawnSync([process.execPath, import.meta.path, 'output'], {
+    stdio: ['inherit', 'inherit', 'inherit'],
+  })
+
+  process.exit(exitCode)
 }
