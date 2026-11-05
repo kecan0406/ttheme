@@ -17,7 +17,9 @@ import { chase, GLIDE } from '../motion.ts'
 import { type Frame, Screen } from '../screen.ts'
 import type { Hit } from '../zones.ts'
 import {
+  type FindSpot,
   type FindView,
+  findHovers,
   gridLayout,
   type Placement,
   place,
@@ -129,6 +131,13 @@ export class Paint {
     this.screen.drop()
   }
 
+  hover(event: Mouse | undefined): void {
+    if (!this.signal.aborted) {
+      this.view.pointer = event && { row: event.row, col: event.col }
+      this.screen.hover(event)
+    }
+  }
+
   private frame(): Frame | undefined {
     if (this.signal.aborted) {
       return undefined
@@ -141,6 +150,7 @@ export class Paint {
     return {
       lines: frame.lines,
       zones: frame.zones,
+      hovers: (target) => findHovers(this.view, target as FindSpot),
       after: (wiped) => this.images(frame.images, wiped, cell),
       ...(this.view.mode === 'grid' && this.view.editing !== undefined ? { cursor: this.caret() } : {}),
       ticking: frame.tick,

@@ -1,8 +1,8 @@
 import type { Hex } from '../core/color.ts'
 import { cap } from './keycaps.ts'
 import { markOf, tabOf } from './parts.ts'
-import { painter } from './style.ts'
-import { zone } from './zones.ts'
+import { LOOKS, painter } from './style.ts'
+import { keyZone, zone } from './zones.ts'
 
 export const HUB_TABS = [
   { name: 'preview', title: 'Preview' },
@@ -47,8 +47,10 @@ export function hubBar(active: HubTab, color: boolean, inks?: readonly Hex[]): s
   const tabs = HUB_TABS.map(({ name, title }) => {
     const spot: HubSpot = { kind: 'hub', tab: name }
 
-    return tabOf(p, title, name === active, (text) => zone(spot, text))
+    return tabOf(p, title, name === active, (text) => zone(spot, text, name === active ? undefined : LOOKS.flat))
   })
 
-  return ` ${mark ? `${mark}  ` : ''}${tabs.join(' ')}  ${p.dim(`${cap('tab')} ${hubNext(active)}`)}`
+  const next = keyZone('tab', p.dim(`${cap('tab')} ${hubNext(active)}`))
+
+  return ` ${mark ? `${mark}  ` : ''}${tabs.join(' ')}  ${next}`
 }

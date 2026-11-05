@@ -42,7 +42,7 @@ import { cap, capped } from './keycaps.ts'
 import { CHANNELS, CONTRAST, type PaletteEditor } from './palette-editor.ts'
 import { boxEdge, boxed, keyAfter, pillOf, SEP } from './parts.ts'
 import { type Art, type Box, type Drawn, LIGHTS, type Mock } from './picker-art.ts'
-import { BG_RESET, FG_RESET, INK_RESET, MARKS, open, type Paint, painter, RESET, surfaceOf } from './style.ts'
+import { BG_RESET, FG_RESET, INK_RESET, LOOKS, MARKS, open, type Paint, painter, RESET, surfaceOf } from './style.ts'
 import { cover, keyZone, zone } from './zones.ts'
 
 const POPOVER = 34
@@ -68,6 +68,7 @@ interface Piece {
   text: string
   sgr: string
   target?: EditorSpot
+  lit?: string
 }
 
 type Cellrow = Piece[]
@@ -150,7 +151,9 @@ function drawn(row: Cellrow, color: boolean): string {
     .map((piece) => {
       const body = color && piece.sgr ? `${piece.sgr}${piece.text}${RESET}` : piece.text
 
-      return piece.target ? zone(piece.target, body) : body
+      const look = color && piece.lit ? () => `${piece.lit}${piece.text}${RESET}` : LOOKS.still
+
+      return piece.target ? zone(piece.target, body, look) : body
     })
     .join('')
 }
@@ -190,6 +193,7 @@ function baseRow(e: PaletteEditor, p: Paint, c: Colors, slot: number, inner: num
   return spot(
     { kind: 'open', slot },
     here && p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)}${line}${INK_RESET}` : line,
+    LOOKS.row,
   )
 }
 
@@ -216,7 +220,7 @@ function cellText(e: PaletteEditor, p: Paint, c: Colors, slot: number, side: num
   const text = `${swatch(e, p, slot, restore)} ${value}${markOf(e, p, slot, missed, restore)}`
   const shown = here && p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)}${text}${INK_RESET}` : text
 
-  return spot({ kind: 'open', slot }, shown)
+  return spot({ kind: 'open', slot }, shown, here ? LOOKS.still : LOOKS.bold)
 }
 
 function pairRow(e: PaletteEditor, p: Paint, c: Colors, row: number, side: number, missed: Set<number>): string {
@@ -225,7 +229,7 @@ function pairRow(e: PaletteEditor, p: Paint, c: Colors, row: number, side: numbe
   const here = e.row === normal
   const name = (PAIRS[row] as string).padEnd(NAME)
   const link = e.linkOf(bright) !== undefined ? p.dim(MARKS.linked) : ' '
-  const first = spot({ kind: 'open', slot: normal }, `${gutterOf(p, c, here)}${here ? p.bold(name) : name}`)
+  const first = spot({ kind: 'open', slot: normal }, `${gutterOf(p, c, here)}${here ? p.bold(name) : name}`, LOOKS.row)
 
   return `${first}${cellText(e, p, c, normal, side, missed)}${link} ${cellText(e, p, c, bright, side, missed)}`
 }
@@ -812,7 +816,12 @@ function contentRows(
             : `${base}${roleSgr(p, c, part.role, usesSlot(part.role, slot))}${e.where && !lights(part.role, slot) ? open('dim') : ''}`
           : ''
 
-        return { text: part.text, sgr, target: { kind: 'run', spot: { pane: tile.id, line: i, run: r } } }
+        return {
+          text: part.text,
+          sgr,
+          target: { kind: 'run', spot: { pane: tile.id, line: i, run: r } },
+          ...(p.color && !here ? { lit: `${sgr}${open('under')}` } : {}),
+        }
       }),
     ]
 
@@ -847,14 +856,20 @@ function popoverRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefin
       const target: EditorSpot = { kind: 'open', slot }
       const hex = e.shown()[slot] as Hex
       const about = slot < BASE.length ? '' : slotLabel(slot).about
+      const lit = p.color ? `${base}${p.bg(c.selection)}${p.fg(c.foreground)}` : ''
 
       return [
         { text: '│ ', sgr: dim, target },
-        { text: label.padEnd(7), sgr: dim, target },
-        { text: MARKS.swatch, sgr: p.color ? `${base}${p.fg(hex)}` : '', target },
-        { text: ' ', sgr: base, target },
-        { text: slotLabel(slot).name.slice(0, 14).padEnd(14), sgr: base, target },
-        { text: about.padEnd(POPOVER - 27), sgr: dim, target },
+        { text: label.padEnd(7), sgr: dim, target, lit },
+        {
+          text: MARKS.swatch,
+          sgr: p.color ? `${base}${p.fg(hex)}` : '',
+          target,
+          lit: p.color ? `${lit}${p.fg(hex)}` : '',
+        },
+        { text: ' ', sgr: base, target, lit },
+        { text: slotLabel(slot).name.slice(0, 14).padEnd(14), sgr: base, target, lit },
+        { text: about.padEnd(POPOVER - 27), sgr: dim, target, lit },
         { text: ' │', sgr: dim, target },
       ]
     }),
@@ -888,6 +903,7 @@ function menuRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefined 
           text: ` ${here ? MARKS.gutter : ' '} ${item.padEnd(width - 6)}`,
           sgr: here && p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)}${open('bold')}` : base,
           target,
+          ...(p.color && !here ? { lit: `${p.bg(c.selection)}${p.fg(c.foreground)}` } : {}),
         },
         { text: '│', sgr: dim },
       ]
@@ -906,6 +922,7 @@ function titleBar(e: PaletteEditor, p: Paint, ui: Colors, width: number, flat: b
   const bar = p.color ? `${flat ? '' : p.bg(barOf(ui))}${p.fg(ui.foreground)}` : ''
   const at = sceneAt(e)
   const chosen = flat ? '' : p.bg(surfaceOf(ui.background, ui.foreground, 'tab'))
+  const hover = p.bg(surfaceOf(ui.background, ui.foreground, 'selection'))
 
   const row: Cellrow = [
     { text: ' ', sgr: bar },
@@ -920,7 +937,12 @@ function titleBar(e: PaletteEditor, p: Paint, ui: Colors, width: number, flat: b
       return [
         i === at
           ? { text: ` ${name} `, sgr: p.color ? `${bar}${chosen}${open('bold')}` : '', target }
-          : { text: ` ${name} `, sgr: p.color ? `${bar}${open('dim')}` : '', target },
+          : {
+              text: ` ${name} `,
+              sgr: p.color ? `${bar}${open('dim')}` : '',
+              target,
+              ...(p.color ? { lit: `${bar}${hover}${open('bold')}` } : {}),
+            },
         { text: ' ', sgr: bar },
       ]
     }),

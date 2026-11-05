@@ -28,7 +28,7 @@ What `sync` carries into `palettes.zsh` for preview comes from `src/cli/emit-she
 
 **A key in preview or its panel.** A case in `__tt_pv_handle` (or the panel's `__tt_te_*`), its line in `PREVIEW_KEYS` (`src/tui/preview-keys.ts`, `onBar` as above), the bar in `__tt_pv_foot`, and the panel's table in HACKING.md.
 
-**A click.** Every click has a key that does the same and acts on the release. On a Node screen wrap the text in `zone(target, text)` while drawing and pad before marking; find hands rectangles in `Frame.zones`; preview appends to `pvz` and acts in `__tt_pv_press` or `__tt_pv_release`.
+**A click.** Every click has a key that does the same and acts on the release. On a Node screen wrap the text in `zone(target, text, look)` while drawing and pad before marking; find hands rectangles in `Frame.zones`; preview appends to `pvz`, acts in `__tt_pv_press` or `__tt_pv_release` and draws the look where `$mhov` names the zone.
 
 **A color, a mark, a badge.** A role from `ROLES`, a glyph from `MARKS`, a part from `src/tui/parts.ts`; a palette's own colors go out as hex. In zsh, `TTHEME_SGR` and `TTHEME_MARKS`.
 
@@ -50,7 +50,7 @@ Before "fixing" something that looks wrong — preview in zsh, a click that acts
 
 Run only the check that answers the change in hand, and only when a round asks to see it (`AGENTS.md`):
 
-- `mise run look <scenario | browse | hub | edit:<palette> | kit:<part>> <cols>x<rows> [keys…] --against HEAD` marks what changed; add `--emit txt,styles --rows a-b` for a change to color.
+- `mise run look <scenario | browse | hub | edit:<palette> | kit:<part>> <cols>x<rows> [keys…] --against HEAD` marks what changed; add `--emit txt,styles --rows a-b` for a change to color. A key `move:COL:ROW` puts the pointer there, for a hover.
 - `mise run tui [names]` compares the screens in `tests/screens/`; `--update` accepts what they draw now.
 - The tests beside the file (`mise run test src/tui/browse`) and `mise run check`.
 - A change to preview: `mise run shell:check`.

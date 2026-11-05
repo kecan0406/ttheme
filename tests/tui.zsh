@@ -38,6 +38,7 @@ typeset -ga SCENARIOS=(
   'hub-ask         few    hub      Tab@GitHub Right Right Down Space Tab@Apply'
   'hub-back        few    hub      Down Right Tab@GitHub BTab@PREVIEW'
   'hub-keys        few    hub      ?@Help'
+  'hub-fold-hover  few    hub      move:4:7 Down'
   'preview-open    few    hub  Down Right'
   'preview-config  few    hub  M-c'
   'preview-colors  few    hub  M-c Down Down Down Down Down Down Down Right'
@@ -131,7 +132,7 @@ normalize() {
 capture() {
   local state=$1 target=$2; shift 2
   local home cmd key
-  local -a reply paint=(NO_COLOR=1)
+  local -a reply paint=(NO_COLOR=1) at
   (( PAINTED )) && paint=(COLORTERM=truecolor)
   home=$(fixture_home $state)
   {
@@ -142,7 +143,12 @@ capture() {
       "env -u GHOSTTY_RESOURCES_DIR -u KITTY_WINDOW_ID -u WEZTERM_PANE -u ALACRITTY_WINDOW_ID -u ITERM_SESSION_ID -u NO_COLOR $reply $paint zsh -f -c '${cmd}; sleep 60'"
     settle
     for key in "$@"; do
-      tmux -L $SOCKET send-keys -- "${key%%@*}"
+      if [[ $key == move:* ]]; then
+        at=(${(s.:.)key})
+        tmux -L $SOCKET send-keys -- $'\e[<35;'$at[2]';'$at[3]'M'
+      else
+        tmux -L $SOCKET send-keys -- "${key%%@*}"
+      fi
       [[ $key == *@* ]] && await "${key#*@}"
       settle
     done

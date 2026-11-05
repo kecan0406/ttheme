@@ -1,8 +1,10 @@
 import { performance } from 'node:perf_hooks'
+import { colorless } from '../terminals/osc.ts'
 import { fit } from './ansi.ts'
 import type { Mouse } from './keys.ts'
 import { RESET } from './style.ts'
-import { type Hit, lifted, marking, Pointer, type Zone } from './zones.ts'
+import { HAND, IDLE } from './terminal.ts'
+import { type Hit, lift, lifted, marking, Pointer, relit, type Target, type Zone } from './zones.ts'
 
 const FRAME_GAP = 16
 export const BEAT = 80
@@ -16,6 +18,7 @@ export interface Frame {
   cursor?: string
   ticking?: boolean
   zones?: Zone[]
+  hovers?: (target: Target) => boolean
 }
 
 interface ScreenOptions {
@@ -28,6 +31,7 @@ export class Screen {
   private shown: string[] = []
   private readonly pointer = new Pointer()
   private cursor = ''
+  private pointing = IDLE
   private wipe = ''
   private immediate: NodeJS.Immediate | undefined
   private delayed: NodeJS.Timeout | undefined
@@ -77,9 +81,17 @@ export class Screen {
     this.shown = []
     this.cursor = ''
     this.wipe = wipe
+
+    if (this.pointing === HAND) {
+      this.pointing = ''
+    }
   }
 
   stop(): void {
+    if (this.pointing === HAND) {
+      this.write(IDLE)
+    }
+
     this.stopped = true
     this.cancel()
     clearInterval(this.ticker)
@@ -92,6 +104,12 @@ export class Screen {
 
   drop(): void {
     this.pointer.drop()
+  }
+
+  hover(event: Mouse | undefined): void {
+    if (this.pointer.moved(event)) {
+      this.request()
+    }
   }
 
   private cancel(): void {
@@ -118,7 +136,19 @@ export class Screen {
     this.last = performance.now()
     const { lines, zones } = lifted(frame.lines, targets)
     this.pointer.zones = [...(frame.zones ?? []), ...zones]
-    let out = this.wipe
+    const lit = this.pointer.lit(frame.hovers)
+
+    if (lit.hot && !colorless(process.env)) {
+      const rows = new Set(zones.filter((one) => one.mark && lit.marks.has(one.mark)).map((one) => one.row))
+
+      for (const row of rows) {
+        lines[row] = lift(relit(frame.lines[row] as string, lit, targets), row, targets).text
+      }
+    }
+
+    const pointing = lit.hot ? HAND : IDLE
+    let out = pointing === this.pointing ? this.wipe : `${pointing}${this.wipe}`
+    this.pointing = pointing
     this.wipe = ''
     const rewritten = new Set<number>()
     const count = Math.max(lines.length, this.shown.length)

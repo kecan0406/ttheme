@@ -1,6 +1,6 @@
 import type { Readable, Writable } from 'node:stream'
 import { SIGNALS, Signalled } from '../core/cancelled.ts'
-import { type Cell, type Inbound, KEYBOARD_QUERY, Keys } from './keys.ts'
+import { type Cell, type Inbound, KEYBOARD_QUERY, Keys, type Mouse } from './keys.ts'
 
 interface Mode {
   on: string
@@ -13,12 +13,25 @@ export const HIDE_CURSOR: Mode = { on: '\x1b[?25l', off: '\x1b[?25h' }
 export const NO_WRAP: Mode = { on: '\x1b[?7l', off: '\x1b[?7h' }
 export const PASTES: Mode = { on: '\x1b[?2004h', off: '\x1b[?2004l' }
 export const FOCUS: Mode = { on: '\x1b[?1004h', off: '\x1b[?1004l' }
-const MOUSE: Mode = { on: '\x1b[?1000h\x1b[?1002h\x1b[?1006h', off: '\x1b[?1006l\x1b[?1002l\x1b[?1000l' }
+export const IDLE = '\x1b]22;default\x1b\\'
+export const HAND = `\x1b]22;${process.env.TERM_PROGRAM === 'iTerm.app' ? 'hand2' : 'pointer'}\x1b\\`
+
+const MOUSE: Mode = {
+  on: '\x1b[?1000h\x1b[?1002h\x1b[?1003h\x1b[?1006h',
+  off: `${IDLE}\x1b[?1006l\x1b[?1003l\x1b[?1002l\x1b[?1000l`,
+}
+
+const CLICKS: Mode = { on: '\x1b[?1000h\x1b[?1002h\x1b[?1006h', off: `${IDLE}\x1b[?1006l\x1b[?1002l\x1b[?1000l` }
+const SETTLE_WAIT = 500
 const PIXELS: Mode = { on: '\x1b[?1016h', off: '\x1b[?1016l\x1b[?1006h' }
 const KEYBOARD: Mode = { on: '\x1b[>5u', off: '\x1b[<u', stacked: true }
 
 export function pointing(env: Record<string, string | undefined> = process.env): Mode[] {
-  return env.TTHEME_MOUSE === 'off' ? [] : [MOUSE]
+  if (env.TTHEME_MOUSE === 'off') {
+    return []
+  }
+
+  return [env.SSH_CONNECTION || env.SSH_TTY ? CLICKS : MOUSE]
 }
 
 export function interactive(): boolean {
@@ -109,6 +122,7 @@ export class Terminal {
   private readonly tty: boolean
   private take: ((events: Inbound[]) => void) | undefined
   private resized: (() => void) | undefined
+  private hovered: ((event: Mouse | undefined) => void) | undefined
   private queued: Inbound[] = []
   private asking: { pick: (event: Inbound) => boolean; hold: boolean } | undefined
   private reject: (error: Error) => void = ignore
@@ -201,6 +215,21 @@ export class Terminal {
 
   onResize(resized: () => void): void {
     this.resized = resized
+  }
+
+  onHover(hovered: (event: Mouse | undefined) => void): void {
+    this.hovered = hovered
+  }
+
+  async settle(): Promise<void> {
+    if (!this.tty || this.aborted || !this.open || !this.owned.includes(MOUSE) || held.get(MOUSE) !== 1) {
+      return
+    }
+
+    this.take = undefined
+    this.hovered = undefined
+    await this.ask(`${MOUSE.off}\x1b[5n`, (event) => (event.kind === 'status' ? true : undefined), SETTLE_WAIT)
+    this.queued = []
   }
 
   until<T>(work: Promise<T>): Promise<T> {
@@ -359,8 +388,9 @@ export class Terminal {
       this.hold(KEYBOARD)
     }
 
+    const still = this.sift(events)
     const asking = this.asking
-    const passed = asking ? events.filter((event) => !asking.pick(event)) : events
+    const passed = asking ? still.filter((event) => !asking.pick(event)) : still
 
     if (passed.length === 0) {
       return
@@ -373,6 +403,32 @@ export class Terminal {
     }
 
     this.take(passed)
+  }
+
+  private sift(events: Inbound[]): Inbound[] {
+    let move: Mouse | undefined
+    let typed = false
+
+    const still = events.filter((event) => {
+      if (event.kind === 'mouse' && event.action === 'move') {
+        move = event
+
+        return false
+      }
+
+      if (event.kind === 'key' || event.kind === 'paste') {
+        move = undefined
+        typed = true
+      }
+
+      return true
+    })
+
+    if (move || typed) {
+      this.hovered?.(move)
+    }
+
+    return still
   }
 
   private release(): void {
@@ -390,6 +446,7 @@ export async function within<T>(options: TerminalOptions, body: (terminal: Termi
   try {
     return await body(terminal)
   } finally {
+    await terminal.settle()
     terminal.close()
   }
 }

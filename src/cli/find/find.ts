@@ -786,6 +786,7 @@ class Finder {
     return within({ modes: [PASTES, ...pointing()], assume: [HIDE_CURSOR, NO_WRAP], burst }, async (terminal) => {
       this.terminal = terminal
       terminal.onResize(this.onResize)
+      terminal.onHover((event) => this.paint.hover(event))
       terminal.listen((events) => {
         for (const event of events) {
           this.inbound(event)

@@ -15,8 +15,20 @@ import { type Help, type HelpSpot, keysBox, keysWidth, type Legend, overlay, typ
 import { cap, capped } from '../keycaps.ts'
 import { moreOf, SEP } from '../parts.ts'
 import { megabytes, progress } from '../pending.ts'
-import { ansiBg, ansiFg, MARKS, open, painter, RESET as R, SPINNER, slotBg, slotFg } from '../style.ts'
-import { cover, hintKey, type KeySpot, type Zone } from '../zones.ts'
+import {
+  ansiBg,
+  ansiFg,
+  LOOKS,
+  type Look,
+  MARKS,
+  open,
+  painter,
+  RESET as R,
+  SPINNER,
+  slotBg,
+  slotFg,
+} from '../style.ts'
+import { cover, hintKey, type KeySpot, type Zone, zone } from '../zones.ts'
 
 export type Preset = 'cutouts' | 'all'
 
@@ -145,6 +157,7 @@ export interface FindView {
   help: Help | undefined
   scene: number
   details: boolean
+  pointer?: { row: number; col: number } | undefined
   info?: Info
   tune: Tuning
   untuned: Tuning
@@ -386,6 +399,53 @@ function clipParts(parts: readonly Part[], room: number): Part[] {
   return out
 }
 
+const SPOT_LOOKS: Partial<Record<FindSpot['kind'], Look>> = {
+  key: LOOKS.flat,
+  site: LOOKS.flat,
+  chip: LOOKS.flat,
+  scene: LOOKS.flat,
+  choice: LOOKS.flat,
+  link: LOOKS.bold,
+  suggest: LOOKS.bold,
+  field: LOOKS.bold,
+  query: LOOKS.soft,
+  track: LOOKS.soft,
+  place: LOOKS.mark,
+  setting: LOOKS.topic,
+}
+
+function familyOf(spot: FindSpot): string | undefined {
+  return spot.kind === 'field' || spot.kind === 'track' ? `field ${spot.field}` : undefined
+}
+
+export function findHovers(view: FindView, { kind }: FindSpot): boolean {
+  if (view.installing !== undefined) {
+    return false
+  }
+
+  if (view.help) {
+    return kind === 'key' || kind === 'topic'
+  }
+
+  if (kind === 'key' || kind === 'link') {
+    return true
+  }
+
+  if (view.editing !== undefined) {
+    return kind === 'suggest'
+  }
+
+  if (view.panel !== undefined) {
+    return kind === 'setting' || kind === 'choice'
+  }
+
+  if (view.mode === 'try') {
+    return kind === 'scene' || (view.tuning !== undefined && (kind === 'field' || kind === 'track' || kind === 'place'))
+  }
+
+  return kind === 'tile' || kind === 'query' || kind === 'site' || kind === 'chip'
+}
+
 class Line {
   private readonly parts: {
     col: number
@@ -427,7 +487,11 @@ class Line {
       const target = spot ?? (link ? { kind: 'link', url: link } : undefined)
       const shown = col >= 0 && col < this.cols ? width(clip(text, this.cols - col)) : 0
 
-      return target && shown > 0 ? [{ row, col, width: shown, height: 1, target }] : []
+      const family = spot && familyOf(spot)
+
+      return target && shown > 0
+        ? [{ row, col, width: shown, height: 1, target, hot: true, ...(family ? { family } : {}) }]
+        : []
     })
   }
 
@@ -442,13 +506,15 @@ class Line {
   render(): string {
     let out = ''
 
-    for (const { col, text, sgr, link, hidden } of this.parts) {
+    for (const { col, text, sgr, link, spot, hidden } of this.parts) {
       if (hidden || col >= this.cols || col < 0) {
         continue
       }
 
       const shown = clip(text, this.cols - col)
-      out += `\x1b[${col + 1}G${sgr}${linked(shown, link)}${sgr ? R : ''}`
+      const body = `${sgr}${linked(shown, link)}${sgr ? R : ''}`
+      const look = spot && SPOT_LOOKS[spot.kind]
+      out += `\x1b[${col + 1}G${spot && look ? zone(spot, body, look, familyOf(spot)) : body}`
     }
 
     return out
@@ -787,7 +853,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
         const line = lines[r0 + 2 + Math.floor((i - 1) / 3)]
         const at = col + 12 + ((i - 1) % 3) * 3
         line?.mark(at - 1, 3, { kind: 'place', at: i })
-        line?.put(at, here ? '■' : MARKS.spot, here ? B + accent : D)
+        line?.put(at, here ? '■' : MARKS.spot, here ? B + accent : D, undefined, { kind: 'place', at: i })
       }
 
       value = POSITIONS[view.tune.at - 1] ?? 'center'
@@ -807,7 +873,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
       lines[r]?.run(col + 12, [
         ['━'.repeat(knob), accent],
         [MARKS.on, B],
-        ['─'.repeat(track - 1 - knob), D],
+        ['─'.repeat(track - 1 - knob), D, undefined, { kind: 'track', field: k }],
       ])
       lines[r]?.mark(col + 12, track, { kind: 'track', field: k })
     }
@@ -1225,13 +1291,25 @@ function grid(
           width: TILE.pitch - 1,
           height: ends - seen,
           target: { kind: 'tile', index: i },
+          hot: true,
         })
       }
 
       const on = i === view.focus
+      const at = view.pointer
+
+      const over =
+        findHovers(view, { kind: 'tile', index: i }) &&
+        at !== undefined &&
+        at.row >= seen &&
+        at.row < ends &&
+        at.col >= c0 &&
+        at.col < c0 + TILE.pitch - 1
 
       if (on) {
         frameBox(inside, r0, c0, TILE.height, TILE.pitch - 1, accent)
+      } else if (over) {
+        frameBox(inside, r0, c0, TILE.height, TILE.pitch - 1, D)
       }
 
       const top = r0 + 1
@@ -1254,10 +1332,10 @@ function grid(
       const row: Part[] = [
         ...(view.installed.includes(tile.key) ? ([['✓ ', OK]] as Part[]) : []),
         ...(tile.page || view.site !== 'all'
-          ? reference(String(tile.id), on ? B : '', tile.page || undefined, siteColor(tile.siteAnsi))
+          ? reference(String(tile.id), on || over ? B : '', tile.page || undefined, siteColor(tile.siteAnsi))
           : ([
               ['● ', siteColor(tile.siteAnsi)],
-              [String(tile.id), on ? B : ''],
+              [String(tile.id), on || over ? B : ''],
             ] as Part[])),
         [' ', ''],
         dims(tile),
@@ -1866,6 +1944,8 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
 
     if (focused) {
       lines[r]?.put(x + 2, MARKS.focus, accent)
+    } else {
+      lines[r]?.put(x + 2, ' ', '', undefined, { kind: 'setting', index: i })
     }
 
     lines[r]?.mark(x + 2, lead - 3, { kind: 'setting', index: i })

@@ -38,6 +38,7 @@ export type Inbound =
   | { kind: 'color'; code: string; value: string }
   | { kind: 'mode'; mode: number; value: number }
   | { kind: 'attributes' }
+  | { kind: 'status' }
   | { kind: 'keyboard'; flags: number }
   | { kind: 'size'; of: 'cell' | 'window' | 'grid'; h: number; w: number }
   | Mouse
@@ -397,6 +398,10 @@ function report(params: string, between: string, final: string, cell: Cell | und
 
   if (final === 'c' && params.startsWith('?')) {
     return [{ kind: 'attributes' }]
+  }
+
+  if (final === 'n' && params === '0') {
+    return [{ kind: 'status' }]
   }
 
   if (final === 'u' && between === '') {

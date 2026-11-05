@@ -9,7 +9,18 @@ import { type Inbound, lineStep } from './keys.ts'
 import { chase } from './motion.ts'
 import { moreOf, SEP } from './parts.ts'
 import { Inline } from './screen.ts'
-import { ansiBar, ansiFg, ansiSquares, FG_RESET, INK_RESET, MARKS, type Paint, painter } from './style.ts'
+import {
+  ansiBar,
+  ansiFg,
+  ansiSquares,
+  FG_RESET,
+  INK_RESET,
+  LOOKS,
+  type Look,
+  MARKS,
+  type Paint,
+  painter,
+} from './style.ts'
 import { HIDE_CURSOR, PASTES, within } from './terminal.ts'
 import { zone } from './zones.ts'
 
@@ -331,8 +342,14 @@ export interface RowSpot {
   pane?: string
 }
 
-export function rowSpot(at: number, part: RowSpot['part'], text: string, pane?: string): string {
-  return zone({ kind: 'row', at, part, ...(pane ? { pane } : {}) } satisfies RowSpot, text)
+export function rowSpot(
+  at: number,
+  part: RowSpot['part'],
+  text: string,
+  pane?: string,
+  look: Look | false = part === 'row' ? LOOKS.row : LOOKS.mark,
+): string {
+  return zone({ kind: 'row', at, part, ...(pane ? { pane } : {}) } satisfies RowSpot, text, look || undefined)
 }
 
 export interface Card {

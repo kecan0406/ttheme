@@ -2,7 +2,7 @@ import { parseSource, sameMarketplace } from '../../store/sources.ts'
 import { wrapText } from '../ansi.ts'
 import type { Hint } from '../bar.ts'
 import { Field } from '../field.ts'
-import { type Paint, SPINNER } from '../style.ts'
+import { LOOKS, type Paint, SPINNER } from '../style.ts'
 import { zone } from '../zones.ts'
 import { framed, typedSource, whereOf } from './draw.ts'
 import type { Network } from './network.ts'
@@ -92,7 +92,7 @@ export class AddForm {
         p.dim(`  ${l}`),
       ),
       '',
-      ...framed(p, width, text).map((line) => zone({ kind: 'form' } satisfies Spot, line)),
+      ...framed(p, width, text).map((line) => zone({ kind: 'form' } satisfies Spot, line, LOOKS.soft)),
       ...(status.length > 0 ? ['', ...status] : []),
     ]
   }

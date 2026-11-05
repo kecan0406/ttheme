@@ -37,7 +37,7 @@ import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCO
 import { boxEdge, boxed, checkOf, contrastOf, hintOf, moreOf, pillOf, SEP } from './parts.ts'
 import type { Chart, Drawn, PickerLayer } from './picker-art.ts'
 import { Screen } from './screen.ts'
-import { FG_RESET, grounded, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } from './style.ts'
+import { FG_RESET, grounded, INK_RESET, LOOKS, MARKS, type Paint, painter, RESET, surfaceOf } from './style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './terminal.ts'
 import { cover, type Hit, keyZone } from './zones.ts'
 
@@ -119,7 +119,7 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
     const text = `${sw}${lchTight(e.lch[slot] as Oklch)}${mark}`
 
     if (!focused) {
-      return spot({ kind: 'slot', slot }, ` ${text}`)
+      return spot({ kind: 'slot', slot }, ` ${text}`, LOOKS.bold)
     }
 
     return spot(
@@ -139,7 +139,7 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
 
       return boxed(
         p,
-        `${spot({ kind: 'slot', slot: row }, `${gutter(here)}${here ? p.bold(label) : label}`)}${cell(row)}`,
+        `${spot({ kind: 'slot', slot: row }, `${gutter(here)}${here ? p.bold(label) : label}`, LOOKS.row)}${cell(row)}`,
         wide,
       )
     }),
@@ -158,6 +158,7 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
       const named = spot(
         { kind: 'slot', slot: row + (e.col === 1 ? 8 : 0) },
         `${gutter(here)}${here ? p.bold(label) : label}`,
+        LOOKS.row,
       )
 
       return boxed(p, `${named}${cell(row)}${cell(row + 8)}`, wide)
@@ -1057,6 +1058,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
 
         return {
           lines,
+          hovers: (target) => !editor.quitting || (target as EditorSpot).kind === 'key',
           after: () =>
             `${
               (editor.pic
@@ -1107,6 +1109,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
     }
 
     terminal.write(CLEAR)
+    terminal.onHover((event) => screen.hover(event))
     terminal.onResize(() => {
       backdrop?.resized()
       layer?.resized()

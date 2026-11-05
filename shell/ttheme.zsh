@@ -12,6 +12,7 @@ typeset -gA TTHEME_SGR=(
   accent $'\e[36m' /accent $'\e[39m'
   pill $'\e[7;1;36m' /pill $'\e[22;27;39m'
   chip $'\e[100;1m' /chip $'\e[22;49m'
+  hot $'\e[100;1;4m' /hot $'\e[22;24;49m'
   danger $'\e[7;1;31m' /danger $'\e[22;27;39m'
   alert $'\e[7;1;33m' /alert $'\e[22;27;39m'
   match $'\e[1;4;36m' /match $'\e[22;24;39m'

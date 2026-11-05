@@ -218,7 +218,9 @@ __tt_ask() {
       REPLY+=$match[1] buf=$match[-1]
     elif [[ $buf == (#b)($'\e['[0-?]#[ -/]#[@-~])(*) ]]; then
       seq=$match[1] buf=$match[-1]
-      if [[ $seq == *[nt] || $seq == $'\e['[?\>]*c || $seq == *'$y' ]]; then
+      if [[ $seq == $'\e[<'*[Mm] ]]; then
+        :
+      elif [[ $seq == *[nt] || $seq == $'\e['[?\>]*c || $seq == *'$y' ]]; then
         REPLY+=$seq
       else
         TTHEME_TYPED+=$seq

@@ -13,6 +13,7 @@ Before "fixing" one of these, read where it was decided.
 | No `/` to search; `j` and `k` do not move in preview or Browse | HACKING.md, Keys a screen takes |
 | `↑` `↓` wrap and the wheel does not | HACKING.md, Keys a screen takes and The mouse |
 | A click acts on the release | HACKING.md, The mouse |
+| A hover stays lit after the pointer leaves the window; a key puts it out | HACKING.md, The mouse |
 | A wheel event within `WHEEL_GAP` of the last one the same way is dropped | `WHEEL_GAP` in `src/tui/keys.ts` |
 | init's picker ignores the mouse | `src/tui/AGENTS.md` |
 | The accent is slot 6, not the palette's cursor | HACKING.md, Drawing the screens |

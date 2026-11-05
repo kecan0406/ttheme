@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { type FindView, findTopics, type Row, renderFind, stepped, transmit } from './screen.ts'
+import { type FindView, findHovers, findTopics, type Row, renderFind, stepped, transmit } from './screen.ts'
 
 test('a step from a typed value goes to the nearest step that way, and steps wrap around', () => {
   const sizes = ['off', '720', '1080', '1440', '1800', '2560']
@@ -121,6 +121,74 @@ test('a tag a site sends with control or direction characters is drawn without t
   const out = frame.lines.join('\n')
   assert.match(out, /hatsune_miku\]52;c;aGk=/)
   assert.ok(!out.includes('\x1b]52') && !out.includes('\x07') && !out.includes(rlo))
+})
+
+test('the tile under the pointer takes a dim frame, the focused one keeps its own, and nothing else is framed', () => {
+  const tile = (id: number): FindView['tiles'][number] => ({
+    id,
+    key: id,
+    site: 'danbooru',
+    siteAnsi: 6,
+    width: 1920,
+    height: 1080,
+    reduced: false,
+    page: '',
+    artist: 'someone',
+    score: 1,
+    variants: 0,
+    mates: [],
+  })
+
+  const framed = (pointer?: { row: number; col: number }) =>
+    renderFind(viewOf({ panel: undefined, tiles: [tile(1), tile(2), tile(3)], pointer }), 100, 30)
+      .lines.join('\n')
+      .split('╭').length - 1
+
+  assert.equal(framed(), 1)
+  assert.equal(framed({ row: 10, col: 30 }), 2)
+  assert.equal(framed({ row: 10, col: 5 }), 1)
+  assert.equal(framed({ row: 10, col: 90 }), 1)
+  assert.equal(framed({ row: 1, col: 30 }), 1)
+})
+
+test('no tile takes a hover frame while a picture installs', () => {
+  const tile = {
+    id: 1,
+    key: 1,
+    site: 'danbooru',
+    siteAnsi: 6,
+    width: 1920,
+    height: 1080,
+    reduced: false,
+    page: '',
+    artist: 'someone',
+    score: 1,
+    variants: 0,
+    mates: [],
+  }
+
+  const view = viewOf({ panel: undefined, tiles: [tile, { ...tile, id: 2, key: 2 }], pointer: { row: 10, col: 30 } })
+
+  assert.equal(renderFind(view, 100, 30).lines.join('\n').split('╭').length - 1, 2)
+  assert.equal(
+    renderFind({ ...view, installing: 1 }, 100, 30)
+      .lines.join('\n')
+      .split('╭').length - 1,
+    1,
+  )
+})
+
+test('only what a click would act on in the state find is in lights under the pointer', () => {
+  const grid = viewOf({ panel: undefined })
+  assert.ok(findHovers(grid, { kind: 'tile', index: 0 }))
+  assert.ok(findHovers(grid, { kind: 'site', tab: 1 }))
+  assert.ok(!findHovers(grid, { kind: 'setting', index: 0 }))
+  assert.ok(findHovers(viewOf(), { kind: 'setting', index: 0 }))
+  assert.ok(!findHovers(viewOf(), { kind: 'tile', index: 0 }))
+  assert.ok(findHovers(viewOf({ installing: 1 }), { kind: 'tile', index: 0 }) === false)
+  assert.ok(findHovers(grid, { kind: 'key', key: 'esc' }))
+  assert.ok(!findHovers(viewOf({ panel: undefined, mode: 'try' }), { kind: 'tile', index: 0 }))
+  assert.ok(findHovers(viewOf({ panel: undefined, mode: 'try' }), { kind: 'scene', scene: 1 }))
 })
 
 test('the Advanced topic of the help presses the a the grid takes', () => {

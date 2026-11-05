@@ -10,7 +10,7 @@ export function tabOf(p: Paint, label: string, on: boolean, mark: (text: string)
     return mark(on ? `[${label}]` : ` ${label} `)
   }
 
-  return on ? p.pill(mark(` ${label} `)) : p.dim(mark(` ${label} `))
+  return mark(on ? p.pill(` ${label} `) : p.dim(` ${label} `))
 }
 
 export function markOf(p: Paint, inks?: readonly Hex[]): string {

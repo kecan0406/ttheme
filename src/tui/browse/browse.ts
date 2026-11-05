@@ -206,6 +206,7 @@ export class BrowsePanel {
           return {
             lines,
             ticking: this.review.phase === 'applying' || this.form.fetching() || this.standing?.standing === 'checking',
+            hovers: (target) => this.free() || !['row', 'hub', 'form'].includes((target as Spot).kind),
           }
         },
         beat: () => {
@@ -218,6 +219,7 @@ export class BrowsePanel {
       })
 
       this.screen = screen
+      terminal.onHover((event) => screen.hover(event))
       terminal.onResize(() => {
         screen.reset()
         screen.request()
@@ -642,7 +644,7 @@ export class BrowsePanel {
       return
     }
 
-    const free = this.review.phase === 'browse' && this.leaving === undefined && !this.removing
+    const free = this.free()
 
     if (event.action === 'wheel') {
       if (!event.sideways && (free || this.review.phase !== 'browse')) {
@@ -679,6 +681,10 @@ export class BrowsePanel {
         this.openRow(spot, event.count)
       }
     }
+  }
+
+  private free(): boolean {
+    return this.review.phase === 'browse' && this.leaving === undefined && !this.removing
   }
 
   private point(spot: RowSpot): void {

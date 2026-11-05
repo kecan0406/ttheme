@@ -5,7 +5,7 @@ import { Field } from './field.ts'
 import { capped } from './keycaps.ts'
 import { lineStep } from './keys.ts'
 import { boxEdge, boxed, boxTitle, moreOf } from './parts.ts'
-import { MARKS, type Paint } from './style.ts'
+import { LOOKS, MARKS, type Paint } from './style.ts'
 import { cover, unzoned, zone } from './zones.ts'
 
 export interface Topic {
@@ -223,7 +223,9 @@ export class Help {
         const head =
           k === 0 ? `${lead} ${group}  ${on && t.run ? p.accent(keys) : p.bold(keys)}` : `${indent}${' '.repeat(kw)}`
 
-        body.push(side(zone({ kind: 'topic', index } satisfies TopicSpot, `${head}  ${line}`)))
+        const look = k === 0 ? LOOKS.topic : LOOKS.soft
+
+        body.push(side(zone({ kind: 'topic', index } satisfies TopicSpot, `${head}  ${line}`, look)))
       }
 
       end++

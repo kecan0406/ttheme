@@ -260,6 +260,9 @@ __tt_pv_row() {
   if (( $1 == cur )); then
     gut=$gc$TTHEME_MARKS[gutter]$r" "
     (( color )) && on=$sb
+  elif (( $1 == mhi && color )); then
+    gut=$d$TTHEME_MARKS[gutter]$r" "
+    d="" lead=""
   fi
   if [[ ${rtype[$1]} == rule ]]; then
     name='── Originals '
@@ -276,6 +279,7 @@ __tt_pv_row() {
     elif (( $1 == cur )); then
       lead=""
     fi
+    [[ $mhov == "fold $1" ]] && lead=$ac
     __tt_pv_hl "$name" "$base"
     hl=$REPLY
     w=$(( lw - 6 - ${(m)#name} - ${#rcnt[$1]} ))
@@ -296,6 +300,7 @@ __tt_pv_row() {
     elif (( $1 == cur )); then
       lead=""
     fi
+    [[ $mhov == "fold $1" ]] && lead=$ac
     __tt_pv_hl "$name" "$base"
     hl=$REPLY
     w=$(( lw - 8 - ${(m)#name} - ${#rcnt[$1]} ))
@@ -335,6 +340,9 @@ __tt_pv_row() {
   by=$REPLY
   __tt_pv_fit "$extra"
   extra=$REPLY
+  if (( $1 == mhi && color )); then
+    by=${by//"$TTHEME_SGR[dim]"/} extra=${extra//"$TTHEME_SGR[dim]"/}
+  fi
   if (( color )); then
     (( w < 1 )) && w=1
     REPLY=$gut$on"$ind$mark $base$hl$r$by$extra${(l:w:: :)}${tstrip[$t]} "$z
@@ -440,6 +448,7 @@ __tt_pv_bar() {
   (( color )) || z= d= on=
   hint="tab ${TTHEME_HUB_TITLES[at % ${#TTHEME_HUB_TITLES} + 1]}"
   [[ ${rtype[cur]} == thm ]] && hint="shift+tab ${TTHEME_HUB_TITLES[(at + ${#TTHEME_HUB_TITLES} - 2) % ${#TTHEME_HUB_TITLES} + 1]}"
+  local hk=${hint%% *}
   __tt_capped "$hint"
   hint=$REPLY
   for title in $TTHEME_HUB_TITLES; do
@@ -464,14 +473,27 @@ __tt_pv_bar() {
     pvz+=("1 $zc $(( zc + ${(m)#title} + 1 )) hub $i")
     (( zc += ${(m)#title} + 2 ))
     if (( i != at )); then
-      line+=$d" $title "$z
+      if (( color && mhp )) && [[ $mhov == "hub $i" ]]; then
+        line+=$on" $title "$z
+      elif (( color )) && [[ $mhov == "hub $i" ]]; then
+        line+=$TTHEME_SGR[chip]" $title "$TTHEME_SGR[/chip]
+      else
+        line+=$d" $title "$z
+      fi
     elif (( color )); then
       line+=$on" $title "$z
     else
       line+="[$title]"
     fi
   done
-  (( len + ${#hint} + 2 <= $1 )) && line+="  "$d$hint$z
+  if (( len + ${#hint} + 2 <= $1 )); then
+    pvz+=("1 $(( zc + 2 )) $(( zc + 1 + ${(m)#hint} )) key $hk")
+    if (( color )) && [[ $mhov == "key $hk" ]]; then
+      line+="  "$TTHEME_SGR[chip]$hint$TTHEME_SGR[/chip]
+    else
+      line+="  "$d$hint$z
+    fi
+  fi
   REPLY=$line
 }
 
@@ -530,6 +552,8 @@ __tt_pv_foot() {
   __tt_cap alt+u; ku=$REPLY
   local -i end=$1 bw=$(( $1 - 1 )) i lwid rwid vwid rend room
   (( color )) || b= d= z= y= al= on=
+  local hl=$TTHEME_SGR[chip] hx=$TTHEME_SGR[/chip]
+  (( mhp )) && hl=$pl hx=$TTHEME_SGR[/pill]
   if (( color )) && [[ -n $applied && $applied != "$painted" ]]; then
     hex=${${=applied}[8]#\#}
     printf -v y '\e[38;2;%d;%d;%dm' $((16#${hex:0:2})) $((16#${hex:2:2})) $((16#${hex:4:2}))
@@ -543,7 +567,9 @@ __tt_pv_foot() {
     (( te )) && badge="$tb (APPLY)"
     for (( i = 1; i <= ${#plabel}; i++ )); do
       (( i > 1 )) && lead+=" "
-      if (( i != pk )); then
+      if (( i != pk )) && (( color )) && [[ $mhov == "pick $i" ]]; then
+        lead+=$hl${plabel[i]}$hx
+      elif (( i != pk )); then
         lead+=$d${plabel[i]}$z
       elif (( color )); then
         lead+=$on${plabel[i]}$z
@@ -637,6 +663,9 @@ __tt_pv_foot() {
       (( vwarn )) && ver=$y$vline$z
     fi
   fi
+  if (( color )) && [[ -n $rk && $mhov == "key $rk" ]]; then
+    right=$hl${right//$'\e'\[[0-9;]##m/}$hx
+  fi
   if (( msgt > 0 )) && [[ -z $pick ]]; then
     text=$msg
     room=$(( bw - (${#badge} ? ${#badge} + 4 : 0) ))
@@ -652,7 +681,11 @@ __tt_pv_foot() {
     [[ -n $note ]] && seg+=("$d$note$z")
     for (( i = 1; i <= ${#kk}; i++ )); do
       __tt_cap "${kk[i]}"
-      seg+=("$b$REPLY$z$d ${kl[i]}$z")
+      if (( color )) && [[ $mhov == "key ${kk[i]}" ]]; then
+        seg+=("$hl$REPLY ${kl[i]}$hx")
+      else
+        seg+=("$b$REPLY$z$d ${kl[i]}$z")
+      fi
     done
     line=${(j:   :)seg}
     if [[ -n $badge ]]; then
@@ -863,19 +896,29 @@ __tt_pv_tabs() {
   (( TTHEME_PALETTES_IN )) || __tt_palettes
   local -a names=($TTHEME_SCENES)
   [[ $mode == pin ]] && names=(Pins $names)
-  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] b=$TTHEME_SGR[bold]
-  local -i k at n=${#names}
+  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] b=$TTHEME_SGR[bold] hl=$TTHEME_SGR[chip] hx=$TTHEME_SGR[/chip]
+  local -i k at n=${#names} zc=$sc
   (( n )) || return 1
+  (( mhp )) && hl=$pl hx=$TTHEME_SGR[/pill]
   at=$(( (scene % n + n) % n + 1 ))
   shown=$names[at] tabs=""
   if (( ${#${(j:  :)names}} <= sw )); then
     for (( k = 1; k <= n; k++ )); do
-      (( k > 1 )) && tabs+="  "
+      if (( k > 1 )); then
+        tabs+="  "
+        (( zc += 2 ))
+      fi
       if (( k == at )); then
         tabs+=$b$ac$names[k]$z
       else
-        tabs+=$d$names[k]$z
+        tabz+=("2 $zc $(( zc + ${#names[k]} - 1 )) scene $k")
+        if (( color )) && [[ $mhov == "scene $k" ]]; then
+          tabs+=$hl$names[k]$hx
+        else
+          tabs+=$d$names[k]$z
+        fi
       fi
+      (( zc += ${#names[k]} ))
     done
   else
     tabs=$b$ac$names[at]$z"  "$d"$at/$n"$z
@@ -884,6 +927,7 @@ __tt_pv_tabs() {
 
 __tt_pv_sample() {
   local shown tabs
+  local -a tabz=()
   local -i sw=$(( sw - 4 )) sc=$(( sc + 2 ))
   __tt_pv_tabs || return 0
   if [[ $shown == Pins ]]; then
@@ -894,9 +938,11 @@ __tt_pv_sample() {
 }
 
 __tt_pv_pins() {
-  local key="pins|$sbot|$sw|$sc|$ph" built=$'\e[2;'$sc'H'$tabs line REPLY
+  local key="pins|$sbot|$sw|$sc|$ph" built="" line REPLY
   local -a reply lines
   local -i r=4
+  pvz+=("${tabz[@]}")
+  out+=$'\e[2;'$sc'H'$tabs
   if [[ $key == "$pvscene" ]]; then
     out+=$pvscenes
     sfit=$pvsfit
@@ -935,11 +981,12 @@ __tt_pv_specimen() {
   fi
   sfit=$(( 6 + ${#lines} < sbot ? 6 + ${#lines} : sbot ))
   (( ${#sp} >= 20 )) || return 0
+  pvz+=("${tabz[@]}")
+  out+=$'\e[2;'$sc'H'$tabs
   if [[ $key == "$pvscene" ]]; then
     out+=$pvscenes
     return 0
   fi
-  built+=$'\e[2;'$sc'H'$tabs
   if [[ $applied == "$painted" ]]; then
     for (( i = 0; i < 16; i++ )); do
       k=$(( i < 8 ? 30 + i : 82 + i ))
@@ -1138,8 +1185,10 @@ __tt_pv_chip() {
   gap=$(( (split ? sc - 1 : se) - lw - ${(m)#key} - 2 ))
   if (( ! color )); then
     REPLY=$'\e['$at'G'"[$text]"
-  elif (( gmenu )); then
+  elif (( gmenu )) || [[ $mhov == group && $mhp == 1 ]]; then
     REPLY=$'\e['$at'G'$pl" $text "$TTHEME_SGR[/pill]
+  elif [[ $mhov == group ]]; then
+    REPLY=$'\e['$at'G'$TTHEME_SGR[hot]" $text "$TTHEME_SGR[/hot]
   else
     REPLY=$'\e['$at'G'$TTHEME_SGR[chip]" $text "$TTHEME_SGR[/chip]
   fi
@@ -1175,6 +1224,8 @@ __tt_pv_gdraw() {
       out+=$TTHEME_MARKS[focus]$mark" "$text" "
     elif (( i == gm )); then
       out+=$pl" $mark $text "$TTHEME_SGR[/pill]
+    elif (( color )) && [[ $mhov == "gpick $i" ]]; then
+      out+=$TTHEME_SGR[chip]" $mark $text "$TTHEME_SGR[/chip]
     elif [[ $mark == $TTHEME_MARKS[on] ]] && (( color )); then
       out+=" "$ac$mark$TTHEME_SGR[/accent]" $text "
     else
@@ -1222,10 +1273,15 @@ __tt_pv_conf_put() {
 
 __tt_pv_pointer() {
   if [[ $1 == off || $TTHEME_MOUSE == off ]]; then
-    [[ -n $pvmouse ]] && printf '\e[?1006l\e[?1002l\e[?1000l'
+    if [[ -n $pvmouse ]]; then
+      __tt_pv_unhover
+      printf '\e]22;default\e\\\e[?1006l\e[?1003l\e[?1002l\e[?1000l'
+    fi
     pvmouse="" mzone=""
   else
-    pvmouse=$'\e[?1000h\e[?1002h\e[?1006h'
+    pvmouse=$'\e[?1000h\e[?1002h'
+    [[ -n $SSH_CONNECTION$SSH_TTY ]] || pvmouse+=$'\e[?1003h'
+    pvmouse+=$'\e[?1006h'
     printf %s "$pvmouse"
   fi
 }
@@ -1330,6 +1386,8 @@ __tt_pv_conf_panel() {
     pvz+=("$(( r0 + k - 1 )) $col $end conf $k")
     if (( k == cf )); then
       out+=$c$TTHEME_MARKS[focus]$z" "$b
+    elif (( color )) && [[ $mhov == (conf|confv|confs)" $k"(| *) ]]; then
+      out+=$d$TTHEME_MARKS[focus]$z" "
     else
       out+="  "$d
     fi
@@ -1338,7 +1396,10 @@ __tt_pv_conf_panel() {
       v=${(P)var}
       (( i )) && v=${sh[i]}
       if (( k == cf )); then
-        out+=$c"‹ "$z$b$v$z$c" ›"$z
+        [[ $mhov == "confs $k -1" ]] && out+=$b
+        out+=$c"‹ "$z$b$v$z
+        [[ $mhov == "confs $k 1" ]] && out+=$b
+        out+=$c" ›"$z
         pvz+=("$(( r0 + k - 1 )) $(( col + 13 )) $(( col + 14 )) confs $k -1")
         pvz+=("$(( r0 + k - 1 )) $(( col + 15 + ${(m)#v} )) $(( col + 17 + ${(m)#v} )) confs $k 1")
       else
@@ -1352,7 +1413,9 @@ __tt_pv_conf_panel() {
       pvz+=("$(( r0 + k - 1 )) $zc $(( zc + ${(m)#sh[j]} + 1 )) confv $k $j")
       (( zc += ${(m)#sh[j]} + 2 ))
       (( j > 1 )) && out+=" "
-      if (( j != i )); then
+      if (( j != i )) && (( color )) && [[ $mhov == "confv $k $j" ]]; then
+        out+=$TTHEME_SGR[chip]" ${sh[j]} "$TTHEME_SGR[/chip]
+      elif (( j != i )); then
         out+=$d" ${sh[j]} "$z
       elif (( ! color )); then
         out+="[${sh[j]}]"
@@ -1587,10 +1650,20 @@ __tt_pv_draw() {
     (( hub )) || out+=$'\e[K\n'
   fi
   if (( N > h && top > 1 )); then
-    out+="   "$dd$TTHEME_MARKS[above]" $(( top - 1 )) more"$zz
+    if [[ $mhov == "more -1" ]]; then
+      out+="   "$TTHEME_MARKS[above]" $(( top - 1 )) more"
+    else
+      out+="   "$dd$TTHEME_MARKS[above]" $(( top - 1 )) more"$zz
+    fi
     pvz+=("$(( hd + 1 )) 1 $lw more -1")
   fi
   out+=$'\e[K\n'
+  if (( mhi && mhrow >= hd + 2 && mhrow < hd + 2 + h )); then
+    i=$(( top + mhrow - hd - 2 ))
+    if (( i != mhi && i <= N )) && [[ ${rtype[i]} != rule ]]; then
+      mhi=$i mhov="row $i"
+    fi
+  fi
   for (( k = 0; k < ph - hd - 2; k++ )); do
     i=$(( top + k ))
     line=""
@@ -1618,6 +1691,7 @@ __tt_pv_draw() {
       fi
     elif (( k == h && N > h && top + h <= N )); then
       line="   "$dd$TTHEME_MARKS[below]" $(( N - top - h + 1 )) more"$zz
+      [[ $mhov == "more 1" ]] && line="   "$TTHEME_MARKS[below]" $(( N - top - h + 1 )) more"
       pvz+=("$(( hd + 2 + k )) 1 $lw more 1")
     fi
     out+=$line$'\e[K\n'
@@ -1835,6 +1909,10 @@ __tt_pv_read() {
     key=esc
     return 0
   fi
+  if [[ $REPLY == $'\e' ]]; then
+    pvrest=$REPLY$pvrest key=esc
+    return 0
+  fi
   if [[ $REPLY != '[' && $REPLY != O ]]; then
     key=nop
     [[ $REPLY == c ]] && key=altc
@@ -1913,8 +1991,12 @@ __tt_pv_sgr() {
     (( b & 2 || mwheel == mlwheel )) && key=nop
     mlwheel=$mwheel
   elif (( b & 32 )); then
-    mact=drag
-    (( b & 3 )) && key=nop
+    if (( (b & 3) == 3 )); then
+      mact=move
+    else
+      mact=drag
+      (( b & 3 )) && key=nop
+    fi
   elif [[ $1 == *m ]] || (( (b & 3) == 3 )); then
     mact=release
   elif (( b & 3 )); then
@@ -1962,6 +2044,7 @@ __tt_pv_word() {
     bksp) REPLY=$'\x7f' ;;
     space) REPLY=' ' ;;
     shift+enter) REPLY=senter ;;
+    shift+tab) REPLY=stab ;;
     alt+u) REPLY=altu ;;
     alt+g) REPLY=altg ;;
     alt+c) REPLY=altc ;;
@@ -1971,6 +2054,60 @@ __tt_pv_word() {
     *) REPLY="" ;;
   esac
   [[ -n $REPLY ]]
+}
+
+__tt_pv_shape() {
+  local -i want=$(( ${#mhov} > 0 ))
+  (( want == mhand )) && return 0
+  mhand=$want
+  if (( want )); then
+    [[ $TERM_PROGRAM == iTerm.app ]] && printf '\e]22;hand2\e\\' || printf '\e]22;pointer\e\\'
+  else
+    printf '\e]22;default\e\\'
+  fi
+  return 0
+}
+
+__tt_pv_unhover() {
+  mhrow=0 mhcol=0 mhov="" mhi=0 mhp=0
+  __tt_pv_shape
+}
+
+__tt_pv_hovered() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
+  local REPLY now=""
+  local -a f
+  local -i held=0
+  if (( mhrow )) && __tt_pv_spot $mhrow $mhcol; then
+    f=(${=REPLY})
+    now=${f[4,-1]}
+    if [[ -n $mzone ]]; then
+      if [[ $REPLY == "$mzone" ]]; then
+        held=1
+      else
+        now=""
+      fi
+    elif (( help || ! mhlive )); then
+      now=""
+    elif (( gmenu )) && [[ $f[4] != (gpick|group) ]]; then
+      now=""
+    else
+      case $f[4] in
+        gbox) now="" ;;
+        row|fold|more|tosearch|group|scene) __tt_pv_free || now="" ;;
+        tefind) __tt_pv_bg_findable || now="" ;;
+        hub) __tt_pv_free && (( f[5] != ${TTHEME_HUB_TABS[(Ie)preview]} )) || now="" ;;
+        key) __tt_pv_word "$f[5]" || now="" ;;
+      esac
+      [[ $f[4] == row && ${rtype[$f[5]]} == rule ]] && now=""
+    fi
+  fi
+  if [[ $now != "$mhov" ]] || (( held != mhp )); then
+    mhov=$now mhp=$held mhi=0 pvquiet=0
+    [[ ${now%% *} == (row|fold) ]] && mhi=${now##* }
+  fi
+  __tt_pv_shape
+  return 0
 }
 
 __tt_pv_mouse() {
@@ -2090,6 +2227,7 @@ __tt_pv_release() {
         __tt_pv_gopen
       fi
       ;;
+    scene) __tt_pv_free && scene=$(( $5 - 1 )) ;;
     tefind) __tt_te_find ;;
     teedit) __tt_te_edit ;;
     tereset) __tt_te_resetting ;;
@@ -2153,6 +2291,7 @@ __tt_pv_pick() {
 }
 
 __tt_pv_leave() {
+  __tt_pv_unhover
   printf '\e[?2026h'
   __tt_pv_bg_close
   __tt_pv_unpaint
@@ -2166,6 +2305,8 @@ __tt_pv_lost() {
 
 __tt_pv_back() {
   printf '\e[?2026h\e[?25l\e[?2004h%s' "$pvmouse"
+  mhand=0
+  __tt_pv_unhover
   __tt_pv_lost
   if [[ -n $applied ]]; then
     __tt_pv_paint "$applied"
@@ -2530,10 +2671,13 @@ __tt_pv_te_head() {
 
 __tt_pv_te_tile() {
   local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] b=$TTHEME_SGR[bold] sty top side bot
-  local -i y=$1 col=$2 r tc=10
+  local -i y=$1 col=$2 r tc=10 over=0
   (( color )) || z= d= b=
-  if (( tfocus == 1 && tf == 5 )); then
+  (( color )) && [[ $mhov == tefind ]] && over=1
+  if (( tfocus == 1 && tf == 5 || over && mhp )); then
     sty=$b$ac top="┏${(l:tc::━:)}┓" side="┃" bot="┗${(l:tc::━:)}┛"
+  elif (( over )); then
+    sty=$b$ac top="╭${(l:tc::─:)}╮" side="│" bot="╰${(l:tc::─:)}╯"
   else
     sty=$d top="╭${(l:tc::─:)}╮" side="│" bot="╰${(l:tc::─:)}╯"
   fi
@@ -2543,7 +2687,11 @@ __tt_pv_te_tile() {
   done
   out+=$'\e['$(( y + 4 ))';'$col'H'$sty$bot$z$'\e['$(( y + 2 ))';'$(( col + tc + 4 ))'H'
   __tt_cap enter
-  if (( tfocus == 1 && tf == 5 )); then
+  if (( over && mhp )); then
+    out+=$pl"$REPLY finds one"$TTHEME_SGR[/pill]
+  elif (( over )); then
+    out+=$TTHEME_SGR[chip]"$REPLY finds one"$TTHEME_SGR[/chip]
+  elif (( tfocus == 1 && tf == 5 )); then
     out+=$b$REPLY$z$d" finds one"$z
   else
     out+=$d"$REPLY finds one"$z
@@ -2619,8 +2767,12 @@ __tt_pv_te_images() {
 }
 
 __tt_pv_te_button() {
+  local spot=teedit
+  (( $1 )) && spot=tereset
   if (( tfocus == 0 && tbtn == $1 )); then
     (( color )) && out+=$ac$TTHEME_MARKS[focus]$z" "$pl" $2 "$z || out+="$TTHEME_MARKS[focus] [$2]"
+  elif (( color )) && [[ $mhov == "$spot" ]]; then
+    out+="  "$TTHEME_SGR[chip]" $2 "$TTHEME_SGR[/chip]
   else
     (( color )) && out+="  "$b" $2 "$z || out+="   $2 "
   fi
@@ -2666,6 +2818,7 @@ __tt_pv_te_panel() {
   fi
   fs=$d hs=$d
   (( tfocus == 1 )) && fs=$ac hs=$b$ac
+  (( tfocus != 1 && color )) && [[ $mhov == teimg ]] && fs="" hs=$b
   if (( tetop == 0 && I <= R )); then
     y=$r0
     st=""
@@ -2708,6 +2861,7 @@ __tt_pv_te_panel() {
   fi
   fs=$d
   (( tfocus == 0 )) && fs=$ac
+  (( tfocus != 0 && color )) && [[ $mhov == tepal ]] && fs=""
   for (( i = 1; i <= P; i++ )); do
     y=$(( r0 + I + i - 1 - tetop ))
     (( y >= r0 && y <= r1 )) || continue
@@ -2721,6 +2875,8 @@ __tt_pv_te_panel() {
       if (( tfocus == 0 && color )); then
         row=${${row//$d/$ac}//$dx/$bx$ax}
         (( i == 1 )) && row=${row/ Palette /$b" Palette "$bx}
+      elif (( color )) && [[ $mhov == tepal ]]; then
+        row=${row//$d/}
       fi
       out+=$'\e['$y';'$col'H'$row$z
       pvz+=("$y $col $end tepal")
@@ -2739,6 +2895,8 @@ __tt_pv_te_panel() {
   out+=$'\e['$y';'$ix'H'
   if (( tfocus == 2 )); then
     (( color )) && out+=$ac$TTHEME_MARKS[focus]$z" "$pl" Apply "$z || out+="$TTHEME_MARKS[focus] [Apply]"
+  elif (( color )) && [[ $mhov == teapply ]]; then
+    out+="  "$TTHEME_SGR[chip]" Apply "$TTHEME_SGR[/chip]
   else
     (( color )) && out+="  "$b" Apply "$z || out+="   Apply "
   fi
@@ -2773,7 +2931,14 @@ __tt_pv_te_draw() {
 
 __tt_pv_handle() {
   local name
+  if [[ $key == mouse && $mact == move ]]; then
+    mhrow=$mrow mhcol=$mcol mhlive=1
+    __tt_pv_hovered
+    return 0
+  fi
+  pvquiet=0
   if [[ $key == mouse ]]; then
+    mhrow=$mrow mhcol=$mcol
     __tt_pv_mouse
     return
   fi
@@ -2962,7 +3127,8 @@ __tt_preview() {
   local te=0 tfocus=0 tetop=0 tewide=0 tbtn=0 tearm=0 tename=""
   local -i pvgone=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
   local -F mlast=0 pvsized=0
-  local mact="" mzone="" pvmouse="" pasted="" pvrest=""
+  local mact="" mzone="" pvmouse="" pasted="" pvrest="" mhov=""
+  local -i mhrow=0 mhcol=0 mhi=0 mhp=0 mhand=0 mhlive=0 pvquiet=0 pvagain=0
   local -a pvz=()
   local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_MOUSE TTHEME_HELP_BOX TTHEME_BG_BLUR TTHEME_BG_COLORS TTHEME_BG_STICKER) clabel=(Mode "New tabs" Announce "Search fx" Mouse Help Blur Pictures Sticker)
   local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "on off" "on off" "0 1 2 3 4" "original tone" "on off") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "on off" "on off" "off 1px 2px 3px 4px" "original tinted" "on off")
@@ -2972,7 +3138,7 @@ __tt_preview() {
     TTHEME_TAB_PALETTE:seq "New tabs rotate through palettes" TTHEME_TAB_PALETTE:off "New tabs keep the terminal theme"
     TTHEME_ANNOUNCE:1 "Shows the palette notice" TTHEME_ANNOUNCE:0 "Silences the palette notice"
     TTHEME_FX:typewriter "The search hint types itself" TTHEME_FX:decode "The search hint decodes" TTHEME_FX:glitch "The search hint glitches in"
-    TTHEME_MOUSE:on "Clicks, the wheel and drags work in ttheme's screens" TTHEME_MOUSE:off "The terminal keeps the mouse, so a drag selects text"
+    TTHEME_MOUSE:on "The pointer, clicks, the wheel and drags work in ttheme's screens" TTHEME_MOUSE:off "The terminal keeps the mouse, so a drag selects text"
     TTHEME_HELP_BOX:on "The keys no bar names stay on screen" TTHEME_HELP_BOX:off "Those keys show only behind ?"
     TTHEME_BG_BLUR:0 "Pictures stay sharp" TTHEME_BG_BLUR:1 "Pictures soften a little behind the text"
     TTHEME_BG_BLUR:2 "Pictures soften behind the text" TTHEME_BG_BLUR:3 "Pictures blur behind the text"
@@ -3006,6 +3172,7 @@ __tt_preview() {
     __tt_pv_pointer
     while :; do
       (( EPOCHREALTIME - pvsized < 0.2 )) || __tt_pv_size
+      (( mhrow )) && __tt_pv_hovered
       printf '\e[?2026h'
       if (( tick && ! te )); then
         __tt_pv_draw hint
@@ -3013,15 +3180,24 @@ __tt_preview() {
         __tt_pv_focus
         __tt_pv_draw
       fi
-      tick=0 mlwheel=0
-      if ! __tt_pv_read; then
-        (( pvgone )) && break
-        [[ -t 0 ]] && continue
-        break
+      tick=0 mlwheel=0 pvquiet=1
+      (( mhrow )) && __tt_pv_hovered
+      if (( ! pvquiet && ! pvagain )); then
+        pvagain=1
+        continue
       fi
-      while :; do
-        __tt_pv_handle || break 2
-        __tt_pv_read drain || break
+      pvagain=0 pvquiet=1
+      while (( pvquiet )); do
+        if ! __tt_pv_read; then
+          (( pvgone )) && break 2
+          [[ -t 0 ]] && continue 2
+          break 2
+        fi
+        while :; do
+          [[ $key == (mouse|nop) ]] || __tt_pv_unhover
+          __tt_pv_handle || break 3
+          __tt_pv_read drain || break
+        done
       done
     done
   } always {
@@ -3039,10 +3215,12 @@ __tt_preview() {
       __tt_pv_unpaint
     fi
     (( conf )) && __tt_pv_unconf
+    local pointed=$pvmouse
     __tt_pv_pointer off
     printf '\e[?2004l\e[?7h'
     (( hubleft )) || printf '\e[?1049l'
     printf '\e[?25h\e[?2026l'
+    [[ -n $pointed ]] && __tt_ask ""
     [[ -n $tty ]] && stty "$tty" 2>/dev/null
     TTHEME_RAW=0
     [[ -n $tune ]] && __tt_pv_untune

@@ -8,6 +8,7 @@ export const ROLES = {
   accent: ['36', '39'],
   pill: ['7;1;36', '22;27;39'],
   chip: ['100;1', '22;49'],
+  hot: ['100;1;4', '22;24;49'],
   danger: ['7;1;31', '22;27;39'],
   alert: ['7;1;33', '22;27;39'],
   match: ['1;4;36', '22;24;39'],
@@ -207,6 +208,57 @@ export interface Paint {
   fg(hex: Hex): string
   bg(hex: Hex): string
 }
+
+export type Look = (inner: string, pressed: boolean) => string
+
+function plain(text: string): string {
+  const [head = '', ...chunks] = text.split('\x1b[')
+
+  return chunks.reduce((kept, chunk) => {
+    const params = /^[0-9;]*m/.exec(chunk)?.[0]
+
+    return `${kept}${params === undefined ? `\x1b[${chunk}` : chunk.slice(params.length)}`
+  }, head)
+}
+
+function undimmed(text: string): string {
+  return text.replaceAll(open('dim'), '')
+}
+
+function swapped(text: string, from: Role, to: Role): string {
+  return undimmed(text).replaceAll(open(from), open(to)).replaceAll(close(from), close(to))
+}
+
+function filled(text: string, role: Role): string {
+  return `${open(role)}${plain(text)}${close(role)}`
+}
+
+function ghost(text: string, mark: string, blank: string, gap: string): string {
+  return text.startsWith(blank)
+    ? `${open('dim')}${mark}${close('dim')}${gap}${undimmed(text.slice(blank.length))}`
+    : text
+}
+
+export const LOOKS = {
+  flat(inner, pressed) {
+    if ([open('pill'), open('danger'), open('alert'), open('reverse')].some((code) => inner.includes(code))) {
+      return inner
+    }
+
+    if (inner.includes(open('chip'))) {
+      return swapped(inner, 'chip', pressed ? 'pill' : 'hot')
+    }
+
+    return filled(inner, pressed ? 'pill' : 'chip')
+  },
+  danger: (inner) => (inner.includes(open('chip')) ? swapped(inner, 'chip', 'danger') : inner),
+  row: (inner) => ghost(inner, MARKS.gutter, '  ', ' '),
+  topic: (inner) => ghost(inner, MARKS.focus, ' ', ''),
+  mark: (inner) => `${open('accent')}${plain(inner)}${close('accent')}`,
+  bold: (inner) => `${open('bold')}${undimmed(inner)}${close('bold')}`,
+  soft: (inner) => undimmed(inner),
+  still: (inner) => inner,
+} satisfies Record<string, Look>
 
 export function painter(color: boolean): Paint {
   const role = (name: Role) => (text: string) => (color ? `${open(name)}${text}${close(name)}` : text)

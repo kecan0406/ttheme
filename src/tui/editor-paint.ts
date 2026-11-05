@@ -7,7 +7,7 @@ import { cells } from '../core/text.ts'
 import { fit, spread } from './ansi.ts'
 import { type Channel, CONTRAST, gateRows, type PaletteEditor, type Scope } from './palette-editor.ts'
 import { boxEdge, boxed, boxTitle, buttonOf, checkOf, hintOf, moreOf, SEP } from './parts.ts'
-import { FG_RESET, INK_RESET, MARKS, open, type Paint } from './style.ts'
+import { FG_RESET, INK_RESET, LOOKS, type Look, MARKS, open, type Paint } from './style.ts'
 import { type KeySpot, keyZone, zone } from './zones.ts'
 
 export const LEFT = 50
@@ -30,8 +30,22 @@ export type EditorSpot =
   | { kind: 'entry'; index: number }
   | { kind: 'picker' }
 
-export function spot(target: EditorSpot, text: string): string {
-  return zone(target, text)
+const SPOT_LOOKS: Partial<Record<EditorSpot['kind'], Look>> = {
+  scope: LOOKS.flat,
+  scene: LOOKS.flat,
+  view: LOOKS.flat,
+  format: LOOKS.flat,
+  choice: LOOKS.row,
+  channel: LOOKS.bold,
+  field: LOOKS.bold,
+}
+
+function familyOf(target: EditorSpot): string | undefined {
+  return 'channel' in target ? `channel ${target.channel}` : 'field' in target ? `field ${target.field}` : undefined
+}
+
+export function spot(target: EditorSpot, text: string, look: Look = SPOT_LOOKS[target.kind] ?? LOOKS.still): string {
+  return zone(target, text, target.kind === 'picker' ? undefined : look, familyOf(target))
 }
 
 export function ink(hex: Hex): Hex {

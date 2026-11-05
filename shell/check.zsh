@@ -94,6 +94,9 @@ out=$(__tt_preview hub </dev/null 2>&1) && { print -u2 "preview ran without a tt
     pvrest=$typed key=""
     __tt_pv_read && [[ $key == "$want" ]] || { print -u2 "$typed with '$flt' in the filter read as $key, not $want"; exit 1 }
   done
+  pvrest=$'\e\e[<35;5;2M' key="" flt=""
+  __tt_pv_read && [[ $key == esc ]] || { print -u2 "an esc right before a mouse report read as $key"; exit 1 }
+  __tt_pv_read && [[ $key == mouse && $mact == move && -z $pvrest ]] || { print -u2 "the mouse report after an esc read as $key, leaving ${(q+)pvrest}"; exit 1 }
 ) || exit 1
 EDITOR=true ttheme config > /dev/null || { print -u2 "ttheme config broke"; exit 1 }
 source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh

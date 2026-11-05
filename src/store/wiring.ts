@@ -78,7 +78,7 @@ export const CONFIG_SETTINGS = {
     default: 'abc',
   },
   TTHEME_MOUSE: {
-    doc: '# clicks, the wheel and drags in preview, browse, the palette editor and find: on, or off to leave the mouse to the terminal, so a drag selects text again without a modifier (default on)',
+    doc: '# the pointer, clicks, the wheel and drags in preview, browse, the palette editor and find: on, or off to leave the mouse to the terminal, so a drag selects text again without a modifier (default on)',
     default: 'on',
   },
   TTHEME_HELP_BOX: {

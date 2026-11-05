@@ -731,18 +731,27 @@ __tt_pv_bg_tuned() {
 __tt_pv_bg_panel() {
   local name=$1 z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] c=$ac val sty mark choice shown REPLY
   local -a labs=(Size Position Opacity Colors) at=(1 4 7 0)
-  local -i r0=$2 col=$3 end=$4 off=${bgoff[$1]} T=$(( $4 - $3 - 21 )) lo=20 hi=100 k i r knob pos=${bgpos[$1]} o tuned
+  local -i r0=$2 col=$3 end=$4 off=${bgoff[$1]} T=$(( $4 - $3 - 21 )) lo=20 hi=100 k i r knob pos=${bgpos[$1]} o tuned over
   (( color )) || z= b= d= c=
   (( T < 8 )) && T=8
   __tt_pv_bg_fs $name && (( REPLY > hi )) && hi=$REPLY
   for k in 1 2 3 4; do
     r=$(( r0 + at[k] ))
     pvz+=("$r $col $(( col + 11 )) tefield $k")
-    sty=$d
+    sty=$d over=0
+    case $mhov in
+      "tefield $k"|"track $k") over=1 ;;
+      place\ *) (( k != 2 )) || over=1 ;;
+      colors\ *) (( k != 4 )) || over=1 ;;
+    esac
+    (( color )) || over=0
+    (( over )) && sty=""
     (( tf == k && ! off )) && sty=$b
     out+=$'\e['$r';'$col'H'
     if (( tf == k && ! off )); then
       out+=$c$TTHEME_MARKS[focus]$z" "
+    elif (( over )); then
+      out+=$d$TTHEME_MARKS[focus]$z" "
     else
       out+="  "
     fi
@@ -756,6 +765,8 @@ __tt_pv_bg_panel() {
         shown=${${choice:#tone}:-tinted}
         if (( ! color )); then
           if [[ $choice == $val ]]; then out+="[$shown] "; else out+=" $shown  "; fi
+        elif [[ $mhov == "colors $choice" && $choice != $val ]]; then
+          out+=$TTHEME_SGR[chip]" $shown "$TTHEME_SGR[/chip]" "
         elif [[ $choice != $val ]]; then
           out+=$d" $shown "$z" "
         elif (( tf == k && ! off )); then
@@ -776,6 +787,8 @@ __tt_pv_bg_panel() {
           out+=$b$c"■"$z
         elif (( i == pos )); then
           out+=$d"■"$z
+        elif [[ $mhov == "place $i" ]]; then
+          out+=$c$TTHEME_MARKS[spot]$z
         else
           out+=$d$TTHEME_MARKS[spot]$z
         fi
@@ -805,7 +818,9 @@ __tt_pv_bg_panel() {
       elif (( off )); then
         out+=$d${(l:knob::━:)}$TTHEME_MARKS[on]${(l:$(( T - 1 - knob ))::─:)}$z
       else
-        out+=$c${(l:knob::━:)}$b$TTHEME_MARKS[on]$z$d${(l:$(( T - 1 - knob ))::─:)}$z
+        out+=$c${(l:knob::━:)}$b$TTHEME_MARKS[on]$z
+        [[ $mhov == "track $k" ]] || out+=$d
+        out+=${(l:$(( T - 1 - knob ))::─:)}$z
       fi
     fi
     out+=$'\e['$r';'$(( end - ${#val} - 1 ))'H'$sty$val$z

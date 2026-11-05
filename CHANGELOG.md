@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- What a click would act on now lights up under the pointer in Preview, Browse, the palette editor and the picture search, down to the search's pictures and the tabs and text of the editor's mock terminal, and a press shows on the thing pressed until you let go. The sample's tabs in Preview and the key beside the bare `ttheme`'s tabs now take a click too. In terminals that allow it the pointer turns into a hand there. A key puts the highlight out until the pointer moves again, and `TTHEME_MOUSE=off` turns it off with the rest of the mouse; over ssh only the press shows.
+
 ## 1.2.93
 
 - With the mode on `auto`, a tab that heard the system's appearance just as the palettes changed could keep a shell using a whole CPU core, even after the tab closed, and no tab followed the appearance while that tab stayed open. Background jobs no longer touch the terminal.

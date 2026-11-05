@@ -315,7 +315,7 @@ Every screen but the inline choosers (init's picker, `ttheme unpin`'s) takes the
 mouse, and every mouse action has a key in the tables above. A press selects —
 it moves the cursor to a row, picks one of find's site tabs, sets a slider to
 the point — and a release over what was pressed acts: a key hint presses its
-key, a ○ picks, a ▸ folds, a button row acts, a tab of the bare `ttheme`
+key, a ○ picks, a ▸ folds, a button row acts, a tab of the sample or of the bare `ttheme`
 switches, and a double click does what enter does, but on a palette in
 Browse's panel, where it picks. Acting on the release keeps a screen that
 closes on a click from leaving the release to the shell, and moving off before
@@ -336,14 +336,46 @@ so red is only ever a fill, slot 1 under the background's own color); one with
 nothing to do is dim, with no chip. A status that is not a control, like a
 card's `↻ auto-update` badge, gets no zone of its own.
 
-A Node screen marks what can be clicked while it draws: `zone(target, text)`
+Under the pointer, what a click would act on lights up, and only that: a hint or
+a tab becomes a chip, a chip takes an underline (`hot`), a button that removes
+something turns red, a row shows a dim ▌ and lifts its dim text, a ○ or a ▸ takes
+the accent, a picture in find takes a dim frame, a run of the palette editor's mock
+terminal an underline, and the cursor's own row stays as it is. A press holds a pill on the
+thing pressed for as long as the pointer stays on it, so moving off shows the
+click is called off. The pointer becomes a hand where the terminal takes OSC 22,
+and the arrow again everywhere else; a palette's colors are never touched.
+
+The mode is any-event tracking (`?1003`), so a move arrives as a report on every
+cell the pointer crosses. Three things keep that cheap and honest. A move that
+changes nothing under the pointer draws nothing. A key puts the hover out until
+the pointer moves again, because a pointer parked on a list would otherwise claim
+whatever scrolls under it, while the wheel keeps it, because the pointer is what
+is moving the list. And a terminal that sends no moves (or an ssh session, which
+asks for none) just never shows a hover: clicks work as they did. A terminal says
+nothing when the pointer leaves its window, so the last hover stays until the next
+report.
+
+Leaving a screen, the mode goes off and the screen waits for the terminal to
+answer a query before it gives the terminal back, dropping every report before the
+answer: one already on its way would otherwise land on the shell's prompt as text.
+`Terminal.settle` does it for a Node screen and `__tt_ask` for preview, after the
+synchronized write ends, since some terminals hold what is inside one.
+
+A Node screen marks what can be clicked while it draws: `zone(target, text, look)`
 around the text (`keyZone` for a key hint), or a rectangle in `Frame.zones`;
 `screen.point(event)` hands back what was under the pointer in the frame on
-screen. The width helpers skip the marks but `.length` and `padEnd` do not, so
-pad before you mark. Let `pointing()` add the mouse mode, and never assume it
-from a program around you. In preview, append a zone to `pvz` where you draw the
-thing (`row from to action`) and act on it in `__tt_pv_press` or
-`__tt_pv_release`.
+screen. A `look` from `LOOKS` says how the text lights up, and a zone without one
+is not lit and keeps the arrow, for what a click does not act on; `LOOKS.still`
+gives the hand and changes nothing, for a color or a slider. A look never changes
+a width. Zones with equal targets light together, so a card of three rows lights
+whole, a `family` lights a slider's label from its track, and `Frame.hovers` turns off what a state of the screen has made inert. The
+width helpers skip the marks but `.length` and `padEnd` do not, so pad before you
+mark. Let `pointing()` add the mouse mode, and never assume it from a program
+around you. A screen hands `terminal.onHover` to `screen.hover`. In preview,
+append a zone to `pvz` where you draw the thing (`row from to action`), act on it
+in `__tt_pv_press` or `__tt_pv_release`, and draw its look where `$mhov` names it
+(`key enter`, `hub 2`), which `__tt_pv_hovered` sets from the zone under the
+pointer.
 
 ### Writing the text
 
