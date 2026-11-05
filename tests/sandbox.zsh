@@ -313,7 +313,7 @@ hand_back() {
     sleep 0.1
   done
   [[ $front == <-> ]] || return 0
-  activate $front
+  activate $front 2> /dev/null || :
 }
 
 absent() {

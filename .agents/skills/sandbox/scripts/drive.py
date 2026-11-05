@@ -51,6 +51,9 @@ def keys(step):
         return [f'\x1b[200~{step[6:]}\x1b[201~'], GAP
     if step in KEYS:
         return [KEYS[step]], GAP
+    for name, report in (('move', '35;{};{}M'), ('press', '0;{};{}M'), ('release', '0;{};{}m')):
+        if step.startswith(f'{name}:'):
+            return ['\x1b[<' + report.format(*step[len(name) + 1:].split(':'))], GAP
     if step.startswith('hold:'):
         key, _, count = step[5:].rpartition(':')
         if key in KEYS and count.isdigit():
