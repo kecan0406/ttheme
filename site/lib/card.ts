@@ -333,8 +333,10 @@ function windowOf(kit: Raster, theme: Theme, k: Tones, title: string, { width, h
   const h = height - y - 76
   const lights = [theme.ansi[1], theme.ansi[3], theme.ansi[2]] as string[]
 
-  const shadow =
-    '<filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#000" flood-opacity="0.5"/></filter>'
+  const dark = theme.mode === 'dark'
+  const ink = dark ? mixOk(theme.background, '#000000', 0.7) : mixOk(theme.foreground, theme.cursor, 0.5)
+
+  const shadow = `<filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="${ink}" flood-opacity="${dark ? 0.6 : 0.18}"/></filter>`
 
   const drawn = [
     rect(x, y, w, h, 22, theme.background, `stroke="${k.hair}" stroke-width="2" filter="url(#shadow)"`),

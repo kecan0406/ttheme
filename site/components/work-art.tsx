@@ -150,7 +150,7 @@ function HeroArt({ art, facets, sizes }: { art: KeyArt | null; facets: string; s
         src={art.src}
         alt=""
         decoding="async"
-        class="absolute top-21 right-[6%] h-100 w-auto max-w-[40%] rounded-xl object-contain shadow-2xl max-sm:top-17 max-sm:h-44"
+        class="absolute top-21 right-[6%] h-100 w-auto max-w-[40%] rounded-xl object-contain shadow-lg max-sm:top-17 max-sm:h-44"
       />
     </>
   )
