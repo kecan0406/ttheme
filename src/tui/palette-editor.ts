@@ -135,7 +135,10 @@ export interface EditorOptions {
   decode?: (text: string) => Colors | undefined
   find?: (edited: Edited, start?: Start) => Promise<Found>
   check: (edited: Edited) => string | undefined
+  help?: boolean
 }
+
+const BOX_KEYS = new Set(['n  N', 'f', 'u', 'ctrl+r', 'space'])
 
 function isPicture(text: string): boolean {
   const trimmed = text.trim()
@@ -404,6 +407,21 @@ export class PaletteEditor {
     const needle = this.filter.toLowerCase()
 
     return (this.options.palettes ?? []).filter((c) => c.name.toLowerCase().includes(needle))
+  }
+
+  boxTopics(): Topic[] {
+    const quiet =
+      this.options.help !== false &&
+      this.mode === 'list' &&
+      !this.inspect &&
+      !this.compare &&
+      !this.quitting &&
+      !this.menu &&
+      !this.overlay &&
+      !this.help &&
+      this.typing === undefined
+
+    return quiet ? this.topics().filter((t) => BOX_KEYS.has(t.keys)) : []
   }
 
   private topics(): Topic[] {

@@ -18,14 +18,15 @@ Preview draws in zsh what the Node screens draw in TypeScript: change both sides
 - The hub's tab bar: `hubBar` (`src/tui/hub.ts`) and `__tt_pv_bar`. Compare row 0 of the `hub-few` and `hub-browse` scenarios.
 - The release line: `releaseOf` (`src/tui/bar.ts`) and preview's `__tt_pv_standing` and `__tt_pv_foot`.
 - The world view: preview's list (`__tt_pv_rows`) and `PaletteList`'s `world` layout shelve the same palettes the same way, and preview's filter matches what `matchesPalette` matches.
+- The Help box: `keysBox` (`src/tui/help.ts`), which Browse, find and the editor draw, and `__tt_pv_keys`. Compare `preview-open` and `hub-browse` at 120x34.
 
 What `sync` carries into `palettes.zsh` for preview comes from `src/cli/emit-shell.ts`, so a change to one of its sources reaches preview only after a `sync`.
 
 ## Where a change goes
 
-**A key on a Node screen.** Read HACKING.md's "Keys a screen takes" first: where typing filters, a letter or digit is never a command, and a key already in the table is a collision to resolve. Then the handler, the help topic that names the key, and the hint on the key bar.
+**A key on a Node screen.** Read HACKING.md's "Keys a screen takes" first: where typing filters, a letter or digit is never a command, and a key already in the table is a collision to resolve. Then the handler, the help topic that names the key (`onBar` where a bar names it too, which keeps it out of the Help box), and the hint on the key bar.
 
-**A key in preview or its panel.** A case in `__tt_pv_handle` (or the panel's `__tt_te_*`), its line in `PREVIEW_KEYS` (`src/tui/preview-keys.ts`), the bar in `__tt_pv_foot`, and the panel's table in HACKING.md.
+**A key in preview or its panel.** A case in `__tt_pv_handle` (or the panel's `__tt_te_*`), its line in `PREVIEW_KEYS` (`src/tui/preview-keys.ts`, `onBar` as above), the bar in `__tt_pv_foot`, and the panel's table in HACKING.md.
 
 **A click.** Every click has a key that does the same and acts on the release. On a Node screen wrap the text in `zone(target, text)` while drawing and pad before marking; find hands rectangles in `Frame.zones`; preview appends to `pvz` and acts in `__tt_pv_press` or `__tt_pv_release`.
 

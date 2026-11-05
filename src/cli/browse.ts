@@ -327,6 +327,7 @@ export async function runBrowse(): Promise<number> {
     lookups: process.env.TTHEME_MARKETPLACE_LOOKUP !== 'off',
     ...(hub && process.env.TTHEME_HUB_SEARCH ? { search: process.env.TTHEME_HUB_SEARCH } : {}),
     fx: promptFx(process.env.TTHEME_FX),
+    help: process.env.TTHEME_HELP_BOX !== 'off',
     owns: tty && !hub,
     ...(live ? { onFocus: (entry: PaletteEntry) => process.stdout.write(live.paint(entry)) } : {}),
   })

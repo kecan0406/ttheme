@@ -11,12 +11,12 @@ import type { Framing } from '../../pictures/backdrop.ts'
 import { graphic } from '../../terminals/graphics.ts'
 import { linked } from '../ansi.ts'
 import type { Tone } from '../bar.ts'
-import { type Help, type HelpSpot, type Legend, overlay, type Topic } from '../help.ts'
+import { type Help, type HelpSpot, keysBox, keysWidth, type Legend, overlay, type Topic } from '../help.ts'
 import { cap, capped } from '../keycaps.ts'
 import { moreOf, SEP } from '../parts.ts'
 import { megabytes, progress } from '../pending.ts'
 import { ansiBg, ansiFg, MARKS, open, painter, RESET as R, SPINNER, slotBg, slotFg } from '../style.ts'
-import { hintKey, type KeySpot, type Zone } from '../zones.ts'
+import { cover, hintKey, type KeySpot, type Zone } from '../zones.ts'
 
 export type Preset = 'cutouts' | 'all'
 
@@ -167,6 +167,7 @@ export interface FindView {
   notice?: { text: string; tone: Tone }
   waiting?: number
   slow?: string
+  keyed?: boolean
 }
 
 export interface TagChip {
@@ -219,6 +220,7 @@ interface Frame {
   tick: boolean
 }
 
+const SAMPLE_REACH = 68
 export const TILE = { pitch: 25, cols: 22, rows: 9, height: 13 }
 export const MIN = { cols: 25, rows: 21 }
 export const HELD = { cols: 10, rows: 3, pitch: 12, top: 4 }
@@ -1155,6 +1157,32 @@ function loading(view: FindView, waiting: boolean, shown: Tile[]): Part | undefi
   return ready < due.length ? [`${spin(view)} Loading thumbnails${SEP}${ready}/${due.length}`, D] : undefined
 }
 
+function gridKeys(line: Line, cols: number, used: number, view: FindView): void {
+  const hints: [string, string][] = [
+    ['space', 'unfold'],
+    ['o', 'open'],
+    ...(view.chips.length > 0 ? ([['1-9', 'tags']] as [string, string][]) : []),
+    ['c', 'cutouts'],
+    ['a', 'filters'],
+    ['pgup', 'page'],
+  ]
+
+  const partsOf = (shown: [string, string][]) =>
+    shown.flatMap(([k, l], i): Part[] => [
+      ...(i > 0 ? ([['   ', '']] as Part[]) : []),
+      [cap(k), B, undefined, keyed(k)],
+      [` ${l}`, D, undefined, keyed(k)],
+    ])
+
+  while (hints.length > 0 && partsWidth(partsOf(hints)) > cols - used - 3) {
+    hints.pop()
+  }
+
+  if (hints.length > 0) {
+    line.right(cols, partsOf(hints))
+  }
+}
+
 function grid(
   lines: Line[],
   images: Placement[],
@@ -1289,6 +1317,10 @@ function grid(
 
   if (scroll.length > 0) {
     lines[rows - 2]?.put(0, scroll.join('   '), D)
+  }
+
+  if (view.keyed && !quiet && view.editing === undefined) {
+    gridKeys(lines[rows - 2] as Line, cols, width(scroll.join('   ')), view)
   }
 
   if (!view.searching && view.tiles.length === 0 && !view.notice && view.tag) {
@@ -1426,7 +1458,7 @@ interface Key {
   does: string
   more?: string
   press?: string
-  after?: string
+  onBar?: boolean
 }
 
 const OPEN: Key = {
@@ -1502,20 +1534,20 @@ const KEYS: Record<FindView['mode'], Key[]> = {
       keys: 'a',
       does: 'Open the advanced filters',
       more: 'Min score, min size, sites, hide, hide tags and PNG only. Advanced › in the settings opens them too.',
-      press: 's',
-      after: 'a',
+      press: 'a',
     },
     { group: 'Finish', keys: 'esc', does: 'Back to preview', press: 'esc' },
   ],
   try: [
-    { group: 'Move', keys: '←→ / h l', does: 'Next or previous post' },
-    { group: 'Picture', keys: 'enter', does: 'Install it', press: 'enter' },
+    { group: 'Move', keys: '←→ / h l', does: 'Next or previous post', onBar: true },
+    { group: 'Picture', keys: 'enter', does: 'Install it', press: 'enter', onBar: true },
     {
       group: 'Picture',
       keys: 't',
       does: 'Tune size, position and opacity',
       more: 'The tuning installs with the picture.',
       press: 't',
+      onBar: true,
     },
     {
       group: 'Picture',
@@ -1523,6 +1555,7 @@ const KEYS: Record<FindView['mode'], Key[]> = {
       does: 'Original or tinted',
       more: 'The picture installs in the colors shown.',
       press: 'c',
+      onBar: true,
     },
     {
       group: 'Picture',
@@ -1530,6 +1563,7 @@ const KEYS: Record<FindView['mode'], Key[]> = {
       does: 'Cut the background out or put it back',
       more: 'On an opaque picture.',
       press: 'x',
+      onBar: true,
     },
     {
       group: 'Picture',
@@ -1537,12 +1571,14 @@ const KEYS: Record<FindView['mode'], Key[]> = {
       does: 'Show the details',
       more: 'Characters, works, tags, rating and file, under Post, Source and Artist.',
       press: 'i',
+      onBar: true,
     },
     {
       group: 'Picture',
       keys: 'shift+←→',
       does: 'Switch the sample',
       more: SCENES.map((scene) => scene.name).join(', '),
+      onBar: true,
     },
     OPEN,
     {
@@ -1552,7 +1588,7 @@ const KEYS: Record<FindView['mode'], Key[]> = {
       more: 'From the clipboard, or drop one on the window.',
       press: 'v',
     },
-    { group: 'Finish', keys: 'esc', does: 'Back to the grid', press: 'esc' },
+    { group: 'Finish', keys: 'esc', does: 'Back to the grid', press: 'esc', onBar: true },
   ],
 }
 
@@ -1566,16 +1602,12 @@ export function findTopics(view: FindView, press: (key: string) => void): Topic[
   const cuts = view.shown?.cut === 'on' || view.shown?.cut === 'off'
 
   return [
-    ...(view.tuning ? TUNE_KEYS : KEYS[view.mode]).map(({ press: key, after, ...topic }): Topic => {
+    ...(view.tuning ? TUNE_KEYS : KEYS[view.mode]).map(({ press: key, ...topic }): Topic => {
       const runs = key !== undefined && (key !== 'x' || cuts)
 
       const run = () => {
         if (key !== undefined) {
           press(key)
-        }
-
-        if (after !== undefined) {
-          press(after)
         }
       }
 
@@ -1917,6 +1949,19 @@ function suggestions(lines: Line[], view: FindView, accent: string): void {
   })
 }
 
+function trialKeys(drawn: string[], cols: number, rows: number, view: FindView): string[] {
+  const reach = view.details ? 2 + Math.max(48, Math.floor(cols * 0.55)) : SAMPLE_REACH
+  const wide = Math.min(keysWidth(KEYS.try), cols - reach - 2)
+  const box = keysBox(painter(true), KEYS.try, wide)
+  const top = rows - 1 - box.length
+
+  return drawn.map((line, i) => {
+    const part = box[i - top]
+
+    return part === undefined ? line : cover(line, cols - 1 - wide, part)
+  })
+}
+
 function zonesOf(lines: Line[], under: Zone[] = []): Zone[] {
   return [...under, ...lines.flatMap((line, row) => line.zones(row))]
 }
@@ -1972,8 +2017,13 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
     return { lines: lines.map((l) => l.render()), images: keep, zones: zonesOf(lines), loader: false, tick: false }
   }
 
+  const drawn = lines.map((l) => l.render())
+
   return {
-    lines: lines.map((l) => l.render()),
+    lines:
+      view.keyed && view.mode === 'try' && !view.tuning && view.installing === undefined
+        ? trialKeys(drawn, cols, rows, view)
+        : drawn,
     images,
     zones: zonesOf(lines, tiles),
     loader: waiting,

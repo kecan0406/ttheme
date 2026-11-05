@@ -14,6 +14,7 @@ export interface Topic {
   does: string
   more?: string
   run?: () => void
+  onBar?: boolean
 }
 
 export interface TopicSpot {
@@ -33,6 +34,37 @@ const KEYS_MOST = 24
 const GROUP_MOST = 16
 const MORE_MOST = 2
 const LEAST = 3
+const KEYS_BOX_ROOM = 16
+
+function keysRows(topics: readonly Topic[]): [string, string][] {
+  return topics
+    .values()
+    .filter((t) => !t.onBar)
+    .map((t): [string, string] => [capped(t.keys), t.does])
+    .toArray()
+}
+
+export function keysWidth(topics: readonly Topic[]): number {
+  const rows = keysRows(topics)
+
+  return Math.max(0, ...rows.map(([keys]) => cells(keys))) + Math.max(0, ...rows.map(([, does]) => cells(does))) + 6
+}
+
+export function keysBox(p: Paint, topics: readonly Topic[], width: number): string[] {
+  const rows = keysRows(topics)
+  const kw = Math.max(0, ...rows.map(([keys]) => cells(keys)))
+  const room = width - kw - 6
+
+  if (rows.length === 0 || room < KEYS_BOX_ROOM) {
+    return []
+  }
+
+  return [
+    boxTitle(width, ' Help ', p.dim, p.bold),
+    ...rows.map(([keys, does]) => boxed(p, ` ${p.bold(fit(keys, kw))}  ${fit(does, room, false)}`, width)),
+    p.dim(boxEdge(width, 'bottom')),
+  ]
+}
 
 export class Help {
   readonly filter = new Field()

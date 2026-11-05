@@ -333,12 +333,15 @@ async function editColors(options: EditorOptions, hosted = false): Promise<Edite
   const backdrop = tty ? Backdrop.of(process.env, home, options.name, terminals) : undefined
   const layer = tty ? PickerLayer.of(process.env, terminals) : undefined
 
-  return runEditor(options, {
-    color: !colorless(),
-    ...(backdrop ? { backdrop } : {}),
-    ...(layer ? { layer } : {}),
-    ...(hosted ? { hosted: true as const } : {}),
-  })
+  return runEditor(
+    { ...options, help: process.env.TTHEME_HELP_BOX !== 'off' },
+    {
+      color: !colorless(),
+      ...(backdrop ? { backdrop } : {}),
+      ...(layer ? { layer } : {}),
+      ...(hosted ? { hosted: true as const } : {}),
+    },
+  )
 }
 
 export async function runNew(name: string, from: string | undefined, into: string | undefined): Promise<number> {

@@ -123,9 +123,9 @@ test('a tag a site sends with control or direction characters is drawn without t
   assert.ok(!out.includes('\x1b]52') && !out.includes('\x07') && !out.includes(rlo))
 })
 
-test('the Advanced topic of the help opens the settings first, since the grid takes no a of its own', () => {
+test('the Advanced topic of the help presses the a the grid takes', () => {
   const pressed: string[] = []
   const topics = findTopics(viewOf({ panel: undefined }), (key) => pressed.push(key))
   topics.find((t) => t.does === 'Open the advanced filters')?.run?.()
-  assert.deepEqual(pressed, ['s', 'a'])
+  assert.deepEqual(pressed, ['a'])
 })

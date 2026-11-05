@@ -181,9 +181,11 @@ export function shellTables(palettes: PaletteEntry[], works: readonly Work[], co
     `typeset -ga TTHEME_HUB_TITLES=(${HUB_TABS.map((tab) => tab.title).join(' ')})`,
     `typeset -gi TTHEME_HUB_CLOSED=${HUB_CLOSED} TTHEME_HUB_SWITCH=${HUB_SWITCH} TTHEME_HUB_UPDATE=${HUB_UPDATE}`,
     '',
-    "# preview's help (src/tui/preview-keys.ts): where each line shows, its group, its keys and what they do",
+    "# preview's help (src/tui/preview-keys.ts): where each line shows, :bar when a bar names it, its group, its keys and what they do",
     'typeset -ga TTHEME_PREVIEW_KEYS=(',
-    ...PREVIEW_KEYS.map((k) => `  ${k.where} ${quote(k.group)} ${quote(k.keys)} ${quote(k.does)}`),
+    ...PREVIEW_KEYS.map(
+      (k) => `  ${k.where}${k.onBar ? ':bar' : ''} ${quote(k.group)} ${quote(k.keys)} ${quote(k.does)}`,
+    ),
     ')',
     '',
     '# the settings config.zsh holds, handed to the CLI on every call',

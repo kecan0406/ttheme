@@ -1,7 +1,7 @@
 import { fit } from '../src/tui/ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../src/tui/bar.ts'
 import { button } from '../src/tui/browse/draw.ts'
-import { Help, type Legend, type Topic } from '../src/tui/help.ts'
+import { Help, keysBox, type Legend, type Topic } from '../src/tui/help.ts'
 import { type Standing, standingLine } from '../src/tui/notice.ts'
 import { boxEdge, boxed, boxTitle, buttonOf, checkOf, moreOf } from '../src/tui/parts.ts'
 import { MARKS, painter, SPINNER } from '../src/tui/style.ts'
@@ -34,13 +34,14 @@ const SHORT: Bar = {
 
 const TOPICS: Topic[] = [
   { group: 'Move', keys: '↑↓  home  end  pgup  pgdn', does: 'Move up or down', run: () => {} },
-  { group: 'Move', keys: '→  enter', does: 'Open a marketplace or a work', run: () => {} },
+  { group: 'Move', keys: '→  enter', does: 'Open a marketplace or a work', run: () => {}, onBar: true },
   {
     group: 'Palettes',
     keys: 'space',
     does: 'Pick or unpick',
     more: 'Apply installs what is picked and removes what is not.',
     run: () => {},
+    onBar: true,
   },
   { group: 'Palettes', keys: 'type', does: 'Filter the list' },
   {
@@ -50,7 +51,7 @@ const TOPICS: Topic[] = [
     more: 'On a palette or a work marked ⇡. The update is installed when you apply.',
     run: () => {},
   },
-  { group: 'Help', keys: '?  esc', does: 'Close help' },
+  { group: 'Help', keys: '?  esc', does: 'Close help', onBar: true },
 ]
 
 const LEGEND: Legend = [
@@ -155,11 +156,19 @@ function help(typed = '', tall = rows): string[] {
   return shown.box(p, cols, tall)
 }
 
+function keys(): string[] {
+  return [
+    heading('the Help box: what no bar names, cut where the box is narrow, and nothing where a line has no room'),
+    ...[Math.min(width, 64), 48, 38].flatMap((at) => [...keysBox(p, TOPICS, at), `${at} wide`, '']),
+  ]
+}
+
 const PARTS = {
   bar: bars,
   buttons,
   states,
   boxes,
+  keys,
   help: () => help(),
   'help-filtered': () => help('pick'),
   'help-empty': () => help('zzz'),

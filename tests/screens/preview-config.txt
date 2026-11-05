@@ -9,13 +9,13 @@
 
 
 
-
 Settings
 ▶ Mode        auto   light  [dark]
   New tabs   [off]  seq
   Announce    on  [off]
   Search fx  [typewriter]  decode   glitch
   Mouse      [on]  off
+  Help       [on]  off
   Blur       [off]  1px   2px   3px   4px
   Pictures   [original]  tinted
   Sticker    [on]  off

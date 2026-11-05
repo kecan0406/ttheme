@@ -535,9 +535,7 @@ __tt_pv_foot() {
     printf -v y '\e[38;2;%d;%d;%dm' $((16#${hex:0:2})) $((16#${hex:2:2})) $((16#${hex:4:2}))
     al=$TTHEME_SGR[reverse]$TTHEME_SGR[bold]$y
   fi
-  if (( help == 2 )); then
-    badge=HELP rk=any right=$b"any key"$z$d" close"$z
-  elif (( help )); then
+  if (( help )); then
     badge=HELP rk='?' right=$b"? / $ke"$z$d" close"$z
   elif [[ -n $pick ]]; then
     __tt_label "$pick"
@@ -750,19 +748,18 @@ __tt_pv_wrap() {
   return 0
 }
 
-__tt_pv_help() {
+__tt_pv_topics() {
   (( TTHEME_PALETTES_IN )) || __tt_palettes
-  local z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] blank where=list
-  (( te )) && where=panel
-  (( gmenu )) && where=group
-  local -a hg=() hk=() hd=() hl=() hn=() wn=() reply=()
-  local -i i j k r x y w hh floor tw kw=0 dw=0 rows used n c0 r0
+  local -i i
+  local w
+  hg=() hk=() hd=() kw=0 dw=0
   for (( i = 1; i + 3 <= ${#TTHEME_PREVIEW_KEYS}; i += 4 )); do
-    case $TTHEME_PREVIEW_KEYS[i] in
-      $where) ;;
-      hub) (( hub && ! te && ! gmenu )) || continue ;;
-      help) (( help == 2 )) && continue ;;
-      first) (( help == 2 )) || continue ;;
+    w=$TTHEME_PREVIEW_KEYS[i]
+    [[ $2 == box && $w == *:bar ]] && continue
+    case ${w%:bar} in
+      $1) ;;
+      hub) (( hub )) && [[ $1 == list ]] || continue ;;
+      help) (( help )) || continue ;;
       *) continue ;;
     esac
     __tt_capped "$TTHEME_PREVIEW_KEYS[i+2]"
@@ -770,9 +767,50 @@ __tt_pv_help() {
     (( ${(m)#REPLY} > kw )) && kw=${(m)#REPLY}
     (( ${(m)#hd[-1]} > dw )) && dw=${(m)#hd[-1]}
   done
+  return 0
+}
+
+__tt_pv_keys() {
+  (( ph >= 22 )) && [[ $TTHEME_HELP_BOX != off ]] || return 0
+  local z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold]
+  local -a hg=() hk=() hd=()
+  local -i i r top x=$(( sc + 2 )) kw=0 dw=0 tw
+  __tt_pv_topics $1 box
+  [[ $1 == panel && -z $tune ]] && hk=("$hk[1]") hd=("$hd[1]")
+  (( sw - kw - 6 >= 16 )) || return 0
+  top=$(( ph - ${#hk} - 2 ))
+  (( top >= ${2:-0} )) || return 0
+  sbot=$(( top - 1 ))
+  if (( gmenu )); then
+    __tt_pv_topics group box
+  elif [[ -n $pick ]]; then
+    __tt_pv_topics pick box
+  elif (( te && tfocus != 1 )); then
+    hk=("$hk[1]") hd=("$hd[1]")
+  fi
+  tw=$(( se - x - kw - 3 ))
+  __tt_pv_box $top $(( ph - 1 )) Help
+  r=$(( top + 1 ))
+  for (( i = 1; i <= ${#hk}; i++, r++ )); do
+    REPLY=${hd[i]}
+    (( ${(m)#REPLY} > tw )) && __tt_clip "$REPLY" $tw
+    out+=$'\e['$r';'$x'H'$b${hk[i]}$z$'\e['$r';'$(( x + kw + 2 ))'H'$REPLY
+  done
+  return 0
+}
+
+__tt_pv_help() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
+  local z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] blank where=list
+  (( te )) && where=panel
+  (( gmenu )) && where=group
+  (( conf )) && where=settings
+  local -a hg=() hk=() hd=() hl=() hn=() wn=() reply=()
+  local -i i j k r x y w hh floor tw kw=0 dw=0 rows used n c0 r0
+  __tt_pv_topics $where
   (( color )) || z= b= d=
   if (( split && sw >= 48 )); then
-    c0=$sc r0=4 tw=$(( se - sc + 1 - kw - 4 )) rows=$(( ph - 4 ))
+    c0=$(( sc + 2 )) r0=2 tw=$(( sw - kw - 8 )) rows=$(( ph - 3 ))
   else
     w=$(( kw + dw + 10 ))
     (( w > pw - 2 )) && w=$(( pw - 2 ))
@@ -817,6 +855,7 @@ __tt_pv_help() {
     done
   done
   (( n < ${#hk} )) && out+=$'\e['$r';'$c0'H'$d$TTHEME_MARKS[below]" $(( ${#hk} - n )) more"$z
+  (( split && sw >= 48 )) && __tt_pv_box 1 $(( r + (n < ${#hk}) )) Help
   return 0
 }
 
@@ -845,6 +884,7 @@ __tt_pv_tabs() {
 
 __tt_pv_sample() {
   local shown tabs
+  local -i sw=$(( sw - 4 )) sc=$(( sc + 2 ))
   __tt_pv_tabs || return 0
   if [[ $shown == Pins ]]; then
     __tt_pv_pins
@@ -854,15 +894,16 @@ __tt_pv_sample() {
 }
 
 __tt_pv_pins() {
-  local key="pins|$sw|$sc|$ph" built=$'\e[2;'$sc'H'$tabs line REPLY
+  local key="pins|$sbot|$sw|$sc|$ph" built=$'\e[2;'$sc'H'$tabs line REPLY
   local -a reply lines
   local -i r=4
   if [[ $key == "$pvscene" ]]; then
     out+=$pvscenes
+    sfit=$pvsfit
     return 0
   fi
   if (( ${#TTHEME_PINS} )); then
-    __tt_map_whole $sw $(( ph - 7 > 2 ? ph - 7 : 2 ))
+    __tt_map_whole $sw $(( sbot - 7 > 2 ? sbot - 7 : 2 ))
     lines=("${reply[@]}" "")
     __tt_here_fit Here $sw
     lines+=("${reply[@]}")
@@ -870,8 +911,9 @@ __tt_pv_pins() {
     __tt_clip "$TTHEME_SGR[dim]No pins yet — enter picks one here$TTHEME_SGR[reset]" $sw
     lines=("$REPLY")
   fi
+  sfit=$(( 4 + ${#lines} < sbot ? 4 + ${#lines} : sbot )) pvsfit=$sfit
   for line in "${lines[@]}"; do
-    (( r < ph )) || break
+    (( r < sbot )) || break
     built+=$'\e['$r';'$sc'H'$line
     (( ++r ))
   done
@@ -882,10 +924,17 @@ __tt_pv_pins() {
 __tt_pv_specimen() {
   (( TTHEME_PALETTES_IN )) || __tt_palettes
   local -a sp=(${=applied}) lines parts
-  (( ${#sp} >= 20 )) || return 0
-  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] cell hex fore line text piece role built="" key="$applied|$painted|$scene|$sw|$sc|$ph"
+  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] cell hex fore line text piece role built="" key="$applied|$painted|$scene|$sbot|$sw|$sc|$ph"
   local -A rs=(p "" d $TTHEME_SGR[dim] b $TTHEME_SGR[bold])
   local -i i r=6 cw=4 k at=${TTHEME_SCENES[(Ie)$shown]} room
+  lines=("${(@P)${:-TTHEME_SCENE_$at}}")
+  if (( sw < 44 )); then
+    lines=("${(@)lines:#«w»*}")
+  else
+    lines=("${(@)lines:#«n»*}")
+  fi
+  sfit=$(( 6 + ${#lines} < sbot ? 6 + ${#lines} : sbot ))
+  (( ${#sp} >= 20 )) || return 0
   if [[ $key == "$pvscene" ]]; then
     out+=$pvscenes
     return 0
@@ -926,11 +975,8 @@ __tt_pv_specimen() {
     line+=$cell
   done
   built+=$'\e[4;'$sc'H'$line
-  lines=("${(@P)${:-TTHEME_SCENE_$at}}")
   for line in "${lines[@]}"; do
-    [[ $line == «w»* ]] && (( sw < 44 )) && continue
-    [[ $line == «n»* ]] && (( sw >= 44 )) && continue
-    (( r < ph )) || break
+    (( r < sbot )) || break
     parts=("${(@s:«:)line}")
     text=$parts[1] room=$sw
     while (( ${(m)#text} > room )); do text=${text[1,-2]}; done
@@ -1320,6 +1366,7 @@ __tt_pv_conf_panel() {
   var=${cvars[cf]}
   note=${cnote[$var:${(P)var}]}
   r=$(( r0 + ${#cvars} + 1 ))
+  cend=$(( r + 2 ))
   [[ -n $note ]] && (( r < ph )) || return 0
   __tt_pv_wrap "$note" $(( end - col + 1 ))
   if (( ${#reply} > ph - r )); then
@@ -1330,6 +1377,7 @@ __tt_pv_conf_panel() {
   for v in $reply; do
     out+=$'\e['$(( r++ ))';'$col'H'$d$v$z
   done
+  (( r > cend )) && cend=$r
   return 0
 }
 
@@ -1409,7 +1457,7 @@ __tt_pv_reach() {
 __tt_pv_draw() {
   (( TTHEME_PALETTES_IN )) || __tt_palettes
   local out line cnt ex ag="" ac="" gc="" pl="" hm="" sb="" dd="" zz="" state=on src="" wk="" nflt="" rsub="" REPLY
-  local -i lw sw split sc se=$(( pw - 1 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
+  local -i lw sw split sc sbot=$ph sfit cend teend se=$(( pw - 1 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
   local -a held
   (( gmenu )) && set --
   bgstrip=""
@@ -1426,7 +1474,7 @@ __tt_pv_draw() {
   reach=()
   if [[ -n $pick && $mode == pin ]]; then
     if (( split )); then
-      __tt_pv_reach $sw $(( ph - 6 ))
+      __tt_pv_reach $(( sw - 4 )) $(( ph - 6 ))
     else
       __tt_pv_reach $se $(( ph - hd - 11 ))
       h=$(( ph - hd - 4 - ${#reach} ))
@@ -1578,32 +1626,38 @@ __tt_pv_draw() {
   (( gmenu )) && __tt_pv_gdraw
   if (( split )); then
     if (( help && sw >= 48 )); then
-      __tt_pv_head 1 $sc $se Help
       __tt_pv_help
     elif (( ${#reach} )); then
       __tt_label "$pick"
-      __tt_pv_head 1 $sc $se "$REPLY" "$rsub"
-      for (( k = 1; k <= ${#reach} && k + 2 < ph; k++ )); do
-        out+=$'\e['$(( k + 2 ))';'$sc'H'${reach[k]}
+      __tt_pv_box 1 $(( ${#reach} + 3 < ph - 1 ? ${#reach} + 3 : ph - 1 )) "$REPLY" "$rsub"
+      for (( k = 1; k <= ${#reach} && k + 2 < ph - 1; k++ )); do
+        out+=$'\e['$(( k + 2 ))';'$(( sc + 2 ))'H'${reach[k]}
       done
     elif (( conf )); then
+      __tt_pv_conf_panel 3 $(( sc + 2 )) $(( se - 2 ))
       __tt_tilde "$TTHEME_CONFIG"
       src=$REPLY
-      (( 8 + ${#src} > sw )) && src=""
-      __tt_pv_head 1 $sc $se Settings "" "$src"
-      __tt_pv_conf_panel 4 $sc $se
+      __tt_pv_box 1 $(( cend < ph - 1 ? cend : ph - 1 )) Settings "$src"
     elif (( te )); then
       __tt_pv_te_head $sc $se
       __tt_pv_te_panel $sc $se 3 $(( ph - 1 ))
-    elif [[ -n $an ]]; then
-      __tt_work_of $an
-      wk=$REPLY
-      __tt_label $an
-      __tt_pv_head 1 $sc $se "$REPLY" "$wk"
-      __tt_pv_sample
+      __tt_pv_keys panel $teend
     else
-      __tt_pv_head 1 $sc $se "Terminal colors"
+      sbot=$(( ph - 1 )) sfit=$(( ph - 1 ))
+      __tt_pv_keys list
       __tt_pv_sample
+      if [[ -n $an ]]; then
+        __tt_work_of $an
+        wk=$REPLY
+        __tt_label $an
+        __tt_pv_box 1 $sfit "$REPLY" "$wk"
+      else
+        __tt_pv_box 1 $sfit "Terminal colors"
+      fi
+      if [[ -z $applied && $mode != pin ]]; then
+        __tt_clip "${dd}Move onto a palette to see it here$zz" $(( sw - 4 ))
+        out+=$'\e[2;'$(( sc + 2 ))'H'$REPLY
+      fi
     fi
     (( help && sw < 48 )) && __tt_pv_help
   else
@@ -2063,7 +2117,6 @@ __tt_pv_bg_track() {
 
 __tt_pv_wheel() {
   local -i i
-  (( help == 2 )) && help=0
   if (( help )); then
     return 0
   elif (( gmenu )); then
@@ -2517,7 +2570,7 @@ __tt_pv_te_edge() {
   local left=$4 right=$5 sty=$6 hs=$7 head=$8 tail=$9 z=$TTHEME_SGR[reset] line
   local -i y=$1 col=$2 w=$3 n
   (( color )) || z=
-  n=$(( w - 3 - (${#head} ? ${#head} + 2 : 0) - (${#tail} ? ${#tail} + 3 : 0) ))
+  n=$(( w - 3 - (${#head} ? ${(m)#head} + 2 : 0) - (${#tail} ? ${(m)#tail} + 3 : 0) ))
   (( n < 0 )) && n=0
   line=$sty$left"─"$z
   [[ -n $head ]] && line+=$hs" $head "$z
@@ -2533,6 +2586,18 @@ __tt_pv_te_sides() {
   for (( y = $1; y <= r1; y++ )); do
     out+=$'\e['$y';'$col'H'$sty"│"$z$'\e['$y';'$(( col + w - 1 ))'H'$sty"│"$z
   done
+}
+
+__tt_pv_box() {
+  local d=$TTHEME_SGR[dim] title=$3 tail=$4
+  (( ${(m)#title} + ${(m)#tail} + 8 > sw )) && tail=""
+  if (( ${(m)#title} + 5 > sw )); then
+    while [[ -n $title ]] && (( ${(m)#title} + 6 > sw )); do title=${title[1,-2]}; done
+    title+=…
+  fi
+  __tt_pv_te_edge $1 $sc $sw ╭ ╮ "$d" "$TTHEME_SGR[bold]$gc" "$title" "$tail"
+  __tt_pv_te_sides $(( $1 + 1 )) $(( $2 - 1 )) $sc $sw "$d"
+  __tt_pv_te_edge $2 $sc $sw ╰ ╯ "$d"
 }
 
 __tt_pv_te_images() {
@@ -2593,6 +2658,7 @@ __tt_pv_te_panel() {
   __tt_te_image && pics=1
   (( pics && 19 <= R && (tfocus == 1 || 19 + P + 1 <= R) )) && I=19
   V=$(( I + P + 1 ))
+  teend=$(( r0 + V ))
   if (( V <= R || tfocus == 1 )); then
     tetop=0
   else
@@ -2714,11 +2780,9 @@ __tt_pv_handle() {
   if (( help )); then
     case $key in
       $'\x03') return 1 ;;
-      '?'|esc) help=0; return 0 ;;
-      nop) return 0 ;;
+      '?'|esc) help=0 ;;
     esac
-    (( help == 2 )) || return 0
-    help=0
+    return 0
   fi
   if [[ -n $pick ]]; then
     __tt_pv_pick
@@ -2885,7 +2949,7 @@ __tt_preview() {
   fi
   local orig=$TTHEME_SPEC applied=$TTHEME_SPEC painted=$TTHEME_SPEC pvbare=$(( ! ${#TTHEME_PAINTED} )) flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" extop="" exnext=0 gstep=0 gseed=0 tick=0 pvhd=2 pvsr=1 pvsc=4
   local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgname="" bgshown="" bginc="" osd="" osdt=0
-  local tune="" tpick="" tf=1 help=0 msg="" msgt=0 an="" bgrel=0 bgmx=0 bgmy=0 bgpad="" bganchor=0 bgcut="" bgnext=0 bgbytes=0 bgstrip="" pvscene="" pvscenes=""
+  local tune="" tpick="" tf=1 help=0 msg="" msgt=0 an="" bgrel=0 bgmx=0 bgmy=0 bgpad="" bganchor=0 bgcut="" bgnext=0 bgbytes=0 bgstrip="" pvscene="" pvscenes="" pvsfit=0
   local -i scene=0
   local -a bgorder=()
   local -A bgfrom=() bgurl=() bgby=() bgsent=() bgcost=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
@@ -2900,8 +2964,8 @@ __tt_preview() {
   local -F mlast=0 pvsized=0
   local mact="" mzone="" pvmouse="" pasted="" pvrest=""
   local -a pvz=()
-  local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS TTHEME_BG_STICKER) clabel=(Mode "New tabs" Announce "Search fx" Mouse Blur Pictures Sticker)
-  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "on off" "0 1 2 3 4" "original tone" "on off") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "on off" "off 1px 2px 3px 4px" "original tinted" "on off")
+  local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_MOUSE TTHEME_HELP_BOX TTHEME_BG_BLUR TTHEME_BG_COLORS TTHEME_BG_STICKER) clabel=(Mode "New tabs" Announce "Search fx" Mouse Help Blur Pictures Sticker)
+  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "on off" "on off" "0 1 2 3 4" "original tone" "on off") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "on off" "on off" "off 1px 2px 3px 4px" "original tinted" "on off")
   local -A cnote=(
     TTHEME_MODE:auto "Every palette in the system's mode, following it as it changes"
     TTHEME_MODE:light "Every palette in its light mode" TTHEME_MODE:dark "Every palette in its dark mode"
@@ -2909,6 +2973,7 @@ __tt_preview() {
     TTHEME_ANNOUNCE:1 "Shows the palette notice" TTHEME_ANNOUNCE:0 "Silences the palette notice"
     TTHEME_FX:typewriter "The search hint types itself" TTHEME_FX:decode "The search hint decodes" TTHEME_FX:glitch "The search hint glitches in"
     TTHEME_MOUSE:on "Clicks, the wheel and drags work in ttheme's screens" TTHEME_MOUSE:off "The terminal keeps the mouse, so a drag selects text"
+    TTHEME_HELP_BOX:on "The keys no bar names stay on screen" TTHEME_HELP_BOX:off "Those keys show only behind ?"
     TTHEME_BG_BLUR:0 "Pictures stay sharp" TTHEME_BG_BLUR:1 "Pictures soften a little behind the text"
     TTHEME_BG_BLUR:2 "Pictures soften behind the text" TTHEME_BG_BLUR:3 "Pictures blur behind the text"
     TTHEME_BG_BLUR:4 "Pictures blur well behind the text"
@@ -2927,8 +2992,6 @@ __tt_preview() {
   __tt_pv_roll
   __tt_pv_rows
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && __tt_pv_goto "$cn"
-  __tt_pv_lw
-  (( reply[2] >= 48 )) && help=2
   if (( hub )); then
     __tt_release hub
     __tt_pv_standing

@@ -633,6 +633,7 @@ class Finder {
       coloring: coloringFor(home),
       editing: tag === '' ? '' : undefined,
       chips: [],
+      keyed: process.env.TTHEME_HELP_BOX !== 'off',
     }
     this.paint = new Paint({
       view: this.view,
@@ -1560,9 +1561,9 @@ class Finder {
       return
     }
 
-    if (key === 's') {
-      view.panel = 0
-      view.advanced = false
+    if (key === 's' || key === 'a') {
+      view.advanced = key === 'a'
+      view.panel = pageOf(view)[0] ?? 0
       this.recount()
       this.paint.draw()
 

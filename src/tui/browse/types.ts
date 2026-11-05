@@ -53,6 +53,7 @@ export interface BrowseOptions {
   search?: string
   color?: boolean
   fx?: PromptFx
+  help?: boolean
   owns?: boolean
   input?: Readable
   output?: Writable

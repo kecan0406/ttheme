@@ -8,7 +8,7 @@ import { isRemote, TOPIC } from '../../store/sources.ts'
 import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
 import { Field } from '../field.ts'
-import { Help, type Legend, overlay, type Topic } from '../help.ts'
+import { Help, keysBox, type Legend, overlay, type Topic } from '../help.ts'
 import { HUB_UPDATE, type HubTab, hubBar, hubGoto, hubNext, hubTo } from '../hub.ts'
 import { capped } from '../keycaps.ts'
 import { lineStep, type Mouse } from '../keys.ts'
@@ -35,6 +35,7 @@ type View = 'browse' | 'search'
 const LEFT_MIN = 40
 const LEFT_MAX = 60
 const PANEL_MIN = 42
+const PANEL_KEEPS = 14
 const WIDE = 94
 const ROOMY = 22
 const MIN_COLS = 40
@@ -78,6 +79,7 @@ export class BrowsePanel {
   private notice: { text: string; tone: Tone } | undefined
   private goto: number | undefined
   private help: Help | undefined
+  private readonly keyed: boolean
   private readonly live: boolean
 
   constructor(opts: BrowseOptions) {
@@ -97,6 +99,7 @@ export class BrowsePanel {
     this.input = opts.input
     this.output = opts.output
     this.live = opts.lookups ?? true
+    this.keyed = opts.help ?? true
     this.paint = opts.onFocus
     this.review = new Review({
       staged: this.staged,
@@ -1309,9 +1312,20 @@ export class BrowsePanel {
       ]
     }
 
-    const box = this.box(width - left - 1, list.length)
+    const keys = this.keysFor(width - left - 1, list.length)
+    const box = [...this.box(width - left - 1, list.length - keys.length), ...keys]
 
     return list.map((row, i) => `${fit(row, left)} ${box[i] ?? ''}`)
+  }
+
+  private keysFor(width: number, height: number): string[] {
+    if (!this.keyed || this.side === 'form') {
+      return []
+    }
+
+    const keys = keysBox(this.p, this.topics(), width)
+
+    return height - keys.length >= PANEL_KEEPS ? keys : []
   }
 
   private box(width: number, height: number): string[] {
@@ -1328,11 +1342,12 @@ export class BrowsePanel {
             keys: 'tab  shift+tab',
             does: `Switch to ${hubNext(this.hub)}`,
             run: () => this.key('tab'),
+            onBar: true,
           },
         ]
       : []
 
-    const close: Topic = { group: 'Help', keys: '? / esc', does: 'Close help', run: () => {} }
+    const close: Topic = { group: 'Help', keys: '? / esc', does: 'Close help', run: () => {}, onBar: true }
 
     const moving: Topic[] = [
       { group: 'Move', keys: '↑↓ / ctrl+j  ctrl+k', does: 'Move up or down' },
@@ -1347,7 +1362,7 @@ export class BrowsePanel {
     if (this.showing === 'search') {
       return [
         ...moving,
-        { group: 'Move', keys: '← / esc', does: 'Back to Browse', run: () => this.closeSearch() },
+        { group: 'Move', keys: '← / esc', does: 'Back to Browse', run: () => this.closeSearch(), onBar: true },
         {
           group: 'Filter',
           keys: 'type',
@@ -1361,14 +1376,16 @@ export class BrowsePanel {
           does: 'Add it, or undo the add',
           more: 'An added marketplace is fetched at once and kept when you apply.',
           run: () => this.take(false),
+          onBar: true,
         },
-        { group: 'Add', keys: 'enter', does: 'Add it and go to its card', run: () => this.take(true) },
+        { group: 'Add', keys: 'enter', does: 'Add it and go to its card', run: () => this.take(true), onBar: true },
         {
           group: 'Add',
           keys: 'enter on ⧉',
           does: 'Ask for a palette or read how to make one',
           more: 'Request a character and Make one show when no marketplace has what you typed.',
           run: () => this.take(true),
+          onBar: true,
         },
         {
           group: 'Add',
@@ -1393,12 +1410,14 @@ export class BrowsePanel {
         keys: '→ / enter',
         does: 'Open a marketplace or a work',
         ...when(!form, () => this.key('right')),
+        onBar: true,
       },
       {
         group: 'Move',
         keys: '← / esc',
         does: 'Back to the marketplaces',
         ...when(panel || form, () => this.back()),
+        onBar: true,
       },
       {
         group: 'Palettes',
@@ -1406,6 +1425,7 @@ export class BrowsePanel {
         does: 'Pick or unpick',
         more: 'Apply installs what is picked and removes what is not. Picking a work or a marketplace picks every palette in it.',
         ...when(!form, () => this.key(' ')),
+        onBar: true,
       },
       {
         group: 'Palettes',
@@ -1413,6 +1433,7 @@ export class BrowsePanel {
         does: `Take an update (${MARKS.update})`,
         more: `On a palette or a work marked ${MARKS.update}. The update is installed when you apply.`,
         ...when(panel, () => this.key('ctrl-r')),
+        onBar: true,
       },
       ...filtering,
       {
@@ -1425,6 +1446,7 @@ export class BrowsePanel {
           this.list.select('extra new')
           this.openForm()
         }),
+        onBar: true,
       },
       {
         group: 'Marketplaces',
@@ -1435,6 +1457,7 @@ export class BrowsePanel {
           this.list.select('extra search')
           this.openSearch()
         }),
+        onBar: true,
       },
       {
         group: 'Marketplaces',
@@ -1447,8 +1470,9 @@ export class BrowsePanel {
         keys: 'enter',
         does: 'Review and apply',
         ...when(this.staged.dirty(), () => this.review.open()),
+        onBar: true,
       },
-      { group: 'Finish', keys: 'esc', does: 'Leave, asking first about changes not applied' },
+      { group: 'Finish', keys: 'esc', does: 'Leave, asking first about changes not applied', onBar: true },
       ...screens,
       close,
     ]

@@ -696,8 +696,8 @@ test('enter takes a marketplace into the panel, typing lands on the first match 
 
 test('? shows the keys and marks over the list until ? or esc, typing filters them, and enter runs the one chosen', async () => {
   const { last, frames, panel } = await drive(['?', ' ', '?', '\x1b'], { rows: 30 })
-  assert.match(frames, /╭─ Help ─+╮/)
-  assert.doesNotMatch(last, /Help/)
+  assert.match(frames, /Type to filter/)
+  assert.doesNotMatch(last, /Type to filter/)
   assert.deepEqual([...panel.picked].sort(), ['alice@pastel/dusk', 'ttheme/orla'])
   const ran = await drive(['?', ...'search', '\r', '\x03'])
   assert.match(ran.frames, /▶ Marketplaces +enter on ⌕ Search +Find one on GitHub/)

@@ -134,7 +134,7 @@ export class Panel {
     const about = lit ? this.foot(inner) : []
     const foot = about.length > 0 && body - 1 - bottom - (about.length + 1) >= MIN_ITEMS ? about : []
     const reserved = bottom + (foot.length > 0 ? foot.length + 1 : 0)
-    const head = detail.lines.slice(0, Math.max(0, body - 2 - reserved))
+    const head = detail.lines.slice(0, Math.max(0, body - 1 - reserved - MIN_ITEMS))
     this.inside.maxItems = Math.max(1, body - head.length - 1 - reserved)
     const { lines, above, below } = this.inside.window()
     const tree = lines.length > 0 ? lines : [p.dim('   No palettes yet')]

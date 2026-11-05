@@ -217,6 +217,8 @@ __tt_pins_load
 
 : ${TTHEME_MOUSE:=on}
 
+: ${TTHEME_HELP_BOX:=on}
+
 : ${TTHEME_KEYS:=auto}
 
 : ${TTHEME_BG_BLUR:=0}

@@ -81,6 +81,10 @@ export const CONFIG_SETTINGS = {
     doc: '# clicks, the wheel and drags in preview, browse, the palette editor and find: on, or off to leave the mouse to the terminal, so a drag selects text again without a modifier (default on)',
     default: 'on',
   },
+  TTHEME_HELP_BOX: {
+    doc: "# the Help box in ttheme's screens: on keeps the keys no bar names on screen, off leaves them to ? (default on)",
+    default: 'on',
+  },
   TTHEME_KEYS: {
     doc: "# key symbols in ttheme's screens: auto draws ⌃ ⌥ ⇧ ↩ ⎋ ⇥ on a Mac and ctrl+r, esc and the like elsewhere and over ssh, where the keyboard may not be a Mac's; mac or text picks one (default auto)",
     default: 'auto',

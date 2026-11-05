@@ -34,7 +34,10 @@ installed as the cursor lands on it, so you choose by looking.
   both find `gotoh-hitori`.
 - From 76 columns on, a sample beside the list shows the palette in a shell
   session, code, a diff, logs and a process monitor. `⇧←` `⇧→` switch the scene.
-- `?` lists every key of the screen you are on, and the mouse works too.
+- `?` lists every key of the screen you are on, and the mouse works too. Where the
+  window has room, a Help box keeps the keys no bar names on screen, in Preview,
+  Browse, the picture preview, the edit panel and the palette editor.
+  `TTHEME_HELP_BOX=off`, or **Help** in `alt+c`, turns it off.
 
 ## This tab, new tabs and the default
 
