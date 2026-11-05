@@ -193,6 +193,7 @@ __tt_ask() {
   local fd saved="" buf="" chunk seq
   local -a match mbegin mend
   REPLY=""
+  (( ZSH_SUBSHELL )) && return 1
   { exec {fd}<>/dev/tty } 2>/dev/null || return 1
   if (( ! TTHEME_RAW )) && ! zle; then
     saved=$(stty -g <&$fd 2>/dev/null && stty raw -echo <&$fd 2>/dev/null)

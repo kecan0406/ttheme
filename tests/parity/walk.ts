@@ -50,7 +50,7 @@ type Step =
 
 interface Failure {
   at: number
-  kind: 'wears' | 'echo' | 'picture' | 'stuck'
+  kind: 'wears' | 'echo' | 'picture' | 'stuck' | 'stopped'
   detail: string
 }
 
@@ -273,6 +273,12 @@ async function walked(fixture: Fixture, steps: readonly Step[], seed: number): P
           kind: 'stuck',
           detail: (error instanceof Error ? error.message : String(error)).split('\n')[0] ?? '',
         }
+      }
+
+      const stopped = (await Promise.all([app, ...extra].map((one) => one.stopped()))).flat()
+
+      if (stopped.length > 0) {
+        return { at, kind: 'stopped', detail: `a job stopped on a tab's terminal: ${stopped.join(', ')}` }
       }
 
       let failure = judged(fixture.term, facts, at, off)

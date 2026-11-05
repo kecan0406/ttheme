@@ -44,6 +44,7 @@ export interface Probe {
   pinHost(host: string, palette: string): void
   wire(terminal: 'ghostty'): Promise<Elsewhere>
   appear(mode: Mode): Promise<void>
+  cli(...args: string[]): Promise<string>
 }
 
 export interface Journey {
@@ -909,6 +910,23 @@ export const JOURNEYS: Journey[] = [
       await p.focus(b)
       await p.appear('dark')
       await p.look('back', { want: 'ttheme/kita-ikuyo', mode: 'dark' })
+    },
+  },
+  {
+    id: 'auto-behind',
+    about:
+      'a job a tab runs in the background leaves the terminal alone: hearing the appearance before it notices a new default, the tab still follows both, and a job that asks the terminal gets no answer',
+    async run(p) {
+      const ghostty = await p.wire('ghostty')
+      p.config(': ${TTHEME_MODE:=auto}')
+      await p.cli('sync')
+      const g = await ghostty.open()
+      await p.cli('default', 'ttheme/kita-ikuyo')
+      await ghostty.appear('light')
+      await ghostty.type(g, ':')
+      await ghostty.look('heard', { want: 'ttheme/kita-ikuyo', at: g })
+      await ghostty.type(g, '__tt_query_bg </dev/null >/dev/null 2>&1 &!')
+      await ghostty.look('asked', { want: 'ttheme/kita-ikuyo', at: g })
     },
   },
   {

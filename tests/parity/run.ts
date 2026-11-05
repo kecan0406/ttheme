@@ -129,6 +129,19 @@ beat.unref()
 
 const recorder: Recorder = { wanted, needs, screens, shows, say: (text) => line.say(text) }
 
+const stopped: string[] = []
+
+function noneStopped(): boolean {
+  if (stopped.length > 0) {
+    console.error(
+      `\na job stopped on a tab's terminal, which only a background job touching it does:\n${stopped.join('\n')}`,
+    )
+    process.exitCode = 1
+  }
+
+  return stopped.length === 0
+}
+
 async function walk(fixture: Fixture, journey: Journey): Promise<Facts> {
   const name = `${fixture.term} ${journey.id}`
   running.add(name)
@@ -147,10 +160,9 @@ async function walk(fixture: Fixture, journey: Journey): Promise<Facts> {
       line.say(`${fixture.term} ${journey.id}: ${error instanceof Error ? error.message : error}`)
     }
   } finally {
-    await app.close()
-
-    for (const other of extra) {
-      await other.close()
+    for (const one of [app, ...extra]) {
+      stopped.push(...(await one.stopped()).map((job) => `${name}: ${job}`))
+      await one.close()
     }
 
     journals.set(name, app.journal)
@@ -681,10 +693,13 @@ async function main(): Promise<void> {
         process.exitCode = 1
       }
 
+      noneStopped()
+
       return
     }
 
-    const ok = report(fresh, scoped)
+    const met = report(fresh, scoped)
+    const ok = noneStopped() && met
     console.log(
       `\n${ok ? tint(TINT.same, MARK.same) : tint(TINT.broken, MARK.broken)} parity ${ok ? 'ok' : 'failed'} — ${journeys.length} journeys × ${terms.length} terminals in ${seconds(started)}`,
     )

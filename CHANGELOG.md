@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- With the mode on `auto`, a tab that heard the system's appearance just as the palettes changed could keep a shell using a whole CPU core, even after the tab closed, and no tab followed the appearance while that tab stayed open. Background jobs no longer touch the terminal.
+
 ## 1.2.92
 
 - A Help box keeps the keys no bar names on screen in Preview, Browse and the picture preview, and in the edit panel and the palette editor where the window is tall enough; the picture search names its own on the line above the key bar. Preview showed its keys only until the first key press, and the others only behind `?`, which still lists every key. `TTHEME_HELP_BOX=off`, or **Help** in `alt+c`, turns them off.

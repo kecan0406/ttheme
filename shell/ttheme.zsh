@@ -49,7 +49,13 @@ __tt_palettes_load() {
 __tt_palettes() {
   local -a at=("")
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/start.zsh 2>/dev/null
-  [[ $at[1] == "$TTHEME_PALETTES_AT" ]] || __tt_fresh
+  if [[ $at[1] != "$TTHEME_PALETTES_AT" ]]; then
+    if (( ZSH_SUBSHELL )); then
+      __tt_palettes_load
+    else
+      __tt_fresh
+    fi
+  fi
   (( TTHEME_PALETTES_IN )) && return 0
   source $TTHEME_HOME/palettes.zsh || return 1
   TTHEME_PALETTES_IN=1

@@ -432,6 +432,12 @@ auto-own.back.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
 auto-own.back.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 auto-own.back.mode	dark	=	=	=	light	=	light	light	light	light	light	=
 auto-own.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
+auto-behind.heard.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+auto-behind.heard.picture	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+auto-behind.heard.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+auto-behind.asked.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+auto-behind.asked.picture	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
+auto-behind.asked.wears	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	=
 palettes.added.colors	ttheme/souryuu-asuka-langley	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/souryuu-asuka-langley cursor:ttheme/souryuu-asuka-langley ansi:ttheme/souryuu-asuka-langley
 palettes.added.picture	none	=	=	=	=	=	=	=	=	=	=	=
 palettes.added.wears	ttheme/souryuu-asuka-langley	=	=	=	=	=	=	=	=	=	=	=

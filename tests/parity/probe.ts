@@ -291,5 +291,6 @@ export function probe(
     pinHost(host, palette) {
       writeFileSync(join(fixture.place.configHome, 'ttheme', 'pins'), `ssh:${host}  ${palette}\n`)
     },
+    cli: (...args) => cli(fixture.place, ...args),
   }
 }

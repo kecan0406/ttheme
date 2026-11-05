@@ -86,6 +86,33 @@ export function lingering(place: Place): boolean {
   })
 }
 
+interface Attached {
+  pid: number
+  state: string
+  args: string
+}
+
+async function attached(tabs: readonly Tab[]): Promise<Attached[]> {
+  const ttys = tabs.flatMap((tab) => (tab.tty && !tab.exited ? [tab.tty.replace('/dev/', '')] : []))
+
+  if (ttys.length === 0) {
+    return []
+  }
+
+  const proc = Bun.spawn(['ps', '-ww', '-t', ttys.join(','), '-o', 'pid=,stat=,args='], {
+    stdout: 'pipe',
+    stderr: 'ignore',
+  })
+
+  const out = await new Response(proc.stdout).text()
+
+  return out.split('\n').flatMap((line) => {
+    const [, pid, state, args] = /^\s*(\d+)\s+(\S+)\s+(.*)$/.exec(line) ?? []
+
+    return pid ? [{ pid: Number(pid), state: state ?? '', args: args ?? '' }] : []
+  })
+}
+
 export function warpPaths(place: Place): { settings: string; themes: string; db: string } {
   return process.platform === 'darwin'
     ? {
@@ -1624,8 +1651,15 @@ export class App {
     }
   }
 
+  async stopped(): Promise<string[]> {
+    const jobs = await attached(this.tabs)
+
+    return jobs.filter((job) => job.state.startsWith('T')).map((job) => `${job.pid} ${job.args}`)
+  }
+
   async close(): Promise<void> {
     this.kind.closed?.()
+    const jobs = await attached(this.tabs)
 
     for (const tab of this.tabs) {
       tab.proc?.kill('SIGHUP')
@@ -1640,6 +1674,12 @@ export class App {
 
       tab.proc?.terminal?.close()
       tab.xterm.dispose()
+    }
+
+    for (const job of jobs) {
+      try {
+        process.kill(job.pid, 'SIGKILL')
+      } catch {}
     }
   }
 }
