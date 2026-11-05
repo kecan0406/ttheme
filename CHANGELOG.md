@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.93
+
 - With the mode on `auto`, a tab that heard the system's appearance just as the palettes changed could keep a shell using a whole CPU core, even after the tab closed, and no tab followed the appearance while that tab stayed open. Background jobs no longer touch the terminal.
 
 ## 1.2.92
