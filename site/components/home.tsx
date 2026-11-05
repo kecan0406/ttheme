@@ -109,7 +109,7 @@ export function Home({
               <p class="text-xs text-muted-foreground">Waifu, husbando, best girl: all welcome.</p>
             </div>
             <div class="flex w-full flex-wrap items-end gap-3">
-              <LinkButton variant="pop" size="lg" href={marketplacePath(BUILTIN)}>
+              <LinkButton size="lg" href={marketplacePath(BUILTIN)}>
                 Browse Palettes
                 <Icon node={ArrowRight} />
               </LinkButton>

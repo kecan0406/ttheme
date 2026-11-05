@@ -55,7 +55,7 @@ import { GateRows, Group, Marks, Swatch, Verdict } from './slot-list'
 import { GateButton, TitleFacts, TitleLine, WorkspaceBar, WorkspaceTitle } from './workspace-shell'
 
 const PLANE_THUMB =
-  'pointer-events-none absolute size-3.5 -translate-1/2 rounded-full border-2 border-white shadow-sm ring-1 ring-black/55'
+  'pointer-events-none absolute size-3.5 -translate-1/2 rounded-full border-2 border-white ring-1 ring-black/55'
 
 const ORIGIN_MARK =
   'pointer-events-none absolute size-3 -translate-1/2 rounded-full border-2 border-dashed border-white/85 ring-1 ring-black/40'
