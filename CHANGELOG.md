@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.95
+
 - Preview now shows the panel of the palette under the cursor beside the list, its pictures, colors and Apply, so you can see and change them while you look: `→` or a click moves into it. `tab` shows the sample full screen instead, where `↑` `↓` move between palettes and `⇧←` `⇧→` switch the scene. The panel needs 86 columns; a narrower window lists the palettes alone, and `→` still opens the panel full screen. In `ttheme pin`, your pins are a `tab` away too.
 
 ## 1.2.94
