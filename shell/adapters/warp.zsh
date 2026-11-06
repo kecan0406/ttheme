@@ -494,10 +494,14 @@ __tt_bg_cells() {
 __tt_cell() { return 1 }
 
 __tt_bg_transmit() {
-  local b64=base64
+  local b64=base64 text=${2%.png}.b64
   local -a wrap=(-w 4096) chunks
-  [[ $OSTYPE == darwin* ]] && b64=/usr/bin/base64 wrap=(-b 4096)
-  chunks=("${(@f)$($b64 $wrap < $2 2>/dev/null)}")
+  if [[ -r $text ]]; then
+    chunks=("${(@f)$(<$text)}")
+  else
+    [[ $OSTYPE == darwin* ]] && b64=/usr/bin/base64 wrap=(-b 4096)
+    chunks=("${(@f)$($b64 $wrap < $2 2>/dev/null)}")
+  fi
   [[ -n $chunks[1] ]] || return 0
   printf '\e_Ga=t,f=100,i=%d,m=%d,q=2;%s\e\\' $1 $(( ${#chunks} > 1 )) "$chunks[1]"
   (( ${#chunks} > 2 )) && printf '\e_Gm=1,q=2;%s\e\\' "${(@)chunks[2,-2]}"

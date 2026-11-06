@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- In Warp, moving onto a palette with pictures in Preview's list is faster: each picture's thumbnail is now kept beside it in the form Warp is sent, so the shell no longer starts a process for every thumbnail. The update writes it for the pictures you already have.
+
 ## 1.2.95
 
 - Preview now shows the panel of the palette under the cursor beside the list, its pictures, colors and Apply, so you can see and change them while you look: `→` or a click moves into it. `tab` shows the sample full screen instead, where `↑` `↓` move between palettes and `⇧←` `⇧→` switch the scene. The panel needs 86 columns; a narrower window lists the palettes alone, and `→` still opens the panel full screen. In `ttheme pin`, your pins are a `tab` away too.

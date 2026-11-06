@@ -901,6 +901,29 @@ function thumbFile(stem: string): string {
   return `${stem}@thumb.png`
 }
 
+function thumbTextFile(stem: string): string {
+  return `${stem}@thumb.b64`
+}
+
+const THUMB_LINE = 4096
+
+function base64Lines(bytes: Uint8Array): Uint8Array {
+  const text = Buffer.from(bytes).toString('base64')
+
+  const lines = Array.from({ length: Math.ceil(text.length / THUMB_LINE) }, (_, i) =>
+    text.slice(i * THUMB_LINE, (i + 1) * THUMB_LINE),
+  )
+
+  return Buffer.from(`${lines.join('\n')}\n`, 'latin1')
+}
+
+function thumbFiles(stem: string, thumb: Uint8Array): [string, Uint8Array][] {
+  return [
+    [thumbFile(stem), thumb],
+    [thumbTextFile(stem), base64Lines(thumb)],
+  ]
+}
+
 function shrunk(width: number, height: number): { width: number; height: number } {
   return height <= THUMB
     ? { width, height }
@@ -950,11 +973,7 @@ function laid(stem: string, focus: number, figure: Uint8Array, fill: Uint8Array,
   return {
     stem,
     fill: named,
-    files: [
-      [`${stem}.png`, figure],
-      [named, fill],
-      [thumbFile(stem), thumb],
-    ],
+    files: [[`${stem}.png`, figure], [named, fill], ...thumbFiles(stem, thumb)],
     inks: [],
   }
 }
@@ -995,7 +1014,9 @@ export function thumbless(configHome: string): { name: string; key: string }[] {
 
   return Object.entries(readStore(dir).palettes).flatMap(([name, rack]) =>
     rack.pictures.flatMap((picture) =>
-      files.has(picture.fill) && !files.has(thumbFile(picture.stem)) ? [{ name, key: picture.key }] : [],
+      files.has(picture.fill) && !(files.has(thumbFile(picture.stem)) && files.has(thumbTextFile(picture.stem)))
+        ? [{ name, key: picture.key }]
+        : [],
     ),
   )
 }
@@ -1009,7 +1030,7 @@ export function writeThumb(configHome: string, name: string, key: string): boole
   }
 
   try {
-    writeAtomic(join(dir, thumbFile(picture.stem)), thumbOf(new Uint8Array(readFileSync(join(dir, picture.fill)))))
+    lay(dir, thumbFiles(picture.stem, thumbOf(new Uint8Array(readFileSync(join(dir, picture.fill))))))
 
     return true
   } catch {
@@ -1565,10 +1586,14 @@ function recolor(dir: string, name: string, picture: Picture, hue: Hue): Picture
     .digest('hex')
     .slice(0, 8)}`
 
-  lay(
-    dir,
-    painted.map(([file, bytes]) => [stem + file.slice(picture.stem.length), bytes]),
-  )
+  const thumb = bytesOf(thumbFile(picture.stem))
+
+  lay(dir, [
+    ...painted
+      .filter(([file]) => file !== thumbFile(picture.stem))
+      .map(([file, bytes]): [string, Uint8Array] => [stem + file.slice(picture.stem.length), bytes]),
+    ...(thumb.length > 0 ? thumbFiles(stem, thumb) : []),
+  ])
 
   for (const kind of ['tune', 'off']) {
     const text = readText(join(dir, `${picture.stem}.${kind}.conf`))
