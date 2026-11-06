@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.96
+
 - In Warp, moving onto a palette with pictures in Preview's list is faster: each picture's thumbnail is now kept beside it in the form Warp is sent, so the shell no longer starts a process for every thumbnail. The update writes it for the pictures you already have.
 
 ## 1.2.95
