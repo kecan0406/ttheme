@@ -56,7 +56,7 @@ upstream's color.
 ttheme edit hatsune-miku   # a built-in palette: your changes are kept as its tuning
 ```
 
-In `ttheme`, the same editor opens from a palette's panel: `tab`, then `enter` on
+In `ttheme`, the same editor opens from a palette's panel: `→`, then `enter` on
 **Edit palette**. Tuning is just the colors you moved, laid over the colors the
 palette's marketplace gives, in `~/.config/ttheme/tone.json`.
 

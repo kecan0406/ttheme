@@ -45,7 +45,6 @@ import { runEditor } from '../tui/editor-screen.ts'
 import type { Choice, Edited, EditorOptions } from '../tui/palette-editor.ts'
 import { PickerLayer } from '../tui/picker-art.ts'
 import { interactive } from '../tui/terminal.ts'
-import { toneRows } from '../tui/tone-view.ts'
 import { EXIT, InputError } from './answer.ts'
 import * as p from './ask.ts'
 import { findFor } from './find/find.ts'
@@ -533,16 +532,8 @@ function shownNamed(home: string, name: string): PaletteEntry {
   return find(shown(home, readMarketplaces(home), false).palettes, name, readInstalled(home).palettes)
 }
 
-export async function runTone(name: string, action: string, width?: string): Promise<number> {
+export async function runTone(name: string, action: string): Promise<number> {
   const home = configHome()
-
-  if (action === 'show') {
-    const base = shownNamed(home, name)
-    const worn = tonedEntry(base, toneOf(readTone(home), base))
-    console.log(toneRows(base, worn, !colorless(), width === undefined ? undefined : Number(width)).join('\n'))
-
-    return 0
-  }
 
   if (action === 'reset') {
     const tone = readTone(home)
@@ -560,7 +551,7 @@ export async function runTone(name: string, action: string, width?: string): Pro
   }
 
   if (action !== 'edit') {
-    throw new InputError(`tone takes show, edit or reset, not ${action}`)
+    throw new InputError(`tone takes edit or reset, not ${action}`)
   }
 
   if (!interactive()) {

@@ -1,7 +1,7 @@
 import { hubNext } from './hub.ts'
 
 interface PreviewKey {
-  where: 'list' | 'panel' | 'group' | 'pick' | 'settings' | 'hub' | 'help'
+  where: 'list' | 'panel' | 'sample' | 'group' | 'pick' | 'settings' | 'hub' | 'help'
   group: string
   keys: string
   does: string
@@ -15,9 +15,9 @@ export const PREVIEW_KEYS: readonly PreviewKey[] = [
   { where: 'list', group: 'Filter', keys: 'type', does: 'Filter by name or title' },
   { where: 'list', group: 'Filter', keys: 'ctrl+u', does: 'Clear the filter' },
   { where: 'hub', group: 'Filter', keys: 'enter', does: 'Search marketplaces when nothing matches', onBar: true },
-  { where: 'list', group: 'Palette', keys: 'shift+←→', does: 'Switch the sample', onBar: true },
   { where: 'list', group: 'Palette', keys: 'enter', does: 'Use it, choosing where', onBar: true },
-  { where: 'list', group: 'Palette', keys: 'tab / → / ctrl+e', does: 'Edit its colors and picture', onBar: true },
+  { where: 'list', group: 'Palette', keys: '→ / ctrl+e', does: 'Edit its colors and picture', onBar: true },
+  { where: 'list', group: 'Palette', keys: 'tab', does: 'See the sample full screen', onBar: true },
   { where: 'list', group: 'Finish', keys: 'esc', does: 'Cancel and put the tab back', onBar: true },
   { where: 'list', group: 'Finish', keys: 'alt+g', does: 'Group and sort the list', onBar: true },
   { where: 'list', group: 'Finish', keys: 'alt+c', does: 'Open the settings', onBar: true },
@@ -44,6 +44,10 @@ export const PREVIEW_KEYS: readonly PreviewKey[] = [
     does: 'Back to the list, dropping changes since the last save',
     onBar: true,
   },
+  { where: 'sample', group: 'Move', keys: '↑↓', does: 'Move to the next palette', onBar: true },
+  { where: 'sample', group: 'Sample', keys: 'shift+←→', does: 'Switch the sample', onBar: true },
+  { where: 'sample', group: 'Sample', keys: 'enter', does: 'Use it, choosing where', onBar: true },
+  { where: 'sample', group: 'Finish', keys: 'tab / esc', does: 'Back to the list', onBar: true },
   { where: 'group', group: 'Move', keys: '↑↓ / j k', does: 'Move between choices' },
   { where: 'group', group: 'Choose', keys: 'space / enter', does: 'Pick it, saved at once' },
   { where: 'group', group: 'Finish', keys: 'esc / alt+g', does: 'Close the menu' },

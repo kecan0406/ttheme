@@ -215,14 +215,14 @@ __tt_pv_lw() {
   (( l < 38 )) && l=38
   (( l > 56 )) && l=56
   (( sw > 64 )) && sw=64
-  if (( te && sw < 50 )); then
+  if (( sw < 50 )); then
     sw=50
     (( pw - l - 6 < sw )) && l=$(( pw - sw - 6 ))
     (( l < 30 )) && l=30
   fi
   (( sw > pw - l - 6 )) && sw=$(( pw - l - 6 ))
-  (( te && sw < 50 )) && sw=0
-  if (( color && sw >= 32 )); then
+  (( sw < 50 )) && sw=0
+  if (( color && sw )); then
     lw=$l
   else
     sw=0
@@ -620,6 +620,9 @@ __tt_pv_foot() {
     fi
     kk+=(shift+enter '?') kl+=(apply keys)
     rk=esc right=$b$ke$z$d" cancel"$z
+  elif (( sample )); then
+    badge='PREVIEW (SAMPLE)' kk=(↑↓ shift+←→ enter '?') kl=(move sample use keys)
+    rk=esc right=$b$ke$z$d" back"$z
   elif (( gmenu )); then
     badge=GROUP kk=(↑↓ space) kl=(move pick)
     rk=esc right=$b$ke$z$d" close"$z
@@ -639,8 +642,7 @@ __tt_pv_foot() {
         kk=(→) kl=(open)
       fi
     else
-      kk=(enter tab) kl=(use edit)
-      (( split )) && { kk+=(shift+←→); kl+=(sample) }
+      kk=(enter → tab) kl=(use edit sample)
       [[ -n $flt ]] && { kk+=(bksp); kl+=(edit) }
     fi
     __tt_pv_alt && { kk+=(alt+c); kl+=(settings) }
@@ -836,6 +838,7 @@ __tt_pv_help() {
   (( TTHEME_PALETTES_IN )) || __tt_palettes
   local z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] blank where=list
   (( te )) && where=panel
+  (( sample )) && where=sample
   (( gmenu )) && where=group
   (( conf )) && where=settings
   local -a hg=() hk=() hd=() hl=() hn=() wn=() reply=()
@@ -1519,8 +1522,8 @@ __tt_pv_reach() {
 
 __tt_pv_draw() {
   (( TTHEME_PALETTES_IN )) || __tt_palettes
-  local out line cnt ex ag="" ac="" gc="" pl="" hm="" sb="" dd="" zz="" state=on src="" wk="" nflt="" rsub="" REPLY
-  local -i lw sw split sc sbot=$ph sfit cend teend se=$(( pw - 1 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
+  local out line cnt ex ag="" ac="" gc="" pl="" hm="" sb="" dd="" zz="" state=on src="" nflt="" rsub="" REPLY
+  local -i lw sw split sc sbot=$ph cend teend se=$(( pw - 1 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
   local -a held
   (( gmenu )) && set --
   bgstrip=""
@@ -1591,6 +1594,10 @@ __tt_pv_draw() {
     done
     out+=$'\e[J'
     __tt_pv_flush
+    return 0
+  fi
+  if (( sample )); then
+    __tt_pv_whole
     return 0
   fi
   if (( te && ! split )); then
@@ -1716,22 +1723,13 @@ __tt_pv_draw() {
       __tt_pv_te_head $sc $se
       __tt_pv_te_panel $sc $se 3 $(( ph - 1 ))
       __tt_pv_keys panel $teend
+    elif [[ ${rtype[cur]} == thm ]]; then
+      __tt_pv_te_glance ${rval[cur]} $sc $se $(( ph - 1 ))
+      __tt_pv_keys list $teend
     else
-      sbot=$(( ph - 1 )) sfit=$(( ph - 1 ))
       __tt_pv_keys list
-      __tt_pv_sample
-      if [[ -n $an ]]; then
-        __tt_work_of $an
-        wk=$REPLY
-        __tt_label $an
-        __tt_pv_box 1 $sfit "$REPLY" "$wk"
-      else
-        __tt_pv_box 1 $sfit "Terminal colors"
-      fi
-      if [[ -z $applied && $mode != pin ]]; then
-        __tt_clip "${dd}Move onto a palette to see it here$zz" $(( sw - 4 ))
-        out+=$'\e[2;'$(( sc + 2 ))'H'$REPLY
-      fi
+      __tt_clip "${dd}Move onto a palette to see it here$zz" $(( se - sc + 1 ))
+      out+=$'\e[1;'$sc'H'$REPLY
     fi
     (( help && sw < 48 )) && __tt_pv_help
   else
@@ -2151,6 +2149,10 @@ __tt_pv_free() {
 
 __tt_pv_press() {
   [[ $4 == tereset ]] || tearm=0
+  if (( ! te )) && [[ $4 == (te*|track|place|colors) ]]; then
+    __tt_pv_free && [[ ${rtype[cur]} == thm ]] || return 0
+    __tt_te_open ${rval[cur]}
+  fi
   case $4 in
     row|fold) __tt_pv_free && [[ ${rtype[$5]} != rule ]] && cur=$5 ;;
     pick) pk=$5 ;;
@@ -2268,6 +2270,11 @@ __tt_pv_wheel() {
     (( mwheel < 0 )) && key=up
     __tt_pv_te
     return
+  elif (( sample )); then
+    key=down
+    (( mwheel < 0 )) && key=up
+    __tt_pv_sampling
+    return
   elif [[ -z $pick && -z $tune ]] && (( ${#rval} )); then
     i=$(( cur + mwheel ))
     [[ ${rtype[i]} == rule ]] && (( i += mwheel ))
@@ -2371,29 +2378,80 @@ __tt_te_save_image() {
   __tt_pv_tune_open $tename
 }
 
-__tt_te_read() {
-  local rows
-  local -i wide=${1:-0}
-  if (( ! wide )); then
-    __tt_pv_lw
-    wide=${reply[2]}
-    (( wide )) || wide=$(( pw - 1 < 66 ? pw - 2 : 65 ))
+__tt_te_edge() {
+  local text
+  local -i w=$1 col i c
+  local -a line=("${(@s::)${(l:w::─:)}}")
+  line[1]=${2[1]} line[w]=${2[2]}
+  shift 2
+  while (( $# >= 2 )); do
+    col=$1 text=$2
+    shift 2
+    for (( i = 1; i <= ${#text}; i++ )); do
+      c=$(( col + i ))
+      (( c > 1 && c < w )) && line[c]=${text[i]}
+    done
+  done
+  REPLY=${(j::)line}
+}
+
+__tt_te_boxed() {
+  setopt localoptions extendedglob
+  local text=$1 plain=${1//$'\e'\[[0-9;]##m/}
+  local -i room=$(( $2 - 2 )) pad
+  if (( ${(m)#plain} > room )); then
+    __tt_clip "$text" $room
+    text=$REPLY plain=${REPLY//$'\e'\[[0-9;]##m/}
   fi
-  tewide=$wide
-  rows=$(__tt_cli tone $tename show $wide 2>/dev/null) || return 1
-  teframe=("${(@f)rows}")
-  return 0
+  pad=$(( room - ${(m)#plain} ))
+  REPLY=$d"│"$dx$text${(l:pad:: :)}$d"│"$dx
+}
+
+__tt_te_rows() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
+  local d=$TTHEME_SGR[dim] dx=$TTHEME_SGR[/dim] b=$TTHEME_SGR[bold] bx=$TTHEME_SGR[/bold] y=$TTHEME_SGR[warn] yx=$TTHEME_SGR[/warn] fx=$TTHEME_SGR[/fg] cell hex mark note REPLY
+  local -a f=("${(@s:|:)TTHEME_TONE[$1]}") hx=(${=TTHEME_PALETTE[$1]}) names=($TTHEME_TONE_NAMES) cells=()
+  local -i W=$2 i at
+  (( color )) || d= dx= b= bx= y= yx= fx=
+  for (( i = 1; i <= 20; i++ )); do
+    cell=${f[i + 2]} mark=" "
+    case ${cell[-1]} in
+      x) mark=$b$TTHEME_MARKS[miss]$bx ;;
+      t) mark=$y$TTHEME_MARKS[on]$yx ;;
+    esac
+    cell=${cell%?} hex=${hx[i]#\#}
+    if (( color )) && [[ ${#hex} == 6 ]]; then
+      cells+=(" "$'\e[38;2;'$((16#${hex:0:2}))';'$((16#${hex:2:2}))';'$((16#${hex:4:2}))'m'$TTHEME_MARKS[swatch]$fx" $cell$mark")
+    else
+      cells+=("   $cell$mark")
+    fi
+  done
+  for note in "$f[1]" "$f[2]"; do
+    [[ -n $note ]] || continue
+    at=$(( W - 4 - ${(m)#note} ))
+    (( at > 11 )) && break
+    note=""
+  done
+  reply=()
+  __tt_te_edge $W ╭╮ 2 " Palette " ${note:+$at} ${note:+" $note "}
+  reply+=("$d$REPLY$dx")
+  for (( i = 1; i <= 4; i++ )); do
+    __tt_te_boxed " ${(r:10:)names[i]}${cells[i]}" $W
+    reply+=("$REPLY")
+  done
+  __tt_te_edge $W ├┤ "${TTHEME_TONE_RULE[@]}"
+  reply+=("$d$REPLY$dx")
+  for (( i = 5; i <= 12; i++ )); do
+    __tt_te_boxed " ${(r:10:)names[i]}${cells[i]}${cells[i + 8]}" $W
+    reply+=("$REPLY")
+  done
+  __tt_te_edge $W ╰╯
+  reply+=("$d$REPLY$dx")
 }
 
 __tt_te_open() {
   local name=$1 REPLY
-  tename=$name tfocus=0 teframe=() tetop=0 msgt=0 te=1 tbtn=0 tearm=0
-  if ! __tt_te_read; then
-    __tt_label $name
-    msg="Could not read the colors of $REPLY" msgt=300
-    tename="" te=0
-    return 0
-  fi
+  tename=$name tfocus=0 tetop=0 msgt=0 te=1 tbtn=0 tearm=0
   (( bgcw )) && __tt_pv_bg_state $name && __tt_pv_tune_open $name
   __tt_te_image && __tt_te_to_image 1
   resized=1
@@ -2402,7 +2460,7 @@ __tt_te_open() {
 
 __tt_te_close() {
   [[ -n $tune ]] && __tt_pv_untune
-  te=0 tfocus=0 tename="" teframe=() tetop=0 tbtn=0 tearm=0 help=0 pick="" resized=1
+  te=0 tfocus=0 tename="" tetop=0 tbtn=0 tearm=0 help=0 pick="" resized=1
   return 0
 }
 
@@ -2502,7 +2560,6 @@ __tt_te_edit() {
   if (( rc == 0 )); then
     __tt_pv_bg_reset $name
     bgload[$name]=""
-    __tt_te_read
     msg=${err:-"Saved"} msgt=200
   elif (( rc == 1 )); then
     __tt_label $name
@@ -2529,7 +2586,6 @@ __tt_te_reset() {
     [[ -n ${TTHEME_PALETTE[$name]} ]] && __tt_pv_paint "${TTHEME_PALETTE[$name]}" && applied=${TTHEME_PALETTE[$name]}
     __tt_pv_bg_reset $name
     bgload[$name]=""
-    __tt_te_read
     msg=${err:-"Back to the original colors"} msgt=200
   elif (( rc == 1 )); then
     __tt_label $name
@@ -2803,15 +2859,17 @@ __tt_pv_te_editrow() {
 __tt_pv_te_panel() {
   local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] b=$TTHEME_SGR[bold] dx=$TTHEME_SGR[/dim] bx=$TTHEME_SGR[/bold] ax=$TTHEME_SGR[/accent] fs hs st note row REPLY
   local -i col=$1 end=$2 r0=$3 r1=$4 ix=$(( $1 + 2 )) ie=$(( $2 - 2 )) R W T P I=3 V i y pics=0 tfs=$tf
+  local -a frame
   (( color )) || z= d= b=
   R=$(( r1 - r0 + 1 )) W=$(( end - col + 1 ))
-  (( tewide == W )) || __tt_te_read $W
-  T=${#teframe} P=$(( ${#teframe} + 2 ))
+  __tt_te_rows $tename $W
+  frame=("${reply[@]}")
+  T=${#frame} P=$(( T + 2 ))
   __tt_te_image && pics=1
   (( pics && 19 <= R && (tfocus == 1 || 19 + P + 1 <= R) )) && I=19
   V=$(( I + P + 1 ))
   teend=$(( r0 + V ))
-  if (( V <= R || tfocus == 1 )); then
+  if (( V <= R || tfocus == 1 || tfocus < 0 )); then
     tetop=0
   else
     tetop=$(( V - R ))
@@ -2840,7 +2898,7 @@ __tt_pv_te_panel() {
       fi
       __tt_pv_te_images $(( y + 3 )) $ix $ie
       if [[ -n $tune ]]; then
-        bgstrip="$(( y + 3 )) $ix $ie"
+        bgstrip="$(( y + 3 )) $ix $ie $tune $tpick"
         (( tfocus == 1 )) || tf=0
         __tt_pv_bg_panel $tpick $(( y + 10 )) $ix $ie
         tf=$tfs
@@ -2871,7 +2929,7 @@ __tt_pv_te_panel() {
       __tt_pv_te_sides $y $y $col $W "$fs"
       __tt_pv_te_editrow $y $col $end
     else
-      row=${teframe[i == P ? T : i]}
+      row=${frame[i == P ? T : i]}
       if (( tfocus == 0 && color )); then
         row=${${row//$d/$ac}//$dx/$bx$ax}
         (( i == 1 )) && row=${row/ Palette /$b" Palette "$bx}
@@ -2929,6 +2987,67 @@ __tt_pv_te_draw() {
   __tt_pv_flush
 }
 
+__tt_pv_te_glance() {
+  local tename=$1 tune="" tpick="" REPLY
+  local -i tfocus=-1 tbtn=0 tearm=0 tetop=0 tf=0
+  local -A tsnaps=()
+  if __tt_pv_bg_state $1; then
+    __tt_pv_shows $1
+    tpick=$REPLY tune=$1
+    __tt_bg_load $tpick
+  fi
+  __tt_pv_te_head $2 $3
+  __tt_pv_te_panel $2 $3 3 $4
+}
+
+__tt_pv_whole() {
+  local wk="" title="Terminal colors" REPLY
+  local -i i sc=1 sw=$(( pw - 1 )) sbot=$(( ph - 1 )) sfit=$(( ph - 1 )) split=0
+  for (( i = 1; i < ph; i++ )); do
+    out+=$'\e['$i$';1H\e[K'
+  done
+  __tt_pv_sample
+  if [[ -n $an ]]; then
+    __tt_work_of $an
+    wk=$REPLY
+    __tt_label $an
+    title=$REPLY
+  fi
+  __tt_pv_box 1 $(( ph - 1 )) "$title" "$wk"
+  (( help )) && __tt_pv_help
+  out+=$'\e['$ph';1H'
+  __tt_pv_foot $se
+  (( osdt > 0 )) && __tt_pv_osd
+  __tt_pv_flush
+}
+
+__tt_pv_sampling() {
+  local -i i k n=${#rval} step=1
+  case $key in
+    $'\x03') return 1 ;;
+    esc|$'\t') sample=0 ;;
+    '?') help=1 ;;
+    sleft) scene=$(( scene - 1 )) ;;
+    sright) scene=$(( scene + 1 )) ;;
+    up|down)
+      [[ $key == up ]] && step=-1
+      for (( i = 1; i < n; i++ )); do
+        k=$(( ((cur - 1 + step * i) % n + n) % n + 1 ))
+        if [[ ${rtype[k]} == thm ]]; then
+          cur=$k
+          break
+        fi
+      done
+      ;;
+    $'\r'|senter)
+      sample=0
+      __tt_pv_handle
+      return
+      ;;
+  esac
+  return 0
+}
+
 __tt_pv_handle() {
   local name
   if [[ $key == mouse && $mact == move ]]; then
@@ -2951,6 +3070,10 @@ __tt_pv_handle() {
   fi
   if [[ -n $pick ]]; then
     __tt_pv_pick
+    return
+  fi
+  if (( sample )); then
+    __tt_pv_sampling
     return
   fi
   if (( te )); then
@@ -3049,7 +3172,7 @@ __tt_pv_handle() {
     ' ') [[ ${rtype[cur]} == (hdr|cat) ]] && __tt_pv_toggle ;;
     $'\t')
       if [[ ${rtype[cur]} == thm ]]; then
-        __tt_te_open ${rval[cur]}
+        sample=1
       elif (( hub )); then
         __tt_pv_screen 1 || return 1
       fi
@@ -3064,8 +3187,6 @@ __tt_pv_handle() {
       done
       ;;
     '?') help=1 ;;
-    sleft) (( --scene )) ;;
-    sright) (( ++scene )) ;;
     $'\x7f'|$'\x08')
       if [[ -n $flt ]]; then
         name=""
@@ -3123,8 +3244,8 @@ __tt_preview() {
   local -i gmenu=0 gm=1
   local -a gitems=(TTHEME_GROUP:work TTHEME_GROUP:marketplace TTHEME_SORT:abc TTHEME_SORT:cast)
   local -A gshow=(abc A-Z cast "Cast order")
-  local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
-  local te=0 tfocus=0 tetop=0 tewide=0 tbtn=0 tearm=0 tename=""
+  local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=()
+  local te=0 tfocus=0 tetop=0 tbtn=0 tearm=0 tename="" sample=0
   local -i pvgone=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
   local -F mlast=0 pvsized=0
   local mact="" mzone="" pvmouse="" pasted="" pvrest="" mhov=""

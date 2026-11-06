@@ -6,6 +6,7 @@ import { marksOf } from '../core/mark.ts'
 import type { Mode, Setting } from '../core/mode.ts'
 import { SCENES } from '../core/scenes.ts'
 import type { Colors } from '../core/seeds.ts'
+import { BASE, PAIRS } from '../core/slots.ts'
 import { publisherOf, slugOf } from '../core/theme.ts'
 import { configTemplate, SETTING_NAMES } from '../store/wiring.ts'
 import { TRAITS } from '../terminals/terminal.ts'
@@ -13,11 +14,13 @@ import { HUB_CLOSED, HUB_SWITCH, HUB_TABS, HUB_UPDATE } from '../tui/hub.ts'
 import { outdatedLines, STANDING_LINES } from '../tui/notice.ts'
 import { PREVIEW_KEYS } from '../tui/preview-keys.ts'
 import { painter } from '../tui/style.ts'
+import { TONE_RULE, toneLine } from '../tui/tone-view.ts'
 import { bannerHead, helpText, VERB_SPECS } from './verbs.ts'
 
 const UNQUOTABLE = /["$`\\]/
 
 interface ZshContext {
+  untuned?: readonly PaletteEntry[]
   startup?: string
   terminals?: readonly string[]
   layer?: Readonly<Record<string, string>>
@@ -44,6 +47,7 @@ function specOf(colors: Colors): string {
 
 export function shellTables(palettes: PaletteEntry[], works: readonly Work[], context: ZshContext = {}): ShellTables {
   const {
+    untuned = [],
     startup,
     terminals = [],
     layer = {},
@@ -52,6 +56,7 @@ export function shellTables(palettes: PaletteEntry[], works: readonly Work[], co
     mode = { worn: 'dark', auto: false, settings: ['light', 'dark'] },
   } = context
 
+  const bases = new Map(untuned.map((p) => [p.name, p]))
   const shelves = shelvesOf(works)
   const abouts = new Map(palettes.map((p) => [p.name, aboutIn(shelves, p.subject)]))
 
@@ -208,6 +213,14 @@ export function shellTables(palettes: PaletteEntry[], works: readonly Work[], co
     '',
     "# the palettes whose colors your tuning moves off their marketplace's (tone.json): lists mark them, and preview's panel offers to reset them",
     `typeset -ga TTHEME_TUNED=(${palettes.flatMap((p) => (tuned.includes(p.name) ? [p.name] : [])).join(' ')})`,
+    '',
+    "# each palette's colors as preview's panel lists them (src/tui/tone-view.ts): the head's longer note, empty while nothing is tuned, and its shorter one, then each of the twenty colors as OKLCH, marked x where a contrast check fails, t where your tuning moved it and - otherwise, |-separated",
+    'typeset -gA TTHEME_TONE=(',
+    ...palettes.map((p) => entry(p, toneLine(bases.get(p.name) ?? p, p))),
+    ')',
+    "# the names down the side of preview's panel (src/core/slots.ts), and the column and label of each part of its ANSI rule",
+    `typeset -ga TTHEME_TONE_NAMES=(${[...BASE, ...PAIRS].join(' ')})`,
+    `typeset -ga TTHEME_TONE_RULE=(${TONE_RULE.flatMap(([col, label]) => [col, quote(label)]).join(' ')})`,
     '',
     '# every palette by work, each work by name and its characters in the order the commons lists them, the palettes of no work after: new tabs cycle through it and TTHEME_SORT=cast lists it',
     order,

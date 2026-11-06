@@ -178,15 +178,22 @@ export function sync(
     wiring.sync(ctx, out)
   }
 
-  out.written.push(...writeTables(ctx, view.untuned.works, host, out.repainted))
+  out.written.push(...writeTables(ctx, view.untuned.works, kept, host, out.repainted))
 
   return out.written
 }
 
-function writeTables(ctx: Ctx, works: readonly Work[], host: Host, repainted: boolean): string[] {
+function writeTables(
+  ctx: Ctx,
+  works: readonly Work[],
+  untuned: readonly PaletteEntry[],
+  host: Host,
+  repainted: boolean,
+): string[] {
   const dir = join(ctx.configHome, 'ttheme')
 
   const tables = shellTables(ctx.entries, works, {
+    untuned,
     startup: ctx.startup,
     terminals: ctx.state.terminals,
     layer: layer(ctx, host),
@@ -230,7 +237,8 @@ export function refreshPictures(configHome: string, home = homedir(), host: Host
     return
   }
 
-  const view = (settled ?? viewOf(configHome)).available
+  const shown = settled ?? viewOf(configHome)
+  const view = shown.available
   const ctx = context(configHome, resolve(view, state.palettes), state, home, host)
   const out = writer(ctx)
 
@@ -238,7 +246,7 @@ export function refreshPictures(configHome: string, home = homedir(), host: Host
     wiring.pictures?.(ctx, out)
   }
 
-  writeTables(ctx, view.works, host, false)
+  writeTables(ctx, view.works, resolve(shown.untuned, state.palettes), host, false)
 }
 
 export function aligns(terminals: readonly Wired[]): boolean {

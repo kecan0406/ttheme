@@ -429,7 +429,7 @@ plain=${out//$'\e[K'/}
   (
     local seq p s
     local -i col far
-    out= tename=ttheme/kita-ikuyo tewide=38 teframe=(x x x) tfocus=2 tune= tbtn=0 tearm=0 mode=hub canpick=0 bgcw=0 color=1 tetop=0
+    out= tename=ttheme/kita-ikuyo tfocus=2 tune= tbtn=0 tearm=0 mode=hub canpick=0 bgcw=0 color=1 tetop=0
     __tt_pv_te_panel 2 39 3 11
     s=$out col=1 far=0
     while [[ -n $s ]]; do

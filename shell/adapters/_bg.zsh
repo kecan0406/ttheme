@@ -833,15 +833,15 @@ __tt_pv_bg_panel() {
 }
 
 __tt_pv_bg_strip() {
-  local pal=$tune dir=${TTHEME_CONFIG:h}/backgrounds cur thumb want sty top side bot cmd buf="" z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] REPLY
-  local -a keys=(${=bgpics[$tune]}) wh pd
+  local pal=$4 pick=$5 dir=${TTHEME_CONFIG:h}/backgrounds cur thumb want sty top side bot cmd buf="" z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] REPLY
+  local -a keys=(${=bgpics[$4]}) wh pd
   local -i r0=$1 col=$2 end=$3 n=${#keys} at show tc tr=3 i k x r id slot first
   if (( n < 1 )); then
     __tt_pv_bg_strip_off
     return 0
   fi
-  cur=${tpick##*:}
-  [[ $tpick == *:* ]] || cur=${bgact[$pal]}
+  cur=${pick##*:}
+  [[ $pick == *:* ]] || cur=${bgact[$pal]}
   at=${keys[(Ie)$cur]}
   (( at )) || at=1
   pd=(${=bgpic[$pal:$keys[at]]})

@@ -9,9 +9,9 @@
               │    ctrl+u                 Clear the filter                          │
               │    enter                  Search marketplaces when nothing matches  │
               │  Palette                                                            │
-              │    shift+←→               Switch the sample                         │
               │    enter                  Use it, choosing where                    │
-              │    tab / → / ctrl+e       Edit its colors and picture               │
+              │    → / ctrl+e             Edit its colors and picture               │
+              │    tab                    See the sample full screen                │
               │  Finish                                                             │
               │    esc                    Cancel and put the tab back               │
               │    alt+g                  Group and sort the list                   │

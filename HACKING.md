@@ -260,20 +260,20 @@ panel below — also take `h` and `l` as `←` and `→`.
 | Key | Preview | Browse |
 |---|---|---|
 | any character | filters | filters every marketplace, landing on the first match in the panel; in the search, filters the marketplace list at once; in the `+ Add marketplace` form, types the source |
-| `↑` `↓` `ctrl+j` `ctrl+k` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping; in a marketplace's panel `↓` past the last palette reaches its actions and `↑` from the first wraps onto them, while the page keys stay among the palettes |
-| `←` `→` | close or open a work while nothing is filtered; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a work while nothing is filtered, and `←` at its top level goes back to the marketplaces; `→` on `+ Add marketplace` moves into its form in the panel and on `Search marketplace` opens the search, and `←` in either goes back |
+| `↑` `↓` `ctrl+j` `ctrl+k` `pgup` `pgdn` `home` `end` | move, wrapping; in the full-screen sample, `↑` `↓` go to the next palette | move, wrapping; in a marketplace's panel `↓` past the last palette reaches its actions and `↑` from the first wraps onto them, while the page keys stay among the palettes |
+| `←` `→` | close or open a work while nothing is filtered; `→` on a palette moves into its panel | `→` on a marketplace moves into its panel; there, close or open a work while nothing is filtered, and `←` at its top level goes back to the marketplaces; `→` on `+ Add marketplace` moves into its form in the panel and on `Search marketplace` opens the search, and `←` in either goes back |
 | `enter` `shift+enter` | open or close a work while nothing is filtered; on a palette, use it — asking where (Default or This tab) in pin mode, or where `TTHEME_TAB_PALETTE` is `off` in a terminal that keeps a default, else in this tab at once; with a filter that finds nothing, in the hub, take it to Browse's Search marketplace | on a marketplace, move into its panel; there, open or close a work while nothing is filtered, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `+ Add marketplace`, move into its form in the panel, and there fetch the source typed and land in the panel of the marketplace it stages; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, go to a marketplace you have, open the request form or the guide on `Request a character` and `Make one`, or go back on `← Back`; on a palette, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
-| `esc` | clear the filter, then put the tab back and close | clear the filter, then leave the panel, then cancel, asking first when something is staged; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
+| `esc` | clear the filter, then put the tab back and close; in the full-screen sample, back to the list | clear the filter, then leave the panel, then cancel, asking first when something is staged; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
 | `space` | fold or open a work while nothing is filtered | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, the search's query or the `+ Add marketplace` form's source, clear it |
-| `?` | keys; a Help box under the sample keeps those no bar names while the window has room and `TTHEME_HELP_BOX` is on | a Help box under the panel keeps those no bar names on the same terms; `?` is the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and its Marks list says what browse's marks mean |
+| `?` | keys; a Help box under the panel keeps those no bar names while the window has room and `TTHEME_HELP_BOX` is on | a Help box under the panel keeps those no bar names on the same terms; `?` is the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and its Marks list says what browse's marks mean |
 | `alt+g` | the group menu: how the list is grouped and sorted; a Mac's option sends `©`, which counts only while the filter is empty and is typed once it holds text, so the chip then drops the key | — |
 | `alt+c` | settings; a Mac's option sends `ç`, which counts only while the filter is empty and is typed once it holds text, so the bar then drops the hint | — |
 | `alt+u` | in the bare `ttheme`, while a newer release is known: close and run `ttheme update` | the same, asking first when something is staged |
-| `ctrl+e` | open the palette's panel | — |
+| `ctrl+e` | move into the palette's panel | — |
 | `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a work, stage its update; in the search, load the marketplace list again |
-| `shift+←` `shift+→` | switch the sample | — |
-| `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
+| `shift+←` `shift+→` | in the full-screen sample, switch it | — |
+| `tab` | on a palette, show the sample full screen, and there go back to the list; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
 | `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |
 | `ctrl+c` | quit | cancel, asking first when something is staged (`y` applies, `n` or a second ctrl+c discards, esc stays) |
 
@@ -289,8 +289,9 @@ a tune it interrupts is kept, so it counts as a change — while a second ctrl+c
 in the dialog leaves without saving. Every Node screen leaves on ctrl+c; browse
 and the editor, which hold changes until they are applied or saved, ask first.
 
-Preview's panel (`tab`, `→` or `ctrl+e` on a palette) has no filter, so it uses
-letters too. It is one list — the picture's fields, an Edit palette button, then
+Preview's panel sits beside the list from 86 columns on and shows the palette
+under the cursor; it takes the keys once `→` or `ctrl+e` on a palette, or a click
+on it, moves into it. It has no filter, so it uses letters too. It is one list — the picture's fields, an Edit palette button, then
 an Apply button — and the part the cursor is in takes the keys:
 
 | Key | Picture | Edit palette | Apply |

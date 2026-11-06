@@ -3,12 +3,15 @@ import { oklch } from '../core/color.ts'
 import { missedRules } from '../core/contrast.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import type { Colors } from '../core/seeds.ts'
-import { BASE, gatedOf, lchTight, listOf, misses, PAIRS } from '../core/slots.ts'
+import { gatedOf, lchTight, listOf, misses } from '../core/slots.ts'
 import { slotColors } from '../store/tone.ts'
-import { boxEdge, boxed, contrastOf, SEP } from './parts.ts'
-import { FG_RESET, MARKS, painter } from './style.ts'
+import { contrastOf, SEP } from './parts.ts'
 
-const WIDTH = 50
+export const TONE_RULE: readonly [number, string][] = [
+  [2, ' ANSI '],
+  [12, ' Normal 0–7 '],
+  [29, ' Bright 8–15 '],
+]
 
 function colorsOfEntry(entry: PaletteEntry): Colors {
   return {
@@ -20,57 +23,15 @@ function colorsOfEntry(entry: PaletteEntry): Colors {
   }
 }
 
-function headOf(width: number, title: string, notes: string[]): [number, string][] {
-  for (const note of notes) {
-    const at = width - 4 - note.length
-
-    if (at > title.length + 2) {
-      return [
-        [2, title],
-        [at, ` ${note} `],
-      ]
-    }
-  }
-
-  return [[2, title]]
-}
-
-export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean, width = WIDTH): string[] {
-  const p = painter(color)
+export function toneLine(base: PaletteEntry, worn: PaletteEntry): string {
   const list = listOf(colorsOfEntry(worn))
   const given = slotColors(base).map((hex) => hex.toLowerCase())
   const bad = misses(list)
-  const failing = missedRules(gatedOf(list)).length
   const off = (slot: number) => list[slot]?.toLowerCase() !== given[slot]
   const tuned = list.filter((_, slot) => off(slot)).length
+  const gate = contrastOf(missedRules(gatedOf(list)).length)
+  const notes = tuned > 0 ? [`${tuned} tuned${SEP}${gate.toLowerCase()}`, gate] : ['', gate]
+  const cells = list.map((hex, slot) => `${lchTight(oklch(hex))}${bad.has(slot) ? 'x' : off(slot) ? 't' : '-'}`)
 
-  const cell = (slot: number) => {
-    const hex = list[slot] as Hex
-
-    const glyph = color ? MARKS.swatch : ' '
-
-    const swatch = color ? `${p.fg(hex)}${glyph}${FG_RESET}` : glyph
-    const mark = bad.has(slot) ? p.bold(MARKS.miss) : off(slot) ? p.warn(MARKS.on) : ' '
-
-    return ` ${swatch} ${lchTight(oklch(hex))}${mark}`
-  }
-
-  const gate = contrastOf(failing)
-  const notes = tuned > 0 ? [`${tuned} tuned${SEP}${gate.toLowerCase()}`, gate] : [gate]
-
-  return [
-    p.dim(boxEdge(width, 'top', headOf(width, ' Palette ', notes))),
-    ...BASE.map((name, row) => boxed(p, ` ${name.padEnd(10)}${cell(row)}`, width)),
-    p.dim(
-      boxEdge(width, 'mid', [
-        [2, ' ANSI '],
-        [12, ' Normal 0–7 '],
-        [29, ' Bright 8–15 '],
-      ]),
-    ),
-    ...PAIRS.map((name, k) =>
-      boxed(p, ` ${name.padEnd(10)}${cell(BASE.length + k)}${cell(BASE.length + 8 + k)}`, width),
-    ),
-    p.dim(boxEdge(width, 'bottom')),
-  ]
+  return [...notes, ...cells].join('|')
 }

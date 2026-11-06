@@ -1,0 +1,24 @@
+╭─ korund ─────────────────────────────────────────────────────────────────────────── Lumen☆Song ─╮
+│ Shell  Code  Diff  Logs  Monitor                                                                │
+│                                                                                                 │
+│ ▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀                                 │
+│                                                                                                 │
+│ ~/code/demo on main +2 ~1                                                                       │
+│ ❯ git status -sb                                                                                │
+│ ## main...origin/main [ahead 1]                                                                 │
+│  M src/main.rs                                                                                  │
+│ ?? notes.md                                                                                     │
+│                                                                                                 │
+│ ❯ ls                                                                                            │
+│ docs  src  tests  Cargo.toml  README.md                                                         │
+│                                                                                                 │
+│ ❯ cargo test                                                                                    │
+│  ✓ parses config                                                                                │
+│  ✗ renders frame  expected 3, received 2                                                        │
+│                                                                                                 │
+│ ❯ echo selected text                                                                            │
+│                                                                                                 │
+│                                                                                                 │
+│                                                                                                 │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────╯
+ [PREVIEW (SAMPLE)] ↑↓ move   shift+←→ sample   enter use   ? keys                         esc back

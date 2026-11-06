@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preview now shows the panel of the palette under the cursor beside the list, its pictures, colors and Apply, so you can see and change them while you look: `→` or a click moves into it. `tab` shows the sample full screen instead, where `↑` `↓` move between palettes and `⇧←` `⇧→` switch the scene. The panel needs 86 columns; a narrower window lists the palettes alone, and `→` still opens the panel full screen. In `ttheme pin`, your pins are a `tab` away too.
+
 ## 1.2.94
 
 - What a click would act on now lights up under the pointer in Preview, Browse, the palette editor and the picture search, down to the search's pictures and the tabs and text of the editor's mock terminal, and a press shows on the thing pressed until you let go. The sample's tabs in Preview and the key beside the bare `ttheme`'s tabs now take a click too. In terminals that allow it the pointer turns into a hand there. A key puts the highlight out until the pointer moves again, and `TTHEME_MOUSE=off` turns it off with the rest of the mouse; over ssh only the press shows.

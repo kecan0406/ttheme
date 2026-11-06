@@ -9,22 +9,30 @@ Run `ttheme` on its own. It opens Preview, where the tab shows every palette you
 installed as the cursor lands on it, so you choose by looking.
 
 ```screen title="ttheme"
- >ω   Preview   Browse   ⇧tab Browse izumi-konata  Lucky☆Star
- ⌕ Search… e.g. kita-ikuyo | Lu…  2/2      Shell  Code  Diff  Logs  Monitor
-
-   ▸ Bocchi the Rock!  ぼっち・ざ…  1      ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀
-   ▾ Lucky☆Star  らき☆すた          1
-▌    ■ izumi-konata       ■ ■ ■ ■ ■ ■      ~/code/demo on main +2 ~1
-                                           ❯ git status -sb
-                                            M src/main.rs
-                                           ?? notes.md
-
-                                           ❯ cargo test
-                                            ✓ parses config
-                                            ✗ renders frame
-
-                                           ❯ echo selected text
-  PREVIEW   enter use   tab edit   ⇧←→ sample   ? keys               esc cancel
+ >ω   Preview   Browse   ⇧ + ⇥ Browse  ◆ izumi-konata  Lucky☆Star
+ Preview (2/2)         work / A-Z
+ ╭───────────────────────────────╮     ╭─ Picture ──────────────────────────────────────╮
+ │ ⌕ Search… e.g. kita-ikuyo |…  │     │   Pictures                                 0/0 │
+ ╰───────────────────────────────╯     ╰────────────────────────────────────────────────╯
+                                       ╭─ Palette ──────── Passes every contrast check ─╮
+   ▸ Bocchi the Rock!  ぼっち…  1      │ Background ■ .21 .014 253°                     │
+   ▾ Lucky☆Star  らき☆すた      1      │ Foreground ■ .91 .021 259°                     │
+▌    ■ izumi-konata   ■ ■ ■ ■ ■ ■      │ Cursor     ■ .63 .099 249°                     │
+                                       │ Selection  ■ .36 .008 256°                     │
+                                       ├─ ANSI ──── Normal 0–7 ───── Bright 8–15 ───────┤
+                                       │ Black      ■ .26 .013 253°  ■ .57 .013 264°    │
+                                       │ Red        ■ .70 .180 359°  ■ .80 .104 359°    │
+                                       │ Green      ■ .80 .134 149°  ■ .88 .142 162°    │
+                                       │ Yellow     ■ .78 .121 118°  ■ .88 .175 118°    │
+                                       │ Blue       ■ .67 .121 250°  ■ .74 .100 250°    │
+                                       │ Magenta    ■ .78 .158 312°  ■ .87 .076 299°    │
+                                       │ Cyan       ■ .73 .124 230°  ■ .82 .085 233°    │
+                                       │ White      ■ .87 .012 260°  ■ .95 .020 257°    │
+                                       ├────────────────────────────────────────────────┤
+                                       │    Edit palette                                │
+                                       ╰────────────────────────────────────────────────╯
+                                            Apply   saves and uses it in this tab
+  PREVIEW   ↩ use   → edit   ⇥ sample   ⌥ + c settings   ? keys                  ⎋ cancel
 ```
 
 - `↑` `↓` move, and the tab shows each palette the moment the cursor lands on it.
@@ -32,8 +40,12 @@ installed as the cursor lands on it, so you choose by looking.
 - Typing filters the list. It matches palette names, works and characters, and a
   character's names in their original language too, so `hitori` and `ひとり`
   both find `gotoh-hitori`.
-- From 76 columns on, a sample beside the list shows the palette in a shell
-  session, code, a diff, logs and a process monitor. `⇧←` `⇧→` switch the scene.
+- From 86 columns on, the panel of the palette under the cursor sits beside the
+  list: its pictures, its colors with the contrast checks they fail, and Apply.
+  `→` moves into it to change them, and a click on it does too.
+- `tab` shows the palette full screen in a shell session, code, a diff, logs and
+  a process monitor. `⇧←` `⇧→` switch the scene, `↑` `↓` the palette, and `tab`
+  or `esc` go back to the list.
 - `?` lists every key of the screen you are on, and the mouse works too: what a
   click would act on lights up under the pointer. Where the window has room, a Help box keeps the keys no bar names on screen, in Preview,
   Browse, the picture preview, the edit panel and the palette editor.
@@ -92,8 +104,8 @@ ttheme pin ssh:teal     # one host
 ttheme pin 'ssh:*.prod' # every host ending in .prod
 ```
 
-`ttheme pin` opens the palette list, with every pin you have in the panel beside it
-and the samples a `⇧←` `⇧→` away. Pick a palette with `enter`, then choose how far
+`ttheme pin` opens the palette list with the panel beside it; `tab` shows every pin
+you have, with the samples a `⇧←` `⇧→` away. Pick a palette with `enter`, then choose how far
 the pin reaches with `←` `→`:
 
 | Reach | Covers |
@@ -208,8 +220,8 @@ none: pictures are downloaded to your machine, into `~/.config/ttheme/background
 cut out and kept faint enough that your text still passes the contrast checks.
 [Terminal support](../reference/terminals.md) says which terminals draw them.
 
-In `ttheme`, put the cursor on a palette and press `tab` to open its panel. The
-**Pictures** row holds the palette's pictures; `enter` on an empty frame opens
+In `ttheme`, the panel beside the list belongs to the palette under the cursor, and
+`→` moves into it. The **Pictures** row holds the palette's pictures; `enter` on an empty frame opens
 **find**, and `f` does from anywhere in the panel.
 
 - **find** searches danbooru, konachan, yande.re and zerochan and lays the posts

@@ -84,7 +84,7 @@ const RUNS = new Map<string, Verb['run']>([
   ['sync', () => runSync()],
   ['redraw', () => runRedraw()],
   ['latest', () => checkLatest()],
-  ['tone', ([name, action, width]) => runTone(name as string, action as string, width)],
+  ['tone', ([name, action]) => runTone(name as string, action as string)],
   [
     'flatten',
     ([source, out, background, opacity, canvas, place, into]) =>

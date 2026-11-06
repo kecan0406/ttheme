@@ -372,9 +372,8 @@ export const VERB_SPECS: VerbSpec[] = [
   },
   {
     name: 'tone',
-    args: ['<palette>', '<action>', '[width]'],
-    about:
-      "Print a palette's colors for preview's panel at its width, open them in the palette editor, or reset them to its marketplace's — preview calls this",
+    args: ['<palette>', '<action>'],
+    about: "Open a palette's colors in the palette editor, or reset them to its marketplace's — preview calls this",
     section: 'setup',
     hidden: true,
   },
