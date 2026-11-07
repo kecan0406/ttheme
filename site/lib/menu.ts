@@ -30,7 +30,9 @@ export interface MenuWork {
   facets: string
 }
 
-export type DocIcon = 'use' | 'make' | 'terminals' | 'commands' | 'settings'
+export type GroupSlug = 'guide' | 'cli' | 'reference'
+
+export type DocIcon = 'use' | 'make' | 'terminals' | 'commands' | 'settings' | 'environment'
 
 export interface MenuDoc {
   label: string
@@ -39,10 +41,15 @@ export interface MenuDoc {
   icon: DocIcon
 }
 
+export interface MenuDocGroup {
+  slug: GroupSlug
+  title: string
+  docs: MenuDoc[]
+}
+
 export interface MenuDocs {
   quick: { label: string; path: string; lede: string }
-  guide: MenuDoc[]
-  reference: MenuDoc[]
+  groups: MenuDocGroup[]
 }
 
 export interface MenuFacts extends MenuDocs {

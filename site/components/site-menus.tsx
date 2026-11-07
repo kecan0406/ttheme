@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   Sprout,
   Terminal,
+  Variable,
 } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { LinkButton } from '@/components/ui/button'
@@ -19,8 +20,10 @@ import { BROWSE_PATH, initOf, MARKETPLACES_PATH } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
 import type { DocIcon, MenuArt, MenuDoc, MenuFacts, MenuPlace, MenuWork } from '@/lib/menu'
 import { makePath } from '@/lib/names'
+import { cn } from '@/lib/utils'
 import { focusOf, WORN_FACETS } from '@/lib/works'
 import { CommandRow } from './command-row'
+import { DocGroupIcon } from './doc-group-icon'
 import { Dots } from './dots'
 import { Mark } from './mark'
 import { WorkArt } from './work-art'
@@ -58,6 +61,7 @@ const DOC_ICONS: Record<DocIcon, { icon: IconNode; tone: string }> = {
   terminals: { icon: Monitor, tone: 'bg-(--a4)/16 text-(--a4)' },
   commands: { icon: Terminal, tone: 'bg-(--a2)/14 text-(--a2)' },
   settings: { icon: SlidersHorizontal, tone: 'bg-(--a3)/14 text-(--a3)' },
+  environment: { icon: Variable, tone: 'bg-(--a1)/14 text-(--a1)' },
 }
 
 function MenuFoot({ children }: { children: Children }) {
@@ -410,18 +414,19 @@ export function DocsMenu({ menu }: { menu: MenuFacts }) {
           </div>
         </MeltCard>
         <div class="grid min-w-0 flex-1 content-start">
-          <p class={HEAD}>Guide</p>
-          <ul class="grid">
-            {menu.guide.map((doc) => (
-              <DocRow doc={doc} />
-            ))}
-          </ul>
-          <p class={`${HEAD} pt-3`}>Reference</p>
-          <ul class="grid">
-            {menu.reference.map((doc) => (
-              <DocRow doc={doc} />
-            ))}
-          </ul>
+          {menu.groups.map((group, at) => (
+            <>
+              <p class={cn(HEAD, 'flex items-center gap-1.5', at > 0 && 'pt-3')}>
+                <DocGroupIcon group={group.slug} class="size-3.25 flex-none" />
+                <span safe>{group.title}</span>
+              </p>
+              <ul class="grid">
+                {group.docs.map((doc) => (
+                  <DocRow doc={doc} />
+                ))}
+              </ul>
+            </>
+          ))}
         </div>
       </div>
       <MenuFoot>

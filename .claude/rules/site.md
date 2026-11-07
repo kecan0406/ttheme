@@ -45,7 +45,7 @@ The design system is the Design System artifact https://claude.ai/artifact/D3Ttw
 - A list of palettes is fetched, never inlined, and no widget waits on it to show what the page drew.
 - A widget re-renders a fragment with the same KitaJS component the server used.
 - Every command a page offers to copy is a `CommandRow`.
-- A tip shows only after a copy (`flash()`), never on hover or focus.
+- A tip shows only after a copy (`flash()`), never on hover or focus; the docs' floating back-to-top button alone names itself on hover and focus.
 - A keyboard shortcut goes through `client/keys.ts`, and a single key never fires with a modifier held, in a field or during an IME composition.
 - A search field is `autocapitalize="none"` and `autocorrect="off"`.
 - `Dialog`, `Popover`, `Tabs`, `Collapsible`, `Combobox`, `Toggle` and `ToggleGroup` are Base UI's parts on native elements, with Base UI's event and attribute names; a feature only composes them.

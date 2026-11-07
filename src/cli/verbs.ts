@@ -477,7 +477,7 @@ export function briefText(color = false): string {
 export const DOCS_URL = 'https://ttheme.dev/docs'
 
 export function docsOf(verb: VerbSpec): string {
-  return `${DOCS_URL}/reference/commands#${verb.name}`
+  return `${DOCS_URL}/cli/commands#${verb.name}`
 }
 
 export function commandHelp(verb: VerbSpec): string {

@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight } from 'lucide'
+import { ArrowRight } from 'lucide'
 import { InitRow } from '@/components/command-row'
 import { LinkButton } from '@/components/ui/button'
 import { COMMANDS, type Command, sectionId } from '@/lib/commands'
@@ -7,37 +7,36 @@ import type { Facts } from '@/lib/facts'
 import { Icon } from '@/lib/icons'
 import { renderInline } from '@/lib/markdown'
 import { SETTING_GROUPS } from '@/lib/settings'
+import { DocGroupIcon } from './doc-group-icon'
 import { DocsFrame, TocDetails } from './docs-frame'
+import { HeadingAnchor } from './heading-anchor'
 
-function Crumbs({ group }: { group?: string }) {
+function Crumbs({ group }: { group: DocPage['group'] }) {
   return (
     <p class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-      <a href={DOCS_PATH} class="transition-colors hover:text-foreground">
-        docs
-      </a>
-      {group ? (
-        <>
-          <Icon node={ChevronRight} class="size-3.5" />
-          <span safe>{group.toLowerCase()}</span>
-        </>
-      ) : null}
+      <DocGroupIcon group={group.slug} class="size-3.25 flex-none" />
+      <span safe>{group.title}</span>
     </p>
   )
+}
+
+function sectionsOf(page: DocPage): DocPage['toc'] {
+  return page.toc.filter((heading) => heading.depth === 2)
 }
 
 function Head({ page }: { page: DocPage }) {
   const safeLede = page.safeLede
 
   return (
-    <header class="grid gap-4">
-      <Crumbs group={page.group.title} />
+    <header class="grid gap-3">
+      <Crumbs group={page.group} />
       <h1 class="font-display text-display-lg font-black text-balance" safe>
         {page.title}
       </h1>
       <p data-lede class="max-w-[62ch] text-pretty text-soft-foreground">
         {safeLede}
       </p>
-      <TocDetails toc={page.toc} />
+      <TocDetails toc={sectionsOf(page)} />
     </header>
   )
 }
@@ -70,9 +69,11 @@ function CommandEntry({ command }: { command: Command }) {
   return (
     <section data-entry>
       <h3 id={command.name}>
-        <code translate="no" safe>
-          {command.name}
-        </code>
+        <HeadingAnchor id={command.name}>
+          <code translate="no" safe>
+            {command.name}
+          </code>
+        </HeadingAnchor>
       </h3>
       <pre data-slot="usage" tabindex="0" translate="no">
         <code safe>{command.usage}</code>
@@ -103,8 +104,10 @@ function CommandsBody() {
     <>
       {COMMANDS.sections.map((section) => (
         <section>
-          <h2 id={sectionId(section)} safe>
-            {section.title}
+          <h2 id={sectionId(section)}>
+            <HeadingAnchor id={sectionId(section)}>
+              <span safe>{section.title}</span>
+            </HeadingAnchor>
           </h2>
           {section.commands.map((command) => (
             <CommandEntry command={command} />
@@ -120,15 +123,19 @@ function SettingsBody() {
     <>
       {SETTING_GROUPS.map((group) => (
         <section>
-          <h2 id={group.id} safe>
-            {group.title}
+          <h2 id={group.id}>
+            <HeadingAnchor id={group.id}>
+              <span safe>{group.title}</span>
+            </HeadingAnchor>
           </h2>
           {group.settings.map((setting) => (
             <section data-entry>
               <h3 id={setting.id}>
-                <code translate="no" safe>
-                  {setting.name}
-                </code>
+                <HeadingAnchor id={setting.id}>
+                  <code translate="no" safe>
+                    {setting.name}
+                  </code>
+                </HeadingAnchor>
               </h3>
               <p data-default>
                 default{' '}
@@ -152,7 +159,7 @@ export function DocsPage({ page, facts }: { page: DocPage; facts: Facts }) {
     <DocsFrame
       facts={facts}
       path={page.path}
-      toc={page.toc}
+      toc={sectionsOf(page)}
       prev={page.prev}
       next={page.next}
       source={page.source}
@@ -172,7 +179,7 @@ function StartHere() {
   const quick = docAt('guide', 'quickstart')
 
   return quick ? (
-    <section aria-labelledby="start-here" class="grid gap-3.5 rounded-xl border border-border bg-muted/65 p-4.5">
+    <section aria-labelledby="start-here" class="grid gap-3 rounded-xl border border-border bg-muted/65 px-4 py-3">
       <div class="grid gap-1">
         <h2 id="start-here" class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">
           start here
@@ -197,7 +204,7 @@ export function DocsIndex({ facts, about }: { facts: Facts; about: string }) {
 
   return (
     <DocsFrame facts={facts} path={DOCS_PATH} toc={[]} next={first && { title: first.title, path: first.path }}>
-      <header class="grid gap-4">
+      <header class="grid gap-3">
         <h1 class="font-display text-display-lg font-black">docs</h1>
         <p class="max-w-[62ch] text-pretty text-soft-foreground" safe>
           {about}
@@ -207,15 +214,15 @@ export function DocsIndex({ facts, about }: { facts: Facts; about: string }) {
       <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,17rem),1fr))] items-start gap-3">
         {DOCS.map((group) => (
           <section
-            class="grid content-start gap-2.5 rounded-xl border border-border bg-card p-4.5"
+            class="grid content-start gap-3 rounded-xl border border-border bg-card px-4 py-3"
             aria-labelledby={`index-${group.slug}`}
           >
             <h2
               id={`index-${group.slug}`}
-              class="text-2xs font-bold tracking-caps text-muted-foreground uppercase"
-              safe
+              class="flex items-center gap-1.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase"
             >
-              {group.title}
+              <DocGroupIcon group={group.slug} class="size-3.25 flex-none" />
+              <span safe>{group.title}</span>
             </h2>
             <ul class="grid gap-3">
               {group.pages.map((page) => (

@@ -2,6 +2,7 @@ import { escapeHtml } from '@kitajs/html'
 import { Check, ChevronRight, Copy, type IconNode, Info, Lightbulb, TriangleAlert } from 'lucide'
 import { Marked, Renderer, type Token, type Tokens } from 'marked'
 import { ChoiceRow, CommandRow, TABBED, type Tabbed } from '@/components/command-row'
+import { HeadingAnchor } from '@/components/heading-anchor'
 import { PinsPlayer } from '@/components/pins-player'
 import { TerminalScreen } from '@/components/terminal'
 import { TerminalFrame } from '@/components/terminal-frame'
@@ -348,7 +349,11 @@ function markdown(doc: Doc, place: Place): Marked {
 
         if (depth === 2 || depth === 3) doc.toc.push({ depth, id, text })
 
-        return `<h${depth} id="${id}">${this.parser.parseInline(tokens)}</h${depth}>\n`
+        if (tokens.some((token) => token.type === 'link'))
+          throw new Error(`${doc.title}: the heading '${text}' holds a link, and a heading is a link to itself`)
+        const safeInner = this.parser.parseInline(tokens)
+
+        return `<h${depth} id="${id}">${html(<HeadingAnchor id={id}>{safeInner}</HeadingAnchor>)}</h${depth}>\n`
       },
       code({ text, lang }) {
         const info = lang ?? ''
