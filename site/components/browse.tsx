@@ -583,7 +583,6 @@ function MarketCover({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
         </span>
         <CommandRow
           command={shelf.add ? `ttheme marketplace add ${shelf.add}` : initOf('npx')}
-          look="quiet"
           class="mt-1.5 [&_pre]:text-2xs"
         />
       </div>
@@ -617,7 +616,7 @@ function PublishCover() {
           <code class="font-mono text-xs text-foreground">ttheme-marketplace</code> topic and it shows up here within
           about an hour.
         </p>
-        <CommandRow command={PUBLISH[0] as string} look="quiet" class="mt-1.5" />
+        <CommandRow command={PUBLISH[0] as string} class="mt-1.5" />
       </div>
     </MeltCard>
   )

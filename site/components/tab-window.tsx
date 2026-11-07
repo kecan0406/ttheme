@@ -33,7 +33,7 @@ export function TabSession({ theme }: { theme: Theme }) {
 }
 
 export function TabUse({ theme }: { theme: Theme }) {
-  return <CommandRow command={`ttheme use ${theme.name}`} look="bright" />
+  return <CommandRow command={`ttheme use ${theme.name}`} />
 }
 
 export function WindowTabs({ tabs, active }: { tabs: WindowTab[]; active: number }) {
