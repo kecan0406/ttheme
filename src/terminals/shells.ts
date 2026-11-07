@@ -1,11 +1,8 @@
 import { existsSync } from 'node:fs'
 import { basename, join } from 'node:path'
+import { SHELLS, type Shell } from '../core/shell.ts'
 import type { Host } from '../store/host.ts'
 import { LAYER, MANAGED } from '../store/wiring.ts'
-
-export const SHELLS = ['zsh', 'bash', 'fish'] as const
-
-export type Shell = (typeof SHELLS)[number]
 
 export function shellNamed(path: string | undefined): Shell | undefined {
   const name = basename(path ?? '').replace(/^-/, '')
