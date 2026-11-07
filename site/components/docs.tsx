@@ -2,7 +2,7 @@ import { ArrowRight } from 'lucide'
 import { InitRow } from '@/components/command-row'
 import { LinkButton } from '@/components/ui/button'
 import { COMMANDS, type Command, sectionId } from '@/lib/commands'
-import { DOC_PAGES, DOCS, DOCS_PATH, type DocPage, docAt, guideOf } from '@/lib/docs'
+import { bodyOf, DOC_PAGES, DOCS, DOCS_PATH, type DocPage, docAt, guideOf } from '@/lib/docs'
 import type { Facts } from '@/lib/facts'
 import { Icon } from '@/lib/icons'
 import { renderInline } from '@/lib/markdown'
@@ -152,8 +152,16 @@ function SettingsBody() {
   )
 }
 
-export function DocsPage({ page, facts }: { page: DocPage; facts: Facts }) {
-  const safeBody = page.safeBody
+export function DocsPage({
+  page,
+  facts,
+  icons,
+}: {
+  page: DocPage
+  facts: Facts
+  icons: Readonly<Record<string, string>>
+}) {
+  const safeBody = bodyOf(page, icons)
 
   return (
     <DocsFrame

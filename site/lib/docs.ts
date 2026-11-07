@@ -1,4 +1,3 @@
-import assets from '@/assets.json' with { type: 'json' }
 import { TERMINALS } from '@/components/terminal-list'
 import { themes } from '@/lib/builtin'
 import { COMMANDS, commandsToc } from '@/lib/commands'
@@ -168,24 +167,26 @@ function madeToc(made: Made | undefined): Heading[] {
   return []
 }
 
-const ICONS: Readonly<Record<string, string>> = assets.terminals
+type Icons = Readonly<Record<string, string>>
 
-function terminalNamed(name: string): { url: string; icon: string | undefined } | undefined {
-  const terminal = TERMINALS.find((each) => each.name === name)
+function placeOf(group: GroupSlug, slug: string, icons: Icons): Parameters<typeof renderDoc>[1] {
+  return {
+    resolve: resolver(group, slug),
+    verbs: VERBS,
+    theme: (id) => themes.find((theme) => theme.id === id),
+    terminal: (name) => {
+      const terminal = TERMINALS.find((each) => each.name === name)
 
-  return terminal
-    ? { url: terminal.url, icon: Object.hasOwn(ICONS, terminal.id) ? ICONS[terminal.id] : undefined }
-    : undefined
+      return terminal
+        ? { url: terminal.url, icon: Object.hasOwn(icons, terminal.id) ? icons[terminal.id] : undefined }
+        : undefined
+    },
+  }
 }
 
 const FLAT = NAV.flatMap((group) =>
   group.pages.map((entry) => {
-    const doc = renderDoc(entry.text, {
-      resolve: resolver(group.slug, entry.slug),
-      verbs: VERBS,
-      theme: (id) => themes.find((theme) => theme.id === id),
-      terminal: terminalNamed,
-    })
+    const doc = renderDoc(entry.text, placeOf(group.slug, entry.slug, {}))
 
     const file = `docs/${group.slug}/${entry.slug}.md`
     const extra = madeToc(entry.made)
@@ -247,6 +248,14 @@ function ungated(): string[] {
 const problems = [...broken(), ...ungated()]
 
 if (problems.length > 0) throw new Error(problems.join('\n'))
+
+export function bodyOf(page: DocPage, icons: Icons): string {
+  const entry = NAV.find((group) => group.slug === page.group.slug)?.pages.find((one) => one.slug === page.slug)
+
+  if (!entry) throw new Error(`${page.path} is missing from the nav table`)
+
+  return renderDoc(entry.text, placeOf(page.group.slug, page.slug, icons)).safeBody
+}
 
 export function docAt(group: string, slug: string): DocPage | undefined {
   return DOC_PAGES.find((page) => page.group.slug === group && page.slug === slug)
