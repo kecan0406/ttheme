@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Seven Chainsaw Man palettes join the built-in ones: Denji, Power, Makima, Hayakawa Aki, Higashiyama Kobeni, Reze and Himeno.
+
 ## 1.2.97
 
 - `ttheme help <command>` now links to the command on the docs' new CLI pages, at ttheme.dev/docs/cli/commands, beside Configuration and Environment variables.

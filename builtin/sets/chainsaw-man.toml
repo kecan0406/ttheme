@@ -1,0 +1,379 @@
+"$schema" = "https://www.schemastore.org/ttheme-set.json"
+
+[[palette]]
+slug = "denji"
+subject = "chainsaw-man/denji"
+
+[palette.colors]
+background = "#1e160d"
+foreground = "#f6dfc6"
+cursor = "#e0ab65"
+selection_background = "#373e46"
+ansi = [
+  "#2b2218",
+  "#ef6f44",
+  "#b4cb59",
+  "#e3b467",
+  "#a48bc1",
+  "#e79cad",
+  "#76b98f",
+  "#e2d2c2",
+
+  "#817568",
+  "#ff9d7c",
+  "#cfe872",
+  "#ffd799",
+  "#baa1d8",
+  "#fdc2cf",
+  "#91d5a9",
+  "#ffebd5",
+]
+
+[palette.colors.light]
+background = "#fff8f4"
+foreground = "#291d0e"
+cursor = "#96692a"
+selection_background = "#d1d8e2"
+ansi = [
+  "#fff1e5",
+  "#ad3f18",
+  "#335918",
+  "#815d17",
+  "#74559b",
+  "#9a495f",
+  "#155b39",
+  "#342b20",
+
+  "#817568",
+  "#943714",
+  "#2a4a12",
+  "#714e05",
+  "#64468b",
+  "#7c4353",
+  "#004d2c",
+  "#291d0e",
+]
+
+[[palette]]
+slug = "power"
+subject = "chainsaw-man/power"
+
+[palette.colors]
+background = "#1f160d"
+foreground = "#f8dec7"
+cursor = "#f3b87b"
+selection_background = "#2b4965"
+ansi = [
+  "#2b2218",
+  "#f16f39",
+  "#bcca22",
+  "#f4af00",
+  "#b879f2",
+  "#ff8fa7",
+  "#36c18d",
+  "#e3d1c3",
+
+  "#837568",
+  "#ff9d76",
+  "#d8e74d",
+  "#ffd793",
+  "#c597f8",
+  "#ffc2cc",
+  "#79d9ac",
+  "#ffead9",
+]
+
+[palette.colors.light]
+background = "#fff8f4"
+foreground = "#2a1d0f"
+cursor = "#9c6729"
+selection_background = "#c0daf8"
+ansi = [
+  "#fff1e7",
+  "#ae3f07",
+  "#36591c",
+  "#835c00",
+  "#8c29de",
+  "#b03659",
+  "#005c3f",
+  "#342a20",
+
+  "#837568",
+  "#933709",
+  "#2c4a16",
+  "#704f00",
+  "#7130b6",
+  "#7e434f",
+  "#004c33",
+  "#2a1d0f",
+]
+
+[[palette]]
+slug = "makima"
+subject = "chainsaw-man/makima"
+
+[palette.colors]
+background = "#201513"
+foreground = "#fddbd6"
+cursor = "#db8377"
+selection_background = "#274058"
+ansi = [
+  "#2e211f",
+  "#f56a5d",
+  "#cdc468",
+  "#ffa936",
+  "#9889e6",
+  "#ff8cbf",
+  "#8ab783",
+  "#e6cfcc",
+
+  "#857370",
+  "#ff9b8f",
+  "#e9e080",
+  "#ffd6aa",
+  "#ae9ffd",
+  "#ffc0d8",
+  "#a5d29d",
+  "#ffe9e6",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2d1b18"
+cursor = "#b24f43"
+selection_background = "#c0daf8"
+ansi = [
+  "#fff0ee",
+  "#c1221f",
+  "#385821",
+  "#8d5700",
+  "#654dcf",
+  "#b12d74",
+  "#1e5b3b",
+  "#362927",
+
+  "#857370",
+  "#95342b",
+  "#2e491a",
+  "#714d20",
+  "#563dbe",
+  "#7f415d",
+  "#024d33",
+  "#2d1b18",
+]
+
+[[palette]]
+slug = "hayakawa-aki"
+subject = "chainsaw-man/hayakawa-aki"
+
+[palette.colors]
+background = "#13181e"
+foreground = "#dbe3f1"
+cursor = "#788291"
+selection_background = "#353f4c"
+ansi = [
+  "#1f242a",
+  "#f2649a",
+  "#6cd4a4",
+  "#b1c360",
+  "#5b98e5",
+  "#c79efa",
+  "#3fbace",
+  "#d1d4dd",
+
+  "#73777f",
+  "#ff98bb",
+  "#9aeec5",
+  "#d2e583",
+  "#80aee7",
+  "#ddc8ff",
+  "#62d6e9",
+  "#e6eefd",
+]
+
+[palette.colors.light]
+background = "#f8f9ff"
+foreground = "#18202a"
+cursor = "#596271"
+selection_background = "#ced8e8"
+ansi = [
+  "#f0f4fc",
+  "#b72767",
+  "#005c3e",
+  "#815e00",
+  "#1a65ae",
+  "#7d45c1",
+  "#005964",
+  "#282c33",
+
+  "#73777f",
+  "#972a59",
+  "#004c34",
+  "#6e5000",
+  "#23578a",
+  "#60488a",
+  "#004a53",
+  "#18202a",
+]
+
+[[palette]]
+slug = "higashiyama-kobeni"
+subject = "chainsaw-man/higashiyama-kobeni"
+
+[palette.colors]
+background = "#201514"
+foreground = "#fcdbd9"
+cursor = "#9c7977"
+selection_background = "#4a2f2e"
+ansi = [
+  "#2d2120",
+  "#ce8277",
+  "#cbc378",
+  "#ebb070",
+  "#8f92c6",
+  "#d5a0cb",
+  "#8ab785",
+  "#e6cfce",
+
+  "#857372",
+  "#f1a296",
+  "#e7df91",
+  "#ffd5ad",
+  "#a5a7dd",
+  "#f9c0ed",
+  "#a5d39f",
+  "#ffe9e7",
+]
+
+[palette.colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1a"
+cursor = "#7a5a58"
+selection_background = "#f7cdcb"
+ansi = [
+  "#fff0ef",
+  "#9e4a3f",
+  "#3c5729",
+  "#875922",
+  "#585da1",
+  "#885081",
+  "#165b42",
+  "#362928",
+
+  "#857372",
+  "#8a3d33",
+  "#2f491c",
+  "#724d24",
+  "#4a4e92",
+  "#7b3f74",
+  "#014d35",
+  "#2d1b1a",
+]
+
+[[palette]]
+slug = "reze"
+subject = "chainsaw-man/reze"
+
+[palette.colors]
+background = "#18171e"
+foreground = "#e5e0f2"
+cursor = "#827baf"
+selection_background = "#423d63"
+ansi = [
+  "#24232b",
+  "#f0669a",
+  "#55d79f",
+  "#f7ad73",
+  "#7e95d0",
+  "#c2a3e8",
+  "#70b4d1",
+  "#d7d2de",
+
+  "#78767f",
+  "#ff98bb",
+  "#74f4ba",
+  "#fad7bd",
+  "#93aae7",
+  "#e1c7ff",
+  "#8cd0ed",
+  "#f1ebfe",
+]
+
+[palette.colors.light]
+background = "#fdf8ff"
+foreground = "#201e2b"
+cursor = "#625a97"
+selection_background = "#d9d2fb"
+ansi = [
+  "#f7f2fd",
+  "#b52a67",
+  "#005c3e",
+  "#935318",
+  "#4761a0",
+  "#7750a9",
+  "#005770",
+  "#2d2b33",
+
+  "#78767f",
+  "#972a59",
+  "#004c33",
+  "#6e4e34",
+  "#30529a",
+  "#64478a",
+  "#00485d",
+  "#201e2b",
+]
+
+[[palette]]
+slug = "himeno"
+subject = "chainsaw-man/himeno"
+
+[palette.colors]
+background = "#101918"
+foreground = "#d4e6e2"
+cursor = "#748581"
+selection_background = "#30403d"
+ansi = [
+  "#1c2624",
+  "#e07552",
+  "#3bdb8a",
+  "#ccbc70",
+  "#569dca",
+  "#b5a7e5",
+  "#70b7b8",
+  "#ccd7d3",
+
+  "#6f7977",
+  "#ff9a78",
+  "#5cf8a6",
+  "#eede88",
+  "#71b2de",
+  "#d4cbfb",
+  "#80d4d5",
+  "#e0f2ed",
+]
+
+[palette.colors.light]
+background = "#f1fcf8"
+foreground = "#132220"
+cursor = "#556562"
+selection_background = "#c9dbd7"
+ansi = [
+  "#ebf6f2",
+  "#a34728",
+  "#005d35",
+  "#7c5f1f",
+  "#136a94",
+  "#6857a6",
+  "#005a5b",
+  "#252e2c",
+
+  "#6f7976",
+  "#953510",
+  "#004d2c",
+  "#6d5006",
+  "#005b82",
+  "#564d86",
+  "#004a4b",
+  "#132220",
+]
