@@ -5,6 +5,7 @@ import { ChoiceRow, CommandRow, TABBED, type Tabbed } from '@/components/command
 import { PinsPlayer } from '@/components/pins-player'
 import { TerminalScreen } from '@/components/terminal'
 import { TerminalFrame } from '@/components/terminal-frame'
+import { TerminalName } from '@/components/terminal-list'
 import { buttonVariants } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { highlightHtml } from '@/lib/highlight'
@@ -40,6 +41,7 @@ interface Place {
   resolve: (href: string) => string
   verbs: readonly string[]
   theme: (id: string) => Theme | undefined
+  terminal: (name: string) => { url: string; icon: string | undefined } | undefined
 }
 
 type Tone = 'note' | 'tip' | 'warning'
@@ -385,6 +387,16 @@ function markdown(doc: Doc, place: Place): Marked {
       },
       table(token) {
         return `<div data-slot="table">${Renderer.prototype.table.call(this, token)}</div>\n`
+      },
+      tablecell(token) {
+        const name = plainOf(token.tokens)
+        const terminal = place.terminal(name)
+
+        if (!terminal) return Renderer.prototype.tablecell.call(this, token)
+        const tag = token.header ? 'th' : 'td'
+        const align = token.align ? ` align="${token.align}"` : ''
+
+        return `<${tag}${align}>${html(<TerminalName name={name} url={terminal.url} src={terminal.icon} />)}</${tag}>\n`
       },
       link({ href, title, tokens }) {
         const named = title ? ` title="${escapeHtml(title)}"` : ''
