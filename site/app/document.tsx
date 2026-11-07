@@ -3,12 +3,12 @@ import assets from '@/assets.json' with { type: 'json' }
 import { FacetGround } from '@/components/facet-ground'
 import { fallback } from '@/lib/builtin'
 import { CARD_HEIGHT, CARD_WIDTH } from '@/lib/card'
+import { CHOICE_SCRIPT } from '@/lib/choice'
 import { contentPolicy } from '@/lib/csp'
 import { HANDOFF_SCRIPT } from '@/lib/handoff'
 import { KEYS_SCRIPT } from '@/lib/keys'
 import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
-import { RUNNER_SCRIPT } from '@/lib/runner'
 import { CARD_REV, ORIGIN } from '@/lib/seo'
 import { SPECULATION_RULES } from '@/lib/speculation'
 import { rootStyle, themeIcon, wearScript } from '@/lib/wear'
@@ -19,7 +19,7 @@ const FONTS: string[] = assets.fonts
 
 const WEAR_SCRIPT = wearScript(fallback)
 
-const INLINE = [KEYS_SCRIPT, RUNNER_SCRIPT, WEAR_SCRIPT, HANDOFF_SCRIPT, ROUTE_SCRIPT, SPECULATION_RULES].concat(
+const INLINE = [KEYS_SCRIPT, CHOICE_SCRIPT, WEAR_SCRIPT, HANDOFF_SCRIPT, ROUTE_SCRIPT, SPECULATION_RULES].concat(
   assets.reload ? [RELOAD] : [],
 )
 
@@ -127,7 +127,7 @@ function Document({
           <link rel="preload" href={font} as="font" type="font/woff2" crossorigin="" />
         ))}
         <script>{KEYS_SCRIPT}</script>
-        <script>{RUNNER_SCRIPT}</script>
+        <script>{CHOICE_SCRIPT}</script>
         <script>{WEAR_SCRIPT}</script>
         <script type="application/json" data-fallback>
           {json(fallback)}

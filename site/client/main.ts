@@ -1,5 +1,5 @@
 import './copy'
-import './runner'
+import './choice'
 import './fields'
 import './ui/collapsible'
 import './ui/combobox'

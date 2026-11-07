@@ -1,7 +1,7 @@
 import { escapeHtml } from '@kitajs/html'
 import { Check, ChevronRight, Copy, type IconNode, Info, Lightbulb, TriangleAlert } from 'lucide'
 import { Marked, Renderer, type Token, type Tokens } from 'marked'
-import { CommandRow, RunnerRow } from '@/components/command-row'
+import { ChoiceRow, CommandRow, TABBED, type Tabbed } from '@/components/command-row'
 import { PinsPlayer } from '@/components/pins-player'
 import { TerminalScreen } from '@/components/terminal'
 import { TerminalFrame } from '@/components/terminal-frame'
@@ -13,7 +13,6 @@ import { idsOf, playPins, readPins, swatchOf } from '@/lib/pins-play'
 import { html } from '@/lib/render'
 import { textLines, widthOf } from '@/lib/terminal'
 import type { Theme } from '@/lib/themes'
-import type { Runner } from '../../src/core/runner.ts'
 
 export interface Heading {
   depth: 2 | 3
@@ -129,16 +128,24 @@ function commandOf(text: string): string | undefined {
   return line?.command && !line.comment && rest.length === 0 ? line.command : undefined
 }
 
-function runnerCommand(pane: Tokens.Code | undefined, runner: Runner): string | undefined {
-  return pane && tabOf(pane) === runner && pane.lang?.split(/\s+/)[0] === 'sh' ? commandOf(pane.text) : undefined
+function paneCommand(pane: Tokens.Code | undefined, value: string | undefined): string | undefined {
+  return pane && value && tabOf(pane) === value && pane.lang?.split(/\s+/)[0] === 'sh'
+    ? commandOf(pane.text)
+    : undefined
 }
 
-function byRunner(panes: readonly Tokens.Code[]): Record<Runner, string> | undefined {
-  const [first, second, ...rest] = panes
-  const npx = runnerCommand(first, 'npx')
-  const bunx = runnerCommand(second, 'bunx')
+function byChoice(
+  panes: readonly Tokens.Code[],
+): { tabs: Tabbed<string>; commands: Record<string, string> } | undefined {
+  for (const tabs of TABBED) {
+    if (panes.length !== tabs.values.length) continue
+    const commands = tabs.values.map((value, at) => paneCommand(panes[at], value))
 
-  return npx && bunx && rest.length === 0 ? { npx, bunx } : undefined
+    if (commands.every((command) => command !== undefined))
+      return { tabs, commands: Object.fromEntries(tabs.values.map((value, at) => [value, commands[at] as string])) }
+  }
+
+  return undefined
 }
 
 function shell(text: string): string {
@@ -291,9 +298,9 @@ function markdown(doc: Doc, place: Place): Marked {
         name: 'tabs',
         renderer(token) {
           const { panes } = token as Tabs
-          const runners = byRunner(panes)
+          const chosen = byChoice(panes)
 
-          if (runners) return `${html(<RunnerRow commands={runners} />)}\n`
+          if (chosen) return `${html(<ChoiceRow tabs={chosen.tabs} commands={chosen.commands} />)}\n`
           groups += 1
 
           return tabs(
