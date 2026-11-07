@@ -230,7 +230,7 @@ export function SearchPreview({ hit, inUse = false }: { hit: Hit | null; inUse?:
             {[palette.slug, ...others].join(', ')}
           </span>
         </div>
-        <CommandRow command={`ttheme use ${palette.slug}`} look="bright" class="mt-2" />
+        <CommandRow command={`ttheme use ${palette.slug}`} class="mt-2" />
       </div>
     </MeltCard>
   )

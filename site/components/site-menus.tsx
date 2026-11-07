@@ -406,7 +406,7 @@ export function DocsMenu({ menu }: { menu: MenuFacts }) {
             <p class="text-sm text-pretty text-soft-foreground" safe>
               {menu.quick.lede}
             </p>
-            <CommandRow command={initOf('npx')} look="bright" class="mt-2.5" />
+            <CommandRow command={initOf('npx')} class="mt-2.5" />
           </div>
         </MeltCard>
         <div class="grid min-w-0 flex-1 content-start">

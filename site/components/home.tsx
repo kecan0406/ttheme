@@ -43,7 +43,7 @@ function Step({ number, title, text, children }: PropsWithChildren<{ number: num
 }
 
 export function LeadUse({ theme }: { theme: Theme }) {
-  return <CommandRow command={`ttheme use ${theme.name}`} look="quiet" />
+  return <CommandRow command={`ttheme use ${theme.name}`} />
 }
 
 function PerTab({ leads }: { leads: Theme[] }) {
@@ -108,10 +108,10 @@ export function Home({
             <h2 id="install" class="font-display text-display-lg font-black">
               three commands
             </h2>
-            <ol data-steps class="grid grid-cols-3 rounded-3xl border bg-card shadow-sm max-[1080px]:grid-cols-1">
+            <ol class="grid grid-cols-3 rounded-3xl border bg-card shadow-sm max-[1080px]:grid-cols-1">
               {STEPS.map((step, index) => (
                 <Step number={index + 1} title={step.title} text={step.text}>
-                  {step.command ? <CommandRow command={step.command} look="quiet" /> : <InitRow look="quiet" />}
+                  {step.command ? <CommandRow command={step.command} /> : <InitRow />}
                 </Step>
               ))}
               <Step number={3} title="use" text="This tab only. Every other tab keeps its own.">
