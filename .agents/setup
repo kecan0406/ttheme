@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+step() {
+  local name=$1 start=$SECONDS
+  shift
+  echo "==> $name"
+  "$@"
+  echo "<== $name ($((SECONDS - start))s)"
+}
+
+apt_packages() {
+  local missing=() tmux_version
+  for pkg in zsh sqlite3; do
+    dpkg -s "$pkg" >/dev/null 2>&1 || missing+=("$pkg")
+  done
+  tmux_version=$(dpkg-query -W -f='${Version}' tmux 2>/dev/null || true)
+  if dpkg --compare-versions "${tmux_version:-0}" ge 3.5; then
+    ((${#missing[@]} == 0)) && return
+  else
+    printf '%s\n' 'Types: deb' 'URIs: http://deb.debian.org/debian' 'Suites: bookworm-backports' \
+      'Components: main' 'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg' |
+      sudo tee /etc/apt/sources.list.d/bookworm-backports.sources >/dev/null
+  fi
+  sudo apt-get update -qq
+  ((${#missing[@]} == 0)) || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${missing[@]}"
+  dpkg --compare-versions "${tmux_version:-0}" ge 3.5 ||
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -t bookworm-backports tmux
+}
+
+install_mise() {
+  command -v mise >/dev/null 2>&1 || curl -fsSL https://mise.run | MISE_QUIET=1 sh
+}
+
+profile_hook() {
+  local marker="# ttheme: mise shims"
+  grep -Fqx "$marker" "$HOME/.bash_profile" 2>/dev/null && return
+  cat >>"$HOME/.bash_profile" <<'EOF'
+
+# ttheme: mise shims
+export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+EOF
+}
+
+export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+
+step "apt: zsh sqlite3, tmux 3.5+" apt_packages
+step "mise" install_mise
+step "profile hook" profile_hook
+step "mise trust" mise trust --quiet mise.toml
+step "mise install" mise install --yes
+step "bun install" bun install --frozen-lockfile
+step "site bun install" bun install --frozen-lockfile --cwd site
+step "git hooks" git config core.hooksPath .githooks
