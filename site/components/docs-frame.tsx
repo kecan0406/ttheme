@@ -1,7 +1,7 @@
 import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
-import { ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Menu, Search } from 'lucide'
+import { ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Menu, Search, TableOfContents } from 'lucide'
 import { siGithub } from 'simple-icons'
-import { Button } from '@/components/ui/button'
+import { Button, LinkButton } from '@/components/ui/button'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
@@ -11,6 +11,7 @@ import { DOCS, DOCS_PATH, type DocLink, REPOSITORY } from '@/lib/docs'
 import type { Facts } from '@/lib/facts'
 import { BrandIcon, Icon } from '@/lib/icons'
 import type { Heading } from '@/lib/markdown'
+import { DocGroupIcon } from './doc-group-icon'
 import { GLASS } from './glass'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
@@ -58,8 +59,9 @@ function DocsNav({ path }: { path: string }) {
       </search>
       {DOCS.map((group) => (
         <section data-group class="grid gap-0.5">
-          <p class="mt-3 mb-1 px-2.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase" safe>
-            {group.title}
+          <p class="mt-2.5 mb-0.5 flex items-center gap-1.5 px-2.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase">
+            <DocGroupIcon group={group.slug} class="size-3.25 flex-none" />
+            <span safe>{group.title}</span>
           </p>
           <ul class="grid">
             {group.pages.map((page) => (
@@ -67,7 +69,7 @@ function DocsNav({ path }: { path: string }) {
                 <RowLink
                   href={page.path}
                   aria-current={page.path === path ? 'page' : undefined}
-                  class="h-auto py-1.5 font-medium"
+                  class="h-auto py-1 font-medium"
                 >
                   {escapeHtml(page.label)}
                 </RowLink>
@@ -87,7 +89,7 @@ function TocList({ toc }: { toc: Heading[] }) {
   return (
     <ol data-toc class="grid">
       {toc.map((heading) => (
-        <li data-depth={heading.depth}>
+        <li>
           <a href={`#${heading.id}`} safe>
             {heading.text}
           </a>
@@ -97,23 +99,29 @@ function TocList({ toc }: { toc: Heading[] }) {
   )
 }
 
+function TocName() {
+  return (
+    <>
+      <span aria-hidden="true">TOC</span>
+      <span class="sr-only">Table of contents</span>
+    </>
+  )
+}
+
 function DocsToc({ toc }: { toc: Heading[] }) {
   return (
     <aside
       aria-labelledby="docs-toc"
-      class={`${GLASS} sticky top-(--clearance) hidden max-h-[min(100dvh_-_var(--clearance)_-_--spacing(3),var(--docs-room,100dvh))] content-start gap-3 overflow-y-auto rounded-xl p-4 docs-toc:grid`}
+      class="sticky top-(--clearance) hidden max-h-[min(100dvh_-_var(--clearance)_-_--spacing(3),var(--docs-room,100dvh))] content-start gap-3 overflow-y-auto pt-3 docs-toc:grid"
     >
-      <p id="docs-toc" class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">
-        On this page
+      <p
+        id="docs-toc"
+        class="flex items-center gap-1.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase"
+      >
+        <Icon node={TableOfContents} class="size-3.25 flex-none" />
+        <TocName />
       </p>
       <TocList toc={toc} />
-      <a
-        href="#top"
-        class="inline-flex items-center gap-1.5 justify-self-start text-xs font-medium text-soft-foreground transition-colors hover:text-foreground"
-      >
-        <Icon node={ArrowUp} class="size-3.5" />
-        Back to top
-      </a>
     </aside>
   )
 }
@@ -121,8 +129,11 @@ function DocsToc({ toc }: { toc: Heading[] }) {
 export function TocDetails({ toc }: { toc: Heading[] }) {
   return toc.length === 0 ? null : (
     <Collapsible class="group/toc rounded-xl border border-border bg-muted/65 docs-toc:hidden">
-      <CollapsibleTrigger class="flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-medium text-soft-foreground">
-        On this page
+      <CollapsibleTrigger class="flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-soft-foreground">
+        <span class="flex items-center gap-1.5">
+          <Icon node={TableOfContents} class="size-4 flex-none" />
+          <TocName />
+        </span>
         <Icon node={ChevronDown} class="size-4 transition-transform group-data-open/toc:rotate-180" />
       </CollapsibleTrigger>
       <CollapsiblePanel>
@@ -140,7 +151,7 @@ function Step({ link, rel }: { link: DocLink; rel: 'prev' | 'next' }) {
       href={link.path}
       rel={rel}
       data-rel={rel}
-      class="flex items-center gap-3.5 rounded-xl border border-border bg-card px-4.5 py-4 text-foreground transition-colors hover:border-input hover:bg-muted data-[rel=next]:col-start-2 data-[rel=next]:justify-end data-[rel=next]:text-right"
+      class="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-foreground transition-colors hover:border-input hover:bg-muted data-[rel=next]:col-start-2 data-[rel=next]:justify-end data-[rel=next]:text-right"
     >
       {rel === 'prev' ? <Icon node={ChevronLeft} class="size-4 flex-none text-muted-foreground" /> : null}
       <span class="grid min-w-0 gap-0.5">
@@ -192,10 +203,10 @@ export function DocsFrame({
           <DocsNav path={path} />
           <main
             id="content"
-            class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 rounded-3xl border border-border bg-card px-4.5 pt-6 pb-6 text-card-foreground shadow-md docs-side:px-10 docs-side:pt-10"
+            class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-md docs-side:p-6"
           >
             {children}
-            <footer class="grid gap-6 pt-6">
+            <footer class="grid gap-3 pt-3">
               {prev || next ? (
                 <nav aria-label="pages" class="grid grid-cols-2 gap-3">
                   {prev ? <Step link={prev} rel="prev" /> : null}
@@ -203,7 +214,7 @@ export function DocsFrame({
                 </nav>
               ) : null}
               {source ? (
-                <p class="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4 text-xs text-muted-foreground">
+                <p class="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
                   {made ? (
                     <span>
                       made from{' '}
@@ -226,6 +237,23 @@ export function DocsFrame({
             </footer>
           </main>
           {toc.length > 0 ? <DocsToc toc={toc} /> : null}
+          <LinkButton
+            href="#top"
+            variant="glass"
+            size="icon-lg"
+            aria-label="Back to top"
+            data-to-top
+            hidden
+            class="fixed right-5 bottom-5 z-40 shadow-md"
+          >
+            <Icon node={ArrowUp} class="size-5" />
+            <span
+              aria-hidden="true"
+              class="pointer-events-none absolute top-1/2 right-full mr-2.5 -translate-y-1/2 translate-x-1 rounded-md border border-border bg-popover px-2 py-1 text-xs font-medium whitespace-nowrap text-popover-foreground opacity-0 shadow-md transition-[opacity,translate] duration-150 group-hover/button:translate-x-0 group-hover/button:opacity-100 group-focus-visible/button:translate-x-0 group-focus-visible/button:opacity-100"
+            >
+              Back to top
+            </span>
+          </LinkButton>
         </docs-page>
       </div>
       <SiteFooter facts={facts} />

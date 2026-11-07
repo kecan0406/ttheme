@@ -50,4 +50,4 @@ changes until you confirm.
    tab as it was.
 
 For everything else, see [Use ttheme](use.md), [Make a palette](make.md) and
-[Commands](../reference/commands.md).
+[Commands](../cli/commands.md).

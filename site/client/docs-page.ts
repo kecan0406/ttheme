@@ -27,13 +27,18 @@ class DocsPage extends HTMLElement {
     if (this.#frame !== 0) return
     this.#frame = requestAnimationFrame(() => {
       this.#frame = 0
+      const back = this.querySelector<HTMLElement>('[data-to-top]')
+      const page = document.documentElement
       const nav = this.querySelector<HTMLElement>('#docs-menu')
       const main = this.querySelector<HTMLElement>('#content')
+      const still = page.scrollHeight <= page.clientHeight
+      const top = nav ? Number.parseFloat(getComputedStyle(nav).top) || 0 : 0
+      const bottom = main?.getBoundingClientRect().bottom
 
-      if (!nav || !main) return
-      const top = Number.parseFloat(getComputedStyle(nav).top) || 0
-      const room = Math.max(0, Math.floor(main.getBoundingClientRect().bottom - top))
-      this.style.setProperty('--docs-room', `${room}px`)
+      if (back) back.hidden = still
+
+      if (!nav || bottom === undefined) return
+      this.style.setProperty('--docs-room', `${Math.max(0, Math.floor(bottom - top))}px`)
     })
   }
 
@@ -131,7 +136,7 @@ class DocsPage extends HTMLElement {
   }
 
   #watch() {
-    const headings = [...this.querySelectorAll<HTMLElement>('#content :is(h2, h3)[id]')]
+    const headings = [...this.querySelectorAll<HTMLElement>('#content h2[id]')]
 
     if (headings.length === 0) return
     const padding = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0

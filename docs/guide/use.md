@@ -254,7 +254,7 @@ A palette keeps every picture you install on it. `,` and `.` move along the
 Pictures row, `s` makes the one you land on the palette's picture, and `D`
 removes it, files and all. `y` copies a line that credits the artist, ready to
 paste beside a screenshot.
-[Settings](../reference/settings.md) lists `TTHEME_BG_COLORS`, `TTHEME_BG_STICKER`, `TTHEME_BG_BLUR`
+[Configuration](../cli/configuration.md) lists `TTHEME_BG_COLORS`, `TTHEME_BG_STICKER`, `TTHEME_BG_BLUR`
 and every `TTHEME_FIND_*` filter.
 
 ## What init changes
@@ -292,9 +292,9 @@ comes back byte for byte; one you edited keeps its backup.
   `detected`.
 - **`init` stops without asking anything.** It asks in a terminal and stops where
   there is none. Run it in a terminal tab, or add `--yes`.
-- **A command cannot reach the network behind a proxy.** The `ttheme` command
-  sends its requests through `HTTPS_PROXY` and `HTTP_PROXY`, leaving out what
-  `NO_PROXY` names, on Node.js 22.21 or newer. An older Node.js goes direct.
+- **A command cannot reach the network behind a proxy.** Set `HTTPS_PROXY`, as
+  [Environment variables](../cli/environment.md#network) says; it needs Node.js
+  22.21 or newer.
 
 When none of these fits, `ttheme info` prints what a bug report needs (before
 ttheme is set up, `npx @kecan0406/ttheme@latest info`, or the same through

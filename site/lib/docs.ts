@@ -3,13 +3,14 @@ import { TERMINALS } from '@/components/terminal-list'
 import { themes } from '@/lib/builtin'
 import { COMMANDS, commandsToc } from '@/lib/commands'
 import { type Doc, type Heading, renderDoc } from '@/lib/markdown'
-import type { DocIcon, MenuDoc, MenuDocs } from '@/lib/menu'
+import type { DocIcon, GroupSlug, MenuDocGroup, MenuDocs } from '@/lib/menu'
 import { SETTING_GROUPS } from '@/lib/settings'
+import commands from '../../docs/cli/commands.md' with { type: 'text' }
+import configuration from '../../docs/cli/configuration.md' with { type: 'text' }
+import environment from '../../docs/cli/environment.md' with { type: 'text' }
 import make from '../../docs/guide/make.md' with { type: 'text' }
 import quickstart from '../../docs/guide/quickstart.md' with { type: 'text' }
 import use from '../../docs/guide/use.md' with { type: 'text' }
-import commands from '../../docs/reference/commands.md' with { type: 'text' }
-import settings from '../../docs/reference/settings.md' with { type: 'text' }
 import terminals from '../../docs/reference/terminals.md' with { type: 'text' }
 import { GATE_RULES } from '../../src/core/contrast.ts'
 
@@ -24,7 +25,7 @@ interface Entry {
 }
 
 interface Group {
-  slug: string
+  slug: GroupSlug
   title: string
   pages: Entry[]
 }
@@ -37,7 +38,7 @@ export interface DocLink {
 export interface DocPage extends Doc {
   slug: string
   label: string
-  group: { slug: string; title: string }
+  group: { slug: GroupSlug; title: string }
   path: string
   file: string
   source: string
@@ -47,7 +48,7 @@ export interface DocPage extends Doc {
 }
 
 interface DocGroup {
-  slug: string
+  slug: GroupSlug
   title: string
   pages: DocPage[]
 }
@@ -77,15 +78,9 @@ const NAV: Group[] = [
     ],
   },
   {
-    slug: 'reference',
-    title: 'Reference',
+    slug: 'cli',
+    title: 'CLI',
     pages: [
-      {
-        slug: 'terminals',
-        label: 'Terminal support',
-        text: terminals,
-        menu: { blurb: 'What each terminal shows, and what it cannot', icon: 'terminals' },
-      },
       {
         slug: 'commands',
         label: 'Commands',
@@ -94,11 +89,29 @@ const NAV: Group[] = [
         menu: { blurb: 'Every command, its arguments and its options', icon: 'commands' },
       },
       {
-        slug: 'settings',
-        label: 'Settings',
-        text: settings,
+        slug: 'configuration',
+        label: 'Configuration',
+        text: configuration,
         made: 'settings',
-        menu: { blurb: 'Every setting in config.zsh and its default', icon: 'settings' },
+        menu: { blurb: 'Your files, every setting in config.zsh and its default', icon: 'settings' },
+      },
+      {
+        slug: 'environment',
+        label: 'Environment variables',
+        text: environment,
+        menu: { blurb: 'Folders, proxy, editor and colors', icon: 'environment' },
+      },
+    ],
+  },
+  {
+    slug: 'reference',
+    title: 'Reference',
+    pages: [
+      {
+        slug: 'terminals',
+        label: 'Terminal support',
+        text: terminals,
+        menu: { blurb: 'What each terminal shows, and what it cannot', icon: 'terminals' },
       },
     ],
   },
@@ -250,10 +263,14 @@ export function guideOf(verb: string): DocPage | undefined {
   )
 }
 
-function menuOf(group: string): MenuDoc[] {
-  return (NAV.find((one) => one.slug === group)?.pages ?? []).flatMap((entry) =>
-    entry.menu ? [{ label: entry.label, path: pathOf(group, entry.slug), ...entry.menu }] : [],
-  )
+function menuOf(group: Group): MenuDocGroup {
+  return {
+    slug: group.slug,
+    title: group.title,
+    docs: group.pages.flatMap((entry) =>
+      entry.menu ? [{ label: entry.label, path: pathOf(group.slug, entry.slug), ...entry.menu }] : [],
+    ),
+  }
 }
 
 export function menuDocs(): MenuDocs {
@@ -263,7 +280,10 @@ export function menuDocs(): MenuDocs {
 
   return {
     quick: { label: quick.label, path: quick.path, lede: quick.description },
-    guide: menuOf('guide'),
-    reference: menuOf('reference'),
+    groups: NAV.flatMap((group) => {
+      const menu = menuOf(group)
+
+      return menu.docs.length > 0 ? [menu] : []
+    }),
   }
 }

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `ttheme help <command>` now links to the command on the docs' new CLI pages, at ttheme.dev/docs/cli/commands, beside Configuration and Environment variables.
+
 ## 1.2.96
 
 - In Warp, moving onto a palette with pictures in Preview's list is faster: each picture's thumbnail is now kept beside it in the form Warp is sent, so the shell no longer starts a process for every thumbnail. The update writes it for the pictures you already have.
