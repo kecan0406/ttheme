@@ -1615,7 +1615,7 @@ lead-showcase > [data-site-header] {
     margin-top: auto;
   }
 
-  [data-lead-actions] [data-runners] {
+  [data-lead-actions] [data-choice] {
     height: calc(var(--spacing) * 11);
   }
 
