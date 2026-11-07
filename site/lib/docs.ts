@@ -1,3 +1,5 @@
+import assets from '@/assets.json' with { type: 'json' }
+import { TERMINALS } from '@/components/terminal-list'
 import { themes } from '@/lib/builtin'
 import { COMMANDS, commandsToc } from '@/lib/commands'
 import { type Doc, type Heading, renderDoc } from '@/lib/markdown'
@@ -153,12 +155,23 @@ function madeToc(made: Made | undefined): Heading[] {
   return []
 }
 
+const ICONS: Readonly<Record<string, string>> = assets.terminals
+
+function terminalNamed(name: string): { url: string; icon: string | undefined } | undefined {
+  const terminal = TERMINALS.find((each) => each.name === name)
+
+  return terminal
+    ? { url: terminal.url, icon: Object.hasOwn(ICONS, terminal.id) ? ICONS[terminal.id] : undefined }
+    : undefined
+}
+
 const FLAT = NAV.flatMap((group) =>
   group.pages.map((entry) => {
     const doc = renderDoc(entry.text, {
       resolve: resolver(group.slug, entry.slug),
       verbs: VERBS,
       theme: (id) => themes.find((theme) => theme.id === id),
+      terminal: terminalNamed,
     })
 
     const file = `docs/${group.slug}/${entry.slug}.md`

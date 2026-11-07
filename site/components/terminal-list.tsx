@@ -6,7 +6,7 @@ import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 
 const REQUEST_URL = `${REPO_URL}/issues/new?template=terminal.yml`
 
-const TERMINALS = [
+export const TERMINALS = [
   { id: 'ghostty', name: 'Ghostty', url: 'https://ghostty.org' },
   { id: 'iterm2', name: 'iTerm2', url: 'https://iterm2.com' },
   { id: 'kitty', name: 'kitty', url: 'https://sw.kovidgoyal.net/kitty/' },
@@ -37,6 +37,24 @@ function TerminalIcon({ src }: { src: string | undefined }) {
         <Icon node={Terminal} class="size-7 text-soft-foreground" />
       </span>
     </span>
+  )
+}
+
+export function TerminalName({ name, url, src }: { name: string; url: string; src: string | undefined }) {
+  return (
+    <a href={url} target="_blank" rel="noopener" class="inline-flex items-center gap-2 whitespace-nowrap">
+      {src ? (
+        <img src={src} alt="" width="18" height="18" loading="lazy" decoding="async" class="size-4.5 object-contain" />
+      ) : (
+        <span aria-hidden="true" class="grid size-4.5 place-items-center rounded-sm bg-muted ring-1 ring-border">
+          <Icon node={Terminal} class="size-3 text-soft-foreground" />
+        </span>
+      )}
+      <span translate="no" safe>
+        {name}
+      </span>
+      <NewTab class="-ml-1 size-3 text-muted-foreground" />
+    </a>
   )
 }
 

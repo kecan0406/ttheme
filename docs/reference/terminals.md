@@ -3,12 +3,19 @@
 ttheme wires eleven terminals, and every one of them shows a palette per tab. Nothing
 is emulated: a terminal that cannot express something does not get it.
 
-| | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Konsole | Terminal.app | Rio | Contour |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| Set up by `init` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| A palette per tab | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Pictures | ✓ | ✓ | ✓ | – | ✓ | – | ✓ | ✓ | ✓ | – | – |
-| Follows the system's appearance | ✓ | ✓ | ✓ | – | ✓ | – | – | – | – | – | ✓ |
+| | Set up by `init` | A palette per tab | Pictures | Follows the system's appearance |
+|---|:-:|:-:|:-:|:-:|
+| Ghostty | ✓ | ✓ | ✓ | ✓ |
+| iTerm2 | ✓ | ✓ | ✓ | ✓ |
+| kitty | ✓ | ✓ | ✓ | ✓ |
+| Alacritty | ✓ | ✓ | – | – |
+| WezTerm | ✓ | ✓ | ✓ | ✓ |
+| Windows Terminal | ✓ | ✓ | – | – |
+| Warp | ✓ | ✓ | ✓ | – |
+| Konsole | ✓ | ✓ | ✓ | – |
+| Terminal.app | ✓ | ✓ | ✓ | – |
+| Rio | ✓ | ✓ | – | – |
+| Contour | ✓ | ✓ | – | ✓ |
 
 `init` offers iTerm2 and Terminal.app on macOS, Konsole on Linux, and Windows
 Terminal from WSL. "Follows the system's appearance" means the terminal tells
