@@ -23,6 +23,7 @@ import { type Anchored, type Departure, departures, lookalikes } from '../core/h
 import { hctOf } from '../core/hct.ts'
 import { colorsOfTheme } from '../core/manifest.ts'
 import { mirrored, withSlot } from '../core/mirror.ts'
+import { slugOfTag } from '../core/names.ts'
 import { decodeImage, encodeRgba, type Rgba, resample } from '../core/png.ts'
 import type { Colors } from '../core/seeds.ts'
 import { setNameOf } from '../core/sets.ts'
@@ -40,6 +41,7 @@ import { artDir, artKey, fetchArt } from '../pictures/art.ts'
 import { reach, readMarketplaces } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { ownIn, readMarketplaceDir, setsDir, warning, worksDir, writeOwnIn } from '../store/local.ts'
+import { liveSource, nameIndex } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
 import { corpusOf, fetchCorpus, readCorpus } from '../store/schemes.ts'
 import { normalize } from '../tui/find/attach.ts'
@@ -102,6 +104,8 @@ const QUANT = { min: 2, max: 256 }
 const NATIVE_MOST = 4
 const RELATED = 'https://safebooru.donmai.us/related_tag.json'
 const RELATED_TIMEOUT = 15_000
+const INDEX_TIMEOUT = 20_000
+const CAST_MOST = 200
 
 const round = (n: number, digits = 0) => Number(n.toFixed(digits))
 
@@ -527,6 +531,53 @@ function workProblems(flags: PaletteFlags): Problem[] {
   return problems
 }
 
+function builtinProblems(flags: PaletteFlags): Problem[] {
+  return (['work-name', 'work-native'] as const).flatMap((key) =>
+    flags[key] === undefined
+      ? []
+      : [{ path: key, problem: `a built-in work's title comes from aninames — leave --${key} out` }],
+  )
+}
+
+interface Outside {
+  subject: string
+  booru: string | undefined
+}
+
+async function indexNotes(outside: readonly Outside[]): Promise<string[]> {
+  if (outside.length === 0 || process.env.TTHEME_NAME_LOOKUP === 'off') {
+    return []
+  }
+
+  const signal = AbortSignal.timeout(INDEX_TIMEOUT)
+  const index = nameIndex(liveSource())
+
+  const notes = await Promise.all(
+    [...new Set(outside.map((o) => workIdOf(o.subject)))].map(async (work) => {
+      try {
+        await index.open(signal)
+
+        const [held, cast] = await Promise.all([index.tagged(work, signal), index.cast(work, signal, CAST_MOST)])
+
+        if (held.length === 0) {
+          return [`${work} is in neither the authority nor aninames' index by that slug — check the spelling`]
+        }
+
+        return outside.flatMap((o) =>
+          workIdOf(o.subject) === work &&
+          !cast.some((m) => m.tags.some((tag) => tag === o.booru || slugOfTag(tag) === characterIdOf(o.subject)))
+            ? [`${o.subject}: no character in aninames' index has that id — check the spelling`]
+            : [],
+        )
+      } catch {
+        return [`${work}: aninames' index did not answer — check the spelling yourself`]
+      }
+    }),
+  )
+
+  return notes.flat()
+}
+
 async function make(only: string | undefined, flags: PaletteFlags): Promise<number> {
   const dry = flags['dry-run'] === true
   const all = readAnchorsFile(flags.anchors)
@@ -543,6 +594,10 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
   if (problems.length > 0) throw new InputError('the options do not fit together', problems)
 
   const target = await targetOf(flags.in, dry)
+  const unfit = target?.builtin ? builtinProblems(flags) : []
+
+  if (unfit.length > 0) throw new InputError('the options do not fit a built-in palette', unfit)
+
   const commons = target?.commons ?? commonsFor(configHome())
   const known = mergeWorks(commons.works, target?.proposals ?? [])
   const held = (id: string) => workOf(target?.builtin ? commons.works : (target?.proposals ?? []), id)
@@ -552,6 +607,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
   const made: Made[] = []
   const failed: Problem[] = []
   const records = new Map<string, { work: Work; characters: string[] }>()
+  const outside: Outside[] = []
 
   for (const anchors of chosen) {
     const { ranked, problems: why } = baseFor(anchors, schemes)
@@ -578,11 +634,10 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
     const nativeNames = !subject ? undefined : about?.known ? about.character?.native : anchors.nativeNames
 
     if (target?.builtin && subject && !about?.known) {
-      failed.push({ path: 'work', problem: `${subject} is not in the authority — add it to aninames first` })
-      continue
+      outside.push({ subject, booru })
     }
 
-    if (subject && !about?.known) {
+    if (subject && !about?.known && !target?.builtin) {
       const id = workIdOf(subject)
       const was = records.get(id)
       const commonsWork = workOf(commons.works, id)
@@ -655,6 +710,8 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
   }
 
   if (failed.length > 0) throw new InputError(`${failed.length} palette(s) cannot be made`, failed)
+
+  notes.push(...(await indexNotes(outside)))
 
   const recorded: Recorded[] = [...records].map(([work, { work: record, characters }]) => {
     const file = target ? join(target.records, `${work}.toml`) : ''

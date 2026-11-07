@@ -56,10 +56,6 @@ export function loadBuiltin(dir: string, commons: Commons): Theme[] {
       seen.set(slug, at)
       const theme = themeOf(`${at}: ${slug}`, doc, { name: `${BUILTIN}/${slug}`, builtin: true })
 
-      if (theme.subject !== undefined && !aboutOf(commons.works, theme.subject)?.known) {
-        fail(`${at}: ${slug}`, `subject "${theme.subject}" is not in the authority — add it to aninames first`)
-      }
-
       const about = aboutOf(commons.works, theme.subject)
 
       if (about?.character && about.character.id !== slug) {

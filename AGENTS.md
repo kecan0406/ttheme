@@ -20,7 +20,7 @@ While a change goes back and forth with the person you work for, run no check un
 |---|---|
 | `mise run ci` | the gate |
 | `mise run test`, `check`, `lint` | unit tests with the contrast gate, typecheck, biome, then anti-slop |
-| `mise run build` | regenerate `dist/`; fails on a contrast violation or a subject the commons lacks |
+| `mise run build` | regenerate `dist/`; fails on a contrast violation |
 | `mise run look <scenario> <cols>x<rows>` | see a TUI screen without a window; compare a change with `--against HEAD`, never by putting a file back from git |
 | `mise run sandbox` | try ttheme in a throwaway home; opens windows, so drive it through the `sandbox` skill (`.agents/skills/sandbox/SKILL.md`), never bare |
 | `mise run parity`, `walk`, `costs`, `forks` | the terminal model, its random walk, the cost and fork ratchets (`tests/AGENTS.md`) |

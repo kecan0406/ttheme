@@ -147,8 +147,9 @@ One palette per pull request. At most three open at a time.
   to. Its `slug` is lowercase letters, digits and single hyphens, at most 40
   characters, and no other built-in palette has it. A palette of a character takes
   the character's `id` for its `slug`.
-- `subject` names a work or a character aninames' authority holds, and
-  `mise run build` refuses a subject it lacks.
+- `subject` names a work or a character, as `<work>/<character>`. One
+  aninames' authority lacks is not refused: its shelf is named by the work's id
+  until aninames holds it.
 - The character's colors go in `cursor`, `selection` and `foreground`, which
   every screen and card draws a palette by; an ANSI color holds one only where
   its hue fits that color's role.
@@ -206,7 +207,7 @@ site's typecheck and XSS scan, the cost ratchet and the parity walk — exactly
 what CI runs.
 
 ```sh
-mise run build                # regenerates dist/ for every terminal — fails on bad contrast or a subject the commons lacks
+mise run build                # regenerates dist/ for every terminal — fails on bad contrast
 mise run build --only kitty   # one terminal's subtree, plus the shared files, still gating every palette
 ```
 
