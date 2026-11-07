@@ -8,6 +8,7 @@ import { aboutOf, worldOrder } from '../core/commons.ts'
 import { inMode, type Manifest } from '../core/manifest.ts'
 import type { Mode, Setting } from '../core/mode.ts'
 import { type Runner, runnerOf } from '../core/runner.ts'
+import type { Shell } from '../core/shell.ts'
 import { BUILTIN, isBuiltin, publisherOf } from '../core/theme.ts'
 import { WIRED, type Wired } from '../core/wired.ts'
 import { backgroundsDir, coloringOf, decodable, readStore } from '../pictures/backdrop.ts'
@@ -52,7 +53,6 @@ import {
   hasZsh,
   invokingShell,
   ownsFish,
-  type Shell,
   shellNamed,
   shellsOf,
   zdotdirOf,
