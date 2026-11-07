@@ -11,6 +11,7 @@ import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
 import { CARD_REV, ORIGIN } from '@/lib/seo'
 import { SPECULATION_RULES } from '@/lib/speculation'
+import type { Theme } from '@/lib/themes'
 import { rootStyle, themeIcon, wearScript } from '@/lib/wear'
 
 const RELOAD = `let s=null,b=null;const c=()=>{s?.close();s=null},f=()=>{if(document.visibilityState==='hidden'&&!document.prerendering)c();else if(!s){s=new EventSource('${assets.reload}');s.onmessage=(e)=>{b??=e.data;if(e.data!==b)location.reload()}}};document.addEventListener('visibilitychange',f);addEventListener('pageshow',f);addEventListener('pagehide',c);f()`
