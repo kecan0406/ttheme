@@ -23,7 +23,7 @@ Name a palette the character's full name, its danbooru tag without a qualifier a
 
 ## 2. Research
 
-Search the web for the character's appearance — hair, eyes, signature item, costume. Find the character's danbooru tag (`https://danbooru.donmai.us/wiki_pages/<tag>`) and check it with `ttheme palette consensus <tag> --json`: `posts` 0 means danbooru has no such tag, and `current`, when present, is the name to use. Keep the result for step 5.
+Search the web for the character's appearance — hair, eyes, signature item, costume. Find the character's danbooru tag (`https://danbooru.donmai.us/wiki_pages/<tag>`) and check it with `ttheme palette consensus <tag> --json`: `posts` 0 means danbooru has no such tag, and `current`, when present, is the name to use. Keep the result for step 5. When `consensus` keeps failing with exit 4 because danbooru turns requests away, go on with the tag you found by hand and read the identity as step 5's last line says, saying so in the report.
 
 ## 3. Find a picture and ask the user
 
@@ -33,6 +33,8 @@ Stop at the first clean, evenly lit render of the anime's own design:
 2. The series' Fandom wiki settei: files named like `<Name>_(Anime).png`, `<Name>-design.jpg`, `<Name>_Anime_HQ.png`.
 3. Other wikis that host settei scans.
 4. Official key visuals or stills, only when the skin is the settei's skin.
+
+A page a fetch tool is refused on often answers `curl`, and a MediaWiki wiki's `api.php?action=query&generator=search&gsrsearch=<name>+design&gsrnamespace=6&prop=imageinfo&iiprop=url|size&format=json` lists its files with their sizes and addresses.
 
 Reject episode stills with graded lighting, manga and light-novel covers, fan art and AI pictures. Prefer an official picture to a larger upscaled copy. Show the user the one or two best candidates as links and ask which to measure. Never save, share or upload the picture.
 
