@@ -541,7 +541,7 @@ export const site = new Elysia({ name: 'site' })
         ld: [crumbs([...DOCS_TRAIL, { name: doc.title, path: doc.path }])],
         cache: FIXED,
       },
-      <DocsPage page={doc} facts={facts} />,
+      <DocsPage page={doc} facts={facts} icons={assets.terminals} />,
     )
   })
   .get(
