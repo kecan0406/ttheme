@@ -1100,6 +1100,7 @@ __tt_pv_tune_stage() {
 }
 
 __tt_pv_tune_keep() {
+  __tt_pv_behind_wait
   __tt_pv_bg_strip_off
   __tt_pv_tune_stage
 }
@@ -1297,10 +1298,41 @@ __tt_pv_unconf() {
   conf=0
 }
 
+__tt_pv_conf_job() {
+  local -i rc=0
+  (( $1 )) && { __tt_cli sync > /dev/null 2>&1 || rc=$? }
+  case $2 in
+    remode) __tt_cli sync > /dev/null 2>&1 || rc=$? ;;
+    redraw) __tt_cli redraw 2>&1 || rc=$? ;;
+  esac
+  return $rc
+}
+
+__tt_pv_conf_saved() {
+  local out=$2 tab=$pvjobkeep[1] kind=$pvjobkeep[2] saved=$pvjobkeep[3]
+  local -i rc=$3
+  pvjobkeep=()
+  if [[ -z $kind ]]; then
+    (( rc )) || __tt_reload
+    return 0
+  fi
+  if [[ $kind == remode ]]; then
+    (( rc )) || __tt_pv_remoded
+    out=$saved
+  else
+    __tt_reload
+  fi
+  bgsrc=() resized=1 bgdim=()
+  (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER
+  msg=${out:-"Saved, with no pictures to draw"} msgt=300
+  return 0
+}
+
 __tt_pv_conf_save() {
-  local var REPLY
+  __tt_pv_behind_wait
+  local var kind="" note name REPLY
   local -a pairs=()
-  local -i i
+  local -i i tab
   for (( i = 1; i <= ${#cvars}; i++ )); do
     var=${cvars[i]}
     [[ ${(P)var} == "${csnap[i]}" ]] || pairs+=($var "${(P)var}")
@@ -1312,12 +1344,25 @@ __tt_pv_conf_save() {
   if __tt_config_write "${pairs[@]}"; then
     __tt_tilde "$TTHEME_CONFIG"
     conf=0 msg="Saved  $REPLY" msgt=200
-    (( ${pairs[(Ie)TTHEME_TAB_PALETTE]} )) && __tt_cli sync > /dev/null 2>&1 && __tt_reload
+    tab=${pairs[(Ie)TTHEME_TAB_PALETTE]}
     if (( ${pairs[(Ie)TTHEME_MODE]} )); then
-      __tt_pv_redraw remode
+      kind=remode
     elif (( ${pairs[(Ie)TTHEME_BG_BLUR]} || ${pairs[(Ie)TTHEME_BG_STICKER]} )); then
-      __tt_pv_redraw
+      kind=redraw
     fi
+    (( tab )) || [[ -n $kind ]] || return 0
+    note=$msg
+    if [[ -n $kind ]]; then
+      note="Drawing the background pictures again"
+      if (( $+functions[__tt_bg_write] )); then
+        for name in ${(k)bgedit}; do
+          __tt_bg_write $name
+        done
+      fi
+      bgedit=()
+    fi
+    pvjobkeep=($tab "$kind" "$msg")
+    __tt_pv_behind '*' "" __tt_pv_conf_saved "$note" __tt_pv_conf_job $tab "$kind"
   else
     __tt_pv_unconf
     __tt_tilde "$TTHEME_CONFIG"
@@ -1325,7 +1370,7 @@ __tt_pv_conf_save() {
   fi
 }
 
-__tt_pv_remode() {
+__tt_pv_remoded() {
   local v n o a p REPLY
   local -a reply held
   __tt_specs_named
@@ -1336,7 +1381,6 @@ __tt_pv_remode() {
   a=$REPLY
   __tt_name_of "$painted"
   p=$REPLY
-  __tt_cli sync > /dev/null 2>&1 || return 0
   __tt_palettes_load && __tt_reloaded
   for v n in $held; do
     [[ -n ${TTHEME_PALETTE[$n]} ]] && typeset -g $v=${TTHEME_PALETTE[$n]}
@@ -1346,31 +1390,6 @@ __tt_pv_remode() {
   __tt_reload
   [[ -n ${TTHEME_PALETTE[$p]} ]] && __tt_pv_paint "${TTHEME_PALETTE[$p]}"
   resized=1
-}
-
-__tt_pv_redraw() {
-  local name out saved=$msg
-  if (( $+functions[__tt_bg_write] )); then
-    for name in ${(k)bgedit}; do
-      __tt_bg_write $name
-    done
-  fi
-  bgedit=()
-  msg="Drawing the background pictures again" msgt=300
-  printf '\e[?2026h'
-  __tt_pv_draw
-
-  if [[ $1 == remode ]]; then
-    __tt_pv_remode
-    out=$saved
-  else
-    out=$(__tt_cli redraw 2>&1)
-    __tt_reload
-  fi
-
-  bgsrc=() resized=1 bgdim=()
-  (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER
-  msg=${${out//$'\n'/ }:-"Saved, with no pictures to draw"} msgt=300
 }
 
 __tt_pv_conf_panel() {
@@ -1456,6 +1475,7 @@ __tt_pv_flush() {
   fi
   if [[ -n $bgstrip ]]; then
     __tt_pv_bg_strip ${=bgstrip}
+    __tt_pv_spins && __tt_pv_bg_orbit $pvjobtick
   elif (( ${#bgthumb} )); then
     __tt_pv_bg_strip_off
   fi
@@ -1526,7 +1546,7 @@ __tt_pv_draw() {
   local -i lw sw split sc sbot=$ph cend teend se=$(( pw - 1 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
   local -a held
   (( gmenu )) && set --
-  bgstrip=""
+  bgstrip="" bgframe=""
   if [[ -n $flt ]]; then
     __tt_pv_norm "$flt"
     nflt=$REPLY
@@ -1849,6 +1869,69 @@ __tt_pv_size() {
   return 0
 }
 
+__tt_pv_behind() {
+  local job=$1 pick=$2 done=$3 note=$4
+  shift 4
+  exec {pvjobfd}< <({ "$@" </dev/null 2>&1; print -rn -- $'\x1e'$? })
+  pvjob=$job pvjobpick=$pick pvjobdone=$done pvjobnote=$note pvjobbuf="" pvjobat=$EPOCHREALTIME pvjobtick=0
+  msg=$note msgt=300
+}
+
+__tt_pv_held() { [[ -n $pvjob && ( $pvjob == '*' || $tune == "$pvjob" ) ]] }
+
+__tt_pv_spins() { [[ -n $pvjob && -n $bgframe && ( $pvjob == '*' || ${bgframe##* } == "$pvjobpick" ) ]] }
+
+__tt_pv_settled() {
+  local -F end=$(( EPOCHREALTIME + 3 ))
+  while (( TTHEME_BG_JOB )) && kill -0 $TTHEME_BG_JOB 2>/dev/null && (( EPOCHREALTIME < end )); do
+    zselect -t 1 || :
+  done
+  "$@"
+}
+
+__tt_pv_behind_ended() {
+  local job=$pvjob done=$pvjobdone text=${pvjobbuf%$'\x1e'*}
+  local -i rc=1
+  exec {pvjobfd}<&-
+  [[ $pvjobbuf == *$'\x1e'* ]] && rc=${pvjobbuf##*$'\x1e'}
+  pvjob="" pvjobpick="" pvjobwant="" pvjobdone="" pvjobnote="" pvjobbuf="" pvjobfd=0
+  text=${${text//$'\n'/ }## #}
+  $done "$job" "$text" $rc
+  return 0
+}
+
+__tt_pv_behind_tick() {
+  [[ -n $pvjob ]] || return 1
+  local chunk
+  local -a ready
+  local -i tick
+  while zselect -a ready -t 0 -r $pvjobfd; do
+    if ! sysread -i $pvjobfd chunk; then
+      __tt_pv_behind_ended
+      return 0
+    fi
+    pvjobbuf+=$chunk
+  done
+  [[ $msg == "$pvjobnote" ]] && msgt=300
+  tick=$(( (EPOCHREALTIME - pvjobat) / 0.08 ))
+  (( tick != pvjobtick )) || return 1
+  pvjobtick=$tick
+  if __tt_pv_spins; then
+    print -rn -- $'\e[?2026h'
+    __tt_pv_bg_orbit $tick
+    printf '\e[%d;%dH\e[?2026l' $pvsr $pvsc
+  fi
+  return 1
+}
+
+__tt_pv_behind_wait() {
+  local -a ready
+  until [[ -z $pvjob ]] || __tt_pv_behind_tick; do
+    zselect -a ready -t 8 -r $pvjobfd || :
+  done
+  return 0
+}
+
 __tt_pv_getch() {
   if [[ -n $pvrest ]]; then
     REPLY=$pvrest[1] pvrest=$pvrest[2,-1]
@@ -1861,7 +1944,9 @@ __tt_pv_getch() {
   local -F t at
   local -i quick=0 step
   while :; do
+    __tt_pv_behind_tick && return 1
     t=0.2
+    [[ -n $pvjob ]] && t=0.08
     __tt_pv_bg_busy && t=0.05
     (( gstep )) && t=0.06
     step=$(( t * 100 + 0.5 ))
@@ -2298,6 +2383,7 @@ __tt_pv_pick() {
 }
 
 __tt_pv_leave() {
+  __tt_pv_behind_wait
   __tt_pv_unhover
   printf '\e[?2026h'
   __tt_pv_bg_close
@@ -2464,15 +2550,36 @@ __tt_te_close() {
   return 0
 }
 
+__tt_te_saved() {
+  local name=$1 REPLY
+  local -a names=(${=2})
+  (( ${#names} )) && __tt_bg_saved $names
+  bgview=()
+  __tt_pv_bg_reset $name
+  bgload[$name]=""
+  if (( te )) && [[ $tename == "$name" && -n $tune ]]; then
+    __tt_pv_bg_reopen $name "$tpick" $tf
+  fi
+  return 0
+}
+
 __tt_te_save() {
-  __tt_te_save_image
   msg="Saved" msgt=200
+  __tt_te_unsaved || return 0
+  local name=$tename
+  local -i row=$tf
+  __tt_pv_tune_keep
+  __tt_pv_behind $name "" __tt_te_saved "Saved" __tt_pv_bg_save_behind
+  bgedit=() bgswap=()
+  __tt_pv_tune_open $name
+  tf=$row
   return 0
 }
 
 __tt_te_apply() {
   if __tt_te_unsaved; then
-    __tt_te_save || return 0
+    __tt_te_save_image
+    msg="Saved" msgt=200
   fi
   if (( canpick )); then
     pick=$tename pk=$pkdef
@@ -2534,8 +2641,8 @@ __tt_pv_unpaint() {
 }
 
 __tt_te_follow() {
-  [[ $orig == "$1" && -n ${TTHEME_PALETTE[$tename]} ]] || return 0
-  orig=${TTHEME_PALETTE[$tename]}
+  [[ $orig == "$1" && -n ${TTHEME_PALETTE[$2]} ]] || return 0
+  orig=${TTHEME_PALETTE[$2]}
   TTHEME_SPEC=$orig
 }
 
@@ -2551,7 +2658,7 @@ __tt_te_edit() {
   err=${${err//$'\n'/ }## #}
   if (( rc == 0 )); then
     __tt_palettes_load && __tt_reloaded
-    __tt_te_follow "$was"
+    __tt_te_follow "$was" $name
     __tt_reload
     back=${TTHEME_PALETTE[$name]:-$back}
   fi
@@ -2569,21 +2676,32 @@ __tt_te_edit() {
   return 0
 }
 
+__tt_te_reset_job() { __tt_pv_settled __tt_cli tone $1 reset 2>&1 >/dev/null }
+
 __tt_te_reset() {
-  local name=$tename err was=${TTHEME_PALETTE[$tename]} REPLY
-  local -i rc
+  [[ $pvjob == "$tename" ]] && return 0
+  __tt_pv_behind_wait
+  local name=$tename
   __tt_te_save_image
-  __tt_pv_untune
-  __tt_pv_bg_close
-  err=$(__tt_cli tone $name reset 2>&1 >/dev/null)
-  rc=$?
-  err=${${err//$'\n'/ }## #}
-  tbtn=0 tearm=0 resized=1 bgdim=()
+  pvjobkeep=("${TTHEME_PALETTE[$name]}")
+  tbtn=0 tearm=0
+  __tt_pv_behind $name "$tpick" __tt_te_was_reset "Putting the original colors back" __tt_te_reset_job $name
+}
+
+__tt_te_was_reset() {
+  local name=$1 err=$2 was=$pvjobkeep[1] shown REPLY
+  local -i rc=$3
+  pvjobkeep=()
+  resized=1 bgdim=()
   if (( rc == 0 )); then
+    __tt_name_of "$applied"
+    shown=$REPLY
     __tt_palettes_load && __tt_reloaded
-    __tt_te_follow "$was"
+    __tt_te_follow "$was" $name
     __tt_reload
-    [[ -n ${TTHEME_PALETTE[$name]} ]] && __tt_pv_paint "${TTHEME_PALETTE[$name]}" && applied=${TTHEME_PALETTE[$name]}
+    if [[ $shown == "$name" && -n ${TTHEME_PALETTE[$name]} ]]; then
+      __tt_pv_paint "${TTHEME_PALETTE[$name]}" && applied=${TTHEME_PALETTE[$name]}
+    fi
     __tt_pv_bg_reset $name
     bgload[$name]=""
     msg=${err:-"Back to the original colors"} msgt=200
@@ -2591,7 +2709,9 @@ __tt_te_reset() {
     __tt_label $name
     msg=${err:-"Could not reset the colors of $REPLY"} msgt=300
   fi
-  __tt_pv_bg_state $name && __tt_pv_tune_open $name
+  if (( te )) && [[ $tename == "$name" ]] && __tt_pv_bg_state $name; then
+    __tt_pv_bg_reopen $name "$tpick" $tf
+  fi
   return 0
 }
 
@@ -2756,17 +2876,19 @@ __tt_pv_te_tile() {
 }
 
 __tt_pv_te_ghost() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
   local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim]
-  local -i r0=$1 col=$2 T=$(( $3 - $2 - 21 )) i
+  local -a labs=($TTHEME_PANEL_LABELS) at=($TTHEME_PANEL_ROWS)
+  local -i r0=$1 col=$2 T=$(( $3 - $2 - TTHEME_PANEL[spare] )) v=$(( $2 + TTHEME_PANEL[value] )) i
   (( color )) || z= d=
-  (( T < 8 )) && T=8
-  out+=$'\e['$r0';'$col'H  '$d"Colors"$'\e['$r0';'$(( col + 12 ))'H'" original  tinted "$z
-  out+=$'\e['$(( r0 + 1 ))';'$col'H  '$d"Size"$'\e['$(( r0 + 1 ))';'$(( col + 12 ))'H'${(l:T::─:)}$z
+  (( T < TTHEME_PANEL[least] )) && T=$TTHEME_PANEL[least]
+  out+=$'\e['$(( r0 + at[4] ))';'$col'H  '$d$labs[4]$'\e['$(( r0 + at[4] ))';'$v'H'" $TTHEME_PANEL_COLORINGS[2]  $TTHEME_PANEL_COLORINGS[4] "$z
+  out+=$'\e['$(( r0 + at[1] ))';'$col'H  '$d$labs[1]$'\e['$(( r0 + at[1] ))';'$v'H'${(l:T::─:)}$z
   for (( i = 1; i <= 9; i++ )); do
-    out+=$'\e['$(( r0 + 3 + (i - 1) / 3 ))';'$(( col + 12 + (i - 1) % 3 * 3 ))'H'$d$TTHEME_MARKS[spot]$z
+    out+=$'\e['$(( r0 + at[2] - 1 + (i - 1) / 3 ))';'$(( v + (i - 1) % 3 * 3 ))'H'$d$TTHEME_MARKS[spot]$z
   done
-  out+=$'\e['$(( r0 + 4 ))';'$col'H  '$d"Position"$z
-  out+=$'\e['$(( r0 + 7 ))';'$col'H  '$d"Opacity"$'\e['$(( r0 + 7 ))';'$(( col + 12 ))'H'${(l:T::─:)}$z
+  out+=$'\e['$(( r0 + at[2] ))';'$col'H  '$d$labs[2]$z
+  out+=$'\e['$(( r0 + at[3] ))';'$col'H  '$d$labs[3]$'\e['$(( r0 + at[3] ))';'$v'H'${(l:T::─:)}$z
   return 0
 }
 
@@ -3224,6 +3346,7 @@ __tt_preview() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   (( TTHEME_PALETTES_IN )) || __tt_palettes
   zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
+  zmodload -F zsh/zselect b:zselect 2>/dev/null
   [[ $functions[TRAPURG] == *__tt_woken* ]] && trap '' URG
   local mode=$1 pdir=${2:-$PWD} hubwas=""
   local -i hub=0 hubleft=0 vchk=0 vwarn=0 vnew=0 pvupdate=0
@@ -3235,9 +3358,10 @@ __tt_preview() {
   fi
   local orig=$TTHEME_SPEC applied=$TTHEME_SPEC painted=$TTHEME_SPEC pvbare=$(( ! ${#TTHEME_PAINTED} )) flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" extop="" exnext=0 gstep=0 gseed=0 tick=0 pvhd=2 pvsr=1 pvsc=4
   local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgname="" bgshown="" bginc="" osd="" osdt=0
-  local tune="" tpick="" tf=1 help=0 msg="" msgt=0 an="" bgrel=0 bgmx=0 bgmy=0 bgpad="" bganchor=0 bgcut="" bgnext=0 bgbytes=0 bgstrip="" pvscene="" pvscenes="" pvsfit=0
-  local -i scene=0
-  local -a bgorder=()
+  local tune="" tpick="" tf=1 help=0 msg="" msgt=0 an="" bgrel=0 bgmx=0 bgmy=0 bgpad="" bganchor=0 bgcut="" bgnext=0 bgbytes=0 bgstrip="" bgframe="" pvjob="" pvjobpick="" pvjobwant="" pvjobdone="" pvjobnote="" pvjobbuf="" pvscene="" pvscenes="" pvsfit=0
+  local -i scene=0 pvjobfd=0 pvjobtick=0
+  local -F pvjobat=0
+  local -a bgorder=() pvjobkeep=()
   local -A bgfrom=() bgurl=() bgby=() bgsent=() bgcost=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
   local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgcred=() bgpage=() bgprof=()
   local conf=0 cf=1
@@ -3322,6 +3446,7 @@ __tt_preview() {
       done
     done
   } always {
+    __tt_pv_behind_wait
     local spec=${sel:+${TTHEME_PALETTE[$sel]}}
     [[ -n $spec && $mode != pin ]] && (( ! ${#bgedit} && ! ${#bgswap} )) && __tt_pv_claim "$sel"
     printf '\e[?2026h'

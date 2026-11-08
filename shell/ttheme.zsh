@@ -28,7 +28,7 @@ typeset -gA TTHEME_MARKS=(
   ok ✓ miss ✗ above ↑ below ↓
   update ⇡ auto ↻ remove × undo ↶
   star ★ link ⧉ search ⌕ linked ⇠
-  contrast ◐ swatch ■ pictures ▣ spot . none – cut …
+  contrast ◐ swatch ■ pictures ▣ queued ◌ spot . none – cut …
 )
 
 typeset -gA TTHEME_KEYCAPS=(

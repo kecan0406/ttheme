@@ -1,6 +1,8 @@
+import { TUNE } from '../src/core/picture-panel.ts'
 import { fit } from '../src/tui/ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../src/tui/bar.ts'
 import { button } from '../src/tui/browse/draw.ts'
+import { type FindView, renderFind } from '../src/tui/find/screen.ts'
 import { Help, keysBox, type Legend, type Topic } from '../src/tui/help.ts'
 import { type Standing, standingLine } from '../src/tui/notice.ts'
 import { boxEdge, boxed, boxTitle, buttonOf, checkOf, moreOf } from '../src/tui/parts.ts'
@@ -163,6 +165,80 @@ function keys(): string[] {
   ]
 }
 
+function trialOf(over: Partial<FindView> = {}): string[] {
+  const tune = { size: 'fill' as const, at: 3, opacity: 0.18 }
+
+  const view: FindView = {
+    palette: 'ann@pastel/tamsin',
+    tag: 'tamsin_(tidewater)',
+    site: 'all',
+    siteAnsi: 6,
+    nextSite: 'danbooru',
+    preset: 'cutouts',
+    order: 'fit',
+    solo: false,
+    rating: ['safe'],
+    block: [],
+    sets: 'fold',
+    narrow: { score: 0, size: 0, png: false },
+    enabled: ['danbooru'],
+    hide: [],
+    hideTags: [],
+    settings: [],
+    panel: undefined,
+    advanced: false,
+    colors: {
+      cursor: '#6ad0c8',
+      selection: '#26423f',
+      background: '#101918',
+      foreground: '#d3e6e3',
+      ansi: ['#1c2524', '#e1739a', '#4dd89e', '#e9f5c4', '#7395cf', '#b4a7e4', '#1abfae', '#ccd7d4'].flatMap((c) => [
+        c,
+        c,
+      ]),
+    },
+    tiles: [4241, 4242, 4243, 4244, 4245, 4246, 4247].map((id) => ({
+      id,
+      key: id,
+      site: 'danbooru',
+      siteAnsi: 6,
+      width: 1700,
+      height: 1400,
+      reduced: false,
+      page: '',
+      artist: 'someone',
+      score: 68,
+      variants: 0,
+      mates: [],
+    })),
+    installed: [],
+    queued: [],
+    held: [],
+    checked: 0,
+    total: 0,
+    searching: false,
+    stage: 'fetch',
+    sites: [],
+    focus: 1,
+    top: 0,
+    scroll: 0,
+    beat: 0,
+    mode: 'try',
+    help: undefined,
+    scene: 0,
+    details: false,
+    tune,
+    untuned: tune,
+    coloring: 'original',
+    chips: [],
+    fill: 120,
+    shown: { id: 4242, clear: 24, bytes: 646_144, path: '', cut: 'on' },
+    ...over,
+  }
+
+  return renderFind(view, cols, rows - 1).lines
+}
+
 const PARTS = {
   bar: bars,
   buttons,
@@ -173,6 +249,16 @@ const PARTS = {
   'help-filtered': () => help('pick'),
   'help-empty': () => help('zzz'),
   'help-short': () => help('', 12),
+  'find-try': () => trialOf(),
+  'find-tune': () => trialOf({ tuning: { field: TUNE.size } }),
+  'find-loading': () =>
+    trialOf({
+      shown: { id: 4241, clear: 24, bytes: 646_144, path: '', cut: 'on' },
+      fetching: { id: 4242, got: 300_000, size: 646_144 },
+      loaderFrom: 0,
+      beat: 99,
+    }),
+  'find-redrawing': () => trialOf({ redraw: { key: 4242, from: 99, done: false }, preparing: 4242, beat: 99 }),
 } satisfies Record<string, () => string[]>
 
 function isPart(name: string): name is keyof typeof PARTS {

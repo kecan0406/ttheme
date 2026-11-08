@@ -1171,6 +1171,14 @@ export function rescaled(opacity: number, from: number, to: number): number {
   return Math.min(1, Math.round((opacity / from) * to * 1000) / 1000)
 }
 
+export function framedBy(picture: Picture, { size, position, strength }: SharedPicture): Tune {
+  return {
+    ...(size === undefined ? {} : { size }),
+    ...(position === undefined ? {} : { position }),
+    ...(strength === undefined ? {} : { opacity: rescaled(strength, 1, picture.opacity) }),
+  }
+}
+
 export function frameAt(
   iw: number,
   ih: number,

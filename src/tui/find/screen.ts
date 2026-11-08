@@ -4,6 +4,20 @@ import type { Coloring } from '../../core/backdrop-tone.ts'
 import { BLOCKS, type Block, KEY_SPAN, type Kind, type Narrow, type Rating, SITES } from '../../core/booru.ts'
 import { type Hex, mix } from '../../core/color.ts'
 import { unqualified } from '../../core/names.ts'
+import {
+  frameCells,
+  orbitLit,
+  STRIP,
+  stripFirst,
+  stripShown,
+  TUNE,
+  TUNE_COLORINGS,
+  TUNE_ROWS,
+  TUNE_SIZE_LEAST,
+  TUNE_SIZE_WHOLE,
+  TUNE_VALUE_AT,
+  tuneTrack,
+} from '../../core/picture-panel.ts'
 import { SCENES, sceneAt, sceneParts, WIDE } from '../../core/scenes.ts'
 import { cells as columns } from '../../core/text.ts'
 import { POSITIONS } from '../../core/theme.ts'
@@ -111,10 +125,6 @@ export type Tuning = Framing
 
 export interface TunePanel {
   field: number
-  held: Tuning
-  base: number
-  fill: number
-  coloring: Coloring
 }
 
 export interface FindView {
@@ -141,6 +151,7 @@ export interface FindView {
   colors: { cursor: Hex; selection: Hex; background: Hex; foreground: Hex; ansi: Hex[] }
   tiles: Tile[]
   installed: number[]
+  queued: number[]
   held: Held[]
   checked: number
   total: number
@@ -164,10 +175,13 @@ export interface FindView {
   rescale?: number
   coloring: Coloring
   tuning?: TunePanel
+  fill?: number
   fetching?: { id: number; got: number; size: number }
   preparing?: number
   cutting?: number
+  redraw?: { key: number; from: number; done: boolean }
   installing?: number
+  closing?: boolean
   shown?: Shown
   editing?: string
   chosen?: string[]
@@ -223,6 +237,7 @@ export type FindSpot =
   | { kind: 'field'; field: number }
   | { kind: 'track'; field: number }
   | { kind: 'place'; at: number }
+  | { kind: 'coloring'; coloring: Coloring }
   | { kind: 'scene'; scene: number }
 
 interface Frame {
@@ -239,6 +254,7 @@ export const MIN = { cols: 25, rows: 21 }
 export const HELD = { cols: 10, rows: 3, pitch: 12, top: 4 }
 const GRID_TOP = HELD.top + HELD.rows + 1
 const HELD_ID = 2 ** 30
+const STRIP_ID = HELD_ID + 2 ** 20
 export const TRY_ID = 2 ** 31
 const BELOW_BG = -1073741826
 const SMALL = 1600
@@ -411,6 +427,7 @@ const SPOT_LOOKS: Partial<Record<FindSpot['kind'], Look>> = {
   query: LOOKS.soft,
   track: LOOKS.soft,
   place: LOOKS.mark,
+  coloring: LOOKS.flat,
   setting: LOOKS.topic,
 }
 
@@ -419,7 +436,7 @@ function familyOf(spot: FindSpot): string | undefined {
 }
 
 export function findHovers(view: FindView, { kind }: FindSpot): boolean {
-  if (view.installing !== undefined) {
+  if (view.closing) {
     return false
   }
 
@@ -440,7 +457,7 @@ export function findHovers(view: FindView, { kind }: FindSpot): boolean {
   }
 
   if (view.mode === 'try') {
-    return kind === 'scene' || (view.tuning !== undefined && (kind === 'field' || kind === 'track' || kind === 'place'))
+    return kind === 'scene' || kind === 'field' || kind === 'track' || kind === 'place' || kind === 'coloring'
   }
 
   return kind === 'tile' || kind === 'query' || kind === 'site' || kind === 'chip'
@@ -799,45 +816,190 @@ function details(lines: Line[], row: number, col: number, room: number, maxRow: 
   }
 }
 
-const TUNE_LABELS = ['Size', 'Position', 'Opacity']
-const TUNE_ROWS = [0, 3, 6]
+const TUNE_WIDE = 44
+const TUNE_WIDEST = 64
+const TUNE_BESIDE = SAMPLE_REACH + TUNE_WIDE + 4
+const TUNE_THUMB = Math.round((TILE.cols * STRIP.rows) / TILE.rows)
+const ROUND = ['╭', '─', '╮', '│', '╰', '╯'] as const
+const HEAVY = ['┏', '━', '┓', '┃', '┗', '┛'] as const
 
-function tunedField(view: FindView, field: number): boolean {
+type TuneView = Pick<FindView, 'tuning' | 'tune' | 'untuned' | 'coloring' | 'fill'>
+
+function tunedField(view: TuneView, field: number): boolean {
   const { tune, untuned } = view
 
-  return field === 0
+  return field === TUNE.size
     ? tune.size !== untuned.size
-    : field === 1
+    : field === TUNE.position
       ? tune.at !== untuned.at
-      : tune.opacity !== untuned.opacity
+      : field === TUNE.opacity && tune.opacity !== untuned.opacity
 }
 
 function opacityText(opacity: number): string {
   return opacity.toFixed(2)
 }
 
-function tunePanel(lines: Line[], r0: number, col: number, end: number, view: FindView, accent: string): void {
-  const panel = view.tuning
+function tunePanel(
+  lines: Line[],
+  images: Placement[],
+  top: number,
+  left: number,
+  wide: number,
+  rows: number,
+  view: FindView,
+  accent: string,
+): void {
+  const tall = rows - top >= 24
+  const head = top + 1
+  const r0 = top + (tall ? STRIP.rows + 5 : 2)
+  const col = left + 2
+  const end = left + wide - 3
+  const browsing = view.tuning === undefined
 
-  if (!panel) {
-    return
+  for (let r = head; r < r0 + 8; r++) {
+    lines[r]?.put(left + 1, ' '.repeat(wide - 2))
   }
 
-  const tile = view.tiles[view.focus]
-  lines[r0 - 3]?.run(col, [
-    [view.palette, B + accent],
-    ['  Background', D],
-    ...(tile
-      ? [[SEP, D] as Part, ...reference(`${tile.site} ${tile.id}`, D, tile.page || undefined, siteColor(tile.siteAnsi))]
-      : []),
-  ])
-  const track = Math.max(8, end - col - 21)
-  const lo = 20
-  const hi = Math.max(100, panel.fill)
+  frameBox(lines, top, left, r0 + 9 - top, wide, accent)
+  lines[top]?.run(left + 2, [[' Picture ', B + accent]])
+  lines[top]?.right(end + 1, [[` ${clip(view.palette, wide - 16)} `, accent]])
 
-  for (const [k, label] of TUNE_LABELS.entries()) {
-    const r = r0 + (TUNE_ROWS[k] as number)
-    const on = panel.field === k
+  if (browsing) {
+    lines[head]?.put(col, MARKS.focus, accent, undefined, { kind: 'field', field: -1 })
+  }
+
+  lines[head]?.put(col + 2, 'Pictures', browsing ? B : D, undefined, { kind: 'field', field: -1 })
+  lines[head]?.right(end + 1, [[`${view.focus + 1}/${view.tiles.length}`, D]])
+
+  if (tall) {
+    const shown = pictureStrip(lines, images, head, col, end, view.tiles, view.focus, TUNE_THUMB, accent)
+
+    for (let r = head + 1; r <= head + STRIP.rows + 2; r++) {
+      lines[r]?.mark(col, end - col + 1, { kind: 'field', field: -1 })
+    }
+
+    const tile = view.tiles[view.focus]
+
+    if (tile && pictureBusy(view, tile.key) && (redrawing(view, tile.key) || loaderFade(view) > 0)) {
+      frameSpinner(lines, head + 1, shown, TUNE_THUMB, beat(view), accent)
+    }
+  }
+
+  tuneRows(lines, r0, col, end, view, accent)
+}
+
+function frameEdge(w: number, h: number): [number, number, string][] {
+  const [topLeft, across, topRight, side, bottomLeft, bottomRight] = HEAVY
+
+  return [
+    ...Array.from({ length: w }, (_, c): [number, number, string] => [
+      0,
+      c,
+      c === 0 ? topLeft : c === w - 1 ? topRight : across,
+    ]),
+    ...Array.from({ length: h - 2 }, (_, r): [number, number, string] => [r + 1, w - 1, side]),
+    ...Array.from({ length: w }, (_, c): [number, number, string] => [
+      h - 1,
+      w - 1 - c,
+      c === 0 ? bottomRight : c === w - 1 ? bottomLeft : across,
+    ]),
+    ...Array.from({ length: h - 2 }, (_, r): [number, number, string] => [h - 2 - r, 0, side]),
+  ]
+}
+
+function frameSpinner(lines: Line[], row: number, col: number, thumb: number, tick: number, accent: string): void {
+  const edge = frameEdge(thumb + 2, STRIP.rows + 2)
+  const tip = (tick * STRIP.step) % edge.length
+
+  edge.forEach(([down, across, glyph], i) => {
+    lines[row + down]?.put(col + across, glyph, (orbitLit(i, tip, edge.length) ? B : D) + accent)
+  })
+}
+
+export function drawnFrameSpinner(
+  thumb: number,
+  tick: number,
+  cols: number,
+  rows: number,
+  row: number,
+  col: number,
+): string[] {
+  const lines = Array.from({ length: rows }, () => new Line(cols))
+  frameSpinner(lines, row, col, thumb, tick, open('accent'))
+
+  return lines.map((line) => line.render())
+}
+
+function pictureStrip(
+  lines: Line[],
+  images: Placement[],
+  head: number,
+  col: number,
+  end: number,
+  tiles: readonly Pick<Tile, 'thumb'>[],
+  focus: number,
+  thumb: number,
+  accent: string,
+): number {
+  const show = stripShown(tiles.length, thumb, end - col)
+  const first = stripFirst(focus, tiles.length, show)
+  const pitch = thumb + STRIP.gap
+
+  for (let i = 0; i < show && first + i < tiles.length; i++) {
+    const x = col + i * pitch
+    const current = first + i === focus
+    const path = tiles[first + i]?.thumb
+
+    frameBox(lines, head + 1, x, STRIP.rows + 2, thumb + 2, current ? B + accent : D, current ? HEAVY : ROUND)
+
+    if (path) {
+      images.push({ id: STRIP_ID + i, path, row: head + 2, col: x + 1, cols: thumb, rows: STRIP.rows, z: -1 })
+    }
+  }
+
+  return col + (focus - first) * pitch
+}
+
+export function drawnPictureStrip(
+  count: number,
+  focus: number,
+  thumb: number,
+  cols: number,
+  rows: number,
+  head: number,
+  col: number,
+  end: number,
+): string[] {
+  const lines = Array.from({ length: rows }, () => new Line(cols))
+  const tiles = Array.from({ length: count }, () => ({}))
+  pictureStrip(lines, [], head, col, end, tiles, focus, thumb, open('accent'))
+
+  return lines.map((line) => line.render())
+}
+
+export function drawnTuneRows(
+  view: TuneView,
+  cols: number,
+  rows: number,
+  r0: number,
+  col: number,
+  end: number,
+): string[] {
+  const lines = Array.from({ length: rows }, () => new Line(cols))
+  tuneRows(lines, r0, col, end, view, open('accent'))
+
+  return lines.map((line) => line.render())
+}
+
+function tuneRows(lines: Line[], r0: number, col: number, end: number, view: TuneView, accent: string): void {
+  const track = tuneTrack(col, end)
+  const lo = TUNE_SIZE_LEAST
+  const hi = Math.max(TUNE_SIZE_WHOLE, view.fill ?? 0)
+  const valueAt = col + TUNE_VALUE_AT
+
+  for (const [k, { label, row }] of TUNE_ROWS.entries()) {
+    const r = r0 + row
+    const on = view.tuning?.field === k
     const style = on ? B : D
 
     if (on) {
@@ -845,13 +1007,25 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
     }
 
     lines[r]?.put(col + 2, label, style, undefined, { kind: 'field', field: k })
+
+    if (k === TUNE.colors) {
+      let at = valueAt
+
+      for (const [coloring, word] of TUNE_COLORINGS) {
+        const sgr = coloring !== view.coloring ? D : on ? open('pill') : B
+        at = (lines[r]?.put(at, ` ${word} `, sgr, undefined, { kind: 'coloring', coloring }) ?? at) + 1
+      }
+
+      continue
+    }
+
     let value: string
 
-    if (k === 1) {
+    if (k === TUNE.position) {
       for (let i = 1; i <= 9; i++) {
         const here = i === view.tune.at
-        const line = lines[r0 + 2 + Math.floor((i - 1) / 3)]
-        const at = col + 12 + ((i - 1) % 3) * 3
+        const line = lines[r - 1 + Math.floor((i - 1) / 3)]
+        const at = valueAt + ((i - 1) % 3) * 3
         line?.mark(at - 1, 3, { kind: 'place', at: i })
         line?.put(at, here ? '■' : MARKS.spot, here ? B + accent : D, undefined, { kind: 'place', at: i })
       }
@@ -860,7 +1034,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
     } else {
       let knob: number
 
-      if (k === 0) {
+      if (k === TUNE.size) {
         const { size } = view.tune
         knob = size === 'fill' ? track - 1 : Math.floor(((size - lo) * (track - 1)) / (hi - lo + 1))
         value = size === 'fill' ? 'fill' : `${size}%`
@@ -870,31 +1044,59 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
       }
 
       knob = Math.max(0, Math.min(track - 1, knob))
-      lines[r]?.run(col + 12, [
+      lines[r]?.run(valueAt, [
         ['━'.repeat(knob), accent],
         [MARKS.on, B],
         ['─'.repeat(track - 1 - knob), D, undefined, { kind: 'track', field: k }],
       ])
-      lines[r]?.mark(col + 12, track, { kind: 'track', field: k })
+      lines[r]?.mark(valueAt, track, { kind: 'track', field: k })
     }
 
-    lines[r]?.right(end - 2, [[value, style]])
+    lines[r]?.right(end - 1, [[value, style]])
 
     if (tunedField(view, k)) {
-      lines[r]?.put(end - 1, '↺', on ? B + accent : D)
+      lines[r]?.put(end, '↺', on ? B + accent : D)
     }
   }
 }
 
-function frameBox(lines: (Line | undefined)[], r0: number, c0: number, h: number, w: number, sgr: string): void {
-  lines[r0]?.put(c0, `╭${'─'.repeat(w - 2)}╮`, sgr)
+function frameBox(
+  lines: (Line | undefined)[],
+  r0: number,
+  c0: number,
+  h: number,
+  w: number,
+  sgr: string,
+  [topLeft, across, topRight, side, bottomLeft, bottomRight]: typeof ROUND | typeof HEAVY = ROUND,
+): void {
+  lines[r0]?.put(c0, `${topLeft}${across.repeat(w - 2)}${topRight}`, sgr)
 
   for (let r = r0 + 1; r < r0 + h - 1; r++) {
-    lines[r]?.put(c0, '│', sgr)
-    lines[r]?.put(c0 + w - 1, '│', sgr)
+    lines[r]?.put(c0, side, sgr)
+    lines[r]?.put(c0 + w - 1, side, sgr)
   }
 
-  lines[r0 + h - 1]?.put(c0, `╰${'─'.repeat(w - 2)}╯`, sgr)
+  lines[r0 + h - 1]?.put(c0, `${bottomLeft}${across.repeat(w - 2)}${bottomRight}`, sgr)
+}
+
+function installMark(view: FindView, key: number): Part[] {
+  if (view.installing === key) {
+    return [[`${spin(view)} `, WARN]]
+  }
+
+  if (view.queued.includes(key)) {
+    return [[`${MARKS.queued} `, WARN]]
+  }
+
+  return view.installed.includes(key) ? [['✓ ', OK]] : []
+}
+
+function installState(view: FindView, key: number): Part[] {
+  if (view.installing === key) {
+    return [[`${SEP}${spin(view)} Installing`, WARN]]
+  }
+
+  return view.queued.includes(key) ? [[`${SEP}${MARKS.queued} Queued`, WARN]] : []
 }
 
 function badge(view: FindView, label = view.site, ansi = view.siteAnsi): Part {
@@ -1086,11 +1288,11 @@ function where(view: FindView): string {
   return view.site === 'all' ? 'any site' : view.site
 }
 
-function status(view: FindView, loading?: Part): Part[] | undefined {
-  if (view.installing !== undefined) {
-    return mention(`${spin(view)} Installing ${view.palette} ← ${named(view.installing)}`, view.installing, WARN)
-  }
+function queuedCount(view: FindView): string {
+  return view.queued.length > 0 ? `${SEP}${view.queued.length} queued` : ''
+}
 
+function status(view: FindView, loading?: Part): Part[] | undefined {
   if (view.hint) {
     return [[view.hint, OK]]
   }
@@ -1099,22 +1301,34 @@ function status(view: FindView, loading?: Part): Part[] | undefined {
     return [[view.notice.text, TONED[view.notice.tone]]]
   }
 
+  const behind = view.installing === undefined ? '' : `${SEP}Installing${queuedCount(view)}`
+
   if (view.waiting !== undefined) {
-    return [[`${view.slow ?? view.site} asked to slow down${SEP}${view.waiting}s`, WARN]]
+    return [[`${view.slow ?? view.site} asked to slow down${SEP}${view.waiting}s${behind}`, WARN]]
   }
 
   if (view.fetching) {
     const { id, got, size } = view.fetching
 
-    return mention(`${spin(view)} Fetching ${named(id)}${SEP}${progress(got, size)}`, id, WARN)
+    return mention(`${spin(view)} Fetching ${named(id)}${SEP}${progress(got, size)}${behind}`, id, WARN)
   }
 
   if (view.cutting !== undefined) {
-    return mention(`${spin(view)} Cutting out ${named(view.cutting)}`, view.cutting, WARN)
+    return mention(`${spin(view)} Cutting out ${named(view.cutting)}${behind}`, view.cutting, WARN)
   }
 
   if (view.preparing !== undefined) {
-    return mention(`${spin(view)} Preparing ${named(view.preparing)}`, view.preparing, WARN)
+    return mention(`${spin(view)} Preparing ${named(view.preparing)}${behind}`, view.preparing, WARN)
+  }
+
+  if (view.installing !== undefined) {
+    const closing = view.closing ? ' — closes when done' : ''
+
+    return mention(
+      `${spin(view)} Installing ${view.palette} ← ${named(view.installing)}${queuedCount(view)}${closing}`,
+      view.installing,
+      WARN,
+    )
   }
 
   if (loading) {
@@ -1148,10 +1362,9 @@ function stageCount(view: FindView, gap: string): string {
   return view.ranking ? `${gap}${view.ranking.done}/${view.ranking.total}` : ''
 }
 
-function bar(line: Line | undefined, x: number, w: number, view: FindView, k: number): void {
+function bar(line: Line | undefined, x: number, w: number, view: FindView, k: number, ratio?: number): void {
   const { background, cursor, selection } = view.colors
-  const { ranking } = view
-  const fillTo = ranking ? Math.round((w * ranking.done) / ranking.total) : -1
+  const fillTo = ratio === undefined ? -1 : Math.round(w * ratio)
   const seg = Math.max(6, Math.round(w * 0.22))
   const u = (beat(view) % (SWEEP * 2)) / SWEEP
   const from = Math.round((w - seg) * (0.5 - 0.5 * Math.cos(Math.PI * (u < 1 ? u : 2 - u))))
@@ -1174,16 +1387,21 @@ function bar(line: Line | undefined, x: number, w: number, view: FindView, k: nu
   }
 }
 
+function loaderFade(view: FindView): number {
+  return view.loaderFrom === undefined ? 0 : Math.min(1, (beat(view) - view.loaderFrom) / FADE)
+}
+
 function loader(lines: (Line | undefined)[], top: number, height: number, room: number, view: FindView): void {
   const { background, foreground } = view.colors
-  const k = view.loaderFrom === undefined ? 0 : Math.min(1, (beat(view) - view.loaderFrom) / FADE)
+  const k = loaderFade(view)
   const row0 = top + (height >= 5 ? Math.floor((height - 5) / 2) : 0)
   lines[row0]?.center(room, [
     [stageLabel(view), B + fg(mix(background, foreground, k))],
     [stageCount(view, '  '), fg(mix(background, mix(foreground, background, 0.45), k))],
   ])
   const w = Math.min(BAR, room - 8)
-  bar(lines[row0 + (height >= 3 ? 2 : 1)], Math.floor((room - w) / 2), w, view, k)
+  const ratio = view.ranking && view.ranking.done / view.ranking.total
+  bar(lines[row0 + (height >= 3 ? 2 : 1)], Math.floor((room - w) / 2), w, view, k, ratio)
 
   if (height < 5) {
     return
@@ -1195,6 +1413,19 @@ function loader(lines: (Line | undefined)[], top: number, height: number, room: 
       ...(i ? ([['    ', fg(mix(background, foreground, 0.25 * k))]] as Part[]) : []),
       [name, fg(mix(background, arrived ? mix(foreground, background, 0.2) : foreground, arrived ? k : 0.32 * k))],
     ]),
+  )
+}
+
+function redrawing(view: FindView, key: number): boolean {
+  const { redraw } = view
+
+  return redraw?.key === key && (!redraw.done || view.beat - redraw.from < frameCells(TUNE_THUMB) / STRIP.step)
+}
+
+function pictureBusy(view: FindView, key: number): boolean {
+  return (
+    redrawing(view, key) ||
+    (view.shown?.id !== key && (view.fetching?.id === key || view.cutting === key || view.preparing === key))
   )
 }
 
@@ -1330,7 +1561,7 @@ function grid(
       }
 
       const row: Part[] = [
-        ...(view.installed.includes(tile.key) ? ([['✓ ', OK]] as Part[]) : []),
+        ...installMark(view, tile.key),
         ...(tile.page || view.site !== 'all'
           ? reference(String(tile.id), on || over ? B : '', tile.page || undefined, siteColor(tile.siteAnsi))
           : ([
@@ -1417,7 +1648,7 @@ function grid(
     badge: 'PICTURE SEARCH',
     lead,
     keys:
-      quiet && lead?.[0] === stage
+      view.closing || (quiet && lead?.[0] === stage)
         ? []
         : [
             ['←↑↓→', 'move'],
@@ -1428,7 +1659,7 @@ function grid(
             ['/', 'search'],
             ['?', 'keys'],
           ],
-    right: ['esc', 'back'],
+    right: view.closing ? undefined : ['esc', 'back'],
   })
 
   return waiting
@@ -1449,6 +1680,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
     ...reference(String(tile.id), B, tile.page || undefined, siteColor(tile.siteAnsi)),
     ['  ', ''],
     dims(tile),
+    ...installState(view, tile.key),
   ]
 
   if (tile.score > 0) {
@@ -1478,12 +1710,19 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
 
   credits(lines, 1, 2, view, accent)
 
-  if (view.tuning) {
-    tunePanel(lines, 8, 2, 2 + Math.min(cols - 4, 60), view, accent)
+  const beside = cols >= TUNE_BESIDE
+  const wide = Math.min(TUNE_WIDEST, cols - SAMPLE_REACH - 4)
+
+  if (beside) {
+    tunePanel(lines, images, 1, cols - 2 - wide, wide, rows, view, accent)
+  }
+
+  if (view.tuning && !beside) {
+    tunePanel(lines, images, 5, 2, Math.min(cols - 4, 60), rows, view, accent)
   } else if (view.details) {
     details(lines, 5, 2, Math.min(cols - 4, Math.max(48, Math.floor(cols * 0.55))), rows - 2, view)
   } else {
-    specimen(lines, 7, 2, cols - 4, rows - 2, view, accent)
+    specimen(lines, 7, 2, (beside ? cols - wide - 2 : cols) - 4, rows - 2, view, accent)
   }
 
   if (view.shown) {
@@ -1497,13 +1736,19 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
       keys: [
         ['↑↓', 'move'],
         ['←→', 'change'],
-        ['=', 'reset'],
+        ...(view.tuning.field === TUNE.colors ? [] : ([['=', 'reset']] as [string, string][])),
         ['+', 'reset all'],
-        view.tuning.field === 1 ? ['1-9', 'place'] : ['shift+←→', 'by 10'],
+        ...(view.tuning.field === TUNE.position
+          ? ([['1-9', 'place']] as [string, string][])
+          : view.tuning.field === TUNE.colors
+            ? []
+            : ([['shift+←→', 'by 10']] as [string, string][])),
         ['c', 'colors'],
-        ['enter', 'keep'],
+        ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
+        ...pictureHint(', .', view),
+        ['enter', 'install'],
       ],
-      right: ['esc', 'cancel'],
+      right: ['esc', 'back'],
     })
 
     return
@@ -1513,21 +1758,24 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   foot(lines[rows - 1] as Line, cols, {
     badge: 'PICTURE PREVIEW',
     lead,
-    keys:
-      view.installing === undefined
-        ? [
-            ['←→', 'browse'],
-            ['enter', 'install'],
-            ['t', 'tune'],
-            ['c', 'colors'],
-            ['i', 'details'],
-            ...(view.details ? [] : [['shift+←→', 'sample'] as [string, string]]),
-            ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
-            ['?', 'keys'],
-          ]
-        : [],
-    right: view.installing === undefined ? ['esc', 'back'] : undefined,
+    keys: view.closing
+      ? []
+      : [
+          ...pictureHint('←→', view),
+          ['↑↓', 'move'],
+          ['enter', 'install'],
+          ['c', 'colors'],
+          ['i', 'details'],
+          ...(view.details ? [] : [['shift+←→', 'sample'] as [string, string]]),
+          ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
+          ['?', 'keys'],
+        ],
+    right: view.closing ? undefined : ['esc', 'back'],
   })
+}
+
+function pictureHint(key: string, view: FindView): [string, string][] {
+  return view.tiles.length > 1 ? [[key, `picture ×${view.tiles.length}`]] : []
 }
 
 interface Key {
@@ -1548,8 +1796,9 @@ const OPEN: Key = {
 }
 
 const TUNE_KEYS: Key[] = [
-  { group: 'Tune', keys: '↑↓', does: 'Choose size, position or opacity' },
+  { group: 'Tune', keys: '↑↓', does: 'Choose colors, size, position or opacity' },
   { group: 'Tune', keys: '←→', does: 'Change it' },
+  { group: 'Tune', keys: ', .', does: 'Choose a picture', onBar: true },
   { group: 'Tune', keys: 'shift+←→', does: 'Change it by 10' },
   { group: 'Tune', keys: '1-9', does: 'Place it in one of nine spots' },
   { group: 'Tune', keys: '=', does: 'Reset this one', press: '=' },
@@ -1561,14 +1810,15 @@ const TUNE_KEYS: Key[] = [
     more: 'An opacity you changed keeps the same multiple of the default.',
     press: 'c',
   },
+  { group: 'Tune', keys: 'x', does: 'Cut the background out or put it back', press: 'x', onBar: true },
   {
     group: 'Finish',
     keys: 'enter',
-    does: 'Keep and go back',
+    does: 'Install it',
     more: 'The tuning installs with the picture.',
     press: 'enter',
   },
-  { group: 'Finish', keys: 'esc', does: 'Undo and go back', press: 'esc' },
+  { group: 'Finish', keys: 'esc', does: 'Back to the pictures', press: 'esc' },
 ]
 
 const KEYS: Record<FindView['mode'], Key[]> = {
@@ -1617,14 +1867,20 @@ const KEYS: Record<FindView['mode'], Key[]> = {
     { group: 'Finish', keys: 'esc', does: 'Back to preview', press: 'esc' },
   ],
   try: [
-    { group: 'Move', keys: '←→ / h l', does: 'Next or previous post', onBar: true },
-    { group: 'Picture', keys: 'enter', does: 'Install it', press: 'enter', onBar: true },
+    { group: 'Move', keys: '←→ / h l / , .', does: 'Choose a picture', onBar: true },
     {
       group: 'Picture',
-      keys: 't',
-      does: 'Tune size, position and opacity',
+      keys: 'enter',
+      does: 'Install it',
+      more: 'Pictures install one after another in the order you pick them, and you can keep browsing.',
+      press: 'enter',
+      onBar: true,
+    },
+    {
+      group: 'Picture',
+      keys: '↑↓',
+      does: 'Move to colors, size, position and opacity',
       more: 'The tuning installs with the picture.',
-      press: 't',
       onBar: true,
     },
     {
@@ -1674,6 +1930,7 @@ export const FIND_MARKS: Legend = [
   [MARKS.link, 'opens in a browser'],
   [MARKS.on, 'a picture of your own'],
   [MARKS.gutter, 'the picture on show'],
+  [MARKS.queued, 'waiting to install'],
 ]
 
 export function findTopics(view: FindView, press: (key: string) => void): Topic[] {
@@ -2065,6 +2322,8 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
 
   if (view.mode === 'try') {
     trial(lines, images, cols, rows, view, accent)
+    const tile = view.tiles[view.focus]
+    waiting = tile !== undefined && pictureBusy(view, tile.key)
   } else {
     waiting = grid(lines, images, tiles, cols, rows, view, accent)
   }
@@ -2101,9 +2360,7 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
 
   return {
     lines:
-      view.keyed && view.mode === 'try' && !view.tuning && view.installing === undefined
-        ? trialKeys(drawn, cols, rows, view)
-        : drawn,
+      view.keyed && view.mode === 'try' && !view.tuning && !view.closing ? trialKeys(drawn, cols, rows, view) : drawn,
     images,
     zones: zonesOf(lines, tiles),
     loader: waiting,

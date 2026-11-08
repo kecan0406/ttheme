@@ -5,10 +5,12 @@ import type { Coloring, Colors, Tone } from '../core/backdrop-tone.ts'
 import { MAX_PIXELS } from '../core/booru.ts'
 import type { Hex } from '../core/color.ts'
 import { contain, decodeImage, encodeRgba, transparency } from '../core/png.ts'
+import type { SharedPicture } from '../core/theme.ts'
 import { writeAtomic } from '../store/edits.ts'
 import {
   backgroundsDir,
   type Framing,
+  framedBy,
   type Inked,
   imageKey,
   inked,
@@ -53,6 +55,11 @@ interface Twin {
   whole: string
 }
 
+interface Clear {
+  job: 'clear'
+  from: string
+}
+
 interface Show {
   job: 'show'
   from: string
@@ -90,6 +97,7 @@ interface Backdrop {
   sticker: boolean
   coloring: Coloring
   tune?: Tune
+  shared?: SharedPicture
   aligns?: boolean
   user?: string
 }
@@ -125,9 +133,9 @@ export interface Look {
   hash: string
 }
 
-type Task = Thumb | Band | Match | Twin | Show | Backdrop | Redraw | Shrink
+type Task = Thumb | Band | Match | Twin | Clear | Show | Backdrop | Redraw | Shrink
 
-type Lane = 'tile' | 'band' | 'view'
+export type Lane = 'tile' | 'band' | 'view' | 'ahead' | 'install'
 
 type Reply = { id: number; value: Result<Task> } | { id: number; error: string }
 
@@ -148,8 +156,9 @@ const LANES: Record<Task['job'], Lane> = {
   band: 'band',
   match: 'tile',
   twin: 'view',
+  clear: 'install',
   show: 'view',
-  backdrop: 'view',
+  backdrop: 'install',
   redraw: 'view',
   shrink: 'view',
 }
@@ -207,6 +216,10 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
 
   const image = decodeImage(new Uint8Array(readFileSync(task.from)), MAX_PIXELS)
 
+  if (task.job === 'clear') {
+    return transparency(image)
+  }
+
   if (task.job === 'backdrop') {
     installBackdrop(
       task.home,
@@ -223,10 +236,11 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
       task.coloring,
       task.sticker,
     )
-    const picture = task.tune && rackOf(task.home, task.colors.name).find((p) => p.key === imageKey(task.origin))
+    const picture = rackOf(task.home, task.colors.name).find((p) => p.key === imageKey(task.origin))
+    const tune = picture && task.shared ? framedBy(picture, task.shared) : task.tune
 
-    if (task.tune && picture) {
-      writeTune(backgroundsDir(task.home), picture, task.tune, task.aligns ?? true, task.user ?? task.home)
+    if (tune && picture) {
+      writeTune(backgroundsDir(task.home), picture, tune, task.aligns ?? true, task.user ?? task.home)
     }
 
     return 0
@@ -329,8 +343,7 @@ class Line {
 export class Renderer {
   private readonly lines = new Map<Lane, Line>()
 
-  run<T extends Task>(task: T): Promise<Result<T>> {
-    const lane = LANES[task.job]
+  run<T extends Task>(task: T, lane: Lane = LANES[task.job]): Promise<Result<T>> {
     let line = this.lines.get(lane)
 
     if (!line) {

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { backdropTone } from '../core/backdrop-tone.ts'
@@ -9,7 +9,6 @@ import {
   fileOf,
   LENDER,
   lend,
-  MAX_PIXELS,
   rated,
   ratingSet,
   rendition,
@@ -18,7 +17,6 @@ import {
   uncredited,
 } from '../core/booru.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
-import { decodeImage, transparency } from '../core/png.ts'
 import { inert } from '../core/text.ts'
 import { MAX_STRENGTH, type SharedPicture } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
@@ -27,13 +25,12 @@ import {
   colorsOf,
   DEFAULT_POSITION,
   dropImage,
+  framedBy,
   imageKey,
-  installBackdrop,
   type Picture,
   rackIn,
   rackOf,
   readStore,
-  rescaled,
   showImage,
   type Tune,
   tuneOf,
@@ -42,6 +39,7 @@ import {
 import { fetchBytes, fetchCredits, fetchLent, fetchPost, fetchProfiles } from '../pictures/booru-net.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../pictures/cutout.ts'
 import { TIMEOUT } from '../pictures/redrawing.ts'
+import { Renderer } from '../pictures/render.ts'
 import { blurOf, coloringFor, stickerOf } from '../store/wiring.ts'
 import { colorless } from '../terminals/osc.ts'
 import { linkable } from '../terminals/terminal.ts'
@@ -71,14 +69,6 @@ function shareable(picture: Picture, { opacity, ...framing }: Tune): Omit<Shared
       : Math.min(MAX_STRENGTH, Math.round((opacity / picture.opacity) * 100) / 100)
 
   return { ...framing, ...(strength === undefined || strength === 1 ? {} : { strength }) }
-}
-
-function framedBy(picture: Picture, { size, position, strength }: SharedPicture): Tune {
-  return {
-    ...(size === undefined ? {} : { size }),
-    ...(position === undefined ? {} : { position }),
-    ...(strength === undefined ? {} : { opacity: rescaled(strength, 1, picture.opacity) }),
-  }
 }
 
 const NUDGE = 0.01
@@ -142,6 +132,7 @@ async function install(
   entry: PaletteEntry,
   shared: SharedPicture,
   aligns: boolean,
+  renders: Renderer,
   signal: AbortSignal,
   step: (stage: string, detail?: string) => void,
 ): Promise<void> {
@@ -202,59 +193,59 @@ async function install(
   step('Downloading')
   const from = fileOf(site, post, version)
   const bytes = await fetchBytes(from.site, from.url, signal, (got, size) => step('Downloading', progress(got, size)))
-  let image = decodeImage(bytes, MAX_PIXELS)
-  let cut = false
+  const scratch = mkdtempSync(join(tmpdir(), 'ttheme-picture-'))
 
-  if (transparency(image) === 0 && canRemoveBackground() && process.env.TTHEME_FIND_REMOVE_BG !== 'off') {
-    const scratch = mkdtempSync(join(tmpdir(), 'ttheme-cut-'))
+  try {
+    const orig = join(scratch, `orig.${version.ext}`)
+    writeFileSync(orig, bytes)
+    let picked = orig
 
-    try {
-      const orig = join(scratch, `orig.${version.ext}`)
-      const path = join(scratch, 'cut.png')
-      writeFileSync(orig, bytes)
-      step('Cutting out')
-      await removeBackground(orig, path, signal)
+    if (
+      canRemoveBackground() &&
+      process.env.TTHEME_FIND_REMOVE_BG !== 'off' &&
+      (await renders.run({ job: 'clear', from: orig })) === 0
+    ) {
+      try {
+        const cut = join(scratch, 'cut.png')
+        step('Cutting out')
+        await removeBackground(orig, cut, signal)
 
-      const figure = decodeImage(new Uint8Array(readFileSync(path)), MAX_PIXELS)
-
-      if (keepable(transparency(figure))) {
-        image = figure
-        cut = true
-      }
-    } catch {
-    } finally {
-      rmSync(scratch, { recursive: true, force: true })
+        if (keepable(await renders.run({ job: 'clear', from: cut }))) {
+          picked = cut
+        }
+      } catch {}
     }
-  }
 
-  await credited
-  const colors = colorsOf(entry)
-  step('Drawing')
-  installBackdrop(
-    configHome,
-    colors,
-    backdropTone(colors),
-    image,
-    {
-      site: site.key,
-      id: shared.id,
-      ext: version.ext,
-      bytes,
-      from: `${site.name} ${shared.id} ${site.pageUrl(shared.id)}`,
-      artist: post.named.artist,
-      profiles,
-      source: sourcePage(post.source),
-      cut,
-    },
-    { width: 0, height: 0 },
-    blurOf(configHome),
-    coloringFor(configHome),
-    stickerOf(configHome),
-  )
-  const picture = rackOf(configHome, entry.name).find((p) => p.key === imageKey(shared))
-
-  if (picture) {
-    writeTune(backgroundsDir(configHome), picture, framedBy(picture, shared), aligns, homedir())
+    await credited
+    const colors = colorsOf(entry)
+    step('Drawing')
+    await renders.run({
+      job: 'backdrop',
+      from: picked,
+      source: orig,
+      home: configHome,
+      colors,
+      tone: backdropTone(colors),
+      origin: {
+        site: site.key,
+        id: shared.id,
+        ext: version.ext,
+        from: `${site.name} ${shared.id} ${site.pageUrl(shared.id)}`,
+        artist: post.named.artist,
+        profiles,
+        source: sourcePage(post.source),
+      },
+      width: 0,
+      height: 0,
+      blur: blurOf(configHome),
+      sticker: stickerOf(configHome),
+      coloring: coloringFor(configHome),
+      shared,
+      aligns,
+      user: homedir(),
+    })
+  } finally {
+    rmSync(scratch, { recursive: true, force: true })
   }
 }
 
@@ -286,6 +277,7 @@ export async function bringPictures(
   const links = process.stdout.isTTY && linkable(process.env)
   const got = new Set<PaletteEntry>()
   const line = pending()
+  const renders = new Renderer()
 
   for (const [at, { entry, shared }] of due.entries()) {
     const label = `${entry.name}  ${postRef(shared, links)}`
@@ -295,7 +287,7 @@ export async function bringPictures(
       line.set(`${stage} ${label}${detail ? `  ${detail}` : ''}${count}`)
 
     try {
-      await install(configHome, entry, shared, aligns, AbortSignal.timeout(TIMEOUT), step)
+      await install(configHome, entry, shared, aligns, renders, AbortSignal.timeout(TIMEOUT), step)
       line.say(`  ▣ ${label}`)
       got.add(entry)
     } catch (error) {
@@ -303,6 +295,7 @@ export async function bringPictures(
     }
   }
 
+  renders.close()
   line.done()
 
   for (const entry of got) {

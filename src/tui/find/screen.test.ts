@@ -87,6 +87,7 @@ function viewOf(over: Partial<FindView> = {}): FindView {
     colors: { cursor: '#ffffff', selection: '#333333', background: '#000000', foreground: '#eeeeee', ansi: [] },
     tiles: [],
     installed: [],
+    queued: [],
     held: [],
     checked: 0,
     total: 0,
@@ -151,7 +152,7 @@ test('the tile under the pointer takes a dim frame, the focused one keeps its ow
   assert.equal(framed({ row: 1, col: 30 }), 1)
 })
 
-test('no tile takes a hover frame while a picture installs', () => {
+test('no tile takes a hover frame while find waits to close', () => {
   const tile = {
     id: 1,
     key: 1,
@@ -171,7 +172,7 @@ test('no tile takes a hover frame while a picture installs', () => {
 
   assert.equal(renderFind(view, 100, 30).lines.join('\n').split('╭').length - 1, 2)
   assert.equal(
-    renderFind({ ...view, installing: 1 }, 100, 30)
+    renderFind({ ...view, closing: true }, 100, 30)
       .lines.join('\n')
       .split('╭').length - 1,
     1,
@@ -185,7 +186,7 @@ test('only what a click would act on in the state find is in lights under the po
   assert.ok(!findHovers(grid, { kind: 'setting', index: 0 }))
   assert.ok(findHovers(viewOf(), { kind: 'setting', index: 0 }))
   assert.ok(!findHovers(viewOf(), { kind: 'tile', index: 0 }))
-  assert.ok(findHovers(viewOf({ installing: 1 }), { kind: 'tile', index: 0 }) === false)
+  assert.ok(!findHovers(viewOf({ panel: undefined, closing: true }), { kind: 'tile', index: 0 }))
   assert.ok(findHovers(grid, { kind: 'key', key: 'esc' }))
   assert.ok(!findHovers(viewOf({ panel: undefined, mode: 'try' }), { kind: 'tile', index: 0 }))
   assert.ok(findHovers(viewOf({ panel: undefined, mode: 'try' }), { kind: 'scene', scene: 1 }))

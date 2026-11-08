@@ -1,9 +1,11 @@
+import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
+import { promisify } from 'node:util'
 import { linksOf } from '../../core/artists.ts'
 import { backdropTone, type Tone } from '../../core/backdrop-tone.ts'
 import {
@@ -42,6 +44,7 @@ import {
 } from '../../core/booru.ts'
 import { type About, aboutIn, aboutOf, shelvesOf, siteTags, type Work } from '../../core/commons.ts'
 import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
+import { resized, TUNE, TUNE_SIZE_LEAST } from '../../core/picture-panel.ts'
 import { SCENES } from '../../core/scenes.ts'
 import { FACE } from '../../core/slots.ts'
 import { POSITIONS } from '../../core/theme.ts'
@@ -58,7 +61,7 @@ import {
 } from '../../pictures/booru-net.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../../pictures/cutout.ts'
 import { type Frame, fitOrder, interleave, type Pick } from '../../pictures/fit.ts'
-import { type Look, Renderer, type Shown } from '../../pictures/render.ts'
+import { type Lane, type Look, Renderer, type Shown } from '../../pictures/render.ts'
 import { kinKeys, near, type Size, sameKeys, sameSet } from '../../pictures/works.ts'
 import { booruTags, find, readAvailable } from '../../store/available.ts'
 import { writeAtomic } from '../../store/edits.ts'
@@ -125,7 +128,7 @@ import {
   within,
 } from '../../tui/terminal.ts'
 import type { Hit } from '../../tui/zones.ts'
-import { aligns as alignsFor, refreshPictures } from '../sync.ts'
+import { aligns as alignsFor, refreshesPictures } from '../sync.ts'
 import { visit } from '../visit.ts'
 import { Kept } from './kept.ts'
 
@@ -269,22 +272,6 @@ const STEPS = new Map([
   ['shift-right', 10],
 ])
 
-function resized(size: Tuning['size'], step: number, fill: number): Tuning['size'] {
-  if (step < 0) {
-    if (size !== 'fill') {
-      return Math.max(SMALLEST, size + step)
-    }
-
-    if (!fill) {
-      return size
-    }
-
-    return Math.max(SMALLEST, Math.max(100, fill) + step + 1)
-  }
-
-  return size === 'fill' || size + step > fill ? 'fill' : size + step
-}
-
 function sameTuning(a: Tuning, b: Tuning): boolean {
   return a.size === b.size && a.at === b.at && a.opacity === b.opacity
 }
@@ -362,6 +349,7 @@ const THUMB = 12
 const PRELOAD = 2
 const PROFILE_WAIT = 5000
 const SETTLE = 150
+const spawned = promisify(execFile)
 const FEATURES = '\x1b[?5522$p\x1b]72;t=q\x1b\\\x1b[c'
 const NOTICE = 4000
 const PEEK = 8000
@@ -371,7 +359,6 @@ const SCREENSHOT = process.platform === 'darwin' ? 'ctrl+shift+cmd+4 copies a sc
 const TRY_WIDTH = 1280
 const TUNED_HELD = 16
 const TOP_RIGHT = POSITIONS.indexOf('top-right') + 1
-const SMALLEST = 20
 const LOOKAHEAD = 2
 const KNOWN = 3
 const WRITTEN = /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u
@@ -452,6 +439,27 @@ interface Current {
   fill?: number
 }
 
+function clarityKey(
+  current: Current,
+  using: Current['using'],
+  coloring: FindView['coloring'],
+  width: number,
+  height: number,
+): string {
+  return `${current.site.key}:${current.id}:${using}:${coloring}:${width}x${height}`
+}
+
+interface Queued {
+  current: Current
+  from: string
+  tune: Tune | undefined
+  coloring: FindView['coloring']
+  framing: string
+  post: Post | undefined
+  profiled: Promise<unknown>
+  touches: number
+}
+
 function describe(error: Error | string): string {
   if (!(error instanceof Error)) {
     return error
@@ -526,8 +534,14 @@ class Finder {
   private readonly heldAsked = new Set<string>()
   private thumbing = 0
   private readonly clarity = new Map<string, Shown>()
+  private readonly rendering = new Map<string, Promise<Shown>>()
+  private readonly queue: Queued[] = []
+  private leaving?: number
   private readonly tunedFiles: string[] = []
   private presenting = false
+  private installAfter?: { key: number; touches: number }
+  private touches = 0
+  private aheadTail: Promise<unknown> = Promise.resolve()
   private again = false
   private readonly renders = new Renderer()
   private showing?: Board
@@ -611,6 +625,7 @@ class Finder {
       },
       tiles: [],
       installed: [],
+      queued: [],
       held: heldOf(home, entry.name),
       checked: 0,
       total: 0,
@@ -875,6 +890,18 @@ class Finder {
     this.done?.(code === 2 && this.saved ? 0 : code)
   }
 
+  private leave(code: number): void {
+    if (this.queue.length === 0) {
+      this.finish(code)
+
+      return
+    }
+
+    this.leaving = code
+    this.view.closing = true
+    this.paint.draw()
+  }
+
   private inbound(event: Inbound): void {
     if (event.kind === 'key') {
       this.key(event.key)
@@ -913,7 +940,7 @@ class Finder {
       return
     }
 
-    if (view.installing !== undefined || view.panel !== undefined) {
+    if (view.closing || view.panel !== undefined) {
       return
     }
 
@@ -989,7 +1016,7 @@ class Finder {
 
     this.peeked = seen.stamp
 
-    if (!seen.picture || view.installing !== undefined) {
+    if (!seen.picture || view.closing) {
       return
     }
 
@@ -1195,12 +1222,16 @@ class Finder {
     const view = this.view
 
     if (key === 'ctrl-c') {
-      this.finish(2)
+      if (view.closing) {
+        this.finish(2)
+      } else {
+        this.leave(2)
+      }
 
       return
     }
 
-    if (view.installing !== undefined) {
+    if (view.closing) {
       return
     }
 
@@ -1248,7 +1279,7 @@ class Finder {
 
     if (this.cols < MIN.cols || this.rows < MIN.rows) {
       if (key === 'esc') {
-        this.finish(2)
+        this.leave(2)
       }
 
       return
@@ -1265,6 +1296,7 @@ class Finder {
     }
 
     if (view.mode === 'try') {
+      this.touches++
       this.tryKey(key)
 
       return
@@ -1278,7 +1310,7 @@ class Finder {
     const hit = this.paint.point(event)
     const spot = hit?.target as FindSpot | undefined
 
-    if (view.installing !== undefined) {
+    if (view.closing) {
       return
     }
 
@@ -1338,6 +1370,7 @@ class Finder {
         this.paint.draw()
       }
     } else if (view.mode === 'try') {
+      this.touches++
       this.tryPoint(spot)
     } else if (spot.kind === 'tile') {
       this.focus(spot.index)
@@ -1367,8 +1400,17 @@ class Finder {
     } else if (view.panel !== undefined) {
       this.panelPoint(spot)
     } else if (view.mode === 'try') {
-      if (spot?.kind === 'place' && view.tuning) {
+      if (spot?.kind === 'place') {
+        view.tuning ??= { field: TUNE.position }
         this.tuneKey(String(spot.at))
+      } else if (spot?.kind === 'coloring') {
+        view.tuning = { field: TUNE.colors }
+
+        if (spot.coloring === view.coloring) {
+          this.paint.draw()
+        } else {
+          this.recolor()
+        }
       }
     } else if (spot?.kind === 'tile' && event.count === 2) {
       this.gridKey('enter')
@@ -1455,27 +1497,22 @@ class Finder {
       view.scene = spot.scene
       view.details = false
       this.paint.draw()
-    } else if (view.tuning && spot.kind === 'field') {
-      view.tuning.field = spot.field
+    } else if (spot.kind === 'field') {
+      view.tuning = spot.field < 0 ? undefined : { field: spot.field }
       this.paint.draw()
     }
   }
 
   private slide(field: number, hit: Hit): void {
     const view = this.view
-    const panel = view.tuning
-
-    if (!panel) {
-      return
-    }
-
     const along = Math.min(1, Math.max(0, hit.width > 1 ? hit.x / (hit.width - 1) : 0))
-    panel.field = field
+    const fill = view.fill ?? 0
+    view.tuning = { field }
 
-    if (field === 0) {
-      const top = Math.max(100, panel.fill)
-      const size = SMALLEST + Math.round(along * (top - SMALLEST + 1))
-      view.tune.size = along === 1 || (panel.fill > 0 && size >= panel.fill) ? 'fill' : Math.min(top, size)
+    if (field === TUNE.size) {
+      const top = Math.max(100, fill)
+      const size = TUNE_SIZE_LEAST + Math.round(along * (top - TUNE_SIZE_LEAST + 1))
+      view.tune.size = along === 1 || (fill > 0 && size >= fill) ? 'fill' : Math.min(top, size)
     } else {
       view.tune.opacity = Math.round(along * 100) / 100
     }
@@ -1572,7 +1609,7 @@ class Finder {
     }
 
     if (key === 'esc') {
-      this.finish(2)
+      this.leave(2)
     }
   }
 
@@ -1848,7 +1885,7 @@ class Finder {
       view.editing = undefined
 
       if (view.tag === '') {
-        this.finish(2)
+        this.leave(2)
 
         return
       }
@@ -1872,7 +1909,7 @@ class Finder {
       }
 
       if (view.tag === '') {
-        this.finish(2)
+        this.leave(2)
 
         return
       }
@@ -2069,8 +2106,8 @@ class Finder {
       return
     }
 
-    if (key === 'left' || key === 'right' || key === 'h' || key === 'l') {
-      this.direction = key === 'left' || key === 'h' ? -1 : 1
+    if (key === 'left' || key === 'right' || key === 'h' || key === 'l' || key === ',' || key === '.') {
+      this.direction = key === 'left' || key === 'h' || key === ',' ? -1 : 1
       this.focus(view.focus + this.direction)
 
       return
@@ -2092,14 +2129,10 @@ class Finder {
       return
     }
 
-    if (key === 't') {
-      view.tuning = {
-        field: 0,
-        held: { ...view.tune },
-        base: view.untuned.opacity,
-        fill: this.current?.fill ?? 0,
-        coloring: view.coloring,
-      }
+    const line = lineStep(key)
+
+    if (line !== undefined) {
+      view.tuning = { field: line < 0 ? TUNE.opacity : TUNE.colors }
       this.paint.draw()
 
       return
@@ -2130,7 +2163,7 @@ class Finder {
     }
 
     if (key === 'enter') {
-      void this.install()
+      this.install()
 
       return
     }
@@ -2150,10 +2183,24 @@ class Finder {
     const panel = view.tuning as TunePanel
     const tune = view.tune
 
+    if (key === ',' || key === '.') {
+      this.direction = key === ',' ? -1 : 1
+      this.focus(view.focus + this.direction)
+
+      return
+    }
+
+    if (key === 'x') {
+      this.swap()
+
+      return
+    }
+
     const line = lineStep(key)
 
     if (line !== undefined) {
-      panel.field = (panel.field + (line < 0 ? 2 : 1)) % 3
+      const next = panel.field + (line < 0 ? -1 : 1)
+      view.tuning = next < TUNE.colors || next > TUNE.opacity ? undefined : { field: next }
       this.paint.draw()
 
       return
@@ -2162,9 +2209,15 @@ class Finder {
     const step = STEPS.get(key)
 
     if (step !== undefined) {
-      if (panel.field === 0) {
-        tune.size = resized(tune.size, step, panel.fill)
-      } else if (panel.field === 1) {
+      if (panel.field === TUNE.colors) {
+        this.recolor()
+
+        return
+      }
+
+      if (panel.field === TUNE.size) {
+        tune.size = resized(tune.size, step, view.fill ?? 0)
+      } else if (panel.field === TUNE.position) {
         tune.at = ((tune.at - 1 + Math.sign(step) + 9) % 9) + 1
       } else {
         tune.opacity = Math.max(0, Math.min(100, Math.round(tune.opacity * 100) + step)) / 100
@@ -2177,19 +2230,19 @@ class Finder {
     }
 
     if (/^[1-9]$/.test(key)) {
-      panel.field = 1
+      panel.field = TUNE.position
       tune.at = Number(key)
       this.retune()
 
       return
     }
 
-    if (key === '=') {
+    if (key === '=' && panel.field !== TUNE.colors) {
       const base = view.untuned
 
-      if (panel.field === 0) {
+      if (panel.field === TUNE.size) {
         tune.size = base.size
-      } else if (panel.field === 1) {
+      } else if (panel.field === TUNE.position) {
         tune.at = base.at
       } else {
         tune.opacity = base.opacity
@@ -2211,6 +2264,7 @@ class Finder {
 
     if (key === 'enter') {
       view.tuning = undefined
+      this.install()
       this.paint.draw()
 
       return
@@ -2223,11 +2277,8 @@ class Finder {
     }
 
     if (key === 'esc') {
-      const moved = panel.coloring !== view.coloring
-      view.tune = { ...panel.held, ...(moved ? { opacity: view.untuned.opacity } : {}) }
-      view.rescale = moved ? scaleOf(panel.held.opacity, panel.base) : undefined
       view.tuning = undefined
-      this.retune()
+      this.tryKey('esc')
     }
   }
 
@@ -2241,6 +2292,7 @@ class Finder {
     view.rescale ??= scaleOf(view.tune.opacity, view.untuned.opacity)
     view.coloring = view.coloring === 'tone' ? 'original' : 'tone'
     view.tune.opacity = view.untuned.opacity
+    view.redraw = { key: this.current.key, from: view.beat, done: false }
     this.paint.draw()
     this.reveal()
   }
@@ -3378,14 +3430,34 @@ class Finder {
   }
 
   private swap(): void {
+    const view = this.view
     const current = this.current
 
-    if (!current?.cut || this.view.shown?.id !== current.key) {
+    if (!current?.cut || view.shown?.id !== current.key || view.tiles[view.focus]?.key !== current.key) {
       return
     }
 
     current.using = current.using === 'cut' ? 'plain' : 'cut'
+    const { width, height } = this.tryBox()
+    const known = this.clarity.get(clarityKey(current, current.using, view.coloring, width, height))
+    view.shown = { ...view.shown, cut: current.using === 'cut' ? 'on' : 'off', clear: known?.clear ?? view.shown.clear }
+    view.redraw = { key: current.key, from: view.beat, done: false }
     this.reveal()
+  }
+
+  private tryBox() {
+    const W = this.cols * this.cell.w
+    const H = this.rows * this.cell.h
+    const width = Math.min(W, TRY_WIDTH)
+
+    return { width, height: Math.max(1, Math.round((H * width) / W)) }
+  }
+
+  private inTurn<T>(work: () => Promise<T>): Promise<T> {
+    const run = this.aheadTail.then(work)
+    this.aheadTail = run.catch(() => undefined)
+
+    return run
   }
 
   private preload(): void {
@@ -3416,9 +3488,12 @@ class Finder {
           const from = fileOf(site, post, version)
           await this.kept.cached(from.site, path, from.url)
 
-          return this.render(
-            { site, id: post.id, key: tile.key, path, ext: version.ext, size: 0, using: 'plain', failed: false },
-            'plain',
+          return this.inTurn(() =>
+            this.render(
+              { site, id: post.id, key: tile.key, path, ext: version.ext, size: 0, using: 'plain', failed: false },
+              'plain',
+              'ahead',
+            ),
           )
         })
         .catch(() => {})
@@ -3431,11 +3506,11 @@ class Finder {
   private async render(
     current: Current,
     using: 'plain' | 'cut',
+    lane?: Lane,
   ): Promise<{ clear: number; path: string; opacity: number; touched: boolean }> {
     const W = this.cols * this.cell.w
     const H = this.rows * this.cell.h
-    const width = Math.min(W, TRY_WIDTH)
-    const height = Math.max(1, Math.round((H * width) / W))
+    const { width, height } = this.tryBox()
     const tune = { ...this.view.tune }
     const { coloring } = this.view
     const touched = tune.opacity !== this.view.untuned.opacity
@@ -3455,7 +3530,7 @@ class Finder {
       `${current.site.key}-${current.id}${using === 'cut' ? 'c' : ''}${coloring === 'original' ? 'o' : ''}-${width}x${height}${mark}.png`,
     )
 
-    const key = `${current.site.key}:${current.id}:${using}:${coloring}:${width}x${height}`
+    const key = clarityKey(current, using, coloring, width, height)
     const known = this.clarity.get(key)
 
     if (known && existsSync(path)) {
@@ -3464,36 +3539,54 @@ class Finder {
       return { clear: known.clear, path, opacity: known.opacity, touched }
     }
 
-    const made = await this.renders.run({
-      job: 'show',
-      from: using === 'cut' ? (current.cut as string) : current.path,
-      cut: using === 'cut',
-      to: path,
-      width,
-      height,
-      colors: this.entry,
-      tone: this.tone,
-      blur: (this.blurring * width) / fillSize(W, H).width,
-      sticker: this.sticker,
-      coloring,
-      ...(tuned
-        ? {
-            tune: {
-              size: tune.size,
-              at: tune.at,
-              ...(touched ? { opacity: tune.opacity } : {}),
-              ...(scale === undefined ? {} : { scale }),
-            },
+    let job = this.rendering.get(path)
+
+    if (!job) {
+      job = this.renders
+        .run(
+          {
+            job: 'show',
+            from: using === 'cut' ? (current.cut as string) : current.path,
+            cut: using === 'cut',
+            to: path,
+            width,
+            height,
+            colors: this.entry,
+            tone: this.tone,
+            blur: (this.blurring * width) / fillSize(W, H).width,
+            sticker: this.sticker,
+            coloring,
+            ...(tuned
+              ? {
+                  tune: {
+                    size: tune.size,
+                    at: tune.at,
+                    ...(touched ? { opacity: tune.opacity } : {}),
+                    ...(scale === undefined ? {} : { scale }),
+                  },
+                }
+              : {}),
+          },
+          lane,
+        )
+        .then((shown) => {
+          this.clarity.set(key, shown)
+
+          if (tuned) {
+            this.keepTuned(path)
           }
-        : {}),
-    })
 
-    this.clarity.set(key, made)
-    current.fill = made.fill
+          return shown
+        })
+        .finally(() => {
+          this.rendering.delete(path)
+        })
 
-    if (tuned) {
-      this.keepTuned(path)
+      this.rendering.set(path, job)
     }
+
+    const made = await job
+    current.fill = made.fill
 
     return { clear: made.clear, path, opacity: made.opacity, touched }
   }
@@ -3534,8 +3627,8 @@ class Finder {
       this.view.rescale = undefined
     }
 
-    if (this.view.tuning && current.fill) {
-      this.view.tuning.fill = current.fill
+    if (current.fill) {
+      this.view.fill = current.fill
     }
 
     this.view.shown = {
@@ -3584,33 +3677,97 @@ class Finder {
       view.preparing = undefined
     }
 
+    if (view.redraw) {
+      view.redraw.done = true
+    }
+
+    const asked = this.installAfter
+    this.installAfter = undefined
+
+    if (asked && view.tiles[view.focus]?.key === asked.key) {
+      this.install(asked.touches)
+    }
+
     this.paint.draw()
   }
 
-  private async install(): Promise<void> {
+  private install(touches = this.touches): void {
     const view = this.view
     const tile = view.tiles[view.focus]
     const current = this.current
 
-    if (!tile || current?.key !== tile.key || view.preparing !== undefined || view.shown?.id !== tile.key) {
+    if (!tile || current?.key !== tile.key || view.shown?.id !== tile.key) {
       return
     }
 
-    view.installing = tile.key
-    view.notice = undefined
-    this.paint.flush()
-    const tune = toTune(view.tune, view.untuned)
-    const pick = this.posts.get(current.key)
-    const post = pick?.post
+    if (this.presenting) {
+      this.installAfter = { key: tile.key, touches }
 
-    if (pick) {
-      await Promise.race([this.kept.profile(pick, this.signal), sleep(PROFILE_WAIT, undefined, { ref: false })])
+      return
     }
 
+    if (this.queue.some((queued) => queued.current.key === tile.key)) {
+      this.notice('Already in the queue', 'info')
+
+      return
+    }
+
+    if (this.queue.length === 0) {
+      view.notice = undefined
+    }
+
+    const tune = toTune(view.tune, view.untuned)
+    const pick = this.posts.get(current.key)
+    const { size, at, opacity } = view.tune
+
+    this.queue.push({
+      current,
+      from: current.using === 'cut' ? (current.cut as string) : current.path,
+      tune,
+      coloring: view.coloring,
+      framing: tune ? `  ${size === 'fill' ? 'fill' : `${size}%`}  ${POSITIONS[at - 1]}  ${opacity.toFixed(2)}` : '',
+      post: pick?.post,
+      profiled: pick
+        ? Promise.race([this.kept.profile(pick, this.signal), sleep(PROFILE_WAIT, undefined, { ref: false })])
+        : Promise.resolve(),
+      touches,
+    })
+
+    this.showQueue()
+    this.paint.flush()
+
+    if (this.queue.length === 1) {
+      void this.installQueue()
+    }
+  }
+
+  private showQueue(): void {
+    const [running, ...waiting] = this.queue
+    this.view.installing = running?.current.key
+    this.view.queued = waiting.map((queued) => queued.current.key)
+  }
+
+  private async installQueue(): Promise<void> {
+    for (let next = this.queue[0]; next && !this.signal.aborted; next = this.queue[0]) {
+      await this.installOne(next)
+      this.queue.shift()
+      this.showQueue()
+      this.paint.draw()
+    }
+
+    if (this.leaving !== undefined && !this.signal.aborted) {
+      this.finish(this.leaving)
+    }
+  }
+
+  private async installOne({ current, from, tune, coloring, framing, post, profiled, touches }: Queued): Promise<void> {
+    const view = this.view
+
     try {
+      await profiled
       await this.renders.run({
         job: 'backdrop',
-        from: current.using === 'cut' ? (current.cut as string) : current.path,
+        from,
         source: current.path,
         home: this.home,
         colors: this.entry,
@@ -3628,34 +3785,43 @@ class Finder {
         height: this.rows * this.cell.h,
         blur: this.blurring,
         sticker: this.sticker,
-        coloring: view.coloring,
+        coloring,
         ...(tune ? { tune, aligns: alignsFor(readInstalled(this.home).terminals), user: homedir() } : {}),
       })
       this.kept.owned(current.site, current.id, post?.owner ?? '')
-      refreshPictures(this.home)
+
+      if (refreshesPictures(this.home)) {
+        await spawned(process.execPath, [process.argv[1] as string, 'image', this.entry.name, 'tuned'])
+      }
+
       this.holds()
-      const { size, at, opacity } = view.tune
-
-      const framing = tune
-        ? `  ${size === 'fill' ? 'fill' : `${size}%`}  ${POSITIONS[at - 1]}  ${opacity.toFixed(2)}`
-        : ''
-
       const by = post?.named.artist.length ? `${post.named.artist.join(', ')}  ` : ''
       view.saved = {
         text: `Background  ${this.entry.name} ← ${by}${current.site.name} ${current.id}${framing}`,
-        key: tile.key,
+        key: current.key,
       }
-      view.installed.push(tile.key)
-      this.fetch?.abort()
-      clearTimeout(this.settle)
-      view.fetching = undefined
-      view.mode = 'grid'
-    } catch (error) {
-      view.notice = { text: error instanceof Error ? error.message : String(error), tone: 'error' }
-    }
+      view.installed.push(current.key)
 
-    view.installing = undefined
-    this.paint.draw()
+      if (
+        view.mode === 'try' &&
+        !view.tuning &&
+        !view.help &&
+        this.touches === touches &&
+        view.tiles[view.focus]?.key === current.key
+      ) {
+        this.fetch?.abort()
+        clearTimeout(this.settle)
+        view.fetching = undefined
+        view.mode = 'grid'
+      }
+    } catch (error) {
+      if (!this.signal.aborted) {
+        this.notice(
+          `${current.site.name} ${current.id} — ${error instanceof Error ? error.message : String(error)}`,
+          'error',
+        )
+      }
+    }
   }
 }
 

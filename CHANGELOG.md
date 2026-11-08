@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Moving quickly between pictures in `ttheme find` is faster: the neighbors drawn ahead no longer hold up the picture you moved to. Browse also stays responsive while a palette's pictures are installed.
+- Installing a picture in `ttheme find` no longer holds the screen: the pictures you pick wait in a queue, marked on their tiles and counted in the foot, while you keep browsing and trying others on.
+- In `ttheme find`, the tuning panel now stands beside the picture as soon as you try one on, in windows of at least 116 columns, so `t` is gone: `↑` `↓` move from the picture to colors, size, position and opacity, `←` `→` change them, and `enter` installs from any row.
+- In `ttheme find`, the panel's list of pictures now reads like Preview's: at most three framed thumbnails around the one you are on, and `,` `.` to choose a picture from any row. A spinner runs around the current picture's frame while it loads, while `x` or `c` draws it again, and in Preview while its colors change.
+- In `ttheme find`, ctrl+c with pictures in the queue now waits for them to install, and a second ctrl+c leaves at once.
+- In Preview, changing a picture's colors, removing a picture, saving a picture, resetting a palette's colors and changing the mode, blur or sticker edge no longer hold the screen: you can keep moving while ttheme works behind. The colors you pick show as chosen at once.
+
 ## 1.2.98
 
 - Seven Chainsaw Man palettes join the built-in ones: Denji, Power, Makima, Hayakawa Aki, Higashiyama Kobeni, Reze and Himeno.

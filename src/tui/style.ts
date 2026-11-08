@@ -46,6 +46,7 @@ export const MARKS = {
   contrast: '◐',
   swatch: '■',
   pictures: '▣',
+  queued: '◌',
   spot: '.',
   none: '–',
   cut: '…',

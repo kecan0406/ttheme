@@ -552,6 +552,7 @@ te=0 tune= tpick= bgcw=0 out=
   bgoff[ttheme/hiiragi-kagami]=0 tf=4 out=; __tt_pv_foot 200; tf=1
   [[ $out == *"c colors"* ]] || { print -u2 "the EDIT bar did not offer the colors key on the Colors row: $out"; exit 1 }
   __tt_pv_tune > /dev/null
+  __tt_pv_behind_wait
   REPLY=; __tt_bg_coloring $tpick
   [[ "$(<$bgd/cli.log)" == "image ttheme/hiiragi-kagami original safebooru_2" && $REPLY == original && $tf == 1 && $tune == ttheme/hiiragi-kagami && $bgsrc[ttheme/hiiragi-kagami] == *5e5e5e5e* ]] ||
     { print -u2 "c did not draw the picture again through the CLI, on the row it was pressed on: $(<$bgd/cli.log) coloring=$REPLY tf=$tf tune=$tune src=$bgsrc[ttheme/hiiragi-kagami]"; exit 1 }
@@ -560,6 +561,7 @@ te=0 tune= tpick= bgcw=0 out=
   rm -f $bgd/cli.log
   tf=4 key=right
   __tt_pv_tune > /dev/null
+  __tt_pv_behind_wait
   [[ "$(<$bgd/cli.log)" == "image ttheme/hiiragi-kagami tone safebooru_2" && $tf == 4 ]] ||
     { print -u2 "the Colors row did not switch back on an arrow key: $(<$bgd/cli.log) tf=$tf"; exit 1 }
 ) || exit 1

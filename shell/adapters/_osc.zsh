@@ -147,6 +147,8 @@ __tt_pv_bg_strip() { : }
 
 __tt_pv_bg_strip_off() { : }
 
+__tt_pv_bg_orbit() { : }
+
 __tt_pv_bg_close() { : }
 
 __tt_pv_bg_lost() { : }

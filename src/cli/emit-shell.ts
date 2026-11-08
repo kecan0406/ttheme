@@ -4,6 +4,17 @@ import { aboutIn, shelvesOf, spoken, type Work, worksFor, worldOrder } from '../
 import { type PaletteEntry, swatch } from '../core/manifest.ts'
 import { marksOf } from '../core/mark.ts'
 import type { Mode, Setting } from '../core/mode.ts'
+import {
+  STRIP,
+  TUNE,
+  TUNE_COLORINGS,
+  TUNE_ROWS,
+  TUNE_SIZE_LEAST,
+  TUNE_SIZE_WHOLE,
+  TUNE_SPARE,
+  TUNE_TRACK_LEAST,
+  TUNE_VALUE_AT,
+} from '../core/picture-panel.ts'
 import { SCENES } from '../core/scenes.ts'
 import type { Colors } from '../core/seeds.ts'
 import { BASE, PAIRS } from '../core/slots.ts'
@@ -43,6 +54,17 @@ export interface ShellTables {
 
 function specOf(colors: Colors): string {
   return [colors.background, colors.foreground, colors.cursor, colors.selection, ...colors.ansi].join(' ')
+}
+
+export function panelTables(): string[] {
+  const order = [TUNE.size, TUNE.position, TUNE.opacity, TUNE.colors]
+
+  return [
+    `typeset -ga TTHEME_PANEL_LABELS=(${order.map((at) => TUNE_ROWS[at].label).join(' ')})`,
+    `typeset -ga TTHEME_PANEL_ROWS=(${order.map((at) => TUNE_ROWS[at].row).join(' ')})`,
+    `typeset -ga TTHEME_PANEL_COLORINGS=(${TUNE_COLORINGS.flat().join(' ')})`,
+    `typeset -gA TTHEME_PANEL=(value ${TUNE_VALUE_AT} spare ${TUNE_SPARE} least ${TUNE_TRACK_LEAST} low ${TUNE_SIZE_LEAST} whole ${TUNE_SIZE_WHOLE} strip ${STRIP.rows} gap ${STRIP.gap} most ${STRIP.most} step ${STRIP.step})`,
+  ]
 }
 
 export function shellTables(palettes: PaletteEntry[], works: readonly Work[], context: ZshContext = {}): ShellTables {
@@ -192,6 +214,9 @@ export function shellTables(palettes: PaletteEntry[], works: readonly Work[], co
       (k) => `  ${k.where}${k.onBar ? ':bar' : ''} ${quote(k.group)} ${quote(k.keys)} ${quote(k.does)}`,
     ),
     ')',
+    '',
+    "# the rows of preview's picture panel, which find draws too (src/core/picture-panel.ts)",
+    ...panelTables(),
     '',
     '# the settings config.zsh holds, handed to the CLI on every call',
     `typeset -ga TTHEME_SETTINGS=(${SETTING_NAMES.join(' ')})`,

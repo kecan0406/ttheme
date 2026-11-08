@@ -249,6 +249,10 @@ export function refreshPictures(configHome: string, home = homedir(), host: Host
   writeTables(ctx, view.works, resolve(shown.untuned, state.palettes), host, false)
 }
 
+export function refreshesPictures(configHome: string): boolean {
+  return wirings(readInstalled(configHome).terminals).some((wiring) => wiring.pictures)
+}
+
 export function aligns(terminals: readonly Wired[]): boolean {
   return !wirings(terminals).some((wiring) => wiring.bakes)
 }
