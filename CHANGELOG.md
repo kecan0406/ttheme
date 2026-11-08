@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.99
+
 - Moving quickly between pictures in `ttheme find` is faster: the neighbors drawn ahead no longer hold up the picture you moved to. Browse also stays responsive while a palette's pictures are installed.
 - Installing a picture in `ttheme find` no longer holds the screen: the pictures you pick wait in a queue, marked on their tiles and counted in the foot, while you keep browsing and trying others on.
 - In `ttheme find`, the tuning panel now stands beside the picture as soon as you try one on, in windows of at least 116 columns, so `t` is gone: `↑` `↓` move from the picture to colors, size, position and opacity, `←` `→` change them, and `enter` installs from any row.
