@@ -1284,6 +1284,32 @@ done
   rm -rf $bgcut $bgd/tall.png $bgd/bake.log
 ) || exit 1
 (
+  source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
+  __tt_cli() { [[ $1 == bake ]] && { sleep 0.2; : >| $3 }; print -r -- $1 >> $bgd/order.log }
+  noted() { : }
+  print -rn -- $'\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\x07\x58\0\0\x03\xf0\x08\x06' > $bgd/tall.png
+  typeset -A bgsent=() bgcost=()
+  typeset -a bgorder=() baked=()
+  bgcut=$bgd/cut bgnext=0 bgbytes=0 msg="" msgt=0 pvjob=""
+  mkdir -p $bgcut
+  __tt_bg_crop $bgd/tall.png 1880 1008 0 600 > /dev/null
+  (( TTHEME_BG_JOB )) || { print -u2 "iTerm2 started no job for a band to bake"; exit 1 }
+  __tt_pv_behind held "" noted "Saved" __tt_cli saved
+  __tt_bg_crop $bgd/tall.png 1880 1008 100 500 > /dev/null
+  __tt_pv_behind_wait
+  [[ "$(<$bgd/order.log)" == $'bake\nsaved' ]] ||
+    { print -u2 "a job behind preview wrote while a picture job was in flight, or one started beside it: ${(f)$(<$bgd/order.log)}"; exit 1 }
+  TTHEME_BG_ASKED=0
+  for i in {1..300}; do
+    __tt_pv_bg_poll
+    __tt_pv_bg_busy || break
+    sleep 0.01
+  done
+  [[ "$(<$bgd/order.log)" == $'bake\nsaved\nbake' && -r $bgcut/tall-100-500.png ]] ||
+    { print -u2 "a picture asked for while a job ran behind preview was never drawn once it ended: ${(f)$(<$bgd/order.log)}"; exit 1 }
+  rm -rf $bgcut $bgd/tall.png $bgd/order.log
+) || exit 1
+(
   TTHEME_TERMINALS=(konsole) TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false' TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_TMUX=0
   source $XDG_CONFIG_HOME/ttheme/adapters/konsole.zsh
   cursor=${${=TTHEME_PALETTE[ttheme/kaito]}[3]}

@@ -17,7 +17,7 @@ __tt_bg_ask() {
   fi
   TTHEME_BG_WANT=("$key" "$@") TTHEME_BG_ASKED=$EPOCHREALTIME
   msg="Loading the background" msgt=500
-  (( TTHEME_BG_JOB )) || __tt_bg_start
+  (( TTHEME_BG_JOB )) || [[ -n $pvjob ]] || __tt_bg_start
   return 0
 }
 
@@ -62,7 +62,7 @@ __tt_pv_bg_poll() {
   __tt_pv_bg_busy || return 1
   local -i done=1
   __tt_bg_reap && done=0
-  (( ! TTHEME_BG_JOB && ${#TTHEME_BG_WANT} && EPOCHREALTIME - TTHEME_BG_ASKED >= 0.15 )) && __tt_bg_start
+  (( ! TTHEME_BG_JOB && ${#TTHEME_BG_WANT} && EPOCHREALTIME - TTHEME_BG_ASKED >= 0.15 )) && [[ -z $pvjob ]] && __tt_bg_start
   __tt_pv_bg_busy && return $done
   [[ $msg == "Loading the background" ]] && msg="" msgt=0
   return 0
@@ -709,7 +709,7 @@ __tt_pv_bg_drop() {
   __tt_pv_untune
   __tt_pv_bg_commit $name
   [[ -z $next ]] || __tt_pv_bg_reopen $name $next $row
-  __tt_pv_behind $name "" __tt_pv_bg_redone "Removing the picture" __tt_pv_settled __tt_cli image $name drop ${key:+$key}
+  __tt_pv_behind $name "" __tt_pv_bg_redone "Removing the picture" __tt_cli image $name drop ${key:+$key}
 }
 
 __tt_pv_bg_reopen() {
@@ -740,7 +740,7 @@ __tt_pv_bg_recolor() {
   __tt_pv_tune_stage
   __tt_pv_bg_commit $name
   __tt_pv_bg_reopen $name $was $row
-  __tt_pv_behind $name $was __tt_pv_bg_redone "$note" __tt_pv_settled __tt_cli image $name $want $key
+  __tt_pv_behind $name $was __tt_pv_bg_redone "$note" __tt_cli image $name $want $key
   pvjobwant=$want
 }
 

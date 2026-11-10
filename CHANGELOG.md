@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- In Terminal.app, a picture saved in Preview right after it was tuned could vanish from the tabs showing its palette: the save and a picture still being tried on wrote the same file at once. A save now waits for the picture being drawn, and no other is drawn until the save ends.
+
 ## 1.2.102
 
 - `ttheme find` no longer stops on a picture site that goes quiet. Before, one preview that never arrived could leave the grid empty for minutes; now find waits for a site's previews only while they keep coming, and after five quiet seconds shows the pictures it has, ranking the late ones without their colors. A site that sends nothing in that time is named in the foot (`danbooru is slow to send previews`), and find stops waiting on it until one of its previews arrives.

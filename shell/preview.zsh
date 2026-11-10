@@ -1909,7 +1909,7 @@ __tt_pv_size() {
 __tt_pv_behind() {
   local job=$1 pick=$2 done=$3 note=$4
   shift 4
-  exec {pvjobfd}< <({ "$@" </dev/null 2>&1; print -rn -- $'\x1e'$? })
+  exec {pvjobfd}< <({ __tt_pv_settled "$@" </dev/null 2>&1; print -rn -- $'\x1e'$? })
   pvjob=$job pvjobpick=$pick pvjobdone=$done pvjobnote=$note pvjobbuf="" pvjobat=$EPOCHREALTIME pvjobtick=0
   msg=$note msgt=300
 }
@@ -2713,7 +2713,7 @@ __tt_te_edit() {
   return 0
 }
 
-__tt_te_reset_job() { __tt_pv_settled __tt_cli tone $1 reset 2>&1 >/dev/null }
+__tt_te_reset_job() { __tt_cli tone $1 reset 2>&1 >/dev/null }
 
 __tt_te_reset() {
   [[ $pvjob == "$tename" ]] && return 0
