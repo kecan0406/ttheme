@@ -30,6 +30,7 @@ export function normalized(text: string): string {
       line
         .replace(/Search….*?\s{2,}(?=\d+\/\d+)/, 'Search… ‹hint›  ')
         .replace(/Search… e\.g\..*$/, 'Search… ‹hint›')
+        .replace(/ {4,}((?:[^ ]| {1,3}[^ ])* {0,3}ttheme \d+\.\d+\.\d+)/, '    $1')
         .replace(/ttheme \d+\.\d+\.\d+/, 'ttheme ‹version›'),
     )
   }

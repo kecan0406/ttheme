@@ -21,4 +21,4 @@
 
 
 
- [PREVIEW] → open   alt+c settings   ? keys                              esc cancel   ttheme ‹version›
+ [PREVIEW] → open   alt+c settings   ? keys    esc cancel   ttheme ‹version›
