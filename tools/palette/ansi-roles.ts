@@ -1,9 +1,9 @@
 import { writeFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
-import { deltaE, oklch } from '../../../../src/core/color.ts'
-import { check } from '../../../../src/core/contrast.ts'
-import { fixRoles } from '../../../../src/core/fix.ts'
-import { type Theme, workIdOf } from '../../../../src/core/theme.ts'
+import { deltaE, oklch } from '../../src/core/color.ts'
+import { check } from '../../src/core/contrast.ts'
+import { fixRoles } from '../../src/core/fix.ts'
+import { type Theme, workIdOf } from '../../src/core/theme.ts'
 import { type Palette, setPalettes, writeMirrors } from './light.ts'
 
 interface ThemeDoc {

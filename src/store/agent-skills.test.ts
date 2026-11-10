@@ -60,8 +60,9 @@ test('a skill another installer put there, or a Claude Code plugin, is not ours 
   rmSync(dir, { recursive: true, force: true })
 })
 
-test('the shipped skill stops at a skill format above the one SKILL_FORMAT names', () => {
+test('the shipped skill stops at a skill format other than the one SKILL_FORMAT names', () => {
   const text = readFileSync(join(ROOT, 'skills', SKILL, 'SKILL.md'), 'utf8')
 
   assert.match(text, new RegExp(`skill format above ${SKILL_FORMAT}\\b`))
+  assert.match(text, new RegExp(`skill format below ${SKILL_FORMAT}\\b`))
 })

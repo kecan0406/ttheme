@@ -88,6 +88,7 @@ interface Made {
   file: string
   changed: boolean
   written: boolean
+  replaces: boolean
   source?: string
   nativeNames?: string[]
   colors: Colors
@@ -560,7 +561,7 @@ async function indexNotes(outside: readonly Outside[]): Promise<string[]> {
         const [held, cast] = await Promise.all([index.tagged(work, signal), index.cast(work, signal, CAST_MOST)])
 
         if (held.length === 0) {
-          return [`${work} is in neither the authority nor aninames' index by that slug — check the spelling`]
+          return [`${work}: neither aninames' authority nor its index holds that id — check the spelling`]
         }
 
         return outside.flatMap((o) =>
@@ -622,7 +623,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
     const subject = tagged ?? (flags.work ? `${flags.work}/${anchors.name}` : undefined)
 
     if (tagged && flags.work && workIdOf(tagged) !== flags.work) {
-      notes.push(`${anchors.name}: the commons holds ${booru} as ${tagged} — the palette names that`)
+      notes.push(`${anchors.name}: the list of works holds ${booru} as ${tagged} — the palette names that`)
     }
 
     if (target?.builtin && subject === undefined) {
@@ -689,6 +690,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
       file,
       changed: file === '' || own?.text !== text,
       written: false,
+      replaces: own !== undefined,
       ...(anchors.source ? { source: anchors.source } : {}),
       ...(nativeNames ? { nativeNames } : {}),
       colors: colorsOfTheme(ranked.shade),
@@ -785,11 +787,12 @@ function madeLines(
       `${m.name}${m.subject ? `  ${m.subject}` : ''}  base ${m.base}`,
       ...m.signature.map(
         (d) =>
-          `  ${d.slot.padEnd(10)} ${d.part.padEnd(part)}  ${d.measured} → ${d.final}  ΔE ${d.delta.toFixed(1)}${d.far || d.turned ? '  far from its anchor' : ''}`,
+          `  ${d.slot.padEnd(10)} ${d.part.padEnd(part)}  ${d.measured} → ${d.final}  ΔE ${d.delta.toFixed(1)}${d.far ? '  far from its anchor' : ''}${d.turned ? '  its hue turned' : ''}`,
       ),
       ...m.turned.map((t) => `  turned     ${t.slot} ${t.from} → ${t.to}  ${t.rule}`),
       ...m.lookalikes.map((pair) => `  reads as one  ${pair}`),
       ...(m.gate.length > 0 ? m.gate.map((g) => `  contrast   ${g}`) : ['  contrast   clean']),
+      ...(m.replaces ? ['  replaces   the palette of that name the marketplace holds — make writes over it'] : []),
       `  ${wrote(m)}`,
     ]
   })

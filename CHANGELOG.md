@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The ttheme-palette skill no longer runs `ttheme check` before it makes a palette: `ttheme palette make` now marks each palette that would write over one of the same name in your marketplace (`replaces`), and the skill asks you then. The skill needs this ttheme, and asks you to update ttheme when it is older; update the skill the way you added it.
+
 ## 1.2.99
 
 - Moving quickly between pictures in `ttheme find` is faster: the neighbors drawn ahead no longer hold up the picture you moved to. Browse also stays responsive while a palette's pictures are installed.

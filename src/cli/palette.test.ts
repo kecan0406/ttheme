@@ -135,3 +135,50 @@ test('palette make leaves a work file it cannot read as it found it', async () =
 
   assert.equal(readFileSync(join(dir, 'works', 'starfall.toml'), 'utf8'), typo)
 })
+
+test('palette make says which palettes would write over one the marketplace already holds', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-palette-'))
+  const dir = join(home, 'mine')
+  mkdirSync(join(home, 'ttheme'), { recursive: true })
+  mkdirSync(join(dir, 'sets'), { recursive: true })
+  writeFileSync(join(dir, 'ttheme-marketplace.toml'), 'name = "pastel"\n\n[owner]\nname = "ann"\n')
+  writeFileSync(
+    join(home, 'ttheme', 'installed.json'),
+    JSON.stringify({ terminals: [], palettes: [], marketplaces: [dir] }),
+  )
+  writeFileSync(join(dir, 'sets', 'original.toml'), '[[palette]]\nslug = "wren"\n')
+  const anchors = join(home, 'anchors.json')
+  writeFileSync(
+    anchors,
+    JSON.stringify({
+      wren: { slots: { cursor: ['Hair', '#40a0ff'] } },
+      kit: { slots: { cursor: ['Hair', '#ff8040'] } },
+    }),
+  )
+
+  const fetched = spyOn(globalThis, 'fetch').mockRejectedValue(new Error('no network in a test'))
+  const out = spyOn(process.stdout, 'write').mockImplementation(() => true)
+  const was = process.env.XDG_CONFIG_HOME
+  process.env.XDG_CONFIG_HOME = home
+
+  let printed = ''
+
+  try {
+    await runPalette('make', undefined, { anchors, in: dir, json: true, 'dry-run': true })
+    printed = String(out.mock.calls[0]?.[0])
+  } finally {
+    fetched.mockRestore()
+    out.mockRestore()
+    process.env.XDG_CONFIG_HOME = was
+  }
+
+  const answer = JSON.parse(printed) as { palettes: { name: string; replaces: boolean }[] }
+
+  assert.deepEqual(
+    answer.palettes.map((p) => [p.name, p.replaces]),
+    [
+      ['ann@pastel/wren', true],
+      ['ann@pastel/kit', false],
+    ],
+  )
+})

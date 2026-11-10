@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util'
-import { liveSource, nameIndex } from '../../../../src/store/names.ts'
+import { liveSource, nameIndex } from '../../src/store/names.ts'
 
 const { positionals } = parseArgs({ args: Bun.argv.slice(2), allowPositionals: true })
 const [slug, limit = '40'] = positionals

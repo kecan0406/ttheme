@@ -430,7 +430,7 @@ export function themeOf(file: string, doc: Record<string, unknown>, place: Place
   if (builtin && other === undefined) {
     fail(
       file,
-      `a built-in palette carries its other mode in [palette.colors.${otherOf(modeOf(own))}] — bun .agents/skills/palette/scripts/light.ts --write <its set> writes it`,
+      `a built-in palette carries its other mode in [palette.colors.${otherOf(modeOf(own))}] — bun tools/palette/light.ts --write <its set> writes it`,
     )
   }
 

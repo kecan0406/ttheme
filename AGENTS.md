@@ -72,7 +72,7 @@ While a change goes back and forth with the person you work for, run no check un
 | find, the picture search | `.claude/rules/find.md` |
 | `tests/`, the parity, compat and cost harnesses | `tests/AGENTS.md`, `HACKING.md` |
 | `site/`, `docs/` | `site/AGENTS.md`, `.claude/rules/site.md` |
-| `builtin/`: palettes | `builtin/AGENTS.md`, `CONTRIBUTING.md` ("Works and characters"), the `palette` skill (`.agents/skills/palette/SKILL.md`) |
+| `builtin/`: palettes | `builtin/AGENTS.md`, `CONTRIBUTING.md` ("Works and characters"), the `ttheme-palette` skill (`skills/ttheme-palette/SKILL.md`, then its `references/builtin.md`) |
 | the wording of a screen, a message or a docs page | `.claude/rules/text.md` |
 
 ## Commits

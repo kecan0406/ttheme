@@ -223,7 +223,7 @@ export const VERB_SPECS: VerbSpec[] = [
       ],
       [
         'make [palette]',
-        'Turn an anchors file into palettes — ranks base schemes, harmonizes, fixes the ANSI roles and runs the contrast checks, then writes them into your local marketplace, proposes in its works/ each work or character the commons lacks, and installs them',
+        'Turn an anchors file into palettes — ranks base schemes, harmonizes, fixes the ANSI roles and runs the contrast checks, then writes them into your local marketplace, records in its works/ each work or character the list of works lacks, and installs them',
       ],
     ],
     flags: {
@@ -243,7 +243,7 @@ export const VERB_SPECS: VerbSpec[] = [
         type: 'string',
         value: '<work>',
         about:
-          "make: the work the characters are from, by its id — one the commons holds, or a new one your marketplace's works/ records",
+          "make: the work the characters are from, by its id — one the list of works holds, or a new one your marketplace's works/ records",
       },
       'work-name': { type: 'string', value: '<name>', about: "make: a new work's name, as lists show it" },
       'work-native': { type: 'string', value: '<title>', about: "make: a new work's title in its own language" },
@@ -266,7 +266,7 @@ export const VERB_SPECS: VerbSpec[] = [
       '  }',
       '  slots         the colors you measured, cursor always among them — background, foreground,',
       '                cursor, selection or ansi0–ansi15 — each ["<part>", "#rrggbb"] as measured',
-      "  booru         the character's danbooru tag — a character the commons knows by it is the one the palette",
+      "  booru         the character's danbooru tag — a character the list of works knows by it is the one the palette",
       '                is of; otherwise --work records it with the new character (optional)',
       "  native_names  the new character's names in its own language (optional)",
       '  source        where the colors were measured (optional)',
@@ -275,7 +275,7 @@ export const VERB_SPECS: VerbSpec[] = [
       'an error lists each field it refuses in problems, as { path, problem }.',
       '',
       `The ttheme-palette agent skill this ttheme works with is skill format ${SKILL_FORMAT};`,
-      'a copy of a lower format asks you to update it before it starts.',
+      'a copy of another format asks you to update the older of the two before it starts.',
     ],
   },
   {

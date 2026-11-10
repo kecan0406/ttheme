@@ -1,23 +1,23 @@
 ---
 name: ttheme-palette
-description: Make a ttheme terminal palette for an anime, game or other character from its official art — research the character, measure colors from an official picture, and let the installed ttheme CLI harmonize, check and install it. Use when the user asks for a ttheme palette or terminal theme of a character, or of a whole work's cast.
+description: Make a ttheme terminal palette for an anime, game or other character from its official art — research the character, measure colors from an official picture, and let the installed ttheme CLI harmonize, check and install it. Use when the user asks for a ttheme palette or terminal theme of a character, or of a whole work's cast — and, inside the ttheme repository, when adding or changing the built-in palettes in builtin/.
 ---
 
 # Character palettes with ttheme
 
-A palette is made from colors measured on the character's own design, never from remembered ones. Decide every step yourself and tell the user afterwards what you chose and why. The one thing you ask is which picture to measure.
+A palette is made from colors measured on the character's own design, never from remembered ones. Decide every step yourself and tell the user afterwards what you chose and why; ask the user only where a step says so.
+
+Inside the ttheme repository, for the built-in palettes in `builtin/`, read `references/builtin.md` first: it changes steps 0, 3 and 7 and adds what the built-in marketplace needs.
 
 ## 0. Check the CLI
 
-Run the CLI the install put there, `node ~/.config/ttheme/ttheme.js` (with `$XDG_CONFIG_HOME` in place of `~/.config` where that is set) — this file writes it as `ttheme`. Never the `ttheme` your shell may already know. Run `ttheme help palette`; if the file is missing or the help names no `--work` flag, ttheme is not installed or is older than 1.2.67: tell the user to run `npx @kecan0406/ttheme@latest init` and stop. If the help names a skill format above 3, this file is older than that ttheme: tell the user to update the skill the way they added it (`init` again, `npx skills add kecan0406/ttheme`, or the ttheme-palette plugin) and stop. That help is the reference for the flags, the anchors format and the exit codes. Always pass `--json` and read the result from stdout.
+Run the CLI the install put there, `node ~/.config/ttheme/ttheme.js` (with `$XDG_CONFIG_HOME` in place of `~/.config` where that is set) — this file writes it as `ttheme`. Never the `ttheme` your shell may already know. Run `ttheme help palette` and read the skill format it names. When the file is missing, or the help names no skill format or a skill format below 4, ttheme is not installed or is older than this file: tell the user to run `npx @kecan0406/ttheme@latest init` and stop. When it names a skill format above 4, this file is older than that ttheme: tell the user to update the skill the way they added it (`init` again, `npx skills add kecan0406/ttheme`, or the ttheme-palette plugin) and stop. That help is the reference for the flags and the anchors format. Always pass `--json` and read the result from stdout.
 
 Exit codes: 0 done, 1 failed, 2 nothing changed, 3 your input is invalid (the JSON says which field and what it accepts — fix it and run again), 4 a network request failed (retry once, then tell the user).
 
 ## 1. Scope
 
-One character, or a work's cast (5–7: the protagonists and the characters the work is known by), all from one production's design. A palette of the same character that ttheme ships or another marketplace has does not stop you. `ttheme check <name>` says whether a palette by that name exists; one of the user's own by that name would be written over, so pick another name or ask.
-
-When `make`'s dry run shows a palette with no `subject`, the list of works does not hold the character: read `references/new-work.md`.
+One character, or a work's cast (5–7: the protagonists and the characters the work is known by), all from one production's design. A palette of the same character that ttheme ships or another marketplace has does not stop you.
 
 Name a palette the character's full name, its danbooru tag without a qualifier and with hyphens for underscores (`gojo_satoru` is `gojo-satoru`, `lucy_(cyberpunk)` is `lucy`). Search and the character's name on the site read from this, so never a nickname or a codename.
 
@@ -29,10 +29,9 @@ Search the web for the character's appearance — hair, eyes, signature item, co
 
 Stop at the first clean, evenly lit render of the anime's own design:
 
-1. The anime's official site, character pages. When the site answers a challenge page, its copy on the Wayback Machine (`https://web.archive.org/web/2024/<page>`) names the picture files.
-2. The series' Fandom wiki settei: files named like `<Name>_(Anime).png`, `<Name>-design.jpg`, `<Name>_Anime_HQ.png`.
-3. Other wikis that host settei scans.
-4. Official key visuals or stills, only when the skin is the settei's skin.
+1. The anime's official site, character pages; behind a challenge page, its Wayback Machine copy (`https://web.archive.org/web/2024/<page>`) names the picture files.
+2. Settei on the series' Fandom wiki (files named like `<Name>_(Anime).png`, `<Name>-design.jpg`, `<Name>_Anime_HQ.png`) or another wiki that hosts settei scans.
+3. Official key visuals or stills, only when the skin is the settei's skin.
 
 A page a fetch tool is refused on often answers `curl`, and a MediaWiki wiki's `api.php?action=query&generator=search&gsrsearch=<name>+design&gsrnamespace=6&prop=imageinfo&iiprop=url|size&format=json` lists its files with their sizes and addresses.
 
@@ -65,18 +64,18 @@ Measured values always come from the picture; this step only picks which parts. 
 
 1. An official color the design visibly carries (a gem, the eyes, an item the series makes merch of).
 2. Chromatic hair: hair whose lit flat measures `chroma` 10 or more. Paler hair counts as white.
-3. Fan consensus, for black, white or grey hair: `consensus`'s `verdict` names the part — eyes (≥ .5), an item (≥ .3), achromatic, or too few posts (< 50).
-4. An achromatic identity, when consensus says so: invent no hue.
-5. Your best reading, when the sample is thin or there is no consensus — say so in the report.
+3. Fan consensus, for black, white or grey hair: the part `consensus`'s `verdict` names, the eyes or an item.
+4. An achromatic identity, when the `verdict` is achromatic: keep it near-neutral and invent no hue.
+5. Your own reading, when the `verdict` finds too few posts or no consensus — say so in the report.
 
 Measure castmates each on their own design and do not push them apart.
 
 ## 6. Anchors
 
-The anchors file's `slots` puts each part you measured into one of the palette's colors. Every character needs `cursor`:
+The anchors file's `slots` puts each part you measured into one of the palette's colors:
 
-- `cursor` holds the character's main color: the hair, or the eyes when consensus picked them.
-- A dark identity color (anything darker than mid-grey) goes into `selection`.
+- `cursor`, which every character needs, holds the character's main color: the hair, or the eyes when consensus picked them.
+- A dark identity color goes into `selection`; `make` refuses one in an ANSI color.
 - `ansi1`–`ansi6` keep their roles (red error, green ok, yellow warning, blue, magenta, cyan): put an anchor in the ANSI color whose role matches its hue, a pale one in its bright twin `ansi9`–`ansi14`. A hue no role holds goes in `cursor`, `selection` or `foreground` when it carries the identity; otherwise keep the moved color and say so in the report.
 - White or pale hair can be the `foreground`.
 
@@ -94,7 +93,7 @@ The anchors file's `slots` puts each part you measured into one of the palette's
 }
 ```
 
-One file holds the whole cast. `ttheme help palette` lists every field.
+One file holds the whole cast.
 
 ## 7. Make
 
@@ -102,7 +101,17 @@ One file holds the whole cast. `ttheme help palette` lists every field.
 ttheme palette make --anchors anchors.json [--work <work> [--work-name "<English title>" --work-native "<official title>"]] --dry-run --json
 ```
 
-shows the result without writing. Read each palette in it with `references/make-result.md`. Check that its `subject` names the character you meant, and pass `--work` when it is missing (`references/new-work.md`). A color that came out `far` or `turned` usually means the anchor or its slot is wrong: go back to step 6. Then run the same command without `--dry-run` to write the palettes into the user's local marketplace (`--in <marketplace>` when they have several) and install them. Exit 2 means they were already there unchanged.
+shows the result without writing. Read each palette in it:
+
+- `subject`, the work and character it is of: check that it names the character you meant. When it is missing, the list of works does not hold the character: read `references/new-work.md`.
+- `signature`, each anchor's part, `measured` and `final` color, `delta` (the ΔE2000 between them) and `shift` (its hue move in degrees). `far` marks a cursor or selection that moved far from its anchor and `turned` a hue that turned: either usually means the anchor or its slot is wrong, so go back to step 6.
+- `turned`, the ANSI colors the role fixer moved, and why; `lookalikes`, anchors that read as one at text size; `gate`, contrast checks it still fails, normally none.
+- `nativeNames`, the names ttheme filled in: set `native_names` in the anchors yourself when they hold a series title or a nickname.
+- `replaces`, set when the marketplace already holds a palette of that name, which `make` writes over: when you did not make it in this task, pick another name or ask the user.
+
+`notes` carries what ttheme noticed on the way (a base scheme list it could not fetch, a character the list of works holds under another work than `--work`), and `works` the work records `make` adds to the marketplace's `works/`, each with the `characters` it records there. `changed` says a file would differ from what is there, and `written` that it was written.
+
+Then run the same command without `--dry-run` to write the palettes into the user's local marketplace (`--in <marketplace>` when they have several) and install them. Exit 2 means they were already there unchanged.
 
 If `make` says the user has no marketplace yet, run `ttheme marketplace init <name>`, with a name the user gave or `characters`. When ttheme cannot read the user's GitHub handle from `gh`, ask for it and pass `--owner <handle>`.
 
@@ -118,7 +127,3 @@ Tell the user, per palette, in their language:
 - anything you were unsure of.
 
 Then, once: `ttheme edit <full name>` tunes it by hand, `ttheme` opens Preview, whose palette panel finds background pictures (`f`), and `ttheme share` shares it as a link or a GitHub marketplace — run `share` only when the user asks.
-
-## Inside the ttheme repository
-
-The built-in palettes take these steps plus what `.agents/skills/palette/SKILL.md` lists: read it before you start.
