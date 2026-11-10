@@ -52,7 +52,7 @@
         "site/client/wear.ts",
         "site/lib/art-source.ts",
         "site/lib/drafts.ts",
-        "src/cli/find/kept.ts",
+        "src/tui/find/kept.ts",
         "src/cli/marketplaces.ts",
         "src/cli/refresh.ts",
         "src/cli/release.ts",
