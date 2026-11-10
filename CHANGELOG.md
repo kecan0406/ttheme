@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- In Preview, a key bar too long for the window now gives up its keys the way Browse's and the editor's do: `enter` always stays, and a key that was dropped comes back when the room left can hold it. Before, Preview kept only `? keys` in a narrow window and never brought a key back.
+
 ## 1.2.101
 
 - The ttheme-palette skill no longer runs `ttheme check` before it makes a palette: `ttheme palette make` now marks each palette that would write over one of the same name in your marketplace (`replaces`), and the skill asks you then. The skill needs this ttheme, and asks you to update ttheme when it is older; update the skill the way you added it.

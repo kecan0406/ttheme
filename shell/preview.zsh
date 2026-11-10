@@ -546,11 +546,11 @@ __tt_pv_standing() {
 __tt_pv_foot() {
   (( TTHEME_PALETTES_IN )) || __tt_palettes
   setopt localoptions extendedglob
-  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] al=$TTHEME_SGR[alert] on=$pl badge="" pre="" lead="" note="" right="" rk="" ver="" text line plain hex tb=EDIT ke ku REPLY
-  local -a kk=() kl=() seg=()
+  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] al=$TTHEME_SGR[alert] on=$pl badge="" pre="" lead="" note="" right="" rk="" ver="" text hex tb=EDIT ke ku REPLY
+  local -a kk=() kl=()
   __tt_cap esc; ke=$REPLY
   __tt_cap alt+u; ku=$REPLY
-  local -i end=$1 bw=$(( $1 - 1 )) i lwid rwid vwid rend room
+  local -i end=$1 bw=$(( $1 - 1 )) i room
   (( color )) || b= d= z= y= al= on=
   local hl=$TTHEME_SGR[chip] hx=$TTHEME_SGR[/chip]
   (( mhp )) && hl=$pl hx=$TTHEME_SGR[/pill]
@@ -677,50 +677,87 @@ __tt_pv_foot() {
     fi
     lead=$y$text$z note="" kk=() kl=() ver=""
   fi
-  while :; do
-    seg=()
-    [[ -n $lead ]] && seg+=("$pre$lead")
-    [[ -n $note ]] && seg+=("$d$note$z")
-    for (( i = 1; i <= ${#kk}; i++ )); do
-      __tt_cap "${kk[i]}"
-      if (( color )) && [[ $mhov == "key ${kk[i]}" ]]; then
-        seg+=("$hl$REPLY ${kl[i]}$hx")
-      else
-        seg+=("$b$REPLY$z$d ${kl[i]}$z")
-      fi
-    done
-    line=${(j:   :)seg}
-    if [[ -n $badge ]]; then
-      if (( color )); then
-        line=$on" $badge "$z"  "$line
-      else
-        line="[$badge] $line"
-      fi
+  __tt_pv_barline
+}
+
+__tt_pv_barfit() {
+  local -i i
+  seg=()
+  [[ -n $lead ]] && seg+=("$pre$lead")
+  [[ -n $note ]] && seg+=("$d$note$z")
+  for i in $held; do
+    seg+=("${hints[i]}")
+  done
+  line=${(j:   :)seg}
+  if [[ -n $badge ]]; then
+    if (( color )); then
+      line=$on" $badge "$z"  "$line
+    else
+      line="[$badge] $line"
     fi
-    plain=${line//$'\e'\[[0-9;]##m/}
-    lwid=${(m)#plain}
-    plain=${right//$'\e'\[[0-9;]##m/}
-    rwid=${(m)#plain}
-    plain=${ver//$'\e'\[[0-9;]##m/}
-    vwid=${(m)#plain}
-    (( lwid <= bw && lwid + (rwid ? 3 + rwid : 0) + (vwid ? 3 + vwid : 0) <= bw )) && break
+  fi
+  plain=${line//$'\e'\[[0-9;]##m/}
+  lwid=${(m)#plain}
+  plain=${right//$'\e'\[[0-9;]##m/}
+  rwid=${(m)#plain}
+  plain=${ver//$'\e'\[[0-9;]##m/}
+  vwid=${(m)#plain}
+  (( lwid + (rwid ? 3 + rwid : 0) + (vwid ? 3 + vwid : 0) <= bw ))
+}
+
+__tt_pv_barline() {
+  setopt localoptions extendedglob
+  local line plain short=$pre REPLY
+  local -a seg=() all=("${kk[@]}") names=("${kl[@]}") hints=() held=() was=() kept=('?' enter)
+  local -i i at lwid rwid vwid rend zc zw fits=1
+  for (( i = 1; i <= ${#all}; i++ )); do
+    __tt_cap "${all[i]}"
+    if (( color )) && [[ $mhov == "key ${all[i]}" ]]; then
+      hints+=("$hl$REPLY ${names[i]}$hx")
+    else
+      hints+=("$b$REPLY$z$d ${names[i]}$z")
+    fi
+    held+=($i)
+  done
+  until __tt_pv_barfit; do
+    at=0
+    for (( i = ${#held}; i > 1; i-- )); do
+      (( ${kept[(Ie)${all[held[i]]}]} )) && continue
+      at=$i
+      break
+    done
     if [[ -n $ver ]] && (( ! vnew )); then
       ver=""
     elif [[ -n $note ]]; then
       note=""
+    elif (( at )); then
+      held[at]=()
     elif [[ -n $pre ]]; then
       pre=""
-    elif (( ${#kk} > 2 )); then
-      kk[-2]=() kl[-2]=()
     elif [[ -n $right ]]; then
       right=""
-    elif (( ${#kk} > 1 )); then
-      kk[-2]=() kl[-2]=()
     elif [[ -n $ver ]]; then
       ver=""
+    elif [[ -n $short ]] && (( ${#held} > 1 && ! ${kept[(Ie)${all[held[1]]}]} )); then
+      held[1]=()
     else
+      fits=0
       break
     fi
+  done
+  if (( fits && ${#held} < ${#all} )); then
+    for (( at = 1; at <= ${#all}; at++ )); do
+      (( ${held[(Ie)$at]} )) && continue
+      was=($held)
+      held+=($at)
+      held=(${(on)held})
+      __tt_pv_barfit || held=($was)
+    done
+    __tt_pv_barfit
+  fi
+  kk=() kl=()
+  for i in $held; do
+    kk+=("${all[i]}") kl+=("${names[i]}")
   done
   if (( lwid > bw )); then
     __tt_clip "$line" $bw
@@ -733,7 +770,7 @@ __tt_pv_foot() {
     rend=$(( end - vwid - 3 ))
   fi
   [[ -n $right ]] && out+=$'\e['$(( rend - rwid + 1 ))'G'$right
-  local -i zc=2 zw
+  zc=2
   [[ -n $badge ]] && (( zc += ${(m)#badge} + (color ? 4 : 3) ))
   if [[ -n $lead ]]; then
     if [[ -n $pick ]]; then
