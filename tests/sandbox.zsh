@@ -302,6 +302,7 @@ open_terminal_app() {
 }
 
 activate() {
+  (( LINUX )) && return 0
   osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($1).activateWithOptions(0)" > /dev/null
 }
 

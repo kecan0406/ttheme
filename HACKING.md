@@ -37,7 +37,7 @@ Terminal.app's profile pictures, whether a shell idle at its prompt runs a
 signal's trap at once, and whether a tab that never painted follows a new
 default and a tab that went off takes it back — and compares them with
 `tests/compat/expect.tsv`: a case that used to pass and fails is a regression
-and fails the run. `--update` writes what was measured into `expect.tsv`
+and fails the run, and so does a terminal whose cases never ran. `--update` writes what was measured into `expect.tsv`
 (`expect-linux.tsv` under `--linux`), never a skip over a pass or a fail, and
 which version, on which day and at which commit, into
 `tests/compat/measured.tsv`. A case about what a tab shows reads it off the

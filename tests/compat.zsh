@@ -200,6 +200,7 @@ measure() {
   if ! env $env zsh $ROOT/tests/sandbox.zsh --behind ${=FLAG[$term]} --zshenv $hook ttheme/hatsune-miku ttheme/souryuu-asuka-langley ttheme/ayanami-rei > /dev/null; then
     rm -f $hook
     { quit $term $was } always { MEASURING=() }
+    print -u2 "$term: the sandbox never started it"
     return 1
   fi
   rm -f $hook
@@ -351,14 +352,18 @@ record() {
 }
 
 in_container() {
-  local image=$1 tag=ttheme-$1 arg REPLY
+  local image=$1 tag=ttheme-$1 log=$OUT/$1.build.log arg REPLY
   local -a build=()
   shift
   (( $+commands[docker] )) || { print -u2 "$image: these cases run in a container, which needs Docker"; return 1 }
   for arg in ${=TTHEME_COMPAT_BUILD_ARGS}; do build+=(--build-arg $arg); done
   (( $#build )) && tag+=-custom
   print -r -- "$image: building tests/compat/$image.Dockerfile…${build:+ ${(j: :)${=TTHEME_COMPAT_BUILD_ARGS}}}"
-  docker build -q -t $tag $build -f "$ROOT/tests/compat/$image.Dockerfile" "$ROOT/tests/compat" > /dev/null || return
+  if ! docker build --progress=plain -t $tag $build -f "$ROOT/tests/compat/$image.Dockerfile" "$ROOT/tests/compat" > $log 2>&1; then
+    print -u2 -r -- "$image: the image never built — the end of $log:"
+    tail -n 60 $log >&2
+    return 1
+  fi
   commit_of
   docker run --rm -v "$ROOT":/work -v "$OUT":"$OUT" -e TTHEME_COMPAT_OUT="$OUT" -e TTHEME_COMPAT_COMMIT="$REPLY" $tag zsh tests/compat.zsh $@
 }
@@ -370,7 +375,7 @@ main() {
     EXPECT=$ROOT/tests/compat/expect-linux.tsv
     TERMINALS=($LINUX_TERMINALS)
   fi
-  local -a terms=(${@:-$TERMINALS}) ran=()
+  local -a terms=(${@:-$TERMINALS}) ran=() missed=()
   local term contained=0
   for term in $terms; do
     (( ${TERMINALS[(Ie)$term]} )) || { print -u2 "unknown terminal $term — one of $TERMINALS"; return 1 }
@@ -398,7 +403,11 @@ main() {
       continue
     fi
     print -r -- "$term: running the cases…"
-    measure $term && ran+=($term)
+    if measure $term; then
+      ran+=($term)
+    else
+      missed+=($term)
+    fi
   done
   (( ${#ran} )) || return 1
   if (( $#upd )); then
@@ -407,7 +416,7 @@ main() {
       record $term
     done
   fi
-  report $ran && (( ! contained ))
+  report $ran $missed && (( ! contained && ! ${#missed} ))
 }
 
 main $@
