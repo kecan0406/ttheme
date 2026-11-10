@@ -1,0 +1,31 @@
+name: setup
+description: What every job needs before its task — zsh, tmux and sqlite3 from apt, the mise tools and the bun packages. The apt install runs behind the other two, zsh from a cache of its packages keyed by the version apt would install, so a slow mirror costs one run per zsh version.
+inputs:
+  save:
+    description: true in the one job that saves a zsh version's packages when the cache lacks them
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - id: version
+      shell: bash
+      run: |
+        echo "zsh=$(apt-cache policy zsh | sed -n 's/^ *Candidate: //p')" >> "$GITHUB_OUTPUT"
+    - id: cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/zsh-debs
+        key: zsh-${{ runner.arch }}-${{ steps.version.outputs.zsh }}
+    - shell: bash
+      run: (set +e; sh "$GITHUB_ACTION_PATH/install.sh"; echo $? > "$RUNNER_TEMP/apt.rc") > "$RUNNER_TEMP/apt.log" 2>&1 &
+    - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+    - shell: bash
+      run: bun install --frozen-lockfile
+    - name: zsh installed
+      shell: bash
+      run: until [ -s "$RUNNER_TEMP/apt.rc" ]; do sleep 0.2; done; cat "$RUNNER_TEMP/apt.log"; exit "$(cat "$RUNNER_TEMP/apt.rc")"
+    - if: inputs.save == 'true' && steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/zsh-debs
+        key: ${{ steps.cache.outputs.cache-primary-key }}

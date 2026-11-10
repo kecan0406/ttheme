@@ -28,11 +28,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/zsh
-      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
-      - run: bun install --frozen-lockfile
-      - name: zsh installed
-        run: until [ -s "$RUNNER_TEMP/apt.rc" ]; do sleep 0.2; done; cat "$RUNNER_TEMP/apt.log"; exit "$(cat "$RUNNER_TEMP/apt.rc")"
+      - uses: ./.github/actions/setup
       - name: newest releases
         if: matrix.lane == 'latest'
         env:
@@ -46,6 +42,7 @@ jobs:
           mise run compat --linux 2>&1 | tee "$RUNNER_TEMP/compat.log"
           echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
       - name: tell
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: zsh tests/nightly.zsh "Real terminals (${{ matrix.lane }} builds) left their expected results" "${{ steps.compat.outputs.code }}" "$RUNNER_TEMP/compat.log"
@@ -68,11 +65,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/zsh
-      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
-      - run: bun install --frozen-lockfile
-      - name: zsh installed
-        run: until [ -s "$RUNNER_TEMP/apt.rc" ]; do sleep 0.2; done; cat "$RUNNER_TEMP/apt.log"; exit "$(cat "$RUNNER_TEMP/apt.rc")"
+      - uses: ./.github/actions/setup
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: /tmp/ttheme-walks.json
@@ -88,6 +81,7 @@ jobs:
           path: /tmp/ttheme-walks.json
           key: walks-${{ github.run_id }}
       - name: tell
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: zsh tests/nightly.zsh "Random walks of the parity model failed" "${{ steps.walk.outputs.code }}" "$RUNNER_TEMP/walk.log"
@@ -117,11 +111,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/zsh
-      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
-      - run: bun install --frozen-lockfile
-      - name: zsh installed
-        run: until [ -s "$RUNNER_TEMP/apt.rc" ]; do sleep 0.2; done; cat "$RUNNER_TEMP/apt.log"; exit "$(cat "$RUNNER_TEMP/apt.rc")"
+      - uses: ./.github/actions/setup
       - id: flakes
         env:
           TTHEME_PARITY_AGAIN: ${{ runner.temp }}/again.tsv
@@ -133,6 +123,7 @@ jobs:
           bun tests/parity/again.ts "$TTHEME_PARITY_AGAIN" 3 2>&1 | tee "$RUNNER_TEMP/flakes.log"
           echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
       - name: tell
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: zsh tests/nightly.zsh "The parity walk needed second walks on main (${{ matrix.terminals }})" "${{ steps.flakes.outputs.code }}" "$RUNNER_TEMP/flakes.log"

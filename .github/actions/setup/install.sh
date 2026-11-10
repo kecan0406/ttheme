@@ -5,8 +5,11 @@ cached ||
   { rm -f ./*.deb; apt-get download zsh zsh-common && cached; } ||
   { rm -f ./*.deb; sudo apt-get update && apt-get download zsh zsh-common && cached; } ||
   rm -f ./*.deb
-sudo cp ./*.deb /var/cache/apt/archives/ 2> /dev/null
-sudo apt-get install -y zsh || { sudo apt-get update && sudo apt-get install -y zsh; } || exit 1
+through_apt() { sudo apt-get install -y --fix-broken && sudo apt-get install -y zsh; }
+cached && sudo dpkg -i ./zsh-common_*.deb ./zsh_*.deb || {
+  sudo cp ./*.deb /var/cache/apt/archives/ 2> /dev/null
+  through_apt || { sudo apt-get update && through_apt; } || exit 1
+}
 cached || { cd && rmdir ~/zsh-debs; }
 command -v tmux > /dev/null && command -v sqlite3 > /dev/null ||
   sudo apt-get install -y tmux sqlite3 ||
