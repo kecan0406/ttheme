@@ -8,9 +8,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 FROM zig AS ghostty
 ARG GHOSTTY=1.4.0
 ARG ZIG=0.17.0
-RUN curl -fsSL --retry 5 --retry-all-errors https://ziglang.org/download/$ZIG/zig-$(uname -m)-linux-$ZIG.tar.xz | tar -xJ -C /opt
+RUN curl -fsSL --retry 5 --retry-all-errors -o /tmp/zig.tar.xz https://ziglang.org/download/$ZIG/zig-$(uname -m)-linux-$ZIG.tar.xz \
+  && tar -xJf /tmp/zig.tar.xz -C /opt && rm /tmp/zig.tar.xz
 WORKDIR /src
-RUN curl -fsSL --retry 5 --retry-all-errors https://release.files.ghostty.org/$GHOSTTY/ghostty-$GHOSTTY.tar.gz | tar -xz --strip-components=1 \
+RUN curl -fsSL --retry 5 --retry-all-errors -o /tmp/ghostty.tar.gz https://release.files.ghostty.org/$GHOSTTY/ghostty-$GHOSTTY.tar.gz \
+  && tar -xzf /tmp/ghostty.tar.gz --strip-components=1 && rm /tmp/ghostty.tar.gz \
   && /opt/zig-$(uname -m)-linux-$ZIG/zig build -Doptimize=ReleaseFast -Dcpu=baseline --prefix /opt/ghostty
 
 FROM ghostty AS ghostty-tip
@@ -19,7 +21,8 @@ ARG ZIG_TIP=0.17.0
 ARG BLUEPRINT=v0.20.4
 RUN git clone -q --depth 1 --branch $BLUEPRINT https://gitlab.gnome.org/GNOME/blueprint-compiler.git /tmp/blueprint \
   && meson setup /tmp/blueprint/build /tmp/blueprint --prefix=/usr/local && meson install -C /tmp/blueprint/build
-RUN curl -fsSL --retry 5 --retry-all-errors https://ziglang.org/download/$ZIG_TIP/zig-$(uname -m)-linux-$ZIG_TIP.tar.xz | tar -xJ -C /opt
+RUN curl -fsSL --retry 5 --retry-all-errors -o /tmp/zig.tar.xz https://ziglang.org/download/$ZIG_TIP/zig-$(uname -m)-linux-$ZIG_TIP.tar.xz \
+  && tar -xJf /tmp/zig.tar.xz -C /opt && rm /tmp/zig.tar.xz
 WORKDIR /tip
 RUN git init -q && git remote add origin https://github.com/ghostty-org/ghostty.git \
   && git fetch -q --depth 1 origin $GHOSTTY_TIP && git checkout -q FETCH_HEAD \
@@ -34,7 +37,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 ARG KITTY=0.49.2
 RUN mkdir -p /opt/kitty \
-  && curl -fsSL --retry 5 --retry-all-errors https://github.com/kovidgoyal/kitty/releases/download/v$KITTY/kitty-$KITTY-$(uname -m | sed 's/aarch64/arm64/').txz | tar -xJ -C /opt/kitty \
+  && curl -fsSL --retry 5 --retry-all-errors -o /tmp/kitty.txz https://github.com/kovidgoyal/kitty/releases/download/v$KITTY/kitty-$KITTY-$(uname -m | sed 's/aarch64/arm64/').txz \
+  && tar -xJf /tmp/kitty.txz -C /opt/kitty && rm /tmp/kitty.txz \
   && ln -s /opt/kitty/bin/kitty /opt/kitty/bin/kitten /usr/local/bin/
 RUN arch=$(dpkg --print-architecture) \
   && curl -fsSL --retry 5 --retry-all-errors -o /tmp/wezterm.deb https://github.com/wezterm/wezterm/releases/download/nightly/wezterm-nightly.Ubuntu24.04$([ "$arch" = amd64 ] || echo ".$arch").deb \
@@ -53,9 +57,10 @@ RUN arch=$(dpkg --print-architecture) \
 RUN chsh -s /usr/bin/zsh root
 ARG NODE=v22.23.3
 RUN arch=$(dpkg --print-architecture | sed 's/amd64/x64/') \
-  && curl -fsSL --retry 5 --retry-all-errors https://nodejs.org/dist/$NODE/node-$NODE-linux-$arch.tar.xz | tar -xJ -C /opt \
+  && curl -fsSL --retry 5 --retry-all-errors -o /tmp/node.tar.xz https://nodejs.org/dist/$NODE/node-$NODE-linux-$arch.tar.xz \
+  && tar -xJf /tmp/node.tar.xz -C /opt && rm /tmp/node.tar.xz \
   && ln -s /opt/node-$NODE-linux-$arch/bin/node /usr/local/bin/node
-RUN curl -fsSL --retry 5 --retry-all-errors https://bun.sh/install | bash -s "bun-v1.3.14"
+RUN curl -fsSL --retry 5 --retry-all-errors -o /tmp/bun.sh https://bun.sh/install && bash /tmp/bun.sh "bun-v1.3.14" && rm /tmp/bun.sh
 COPY --from=ghostty /opt/ghostty /opt/ghostty
 COPY --from=ghostty-tip /opt/ghostty-tip /opt/ghostty-tip
 RUN ln -s /opt/ghostty/bin/ghostty /usr/local/bin/ghostty \

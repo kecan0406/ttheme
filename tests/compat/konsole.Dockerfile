@@ -6,8 +6,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 ARG NODE=v22.23.3
 RUN arch=$(dpkg --print-architecture | sed 's/amd64/x64/') \
-  && curl -fsSL https://nodejs.org/dist/$NODE/node-$NODE-linux-$arch.tar.xz | tar -xJ -C /opt \
+  && curl -fsSL --retry 5 --retry-all-errors -o /tmp/node.tar.xz https://nodejs.org/dist/$NODE/node-$NODE-linux-$arch.tar.xz \
+  && tar -xJf /tmp/node.tar.xz -C /opt && rm /tmp/node.tar.xz \
   && ln -s /opt/node-$NODE-linux-$arch/bin/node /usr/local/bin/node
-RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.14"
+RUN curl -fsSL --retry 5 --retry-all-errors -o /tmp/bun.sh https://bun.sh/install && bash /tmp/bun.sh "bun-v1.3.14" && rm /tmp/bun.sh
 ENV PATH=/root/.bun/bin:$PATH LANG=C.UTF-8 TMPDIR=/tmp TTHEME_COMPAT_IMAGE=konsole
 WORKDIR /work
