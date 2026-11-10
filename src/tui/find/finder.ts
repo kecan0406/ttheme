@@ -77,6 +77,7 @@ export class Finder {
   private terminal?: Terminal
   private noticeTimer?: NodeJS.Timeout
   private peekTimer?: NodeJS.Timeout
+  private readonly slowed = new Set<string>()
   private done?: (code: number) => void
   private readonly scratch = mkdtempSync(join(tmpdir(), 'ttheme-find-'))
 
@@ -182,6 +183,8 @@ export class Finder {
         this.inform()
         this.paint.draw()
       },
+      quieted: (site) => this.slow(site),
+      arrived: (site) => this.thumbs.revive(site),
     })
     this.thumbs = new Thumbs({
       view: this.view,
@@ -466,6 +469,17 @@ export class Finder {
       }
     }, ms)
     this.paint.draw()
+  }
+
+  private slow(key: string): void {
+    if (this.slowed.has(key)) {
+      return
+    }
+
+    this.slowed.add(key)
+    const name = SITES.find((site) => site.key === key)?.name ?? key
+    const unranked = this.view.order === 'fit' ? ', so its pictures are not ranked by color' : ''
+    this.notice(`${name} is slow to send previews${unranked}`)
   }
 
   private unhint(): void {

@@ -9,6 +9,7 @@ import { locate } from '../../pictures/booru-net.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../../pictures/cutout.ts'
 import type { Pick } from '../../pictures/fit.ts'
 import type { Lane, Renderer, Shown } from '../../pictures/render.ts'
+import { cap } from '../keycaps.ts'
 import { lineStep } from '../keys.ts'
 import type { Hit } from '../zones.ts'
 import type { Boards } from './boards.ts'
@@ -199,6 +200,15 @@ export class Trial {
 
   tryKey(key: string): void {
     const view = this.view
+    const tile = view.tiles[view.focus]
+
+    if (key === 'enter' && tile && view.failed === tile.key) {
+      view.failed = undefined
+      view.notice = undefined
+      void this.load(tile)
+
+      return
+    }
 
     if (view.tuning) {
       this.tuneKey(key)
@@ -272,6 +282,7 @@ export class Trial {
       this.fetch?.abort()
       clearTimeout(this.settle)
       view.fetching = undefined
+      view.failed = undefined
       view.mode = 'grid'
       view.notice = undefined
       this.paint.draw()
@@ -411,6 +422,12 @@ export class Trial {
     this.fetch?.abort()
     clearTimeout(this.settle)
     view.fetching = undefined
+
+    if (view.failed !== undefined) {
+      view.failed = undefined
+      view.notice = undefined
+    }
+
     this.inform()
 
     if (!tile) {
@@ -543,7 +560,9 @@ export class Trial {
       this.preload()
     } catch (error) {
       if (!control.signal.aborted && !this.signal.aborted) {
-        view.notice = { text: reason(site.name, error instanceof Error ? error : String(error)), tone: 'error' }
+        const told = reason(site.name, error instanceof Error ? error : String(error))
+        view.failed = tile.key
+        view.notice = { text: `${told} — ${cap('enter')} tries again`, tone: 'error' }
       }
     } finally {
       if (view.fetching?.id === tile.key) {

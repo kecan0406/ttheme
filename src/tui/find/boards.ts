@@ -125,6 +125,7 @@ export class Boards {
   private readonly boards = new Map<string, Board>()
   private readonly looking = new Map<number, Promise<Look | undefined>>()
   private readonly looked = new Map<number, Look>()
+  private readonly late = new Set<number>()
   private readonly matched = new Map<Post, number>()
   private aheading = false
   private readonly pages = new Map<string, Promise<Post[]>>()
@@ -477,6 +478,7 @@ export class Boards {
           await fetchLent(
             asking.map((post) => post.md5),
             this.signal,
+            true,
           ),
         )
       } catch {}
@@ -603,7 +605,9 @@ export class Boards {
       return
     }
 
-    const next = board.queue.slice(0, this.need()).filter((pick) => !this.looking.has(postKey(pick.site, pick.post.id)))
+    const next = board.queue
+      .slice(0, this.need())
+      .filter((pick) => !this.looking.has(postKey(pick.site, pick.post.id)) && !this.quiet(pick))
 
     if (next.length === 0) {
       return
@@ -702,12 +706,28 @@ export class Boards {
 
     const lane = async () => {
       while (next < picks.length) {
-        await this.look(picks[next++] as Pick)
+        await this.sight(picks[next++] as Pick)
         each?.()
       }
     }
 
     await Promise.all(Array.from({ length: THUMB }, lane))
+  }
+
+  private quiet(pick: Pick): boolean {
+    return this.kept.pace.still(previewOf(pick.site, pick.post).site.key)
+  }
+
+  private async sight(pick: Pick): Promise<void> {
+    const key = postKey(pick.site, pick.post.id)
+
+    if (this.late.has(key) || this.quiet(pick)) {
+      return
+    }
+
+    if (!(await this.kept.pace.wait(previewOf(pick.site, pick.post).site.key, this.look(pick)))) {
+      this.late.add(key)
+    }
   }
 
   private look(pick: Pick): Promise<Look | undefined> {
@@ -837,7 +857,7 @@ export class Boards {
   }
 
   private async vet(pick: Pick): Promise<boolean> {
-    const [passed] = await Promise.all([this.passes(pick), this.look(pick)])
+    const [passed] = await Promise.all([this.passes(pick), this.sight(pick)])
 
     return passed
   }

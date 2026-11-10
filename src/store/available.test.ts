@@ -399,6 +399,24 @@ test('a body over its ceiling is refused, whatever its length header says', asyn
   assert.equal((await bodyWithin(new Response(null, { status: 204 }), 4096, 'too much')).length, 0)
 })
 
+test('a body that stops coming is let go once it has been quiet too long', async () => {
+  let stopped = false
+
+  const stalled = new Response(
+    new ReadableStream({
+      start(controller) {
+        controller.enqueue(new Uint8Array(8))
+      },
+      cancel() {
+        stopped = true
+      },
+    }),
+  )
+
+  await assert.rejects(bodyWithin(stalled, 4096, 'too much', undefined, 20), { name: 'TimeoutError' })
+  assert.ok(stopped, 'the stream is let go')
+})
+
 test('the head of a body stops reading at what it asked for', async () => {
   let stopped = false
 

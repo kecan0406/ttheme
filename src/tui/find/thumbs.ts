@@ -57,6 +57,8 @@ export class Thumbs {
   private readonly heldAsked = new Set<string>()
   private thumbing = 0
   private readonly thumbless = new Set<number>()
+  private readonly again = new Map<number, Pick>()
+  private readonly retried = new Set<number>()
 
   private readonly view: FindView
   private readonly grid: () => Grid
@@ -97,6 +99,24 @@ export class Thumbs {
   want(...picks: Pick[]): void {
     this.thumbQueue.push(...picks)
     this.thumbs()
+  }
+
+  revive(from: string): void {
+    const due = [...this.again].filter(([, pick]) => previewOf(pick.site, pick.post).site.key === from)
+
+    if (due.length === 0) {
+      return
+    }
+
+    for (const [key] of due) {
+      this.again.delete(key)
+      this.retried.add(key)
+      this.thumbless.delete(key)
+    }
+
+    this.want(...due.map(([, pick]) => pick))
+    this.show()
+    this.paint.draw()
   }
 
   holds(): void {
@@ -140,7 +160,13 @@ export class Thumbs {
       this.thumbing++
       this.thumb(pick)
         .catch(() => {
-          this.thumbless.add(postKey(pick.site, pick.post.id))
+          const key = postKey(pick.site, pick.post.id)
+          this.thumbless.add(key)
+
+          if (!this.retried.has(key)) {
+            this.again.set(key, pick)
+          }
+
           this.show()
           this.paint.draw()
         })

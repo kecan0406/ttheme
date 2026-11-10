@@ -177,6 +177,7 @@ export interface FindView {
   tuning?: TunePanel
   fill?: number
   fetching?: { id: number; got: number; size: number }
+  failed?: number
   preparing?: number
   cutting?: number
   redraw?: { key: number; from: number; done: boolean }
@@ -250,6 +251,8 @@ interface Frame {
 
 const SAMPLE_REACH = 68
 export const TILE = { pitch: 25, cols: 22, rows: 9, height: 13 }
+
+const NO_PREVIEW = 'No preview'
 export const MIN = { cols: 25, rows: 21 }
 export const HELD = { cols: 10, rows: 3, pitch: 12, top: 4 }
 const GRID_TOP = HELD.top + HELD.rows + 1
@@ -1558,6 +1561,12 @@ function grid(
           ...(to - from < TILE.rows ? { crop: from - top } : {}),
           z: -1,
         })
+      } else if (tile.missing) {
+        const middle = top + Math.floor(TILE.rows / 2)
+
+        if (middle >= from && middle < to) {
+          inside[middle]?.put(c0 + 1 + Math.floor((TILE.cols - width(NO_PREVIEW)) / 2), NO_PREVIEW, D)
+        }
       }
 
       const row: Part[] = [
@@ -1746,7 +1755,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
         ['c', 'colors'],
         ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
         ...pictureHint(', .', view),
-        ['enter', 'install'],
+        ['enter', view.failed === tile.key ? 'try again' : 'install'],
       ],
       right: ['esc', 'back'],
     })
@@ -1763,7 +1772,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
       : [
           ...pictureHint('←→', view),
           ['↑↓', 'move'],
-          ['enter', 'install'],
+          ['enter', view.failed === tile.key ? 'try again' : 'install'],
           ['c', 'colors'],
           ['i', 'details'],
           ...(view.details ? [] : [['shift+←→', 'sample'] as [string, string]]),
@@ -1872,7 +1881,7 @@ const KEYS: Record<FindView['mode'], Key[]> = {
       group: 'Picture',
       keys: 'enter',
       does: 'Install it',
-      more: 'Pictures install one after another in the order you pick them, and you can keep browsing.',
+      more: 'Pictures install one after another in the order you pick them, and you can keep browsing. After a picture fails to arrive, enter fetches it again.',
       press: 'enter',
       onBar: true,
     },

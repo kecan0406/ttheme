@@ -16,6 +16,9 @@ import { origins } from '../../pictures/backdrop.ts'
 import { fetchBytes, fetchCredits, fetchPost, fetchProfiles, headOf, locate } from '../../pictures/booru-net.ts'
 import type { Pick } from '../../pictures/fit.ts'
 import { writeAtomic } from '../../store/edits.ts'
+import { Pace } from './pace.ts'
+
+const LULL = 5_000
 
 interface Known {
   urls: string[]
@@ -27,6 +30,8 @@ interface Shelf {
   entry: PaletteEntry
   signal: AbortSignal
   credited: () => void
+  quieted: (site: string) => void
+  arrived: (site: string) => void
 }
 
 export class Kept {
@@ -35,12 +40,14 @@ export class Kept {
   private readonly crediting = new Map<number, Promise<void>>()
   private readonly inflight = new Map<string, Promise<number>>()
   private readonly asking = new Map<string, Promise<void>>()
+  readonly pace: Pace
 
   private readonly home: string
   private readonly manifest: Manifest
   private readonly entry: PaletteEntry
   private readonly signal: AbortSignal
   private readonly credited: () => void
+  private readonly arrived: (site: string) => void
 
   constructor(shelf: Shelf) {
     this.home = shelf.home
@@ -48,6 +55,8 @@ export class Kept {
     this.entry = shelf.entry
     this.signal = shelf.signal
     this.credited = shelf.credited
+    this.arrived = shelf.arrived
+    this.pace = new Pace(LULL, shelf.signal, shelf.quieted)
   }
 
   matesOf(site: Site, owner: string): string[] {
@@ -178,6 +187,8 @@ export class Kept {
     const job = (async () => {
       const bytes = await fetchBytes(site, url, this.signal, progress)
       writeAtomic(path, bytes)
+      this.pace.came(site.key)
+      this.arrived(site.key)
 
       return bytes.length
     })()
@@ -208,7 +219,7 @@ export class Kept {
     const due = names.filter((name) => !this.asking.has(name) && known[name] === undefined)
 
     if (due.length > 0) {
-      const job = fetchProfiles(due, signal)
+      const job = fetchProfiles(due, signal, true)
         .then(
           (found) => {
             for (const name of due) {

@@ -34,13 +34,15 @@ export function describe(error: Error | string): string {
     return code
   }
 
-  const first = (error.message || error.name).split('.')[0] ?? ''
+  const first = (error.message || error.name).split(/\.(?:\s|$)/)[0] ?? ''
 
   return first.length > 56 ? `${first.slice(0, 55)}…` : first
 }
 
 export function reason(name: string, error: Error | string): string {
-  return `${name}: ${describe(error)}`
+  const told = describe(error)
+
+  return told.startsWith(`${name} `) ? told : `${name}: ${told}`
 }
 
 export function previewStem(id: number, url: string): string {

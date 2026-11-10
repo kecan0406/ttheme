@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `ttheme find` no longer stops on a picture site that goes quiet. Before, one preview that never arrived could leave the grid empty for minutes; now find waits for a site's previews only while they keep coming, and after five quiet seconds shows the pictures it has, ranking the late ones without their colors. A site that sends nothing in that time is named in the foot (`danbooru is slow to send previews`), and find stops waiting on it until one of its previews arrives.
+- In `ttheme find`, a picture whose preview could not be fetched now says `No preview` on its tile instead of staying blank, and is fetched once more when its site next sends a picture.
+- A picture download that sends nothing for twenty seconds, in `ttheme find` or while `ttheme add` brings a palette's pictures, now ends with `no answer in time` instead of waiting for minutes. In find's try view, `enter` then fetches the picture again.
+- In `ttheme find`, a site's failure no longer names the site twice (`danbooru: danbooru is behind a Cloudflare challenge`), and one from yande.re is no longer cut short at the dot in its name.
+- In `ttheme find`, the tags, artist links and suggestions borrowed from danbooru no longer hold up the other sites: they are skipped while danbooru asks to slow down or sits behind a Cloudflare challenge, instead of making every site's first page wait.
 - In Preview, a key bar too long for the window now gives up its keys the way Browse's and the editor's do: `enter` always stays, and a key that was dropped comes back when the room left can hold it. Before, Preview kept only `? keys` in a narrow window and never brought a key back.
 
 ## 1.2.101

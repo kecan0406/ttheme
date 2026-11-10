@@ -439,6 +439,7 @@ export async function bodyWithin(
   most: number,
   tooLarge: string,
   progress?: (got: number, size: number) => void,
+  quiet = 0,
 ): Promise<Uint8Array> {
   const size = Number(response.headers.get('content-length')) || 0
 
@@ -451,16 +452,38 @@ export async function bodyWithin(
   const chunks: Uint8Array[] = []
   let got = 0
 
-  for (let read = await reader?.read(); read && !read.done; read = await reader?.read()) {
-    got += read.value.length
+  if (!reader) {
+    return Buffer.concat(chunks)
+  }
 
-    if (got > most) {
-      await reader?.cancel()
-      throw new Error(tooLarge)
+  const next = () => {
+    if (!quiet) {
+      return reader.read()
     }
 
-    chunks.push(read.value)
-    progress?.(got, size)
+    let clock: NodeJS.Timeout | undefined
+
+    const silent = new Promise<never>((_, fail) => {
+      clock = setTimeout(() => fail(new DOMException('no answer in time', 'TimeoutError')), quiet)
+    })
+
+    return Promise.race([reader.read(), silent]).finally(() => clearTimeout(clock))
+  }
+
+  try {
+    for (let read = await next(); !read.done; read = await next()) {
+      got += read.value.length
+
+      if (got > most) {
+        throw new Error(tooLarge)
+      }
+
+      chunks.push(read.value)
+      progress?.(got, size)
+    }
+  } catch (error) {
+    reader.cancel().catch(() => {})
+    throw error
   }
 
   return Buffer.concat(chunks)

@@ -1,7 +1,7 @@
 import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { fetchBytes, fetchPosts, redirected, retryAfter } from '../pictures/booru-net.ts'
+import { fetchBytes, fetchLent, fetchPosts, redirected, retryAfter } from '../pictures/booru-net.ts'
 import {
   blockSet,
   cutoutMap,
@@ -782,5 +782,61 @@ test('a request cut off by a connection reset is tried again', async () => {
     assert.equal(calls, 2)
   } finally {
     fetched.mockRestore()
+  }
+})
+
+test('what find borrows from danbooru never sits out a 429, and is not asked again while danbooru wants a wait', async () => {
+  const clock = spyOn(Date, 'now').mockReturnValue(Date.now() - 300_000)
+  let calls = 0
+
+  const fetched = spyOn(globalThis, 'fetch').mockImplementation(
+    Object.assign(
+      async () => {
+        calls++
+
+        return new Response(null, { status: 429, headers: { 'retry-after': '30' } })
+      },
+      { preconnect },
+    ),
+  )
+
+  const { signal } = new AbortController()
+
+  try {
+    await assert.rejects(fetchLent(['0'.repeat(32)], signal, true), /danbooru answered 429/)
+    await assert.rejects(fetchLent(['0'.repeat(32)], signal, true), /danbooru asks to wait 30s/)
+    assert.equal(calls, 1)
+  } finally {
+    fetched.mockRestore()
+    clock.mockRestore()
+  }
+})
+
+test('a site behind a Cloudflare challenge is spared what find borrows from it, and still asked for its own posts', async () => {
+  const clock = spyOn(Date, 'now').mockReturnValue(Date.now() - 120_000)
+  const asked: string[] = []
+
+  const fetched = spyOn(globalThis, 'fetch').mockImplementation(
+    Object.assign(
+      async (url: Parameters<typeof fetch>[0]) => {
+        asked.push(String(url))
+
+        return new Response(null, { status: 403, headers: { server: 'cloudflare', 'cf-mitigated': 'challenge' } })
+      },
+      { preconnect },
+    ),
+  )
+
+  const { signal } = new AbortController()
+
+  try {
+    await assert.rejects(fetchPosts(dan, 'x', 0, signal), /behind a Cloudflare challenge/)
+    await assert.rejects(fetchLent(['0'.repeat(32)], signal, true), /behind a Cloudflare challenge/)
+    await assert.rejects(fetchPosts(dan, 'x', 0, signal), /behind a Cloudflare challenge/)
+    assert.equal(asked.length, 2)
+    assert.ok(asked.every((url) => !url.includes('md5')))
+  } finally {
+    fetched.mockRestore()
+    clock.mockRestore()
   }
 })
