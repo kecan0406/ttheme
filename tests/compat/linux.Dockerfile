@@ -28,14 +28,10 @@ RUN git init -q && git remote add origin https://github.com/ghostty-org/ghostty.
 FROM ubuntu:26.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    xvfb xdotool imagemagick x11-utils dbus zsh sqlite3 procps curl ca-certificates xz-utils unzip gpg fonts-dejavu-core \
+    xvfb xdotool imagemagick x11-utils dbus zsh sqlite3 procps curl ca-certificates xz-utils unzip fonts-dejavu-core \
     libgl1-mesa-dri libegl1 libegl-mesa0 libglx-mesa0 mesa-vulkan-drivers libvulkan1 libxkbcommon-x11-0 libasound2t64 \
     libgtk-4-1 libadwaita-1-0 libgtk4-layer-shell0 alacritty \
   && rm -rf /var/lib/apt/lists/*
-COPY --from=ghostty /opt/ghostty /opt/ghostty
-COPY --from=ghostty-tip /opt/ghostty-tip /opt/ghostty-tip
-RUN ln -s /opt/ghostty/bin/ghostty /usr/local/bin/ghostty \
-  && ! ldd /opt/ghostty/bin/ghostty /opt/ghostty-tip/bin/ghostty | grep 'not found'
 ARG KITTY=0.49.2
 RUN mkdir -p /opt/kitty \
   && curl -fsSL --retry 5 --retry-all-errors https://github.com/kovidgoyal/kitty/releases/download/v$KITTY/kitty-$KITTY-$(uname -m | sed 's/aarch64/arm64/').txz | tar -xJ -C /opt/kitty \
@@ -45,11 +41,10 @@ RUN arch=$(dpkg --print-architecture) \
   && apt-get update && apt-get install -y --no-install-recommends /tmp/wezterm.deb \
   && rm -rf /var/lib/apt/lists/* /tmp/wezterm.deb
 ARG WARP=0.2026.10.21.08.25.stable.02
-RUN mkdir -p /etc/apt/keyrings \
-  && curl -fsSL --retry 5 --retry-all-errors https://releases.warp.dev/linux/keys/warp.asc | gpg --dearmor > /etc/apt/keyrings/warpdotdev.gpg \
-  && echo "deb [signed-by=/etc/apt/keyrings/warpdotdev.gpg] https://releases.warp.dev/linux/deb stable main" > /etc/apt/sources.list.d/warpdotdev.list \
-  && apt-get update && apt-get install -y --no-install-recommends warp-terminal${WARP:+=$WARP} \
-  && rm -rf /var/lib/apt/lists/*
+RUN arch=$(dpkg --print-architecture) \
+  && curl -fsSL --retry 5 --retry-all-errors -o /tmp/warp.deb https://releases.warp.dev/stable/v${WARP%.*}_${WARP##*.}/warp-terminal_${WARP}_$arch.deb \
+  && apt-get update && apt-get install -y --no-install-recommends /tmp/warp.deb \
+  && rm -rf /var/lib/apt/lists/* /tmp/warp.deb /etc/apt/sources.list.d/warpdotdev.sources /etc/apt/trusted.gpg.d/warpdotdev.gpg
 ARG RIO=0.5.28
 RUN arch=$(dpkg --print-architecture) \
   && curl -fsSL --retry 5 --retry-all-errors -o /tmp/rio.deb https://github.com/raphamorim/rio/releases/download/v$RIO/rioterm_${RIO}_${arch}_x11.deb \
@@ -61,5 +56,9 @@ RUN arch=$(dpkg --print-architecture | sed 's/amd64/x64/') \
   && curl -fsSL --retry 5 --retry-all-errors https://nodejs.org/dist/$NODE/node-$NODE-linux-$arch.tar.xz | tar -xJ -C /opt \
   && ln -s /opt/node-$NODE-linux-$arch/bin/node /usr/local/bin/node
 RUN curl -fsSL --retry 5 --retry-all-errors https://bun.sh/install | bash -s "bun-v1.3.14"
+COPY --from=ghostty /opt/ghostty /opt/ghostty
+COPY --from=ghostty-tip /opt/ghostty-tip /opt/ghostty-tip
+RUN ln -s /opt/ghostty/bin/ghostty /usr/local/bin/ghostty \
+  && ! ldd /opt/ghostty/bin/ghostty /opt/ghostty-tip/bin/ghostty | grep 'not found'
 ENV PATH=/root/.bun/bin:$PATH LANG=C.UTF-8 TMPDIR=/tmp TTHEME_COMPAT_IMAGE=linux
 WORKDIR /work
