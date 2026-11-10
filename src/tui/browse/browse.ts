@@ -8,8 +8,8 @@ import { isRemote, TOPIC } from '../../store/sources.ts'
 import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
 import { Field } from '../field.ts'
-import { Help, keysBox, type Legend, overlay, type Topic } from '../help.ts'
-import { HUB_UPDATE, type HubTab, hubBar, hubGoto, hubNext, hubTo } from '../hub.ts'
+import { Help, keysBox, overlay } from '../help.ts'
+import { HUB_UPDATE, type HubTab, hubBar, hubGoto, hubTo } from '../hub.ts'
 import { capped } from '../keycaps.ts'
 import { lineStep, type Mouse } from '../keys.ts'
 import { Glide } from '../motion.ts'
@@ -26,6 +26,7 @@ import { Panel } from './panel.ts'
 import { Review } from './review.ts'
 import { Search } from './search.ts'
 import { Staged } from './staged.ts'
+import { browseLegend, browseTopics, type TopicsHost } from './topics.ts'
 import type { BrowseIo, BrowseOptions, BrowseResult, Detail, Found, Marketplace, Row, Spot } from './types.ts'
 
 type Side = 'cards' | 'panel' | 'form'
@@ -65,6 +66,7 @@ export class BrowsePanel {
   private readonly list: PaletteList<Row>
   private readonly panel: Panel
   private readonly search: Search
+  private readonly topicsHost: TopicsHost
   private side: Side = 'cards'
   private showing: View = 'browse'
   private open: string | undefined
@@ -156,6 +158,21 @@ export class BrowsePanel {
       ...(this.io.names ? { names: this.io.names.bind(this.io) } : {}),
       visit: (url) => this.io.visit(url),
     })
+    this.topicsHost = {
+      hub: this.hub,
+      list: this.list,
+      staged: this.staged,
+      search: this.search,
+      review: this.review,
+      showing: () => this.showing,
+      side: () => this.side,
+      key: (key) => this.key(key),
+      take: (back) => this.take(back),
+      back: () => this.back(),
+      openSearch: () => this.openSearch(),
+      openForm: () => this.openForm(),
+      closeSearch: () => this.closeSearch(),
+    }
     this.follow()
 
     if (opts.search?.trim()) {
@@ -374,7 +391,7 @@ export class BrowsePanel {
         this.leave(undefined)
       }
     } else if (key === '?') {
-      this.help = new Help(this.topics(), this.legend())
+      this.help = new Help(browseTopics(this.topicsHost), browseLegend())
     } else if (page !== undefined) {
       this.move(page)
     } else if (line !== undefined) {
@@ -425,7 +442,7 @@ export class BrowsePanel {
     } else if (key === 'esc' || key === 'left') {
       this.closeSearch()
     } else if (key === '?') {
-      this.help = new Help(this.topics(), this.legend())
+      this.help = new Help(browseTopics(this.topicsHost), browseLegend())
     } else if (page !== undefined) {
       this.move(page)
     } else if (line !== undefined) {
@@ -445,7 +462,7 @@ export class BrowsePanel {
     if (key === 'esc' || key === 'left') {
       this.back()
     } else if (key === '?') {
-      this.help = new Help(this.topics(), this.legend())
+      this.help = new Help(browseTopics(this.topicsHost), browseLegend())
     } else if (key === 'tab' || key === 'shift-tab') {
       if (this.hub) {
         this.leave(hubGoto(this.hub, key === 'tab' ? 1 : -1))
@@ -1329,7 +1346,7 @@ export class BrowsePanel {
       return []
     }
 
-    const keys = keysBox(this.p, this.topics(), width)
+    const keys = keysBox(this.p, browseTopics(this.topicsHost), width)
 
     return height - keys.length >= PANEL_KEEPS ? keys : []
   }
@@ -1338,161 +1355,5 @@ export class BrowsePanel {
     const top = this.current().focusedRow()?.kind === 'top'
 
     return this.panel.draw(width, height, this.detail(width - 4), top, this.side !== 'cards')
-  }
-
-  private topics(): Topic[] {
-    const screens: Topic[] = this.hub
-      ? [
-          {
-            group: 'Help',
-            keys: 'tab  shift+tab',
-            does: `Switch to ${hubNext(this.hub)}`,
-            run: () => this.key('tab'),
-            onBar: true,
-          },
-        ]
-      : []
-
-    const close: Topic = { group: 'Help', keys: '? / esc', does: 'Close help', run: () => {}, onBar: true }
-
-    const moving: Topic[] = [
-      { group: 'Move', keys: '↑↓ / ctrl+j  ctrl+k', does: 'Move up or down' },
-      { group: 'Move', keys: 'pgup  pgdn  home  end', does: 'Move a page, or to either end' },
-    ]
-
-    const filtering: Topic[] = [
-      { group: 'Filter', keys: 'type', does: 'Filter the list' },
-      { group: 'Filter', keys: 'ctrl+u', does: 'Clear the filter' },
-    ]
-
-    if (this.showing === 'search') {
-      return [
-        ...moving,
-        { group: 'Move', keys: '← / esc', does: 'Back to Browse', run: () => this.closeSearch(), onBar: true },
-        {
-          group: 'Filter',
-          keys: 'type',
-          does: 'Find a work or a marketplace',
-          more: "Once you stop typing, the title is looked up in any language, unless TTHEME_NAME_LOOKUP is off. A palette's whole name finds its work too.",
-        },
-        filtering[1] as Topic,
-        {
-          group: 'Add',
-          keys: 'space',
-          does: 'Add it, or undo the add',
-          more: 'An added marketplace is fetched at once and kept when you apply.',
-          run: () => this.take(false),
-          onBar: true,
-        },
-        { group: 'Add', keys: 'enter', does: 'Add it and go to its card', run: () => this.take(true), onBar: true },
-        {
-          group: 'Add',
-          keys: 'enter on ⧉',
-          does: 'Ask for a palette or read how to make one',
-          more: 'Request a character and Make one show when no marketplace has what you typed.',
-          run: () => this.take(true),
-          onBar: true,
-        },
-        {
-          group: 'Add',
-          keys: 'ctrl+r',
-          does: 'Load the list again',
-          more: 'The list is gathered from GitHub every half hour.',
-          run: () => this.search.load(),
-        },
-        ...screens,
-        close,
-      ]
-    }
-
-    const form = this.side === 'form'
-    const panel = this.side === 'panel'
-    const when = (on: boolean, run: () => void) => (on ? { run } : {})
-
-    return [
-      ...moving,
-      {
-        group: 'Move',
-        keys: '→ / enter',
-        does: 'Open a marketplace or a work',
-        ...when(!form, () => this.key('right')),
-        onBar: true,
-      },
-      {
-        group: 'Move',
-        keys: '← / esc',
-        does: 'Back to the marketplaces',
-        ...when(panel || form, () => this.back()),
-        onBar: true,
-      },
-      {
-        group: 'Palettes',
-        keys: 'space',
-        does: 'Pick or unpick',
-        more: 'Apply installs what is picked and removes what is not. Picking a work or a marketplace picks every palette in it.',
-        ...when(!form, () => this.key(' ')),
-        onBar: true,
-      },
-      {
-        group: 'Palettes',
-        keys: 'ctrl+r',
-        does: `Take an update (${MARKS.update})`,
-        more: `On a palette or a work marked ${MARKS.update}. The update is installed when you apply.`,
-        ...when(panel, () => this.key('ctrl-r')),
-        onBar: true,
-      },
-      ...filtering,
-      {
-        group: 'Marketplaces',
-        keys: 'enter on + Add',
-        does: 'Add one from GitHub or a folder',
-        more: 'Type owner/repo, owner/repo#v1 for a tag or a branch, or the path of a folder.',
-        ...when(!form, () => {
-          this.back()
-          this.list.select('extra new')
-          this.openForm()
-        }),
-        onBar: true,
-      },
-      {
-        group: 'Marketplaces',
-        keys: 'enter on ⌕ Search',
-        does: 'Find one on GitHub',
-        ...when(!form, () => {
-          this.back()
-          this.list.select('extra search')
-          this.openSearch()
-        }),
-        onBar: true,
-      },
-      {
-        group: 'Marketplaces',
-        keys: '↓  past the palettes',
-        does: 'Update, auto-update or remove it',
-        more: 'A marketplace keeps its own actions under its palettes in the panel.',
-      },
-      {
-        group: 'Finish',
-        keys: 'enter',
-        does: 'Review and apply',
-        ...when(this.staged.dirty(), () => this.review.open()),
-        onBar: true,
-      },
-      { group: 'Finish', keys: 'esc', does: 'Leave, asking first about changes not applied', onBar: true },
-      ...screens,
-      close,
-    ]
-  }
-
-  private legend(): Legend {
-    return [
-      [MARKS.on, 'picked'],
-      [MARKS.off, 'not picked'],
-      [`${MARKS.closed} ${MARKS.opened}`, 'a work, closed or open'],
-      [MARKS.update, 'has an update'],
-      [MARKS.auto, 'updates on its own'],
-      [MARKS.miss, 'fails a contrast check'],
-      [MARKS.star, 'stars on GitHub'],
-    ]
   }
 }

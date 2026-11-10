@@ -37,6 +37,7 @@ import {
   roleSgr,
   spot,
 } from './editor-paint.ts'
+import { editorBoxTopics } from './editor-topics.ts'
 import { keysBox } from './help.ts'
 import { cap, capped } from './keycaps.ts'
 import { CHANNELS, CONTRAST, type PaletteEditor } from './palette-editor.ts'
@@ -716,7 +717,7 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
 
   const rules = gateBox(p, e, body - rows.length, width)
   const gap = body - rows.length - rules.length
-  const keys = keysBox(p, e.boxTopics(), width)
+  const keys = keysBox(p, editorBoxTopics(e), width)
   const help = keys.length <= gap ? keys : []
   rows.push(...Array.from({ length: Math.max(0, gap - help.length) }, () => ''), ...rules, ...help)
 
