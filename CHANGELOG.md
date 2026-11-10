@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.101
+
 - The ttheme-palette skill no longer runs `ttheme check` before it makes a palette: `ttheme palette make` now marks each palette that would write over one of the same name in your marketplace (`replaces`), and the skill asks you then. The skill needs this ttheme, and asks you to update ttheme when it is older; update the skill the way you added it.
 
 ## 1.2.99
