@@ -3,9 +3,9 @@ import { Mail, Paintbrush, Plus, X } from 'lucide'
 import { type SimpleIcon, siGithub, siX } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { marketplacePath, REPO, REPO_URL } from '@/lib/gallery'
+import { REPO, REPO_URL } from '@/lib/gallery'
 import { BrandIcon, Icon, NewTab } from '@/lib/icons'
-import { BUILTIN, paint, type Theme } from '@/lib/themes'
+import { paint, type Theme } from '@/lib/themes'
 
 const ART_CALL = 'art-call'
 
@@ -60,7 +60,17 @@ function Point({ children }: PropsWithChildren) {
   )
 }
 
-function Way({ icon, name, address, action }: { icon: JSX.Element; name: string; address: string; action: JSX.Element }) {
+function Way({
+  icon,
+  name,
+  address,
+  action,
+}: {
+  icon: JSX.Element
+  name: string
+  address: string
+  action: JSX.Element
+}) {
   return (
     <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-border py-2.5 last:border-b">
       <div class="grid min-w-0 grid-cols-[5.25rem_minmax(0,1fr)] items-center gap-3 max-[640px]:grid-cols-[minmax(0,1fr)] max-[640px]:gap-0.5">
@@ -123,15 +133,6 @@ export function ArtCallDialog({ lead, sticker }: { lead: Theme; sticker: string 
               <p class="text-pretty text-soft-foreground">We'd love to feature your cool or cute art here!</p>
             </div>
             <ul class="grid text-soft-foreground">
-              <Point>
-                Any character with a ttheme palette is welcome.{' '}
-                <a
-                  href={marketplacePath(BUILTIN)}
-                  class="font-semibold text-foreground underline decoration-foreground/40 underline-offset-4 outline-none hover:decoration-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  Browse Palettes
-                </a>
-              </Point>
               <Point>Your drawing stays yours, with your name and a link to your post right beside it.</Point>
               <Point>If you ever want it taken down, just tell us.</Point>
             </ul>
@@ -164,7 +165,13 @@ export function ArtCallDialog({ lead, sticker }: { lead: Theme; sticker: string 
                   name="X"
                   address={`@${ART_X}`}
                   action={
-                    <LinkButton variant="outline" size="sm" href={`https://x.com/${ART_X}`} target="_blank" rel="noopener">
+                    <LinkButton
+                      variant="outline"
+                      size="sm"
+                      href={`https://x.com/${ART_X}`}
+                      target="_blank"
+                      rel="noopener"
+                    >
                       Send a DM
                       <NewTab />
                     </LinkButton>

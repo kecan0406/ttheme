@@ -7,9 +7,7 @@ export interface CastMember {
   scale: number
 }
 
-export const CAST: readonly CastMember[] = [
-  { name: 'souryuu-asuka-langley', face: 930 / 756, scale: 1 },
-]
+export const CAST: readonly CastMember[] = [{ name: 'souryuu-asuka-langley', face: 930 / 756, scale: 1 }]
 
 export interface StickerCredit {
   name: string

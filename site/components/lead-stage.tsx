@@ -126,16 +126,16 @@ function CastTabs({ cast }: { cast: Theme[] }) {
     <div class="mx-2 flex flex-none items-center gap-1.5">
       <RadioGroup variant="fit" label="terminal tabs" class="flex-none">
         {cast.map((theme, at) => (
-        <RadioGroupItem variant="fit" name="lead-tab" value={theme.name} checked={at === 0}>
-          <i
-            aria-hidden="true"
-            class="size-1.5 flex-none rounded-full forced-color-adjust-none"
-            style={`background:${paint(theme, (shade) => shade.cursor)}`}
-          />
-          <span translate="no" safe>
-            {theme.name}
-          </span>
-        </RadioGroupItem>
+          <RadioGroupItem variant="fit" name="lead-tab" value={theme.name} checked={at === 0}>
+            <i
+              aria-hidden="true"
+              class="size-1.5 flex-none rounded-full forced-color-adjust-none"
+              style={`background:${paint(theme, (shade) => shade.cursor)}`}
+            />
+            <span translate="no" safe>
+              {theme.name}
+            </span>
+          </RadioGroupItem>
         ))}
       </RadioGroup>
       <ArtCallTab />
