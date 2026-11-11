@@ -60,7 +60,7 @@ export function TerminalFrame({
           {mode ? <WindowMode /> : null}
         </div>
       ) : (
-        <div class="relative flex min-h-9.5 flex-none items-center gap-2 py-1 pr-1 pl-3.5">
+        <div class={cn('relative flex min-h-9.5 flex-none items-center gap-2 py-1 pr-1 pl-3.5', roomy && 'min-h-11')}>
           <Lights />
           {heading ? (
             heading

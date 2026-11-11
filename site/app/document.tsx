@@ -11,6 +11,7 @@ import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
 import { CARD_REV, ORIGIN } from '@/lib/seo'
 import { SPECULATION_RULES } from '@/lib/speculation'
+import type { Theme } from '@/lib/themes'
 import { rootStyle, themeIcon, wearScript } from '@/lib/wear'
 
 const RELOAD = `let s=null,b=null;const c=()=>{s?.close();s=null},f=()=>{if(document.visibilityState==='hidden'&&!document.prerendering)c();else if(!s){s=new EventSource('${assets.reload}');s.onmessage=(e)=>{b??=e.data;if(e.data!==b)location.reload()}}};document.addEventListener('visibilitychange',f);addEventListener('pageshow',f);addEventListener('pagehide',c);f()`
@@ -40,6 +41,8 @@ export interface Page {
   head?: string
   module?: string
   preload?: Preload
+  wear?: Theme
+  flat?: boolean
 }
 
 export interface Preload {
@@ -59,6 +62,8 @@ function Document({
   head,
   module,
   preload,
+  wear = fallback,
+  flat = false,
   children,
 }: PropsWithChildren<{
   title: string
@@ -71,15 +76,17 @@ function Document({
   head?: string
   module?: string
   preload?: Preload
+  wear?: Theme
+  flat?: boolean
 }>) {
   return (
-    <html lang="en" data-mode="dark" data-setting="auto" style={rootStyle(fallback)}>
+    <html lang="en" data-mode="dark" data-setting="auto" style={rootStyle(wear)}>
       <head>
         <meta charset="utf-8" />
         <meta http-equiv="Content-Security-Policy" content={contentPolicy(head ? [...INLINE, head] : INLINE)} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content={fallback.background} />
-        <link rel="icon" type="image/svg+xml" href={themeIcon(fallback)} />
+        <meta name="theme-color" content={wear.background} />
+        <link rel="icon" type="image/svg+xml" href={themeIcon(wear)} />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <title safe>{title}</title>
         <meta name="description" content={description} />
@@ -151,7 +158,7 @@ function Document({
           skip to content
         </a>
         <route-progress role="progressbar" aria-label="loading" />
-        <FacetGround />
+        {flat ? null : <FacetGround />}
         {children}
         <p data-announce role="status" class="sr-only" />
       </body>
@@ -160,7 +167,22 @@ function Document({
 }
 
 export function page(
-  { title, description, path, image, imageAlt, robots, ld, status = 200, cache, head, module, preload }: Page,
+  {
+    title,
+    description,
+    path,
+    image,
+    imageAlt,
+    robots,
+    ld,
+    status = 200,
+    cache,
+    head,
+    module,
+    preload,
+    wear,
+    flat,
+  }: Page,
   body: JSX.Element,
 ): Response {
   const text = `<!doctype html>${html(
@@ -175,6 +197,8 @@ export function page(
       head={head}
       module={module}
       preload={preload}
+      wear={wear}
+      flat={flat}
     >
       {body}
     </Document>,

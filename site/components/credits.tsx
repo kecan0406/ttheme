@@ -1,7 +1,9 @@
+import type { PropsWithChildren } from '@kitajs/html'
 import { type SimpleIcon, siAnilist, siIgdb, siSteam, siThemoviedatabase } from 'simple-icons'
 import { ANILIST_HOME, BANGUMI_HOME, CREDITS_PATH, IGDB_HOME, STEAM_HOME, TMDB_HOME } from '@/lib/art'
 import type { Facts } from '@/lib/facts'
 import { BrandIcon, NewTab } from '@/lib/icons'
+import { STICKER_CREDITS } from '@/lib/lead-cast'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 
@@ -58,6 +60,20 @@ const SOURCES: Source[] = [
   },
 ]
 
+function StickerLink({ href, children }: PropsWithChildren<{ href: string }>) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener"
+      class="inline-flex items-center gap-1 rounded-sm text-soft-foreground underline underline-offset-4 hover:text-foreground"
+    >
+      {children}
+      <NewTab class="size-3" />
+    </a>
+  )
+}
+
 export function Credits({ facts }: { facts: Facts }) {
   return (
     <div class="ground flex min-h-dvh flex-col">
@@ -70,7 +86,7 @@ export function Credits({ facts }: { facts: Facts }) {
           <h1 class="font-display text-display-lg font-black">credits</h1>
           <p class="max-w-[68ch] text-pretty text-soft-foreground">
             Where the pictures on this site come from. Each one is shown from its source's own servers, and ttheme keeps
-            none of them.
+            none of them but the landing's stickers.
           </p>
         </div>
         <ul class="grid max-w-[68ch] gap-6">
@@ -96,6 +112,60 @@ export function Credits({ facts }: { facts: Facts }) {
               )}
             </li>
           ))}
+          <li class="grid gap-2 border-t pt-6">
+            <h2 class="font-display text-display-sm font-black">The landing's stickers</h2>
+            <p class="text-pretty text-soft-foreground">
+              Cut out of these pictures for the landing and kept with the site.
+            </p>
+            <ul class="grid gap-1">
+              {STICKER_CREDITS.map((credit) => (
+                <li class="text-sm text-muted-foreground">
+                  <span safe>{`${credit.who}: `}</span>
+                  {credit.artist === null ? null : (
+                    <>
+                      <span lang={credit.japanese ? 'ja' : undefined} translate="no" safe>
+                        {credit.artist}
+                      </span>{' '}
+                    </>
+                  )}
+                  <StickerLink href={credit.profile}>
+                    <span class="font-medium text-foreground" translate="no" safe>
+                      {credit.handle}
+                    </span>
+                    <span class="sr-only" safe>{` on ${credit.site}`}</span>
+                  </StickerLink>{' '}
+                  <StickerLink href={credit.post}>
+                    <BrandIcon icon={credit.siteIcon} class="size-3 flex-none" />
+                    <span class="sr-only" safe>{`Original post on ${credit.site}`}</span>
+                  </StickerLink>
+                  {credit.license === null ? null : (
+                    <>
+                      {', '}
+                      <StickerLink href={credit.license.url}>
+                        <BrandIcon icon={credit.license.icon} class="size-3 flex-none" />
+                        <span class="sr-only" safe>{`${credit.license.brand} `}</span>
+                        <span safe>{credit.license.terms}</span>
+                      </StickerLink>
+                    </>
+                  )}
+                  {credit.after === null ? null : (
+                    <>
+                      <span safe>{`, after the ${credit.after.work} cover by `}</span>
+                      <span lang="ja" translate="no" safe>
+                        {credit.after.artist}
+                      </span>{' '}
+                      <StickerLink href={credit.after.url}>
+                        <span class="font-medium text-foreground" translate="no" safe>
+                          {credit.after.handle}
+                        </span>
+                        <span class="sr-only" safe>{` on ${credit.after.site}`}</span>
+                      </StickerLink>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </li>
         </ul>
       </main>
       <SiteFooter facts={facts} current={CREDITS_PATH} />

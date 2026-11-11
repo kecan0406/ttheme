@@ -10,6 +10,8 @@ const radioVariants = cva(
         default:
           'min-h-8 rounded-full px-3 py-1 text-sm text-soft-foreground hover:bg-muted hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-checked:ring-1 has-checked:ring-border',
         tab: 'relative min-w-0 flex-1 rounded-md px-3 text-xs text-(--fg)/70 before:absolute before:top-1/2 before:left-0 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-(--fg)/16 first:before:hidden hover:text-(--fg) has-checked:bg-(--fg)/16 has-checked:text-(--fg) has-checked:shadow-sm has-checked:before:hidden has-focus-visible:ring-0 has-focus-visible:ring-offset-0 has-focus-visible:inset-ring-2 has-focus-visible:inset-ring-ring [:has(:checked)+&]:before:hidden [&>[data-mark]]:text-(--fg)/30 has-checked:[&>[data-mark]]:text-(--a5)',
+        fit: 'relative min-w-0 flex-auto gap-1.25 rounded-md px-1.75 font-mono text-2xs text-(--fg)/70 before:absolute before:top-1/2 before:left-0 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-(--fg)/16 first:before:hidden hover:text-(--fg) has-checked:bg-(--fg)/16 has-checked:text-(--fg) has-checked:shadow-sm has-checked:before:hidden has-focus-visible:ring-0 has-focus-visible:ring-offset-0 has-focus-visible:inset-ring-2 has-focus-visible:inset-ring-ring [:has(:checked)+&]:before:hidden',
+        wear: 'min-h-11 flex-auto gap-2 rounded-full bg-(--bg) pr-3.5 pl-2 font-mono text-xs font-normal text-(--fg) inset-ring inset-ring-(--fg)/18 hover:inset-ring-(--fg)/34 has-checked:inset-ring-2 has-checked:inset-ring-(--cu) has-focus-visible:ring-(--cu)',
         underline:
           'relative -mb-px px-0.5 pb-3 text-sm text-soft-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 hover:text-foreground has-checked:text-foreground has-checked:after:opacity-100',
       },
@@ -25,6 +27,8 @@ type Variant = NonNullable<VariantProps<typeof radioVariants>['variant']>
 const GROUP: Record<Variant, string> = {
   default: 'rounded-full border border-border bg-muted/65',
   tab: 'h-7.5 w-auto min-w-0 flex-1 flex-nowrap items-stretch gap-0 rounded-lg bg-(--fg)/6 p-0.5',
+  fit: 'h-8 w-auto min-w-0 flex-nowrap items-stretch gap-0 rounded-lg bg-(--fg)/6 p-0.5',
+  wear: 'w-full gap-2 p-0',
   underline: 'w-full gap-6 border-b border-border p-0',
 }
 

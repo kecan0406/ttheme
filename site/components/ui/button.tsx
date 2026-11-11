@@ -22,10 +22,12 @@ const buttonVariants = cva(
         scene: 'text-(--fg)/65 hover:bg-(--fg)/12 hover:text-(--fg)',
         destructive: 'bg-destructive/16 text-destructive hover:bg-destructive/24',
         link: 'font-medium text-primary underline-offset-4 hover:underline',
+        lead: 'bg-primary text-primary-foreground shadow-md transition-[translate,box-shadow] duration-150 hover:-translate-y-px hover:shadow-lg active:translate-y-0 active:scale-100 active:shadow-sm lead-stacked:bg-background lead-stacked:text-foreground',
       },
       size: {
         default: 'h-9 px-4.5',
         lg: 'h-11 px-6 text-base',
+        xl: 'h-12.5 px-5.5 text-base',
         sm: 'h-7.5 px-3',
         xs: 'h-7 gap-1.5 px-2.5 text-xs',
         chip: "h-6.5 gap-1.5 px-2.5 text-xs font-medium [&_svg:not([class*='size-'])]:size-3.5",

@@ -337,15 +337,16 @@ export async function buildAssets(production: boolean): Promise<void> {
     css: shelf.url('site'),
     ...(await client(production)),
     fonts: PRELOAD.map((name) => shelf.url(name)),
-    terminals: terminalIcons(shelf),
+    terminals: picturesIn(shelf, 'terminals'),
+    stickers: picturesIn(shelf, 'stickers'),
     reload: production ? '' : '/__reload',
   }
 
   kept(join(SITE, 'assets.json'), `${JSON.stringify(manifest, null, 2)}\n`)
 }
 
-function terminalIcons(shelf: Shelf): Record<string, string> {
-  const folder = join(SITE, 'app', 'terminals')
+function picturesIn(shelf: Shelf, name: string): Record<string, string> {
+  const folder = join(SITE, 'app', name)
 
   return Object.fromEntries(
     readdirSync(folder)
@@ -534,10 +535,19 @@ async function docsChecked(): Promise<void> {
 }
 
 if (import.meta.main) {
+  if (process.argv[2] === 'output') {
+    await docsChecked()
+    await buildAssets(true)
+    await output()
+    process.exit(0)
+  }
+
   await snapshot(true)
   commands()
-  await docsChecked()
-  await buildAssets(true)
-  await output()
-  process.exit(0)
+
+  const { exitCode } = Bun.spawnSync([process.execPath, import.meta.path, 'output'], {
+    stdio: ['inherit', 'inherit', 'inherit'],
+  })
+
+  process.exit(exitCode)
 }

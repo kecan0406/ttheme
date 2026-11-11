@@ -19,6 +19,7 @@ pages/
 *.jpg
 *.jpeg
 *.webp
+!site/app/stickers/*.webp
 *.avif
 *.gif
 !docs/demo.gif
