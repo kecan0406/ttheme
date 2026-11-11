@@ -48,10 +48,10 @@ function note(reason: Reason, popup: Element | null) {
   })
 }
 
-function reasonFor(popup: HTMLElement): Reason {
+function reasonFor(popup: HTMLElement, opening: boolean): Reason {
   if (cause && (cause.popup === null || cause.popup === popup)) return cause.reason
 
-  return pressed && !popup.contains(pressed) ? 'outside-press' : 'none'
+  return !opening && pressed && !popup.contains(pressed) ? 'outside-press' : 'none'
 }
 
 export function hide(popup: HTMLElement, reason: Reason) {
@@ -150,10 +150,11 @@ document.addEventListener(
     const popup = event.target
 
     if (!isPopup(popup)) return
-    const reason = reasonFor(popup)
+    const opening = (event as ToggleEvent).newState === 'open'
+    const reason = reasonFor(popup, opening)
     const trigger = reason === 'trigger-press' ? (anchors.get(popup) ?? null) : null
 
-    if ((event as ToggleEvent).newState !== 'open') {
+    if (!opening) {
       emit(popup, 'openchange', { open: false, reason, trigger }, false)
       mark(popup, false)
       rest(popup)

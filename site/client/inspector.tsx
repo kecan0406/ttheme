@@ -16,6 +16,7 @@ export class Inspector {
   #faint: () => string | undefined
   #hovered: HTMLElement | null = null
   #pinned: HTMLElement | null = null
+  #showing = false
   #timer = 0
   #warm = 0
 
@@ -40,7 +41,7 @@ export class Inspector {
     if (this.#pinned) return
     window.clearTimeout(this.#timer)
 
-    if (this.#showing() || performance.now() < this.#warm) {
+    if (this.#showing || performance.now() < this.#warm) {
       this.#show(run)
 
       return
@@ -86,7 +87,7 @@ export class Inspector {
   }
 
   redraw() {
-    const run = this.#pinned ?? (this.#showing() ? this.#hovered : null)
+    const run = this.#pinned ?? (this.#showing ? this.#hovered : null)
 
     if (run) this.#show(run)
   }
@@ -96,7 +97,7 @@ export class Inspector {
     this.#hovered?.removeAttribute('data-hover')
     this.#hovered = null
 
-    if (!this.#pinned && this.#showing()) {
+    if (!this.#pinned && this.#showing) {
       this.#warm = performance.now() + WARM
       this.#hide()
     }
@@ -104,12 +105,6 @@ export class Inspector {
 
   #box(): HTMLElement | null {
     return this.#host.querySelector<HTMLElement>('[data-inspector]')
-  }
-
-  #showing(): boolean {
-    const box = this.#box()
-
-    return box !== null && !box.hidden
   }
 
   #show(run: HTMLElement) {
@@ -138,7 +133,8 @@ export class Inspector {
         />,
       ),
     )
-    const appearing = box.hidden
+    const appearing = !this.#showing
+    this.#showing = true
     box.hidden = false
     box.toggleAttribute('data-pinned', this.#pinned !== null)
     const card = box.firstElementChild as HTMLElement | null
@@ -172,6 +168,8 @@ export class Inspector {
 
   #hide() {
     const box = this.#box()
+
+    this.#showing = false
 
     if (!box) return
     box.hidden = true

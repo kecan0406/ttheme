@@ -8,9 +8,9 @@ class PinsPlayer extends HTMLElement {
   #data: PinsData | null = null
   #at = 0
   #typed = 0
-  #playing = false
+  #playing: { timer: number } | null = null
   #held = false
-  #timer = 0
+  #shown = false
   #seen: IntersectionObserver | null = null
 
   #click = (event: MouseEvent) => {
@@ -27,26 +27,33 @@ class PinsPlayer extends HTMLElement {
       threshold: 0.5,
     })
     this.#seen.observe(this)
+    document.addEventListener('visibilitychange', this.#watched)
   }
 
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
     this.#seen?.disconnect()
-    window.clearTimeout(this.#timer)
+    document.removeEventListener('visibilitychange', this.#watched)
+    window.clearTimeout(this.#playing?.timer)
+    this.#playing = null
   }
 
+  #watched = () => this.#see(this.#shown)
+
   #see(shown: boolean) {
-    if (!shown) {
+    this.#shown = shown
+
+    if (!shown || document.hidden) {
       this.#halt()
 
       return
     }
 
-    if (!this.#held && !reducedMotion()) this.#play(PACE.start)
+    if (!this.#playing && !this.#held && !reducedMotion()) this.#play(PACE.start)
   }
 
   #toggle() {
-    this.#held = this.#playing
+    this.#held = this.#playing !== null
 
     if (this.#playing) this.#halt()
     else this.#play(PACE.restart)
@@ -61,20 +68,19 @@ class PinsPlayer extends HTMLElement {
   }
 
   #play(delay: number) {
-    this.#playing = true
-    this.#label()
     this.#later(delay)
+    this.#label()
   }
 
   #halt() {
-    this.#playing = false
-    window.clearTimeout(this.#timer)
+    window.clearTimeout(this.#playing?.timer)
+    this.#playing = null
     this.#label()
   }
 
   #later(delay: number) {
-    window.clearTimeout(this.#timer)
-    this.#timer = window.setTimeout(() => this.#tick(), delay)
+    window.clearTimeout(this.#playing?.timer)
+    this.#playing = { timer: window.setTimeout(() => this.#tick(), delay) }
   }
 
   #tick() {
@@ -137,7 +143,7 @@ class PinsPlayer extends HTMLElement {
   }
 
   #label() {
-    fill(this.querySelector('[data-pins-toggle]'), html(<PlayLabel playing={this.#playing} />))
+    fill(this.querySelector('[data-pins-toggle]'), html(<PlayLabel playing={this.#playing !== null} />))
   }
 }
 

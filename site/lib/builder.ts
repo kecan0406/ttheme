@@ -6,6 +6,7 @@ import type { Draft } from '../../src/core/draft.ts'
 import type { UpstreamEntry } from '../../src/core/manifest.ts'
 import { mirror } from '../../src/core/mirror.ts'
 import { type Mode, modeOf, otherOf } from '../../src/core/mode.ts'
+import { grow, SEED_FIELDS, SEEDS, type Seeds } from '../../src/core/seeds.ts'
 import { colorsOf, listOf } from '../../src/core/slots.ts'
 import { type SharedPicture, slugOf, slugProblem, subjectProblem } from '../../src/core/theme.ts'
 
@@ -56,6 +57,18 @@ export interface Start extends Opening {
 export interface Stored {
   drafts: Edit[]
 }
+
+export interface Seeding {
+  seeds: Seeds
+  before: Edit
+}
+
+interface Seeded {
+  edit: Edit
+  seeding: Seeding
+}
+
+export type Shelf = { state: 'none' } | { state: 'kept' | 'refused'; stored: Stored }
 
 export interface BuilderData {
   first: Opening
@@ -130,6 +143,25 @@ export function blankEdit(colors: Hex[], id: string, at: number, name = BLANK_NA
     source: null,
     at,
   })
+}
+
+export function startBlank(open: Edit, seeding: Seeding | null, id: string, at: number, name?: string): Seeded {
+  const seeds = { ...SEEDS }
+
+  return { edit: blankEdit(listOf(grow(seeds)), id, at, name), seeding: { seeds, before: seeding?.before ?? open } }
+}
+
+export function reseeded(edit: Edit, seeding: Seeding, key: string, value: number, at: number): Seeded | null {
+  const field = SEED_FIELDS.find((one) => one.key === key)
+
+  if (!field || Number.isNaN(value)) return null
+  const seeds = { ...seeding.seeds, [field.key]: Math.min(field.max, Math.max(field.min, value)) }
+  const made = listOf(grow(seeds))
+
+  return {
+    edit: { ...edit, made, origin: { made: [...made], other: edit.origin.other }, at },
+    seeding: { ...seeding, seeds },
+  }
 }
 
 function started(edit: Omit<Edit, 'start'>): Edit {
@@ -272,21 +304,34 @@ export function kept(stored: Stored, edit: Edit): Stored {
 }
 
 export function dropped(stored: Stored, id: string): Stored {
-  return { drafts: stored.drafts.filter((draft) => draft.id !== id) }
+  const drafts = stored.drafts.filter((draft) => draft.id !== id)
+
+  return drafts.length === stored.drafts.length ? stored : { drafts }
 }
 
-export function restored(stored: Stored, at: number, edit: Edit): Stored {
+export function restored(stored: Stored, edit: Edit): Stored {
   const drafts = stored.drafts.filter((draft) => draft.id !== edit.id)
+  const older = drafts.findIndex((draft) => draft.at < edit.at)
 
-  return { drafts: drafts.toSpliced(Math.min(at, drafts.length), 0, edit).slice(0, MOST_DRAFTS) }
+  return { drafts: drafts.toSpliced(older < 0 ? drafts.length : older, 0, edit).slice(0, MOST_DRAFTS) }
+}
+
+export function reread(shelf: Shelf, stored: Stored | null): Shelf {
+  if (!stored) return { state: 'none' }
+
+  return { state: shelf.state === 'refused' ? 'refused' : 'kept', stored }
+}
+
+export function draftsOn(shelf: Shelf): Edit[] {
+  return shelf.state === 'none' ? [] : shelf.stored.drafts
 }
 
 const RETURNING = RETURNS.map((type) => `n.type==='${type}'`).join('||')
 
 export const RESTORE_SCRIPT = `(()=>{try{const n=performance.getEntriesByType('navigation')[0],i=sessionStorage.getItem('${TAB_KEY}'),s=JSON.parse(localStorage.getItem('${STORE}')||'null'),a=new URLSearchParams(location.search),k=(x)=>x&&s&&Array.isArray(s.drafts)&&s.drafts.some((d)=>d&&d.id===x);if(n&&(${RETURNING})&&k(i)||k(a.get('${DRAFT_KEY}'))||a.has('${NEW_KEY}'))document.documentElement.dataset.restoring=''}catch{}})()`
 
-export function askedDraft(search: string, stored: Stored | null): Edit | undefined {
+export function askedDraft(search: string, drafts: readonly Edit[]): Edit | undefined {
   const id = new URLSearchParams(search).get(DRAFT_KEY)
 
-  return id ? stored?.drafts.find((draft) => draft.id === id) : undefined
+  return id ? drafts.find((draft) => draft.id === id) : undefined
 }

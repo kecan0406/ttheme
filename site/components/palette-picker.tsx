@@ -18,6 +18,14 @@ import { byWork, leadOf, shelfFocusOf, tileLook } from '@/lib/works'
 import { Dots, dotColors } from './dots'
 import { WorkArt } from './work-art'
 
+export function OptionsNote({ failed = false }: { failed?: boolean }) {
+  return (
+    <p class="px-2.5 py-2 text-xs text-muted-foreground">
+      {failed ? "couldn't load the palettes" : 'loading the palettes…'}
+    </p>
+  )
+}
+
 export function PaletteOptions({
   themes,
   current,
@@ -135,7 +143,7 @@ export function PalettePicker() {
             data-options
             class="grid max-h-[min(560px,calc(100dvh-140px))] min-h-0 auto-rows-max grid-cols-[minmax(0,1fr)] gap-1.5 overflow-y-auto overscroll-contain"
           >
-            <p class="px-2.5 py-2 text-xs text-muted-foreground">loading the palettes…</p>
+            <OptionsNote />
           </ComboboxList>
         </Combobox>
       </Popover>

@@ -33,5 +33,14 @@ export function enter(popup: HTMLElement, first?: () => void) {
 export async function leave(popup: HTMLElement): Promise<void> {
   rest(popup)
   popup.setAttribute('data-ending-style', '')
-  await Promise.allSettled(popup.getAnimations({ subtree: true }).map((animation) => animation.finished))
+
+  const ending = popup
+    .getAnimations({ subtree: true })
+    .filter(
+      (animation) =>
+        animation.playState === 'running' &&
+        animation.effect?.getComputedTiming().iterations !== Number.POSITIVE_INFINITY,
+    )
+
+  await Promise.allSettled(ending.map((animation) => animation.finished))
 }

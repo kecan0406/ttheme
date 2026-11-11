@@ -4,6 +4,7 @@ import {
   listIn,
   madeMode,
   nameTrouble,
+  type Shelf,
   subjectTrouble,
   type View,
   writesOther,
@@ -14,7 +15,7 @@ import { pictureOf } from '@/lib/pictures'
 import { gateLinesOf, slotViewOf } from '@/lib/slot-view'
 import type { GateLine, Picture, SlotFormat, SlotView } from '@/lib/view-types'
 import { contrast, type Hex, mix } from '../../src/core/color.ts'
-import { type Draft, paletteToml } from '../../src/core/draft.ts'
+import { type Draft, paletteToml, shareLink } from '../../src/core/draft.ts'
 import { marksOf } from '../../src/core/mark.ts'
 import { otherOf } from '../../src/core/mode.ts'
 import { PLANE_BOTTOM, PLANE_TOP, shareOf } from '../../src/core/plane.ts'
@@ -255,6 +256,12 @@ export interface LinkView {
   failed: string | null
 }
 
+export type Sharing =
+  | { state: 'idle' }
+  | { state: 'asking'; key: string }
+  | { state: 'made'; key: string; code: string }
+  | { state: 'failed'; key: string; problem: string }
+
 export interface MarketView {
   owner: string
   name: string
@@ -450,12 +457,35 @@ export function marketOf(owner: string, name: string): MarketView {
   return { owner, name, repo, zip: `${repo}.zip`, problem }
 }
 
-export function statusOf(edit: Edit, kept: boolean, saved: boolean): StatusView {
+export function sharingOf(sharing: Sharing, key: string): Sharing {
+  return sharing.state !== 'idle' && sharing.key === key ? sharing : { state: 'asking', key }
+}
+
+export function shared(sharing: Sharing, key: string, answer: { code: string } | { problem: string }): Sharing {
+  if (sharing.state !== 'asking' || sharing.key !== key) return sharing
+
+  return 'code' in answer
+    ? { state: 'made', key, code: answer.code }
+    : { state: 'failed', key, problem: answer.problem }
+}
+
+export function linkOf(sharing: Sharing, name: string, problem: string | undefined): LinkView {
+  if (problem) return { name, link: null, code: null, failed: problem }
+
+  if (sharing.state === 'made') return { name, link: shareLink(sharing.code), code: sharing.code, failed: null }
+
+  return { name, link: null, code: null, failed: sharing.state === 'failed' ? sharing.problem : null }
+}
+
+export function statusOf(edit: Edit, shelf: Shelf): StatusView {
+  if (shelf.state === 'none') return { ok: false, text: 'this browser keeps no drafts — export before you leave' }
+
+  if (shelf.state === 'refused')
+    return { ok: false, text: `${edit.name} was not kept in this browser — export before you leave` }
+
+  if (!shelf.stored.drafts.some((draft) => draft.id === edit.id))
+    return { ok: true, text: `${edit.name} — a change keeps it in this browser` }
   const named = nameTrouble(edit.name)
-
-  if (!kept) return { ok: false, text: 'this browser keeps no drafts — export before you leave' }
-
-  if (!saved) return { ok: true, text: `${edit.name} — a change keeps it in this browser` }
 
   return named
     ? { ok: false, text: `kept in this browser, but the name ${named}` }

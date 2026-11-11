@@ -2,6 +2,12 @@ import { plural } from '@/lib/utils'
 import { announce } from './dom'
 import { composing, letter, typing } from './keys'
 
+const LAND_MS = 120
+
+const SLACK = 2
+
+type Pin = { id: string; landing: number } | { id: string; top: number }
+
 function idOf(hash: string): string {
   try {
     return decodeURIComponent(hash.slice(1))
@@ -10,12 +16,16 @@ function idOf(hash: string): string {
   }
 }
 
+function topOf(id: string): number {
+  return document.getElementById(id)?.getBoundingClientRect().top ?? 0
+}
+
 class DocsPage extends HTMLElement {
   #spy: IntersectionObserver | null = null
 
   #passed = new Map<string, boolean>()
 
-  #pinned: string | null = null
+  #pin: Pin | null = null
 
   #tallying = 0
 
@@ -102,7 +112,7 @@ class DocsPage extends HTMLElement {
 
   #mark() {
     const ids = [...this.#passed.keys()]
-    const current = this.#pinned ?? ids.findLast((id) => this.#passed.get(id)) ?? ids[0]
+    const current = this.#pin?.id ?? ids.findLast((id) => this.#passed.get(id)) ?? ids[0]
     const at = current === undefined ? -1 : ids.indexOf(current)
 
     for (const link of this.querySelectorAll<HTMLAnchorElement>('[data-toc] a')) {
@@ -114,25 +124,53 @@ class DocsPage extends HTMLElement {
     }
   }
 
-  #pin(id: string) {
-    this.#pinned = this.#passed.has(id) ? id : null
+  #hold(id: string) {
+    this.#unpin()
+
+    if (this.#passed.has(id)) this.#land(id)
     this.#mark()
+  }
+
+  #land(id: string) {
+    const landing = window.setTimeout(() => {
+      this.#pin = { id, top: topOf(id) }
+    }, LAND_MS)
+
+    this.#pin = { id, landing }
+  }
+
+  #unpin() {
+    const pin = this.#pin
+
+    if (pin && 'landing' in pin) window.clearTimeout(pin.landing)
+    this.#pin = null
   }
 
   #follow = (event: MouseEvent) => {
     const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href^="#"]')
 
-    if (link) this.#pin(idOf(link.hash))
+    if (link) this.#hold(idOf(link.hash))
   }
 
   #arrive = () => {
-    this.#pin(idOf(location.hash))
+    this.#hold(idOf(location.hash))
   }
 
   #release = () => {
-    if (this.#pinned === null) return
-    this.#pinned = null
+    if (!this.#pin) return
+    this.#unpin()
     this.#mark()
+  }
+
+  #scrolled = () => {
+    const pin = this.#pin
+
+    if (!pin) return
+
+    if ('landing' in pin) {
+      window.clearTimeout(pin.landing)
+      this.#land(pin.id)
+    } else if (Math.abs(topOf(pin.id) - pin.top) > SLACK) this.#release()
   }
 
   #watch() {
@@ -170,6 +208,7 @@ class DocsPage extends HTMLElement {
 
     for (const kind of ['wheel', 'touchstart', 'keydown'])
       window.addEventListener(kind, this.#release, { passive: true })
+    window.addEventListener('scroll', this.#scrolled, { passive: true })
     window.addEventListener('scroll', this.#fit, { passive: true })
     window.addEventListener('resize', this.#fit, { passive: true })
     const main = this.querySelector('#content')
@@ -188,7 +227,9 @@ class DocsPage extends HTMLElement {
     window.removeEventListener('hashchange', this.#arrive)
 
     for (const kind of ['wheel', 'touchstart', 'keydown']) window.removeEventListener(kind, this.#release)
+    window.removeEventListener('scroll', this.#scrolled)
     window.removeEventListener('scroll', this.#fit)
+    this.#unpin()
     window.removeEventListener('resize', this.#fit)
     this.#sized?.disconnect()
     cancelAnimationFrame(this.#frame)

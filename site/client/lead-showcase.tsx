@@ -28,16 +28,15 @@ function wake(sticker: HTMLImageElement) {
   sticker.src = src
 }
 
+type Cycle = { stage: 'off' } | { stage: 'held'; frozen: Animation | null } | { stage: 'running'; run: Animation }
+
 class LeadShowcase extends HTMLElement {
   #leads: Theme[] = []
   #worn: Theme | null = null
-  #run: Animation | null = null
-  #cycling = false
+  #cycle: Cycle = { stage: 'off' }
   #holds = new Set<string>()
   #view: IntersectionObserver | null = null
   #wide: MediaQueryList | null = null
-  #photoTurn = 0
-  #stickerTurn = 0
   #pointer: [number, number] = [0, 0]
   #frame = 0
   #off = () => {}
@@ -71,7 +70,7 @@ class LeadShowcase extends HTMLElement {
   #stacked = () => this.#hold('stacked', !this.#wide?.matches)
 
   #focus = (event: FocusEvent) => {
-    if ((event.target as Element).matches(':focus-visible')) this.#turn(false)
+    if ((event.target as Element).matches(':focus-visible')) this.#rest()
   }
 
   #point = (event: PointerEvent) => {
@@ -91,11 +90,12 @@ class LeadShowcase extends HTMLElement {
     this.#lean([0, 0])
   }
 
-  #wiped = () => {
+  #wiped = (event: AnimationEvent) => {
     const solid = this.#solid
     const world = this.#world
 
-    if (solid) delete solid.dataset.turn
+    if (!solid || event.target !== solid || event.animationName !== `lead-wipe-${solid.dataset.turn}`) return
+    delete solid.dataset.turn
     world?.style.removeProperty('--lead-was')
     world?.style.removeProperty('--lead-field')
   }
@@ -137,6 +137,7 @@ class LeadShowcase extends HTMLElement {
     this.#worn = this.#leads[0] ?? null
     this.addEventListener('click', this.#click)
     this.#solid?.addEventListener('animationend', this.#wiped)
+    this.#solid?.addEventListener('animationcancel', this.#wiped)
     this.#off = onWear((theme) => this.#pick(theme))
     this.#offMode = onMode(() => this.#remode())
     const recalled = recall()
@@ -167,7 +168,10 @@ class LeadShowcase extends HTMLElement {
     this.#wide.addEventListener('change', this.#stacked)
     this.#hidden()
     this.#stacked()
-    this.#turn(stored === null && this.#leads.length > 1)
+
+    if (stored !== null || this.#leads.length < 2) return
+    this.#cycle = { stage: 'held', frozen: null }
+    this.#schedule()
   }
 
   disconnectedCallback() {
@@ -175,10 +179,11 @@ class LeadShowcase extends HTMLElement {
     this.removeEventListener('pointermove', this.#point)
     this.removeEventListener('pointerleave', this.#unpoint)
     this.#solid?.removeEventListener('animationend', this.#wiped)
+    this.#solid?.removeEventListener('animationcancel', this.#wiped)
     this.#off()
     this.#offMode()
-    this.#cycling = false
-    this.#run?.cancel()
+    this.#clock()?.cancel()
+    this.#cycle = { stage: 'off' }
     this.#view?.disconnect()
     this.#view = null
     this.#wide?.removeEventListener('change', this.#stacked)
@@ -203,9 +208,21 @@ class LeadShowcase extends HTMLElement {
     world?.style.setProperty('--py', y.toFixed(3))
   }
 
-  #turn(on: boolean) {
-    this.#cycling = on
-    this.#schedule()
+  #clock(): Animation | null {
+    const cycle = this.#cycle
+
+    return cycle.stage === 'running' ? cycle.run : cycle.stage === 'held' ? cycle.frozen : null
+  }
+
+  #freeze() {
+    this.#clock()?.pause()
+    this.#line?.style.removeProperty('opacity')
+  }
+
+  #rest() {
+    if (this.#cycle.stage === 'off') return
+    this.#freeze()
+    this.#cycle = { stage: 'off' }
   }
 
   #hold(reason: string, on: boolean) {
@@ -232,32 +249,34 @@ class LeadShowcase extends HTMLElement {
   #schedule() {
     const line = this.#line
 
-    if (!this.#cycling || this.#holds.size > 0 || !line) {
-      this.#run?.pause()
-      line?.style.removeProperty('opacity')
+    if (this.#cycle.stage === 'off') return
+
+    if (this.#holds.size > 0 || !line) {
+      this.#freeze()
+      this.#cycle = { stage: 'held', frozen: this.#clock() }
 
       return
     }
 
-    this.#run?.cancel()
+    this.#clock()?.cancel()
     line.style.opacity = '1'
     const coming = this.#leads[(this.#at + 1) % this.#leads.length]
     const sticker = this.#stickers.find((one) => one.dataset.leadSticker === coming?.name)
 
     if (sticker) wake(sticker)
     const run = line.animate({ scale: ['0 1', '1 1'] }, { duration: CYCLE_MS, easing: 'linear', fill: 'forwards' })
-    this.#run = run
+    this.#cycle = { stage: 'running', run }
     run.finished.then(
       () => {
-        if (this.#run !== run) return
-        this.#cycle()
+        if (this.#clock() !== run) return
+        this.#advance()
         this.#schedule()
       },
       () => {},
     )
   }
 
-  #cycle() {
+  #advance() {
     const next = this.#leads[(this.#at + 1) % this.#leads.length] as Theme
 
     fadeThrough(() => this.#draw(next))
@@ -270,7 +289,7 @@ class LeadShowcase extends HTMLElement {
   }
 
   #pick(theme: Theme) {
-    if (this.#cycling) this.#turn(false)
+    this.#rest()
 
     if (theme.name !== this.#worn?.name) fadeThrough(() => this.#draw(theme))
   }
@@ -292,10 +311,9 @@ class LeadShowcase extends HTMLElement {
 
     const stickers = this.#stickers
     const shown = stickers.find((sticker) => sticker.dataset.leadSticker === theme.name)
-    const turn = ++this.#stickerTurn
 
     const wear = () => {
-      if (turn !== this.#stickerTurn) return
+      if (this.#worn !== theme) return
 
       for (const sticker of stickers) sticker.dataset.on = String(sticker === shown)
 
@@ -317,7 +335,6 @@ class LeadShowcase extends HTMLElement {
 
   #frameArt(theme: Theme) {
     const photo = this.#photo
-    const turn = ++this.#photoTurn
 
     if (!photo) return
 
@@ -333,7 +350,7 @@ class LeadShowcase extends HTMLElement {
       (index) => {
         const art = index.works.find((work) => work.id === theme.work?.id)?.art
 
-        if (turn !== this.#photoTurn) return
+        if (this.#worn !== theme) return
 
         if (!art) {
           photo.hidden = true
@@ -356,7 +373,7 @@ class LeadShowcase extends HTMLElement {
         image.src = art.src
 
         const place = () => {
-          if (turn !== this.#photoTurn) return
+          if (this.#worn !== theme) return
           const before = [...photo.children]
 
           photo.hidden = false

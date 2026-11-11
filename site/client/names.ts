@@ -2,20 +2,35 @@ import { NAME_PAUSE, NAMES_PATH, type NamesAnswer, namesPath } from '@/lib/names
 
 const STALL_MS = 300
 
+type Naming =
+  | { state: 'idle' }
+  | { state: 'waiting'; query: string; timer: number }
+  | { state: 'asking'; query: string; stop: AbortController; timer: number }
+  | { state: 'stalled'; query: string; stop: AbortController }
+  | { state: 'failed'; query: string }
+
 export class NameLookup {
   readonly answers = new Map<string, NamesAnswer>()
-  naming = ''
-  stalled = false
-  failed = ''
-  #asking: AbortController | null = null
-  #asked = ''
-  #pause = 0
-  #stall = 0
+  #naming: Naming = { state: 'idle' }
   #primed = false
   readonly #changed: (asked: string) => void
 
   constructor(changed: (asked: string) => void) {
     this.#changed = changed
+  }
+
+  get naming(): string {
+    const now = this.#naming
+
+    return now.state === 'idle' || now.state === 'failed' ? '' : now.query
+  }
+
+  get stalled(): boolean {
+    return this.#naming.state === 'stalled'
+  }
+
+  get failed(): string {
+    return this.#naming.state === 'failed' ? this.#naming.query : ''
   }
 
   warm() {
@@ -31,41 +46,27 @@ export class NameLookup {
   later(query: string) {
     const asked = query.trim()
 
-    window.clearTimeout(this.#pause)
+    if (this.#asking(asked)) return
 
-    if (this.#asked && this.#asked !== asked) {
-      this.#asking?.abort()
-      window.clearTimeout(this.#stall)
-      this.stalled = false
-    }
-
-    this.naming = asked && !this.answers.has(asked) ? asked : ''
-
-    if (!this.naming) return
-    this.#pause = window.setTimeout(() => {
-      if (this.naming === asked && this.#asked !== asked) this.ask(asked)
-    }, NAME_PAUSE)
+    if (!asked || this.answers.has(asked)) return this.#turn({ state: 'idle' })
+    this.#turn({ state: 'waiting', query: asked, timer: window.setTimeout(() => this.ask(asked), NAME_PAUSE) })
   }
 
   ask(query: string) {
     const asked = query.trim()
 
-    window.clearTimeout(this.#pause)
-
-    if (!asked || this.answers.has(asked) || this.#asked === asked) return
+    if (!asked || this.answers.has(asked) || this.#asking(asked)) return
     this.#primed = true
-    this.#asking?.abort()
-    const asking = new AbortController()
-    this.#asking = asking
-    this.#asked = asked
-    this.naming = asked
-    window.clearTimeout(this.#stall)
-    this.stalled = false
-    this.#stall = window.setTimeout(() => {
-      this.stalled = true
+    const stop = new AbortController()
+
+    const timer = window.setTimeout(() => {
+      if (!this.#mine(stop)) return
+      this.#turn({ state: 'stalled', query: asked, stop }, false)
       this.#changed(asked)
     }, STALL_MS)
-    fetch(namesPath(asked), { signal: asking.signal })
+
+    this.#turn({ state: 'asking', query: asked, stop, timer })
+    fetch(namesPath(asked), { signal: stop.signal })
       .then((response) => {
         if (!response.ok) throw new Error(String(response.status))
 
@@ -74,30 +75,40 @@ export class NameLookup {
       .then(
         (answer) => {
           this.answers.set(asked, answer)
-          this.#answered(asking, asked, '')
+          this.#answered(stop, asked, { state: 'idle' })
         },
-        () => this.#answered(asking, asked, asking.signal.aborted ? '' : asked),
+        () => this.#answered(stop, asked, { state: 'failed', query: asked }),
       )
   }
 
   stop() {
-    window.clearTimeout(this.#pause)
-    window.clearTimeout(this.#stall)
-    this.#asking?.abort()
+    this.#turn({ state: 'idle' })
   }
 
-  #answered(asking: AbortController, asked: string, failed: string) {
-    if (this.#asking === asking) {
-      this.#asking = null
-      this.#asked = ''
-      window.clearTimeout(this.#stall)
-      this.stalled = false
-    }
+  #asking(asked: string): boolean {
+    const now = this.#naming
 
-    if (asking.signal.aborted) return
+    return (now.state === 'asking' || now.state === 'stalled') && now.query === asked
+  }
 
-    if (this.naming === asked) this.naming = ''
-    this.failed = failed
+  #mine(stop: AbortController): boolean {
+    const now = this.#naming
+
+    return (now.state === 'asking' || now.state === 'stalled') && now.stop === stop
+  }
+
+  #turn(next: Naming, abort = true) {
+    const was = this.#naming
+
+    if (was.state === 'waiting' || was.state === 'asking') window.clearTimeout(was.timer)
+
+    if (abort && (was.state === 'asking' || was.state === 'stalled')) was.stop.abort()
+    this.#naming = next
+  }
+
+  #answered(stop: AbortController, asked: string, next: Naming) {
+    if (!this.#mine(stop)) return
+    this.#turn(next, false)
     this.#changed(asked)
   }
 }

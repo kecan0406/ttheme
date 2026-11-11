@@ -80,7 +80,10 @@ class MarketplaceWorkspace extends HTMLElement {
   }
 
   #popstate = () => {
-    this.#when(() => this.#select(this.#named(nameAt(location.pathname) ?? this.#data.start), false))
+    this.#when(
+      () => this.#select(this.#named(nameAt(location.pathname) ?? this.#data.start), false),
+      () => location.reload(),
+    )
   }
 
   connectedCallback() {
@@ -125,11 +128,12 @@ class MarketplaceWorkspace extends HTMLElement {
     return this.#ready
   }
 
-  #when(act: () => void) {
+  #when(act: () => void, missed = () => {}) {
     if (this.#palettes.length > 0) act()
     else
       void this.#load().then(() => {
         if (this.#palettes.length > 0) act()
+        else missed()
       })
   }
 

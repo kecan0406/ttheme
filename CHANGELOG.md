@@ -9,6 +9,11 @@
 - In Ghostty, a shell that started while Ghostty was marked as unable to name its front tab follows the front tab again once the mark runs out or is removed. Before, that shell never did until it was restarted.
 - A shell that ends at its prompt, with `ctrl+d`, now turns focus reporting off as it goes. Before, the program it was started from could get `^[[I` and `^[[O` typed into it whenever the window gained or lost focus.
 - In iTerm2 under `auto`, a mode switch that was killed midway no longer makes every later appearance report read as part of a switch still running.
+- In the site's builder, one drag on the color plane is one step of undo, where letting go right after a move could make two, and `esc` or a pointer the browser takes away ends the drag.
+- In the builder, Cancel after starting a blank palette over another blank goes back to the palette you had open, a seed you move is kept like any other change, and a blank you cancel no longer stays in your drafts.
+- In the builder, a draft the browser refused to store now says `was not kept in this browser` and your other drafts stay listed. Before, it read as a browser that keeps no drafts and the list went empty.
+- The site's header search now opens to say the works did not load when their list fails, and its field folds back when you tab out of it. A header menu also opens on time while the pointer moves between its label and its arrow.
+- On a docs page, the contents list follows the page again when you drag the scrollbar after jumping to a heading.
 
 ## 1.2.109
 

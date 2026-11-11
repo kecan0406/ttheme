@@ -1,4 +1,4 @@
-import { PaletteOptions } from '@/components/palette-picker'
+import { OptionsNote, PaletteOptions } from '@/components/palette-picker'
 import { palettesPath } from '@/lib/gallery'
 import { html } from '@/lib/render'
 import { BUILTIN, type Theme } from '@/lib/themes'
@@ -29,9 +29,10 @@ function reveal(image: HTMLImageElement) {
   if (image.dataset.src) image.src = image.dataset.src
 }
 
+type Options = { state: 'idle' | 'loading' | 'failed' } | { state: 'ready'; themes: Theme[] }
+
 class PalettePicker extends HTMLElement {
-  #themes: Theme[] | undefined
-  #loading: Promise<void> | undefined
+  #options: Options = { state: 'idle' }
   #lit: HTMLElement | null = null
   #late: IntersectionObserver | null = null
 
@@ -51,25 +52,30 @@ class PalettePicker extends HTMLElement {
     this.#late?.disconnect()
   }
 
-  #load = (): Promise<void> => {
-    this.#loading ??= Promise.all([palettes(palettesPath(BUILTIN)), searchIndex().catch(() => null)])
+  #load = () => {
+    const was = this.#options.state
+
+    if (was === 'loading' || was === 'ready') return
+    this.#options = { state: 'loading' }
+
+    if (was === 'failed') fill(this.querySelector('[data-options]'), html(<OptionsNote />))
+    Promise.all([palettes(palettesPath(BUILTIN)), searchIndex().catch(() => null)])
       .then(([themes, index]) => {
         const list = this.querySelector('[data-options]')
         const arts = new Map(index?.works.map((work) => [work.id, work]))
 
-        this.#themes = themes
+        this.#options = { state: 'ready', themes }
         fill(list, html(<PaletteOptions themes={themes} current={current()} arts={arts} />))
         this.#watch(list)
       })
       .catch(() => {
-        this.#loading = undefined
-        fill(
-          this.querySelector('[data-options]'),
-          html(<p class="px-2.5 py-2 text-xs text-muted-foreground">couldn't load the palettes</p>),
-        )
+        this.#options = { state: 'failed' }
+        fill(this.querySelector('[data-options]'), html(<OptionsNote failed />))
       })
+  }
 
-    return this.#loading
+  #themed(name: string | undefined): Theme | undefined {
+    return this.#options.state === 'ready' ? this.#options.themes.find((entry) => entry.name === name) : undefined
   }
 
   #watch(list: Element | null) {
@@ -97,11 +103,11 @@ class PalettePicker extends HTMLElement {
     box.dataset.value = current()
 
     for (const shelf of this.querySelectorAll<HTMLElement>('[data-shelf]')) this.#rest(shelf)
-    void this.#load()
+    this.#load()
   }
 
   #picked = (event: CustomEvent<ValueChange>) => {
-    const theme = this.#themes?.find((entry) => entry.name === event.detail.value)
+    const theme = this.#themed(event.detail.value)
 
     if (theme) choose(theme)
     else event.preventDefault()
@@ -128,7 +134,7 @@ class PalettePicker extends HTMLElement {
   }
 
   #wear(shelf: HTMLElement, name: string | undefined) {
-    const theme = this.#themes?.find((entry) => entry.name === name)
+    const theme = this.#themed(name)
 
     if (theme) shelf.querySelector('[data-slot="melt-card"]')?.setAttribute('style', tileLook(theme))
   }

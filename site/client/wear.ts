@@ -27,15 +27,17 @@ const COLOR = /^#[0-9a-f]{6}$/i
 
 const FADE: KeyframeEffectOptions = { duration: 400, easing: 'cubic-bezier(0.3, 0.7, 0.2, 1)' }
 
-const painted = new Map<string, Rgb>()
+interface Fade {
+  clock: Animation
+  goal: Vars
+  painted: Map<string, Rgb>
+}
 
 const chrome = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
 
 const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
 
-let fading: Animation | null = null
-
-let goal: Vars = []
+let fading: Fade | null = null
 
 function isShade(value: unknown): value is Shade {
   if (typeof value !== 'object' || value === null) return false
@@ -131,9 +133,8 @@ function same(slots: Vars, other: Vars): boolean {
 }
 
 function settle(root: HTMLElement) {
-  fading?.cancel()
+  fading?.clock.cancel()
   fading = null
-  painted.clear()
   delete root.dataset.settling
 }
 
@@ -146,24 +147,27 @@ function badge(root: HTMLElement) {
 }
 
 function fade(root: HTMLElement, slots: Vars) {
-  if (fading ? same(slots, goal) : slots.every(([slot, color]) => root.style.getPropertyValue(slot) === color)) return
+  const was = fading
+
+  if (was ? same(slots, was.goal) : slots.every(([slot, color]) => root.style.getPropertyValue(slot) === color)) return
 
   const fades = slots.map(([slot, color]) => {
     const worn = root.style.getPropertyValue(slot)
 
-    return { slot, from: painted.get(slot) ?? rgb(COLOR.test(worn) ? worn : color), to: rgb(color) }
+    return { slot, from: was?.painted.get(slot) ?? rgb(COLOR.test(worn) ? worn : color), to: rgb(color) }
   })
 
   const timing = new KeyframeEffect(null, null, reducedMotion() ? { duration: 0 } : FADE)
   const clock = new Animation(timing)
+  const mine: Fade = { clock, goal: slots, painted: new Map(was?.painted) }
 
   const step = () => {
-    if (fading !== clock) return
+    if (fading !== mine) return
     const progress = clock.playState === 'finished' ? 1 : (timing.getComputedTiming().progress ?? 0)
 
     for (const { slot, from, to } of fades) {
       const color = mix(from, to, progress)
-      painted.set(slot, color)
+      mine.painted.set(slot, color)
       root.style.setProperty(slot, hex(color))
     }
 
@@ -172,14 +176,13 @@ function fade(root: HTMLElement, slots: Vars) {
   }
 
   const settled = () => {
-    if (fading !== clock) return
+    if (fading !== mine) return
     settle(root)
     badge(root)
   }
 
-  fading?.cancel()
-  fading = clock
-  goal = slots
+  was?.clock.cancel()
+  fading = mine
   root.dataset.settling = ''
   clock.play()
   requestAnimationFrame(step)
@@ -248,10 +251,10 @@ export function arrive() {
   const text = root.dataset.handoff
 
   if (text === undefined) return
-  delete root.dataset.handoff
   const own = handed(text)
 
   if (!own) return
+  delete root.dataset.handoff
   settle(root)
   document.dispatchEvent(new CustomEvent<Shown>(SHOW_EVENT, { detail: { vars: worn(), origin: null, instant: true } }))
   wear(own.vars, own.light, own.origin)
@@ -261,7 +264,7 @@ window.addEventListener('pageshow', (event) => {
   if (!event.persisted || !fading) return
   const root = document.documentElement
 
-  for (const [slot, color] of goal) root.style.setProperty(slot, color)
+  for (const [slot, color] of fading.goal) root.style.setProperty(slot, color)
   chrome?.setAttribute('content', root.style.getPropertyValue('--bg'))
   settle(root)
   badge(root)

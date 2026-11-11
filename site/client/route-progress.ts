@@ -24,6 +24,7 @@ class RouteProgress extends HTMLElement {
     window.navigation.addEventListener('navigate', this.#navigate)
     window.addEventListener('pageshow', this.#restored)
     this.addEventListener('animationend', this.#ended)
+    this.addEventListener('animationcancel', this.#ended)
 
     if (!('arriving' in document.documentElement.dataset)) return
 
@@ -39,6 +40,7 @@ class RouteProgress extends HTMLElement {
     window.navigation.removeEventListener('navigate', this.#navigate)
     window.removeEventListener('pageshow', this.#restored)
     this.removeEventListener('animationend', this.#ended)
+    this.removeEventListener('animationcancel', this.#ended)
     clearTimeout(this.#limit)
   }
 
@@ -74,7 +76,7 @@ class RouteProgress extends HTMLElement {
   }
 
   #ended = (event: AnimationEvent) => {
-    if (event.animationName === 'route-out') this.#idle()
+    if (event.animationName === 'route-out' && this.dataset.state !== 'going') this.#idle()
   }
 
   #restored = (event: PageTransitionEvent) => {

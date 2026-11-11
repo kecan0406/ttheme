@@ -1,31 +1,38 @@
 import { SEARCH_PATH, type SearchIndex } from '@/lib/search'
 
-let load: Promise<SearchIndex> | null = null
+type Loaded =
+  | { state: 'idle' | 'failed' }
+  | { state: 'loading'; load: Promise<SearchIndex> }
+  | { state: 'held'; load: Promise<SearchIndex>; index: SearchIndex }
 
-let held: SearchIndex | null = null
+let loaded: Loaded = { state: 'idle' }
 
 export function searchIndex(): Promise<SearchIndex> {
-  if (load) return load
+  if (loaded.state === 'loading' || loaded.state === 'held') return loaded.load
 
-  const loading = fetch(SEARCH_PATH, { priority: 'low' }).then((response) => {
+  const load = fetch(SEARCH_PATH, { priority: 'low' }).then((response) => {
     if (!response.ok) throw new Error(String(response.status))
 
     return response.json() as Promise<SearchIndex>
   })
 
-  load = loading
-  loading.then(
+  loaded = { state: 'loading', load }
+  load.then(
     (index) => {
-      held = index
+      loaded = { state: 'held', load, index }
     },
     () => {
-      load = null
+      loaded = { state: 'failed' }
     },
   )
 
-  return loading
+  return load
 }
 
 export function heldIndex(): SearchIndex | null {
-  return held
+  return loaded.state === 'held' ? loaded.index : null
+}
+
+export function indexFailed(): boolean {
+  return loaded.state === 'failed'
 }

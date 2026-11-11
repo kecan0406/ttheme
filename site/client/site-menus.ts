@@ -43,34 +43,35 @@ function menuWork(work: SearchWork): MenuWork {
   }
 }
 
+interface Wait {
+  to: 'open' | 'close'
+  popup: HTMLElement
+  timer: number
+}
+
 class SiteMenus extends HTMLElement {
-  #opening = 0
-  #closing = 0
+  #wait: Wait | null = null
   #pinned: HTMLElement | null = null
-  #pending: HTMLElement | null = null
 
   #moved = (event: PointerEvent) => {
     if (event.pointerType !== 'mouse') return
     const popup = popupOf(event.target)
 
-    if (!popup || popup === this.#pending) return
-    window.clearTimeout(this.#closing)
+    if (!popup || (this.#wait?.to === 'open' && this.#wait.popup === popup)) return
+    this.#settle()
 
     if (isOpen(popup)) return
-    window.clearTimeout(this.#opening)
     const switching = this.#open() !== null && this.#pinned === null
 
-    if (switching) this.#show(popup)
-    else {
-      this.#pending = popup
-      this.#opening = window.setTimeout(() => this.#show(popup), OPEN_MS)
-    }
+    if (switching) show(popup, 'trigger-hover')
+    else this.#wait = { to: 'open', popup, timer: window.setTimeout(() => this.#waited(), OPEN_MS) }
   }
 
   #out = (event: PointerEvent) => {
     if (event.pointerType !== 'mouse') return
-    window.clearTimeout(this.#opening)
-    this.#pending = null
+    const from = popupOf(event.target)
+
+    if (from && from === popupOf(event.relatedTarget)) return
     this.#later()
   }
 
@@ -78,9 +79,7 @@ class SiteMenus extends HTMLElement {
     const popup = popupOf(event.target)
 
     if (!popup) return
-    window.clearTimeout(this.#opening)
-    window.clearTimeout(this.#closing)
-    this.#pending = null
+    this.#settle()
 
     if (!(event.target as Element).closest('[data-menu-trigger]')) {
       const open = this.#open()
@@ -90,22 +89,15 @@ class SiteMenus extends HTMLElement {
       return
     }
 
-    if (!isOpen(popup)) {
-      this.#pinned = popup
-
-      return
-    }
-
+    if (!isOpen(popup)) return
     event.preventDefault()
 
-    if (this.#pinned === popup) {
-      this.#pinned = null
-      hide(popup, 'trigger-press')
-    } else this.#pinned = popup
+    if (this.#pinned === popup) hide(popup, 'trigger-press')
+    else this.#pinned = popup
   }
 
   #enter = (event: PointerEvent) => {
-    if (event.pointerType === 'mouse') window.clearTimeout(this.#closing)
+    if (event.pointerType === 'mouse' && this.#wait?.to === 'close') this.#settle()
   }
 
   #leave = (event: PointerEvent) => {
@@ -114,12 +106,14 @@ class SiteMenus extends HTMLElement {
 
   #changed = (event: CustomEvent<OpenChange>) => {
     const popup = event.target
+    const { open, reason } = event.detail
 
     if (!(popup instanceof HTMLElement) || !POPUPS.includes(popup.id as (typeof POPUPS)[number])) return
 
-    if (!event.detail.open && this.#pinned === popup) this.#pinned = null
+    if (open) this.#pinned = reason === 'trigger-hover' ? null : popup
+    else if (this.#pinned === popup) this.#pinned = null
 
-    if (event.detail.open && popup.id === MENUS.builder) this.#drafts()
+    if (open && popup.id === MENUS.builder) this.#drafts()
   }
 
   #wore = (event: Event) => this.#inUse((event as CustomEvent<Theme>).detail)
@@ -152,8 +146,7 @@ class SiteMenus extends HTMLElement {
       popup.removeEventListener('pointerleave', this.#leave)
     }
 
-    window.clearTimeout(this.#opening)
-    window.clearTimeout(this.#closing)
+    this.#settle()
   }
 
   #popups(): HTMLElement[] {
@@ -168,20 +161,28 @@ class SiteMenus extends HTMLElement {
     return this.#popups().find(isOpen) ?? null
   }
 
-  #show(popup: HTMLElement) {
-    this.#pending = null
-    this.#pinned = null
-    show(popup, 'trigger-hover')
+  #settle() {
+    window.clearTimeout(this.#wait?.timer)
+    this.#wait = null
+  }
+
+  #waited() {
+    const wait = this.#wait
+
+    if (!wait) return
+    this.#wait = null
+    const { popup } = wait
+
+    if (wait.to === 'open') show(popup, 'trigger-hover')
+    else if (this.#pinned !== popup && !popup.matches(':hover') && !this.querySelector(':hover')) hide(popup, 'none')
   }
 
   #later() {
-    window.clearTimeout(this.#closing)
+    this.#settle()
     const popup = this.#open()
 
     if (!popup || this.#pinned === popup) return
-    this.#closing = window.setTimeout(() => {
-      if (this.#pinned !== popup && !popup.matches(':hover') && !this.querySelector(':hover')) hide(popup, 'none')
-    }, CLOSE_MS)
+    this.#wait = { to: 'close', popup, timer: window.setTimeout(() => this.#waited(), CLOSE_MS) }
   }
 
   #inUse(theme: Theme | null) {

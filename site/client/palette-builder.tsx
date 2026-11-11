@@ -28,10 +28,10 @@ import { PaneBody } from '@/components/mock-window'
 import {
   askedDraft,
   type BuilderData,
-  blankEdit,
   changedIn,
   changes,
   dirty,
+  draftsOn,
   dropped,
   type Edit,
   editOf,
@@ -44,10 +44,15 @@ import {
   newName,
   originIn,
   RETURNS,
+  reread,
+  reseeded,
   resetAll,
   restored,
+  type Seeding,
+  type Shelf,
   type Start,
   type Stored,
+  startBlank,
   storedOf,
   TAB_KEY,
   type View,
@@ -61,7 +66,7 @@ import {
   exportProblem,
   fileOf,
   gateOf,
-  type LinkView,
+  linkOf,
   marketOf,
   modesOf,
   type PickerView,
@@ -69,11 +74,14 @@ import {
   type RowFormat,
   ratioAt,
   rowsOf,
+  type Sharing,
   type StartGroup,
   type StartList,
   seedRowsOf,
   seedsAtDefault,
   setDrafts,
+  shared,
+  sharingOf,
   slotVars,
   statusOf,
 } from '@/lib/builder-view'
@@ -86,11 +94,10 @@ import { BUILTIN } from '@/lib/themes'
 import { FORMATS, type Pane, type Picture, type PictureCredit, type SlotFormat } from '@/lib/view-types'
 import { textDraft, webCheck, webCode } from '@/lib/web-code'
 import { type Hex, mix, type Oklch } from '../../src/core/color.ts'
-import { codeOf, type Draft, shareLink } from '../../src/core/draft.ts'
+import { codeOf, type Draft } from '../../src/core/draft.ts'
 import { PLANE_BOTTOM, PLANE_TOP, reach } from '../../src/core/plane.ts'
 import { marketplaceToml, readmeOf, repoFor } from '../../src/core/scaffold.ts'
-import { grow, SEED_FIELDS, SEEDS, type Seeds } from '../../src/core/seeds.ts'
-import { lchIn, listOf, misses, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
+import { lchIn, misses, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
 import {
   brightLinks,
   following,
@@ -112,6 +119,22 @@ interface Snapshot {
   made: Hex[]
   other: Edit['other']
 }
+
+interface Drag {
+  plane: HTMLElement
+  pointer: number
+  frame: number
+  at: [number, number] | null
+}
+
+interface Picking {
+  slot: number
+  keep: number
+  hue: number | null
+  drag: Drag | null
+}
+
+type Starts = { state: 'idle' | 'loading' | 'failed' } | { state: 'ready'; starts: Start[] }
 
 const SAVE_MS = 400
 
@@ -138,14 +161,31 @@ function readStore(): Stored | null {
   }
 }
 
-function tabDraft(stored: Stored | null): Edit | undefined {
+function shelve(change: (stored: Stored) => Stored): Shelf {
+  const stored = readStore()
+
+  if (!stored) return { state: 'none' }
+  const next = change(stored)
+
+  if (next === stored) return { state: 'kept', stored }
+
+  try {
+    localStorage.setItem(STORE, JSON.stringify(next))
+
+    return { state: 'kept', stored: next }
+  } catch {
+    return { state: 'refused', stored }
+  }
+}
+
+function tabDraft(drafts: readonly Edit[]): Edit | undefined {
   try {
     const entry = performance.getEntriesByType('navigation')[0]
 
     if (!(entry instanceof PerformanceNavigationTiming) || !RETURNS.includes(entry.type)) return undefined
     const id = sessionStorage.getItem(TAB_KEY)
 
-    return stored?.drafts.find((draft) => draft.id === id)
+    return drafts.find((draft) => draft.id === id)
   } catch {
     return undefined
   }
@@ -177,7 +217,7 @@ class PaletteBuilder extends HTMLElement {
   #view: View = 'made'
   #format: SlotFormat = 'hex'
   #rows: RowFormat = 'hex'
-  #open: number | null = null
+  #picker: Picking | null = null
   #where = true
   #only = false
   #history: Snapshot[] = []
@@ -185,25 +225,19 @@ class PaletteBuilder extends HTMLElement {
   #last: string | undefined
   #links = new Map<number, Oklch>()
   #unlinked = new Set<number>()
-  #keep = 0
-  #seeds: Seeds | null = null
-  #before: Edit | null = null
-  #starts: Start[] | null = null
-  #loading: Promise<void> | null = null
-  #startFailed = false
+  #seeding: Seeding | null = null
+  #starts: Starts = { state: 'idle' }
   #draftQuery = ''
-  #deleted: { edit: Edit; at: number } | null = null
-  #stored: Stored | null = null
+  #deleted: Edit | null = null
+  #shelf: Shelf = { state: 'none' }
+  #owed: { timer: number } | null = null
   #linkId: string | null = null
   #credits = new Map<string, PictureCredit | null>()
-  #saving = 0
   #market = { owner: '', name: '', description: '' }
-  #link: { key: string; view: LinkView } | null = null
+  #sharing: Sharing = { state: 'idle' }
   #urls = new Map<string, string>()
   #shown = new WeakMap<Element, string>()
-  #dragging: 'plane' | null = null
-  #frame = 0
-  #pending: (() => void) | null = null
+  #queued: { frame: number; work: () => void } | null = null
   #grid = ''
   #panes = new Map<string, Pane>()
   #sizer: ResizeObserver | undefined
@@ -221,17 +255,17 @@ class PaletteBuilder extends HTMLElement {
 
   connectedCallback() {
     this.#data = readJson<BuilderData>(this, 'script[data-builder]')
-    this.#stored = readStore()
+    this.#shelf = reread(this.#shelf, readStore())
     const link = this.#data.link !== null
-    const asked = link ? undefined : askedDraft(location.search, this.#stored)
-    const back = link ? undefined : (asked ?? tabDraft(this.#stored))
+    const asked = link ? undefined : askedDraft(location.search, this.#drafts)
+    const back = link ? undefined : (asked ?? tabDraft(this.#drafts))
     const fresh = link || back ? null : newName(location.search)
     this.#edit = back ?? editOf(this.#data.first.draft, this.#data.first.name, link, freshId(), Date.now())
 
     if (fresh !== null) {
-      this.#before = this.#edit
-      this.#seeds = { ...SEEDS }
-      this.#edit = blankEdit(listOf(grow(this.#seeds)), freshId(), Date.now(), fresh)
+      const blank = startBlank(this.#edit, null, freshId(), Date.now(), fresh)
+      this.#seeding = blank.seeding
+      this.#edit = blank.edit
     }
 
     if (link) this.#linkId = this.#edit.id
@@ -286,6 +320,8 @@ class PaletteBuilder extends HTMLElement {
     this.#sizer?.disconnect()
     this.#follow.disconnect()
     cancelAnimationFrame(this.#sizing)
+    this.#endDrag(false)
+    this.#unqueue(false)
     this.#flush()
 
     for (const url of this.#urls.values()) URL.revokeObjectURL(url)
@@ -363,26 +399,18 @@ class PaletteBuilder extends HTMLElement {
   }
 
   #save() {
-    window.clearTimeout(this.#saving)
-    this.#saving = window.setTimeout(this.#flush, SAVE_MS)
+    window.clearTimeout(this.#owed?.timer)
+    this.#owed = { timer: window.setTimeout(this.#flush, SAVE_MS) }
   }
 
   #flush = () => {
-    if (!this.#saving) return
-    window.clearTimeout(this.#saving)
-    this.#saving = 0
+    const owed = this.#owed
+
+    if (!owed) return
+    window.clearTimeout(owed.timer)
+    this.#owed = null
     this.#mark()
-
-    try {
-      const stored = storedOf(localStorage.getItem(STORE))
-      const next = kept(stored, this.#state)
-
-      if (next !== stored) localStorage.setItem(STORE, JSON.stringify(next))
-      this.#stored = next
-    } catch {
-      this.#stored = null
-    }
-
+    this.#shelf = shelve((stored) => kept(stored, this.#state))
     this.#renderStatus()
     this.#renderDrafts()
   }
@@ -393,25 +421,16 @@ class PaletteBuilder extends HTMLElement {
     } catch {}
   }
 
-  #write(next: Stored) {
-    try {
-      localStorage.setItem(STORE, JSON.stringify(next))
-      this.#stored = next
-    } catch {
-      this.#stored = null
-    }
-  }
-
   #synced = (event: StorageEvent) => {
     if (event.key !== STORE) return
-    this.#stored = readStore()
+    this.#shelf = reread(this.#shelf, readStore())
     this.#renderStatus()
     this.#renderDrafts()
   }
 
   #renderDrafts() {
-    const drafts = this.#stored?.drafts ?? []
-    const list = draftListOf(drafts, this.#state.id, this.#draftQuery, this.#deleted?.edit.name ?? null, Date.now())
+    const drafts = this.#drafts
+    const list = draftListOf(drafts, this.#state.id, this.#draftQuery, this.#deleted?.name ?? null, Date.now())
     this.#fill(this.querySelector('[data-drafts-list]'), html(<DraftEntries list={list} />))
     this.#fill(this.querySelector('[data-drafts-room]'), html(<DraftRoom list={list} />))
     const count = this.querySelector<HTMLElement>('[data-drafts-count]')
@@ -427,40 +446,63 @@ class PaletteBuilder extends HTMLElement {
   }
 
   #deleteDraft(id: string) {
-    const stored = readStore()
-    const at = stored?.drafts.findIndex((draft) => draft.id === id) ?? -1
-    const edit = stored?.drafts[at]
+    const edit = readStore()?.drafts.find((draft) => draft.id === id)
 
-    if (!stored || !edit || id === this.#state.id) return
-    this.#write(dropped(stored, id))
-    this.#deleted = { edit, at }
+    if (!edit || id === this.#state.id) return
+    this.#shelf = shelve((stored) => dropped(stored, id))
+    const gone = this.#shelf.state === 'kept'
+
+    if (gone) this.#deleted = edit
+    this.#renderStatus()
     this.#renderDrafts()
+
+    if (!gone) return
     this.querySelector<HTMLElement>('[data-draft-undo]')?.focus()
     announce(`deleted ${edit.name}`)
   }
 
   #undoDelete() {
     const gone = this.#deleted
-    const stored = readStore()
 
-    if (!gone || !stored) return
-    this.#write(restored(stored, gone.at, gone.edit))
-    this.#deleted = null
+    if (!gone) return
+    this.#shelf = shelve((stored) => restored(stored, gone))
+    const back = this.#shelf.state === 'kept'
+
+    if (back) this.#deleted = null
+    this.#renderStatus()
     this.#renderDrafts()
-    this.querySelector<HTMLElement>(`[data-draft-open="${gone.edit.id}"]`)?.focus()
-    announce(`${gone.edit.name} is back`)
+
+    if (!back) return
+    this.querySelector<HTMLElement>(`[data-draft-open="${gone.id}"]`)?.focus()
+    announce(`${gone.name} is back`)
   }
 
   #schedule(work: () => void) {
-    this.#pending = work
+    if (this.#queued) {
+      this.#queued.work = work
 
-    if (this.#frame) return
-    this.#frame = requestAnimationFrame(() => {
-      this.#frame = 0
-      const run = this.#pending
-      this.#pending = null
-      run?.()
-    })
+      return
+    }
+
+    const queued = {
+      work,
+      frame: requestAnimationFrame(() => {
+        this.#queued = null
+        queued.work()
+      }),
+    }
+
+    this.#queued = queued
+  }
+
+  #unqueue(run: boolean) {
+    const queued = this.#queued
+
+    if (!queued) return
+    cancelAnimationFrame(queued.frame)
+    this.#queued = null
+
+    if (run) queued.work()
   }
 
   #render() {
@@ -491,7 +533,8 @@ class PaletteBuilder extends HTMLElement {
     this.#enable('[data-reset]', edits > 0)
     this.#renderName()
 
-    const rows = rowsOf(list, missed, changed, this.#rows, this.#open, this.#linked(), this.#only)
+    const open = this.#picker?.slot ?? null
+    const rows = rowsOf(list, missed, changed, this.#rows, open, this.#linked(), this.#only)
     this.#fill(this.querySelector('[data-base-rows]'), html(<BaseRows rows={rows.base} />))
     this.#fill(this.querySelector('[data-pair-rows]'), html(<PairRows pairs={rows.pairs} />))
     const empty = this.querySelector<HTMLElement>('[data-rows-empty]')
@@ -576,8 +619,7 @@ class PaletteBuilder extends HTMLElement {
   }
 
   #renderStatus() {
-    const saved = this.#stored?.drafts.some((draft) => draft.id === this.#state.id) ?? false
-    const status = statusOf(this.#state, this.#stored !== null, saved)
+    const status = statusOf(this.#state, this.#shelf)
     this.#fill(document.querySelector('[data-status]'), html(<StatusText status={status} />))
   }
 
@@ -609,7 +651,7 @@ class PaletteBuilder extends HTMLElement {
   }
 
   #renderSeeds() {
-    const seeds = this.#seeds
+    const seeds = this.#seeding?.seeds ?? null
     const colors = this.querySelector<HTMLElement>('[data-panel-body="colors"]')
     const body = this.querySelector<HTMLElement>('[data-panel-body="seeds"]')
     const first = this.querySelector('[data-first-tab]')
@@ -660,18 +702,16 @@ class PaletteBuilder extends HTMLElement {
   }
 
   #renderPicker() {
-    const box = this.querySelector<HTMLElement>('[data-picker]')
-    const slot = this.#open
+    const picker = this.#picker
 
-    if (!box || slot === null || box.hidden || !box.firstElementChild) return
-    const p = this.#pickerView(slot)
+    if (!picker) return
+    const p = this.#pickerView(picker.slot)
     const { s } = p
     this.#fill(this.querySelector('[data-picker-head]'), html(<PickerHead p={p} />))
-    const rows = this.querySelector<HTMLElement>('[data-plane-rows]')
 
-    if (rows?.dataset.hue !== String(s.hue)) {
-      if (rows) rows.dataset.hue = String(s.hue)
-      this.#fill(rows, html(<PlaneRows s={s} />))
+    if (picker.hue !== s.hue) {
+      picker.hue = s.hue
+      this.#fill(this.querySelector('[data-plane-rows]'), html(<PlaneRows s={s} />))
     }
 
     this.#place('[data-thumb-plane]', s.x, s.y)
@@ -739,26 +779,35 @@ class PaletteBuilder extends HTMLElement {
     if (!data || !box) return
     this.#select('colors')
 
-    if (this.#seeds) this.#keepSeeds()
-    const row = this.querySelector<HTMLElement>(`[data-row="${slot}"]`)
-    const group = row?.closest('details')
+    if (this.#seeding) this.#keepSeeds()
+    const group = this.querySelector(`[data-row="${slot}"]`)?.closest('details')
 
-    if (group && !group.open) group.open = true
-    this.#open = slot
-    this.#keep = lchIn(this.#list(), this.#list()[slot] as Hex).c
-    this.#settle()
-    const p = this.#pickerView(slot)
-    this.#shown.delete(box)
-    fill(box, html(<Picker p={p} track={hueTrack()} panes={data.panes} />))
-    box.hidden = false
+    if (group?.open === false) group.open = true
+    else if (group?.hasAttribute('data-closed'))
+      group.querySelector<HTMLElement>(':scope > [data-slot="collapsible-trigger"]')?.click()
+    this.#pick(slot)
     this.#render()
     this.#placePicker()
     box.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' })
   }
 
+  #pick(slot: number) {
+    const data = this.#data
+    const box = this.querySelector<HTMLElement>('[data-picker]')
+
+    if (!data || !box) return
+    this.#endDrag(false)
+    this.#unqueue(false)
+    this.#picker = { slot, keep: lchIn(this.#list(), this.#list()[slot] as Hex).c, hue: null, drag: null }
+    this.#settle()
+    this.#shown.delete(box)
+    fill(box, html(<Picker p={this.#pickerView(slot)} track={hueTrack()} panes={data.panes} />))
+    box.hidden = false
+  }
+
   #placePicker() {
     const box = this.querySelector<HTMLElement>('[data-picker]')
-    const row = this.#open === null ? null : this.querySelector<HTMLElement>(`[data-row="${this.#open}"]`)
+    const row = this.#picker ? this.querySelector<HTMLElement>(`[data-row="${this.#picker.slot}"]`) : null
 
     if (!box || !row) return
     const anchor = row.closest<HTMLElement>('[data-pair]') ?? row
@@ -766,11 +815,13 @@ class PaletteBuilder extends HTMLElement {
   }
 
   #close(refocus: boolean) {
-    const slot = this.#open
+    const picker = this.#picker
     const box = this.querySelector<HTMLElement>('[data-picker]')
 
-    if (slot === null) return
-    this.#open = null
+    if (!picker) return
+    this.#endDrag(false)
+    this.#unqueue(false)
+    this.#picker = null
     this.#settle()
 
     if (box) {
@@ -781,7 +832,7 @@ class PaletteBuilder extends HTMLElement {
 
     this.#render()
 
-    if (refocus) this.querySelector<HTMLElement>(`[data-slot-open="${slot}"]`)?.focus()
+    if (refocus) this.querySelector<HTMLElement>(`[data-slot-open="${picker.slot}"]`)?.focus()
   }
 
   #light() {
@@ -789,7 +840,7 @@ class PaletteBuilder extends HTMLElement {
 
     if (!mock) return
 
-    if (this.#where && this.#open !== null) mock.dataset.lit = String(this.#open)
+    if (this.#where && this.#picker) mock.dataset.lit = String(this.#picker.slot)
     else delete mock.dataset.lit
   }
 
@@ -870,7 +921,7 @@ class PaletteBuilder extends HTMLElement {
     }
 
     if (list.matches('[data-slot="combobox"]')) {
-      const start = this.#starts?.find((one) => one.name === value)
+      const start = this.#starts.state === 'ready' ? this.#starts.starts.find((one) => one.name === value) : undefined
 
       if (start) this.#startFrom(start, false)
       else event.preventDefault()
@@ -890,7 +941,7 @@ class PaletteBuilder extends HTMLElement {
 
     if (value === 'drafts') this.#renderDrafts()
 
-    if (value !== 'colors' && this.#open !== null) this.#close(false)
+    if (value !== 'colors') this.#close(false)
   }
 
   #pressed = (event: CustomEvent<PressedChange>) => {
@@ -900,9 +951,11 @@ class PaletteBuilder extends HTMLElement {
     if (link) return this.#toggleLink(Number(link))
 
     if (toggle.matches('[data-picker-link]')) {
-      if (this.#open === null || this.#open < 4) return event.preventDefault()
+      const slot = this.#picker?.slot ?? 0
 
-      return this.#toggleLink(this.#open >= 12 ? this.#open : this.#open + 8)
+      if (slot < 4) return event.preventDefault()
+
+      return this.#toggleLink(slot >= 12 ? slot : slot + 8)
     }
 
     if (toggle.matches('[data-where]')) this.#where = event.detail.pressed
@@ -917,7 +970,7 @@ class PaletteBuilder extends HTMLElement {
     const { open, reason } = event.detail
 
     if (!open) {
-      const row = this.#open === null ? null : this.querySelector(`[data-row="${this.#open}"]`)
+      const row = this.#picker ? this.querySelector(`[data-row="${this.#picker.slot}"]`) : null
 
       if (row && popup.contains(row)) this.#close(false)
 
@@ -930,7 +983,7 @@ class PaletteBuilder extends HTMLElement {
     if (popup.matches('[data-export]')) this.#renderExport(true)
 
     if (popup.id !== 'builder-start') return
-    void this.#loadStarts()
+    this.#loadStarts()
     this.#renderStart()
   }
 
@@ -942,16 +995,7 @@ class PaletteBuilder extends HTMLElement {
     this.#settle()
     this.#relink()
 
-    if (this.#open !== null) {
-      const box = this.querySelector<HTMLElement>('[data-picker]')
-      this.#keep = lchIn(this.#list(), this.#list()[this.#open] as Hex).c
-
-      if (box && this.#data) {
-        this.#shown.delete(box)
-        fill(box, html(<Picker p={this.#pickerView(this.#open)} track={hueTrack()} panes={this.#data.panes} />))
-      }
-    }
-
+    if (this.#picker) this.#pick(this.#picker.slot)
     this.#render()
     announce(`editing the ${mode} colors`)
   }
@@ -986,7 +1030,7 @@ class PaletteBuilder extends HTMLElement {
 
   #startFrom(start: { name: string; draft: Draft }, own: boolean) {
     this.#flush()
-    this.#leaveSeeds(false)
+    this.#seeding = null
     this.#edit = editOf(start.draft, start.name, own, freshId(), Date.now())
     this.#reset()
     this.#closeStart()
@@ -998,6 +1042,7 @@ class PaletteBuilder extends HTMLElement {
     this.#history = []
     this.#future = []
     this.#only = false
+    this.#unqueue(false)
     this.#settle()
     this.#relink()
     this.#close(false)
@@ -1010,10 +1055,10 @@ class PaletteBuilder extends HTMLElement {
   #startDraft(id: string) {
     if (id === this.#state.id) return this.#select('colors')
     this.#flush()
-    const draft = this.#stored?.drafts.find((stored) => stored.id === id)
+    const draft = this.#drafts.find((stored) => stored.id === id)
 
     if (!draft) return
-    this.#leaveSeeds(false)
+    this.#seeding = null
     this.#edit = { ...draft }
     this.#deleted = null
     this.#reset('drafts')
@@ -1022,75 +1067,79 @@ class PaletteBuilder extends HTMLElement {
 
   #startBlank() {
     this.#flush()
-    this.#leaveSeeds(false)
-    this.#before = this.#state
-    this.#seeds = { ...SEEDS }
-    this.#edit = blankEdit(listOf(grow(this.#seeds)), freshId(), Date.now())
+    const blank = startBlank(this.#state, this.#seeding, freshId(), Date.now())
+    this.#seeding = blank.seeding
+    this.#edit = blank.edit
     this.#reset()
     this.#closeStart()
     this.querySelector<HTMLElement>('[data-seed]')?.focus()
   }
 
   #seed(key: string, value: number) {
-    const seeds = this.#seeds
-    const field = SEED_FIELDS.find((one) => one.key === key)
+    const seeding = this.#seeding
+    const next = seeding ? reseeded(this.#state, seeding, key, value, Date.now()) : null
 
-    if (!seeds || !field || Number.isNaN(value)) return
-    this.#seeds = { ...seeds, [field.key]: clamp(value, field.min, field.max) }
-    const made = listOf(grow(this.#seeds))
-    const edit = this.#state
-    this.#edit = { ...edit, made, origin: { made: [...made], other: edit.origin.other }, at: Date.now() }
+    if (!next) return
+    this.#seeding = next.seeding
+    this.#edit = next.edit
     this.#render()
+    this.#save()
   }
 
   #keepSeeds() {
-    this.#seeds = null
-    this.#before = null
+    this.#seeding = null
     this.#relink()
     this.#select('colors')
     this.#render()
     this.#save()
   }
 
-  #leaveSeeds(back: boolean) {
-    if (!this.#seeds) return
-    this.#seeds = null
+  #cancelSeeds() {
+    const seeding = this.#seeding
 
-    if (back && this.#before) this.#edit = this.#before
-    this.#before = null
+    if (!seeding) return
+    const blank = this.#state.id
+    window.clearTimeout(this.#owed?.timer)
+    this.#owed = null
+    this.#seeding = null
+    this.#edit = seeding.before
+    this.#shelf = shelve((stored) => dropped(stored, blank))
+    this.#reset()
   }
 
   #closeStart() {
     this.querySelector<HTMLElement>('#builder-start')?.hidePopover()
   }
 
-  async #loadStarts() {
-    if (this.#starts || this.#loading) return
-    this.#startFailed = false
-
-    this.#loading = (async () => {
-      try {
-        const response = await fetch('/builder/palettes.json')
-
+  #loadStarts() {
+    if (this.#starts.state === 'loading' || this.#starts.state === 'ready') return
+    this.#starts = { state: 'loading' }
+    this.#renderStart()
+    fetch('/builder/palettes.json')
+      .then((response) => {
         if (!response.ok) throw new Error(String(response.status))
-        this.#starts = (await response.json()) as Start[]
-      } catch {
-        this.#startFailed = true
-      } finally {
-        this.#loading = null
-        this.#renderStart()
-      }
-    })()
+
+        return response.json() as Promise<Start[]>
+      })
+      .then(
+        (starts) => {
+          this.#starts = { state: 'ready', starts }
+        },
+        () => {
+          this.#starts = { state: 'failed' }
+        },
+      )
+      .then(() => this.#renderStart())
   }
 
   #renderStart() {
     const target = this.querySelector('[data-start-list]')
+    const starts = this.#starts
 
-    const list: StartList = this.#startFailed
-      ? { state: 'failed' }
-      : !this.#starts
-        ? { state: 'loading' }
-        : { state: 'ready', groups: groupsOf(this.#starts) }
+    const list: StartList =
+      starts.state === 'ready'
+        ? { state: 'ready', groups: groupsOf(starts.starts) }
+        : { state: starts.state === 'failed' ? 'failed' : 'loading' }
 
     this.#fill(target, html(<StartEntries list={list} />))
   }
@@ -1146,46 +1195,40 @@ class PaletteBuilder extends HTMLElement {
       download.download = file.file
     }
 
-    void this.#renderLink()
+    this.#renderLink()
     this.#renderMarket()
   }
 
   get #drafts(): Edit[] {
-    return this.#stored?.drafts ?? []
+    return draftsOn(this.#shelf)
   }
 
-  async #renderLink() {
-    const edit = this.#state
-    const problem = exportProblem(edit)
-    const drafts = setDrafts(edit, this.#drafts)
+  #renderLink() {
+    const drafts = setDrafts(this.#state, this.#drafts)
+    const was = this.#sharing
     const key = JSON.stringify(drafts)
-    const panel = this.querySelector('[data-export-panel="link"]')
+    this.#sharing = drafts ? sharingOf(was, key) : { state: 'idle' }
+    this.#drawLink()
 
-    if (problem) {
-      this.#link = null
-      this.#fill(panel, html(<LinkPanel view={{ name: edit.name, link: null, code: null, failed: problem }} />))
+    if (!drafts || this.#sharing === was) return
+    webCode(drafts).then(
+      (code) => this.#share(key, { code }),
+      (failure: Error) => this.#share(key, { problem: failure.message }),
+    )
+  }
 
-      return
-    }
+  #share(key: string, answer: { code: string } | { problem: string }) {
+    const next = shared(this.#sharing, key, answer)
 
-    if (this.#link?.key === key) {
-      this.#fill(panel, html(<LinkPanel view={{ ...this.#link.view, name: edit.name }} />))
+    if (next === this.#sharing) return
+    this.#sharing = next
+    this.#drawLink()
+  }
 
-      return
-    }
-
-    this.#fill(panel, html(<LinkPanel view={{ name: edit.name, link: null, code: null, failed: null }} />))
-
-    try {
-      const code = await webCode(drafts as Draft[])
-
-      if (key !== JSON.stringify(setDrafts(this.#state, this.#drafts))) return
-      this.#link = { key, view: { name: edit.name, link: shareLink(code), code, failed: null } }
-    } catch (failure) {
-      this.#link = { key, view: { name: edit.name, link: null, code: null, failed: (failure as Error).message } }
-    }
-
-    this.#fill(this.querySelector('[data-export-panel="link"]'), html(<LinkPanel view={this.#link.view} />))
+  #drawLink() {
+    const edit = this.#state
+    const view = linkOf(this.#sharing, edit.name, exportProblem(edit))
+    this.#fill(this.querySelector('[data-export-panel="link"]'), html(<LinkPanel view={view} />))
   }
 
   #renderMarket() {
@@ -1214,60 +1257,91 @@ class PaletteBuilder extends HTMLElement {
     download.download = view.zip
   }
 
-  #planeAt(event: PointerEvent) {
-    const plane = this.querySelector<HTMLElement>('[data-plane]')
-    const slot = this.#open
+  #dragTo(picker: Picking, drag: Drag) {
+    const { at, plane } = drag
 
-    if (!plane || slot === null) return
+    if (!at) return
+    drag.at = null
     const box = plane.getBoundingClientRect()
-    const x = clamp((event.clientX - box.left) / box.width)
-    const y = clamp((event.clientY - box.top) / box.height)
+    const x = clamp((at[0] - box.left) / box.width)
+    const y = clamp((at[1] - box.top) / box.height)
     const l = PLANE_TOP - y * (PLANE_TOP - PLANE_BOTTOM)
-    const { h } = lchIn(this.#list(), this.#list()[slot] as Hex)
+    const { h } = lchIn(this.#list(), this.#list()[picker.slot] as Hex)
     const c = x * reach(l, h)
-    this.#keep = c
-    this.#set(slot, placed(l, c, h).hex, `plane:${slot}`)
+    picker.keep = c
+    this.#set(picker.slot, placed(l, c, h).hex, `plane:${picker.slot}`)
   }
 
   #press = (event: PointerEvent) => {
     const plane = (event.target as Element | null)?.closest<HTMLElement>('[data-plane]')
+    const picker = this.#picker
 
-    if (!plane || event.button !== 0) return
+    if (!plane || !picker || event.button !== 0) return
     event.preventDefault()
-    plane.setPointerCapture(event.pointerId)
-    this.#dragging = 'plane'
+    this.#endDrag(false)
+    this.#unqueue(true)
     this.#settle()
-    this.#planeAt(event)
+    const drag: Drag = { plane, pointer: event.pointerId, frame: 0, at: [event.clientX, event.clientY] }
+    picker.drag = drag
+    plane.setPointerCapture(drag.pointer)
+    plane.addEventListener('pointermove', this.#dragged)
+    plane.addEventListener('pointerup', this.#lifted)
+    plane.addEventListener('pointercancel', this.#lifted)
+    plane.addEventListener('lostpointercapture', this.#lifted)
+    this.#dragTo(picker, drag)
+  }
 
-    const move = (next: PointerEvent) => {
-      if (this.#dragging === 'plane') this.#schedule(() => this.#planeAt(next))
-    }
+  #dragged = (event: PointerEvent) => {
+    const picker = this.#picker
+    const drag = picker?.drag
 
-    const end = () => {
-      this.#dragging = null
-      this.#settle()
-      plane.removeEventListener('pointermove', move)
-      plane.removeEventListener('pointerup', end)
-      plane.removeEventListener('pointercancel', end)
-      this.querySelector<HTMLElement>('[data-plane-l]')?.focus({ preventScroll: true })
-    }
+    if (!picker || !drag || event.pointerId !== drag.pointer) return
+    drag.at = [event.clientX, event.clientY]
 
-    plane.addEventListener('pointermove', move)
-    plane.addEventListener('pointerup', end)
-    plane.addEventListener('pointercancel', end)
+    if (drag.frame) return
+    drag.frame = requestAnimationFrame(() => {
+      drag.frame = 0
+
+      if (picker.drag === drag) this.#dragTo(picker, drag)
+    })
+  }
+
+  #lifted = (event: PointerEvent) => {
+    if (event.pointerId !== this.#picker?.drag?.pointer) return
+    this.#endDrag(event.type === 'pointerup')
+    this.querySelector<HTMLElement>('[data-plane-l]')?.focus({ preventScroll: true })
+  }
+
+  #endDrag(landed: boolean) {
+    const picker = this.#picker
+    const drag = picker?.drag
+
+    if (!picker || !drag) return
+    cancelAnimationFrame(drag.frame)
+
+    if (landed) this.#dragTo(picker, drag)
+    picker.drag = null
+    this.#settle()
+    drag.plane.removeEventListener('pointermove', this.#dragged)
+    drag.plane.removeEventListener('pointerup', this.#lifted)
+    drag.plane.removeEventListener('pointercancel', this.#lifted)
+    drag.plane.removeEventListener('lostpointercapture', this.#lifted)
+
+    if (drag.plane.hasPointerCapture(drag.pointer)) drag.plane.releasePointerCapture(drag.pointer)
   }
 
   #channel(kind: 'l' | 'c' | 'h' | 'contrast', value: number) {
-    const slot = this.#open
+    const picker = this.#picker
 
-    if (slot === null) return
+    if (!picker) return
+    const { slot } = picker
     const list = this.#list()
     const now = lchIn(list, list[slot] as Hex)
 
     if (kind === 'contrast') {
       const partner = partnerOf(list, slot)
       const against = list[partner.against] as Hex
-      const solved = solveLightness(list[slot] as Hex, now, this.#keep, against, ratioAt(value / 1000))
+      const solved = solveLightness(list[slot] as Hex, now, picker.keep, against, ratioAt(value / 1000))
       this.#set(slot, solved.hex, `contrast:${slot}`)
 
       if (solved.stops !== undefined) announce(`the ratio stops at ${solved.stops.toFixed(2)} to 1 on this side`)
@@ -1276,23 +1350,24 @@ class PaletteBuilder extends HTMLElement {
     }
 
     if (kind === 'c') {
-      this.#keep = (value / 100) * reach(now.l, now.h)
-      this.#set(slot, placed(now.l, this.#keep, now.h).hex, `c:${slot}`)
+      picker.keep = (value / 100) * reach(now.l, now.h)
+      this.#set(slot, placed(now.l, picker.keep, now.h).hex, `c:${slot}`)
 
       return
     }
 
     const l = kind === 'l' ? value / 100 : now.l
     const h = kind === 'h' ? value : now.h
-    this.#set(slot, placed(l, Math.min(this.#keep, room(l, h)), h).hex, `${kind}:${slot}`)
+    this.#set(slot, placed(l, Math.min(picker.keep, room(l, h)), h).hex, `${kind}:${slot}`)
   }
 
   #typed(input: HTMLInputElement) {
-    const slot = this.#open
+    const picker = this.#picker
     const color = parseColor(input.value)
     const bad = this.querySelector<HTMLElement>('[data-bad]')
 
-    if (slot === null) return
+    if (!picker) return
+    const { slot } = picker
 
     if (!color) {
       input.setAttribute('aria-invalid', 'true')
@@ -1305,7 +1380,7 @@ class PaletteBuilder extends HTMLElement {
     input.setAttribute('aria-invalid', 'false')
 
     if (bad) bad.hidden = true
-    this.#keep = lchIn(this.#list(), color).c
+    picker.keep = lchIn(this.#list(), color).c
     this.#set(slot, color, '!typed')
     input.value = this.#pickerView(slot).s.formats[this.#format]
   }
@@ -1330,11 +1405,13 @@ class PaletteBuilder extends HTMLElement {
 
     if (target.closest('[data-picker-close]')) return this.#close(true)
 
-    if (target.closest('[data-picker-back]') && this.#open !== null) {
+    const picker = this.#picker
+
+    if (target.closest('[data-picker-back]') && picker) {
       const origin = originIn(this.#state, this.#view)
-      const hex = origin[this.#open] as Hex
-      this.#keep = lchIn(origin, hex).c
-      this.#set(this.#open, hex, '!back')
+      const hex = origin[picker.slot] as Hex
+      picker.keep = lchIn(origin, hex).c
+      this.#set(picker.slot, hex, '!back')
 
       return
     }
@@ -1350,7 +1427,7 @@ class PaletteBuilder extends HTMLElement {
         this.#select('colors')
       }
 
-      if (this.#open === slot && !opener.closest('[data-inspector]')) return this.#close(true)
+      if (picker?.slot === slot && !opener.closest('[data-inspector]')) return this.#close(true)
 
       return this.#openSlot(slot)
     }
@@ -1386,12 +1463,7 @@ class PaletteBuilder extends HTMLElement {
 
     if (target.closest('[data-seeds-keep]')) return this.#keepSeeds()
 
-    if (target.closest('[data-seeds-cancel]')) {
-      this.#leaveSeeds(true)
-      this.#reset()
-
-      return
-    }
+    if (target.closest('[data-seeds-cancel]')) return this.#cancelSeeds()
 
     if (target.closest('[data-start-blank]')) return this.#startBlank()
     const gone = target.closest<HTMLElement>('[data-draft-delete]')?.dataset.draftDelete
@@ -1403,13 +1475,7 @@ class PaletteBuilder extends HTMLElement {
 
     if (target.closest('[data-draft-undo]')) return this.#undoDelete()
 
-    if (target.closest('[data-start-retry]')) {
-      this.#startFailed = false
-      this.#renderStart()
-      void this.#loadStarts()
-
-      return
-    }
+    if (target.closest('[data-start-retry]')) return this.#loadStarts()
 
     if (target.closest('[data-open-go]')) {
       void this.#openText(this.querySelector<HTMLTextAreaElement>('[data-open-text]')?.value ?? '')
@@ -1473,7 +1539,11 @@ class PaletteBuilder extends HTMLElement {
   #change = (event: Event) => {
     const input = event.target as HTMLInputElement
 
-    if (input.matches('[data-plane-l], [data-plane-c], [data-hue], [data-contrast]')) return this.#settle()
+    if (input.matches('[data-plane-l], [data-plane-c], [data-hue], [data-contrast]')) {
+      this.#unqueue(true)
+
+      return this.#settle()
+    }
 
     if (input.matches('[data-value]')) return this.#typed(input)
 
@@ -1510,11 +1580,7 @@ class PaletteBuilder extends HTMLElement {
   #key = (event: KeyboardEvent) => {
     if (composing(event)) return
 
-    if (
-      event.key === 'Escape' &&
-      this.#open !== null &&
-      !(event.target as Element | null)?.closest('dialog, [popover]')
-    ) {
+    if (event.key === 'Escape' && this.#picker && !(event.target as Element | null)?.closest('dialog, [popover]')) {
       event.preventDefault()
       this.#close(true)
 

@@ -8,8 +8,8 @@ import { paletteNameOf, requestUrl } from '../../src/core/names.ts'
 import { announce, fill, parsed, reducedMotion } from './dom'
 import { composing, letter, typing } from './keys'
 import { NameLookup } from './names'
-import { heldIndex, searchIndex } from './search-index'
-import type { ItemHighlighted } from './ui/change'
+import { heldIndex, indexFailed, searchIndex } from './search-index'
+import type { ItemHighlighted, OpenChange } from './ui/change'
 import { hide, show } from './ui/popover'
 import { current, fallback, recall } from './wear'
 
@@ -105,17 +105,21 @@ function allPath(query: string): string {
   return `${path}?${new URLSearchParams({ q: query })}`
 }
 
+interface Card {
+  key: string
+  coming: HTMLElement | null
+}
+
 class SiteSearch extends HTMLElement {
   #input: HTMLInputElement | null = null
   #popup: HTMLElement | null = null
   #box: HTMLElement | null = null
   #hits: Hit[] = []
   #drawn = ''
-  #shown = ''
-  #turn = 0
+  #card: Card = { key: '', coming: null }
   #saying = 0
   #settling = 0
-  #failed = false
+  #loading: Promise<unknown> | null = null
   #wanted = false
   #names = new NameLookup((asked) => {
     if (asked === this.#query()) this.#render()
@@ -194,6 +198,12 @@ class SiteSearch extends HTMLElement {
 
     if (next instanceof Node && (this.#box?.contains(next) || this.#popup?.contains(next))) return
     this.#close()
+
+    if (next instanceof Node) this.#collapse()
+  }
+
+  #toggled = (event: CustomEvent<OpenChange>) => {
+    if (event.target === this.#popup) this.#input?.setAttribute('aria-expanded', String(event.detail.open))
   }
 
   #press = (event: MouseEvent) => {
@@ -232,8 +242,9 @@ class SiteSearch extends HTMLElement {
     this.#input?.addEventListener('input', this.#typed)
     this.#input?.addEventListener('focus', this.#focused)
     this.#input?.addEventListener('keydown', this.#key)
-    this.#input?.addEventListener('blur', this.#left)
+    this.#box?.addEventListener('focusout', this.#left)
     this.#box?.addEventListener('pointerenter', this.#near)
+    this.#popup?.addEventListener('openchange', this.#toggled)
     this.addEventListener('click', this.#press)
     this.addEventListener('mousedown', this.#keep)
     this.addEventListener('itemhighlighted', this.#lit)
@@ -246,8 +257,9 @@ class SiteSearch extends HTMLElement {
     this.#input?.removeEventListener('input', this.#typed)
     this.#input?.removeEventListener('focus', this.#focused)
     this.#input?.removeEventListener('keydown', this.#key)
-    this.#input?.removeEventListener('blur', this.#left)
+    this.#box?.removeEventListener('focusout', this.#left)
     this.#box?.removeEventListener('pointerenter', this.#near)
+    this.#popup?.removeEventListener('openchange', this.#toggled)
     this.removeEventListener('click', this.#press)
     this.removeEventListener('mousedown', this.#keep)
     this.removeEventListener('itemhighlighted', this.#lit)
@@ -265,23 +277,25 @@ class SiteSearch extends HTMLElement {
 
   #load() {
     if (heldIndex()) return
-    this.#failed = false
-    searchIndex().then(
+    const load = searchIndex()
+
+    if (load === this.#loading) return
+    this.#loading = load
+    load.then(
       () => {
         if (this.#isOpen()) this.#render()
         else if (this.#wanted) this.#reveal()
       },
       () => {
-        this.#failed = true
-        this.#wanted = false
-
-        if (this.#isOpen()) this.#render()
+        if (!this.#isOpen() && !this.#wanted) return
+        this.#render()
+        this.#open()
       },
     )
   }
 
   #begin() {
-    if (this.#isOpen()) return
+    if (this.#isOpen() || this.#wanted) return
     this.#wanted = true
     this.#load()
 
@@ -323,16 +337,13 @@ class SiteSearch extends HTMLElement {
 
     this.#wanted = false
 
-    if (!popup) return
-    show(popup, 'none')
-    this.#input?.setAttribute('aria-expanded', 'true')
+    if (popup) show(popup, 'none')
   }
 
   #close() {
     this.#wanted = false
 
     if (this.#popup) hide(this.#popup, 'none')
-    this.#input?.setAttribute('aria-expanded', 'false')
   }
 
   #view(index: SearchIndex | null): SearchView {
@@ -357,7 +368,7 @@ class SiteSearch extends HTMLElement {
       found: all.length === 0 ? (answer?.found ?? []).filter((work) => !known.has(work.id)) : [],
       markets: index ? marketsFor(index.markets, query) : [],
       state: !index
-        ? this.#failed
+        ? indexFailed()
           ? 'unloaded'
           : 'loading'
         : naming && this.#names.stalled
@@ -409,25 +420,24 @@ class SiteSearch extends HTMLElement {
     const key = keyOf(hit, worn)
     const host = document.querySelector('[data-search-preview]')
 
-    if (key === this.#shown || !host || !previewing()) return
-    const from = this.#hits.findIndex((one) => keyOf(one, worn) === this.#shown)
+    if (key === this.#card.key || !host || !previewing()) return
+    const from = this.#hits.findIndex((one) => keyOf(one, worn) === this.#card.key)
     const to = hit ? this.#hits.indexOf(hit) : -1
     const way = from >= 0 && to >= 0 && to < from ? -1 : 1
     const card = parsed(html(SearchPreview({ hit, inUse: hit !== null && isWorn(hit, worn) })))
-    const turn = ++this.#turn
-
-    this.#shown = key
 
     if (!this.#isOpen()) {
+      this.#card = { key, coming: null }
       host.replaceChildren(card)
 
       return
     }
 
+    this.#card = { key, coming: card }
     card.style.opacity = '0'
     host.append(card)
     decoded(card).then(() => {
-      if (turn !== this.#turn) {
+      if (this.#card.coming !== card) {
         card.remove()
 
         return
