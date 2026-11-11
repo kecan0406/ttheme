@@ -741,14 +741,18 @@ function forget(dir: string, stem: string): void {
   }
 }
 
-function discard(dir: string, name: string, picture: Picture): void {
-  forget(dir, picture.stem)
-  dropInks(dir, name, picture.key)
+function heldBy(dir: string, name: string, picture: Picture): string[] {
+  return [
+    ...stemFiles(dir, picture.stem),
+    ...inkFiles(name, picture.key, 'dark'),
+    ...inkFiles(name, picture.key, 'light'),
+    ...[picture.original, picture.cut].flatMap((kept) => (kept ? [kept] : [])),
+  ].map((file) => join(dir, file))
+}
 
-  for (const kept of [picture.original, picture.cut]) {
-    if (kept) {
-      rmSync(join(dir, kept), { force: true })
-    }
+function discard(dir: string, name: string, picture: Picture): void {
+  for (const path of heldBy(dir, name, picture)) {
+    rmSync(path, { force: true })
   }
 }
 
@@ -1111,10 +1115,7 @@ export function installBackdrop(
   }
 
   const old = rack.pictures.find((held) => held.key === key)
-
-  if (old) {
-    discard(dir, name, old)
-  }
+  const stale = old ? heldBy(dir, name, old) : []
 
   mkdirSync(join(dir, ORIGINALS), { recursive: true })
 
@@ -1129,6 +1130,12 @@ export function installBackdrop(
   rack.active = key
   store.palettes[name] = rack
   save(dir, store, [name])
+
+  for (const path of stale) {
+    if (!written.includes(path)) {
+      rmSync(path, { force: true })
+    }
+  }
 
   return [...written, join(dir, `${fileStem(name)}.conf`)]
 }

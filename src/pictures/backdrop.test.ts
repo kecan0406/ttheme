@@ -237,6 +237,41 @@ test('a palette named like a property every object has keeps its pictures as any
   assert.deepEqual(rackOf(configHome, 'constructor'), [])
 })
 
+test('a picture put in again that cannot be written leaves the one it would replace whole', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  const window = { width: 40, height: 20 }
+  const image = { width: 4, height: 4, data: new Uint8Array(64).fill(201) }
+  const other = { width: 4, height: 4, data: new Uint8Array(64).fill(90) }
+  const source = { site: 'safebooru', id: 1, ext: 'png', bytes: new Uint8Array([1]), from: 'safebooru 1' }
+  installBackdrop(configHome, TAMSIN, toneFor(TAMSIN, 'cursor'), image, source, window, 0)
+  const [before] = rackOf(configHome, 'tamsin')
+  assert.ok(before?.original)
+  const held = [before.fill, before.original, ...readdirSync(join(dir, 'inks')).map((file) => join('inks', file))]
+  const blocked = join(dir, 'originals', 'tamsin-safebooru_1.jpg')
+  mkdirSync(join(blocked, 'held'), { recursive: true })
+  assert.throws(() =>
+    installBackdrop(configHome, TAMSIN, toneFor(TAMSIN, 'cursor'), other, { ...source, ext: 'jpg' }, window, 0),
+  )
+  assert.deepEqual(rackOf(configHome, 'tamsin'), [before])
+  assert.deepEqual(
+    held.filter((file) => !existsSync(join(dir, file))),
+    [],
+  )
+  rmSync(blocked, { recursive: true })
+  installBackdrop(configHome, TAMSIN, toneFor(TAMSIN, 'cursor'), image, source, window, 0)
+  installBackdrop(configHome, TAMSIN, toneFor(TAMSIN, 'cursor'), other, { ...source, ext: 'jpg' }, window, 0)
+  const [after] = rackOf(configHome, 'tamsin')
+  assert.ok(after?.original)
+  assert.notEqual(after.stem, before.stem)
+  assert.ok(existsSync(join(dir, after.fill)))
+  assert.ok(existsSync(join(dir, after.original)))
+  assert.deepEqual(
+    [before.fill, before.original].filter((file) => existsSync(join(dir, file))),
+    [],
+  )
+})
+
 test('a picture whose artist is named like a property every object has still gets its conf, so sync keeps working', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const image = { width: 4, height: 4, data: new Uint8Array(64).fill(201) }
