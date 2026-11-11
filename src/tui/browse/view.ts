@@ -235,8 +235,12 @@ export function footer(b: Shown): Bar {
     badge: filter ? 'BROWSE (FILTER)' : 'BROWSE',
     ...(b.notice ? { lead: toned(b.p, b.notice.tone, b.notice.text) } : {}),
     keys: [...(b.side === 'panel' ? b.panel.keys(apply) : cardKeys(b, apply)), ...tail],
-    right: filter ? ['esc', 'clear'] : b.side === 'panel' ? ['esc', 'back'] : ['esc', 'cancel'],
-    ...(b.standing ? { standing: b.standing } : {}),
+    ...(!filter && b.side === 'panel'
+      ? { right: ['esc', 'back'] as Hint }
+      : b.standing
+        ? {}
+        : { right: ['esc', filter ? 'clear' : 'cancel'] as Hint }),
+    ...(b.standing ? { standing: b.standing, beat: b.beat } : {}),
   }
 }
 

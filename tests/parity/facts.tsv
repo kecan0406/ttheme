@@ -21,15 +21,15 @@ use-plain.used.wears	ttheme/hatsune-miku	=	=	=	=	=	=	=	=	=	=	=
 use-plain.used.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.preview.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 hub.preview.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
-hub.preview.text	txt:71accdb9d0	=	=	=	txt:ea8db20899	=	txt:ea8db20899	=	=	=	txt:ea8db20899	txt:ea8db20899
+hub.preview.text	txt:f1eda74006	=	=	=	txt:19d325c53a	=	txt:19d325c53a	=	=	=	txt:19d325c53a	txt:19d325c53a
 hub.preview.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.browse.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
 hub.browse.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
-hub.browse.text	txt:b50f5deac3	=	=	=	=	=	=	=	=	=	=	=
+hub.browse.text	txt:0c5712bfed	=	=	=	=	=	=	=	=	=	=	=
 hub.browse.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 hub.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
-hub.back.text	txt:71accdb9d0	=	=	=	txt:ea8db20899	=	txt:ea8db20899	=	=	=	txt:ea8db20899	txt:ea8db20899
+hub.back.text	txt:f1eda74006	=	=	=	txt:19d325c53a	=	txt:19d325c53a	=	=	=	txt:19d325c53a	txt:19d325c53a
 hub.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.closed.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
 hub.closed.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
@@ -183,7 +183,7 @@ tmux-behind.pane.wears	ttheme/ayanami-rei	=	=	=	=	=	=	=	=	=	=	=
 tmux-behind.pane.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.hover.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
 preview-hover.hover.picture	ttheme/kita-ikuyo	=	=	=	none	=	none	=	=	=	none	none
-preview-hover.hover.text	txt:d40d0a3abe	=	=	=	txt:35fe1c3c5e	=	txt:35fe1c3c5e	=	=	=	txt:35fe1c3c5e	txt:35fe1c3c5e
+preview-hover.hover.text	txt:61e321929c	=	=	=	txt:3725e9da7e	=	txt:3725e9da7e	=	=	=	txt:3725e9da7e	txt:3725e9da7e
 preview-hover.hover.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
@@ -286,7 +286,7 @@ ssh.out.wears	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 ssh.out.issue	-	=	=	=	=	=	=	=	=	=	=	=
 browse.hover.colors	ttheme/kita-ikuyo	=	=	=	=	=	=	=	=	=	=	bg:ttheme/izumi-konata fg:ttheme/kita-ikuyo cursor:ttheme/kita-ikuyo ansi:ttheme/kita-ikuyo
 browse.hover.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none
-browse.hover.text	txt:b50f5deac3	=	=	=	=	=	=	=	=	=	=	=
+browse.hover.text	txt:0c5712bfed	=	=	=	=	=	=	=	=	=	=	=
 browse.hover.issue	-	=	=	=	=	=	=	=	=	=	=	=
 browse.back.colors	ttheme/izumi-konata	=	=	=	=	=	=	=	=	=	=	=
 browse.back.picture	ttheme/izumi-konata	=	=	=	none	=	none	=	=	=	none	none

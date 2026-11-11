@@ -24,7 +24,7 @@ import { TRAITS } from '../terminals/terminal.ts'
 import { HUB_CLOSED, HUB_SWITCH, HUB_TABS, HUB_UPDATE } from '../tui/hub.ts'
 import { outdatedLines, STANDING_LINES } from '../tui/notice.ts'
 import { PREVIEW_KEYS } from '../tui/preview-keys.ts'
-import { painter } from '../tui/style.ts'
+import { painter, SPINNER } from '../tui/style.ts'
 import { TONE_RULE, toneLine } from '../tui/tone-view.ts'
 import { bannerHead, helpText, VERB_SPECS } from './verbs.ts'
 
@@ -166,6 +166,7 @@ export function shellTables(palettes: PaletteEntry[], works: readonly Work[], co
     'typeset -gA TTHEME_STANDING=(',
     ...Object.entries(STANDING_LINES).map(([standing, line]) => `  ${standing} ${quote(line)}`),
     ')',
+    `typeset -ga TTHEME_SPINNER=(${SPINNER.join(' ')})`,
     '',
     '# the palette new tabs open with, which the iTerm2 "ttheme: default" profile shows',
     `typeset -g TTHEME_STARTUP=${startup ?? ''}`,

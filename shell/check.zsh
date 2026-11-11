@@ -864,28 +864,28 @@ TTHEME_STARTUP=
   unset CI
   zmodload -F zsh/datetime p:EPOCHSECONDS
   TTHEME_STATE_DIR=$XDG_CONFIG_HOME/standing TTHEME_VERSION=1.2.29 TTHEME_AUTO_UPDATE=on
-  typeset -gA TTHEME_STANDING=(unknown 'ttheme %s' checking 'ttheme %s  checking…' current 'ttheme %s  ✓ up to date' newer 'ttheme %s  ⇡ %s available' failed 'ttheme %s  ✗ check failed')
+  typeset -gA TTHEME_STANDING=(unknown 'v%1$s' checking 'v%1$s' current '✓ v%1$s' newer '⇡ v%2$s' failed '✗ v%1$s')
   now=$(( EPOCHSECONDS * 1000 ))
   stand() {
     local vline="" in=$1
-    local -i vchk=0 vwarn=0
+    local -i vchk=0 vwarn=0 vnew=0 vgood=0
     mkdir -p $TTHEME_STATE_DIR
     [[ -n $in ]] && print -r -- "$in" >| $TTHEME_STATE_DIR/release.json || rm -f $TTHEME_STATE_DIR/release.json
     __tt_pv_standing
     REPLY="$vline|$vchk|$vwarn"
   }
   stand ''
-  [[ $REPLY == 'ttheme 1.2.29|0|0' ]] || { print -u2 "no stamp did not read as the version alone: $REPLY"; exit 1 }
+  [[ $REPLY == 'v1.2.29|0|0' ]] || { print -u2 "no stamp did not read as the version alone: $REPLY"; exit 1 }
   stand "{\"checked\":$now,\"trying\":$now}"
-  [[ $REPLY == 'ttheme 1.2.29  checking…|1|0' ]] || { print -u2 "a check under way did not read as checking: $REPLY"; exit 1 }
+  [[ $REPLY == 'v1.2.29|1|0' ]] || { print -u2 "a check under way did not read as checking: $REPLY"; exit 1 }
   stand "{\"checked\":$now,\"latest\":\"1.2.29\",\"trying\":$(( now - 40000 ))}"
-  [[ $REPLY == 'ttheme 1.2.29  ✓ up to date|0|0' ]] || { print -u2 "a claim older than 30 s still read as checking: $REPLY"; exit 1 }
+  [[ $REPLY == '✓ v1.2.29|0|0' ]] || { print -u2 "a claim older than 30 s still read as checking: $REPLY"; exit 1 }
   stand "{\"checked\":$now,\"latest\":\"1.2.30\"}"
-  [[ $REPLY == 'ttheme 1.2.29  ⇡ 1.2.30 available|0|1' ]] || { print -u2 "a newer release did not read as available: $REPLY"; exit 1 }
+  [[ $REPLY == '⇡ v1.2.30|0|1' ]] || { print -u2 "a newer release did not read as available: $REPLY"; exit 1 }
   stand "{\"checked\":$(( now - 82800000 )),\"latest\":\"1.2.30\",\"failed\":$now}"
-  [[ $REPLY == 'ttheme 1.2.29  ✗ check failed|0|1' ]] || { print -u2 "a failed check did not read as failed: $REPLY"; exit 1 }
+  [[ $REPLY == '✗ v1.2.29|0|1' ]] || { print -u2 "a failed check did not read as failed: $REPLY"; exit 1 }
   TTHEME_AUTO_UPDATE=off stand "{\"checked\":$now,\"latest\":\"1.2.30\"}"
-  [[ $REPLY == 'ttheme 1.2.29|0|0' ]] || { print -u2 "updates off still read a release: $REPLY"; exit 1 }
+  [[ $REPLY == 'v1.2.29|0|0' ]] || { print -u2 "updates off still read a release: $REPLY"; exit 1 }
 ) || exit 1
 (
   __tt_cli() { print -r -- "$*" >| $XDG_CONFIG_HOME/relcli }

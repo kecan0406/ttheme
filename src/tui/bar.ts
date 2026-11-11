@@ -2,7 +2,7 @@ import { cells } from '../core/text.ts'
 import { fit, spread } from './ansi.ts'
 import type { ReleaseLine } from './notice.ts'
 import { hintOf, pillOf } from './parts.ts'
-import type { Paint } from './style.ts'
+import { type Paint, SPINNER } from './style.ts'
 import { keyZone } from './zones.ts'
 
 export type Hint = [string, string]
@@ -15,6 +15,7 @@ export interface Bar {
   keys: Hint[]
   right?: Hint
   standing?: ReleaseLine
+  beat?: number
   keep?: string[]
 }
 
@@ -22,15 +23,21 @@ const KEPT = ['?', 'enter']
 
 const UPDATE_KEY: Hint = ['alt+u', 'update']
 
-function releaseOf(p: Paint, standing: ReleaseLine): string {
-  if (standing.standing !== 'newer') {
-    return (standing.standing === 'failed' ? p.warn : p.dim)(standing.line)
+function releaseOf(p: Paint, standing: ReleaseLine, beat: number): string {
+  const badge = (look: (text: string) => string, label: string) => (p.color ? look(` ${label} `) : label)
+
+  if (standing.standing === 'newer') {
+    return `${hintOf(p, ...UPDATE_KEY)}   ${keyZone(UPDATE_KEY[0], badge(p.alert, standing.line))}`
   }
 
-  const cut = standing.line.indexOf('  ')
-  const news = standing.line.slice(cut + 2)
+  if (standing.standing === 'checking') {
+    return badge(p.chip, `${SPINNER[beat % SPINNER.length]} ${standing.line}`)
+  }
 
-  return `${hintOf(p, ...UPDATE_KEY)}   ${p.dim(standing.line.slice(0, cut))}  ${keyZone(UPDATE_KEY[0], p.color ? p.alert(` ${news} `) : news)}`
+  return badge(
+    standing.standing === 'failed' ? p.danger : standing.standing === 'current' ? p.good : p.chip,
+    standing.line,
+  )
 }
 
 export type Tone = 'ok' | 'warn' | 'error' | 'info'
@@ -48,7 +55,7 @@ export function barLine(p: Paint, bar: Bar, width: number): string {
   const drawn = (shown: Hint[]) => {
     const line = `${badge}${[lead ?? '', note ? p.dim(note) : '', ...shown.map(hint)].filter(Boolean).join('   ')}`
 
-    const mark = standing ? releaseOf(p, standing) : ''
+    const mark = standing ? releaseOf(p, standing, bar.beat ?? 0) : ''
 
     const tail = [right ? hint(right) : '', mark].filter(Boolean).join('   ')
 

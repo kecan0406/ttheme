@@ -15,6 +15,7 @@ typeset -gA TTHEME_SGR=(
   hot $'\e[100;1;4m' /hot $'\e[22;24;49m'
   danger $'\e[7;1;31m' /danger $'\e[22;27;39m'
   alert $'\e[7;1;33m' /alert $'\e[22;27;39m'
+  good $'\e[7;1;32m' /good $'\e[22;27;39m'
   match $'\e[1;4;36m' /match $'\e[22;24;39m'
   ok $'\e[32m' /ok $'\e[39m'
   warn $'\e[33m' /warn $'\e[39m'

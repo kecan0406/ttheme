@@ -520,7 +520,7 @@ __tt_pv_standing() {
   local -a reply
   local standing=unknown latest="" was=$vline
   integer now
-  vchk=0 vwarn=0 vnew=0
+  vchk=0 vwarn=0 vnew=0 vgood=0
   if [[ $TTHEME_AUTO_UPDATE != off && ${CI:-false} == false ]]; then
     (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
     now=$(( EPOCHSECONDS * 1000 ))
@@ -531,8 +531,8 @@ __tt_pv_standing() {
     elif (( reply[5] )); then
       standing=failed vwarn=1
     elif [[ -n $latest ]]; then
-      standing=current
-      __tt_newer $latest $TTHEME_VERSION && standing=newer vwarn=1 vnew=1
+      standing=current vgood=1
+      __tt_newer $latest $TTHEME_VERSION && standing=newer vwarn=1 vnew=1 vgood=0
     fi
   fi
   if [[ $standing == newer ]]; then
@@ -550,7 +550,8 @@ __tt_pv_foot() {
   local -a kk=() kl=()
   __tt_cap esc; ke=$REPLY
   __tt_cap alt+u; ku=$REPLY
-  local -i end=$1 bw=$(( $1 - 1 )) i room
+  local -i end=$1 bw=$(( $1 - 1 )) i room vf
+  vspin=0
   (( color )) || b= d= z= y= al= on=
   local hl=$TTHEME_SGR[chip] hx=$TTHEME_SGR[/chip]
   (( mhp )) && hl=$pl hx=$TTHEME_SGR[/pill]
@@ -647,22 +648,31 @@ __tt_pv_foot() {
     fi
     __tt_pv_alt && { kk+=(alt+c); kl+=(settings) }
     kk+=('?') kl+=(keys)
-    if [[ -n $flt ]]; then
+    if (( ! hub )) && [[ -n $flt ]]; then
       rk=esc right=$b$ke$z$d" clear"$z
-    else
+    elif (( ! hub )); then
       rk=esc right=$b$ke$z$d" cancel"$z
       [[ -n $cdot ]] && right+=" $ac$cdot$z $cn"
     fi
-    if (( hub && vnew )); then
-      ver=$b$ku$z$d" update"$z"   "$d${vline%%  *}$z"  "
-      if (( color )); then
-        ver+=$al" ${vline#*  } "$z
-      else
-        ver+=${vline#*  }
+    if (( hub )); then
+      ver=$vline
+      if (( vchk )); then
+        vf=$(( EPOCHREALTIME / 0.08 ))
+        ver=${TTHEME_SPINNER[vf % ${#TTHEME_SPINNER} + 1]}" "$vline
+        vspin=1
       fi
-    elif (( hub )); then
-      ver=$d$vline$z
-      (( vwarn )) && ver=$y$vline$z
+      if (( ! color )); then
+        :
+      elif (( vnew )); then
+        ver=$al" $ver "$z
+      elif (( vwarn )); then
+        ver=$TTHEME_SGR[danger]" $ver "$z
+      elif (( vgood )); then
+        ver=$TTHEME_SGR[good]" $ver "$z
+      else
+        ver=$TTHEME_SGR[chip]" $ver "$z
+      fi
+      (( vnew )) && ver=$b$ku$z$d" update"$z"   "$ver
     fi
   fi
   if (( color )) && [[ -n $rk && $mhov == "key $rk" ]]; then
@@ -675,9 +685,17 @@ __tt_pv_foot() {
       while [[ -n $text ]] && (( ${(m)#text} > room - 1 )); do text=${text[1,-2]}; done
       text+=…
     fi
-    lead=$y$text$z note="" kk=() kl=() ver=""
+    lead=$y$text$z note="" kk=() kl=() ver="" vspin=0
   fi
   __tt_pv_barline
+}
+
+__tt_pv_spin() {
+  (( TTHEME_PALETTES_IN )) || __tt_palettes
+  local d=$TTHEME_SGR[chip] z=$TTHEME_SGR[/chip]
+  local -i vf=$(( EPOCHREALTIME / 0.08 ))
+  (( color )) || d= z=
+  printf '\e[?2026h\e[%d;%dH%s\e[%d;%dH\e[?2026l' $ph $vspin $d${TTHEME_SPINNER[vf % ${#TTHEME_SPINNER} + 1]}$z $pvsr $pvsc
 }
 
 __tt_pv_barfit() {
@@ -768,6 +786,9 @@ __tt_pv_barline() {
   if [[ -n $ver ]]; then
     out+=$'\e['$(( end - vwid + 1 ))'G'$ver$z
     rend=$(( end - vwid - 3 ))
+    (( vspin )) && vspin=$(( end - vwid + 1 + color ))
+  else
+    vspin=0
   fi
   [[ -n $right ]] && out+=$'\e['$(( rend - rwid + 1 ))'G'$right
   zc=2
@@ -1983,6 +2004,7 @@ __tt_pv_getch() {
   while :; do
     __tt_pv_behind_tick && return 1
     t=0.2
+    (( vspin )) && t=0.08
     [[ -n $pvjob ]] && t=0.08
     __tt_pv_bg_busy && t=0.05
     (( gstep )) && t=0.06
@@ -2006,6 +2028,7 @@ __tt_pv_getch() {
       (( msgt > 0 )) || return 1
     fi
     (( vchk )) && __tt_pv_standing && return 1
+    (( vspin )) && __tt_pv_spin
     (( gstep )) && { gstep=$(( gstep - 1 )); tick=1; return 1 }
     (( ! te && SECONDS >= exnext )) && { __tt_pv_roll; gstep=8; tick=1; return 1 }
   done
@@ -3386,7 +3409,7 @@ __tt_preview() {
   zmodload -F zsh/zselect b:zselect 2>/dev/null
   [[ $functions[TRAPURG] == *__tt_woken* ]] && trap '' URG
   local mode=$1 pdir=${2:-$PWD} hubwas=""
-  local -i hub=0 hubleft=0 vchk=0 vwarn=0 vnew=0 pvupdate=0
+  local -i hub=0 hubleft=0 vchk=0 vwarn=0 vnew=0 vgood=0 vspin=0 pvupdate=0
   local vline=""
   [[ $mode == hub ]] && hub=1
   if [[ ! -t 0 || ! -t 1 ]]; then

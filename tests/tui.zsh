@@ -125,7 +125,7 @@ await() {
 normalize() {
   expand -t 8 |
     sed -E -e 's/Search….*│$/Search… ‹hint› │/' -e t -e 's/Search….*/Search… ‹hint›/' |
-    sed -E -e 's/ {4,}(([^ ]| {1,3}[^ ])* {0,3}ttheme [0-9]+\.[0-9]+\.[0-9]+)/    \1/' -e 's/ttheme [0-9]+\.[0-9]+\.[0-9]+/ttheme ‹version›/' |
+    sed -E -e 's/ {4,}(([^ ]| {1,3}[^ ])* {0,3}v[0-9]+\.[0-9]+\.[0-9]+)/    \1/' -e 's/v[0-9]+\.[0-9]+\.[0-9]+/v‹version›/' |
     sed -e 's/[[:space:]]*$//' |
     awk 'BEGIN{n=0} {lines[n++]=$0} END{while(n>0 && lines[n-1]=="") n--; for(i=0;i<n;i++) print lines[i]}'
 }

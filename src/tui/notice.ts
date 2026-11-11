@@ -36,13 +36,13 @@ export interface ReleaseLine {
 }
 
 export const STANDING_LINES: Record<Standing, string> = {
-  unknown: 'ttheme %s',
-  checking: 'ttheme %s  checking…',
-  current: `ttheme %s  ${MARKS.ok} up to date`,
-  newer: `ttheme %s  ${MARKS.update} %s available`,
-  failed: `ttheme %s  ${MARKS.miss} check failed`,
+  unknown: 'v%1$s',
+  checking: 'v%1$s',
+  current: `${MARKS.ok} v%1$s`,
+  newer: `${MARKS.update} v%2$s`,
+  failed: `${MARKS.miss} v%1$s`,
 }
 
 export function standingLine(standing: Standing, running: string, latest = ''): string {
-  return STANDING_LINES[standing].replace('%s', running).replace('%s', latest)
+  return STANDING_LINES[standing].replace('%1$s', running).replace('%2$s', latest)
 }

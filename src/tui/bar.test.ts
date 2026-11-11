@@ -250,7 +250,7 @@ const BARS: Held[] = [
       ['?', 'keys'],
     ],
     right: ['esc', 'cancel'],
-    standing: { standing: 'newer', line: 'ttheme 1.2.3  1.2.4 is out' },
+    standing: { standing: 'newer', line: '⇡ v1.2.4' },
   },
   {
     badge: 'HUB',
@@ -260,7 +260,7 @@ const BARS: Held[] = [
       ['?', 'keys'],
     ],
     right: ['esc', 'cancel'],
-    standing: { standing: 'unknown', line: 'ttheme 1.2.3' },
+    standing: { standing: 'unknown', line: 'v1.2.3' },
   },
   {
     badge: '見本',
