@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.105
+
 - The release line at the right end of the bare `ttheme`'s key bar is now one badge that stays where it is: `v1.2.104` in gray with a spinner while a check runs, green with `✓` when it is the latest, red with `✗` when the check failed, and the new version in yellow with `⇡` beside `alt+u update`. Before, the line changed length with each state and pushed `esc cancel` sideways when a check ended. The bar no longer shows `esc cancel` or `esc clear` there; the key still works.
 
 ## 1.2.104
