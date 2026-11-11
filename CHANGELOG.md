@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- In Ghostty, a tab that is running a program takes its own picture sooner after you switch to it with a click or with a shortcut that holds ⌃, ⌥ or ⌘: ttheme now looks the moment macOS reports the click or the key. Before, it looked every 50 to 150 ms, and the previous tab's picture stayed up for as long as that took.
+- The helper that follows Ghostty's front tab no longer grows in memory. Before, it kept every window list it asked macOS for, for as long as Ghostty stayed open.
+
 ## 1.2.106
 
 - A first search in Browse answers sooner: what it ranks by now comes with the names it finds, in one round of requests where it took two or three, and it reads about a third fewer files. Before, it read each work's own record to put a series' works together.
