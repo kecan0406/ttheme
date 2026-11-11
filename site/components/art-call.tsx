@@ -125,10 +125,6 @@ export function ArtCallDialog({ lead, sticker }: { lead: Theme; sticker: string 
                 <br />
                 We're looking for character art for the banner!
               </DialogTitle>
-              <p class="text-sm text-pretty text-soft-foreground">
-                The character behind this terminal is a fan's drawing. If you've drawn a character who has a ttheme
-                palette, we'd love to show yours here too.
-              </p>
               <p class="text-sm font-bold text-pretty">
                 Your art stays yours, shown with your name and a link to your post. Rather not have it here later? Just
                 let us know.
