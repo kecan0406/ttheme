@@ -1,6 +1,6 @@
 import { escapeHtml } from '@kitajs/html'
 import type { Facts } from '@/lib/facts'
-import { NPM_URL, REPO, REPO_URL } from '@/lib/gallery'
+import { NPM_URL, REPO, REPO_URL, X_URL } from '@/lib/gallery'
 import { siteMeta } from '@/lib/titles'
 import pkg from '../../package.json' with { type: 'json' }
 import { SHARE_URL } from '../../src/core/draft.ts'
@@ -37,7 +37,7 @@ export function siteGraph({ version }: Facts) {
         license: 'https://opensource.org/licenses/MIT',
         version,
         author: { '@type': 'Person', name: OWNER, url: `https://github.com/${OWNER}` },
-        sameAs: [NPM_URL],
+        sameAs: [NPM_URL, X_URL],
       },
     ],
   }

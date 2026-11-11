@@ -85,6 +85,8 @@ export function repoUrl(repo: string): string {
 
 export const NPM_URL = 'https://www.npmjs.com/package/@kecan0406/ttheme'
 
+export const X_URL = 'https://x.com/tthemedev'
+
 export function initOf(runner: Runner): string {
   return `${runner} @kecan0406/ttheme init`
 }
