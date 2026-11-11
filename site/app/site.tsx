@@ -56,7 +56,7 @@ import {
   siteMeta,
   workMeta,
 } from '@/lib/titles'
-import { firstScript } from '@/lib/wear'
+import { leadScript } from '@/lib/wear'
 import { workPages } from '@/lib/work-page'
 import { byWork, leadOf, leadsOf, ribbon, WORK_PATH, workEntries, workPath } from '@/lib/works'
 import repo from '@/repo.json' with { type: 'json' }
@@ -391,7 +391,8 @@ export const site = new Elysia({ name: 'site' })
     },
   })
   .get('/', () => {
-    const lead = castOf(themes)[0] as Theme
+    const cast = castOf(themes)
+    const lead = cast[0] as Theme
     const stickers: Record<string, string> = assets.stickers
 
     return page(
@@ -403,7 +404,7 @@ export const site = new Elysia({ name: 'site' })
         cache: FIXED,
         wear: lead,
         flat: true,
-        head: firstScript(lead),
+        head: leadScript(cast),
         preload: { src: stickers[lead.name] as string, srcset: stickerSet(stickers, lead.name), sizes: STICKER_SIZES },
       },
       <Home themes={themes} features={features} facts={facts} terminals={assets.terminals} stickers={stickers} />,

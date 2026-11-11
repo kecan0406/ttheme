@@ -139,7 +139,8 @@ class LeadShowcase extends HTMLElement {
     this.#solid?.addEventListener('animationend', this.#wiped)
     this.#off = onWear((theme) => this.#pick(theme))
     this.#offMode = onMode(() => this.#remode())
-    const stored = recall()
+    const recalled = recall()
+    const stored = recalled && isCast(recalled.name) ? recalled : null
 
     if (stored && stored.name !== this.#worn?.name) this.#draw(stored, true)
     delete document.documentElement.dataset.picked

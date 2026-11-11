@@ -69,11 +69,12 @@ export function wearScript(fallback: Theme): string {
   return `(function(){try{var h=document.documentElement,s=h.style,m=document.querySelector('meta[name=theme-color]'),c=document.querySelector('link[rel=icon]'),a=[${ADVANCES.join(',')}],g='${GLYPHS}',q=localStorage.getItem('${MODE_KEY}'),l=q==='light'||(q!=='dark'&&matchMedia('(prefers-color-scheme: light)').matches),d=l?'light':'dark',w=JSON.parse(localStorage.getItem('${WEAR_KEY}')),v=w&&w.v&&w.v[d],i,e=0,k,n,o,B,F,L,M,K=${json(MARKS)};h.setAttribute('data-mode',d);h.setAttribute('data-setting',q==='light'||q==='dark'?q:'auto');if(!v||!v.length){if(!l)return;v=${light};w=null}for(i=0;i<v.length;i++)if(v[i][0].indexOf('--')===0){s.setProperty(v[i][0],v[i][1]);if(m&&v[i][0]==='--bg')m.content=v[i][1]}s.colorScheme=l?'light only':'dark only';n=w&&w.t&&w.t.name;if(typeof n==='string'){h.setAttribute('data-picked','');for(i=0;i<n.length;i++){k=g.indexOf(n[i]);e+=(k<0?${WIDEST}:a[k])+(${TRACKING})}s.setProperty('--palette-name',JSON.stringify(n));s.setProperty('--palette-work',JSON.stringify(w.t.work&&w.t.work.name||''));s.setProperty('--palette-em',String(e/1000))}o=function(x){for(var z=0;z<v.length;z++)if(v[z][0]===x)return v[z][1]};B=o('--bg');F=o('--fg');L=${LIFT};M=[L(o('--cu'),B,F),L(o('--se'),B,F),L(o('--fg'),B,F)];for(i=0;i<3;i++)s.setProperty(K[i],M[i]);if(c)c.href=(${ICON})(B,F,M)}catch(x){}})()`
 }
 
-export function firstScript(first: Theme): string {
-  const vars = json(withMarks(wearVars(inMode(first, 'light'))))
-  const icon = json(themeIcon(inMode(first, 'light')))
+export function leadScript(cast: readonly Theme[]): string {
+  const lead = cast[0] as Theme
+  const vars = (mode: Mode) => json(withMarks([...wearVars(inMode(lead, mode)), ...wearOwn(inMode(lead, mode))]))
+  const icon = (mode: Mode) => json(themeIcon(inMode(lead, mode)))
 
-  return `(function(){try{var h=document.documentElement,m=document.querySelector('meta[name=theme-color]'),c=document.querySelector('link[rel=icon]'),v=${vars},i;if(h.hasAttribute('data-picked')||h.getAttribute('data-mode')!=='light')return;for(i=0;i<v.length;i++){h.style.setProperty(v[i][0],v[i][1]);if(m&&v[i][0]==='--bg')m.content=v[i][1]}if(c)c.href=${icon}}catch(x){}})()`
+  return `(function(){try{var h=document.documentElement,s=h.style,m=document.querySelector('meta[name=theme-color]'),c=document.querySelector('link[rel=icon]'),w=JSON.parse(localStorage.getItem('${WEAR_KEY}')),n=w&&w.t&&w.t.name,d=h.getAttribute('data-mode')==='light'?'light':'dark',v,i;if(typeof n==='string'&&${json(cast.map((theme) => theme.name))}.indexOf(n)>=0)return;if(!h.hasAttribute('data-picked')&&d==='dark')return;h.removeAttribute('data-picked');v=d==='light'?${vars('light')}:${vars('dark')};for(i=0;i<v.length;i++){s.setProperty(v[i][0],v[i][1]);if(m&&v[i][0]==='--bg')m.content=v[i][1]}s.colorScheme=d+' only';if(c)c.href=d==='light'?${icon('light')}:${icon('dark')}}catch(x){}})()`
 }
 
 export const SLOTS = ['--bg', '--fg', '--cu', '--se', ...Array.from({ length: 16 }, (_, index) => `--a${index}`)]
