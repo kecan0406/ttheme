@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSy
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import pkg from '../../package.json' with { type: 'json' }
+import { freshnessOf } from '../core/freshness.ts'
 import { type Runner, runnerOf } from '../core/runner.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { readInstalled } from '../store/installed.ts'
@@ -35,7 +36,6 @@ export function launch(runner: Runner, verb: string): string {
 }
 
 const DAY = 24 * 60 * 60 * 1000
-const RETRY = 60 * 60 * 1000
 const TIMEOUT = 10_000
 const BUSY = 30_000
 
@@ -149,15 +149,50 @@ function fetchLatest(timeout = TIMEOUT): Promise<string> {
   })
 }
 
+function failedAt(seen: Seen, now: number): number | undefined {
+  if (seen.failed !== undefined) {
+    return seen.failed
+  }
+
+  return seen.trying !== undefined && now - seen.trying >= BUSY && seen.trying > seen.checked ? seen.trying : undefined
+}
+
+export type Check = 'trying' | 'due' | 'waiting'
+
+export function checkOf(seen: Seen, now: number): Check {
+  if (seen.trying !== undefined && now - seen.trying < BUSY) {
+    return 'trying'
+  }
+
+  return freshnessOf(seen.checked || undefined, failedAt(seen, now), now).due ? 'due' : 'waiting'
+}
+
+function began(seen: Seen, now: number): Seen {
+  return { ...seen, trying: now }
+}
+
+function answered(seen: Seen, now: number, latest: string): Seen {
+  return { checked: now, latest, ...(seen.told !== undefined ? { told: seen.told } : {}) }
+}
+
+function failing(seen: Seen, now: number): Seen {
+  return {
+    checked: seen.checked,
+    ...(seen.latest !== undefined ? { latest: seen.latest } : {}),
+    ...(seen.told !== undefined ? { told: seen.told } : {}),
+    failed: now,
+  }
+}
+
 export function startReleaseCheck(now = Date.now()): void {
   const seen = readSeen()
 
-  if (!autoWanted() || now - seen.checked < DAY) {
+  if (!autoWanted() || checkOf(seen, now) !== 'due') {
     return
   }
 
   try {
-    writeSeen({ ...seen, checked: now, trying: now })
+    writeSeen(began(seen, now))
     spawn(process.execPath, [process.argv[1] as string, 'latest'], {
       detached: true,
       stdio: 'ignore',
@@ -166,34 +201,25 @@ export function startReleaseCheck(now = Date.now()): void {
   } catch {}
 }
 
-function settled(seen: Seen): Seen {
-  return {
-    checked: seen.checked,
-    ...(seen.latest !== undefined ? { latest: seen.latest } : {}),
-    ...(seen.told !== undefined ? { told: seen.told } : {}),
-  }
-}
-
 export async function checkLatest(): Promise<number> {
   try {
     const latest = await fetchLatest()
-    writeSeen({ ...settled(readSeen()), checked: Date.now(), latest })
+    writeSeen(answered(readSeen(), Date.now(), latest))
 
     return 0
   } catch {
-    const now = Date.now()
-    writeSeen({ ...settled(readSeen()), checked: now - DAY + RETRY, failed: now })
+    writeSeen(failing(readSeen(), Date.now()))
 
     return 1
   }
 }
 
 export function standingOf(seen: Seen, now: number, running: string = pkg.version): Standing {
-  if (seen.trying !== undefined && now - seen.trying < BUSY) {
+  if (checkOf(seen, now) === 'trying') {
     return 'checking'
   }
 
-  if (seen.failed !== undefined) {
+  if (failedAt(seen, now) !== undefined) {
     return 'failed'
   }
 
@@ -269,6 +295,8 @@ export function tellRelease(now = Date.now()): void {
   )
 }
 
+export class Replaced extends Error {}
+
 export function upgradeTo(latest: string, args: readonly string[]): number {
   console.log(`Updating ttheme ${pkg.version} → ${latest}`)
 
@@ -290,15 +318,23 @@ export function upgradeTo(latest: string, args: readonly string[]): number {
     )
   }
 
-  if (ran.status !== 0) {
-    throw new Error(`${by} stopped with status ${ran.status} — ttheme ${pkg.version} is still installed`)
-  }
-
   const cli = installedCli()
   const now = spawnSync(process.execPath, [cli, '--version'], { encoding: 'utf8' }).stdout?.trim()
 
+  if (ran.status !== 0 && now === pkg.version) {
+    throw new Error(`${by} stopped with status ${ran.status} — ttheme ${pkg.version} is still installed`)
+  }
+
+  if (ran.status !== 0) {
+    throw new Replaced(
+      `${by} stopped with status ${ran.status} and left ${cli} at ${now || 'a version that does not read'} — \`${again}\` finishes the update`,
+    )
+  }
+
   if (now !== latest) {
-    throw new Error(`${cli} is ${now || 'unreadable'} after the update, not ${latest} — \`${again}\` tries again`)
+    throw new (now === pkg.version ? Error : Replaced)(
+      `${cli} is ${now || 'unreadable'} after the update, not ${latest} — \`${again}\` tries again`,
+    )
   }
 
   const seen = readSeen()
@@ -328,7 +364,7 @@ export async function newerRelease(): Promise<{ latest?: string; note: string; f
     }
   }
 
-  writeSeen({ ...settled(readSeen()), checked: Date.now(), latest })
+  writeSeen(answered(readSeen(), Date.now(), latest))
 
   if (!isNewer(latest, pkg.version)) {
     return { note: `  ttheme ${pkg.version} — up to date` }

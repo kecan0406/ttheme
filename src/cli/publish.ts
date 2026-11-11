@@ -174,6 +174,40 @@ export async function pushRepo(dir: string): Promise<void> {
   await run('git', ['push', '--set-upstream', 'origin', 'HEAD'], dir)
 }
 
+export async function unpushed(dir: string): Promise<boolean> {
+  try {
+    return (await run('git', ['rev-list', '--count', '@{upstream}..HEAD'], dir)) !== '0'
+  } catch {
+    return true
+  }
+}
+
+const HELD =
+  '"d=\\(.description // "")\\nt=\\([.repositoryTopics // [] | .[] | (.name // .topic.name // empty)] | join(" "))"'
+
+export function describedIn(held: string, description: string | undefined, listed: boolean): boolean {
+  const said = /^d=(.*)$/m.exec(held)?.[1]
+  const topics = /^t=(.*)$/m.exec(held)?.[1]
+
+  if (said === undefined || topics === undefined) {
+    return true
+  }
+
+  return said === (description ?? '') && (!listed || topics.split(' ').includes(TOPIC))
+}
+
+export async function described(repo: Repo, description: string | undefined, listed: boolean): Promise<boolean> {
+  try {
+    return describedIn(
+      await run('gh', ['repo', 'view', repoText(repo), '--json', 'description,repositoryTopics', '--jq', HELD]),
+      description,
+      listed,
+    )
+  } catch {
+    return true
+  }
+}
+
 export async function describeRepo(repo: Repo, description: string | undefined, listed: boolean): Promise<void> {
   await run('gh', [
     'repo',

@@ -1,5 +1,15 @@
 import assert from 'node:assert/strict'
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, sep } from 'node:path'
 import { test } from 'node:test'
@@ -519,6 +529,39 @@ test('init places the agent skill it is asked for, records it, writes it again o
   applyUninstall(planUninstall(uninstall), uninstall, { platform: 'darwin', env: {}, run: () => undefined })
   assert.ok(!existsSync(dirname(skill)))
   assert.throws(() => lstatSync(linked))
+})
+
+test('setting ttheme up again with fewer terminals and skills takes it out of the ones left off, and keeps the rest wired', () => {
+  const paths = makeFixture()
+  const kitty = join(paths.configHome, 'kitty', 'kitty.conf')
+  const themes = join(paths.configHome, 'kitty', 'themes')
+  const skill = join(paths.home, '.agents', 'skills', 'ttheme-palette')
+  mkdirSync(dirname(kitty), { recursive: true })
+  writeFileSync(kitty, 'font_size 13\n')
+  mkdirSync(themes)
+  writeFileSync(join(themes, 'Mine.conf'), 'background #000000\n')
+
+  applyInit(
+    planInit(options({ terminals: ['ghostty', 'kitty'], palettes: ['ttheme/ember'], skills: ['agents'] }), paths),
+  )
+  assert.match(readFileSync(kitty, 'utf8'), /^# ttheme begin$/m)
+  assert.ok(readdirSync(themes).some((file) => file.startsWith('ttheme-')))
+  assert.ok(existsSync(skill))
+
+  const state = installedState(paths.configHome)
+  assert.ok(state)
+  applyInit(planAgain(state, options({ terminals: ['ghostty'], palettes: ['ttheme/ember'] }), paths))
+  assert.equal(readFileSync(kitty, 'utf8'), 'font_size 13\n')
+  assert.ok(!existsSync(`${kitty}.ttheme.bak`))
+  assert.deepEqual(readdirSync(themes), ['Mine.conf'])
+  assert.ok(!existsSync(skill))
+  assert.deepEqual(installedState(paths.configHome), {
+    terminals: ['ghostty'],
+    startup: 'ttheme/ember',
+    palettes: ['ttheme/ember'],
+  })
+  assert.match(readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8'), /^# ttheme begin$/m)
+  assert.ok(existsSync(join(paths.configHome, 'ghostty', 'themes', 'ttheme-ttheme--ember.dark')))
 })
 
 test('init under Bun finds the Node.js the tab layer runs past the node bunx puts first on PATH, and none where Bun is alone', () => {

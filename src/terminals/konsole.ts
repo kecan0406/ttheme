@@ -6,7 +6,7 @@ import type { Theme } from '../core/theme.ts'
 import { owned } from '../core/theme.ts'
 import { editUserFile, spareBackup } from '../store/edits.ts'
 import type { Host } from '../store/host.ts'
-import { dataHome, ownedIn, readText, running, tilde } from './common.ts'
+import { dataHome, ownedIn, pointingOf, readText, running, tilde } from './common.ts'
 import { konsole as emitter, konsoleScheme } from './emit/konsole.ts'
 import type { At, Ctx, Defaults, Moment, Out, Wiring } from './types.ts'
 
@@ -255,15 +255,14 @@ const defaults: Defaults = {
     const file = konsolerc(moment.configHome)
     const content = readText(file)
     const now = iniValue(content, 'Desktop Entry', 'DefaultProfile')
-    const ours = now?.startsWith(owned('')) === true
+    const pointing = pointingOf(moment.startup, take, now?.startsWith(owned('')) === true)
 
-    const want = moment.startup
-      ? take || ours
+    const want =
+      pointing === 'take' && moment.startup
         ? profileFile(moment.startup)
-        : undefined
-      : ours
-        ? (moment.state.konsoleBase ?? '')
-        : undefined
+        : pointing === 'give'
+          ? (moment.state.konsoleBase ?? '')
+          : undefined
 
     if (want === undefined || (want === (now ?? '') && !take)) {
       return undefined

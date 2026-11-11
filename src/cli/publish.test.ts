@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { type Work, workToml } from '../core/commons.ts'
 import { readMarketplaceInfo } from '../store/sources.ts'
-import { proposalsFor, remoteOf, unsaved, withCharacter, withDescription } from './publish.ts'
+import { describedIn, proposalsFor, remoteOf, unpushed, unsaved, withCharacter, withDescription } from './publish.ts'
 
 const toml = `"$schema" = "https://www.schemastore.org/ttheme-marketplace.json"
 name = "pastel"
@@ -144,6 +144,44 @@ test('a set file git never committed, or changed since it was, is one share must
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
+})
+
+test('a share whose push or description never landed is still owed: commits the remote lacks, a description or a topic GitHub does not hold', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-publish-'))
+  const remote = join(dir, 'remote.git')
+  const work = join(dir, 'work')
+
+  const git = (...args: string[]) =>
+    execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...args], {
+      cwd: work,
+      stdio: 'ignore',
+    })
+
+  try {
+    mkdirSync(work)
+    execFileSync('git', ['init', '-q', '--bare', remote], { stdio: 'ignore' })
+    git('init', '-q', '-b', 'main')
+    writeFileSync(join(work, 'ttheme-marketplace.toml'), 'name = "pastel"\n')
+    git('add', '-A')
+    git('commit', '-q', '--no-verify', '-m', 'share')
+    git('remote', 'add', 'origin', remote)
+    assert.equal(await unpushed(work), true)
+    git('push', '-q', '--set-upstream', 'origin', 'HEAD')
+    assert.equal(await unpushed(work), false)
+    writeFileSync(join(work, 'README.md'), '# pastel\n')
+    git('add', '-A')
+    git('commit', '-q', '--no-verify', '-m', 'more')
+    assert.equal(await unpushed(work), true)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+
+  assert.equal(describedIn('d=Soft colors\nt=ttheme-marketplace terminal', 'Soft colors', true), true)
+  assert.equal(describedIn('d=Soft colors\nt=terminal', 'Soft colors', true), false)
+  assert.equal(describedIn('d=Soft colors\nt=', 'Soft colors', false), true)
+  assert.equal(describedIn('d=\nt=ttheme-marketplace', undefined, true), true)
+  assert.equal(describedIn('d=Old words\nt=ttheme-marketplace', 'Soft colors', true), false)
+  assert.equal(describedIn('', 'Soft colors', true), true)
 })
 
 test('a remote counts as GitHub only on GitHub itself', async () => {

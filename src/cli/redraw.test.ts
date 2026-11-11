@@ -1,5 +1,6 @@
+import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -9,15 +10,24 @@ import { STICKERING } from '../core/sticker.ts'
 import {
   backgroundsDir,
   colorsOf,
+  dropImage,
   installBackdrop,
+  owedOf,
   type Picture,
   paintFor,
   rackOf,
   readStore,
+  staleBy,
+  standingOf,
+  triedAs,
+  type Work,
+  workFor,
 } from '../pictures/backdrop.ts'
 import { readAvailable, writeBundled } from '../store/available.ts'
 import { readInstalled, writeInstalled } from '../store/installed.ts'
+import { shelfFor } from './craft.ts'
 import { moveColors } from './init.ts'
+import { bringPictures, owedPictures } from './pictures.ts'
 import { redrawColoring, redrawPictures } from './redraw.ts'
 
 const ORLA: PaletteEntry = {
@@ -56,7 +66,7 @@ function home(mode: 'dark' | 'light'): string {
   return configHome
 }
 
-function install(configHome: string, id = 7, original?: Uint8Array): Picture {
+function install(configHome: string, id = 7, original?: Uint8Array, site = 'safebooru'): Picture {
   const worn = readAvailable(configHome).palettes.find((entry) => entry.name === 'ttheme/orla') as PaletteEntry
   const image = figure()
 
@@ -65,7 +75,7 @@ function install(configHome: string, id = 7, original?: Uint8Array): Picture {
     colorsOf(worn),
     worn.backdrop,
     image,
-    { site: 'safebooru', id, ext: 'png', bytes: original ?? encodeRgba(image) },
+    { site, id, ext: 'png', bytes: original ?? encodeRgba(image) },
     { width: 40, height: 20 },
     0,
     'tone',
@@ -197,9 +207,132 @@ test('a picture the sticker cannot be drawn on says so once, and is not tried ag
   const again = () => redrawPictures(configHome, (line) => lines.push(line), configHome, { emit: false })
   await again()
   assert.equal(lines.filter((line) => line.includes('left as it was')).length, 1)
-  assert.equal(rackOf(configHome, 'ttheme/orla')[0]?.sticker, STICKERING)
+  assert.equal(rackOf(configHome, 'ttheme/orla')[0]?.sticker, undefined)
+  assert.equal(rackOf(configHome, 'ttheme/orla')[0]?.tried?.sticker, STICKERING)
 
   lines.length = 0
   assert.equal(await again(), 0)
   assert.deepEqual(lines, [])
+})
+
+test('a picture that cannot be drawn again says so once, then once more only when another drawing is asked of it', async () => {
+  const configHome = home('dark')
+  install(configHome)
+  const dir = backgroundsDir(configHome)
+  const stored = readStore(dir)
+  const held = stored.palettes['ttheme/orla']?.pictures[0]
+  assert.ok(held)
+  const { tone: _tone, original: _original, ...bare } = held
+  stored.palettes['ttheme/orla'] = { active: bare.key, pictures: [bare] }
+  writeFileSync(join(dir, 'images.json'), JSON.stringify(stored))
+  const lines: string[] = []
+  const again = () => redrawPictures(configHome, (line) => lines.push(line), configHome, { emit: false })
+  const said = () => lines.splice(0)
+  const left = () => said().filter((line) => line.includes('left as it was'))
+  assert.equal(await again(), 0)
+  assert.deepEqual(left(), [`  ▢ ttheme/orla ${bare.key} — no original to draw it from, left as it was`])
+  assert.equal(rackOf(configHome, 'ttheme/orla')[0]?.stem, bare.stem)
+  assert.equal(await again(), 0)
+  assert.equal(await again(), 0)
+  assert.deepEqual(said(), [])
+
+  writeFileSync(join(configHome, 'ttheme', 'config.zsh'), ': ${TTHEME_MODE:=dark}\n: ${TTHEME_BG_BLUR:=4}\n')
+  assert.equal(await again(), 0)
+  assert.equal(left().length, 1)
+  assert.equal(await again(), 0)
+  assert.deepEqual(said(), [])
+})
+
+test('a mode switch that finds neither the other ink nor an original says so once, not on every sync', async () => {
+  const configHome = home('dark')
+  const before = install(configHome)
+  const dir = backgroundsDir(configHome)
+  rmSync(join(dir, 'inks'), { recursive: true })
+  rmSync(join(dir, before.original as string))
+  writeFileSync(join(configHome, 'ttheme', 'config.zsh'), ': ${TTHEME_MODE:=light}\n')
+  const lines: string[] = []
+  const again = () => redrawPictures(configHome, (line) => lines.push(line), configHome, { emit: false })
+  assert.equal(await again(), 0)
+  assert.equal(lines.filter((line) => line.includes('left as it was')).length, 1)
+  lines.length = 0
+  assert.equal(await again(), 0)
+  assert.deepEqual(lines, [])
+  assert.equal(rackOf(configHome, 'ttheme/orla')[0]?.stem, before.stem)
+})
+
+test('what a picture needs is one answer: drawn again for its drawing, swapped for its mode, nothing once that was tried', () => {
+  const configHome = home('dark')
+  const picture = install(configHome)
+  const worn = readAvailable(configHome).palettes.find((entry) => entry.name === 'ttheme/orla') as PaletteEntry
+  const paint = paintFor(worn)
+  const wanted = { paint, blur: 0, sticker: true }
+  assert.deepEqual(standingOf(picture), { drawn: 'tinted', tone: paint.hue.color, light: false })
+  assert.deepEqual(staleBy(picture, wanted), [])
+  assert.equal(workFor(picture, wanted), undefined)
+  assert.deepEqual(staleBy(picture, { ...wanted, blur: 3, sticker: false }), ['blur', 'sticker'])
+  assert.equal(workFor(picture, { ...wanted, blur: 3 })?.by, 'draw')
+  const light = { ...wanted, paint: paintFor(inMode(worn, 'light')) }
+  assert.deepEqual(staleBy(picture, light), ['mode', 'tone'])
+  const swap = workFor(picture, light)
+  assert.equal(swap?.by, 'swap')
+  assert.equal(workFor(picture, { ...light, blur: 3 })?.by, 'draw')
+  assert.equal(workFor(triedAs(picture, (swap as Work).attempt), light), undefined)
+  assert.equal(workFor(triedAs(picture, (swap as Work).attempt), wanted), undefined)
+  assert.equal(workFor(triedAs(picture, (swap as Work).attempt), { ...light, blur: 3 })?.by, 'draw')
+  assert.equal(workFor(picture, wanted, true)?.attempt.coloring, 'original')
+  const { tone: _tone, ...old } = picture
+  assert.deepEqual(standingOf(old), { drawn: 'never', source: true })
+  assert.deepEqual(staleBy(old, wanted), ['undrawn'])
+  assert.deepEqual(standingOf({ ...old, coloring: 'original' }), { drawn: 'original' })
+})
+
+test('a listed picture whose fetch failed is owed until it arrives, and one the user dropped is not', async () => {
+  const configHome = home('dark')
+
+  const listed = {
+    ...ORLA,
+    pictures: [
+      { site: 'konachan', id: 7 },
+      { site: 'konachan', id: 8 },
+    ],
+  }
+
+  install(configHome, 8, undefined, 'konachan')
+  const fetched = spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'))
+  const said: string[] = []
+  const log = spyOn(console, 'log').mockImplementation((line) => void said.push(String(line)))
+
+  try {
+    await bringPictures(configHome, [listed], [])
+  } finally {
+    fetched.mockRestore()
+    log.mockRestore()
+  }
+
+  const dir = backgroundsDir(configHome)
+  assert.equal(said.length, 1)
+  assert.match(said[0] ?? '', /^ {2}▢ ttheme\/orla {2}konachan 7 — /)
+  assert.deepEqual(owedOf(readStore(dir), 'ttheme/orla'), ['konachan_7'])
+  assert.deepEqual(owedPictures(configHome, listed).pictures, [{ site: 'konachan', id: 7 }])
+  dropImage(configHome, 'ttheme/orla', 'konachan_8')
+  assert.deepEqual(owedPictures(configHome, listed).pictures, [{ site: 'konachan', id: 7 }])
+  install(configHome, 7, undefined, 'konachan')
+  assert.deepEqual(owedOf(readStore(dir), 'ttheme/orla'), [])
+  assert.equal('owed' in readStore(dir), false)
+  dropImage(configHome, 'ttheme/orla', 'konachan_7')
+  assert.deepEqual(owedPictures(configHome, listed).pictures, [])
+})
+
+test('pictures added in an editor that is then cancelled go, and the picture that was up is up again', () => {
+  const configHome = home('dark')
+  install(configHome, 7)
+  install(configHome, 8)
+  const shelf = shelfFor(configHome, 'ttheme/orla')
+  install(configHome, 9)
+  assert.equal(shelf.added(), 1)
+  shelf.discard()
+  assert.deepEqual(
+    rackOf(configHome, 'ttheme/orla').map((picture) => picture.key),
+    ['safebooru_8', 'safebooru_7'],
+  )
 })

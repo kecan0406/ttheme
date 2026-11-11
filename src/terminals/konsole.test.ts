@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFil
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { runOff } from '../cli/installs.ts'
 import { commit, sync, wiringNext, wiringPlan } from '../cli/sync.ts'
 import { applyUninstall, planUninstall } from '../cli/uninstall.ts'
 import { type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
@@ -337,6 +338,38 @@ test('uninstall gives Konsole its own default back and deletes every scheme and 
   assert.equal(readFileSync(rc, 'utf8'), mine)
   assert.ok(!existsSync(backupPath(rc)))
   assert.deepEqual(readdirSync(konsoleData(home)), ['Mine.profile'])
+})
+
+test('ttheme off run again after it was cut short before the default profile moved gives Konsole its own back', () => {
+  const { configHome, home } = fixture()
+  const rc = konsolerc(configHome)
+  const mine = '[Desktop Entry]\nDefaultProfile=Mine.profile\n'
+  put(rc, mine)
+  put(join(konsoleData(home), 'Mine.profile'), '[General]\nName=Mine\n')
+  const off: Installed = { terminals: ['konsole'], palettes: ['orla'], off: true }
+  writeInstalled(configHome, off)
+  commit(configHome, manifest, off, { terminals: ['konsole'], palettes: ['orla'] }, false, nobody, home)
+  const on = JSON.parse(readFileSync(join(configHome, 'ttheme', 'installed.json'), 'utf8')) as Installed
+  assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-orla.profile')
+  writeInstalled(configHome, { ...on, off: true })
+  const was = process.env.XDG_CONFIG_HOME
+  const log = console.log
+  process.env.XDG_CONFIG_HOME = configHome
+  console.log = () => {}
+
+  try {
+    runOff(nobody)
+  } finally {
+    console.log = log
+
+    if (was === undefined) {
+      delete process.env.XDG_CONFIG_HOME
+    } else {
+      process.env.XDG_CONFIG_HOME = was
+    }
+  }
+
+  assert.equal(readFileSync(rc, 'utf8'), mine)
 })
 
 test('uninstall drops the konsolerc backup that ttheme off already made true again', () => {

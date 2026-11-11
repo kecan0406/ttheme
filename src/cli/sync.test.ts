@@ -23,8 +23,9 @@ import { owned } from '../core/theme.ts'
 import { ROOT } from '../root.ts'
 import { writeBundled } from '../store/available.ts'
 import type { Host } from '../store/host.ts'
-import { type Installed, readInstalled, startupPalette, writeInstalled } from '../store/installed.ts'
+import { type Installed, readInstalled, standingOf, startupPalette, writeInstalled } from '../store/installed.ts'
 import { upsertAlacrittyImport } from '../terminals/alacritty.ts'
+import { pointingOf } from '../terminals/common.ts'
 import { removeContourDefault } from '../terminals/contour.ts'
 import { warpPictureFile } from '../terminals/emit/warp.ts'
 import { itermProfilesPath } from '../terminals/iterm2.ts'
@@ -32,7 +33,10 @@ import {
   WARP_SYSTEM_DEFAULT,
   type WarpChannel,
   warp,
+  warpBackOf,
+  warpBasePath,
   warpChannelOf,
+  warpPlan,
   warpSettings,
   warpSystemOf,
   warpSystemValue,
@@ -40,9 +44,9 @@ import {
   warpThemes,
   warpThemeValue,
 } from '../terminals/warp.ts'
-import { weztermBlock } from '../terminals/wezterm.ts'
+import { wezterm, weztermBlock } from '../terminals/wezterm.ts'
 import { wtFragmentPath } from '../terminals/windows-terminal.ts'
-import { forget, pointDefaults, refreshPictures, resolve, sync, wiringNotes, withBases } from './sync.ts'
+import { commit, forget, pointDefaults, refreshPictures, resolve, sync, wiringNotes, withBases } from './sync.ts'
 
 function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
@@ -255,6 +259,24 @@ test('sync wires an existing wezterm.lua before its last return, and leaves one 
   writeFileSync(dotfile, 'return { font_size = 13 }\n')
   sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['ttheme/orla'] }, home)
   assert.equal(readFileSync(dotfile, 'utf8'), 'return { font_size = 13 }\n')
+})
+
+test('unwiring WezTerm takes ttheme out of every config it wired, and never empties one that was there before ttheme', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const state: Installed = { terminals: ['wezterm'], palettes: ['ttheme/orla'] }
+  const made = join(configHome, 'wezterm', 'wezterm.lua')
+  const dotfile = join(home, '.wezterm.lua')
+  const starter = "local wezterm = require 'wezterm'\nlocal config = wezterm.config_builder()\n\nreturn config\n"
+  sync(configHome, manifest, state, home)
+  assert.match(readFileSync(made, 'utf8'), /^-- ttheme begin$/m)
+  writeFileSync(dotfile, starter)
+  sync(configHome, manifest, state, home)
+  assert.match(readFileSync(dotfile, 'utf8'), /^-- ttheme begin$/m)
+  assert.deepEqual(wezterm.unwire({ configHome, home }, state).edits, [
+    { file: dotfile, content: starter },
+    { file: made, content: '' },
+  ])
 })
 
 test('sync wires the kaku.lua Kaku wrote through the WezTerm module, and makes no wezterm.lua beside it', () => {
@@ -516,6 +538,7 @@ test('a Warp theme written late lands when nothing came after it, and gives way 
     mkdirSync(join(settings, '..'), { recursive: true })
     writeFileSync(settings, mine)
     sync(configHome, manifest, { terminals: ['warp'], palettes: ['ttheme/orla'] }, home)
+    assert.equal(readFileSync(settings, 'utf8'), mine)
 
     return { configHome, home, settings }
   }) as [{ configHome: string; home: string; settings: string }, { configHome: string; home: string; settings: string }]
@@ -530,6 +553,56 @@ test('a Warp theme written late lands when nothing came after it, and gives way 
   await new Promise((resolve) => setTimeout(resolve, 300))
   assert.match(readFileSync(kept.settings, 'utf8'), /name = "ttheme\/orla, dark"/)
   assert.equal(readFileSync(undone.settings, 'utf8'), mine)
+})
+
+test("ttheme off that cannot write Warp's settings keeps the theme it replaced, so the next off still gives it back", () => {
+  const configHome = fixture()
+  const home = fixture()
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla'] }
+  sync(configHome, manifest, state, home)
+  const settings = warpSettings(home, configHome)
+  mkdirSync(dirname(settings), { recursive: true })
+
+  const mine =
+    '[appearance.themes]\nsystem_theme = true\nselected_system_themes = { light = "nord", dark = "koi" }\ntheme = "koi"\n'
+
+  writeFileSync(settings, mine)
+  sync(configHome, manifest, state, home)
+  assert.equal(readFileSync(warpBasePath(configHome), 'utf8'), '"koi"')
+  chmodSync(dirname(settings), 0o555)
+
+  try {
+    assert.throws(() => sync(configHome, manifest, { ...state, off: true }, home))
+  } finally {
+    chmodSync(dirname(settings), 0o755)
+  }
+
+  assert.equal(readFileSync(warpBasePath(configHome), 'utf8'), '"koi"')
+  sync(configHome, manifest, { ...state, off: true }, home)
+  assert.equal(readFileSync(settings, 'utf8'), mine)
+  assert.ok(!existsSync(warpBasePath(configHome)))
+})
+
+test("a Warp change is decided whole: taking over keeps the user's values aside, and giving back drops them", () => {
+  const orla = warpThemeValue('ttheme/orla, dark', `${owned('ttheme/orla')}.dark.yaml`)
+
+  const mine =
+    '[appearance.themes]\nsystem_theme = true\nselected_system_themes = { light = "nord", dark = "koi" }\ntheme = "koi"\n'
+
+  const taken = warpPlan(mine, {}, orla, 'off')
+  assert.deepEqual(taken.side, { base: '"koi"', system: '{ light = "nord", dark = "koi" }', contrast: 'table' })
+  assert.equal(warpThemeOf(taken.settings), orla)
+  assert.equal(warpSystemOf(taken.settings), warpSystemValue(orla))
+  assert.match(taken.settings, /^\[appearance\.text\]\nenforce_minimum_contrast = "never"$/m)
+  assert.deepEqual(warpPlan(taken.settings, taken.side, orla, 'off'), taken)
+  assert.equal(warpBackOf(taken.settings, taken.side), '"koi"')
+  assert.deepEqual(warpPlan(taken.settings, taken.side, '"koi"', 'back'), { settings: mine, side: {} })
+  assert.equal(warpBackOf(taken.settings, {}), '"dark"')
+  assert.equal(warpBackOf(mine, { base: '"koi"' }), undefined)
+  assert.deepEqual(warpPlan(mine, { base: '"nord"' }, undefined, 'back'), { settings: mine, side: {} })
+  const set = '[appearance.text]\nenforce_minimum_contrast = "always"\n\n[appearance.themes]\ntheme = "koi"\n'
+  assert.deepEqual(warpPlan(set, { contrast: 'key' }, orla, 'off').side, { base: '"koi"' })
+  assert.deepEqual(warpPlan(set, { contrast: 'key' }, orla).side, { base: '"koi"', contrast: 'key' })
 })
 
 test('a linked Warp settings file is written through its link, which an identical link then replaces so Warp hears every write', async () => {
@@ -1111,6 +1184,39 @@ test('iTerm2 takes ttheme: default as its default profile, keeps it while off an
   assert.ok(!pointDefaults('/nowhere', { ...state, off: true }, false, host).has('iterm2'))
   assert.ok(pointDefaults('/nowhere', { ...state, palettes: [] }, false, host).has('iterm2'))
   assert.deepEqual(writes, ['ttheme-default', 'USER'])
+})
+
+test('a default profile is taken when asked or already ours, given back when ours and nothing is worn, and kept otherwise', () => {
+  assert.equal(pointingOf('ttheme/orla', true, false), 'take')
+  assert.equal(pointingOf('ttheme/orla', false, true), 'take')
+  assert.equal(pointingOf('ttheme/orla', false, false), 'keep')
+  assert.equal(pointingOf(undefined, true, true), 'give')
+  assert.equal(pointingOf(undefined, false, true), 'give')
+  assert.equal(pointingOf(undefined, true, false), 'keep')
+})
+
+test('an install stands empty, off or on, and wears its startup palette only while on', () => {
+  const state: Installed = { terminals: [], startup: 'ttheme/juno', palettes: ['ttheme/orla', 'ttheme/juno'] }
+  assert.deepEqual(standingOf(state), { is: 'on', startup: 'ttheme/juno' })
+  assert.deepEqual(standingOf({ ...state, off: true }), { is: 'off', startup: 'ttheme/juno' })
+  assert.deepEqual(standingOf({ ...state, startup: 'ttheme/gone' }), { is: 'on', startup: 'ttheme/orla' })
+  assert.deepEqual(standingOf({ ...state, off: true, palettes: [] }), { is: 'empty' })
+})
+
+test('a terminal dropped from the install gets its default profile back and loses the files ttheme wrote for it', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const { host, writes } = defaultsAt('USER')
+  const both: Installed = { terminals: ['iterm2', 'ghostty'], palettes: ['ttheme/orla'] }
+  commit(configHome, manifest, undefined, both, true, host, home)
+  const taken = readInstalled(configHome)
+  assert.equal(taken.itermBase, 'USER')
+  assert.ok(existsSync(itermProfilesPath(home)))
+  commit(configHome, manifest, taken, { ...taken, terminals: ['ghostty'] }, false, host, home)
+  assert.deepEqual(writes, ['ttheme-default', 'USER'])
+  assert.ok(!existsSync(itermProfilesPath(home)))
+  assert.deepEqual(readInstalled(configHome).terminals, ['ghostty'])
+  assert.ok(existsSync(join(configHome, 'ghostty', 'themes', 'ttheme-ttheme--orla.dark')))
 })
 
 test('iTerm2 keeps its default profile when nothing is worn, it is not wired, or the user picked one ttheme did not take', () => {

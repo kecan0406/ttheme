@@ -17,8 +17,8 @@ import {
   viewOf,
   writeKept,
 } from '../store/available.ts'
-import { systemHost } from '../store/host.ts'
-import { readInstalled, startupPalette } from '../store/installed.ts'
+import { type Host, systemHost } from '../store/host.ts'
+import { type Installed, readInstalled, standingOf } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { fetchCorpus, hasCorpus } from '../store/schemes.ts'
 import { installedPath, isLocal, marketplaceSources, shownSource } from '../store/sources.ts'
@@ -30,11 +30,11 @@ import { PalettePrompt, type PickerScope, promptFx } from '../tui/palette-prompt
 import { pending, say } from '../tui/pending.ts'
 import { EXIT, failureOf, InputError } from './answer.ts'
 import { adopt, isPaletteFile, type Refused, takeFile } from './craft.ts'
-import { bringPictures, followPictures } from './pictures.ts'
+import { bringPictures, followPictures, owedPictures } from './pictures.ts'
 import { redrawPictures } from './redraw.ts'
 import { attempt, failureLine, updatesLine } from './refresh.ts'
-import { initCommand, newerRelease, upgradeTo } from './release.ts'
-import { commit, settle, sync } from './sync.ts'
+import { initCommand, newerRelease, Replaced, upgradeTo } from './release.ts'
+import { commit, pointDefaults, settle, sync } from './sync.ts'
 import { behindOf, conflictLine, takes, takeUpstream } from './upstreams.ts'
 
 export function reload(count: number): void {
@@ -92,6 +92,13 @@ export async function runAdd(asked: string[], into?: string): Promise<void> {
   if (fresh.length === 0) {
     sync(home, manifest, state)
     console.log(`Already installed: ${already.join(', ')}`)
+    await bringPictures(
+      home,
+      available(home, manifest, false)
+        .palettes.filter((e) => already.includes(e.name))
+        .map((e) => owedPictures(home, e)),
+      state.terminals,
+    )
 
     return
   }
@@ -163,45 +170,54 @@ export async function runSync(): Promise<void> {
   }
 }
 
-export function runOn(): void {
+export function runOn(host: Host = systemHost()): void {
   const home = configHome()
   const state = readInstalled(home)
-  const name = startupPalette(state)
+  const standing = standingOf(state)
 
-  if (!name) {
-    throw new Error('no palettes installed — `ttheme` picks some')
-  }
+  switch (standing.is) {
+    case 'empty':
+      throw new Error('no palettes installed — `ttheme` picks some')
+    case 'on':
+      pointDefaults(home, state, false, host)
+      console.log(`Already on  ${standing.startup}`)
 
-  if (!state.off) {
-    console.log(`Already on  ${name}`)
-
-    return
-  }
-
-  const { off: _, ...next } = state
-  const pointed = commit(home, readMarketplaces(home), state, next)
-  console.log(defaultNote(name, next.terminals, pointed).join('\n'))
-}
-
-export function runOff(): void {
-  const home = configHome()
-  const state = readInstalled(home)
-
-  if (state.off) {
-    console.log('Already off')
-
-    return
-  }
-
-  const pointed = commit(home, readMarketplaces(home), state, { ...state, off: true })
-  const name = startupPalette(state)
-  console.log(`Off  new tabs open in the terminal's own colors${name ? ` — \`ttheme on\` uses ${name} again` : ''}`)
-
-  for (const wiring of wirings(state.terminals)) {
-    if (pointed.get(wiring.id)?.restart) {
-      console.log(`${wiring.name} new tabs open on your own profile once ${wiring.name} restarts`)
+      return
+    case 'off': {
+      const { off: _, ...next } = state
+      const pointed = commit(home, readMarketplaces(home), state, next, false, host)
+      console.log(defaultNote(standing.startup, next.terminals, pointed).join('\n'))
     }
   }
+}
+
+function restarts(state: Installed, pointed: ReadonlyMap<Wired, Pointed>): string[] {
+  return wirings(state.terminals).flatMap((wiring) =>
+    pointed.get(wiring.id)?.restart
+      ? [`${wiring.name} new tabs open on your own profile once ${wiring.name} restarts`]
+      : [],
+  )
+}
+
+export function runOff(host: Host = systemHost()): void {
+  const home = configHome()
+  const state = readInstalled(home)
+  const standing = standingOf(state)
+
+  if (state.off) {
+    console.log(['Already off', ...restarts(state, pointDefaults(home, state, false, host))].join('\n'))
+
+    return
+  }
+
+  const pointed = commit(home, readMarketplaces(home), state, { ...state, off: true }, false, host)
+
+  console.log(
+    [
+      `Off  new tabs open in the terminal's own colors${standing.is === 'empty' ? '' : ` — \`ttheme on\` uses ${standing.startup} again`}`,
+      ...restarts(state, pointed),
+    ].join('\n'),
+  )
 }
 
 function defaultNote(name: string, terminals: Wired[], pointed: ReadonlyMap<Wired, Pointed>): string[] {
@@ -254,6 +270,10 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
     } catch (error) {
       failures.push(EXIT.failed)
       console.log(`  ttheme could not update to ${release.latest}: ${(error as Error).message}`)
+
+      if (error instanceof Replaced) {
+        return EXIT.failed
+      }
     }
   } else {
     console.log(release.note)

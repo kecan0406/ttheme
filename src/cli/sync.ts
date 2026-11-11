@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, readFileSync, rmSync, utimesSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { Work } from '../core/commons.ts'
@@ -9,16 +9,16 @@ import { backgroundsDir, freshenConfs, paintFor, retint } from '../pictures/back
 import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
 import { forgetAppearance, knowAppearance } from '../store/appearance.ts'
 import { available, nameOf, nearest, type View, viewOf, writeKept } from '../store/available.ts'
-import { compileZsh, editUserFile, listing, writeAtomic } from '../store/edits.ts'
+import { compileZsh, editUserFile, listing, relink, restoreUserFile, symlinked, writeAtomic } from '../store/edits.ts'
 import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, worn, writeInstalled } from '../store/installed.ts'
 import { marketplacesOf } from '../store/sources.ts'
 import { readTone, tunedNames } from '../store/tone.ts'
 import { modeFor, modeSetting } from '../store/wiring.ts'
-import { readText, themeFiles, tilde } from '../terminals/common.ts'
+import { ownedIn, readText, themeFiles, tilde } from '../terminals/common.ts'
 import { wirings } from '../terminals/index.ts'
 import { settingsFor } from '../terminals/terminal.ts'
-import type { Ctx, Moment, Now, Out, Pointed } from '../terminals/types.ts'
+import type { Ctx, Moment, Now, Out, Pointed, Unwired } from '../terminals/types.ts'
 import { shellTables } from './emit-shell.ts'
 
 export function resolve(manifest: Manifest, names: string[]): PaletteEntry[] {
@@ -346,19 +346,80 @@ export function pointDefaults(
   return pointed
 }
 
+export function planUnwire(
+  configHome: string,
+  terminals: readonly Wired[],
+  state: Installed | undefined,
+  home = homedir(),
+): Unwired {
+  const at = { configHome, home }
+  const parts = wirings(terminals).map((wiring) => wiring.unwire(at, state))
+
+  return {
+    edits: parts.flatMap((part) => part.edits),
+    removals: [
+      ...wirings(terminals).flatMap((wiring) => (wiring.shelf ? ownedIn(wiring.shelf.dir(at)) : [])),
+      ...parts.flatMap((part) => part.removals),
+    ],
+    touches: parts.flatMap((part) => part.touches),
+  }
+}
+
+function applyUnwire(plan: Unwired): void {
+  for (const { file, content } of plan.edits) {
+    restoreUserFile(file, content)
+  }
+
+  for (const path of plan.removals) {
+    rmSync(path, { recursive: true, force: true })
+  }
+
+  const now = new Date()
+
+  for (const file of plan.touches) {
+    if (symlinked(file)) {
+      relink(file)
+    } else if (existsSync(file)) {
+      utimesSync(file, now, now)
+    }
+  }
+}
+
+function giveBack(
+  configHome: string,
+  state: Installed,
+  terminals: readonly Wired[],
+  host: Host,
+  home = homedir(),
+): Map<Wired, Pointed> {
+  return pointDefaults(configHome, { ...state, terminals: [...terminals], off: true, palettes: [] }, false, host, home)
+}
+
+function only(state: Installed, terminals: readonly Wired[] | undefined): Installed {
+  return terminals ? { ...state, terminals: state.terminals.filter((id) => terminals.includes(id)) } : state
+}
+
 export function commit(
   configHome: string,
   manifest: Manifest,
-  before: Installed,
+  before: Installed | undefined,
   after: Installed,
-  take = false,
+  take: boolean | readonly Wired[] = false,
   host: Host = systemHost(),
   home = homedir(),
 ): Map<Wired, Pointed> {
-  const taking = take || (!worn(before) && worn(after) !== undefined)
-  const next = taking ? withBases(configHome, after, host, home) : after
+  const was = before ? worn(before) : undefined
+  const taking = take !== false || (!was && worn(after) !== undefined)
+  const taken = Array.isArray(take) ? take : undefined
+  const next = taking ? { ...withBases(configHome, only(after, taken), host, home), terminals: after.terminals } : after
+  const dropped = before ? before.terminals.filter((id) => !next.terminals.includes(id)) : []
   sync(configHome, manifest, next, home, host)
   writeInstalled(configHome, next)
 
-  return taking || worn(before) !== worn(after) ? pointDefaults(configHome, next, taking, host, home) : new Map()
+  if (before && dropped.length > 0) {
+    giveBack(configHome, before, dropped, host, home)
+    applyUnwire(planUnwire(configHome, dropped, before, home))
+  }
+
+  return taking || was !== worn(next) ? pointDefaults(configHome, only(next, taken), taking, host, home) : new Map()
 }

@@ -19,7 +19,17 @@ import { readMarketplaceDir, warning } from '../store/local.ts'
 import { readIndex } from '../store/marketplace-index.ts'
 import { nameSearch } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
-import { autoUpdates, isLocal, isRemote, localIdentity, marketplacesOf, repoOf, shownSource } from '../store/sources.ts'
+import {
+  autoUpdates,
+  isLocal,
+  isRemote,
+  localIdentity,
+  marketplacesOf,
+  readTries,
+  repoOf,
+  shownSource,
+  type Tried,
+} from '../store/sources.ts'
 import { readTone, tunedIn } from '../store/tone.ts'
 import { modeFor } from '../store/wiring.ts'
 import { liveOf } from '../terminals/live.ts'
@@ -40,10 +50,8 @@ import {
   dueSources,
   type Fetched,
   fetchMarketplace,
-  readTries,
   refreshMarketplace,
   storeMarketplace,
-  type Tried,
 } from './refresh.ts'
 import { autoWanted, releaseLine } from './release.ts'
 import { commit, forget } from './sync.ts'
@@ -199,10 +207,6 @@ async function applyBrowse(
     }
   }
 
-  for (const source of result.removes) {
-    dropCache(home, source)
-  }
-
   const sources = [
     ...marketplacesOf(current.marketplaces).filter((s) => !result.removes.includes(s)),
     ...result.adds.map((m) => m.source),
@@ -233,6 +237,10 @@ async function applyBrowse(
   const next = { ...placed, palettes: wanted }
   commit(home, manifest, current, next)
   forget(home, manifest, current.terminals, dropped)
+
+  for (const source of result.removes) {
+    dropCache(home, source)
+  }
 
   for (const line of marketplaceChanges(result, marketplaces, wanted)) {
     say(line)

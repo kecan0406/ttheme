@@ -23,12 +23,28 @@ export interface Installed {
   palettes: string[]
 }
 
+export type Standing = { is: 'empty' } | { is: 'off'; startup: string } | { is: 'on'; startup: string }
+
+export function standingOf(state: Installed): Standing {
+  const startup = state.startup && state.palettes.includes(state.startup) ? state.startup : state.palettes[0]
+
+  if (startup === undefined) {
+    return { is: 'empty' }
+  }
+
+  return { is: state.off ? 'off' : 'on', startup }
+}
+
 export function startupPalette(state: Installed): string | undefined {
-  return state.startup && state.palettes.includes(state.startup) ? state.startup : state.palettes[0]
+  const standing = standingOf(state)
+
+  return standing.is === 'empty' ? undefined : standing.startup
 }
 
 export function worn(state: Installed): string | undefined {
-  return state.off ? undefined : startupPalette(state)
+  const standing = standingOf(state)
+
+  return standing.is === 'on' ? standing.startup : undefined
 }
 
 type Optional = Exclude<keyof Installed, 'terminals' | 'palettes'>

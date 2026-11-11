@@ -284,8 +284,9 @@ interface Shelf {
   discard: () => void
 }
 
-function shelfFor(home: string, name: string): Shelf {
-  const before = new Set(rackOf(home, name).map((picture) => picture.key))
+export function shelfFor(home: string, name: string): Shelf {
+  const [up, ...others] = rackOf(home, name).map((picture) => picture.key)
+  const before = new Set(up === undefined ? [] : [up, ...others])
 
   return {
     count: () => rackOf(home, name).length,
@@ -295,8 +296,11 @@ function shelfFor(home: string, name: string): Shelf {
       const gone = rackOf(home, name).filter((picture) => !before.has(picture.key))
 
       for (const picture of gone) {
-        showImage(home, name, picture.key)
-        dropImage(home, name)
+        dropImage(home, name, picture.key)
+      }
+
+      if (up !== undefined && gone.length > 0) {
+        showImage(home, name, up)
       }
 
       if (gone.length > 0) {

@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import type { Host } from '../store/host.ts'
 import type { Installed } from '../store/installed.ts'
 import { modeSetting } from '../store/wiring.ts'
-import { tilde } from './common.ts'
+import { pointingOf, tilde } from './common.ts'
 import { iterm2 as emitter, itermProfiles } from './emit/iterm2.ts'
 import type { Ctx, Defaults, Moment, Wiring } from './types.ts'
 
@@ -54,14 +54,14 @@ const defaults: Defaults = {
   },
   point(moment: Moment, take: boolean) {
     const now = current(moment.host)
+    const pointing = pointingOf(moment.startup, take, now === ITERM_DEFAULT)
 
-    const want = moment.startup
-      ? take || now === ITERM_DEFAULT
+    const want =
+      pointing === 'take'
         ? ITERM_DEFAULT
-        : undefined
-      : now === ITERM_DEFAULT && !keeps(moment.state)
-        ? moment.state.itermBase
-        : undefined
+        : pointing === 'give' && !keeps(moment.state)
+          ? moment.state.itermBase
+          : undefined
 
     if (!want || want === now) {
       return undefined

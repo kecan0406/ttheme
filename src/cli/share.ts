@@ -27,6 +27,7 @@ import { newLocal } from './marketplaces.ts'
 import {
   commitAll,
   createRepo,
+  described,
   describeRepo,
   isPublic,
   proposalsFor,
@@ -37,6 +38,7 @@ import {
   repoText,
   repoUrl,
   toolsProblem,
+  unpushed,
   unsaved,
   withDescription,
 } from './publish.ts'
@@ -539,7 +541,12 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
 
   const changes = copies.length + drops.length + proposals.length > 0 || description !== was
 
-  if (changes || !remote) {
+  const behind =
+    remote !== undefined &&
+    !changes &&
+    ((await unpushed(marketplace.dir)) || !(await described(remote, description, open)))
+
+  if (changes || !remote || behind) {
     p.note(lines.join('\n'), `Share ${marketplace.id}`)
 
     const go = asked(
@@ -582,7 +589,7 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
     }
   }
 
-  if (changes || !remote) {
+  if (changes || !remote || behind) {
     const step = pending(`Pushing ${repoText(repo)}`)
 
     try {

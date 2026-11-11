@@ -40,7 +40,7 @@ import {
 import { artDir, artKey, fetchArt } from '../pictures/art.ts'
 import { reach, readMarketplaces } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
-import { ownIn, readMarketplaceDir, setsDir, warning, worksDir, writeOwnIn } from '../store/local.ts'
+import { localMarketplaces, ownIn, readMarketplaceDir, setsDir, warning, worksDir, writeOwnIn } from '../store/local.ts'
 import { liveSource, nameIndex } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
 import { corpusOf, fetchCorpus, readCorpus } from '../store/schemes.ts'
@@ -411,6 +411,10 @@ async function targetOf(into: string | undefined, dry: boolean): Promise<Target 
       proposals: [],
       records: '',
     }
+  }
+
+  if (dry && into === undefined && localMarketplaces(home, false).length === 0) {
+    return undefined
   }
 
   try {

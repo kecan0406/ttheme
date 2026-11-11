@@ -3,7 +3,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { Mode } from '../core/mode.ts'
 import { owned } from '../core/theme.ts'
-import { editUserFile, relink, writeAtomic } from '../store/edits.ts'
+import { writeAtomic } from '../store/edits.ts'
 import { readInstalled, worn } from '../store/installed.ts'
 import { modeFor } from '../store/wiring.ts'
 import { type WarpLook, type WarpPicture, warpTheme, warpThemeFile } from './emit/warp.ts'
@@ -12,22 +12,19 @@ import { detectTerminal, type Live } from './terminal.ts'
 import {
   WARP_DEFAULT,
   warpChannelOf,
+  warpOurs,
   warpReady,
   warpRef,
   warpSettings,
   warpSystemOf,
   warpThemeOf,
   warpThemes,
-  warpWear,
+  wearWarpTheme,
 } from './warp.ts'
 
 type Env = Record<string, string | undefined>
 
 export const WARP_SETTLE = 150
-
-function ours(value: string | undefined): boolean {
-  return value?.includes(`path = "${owned('')}`) === true
-}
 
 function wired(configHome: string): boolean {
   try {
@@ -93,17 +90,7 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
   let settle: NodeJS.Timeout | undefined
   let known: NodeJS.Timeout | undefined
 
-  const wear = (value: string) => {
-    const content = readFileSync(settings, 'utf8')
-    const next = warpWear(content, value, configHome, channel)
-
-    if (next === content) {
-      return
-    }
-
-    editUserFile(settings, next)
-    relink(settings)
-  }
+  const wear = (value: string) => wearWarpTheme(settings, value, configHome, channel)
 
   const sweep = (keep?: string) => {
     for (const view of views.splice(0)) {
@@ -174,8 +161,8 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
         const content = readFileSync(settings, 'utf8')
         const theme = warpThemeOf(content)
 
-        if (ours(theme) || ours(warpSystemOf(content))) {
-          wear(ours(theme) || theme === undefined ? WARP_DEFAULT : theme)
+        if (warpOurs(theme) || warpOurs(warpSystemOf(content))) {
+          wear(warpOurs(theme) || theme === undefined ? WARP_DEFAULT : theme)
         }
       }
 

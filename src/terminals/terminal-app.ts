@@ -9,7 +9,7 @@ import { frameAt } from '../pictures/backdrop.ts'
 import type { ProfileBackground } from '../pictures/conf.ts'
 import { rewrite, writeAtomic } from '../store/edits.ts'
 import type { Host } from '../store/host.ts'
-import { readText } from './common.ts'
+import { pointingOf, readText } from './common.ts'
 import { terminalApp as emitter } from './emit/terminal-app.ts'
 import type { Ctx, Defaults, Moment, Wiring } from './types.ts'
 
@@ -432,19 +432,18 @@ const defaults: Defaults = {
   },
   point(moment: Moment, take: boolean) {
     const now = current(moment.host)
-    const ours = now?.startsWith(OURS) === true
+    const pointing = pointingOf(moment.startup, take, now?.startsWith(OURS) === true)
 
     if (moment.state.palettes.length === 0) {
       script(moment.host, moment.configHome, ['drop'])
     }
 
-    const want = moment.startup
-      ? take || ours
+    const want =
+      pointing === 'take' && moment.startup
         ? terminalProfile(moment.startup)
-        : undefined
-      : ours
-        ? baseOf(moment.state, moment.host)
-        : undefined
+        : pointing === 'give'
+          ? baseOf(moment.state, moment.host)
+          : undefined
 
     if (want === undefined || (want === now && !take)) {
       return undefined

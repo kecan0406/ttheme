@@ -27,6 +27,8 @@ import {
   dropImage,
   framedBy,
   imageKey,
+  owedOf,
+  oweImages,
   type Picture,
   rackIn,
   rackOf,
@@ -119,6 +121,12 @@ function missingPictures(configHome: string, entry: PaletteEntry): SharedPicture
   const have = new Set(rackIn(readStore(backgroundsDir(configHome)), entry.name)?.pictures.map((p) => p.key))
 
   return (entry.pictures ?? []).filter((p) => !have.has(imageKey(p)))
+}
+
+export function owedPictures(configHome: string, entry: PaletteEntry): PaletteEntry {
+  const owed = new Set(owedOf(readStore(backgroundsDir(configHome)), entry.name))
+
+  return { ...entry, pictures: (entry.pictures ?? []).filter((p) => owed.has(imageKey(p))) }
 }
 
 function since(entry: PaletteEntry, before: readonly SharedPicture[] | undefined): PaletteEntry {
@@ -276,6 +284,7 @@ export async function bringPictures(
   const aligns = alignsFor(terminals)
   const links = process.stdout.isTTY && linkable(process.env)
   const got = new Set<PaletteEntry>()
+  const failed = new Map<string, string[]>()
   const line = pending()
   const renders = new Renderer()
 
@@ -292,11 +301,16 @@ export async function bringPictures(
       got.add(entry)
     } catch (error) {
       line.say(`  ▢ ${label} — ${inert(error instanceof Error ? error.message : String(error))}`)
+      failed.set(entry.name, [...(failed.get(entry.name) ?? []), imageKey(shared)])
     }
   }
 
   renders.close()
   line.done()
+
+  for (const [name, keys] of failed) {
+    oweImages(configHome, name, keys)
+  }
 
   for (const entry of got) {
     const held = new Set(rackOf(configHome, entry.name).map((picture) => picture.key))

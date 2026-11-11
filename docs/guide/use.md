@@ -289,7 +289,7 @@ comes back byte for byte; one you edited keeps its backup.
 - **A terminal shows no palette.** Quit and reopen iTerm2, Konsole, Terminal.app
   or Contour once. If ttheme never wired that terminal, run `init` again from
   inside it, answer **No, set it up again**, and mark it where it says
-  `detected`.
+  `detected`. A terminal you unmark there has ttheme taken out of its config.
 - **`init` stops without asking anything.** It asks in a terminal and stops where
   there is none. Run it in a terminal tab, or add `--yes`.
 - **A command cannot reach the network behind a proxy.** Set `HTTPS_PROXY`, as

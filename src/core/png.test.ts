@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { crc32, deflateSync } from 'node:zlib'
 import { PNG } from 'pngjs'
 import { jpegSize } from './jpeg.ts'
-import { decodeImage, decodePng, encodeMask, pngHead, toneOf } from './png.ts'
+import { decodeImage, decodePng, encodeMask, encodeRgb, pngHead, toneOf } from './png.ts'
 
 function sample(width: number, height: number, alpha: boolean, smooth: boolean): PNG {
   const png = new PNG({ width, height })
@@ -141,6 +141,29 @@ test('a PNG is read the way its eXIf orientation shows it, as the JPEG decoder t
     )
     assert.deepEqual([pngHead(bytes)?.width, pngHead(bytes)?.height], [width, height])
   }
+})
+
+function noted(png: Uint8Array, text: string): Uint8Array {
+  const bytes = Buffer.from(png)
+  const body = Buffer.from(`tEXt${text}`, 'latin1')
+  const chunk = Buffer.alloc(8 + body.length)
+  chunk.writeUInt32BE(body.length - 4, 0)
+  body.copy(chunk, 4)
+  chunk.writeUInt32BE(crc32(body), 4 + body.length)
+
+  return new Uint8Array(Buffer.concat([bytes.subarray(0, 33), chunk, bytes.subarray(33)]))
+}
+
+test('a PNG has see-through parts by its chunks, never by letters that only spell one inside another', () => {
+  const solid = encodeRgb({ width: 2, height: 1, data: new Uint8Array([10, 20, 30, 40, 50, 60]) })
+  const mask = encodeMask({ width: 2, height: 1, data: new Uint8Array([0, 255]) }, '#39c5bb')
+  assert.equal(pngHead(solid)?.alpha, false)
+  assert.equal(pngHead(mask)?.alpha, true)
+  assert.equal(pngHead(noted(solid, 'Comment\0made with tRNS in mind'))?.alpha, false)
+  assert.equal(pngHead(noted(mask, 'Comment\0every IDAT follows'))?.alpha, true)
+  assert.equal(pngHead(noted(mask, 'Comment\0plain').subarray(0, 60))?.alpha, false)
+  assert.deepEqual(decodePng(noted(mask, 'Comment\0every IDAT follows')), decodePng(mask))
+  assert.equal(toneOf(noted(mask, 'Comment\0a PLTE and a tRNS')), '#39c5bb')
 })
 
 function without(png: Uint8Array, kind: string): Uint8Array {

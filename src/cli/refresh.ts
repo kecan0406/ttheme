@@ -1,7 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, statSync, utimesSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { existsSync, mkdirSync, utimesSync } from 'node:fs'
 import { WORKS_DIR, type Work } from '../core/commons.ts'
+import { freshnessOf, REFRESH_AFTER, RETRY_AFTER } from '../core/freshness.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { SETS_DIR } from '../core/sets.ts'
 import { untar } from '../core/tarball.ts'
@@ -29,6 +28,7 @@ import {
   archiveUrl,
   autoUpdates,
   cachePath,
+  freshness,
   installedPath,
   isLocal,
   isRemote,
@@ -36,8 +36,10 @@ import {
   type MarketplaceInfo,
   marketplacesDir,
   marketplacesOf,
+  readTries,
   refOf,
   shownSource,
+  writeTry,
 } from '../store/sources.ts'
 import { cap } from '../tui/keycaps.ts'
 import { pending } from '../tui/pending.ts'
@@ -45,17 +47,12 @@ import { MARKS } from '../tui/style.ts'
 import { autoWanted, initCommand } from './release.ts'
 import { behindOf, conflictLine, updatable } from './upstreams.ts'
 
-export const REFRESH_AFTER = 24 * 60 * 60 * 1000
-export const RETRY_AFTER = 60 * 60 * 1000
+export { REFRESH_AFTER, RETRY_AFTER }
+
 export const AUTO_TIMEOUT = 5_000
 const ARCHIVE_MOST = 16 * 1024 * 1024
 const TEXT_MOST = 4 * 1024 * 1024
 const MARKETPLACE_PATH = new RegExp(`^(?:${SETS_DIR}|${WORKS_DIR})/[^/]+\\.toml$`)
-
-export interface Tried {
-  at: number
-  error: string
-}
 
 export interface FetchedMarketplace {
   source: string
@@ -68,64 +65,15 @@ export interface FetchedMarketplace {
 
 export type Fetched = FetchedMarketplace | { source: string; id: string; entries: PaletteEntry[]; works: Work[] }
 
-function triesPath(): string {
-  return join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'ttheme', 'marketplaces.json')
-}
-
-export function readTries(): Record<string, Tried> {
-  try {
-    const doc = JSON.parse(readFileSync(triesPath(), 'utf8')) as Record<string, Partial<Tried>>
-
-    return Object.fromEntries(
-      Object.entries(doc).filter(
-        (pair): pair is [string, Tried] => typeof pair[1]?.at === 'number' && typeof pair[1].error === 'string',
-      ),
-    )
-  } catch {
-    return {}
-  }
-}
-
-function writeTry(source: string, error: string | undefined): void {
-  const tries = readTries()
-
-  if (error === undefined) {
-    if (!(source in tries)) {
-      return
-    }
-
-    delete tries[source]
-  } else {
-    tries[source] = { at: Date.now(), error }
-  }
-
-  mkdirSync(dirname(triesPath()), { recursive: true })
-  writeAtomic(triesPath(), `${JSON.stringify(tries, null, 2)}\n`)
-}
-
-export function fetchedAt(home: string, source: string): number | undefined {
-  const path = isRemote(source) ? cachePath(home, source) : undefined
-
-  try {
-    return path ? statSync(path).mtimeMs : undefined
-  } catch {
-    return undefined
-  }
-}
-
 export function isDue(auto: boolean, fetched: number | undefined, failed: number | undefined, now: number): boolean {
-  return (
-    auto &&
-    (fetched === undefined || now - fetched >= REFRESH_AFTER) &&
-    (failed === undefined || now - failed >= RETRY_AFTER)
-  )
+  return auto && freshnessOf(fetched, failed, now).due
 }
 
 export function dueSources(home: string, state: Installed, now = Date.now()): string[] {
   const tries = readTries()
 
-  return marketplacesOf(state.marketplaces).filter((source) =>
-    isDue(autoUpdates(source, state.updates), fetchedAt(home, source), tries[source]?.at, now),
+  return marketplacesOf(state.marketplaces).filter(
+    (source) => autoUpdates(source, state.updates) && freshness(home, source, tries, now).due,
   )
 }
 
@@ -205,7 +153,7 @@ export function storeMarketplace(home: string, fetched: Fetched): void {
   }
 
   mkdirSync(marketplacesDir(home), { recursive: true })
-  writeAtomic(cachePath(home, fetched.source), `${JSON.stringify(fetched.archive)}\n`)
+  writeAtomic(cachePath(home, fetched.source), `${JSON.stringify({ ...fetched.archive, source: fetched.source })}\n`)
 }
 
 function cachedArchive(home: string, source: string): Archive | undefined {
@@ -234,7 +182,8 @@ async function fetchNewer(home: string, source: string, timeout?: number): Promi
   }
 
   const cached = cachedArchive(home, source)
-  const archive = await fetchArchive(source, timeout, undefined, cached?.etag)
+  const etag = cached && (cached.source ?? source) === source ? cached.etag : undefined
+  const archive = await fetchArchive(source, timeout, undefined, etag)
 
   return archive && fromArchive(source, archive)
 }

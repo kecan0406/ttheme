@@ -39,7 +39,7 @@ import {
 } from '../core/png.ts'
 import { CLOSED, paperOf, type Sides, STICKERING, sidesOf, stickered } from '../core/sticker.ts'
 import { inert } from '../core/text.ts'
-import { stem as fileStem, POSITIONS, type SharedPicture } from '../core/theme.ts'
+import { BUILTIN, stem as fileStem, POSITIONS, type SharedPicture } from '../core/theme.ts'
 import { listing, writeAtomic } from '../store/edits.ts'
 import { CONF_FIT, CONF_IMAGE, CONF_INCLUDE, CONF_OPACITY, CONF_OPTIONAL, CONF_POSITION } from './conf.ts'
 import { MATTING, matte } from './cutout.ts'
@@ -555,6 +555,15 @@ export interface Picture {
   matte?: number
   sticker?: number
   light?: true
+  tried?: Attempt
+}
+
+export interface Attempt {
+  blur: number
+  matte: number
+  sticker: number
+  light: boolean
+  coloring: Coloring
 }
 
 interface Rack {
@@ -565,6 +574,7 @@ interface Rack {
 interface Store {
   version: number
   palettes: Record<string, Rack>
+  owed?: Record<string, string[]>
 }
 
 function storePath(dir: string): string {
@@ -641,8 +651,86 @@ export function paintFor(entry: Colors & { backdrop: Hue }): Paint {
   return { hue: { color: entry.backdrop.color, opacity: entry.backdrop.opacity }, colors: colorsOf(entry) }
 }
 
-export function undrawn(picture: Picture): boolean {
-  return picture.tone === undefined && coloringOf(picture) === 'tone'
+export type Standing =
+  | { drawn: 'never'; source: boolean }
+  | { drawn: 'tinted'; tone: Hex; light: boolean }
+  | { drawn: 'original' }
+
+export function standingOf(picture: Picture): Standing {
+  if (coloringOf(picture) === 'original') {
+    return { drawn: 'original' }
+  }
+
+  return picture.tone === undefined
+    ? { drawn: 'never', source: picture.original !== undefined }
+    : { drawn: 'tinted', tone: picture.tone, light: picture.light === true }
+}
+
+export interface Wanted {
+  paint: Paint
+  blur: number
+  sticker: boolean
+}
+
+export type Stale = 'undrawn' | 'blur' | 'matte' | 'sticker' | 'mode' | 'tone'
+
+export function staleBy(picture: Picture, { paint, blur, sticker }: Wanted): Stale[] {
+  const standing = standingOf(picture)
+  const tinted = standing.drawn === 'tinted'
+
+  return [
+    ...(standing.drawn === 'never' ? (['undrawn'] as const) : []),
+    ...((picture.blur ?? 0) !== blur ? (['blur'] as const) : []),
+    ...(picture.cut !== undefined && picture.matte !== MATTING ? (['matte'] as const) : []),
+    ...(picture.original !== undefined && (picture.sticker ?? 0) !== (sticker ? STICKERING : 0)
+      ? (['sticker'] as const)
+      : []),
+    ...(tinted && standing.light !== isLight(paint.colors) ? (['mode'] as const) : []),
+    ...(tinted && standing.tone !== paint.hue.color ? (['tone'] as const) : []),
+  ]
+}
+
+export type Work = { by: 'draw'; attempt: Attempt } | { by: 'swap'; attempt: Attempt }
+
+const DRAWN_AGAIN: ReadonlySet<Stale> = new Set(['undrawn', 'blur', 'matte', 'sticker'])
+
+function sameAttempt(a: Attempt | undefined, b: Attempt): boolean {
+  return (
+    a !== undefined &&
+    a.blur === b.blur &&
+    a.matte === b.matte &&
+    a.sticker === b.sticker &&
+    a.light === b.light &&
+    a.coloring === b.coloring
+  )
+}
+
+export function workFor(picture: Picture, wanted: Wanted, ownColors = false): Work | undefined {
+  const moved = ownColors && coloringOf(picture) === 'tone'
+
+  const attempt: Attempt = {
+    blur: wanted.blur,
+    matte: MATTING,
+    sticker: wanted.sticker ? STICKERING : 0,
+    light: isLight(wanted.paint.colors),
+    coloring: moved ? 'original' : coloringOf(picture),
+  }
+
+  if (sameAttempt(picture.tried, attempt)) {
+    return undefined
+  }
+
+  const stale = staleBy(picture, wanted)
+
+  if (moved || stale.some((why) => DRAWN_AGAIN.has(why))) {
+    return { by: 'draw', attempt }
+  }
+
+  return stale.includes('mode') ? { by: 'swap', attempt } : undefined
+}
+
+export function triedAs(picture: Picture, attempt: Attempt): Picture {
+  return { ...picture, tried: attempt }
 }
 
 function word(name: string): string {
@@ -779,6 +867,65 @@ function legacyPicture(name: string, text: string | undefined, originals: string
   }
 }
 
+function namedBy(stem: string): string {
+  const [first, second, third, ...more] = stem.split('--')
+
+  if (first && second && third && more.length === 0) {
+    return `${first}@${second}/${third}`
+  }
+
+  return first === BUILTIN && second && third === undefined ? `${first}/${second}` : stem
+}
+
+function listedPictures(dir: string, stem: string, text: string, originals: string[]): Rack | undefined {
+  const own = new Set([...text.matchAll(/^# colors (\S+) original$/gm)].map((match) => match[1]))
+  const pages = new Map([...text.matchAll(/^# source (\S+) .* (\S+)$/gm)].map((match) => [match[1], match[2]]))
+
+  const pictures = [...text.matchAll(/^# picture (\S+) (\S+) (\S+) (\S+) (\S+)(?: (.+))?$/gm)].flatMap(
+    ([, key = '', held = '', fill = '', strength, by = '-', from]): Picture[] => {
+      const opacity = Number(strength)
+
+      if (!held.startsWith(`${stem}.`) || !fill.startsWith(held) || !Number.isFinite(opacity)) {
+        return []
+      }
+
+      const kept = `${stem}-${key}.`
+      const original = originals.find((file) => file.startsWith(kept) && file !== `${kept}cut.png`)
+      const tone = own.has(key) ? undefined : toneIn(join(dir, fill))
+      const page = pages.get(key)
+
+      return [
+        {
+          key,
+          stem: held,
+          fill,
+          opacity,
+          ...(own.has(key) ? { coloring: 'original' as const } : {}),
+          ...(tone ? { tone } : {}),
+          ...(from ? { from } : {}),
+          ...(by === '-' ? {} : { artist: by.split(',') }),
+          ...(page ? { source: page } : {}),
+          ...(original ? { original: join(ORIGINALS, original) } : {}),
+          ...(originals.includes(`${kept}cut.png`) ? { cut: join(ORIGINALS, `${kept}cut.png`) } : {}),
+        },
+      ]
+    },
+  )
+
+  const active = /^# image (\S+) \d+\/\d+$/m.exec(text)?.[1]
+  const shown = pictures.find((picture) => picture.key === active) ?? pictures[0]
+
+  return shown ? { active: shown.key, pictures } : undefined
+}
+
+function toneIn(path: string): Hex | undefined {
+  try {
+    return toneOf(new Uint8Array(readFileSync(path)))
+  } catch {
+    return undefined
+  }
+}
+
 function adopt(from: string, to: string): void {
   if (existsSync(from)) {
     renameSync(from, to)
@@ -802,6 +949,13 @@ function migrate(dir: string): Store {
   const moved: string[] = []
 
   for (const name of new Set([...confs, ...listing(shelf)])) {
+    const listed = listedPictures(dir, name, readText(join(dir, `${name}.conf`)) ?? '', originals)
+
+    if (listed) {
+      store.palettes[namedBy(name)] = listed
+      continue
+    }
+
     const pictures: Picture[] = []
     const shown = legacyPicture(name, readText(join(dir, `${name}.conf`)), originals)
 
@@ -833,7 +987,7 @@ function migrate(dir: string): Store {
 
     if (pictures.length > 0) {
       pictures.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
-      store.palettes[name] = { active: (shown ?? (pictures[0] as Picture)).key, pictures }
+      store.palettes[namedBy(name)] = { active: (shown ?? (pictures[0] as Picture)).key, pictures }
     }
   }
 
@@ -854,6 +1008,31 @@ function migrate(dir: string): Store {
   }
 
   return store
+}
+
+export function owedOf(store: Store, name: string): string[] {
+  const owed = store.owed && Object.hasOwn(store.owed, name) ? store.owed[name] : undefined
+
+  return Array.isArray(owed) ? owed.map(String) : []
+}
+
+function owing(store: Store, name: string, keys: readonly string[]): Store {
+  const { [name]: _, ...others } = store.owed ?? {}
+  const owed = keys.length > 0 ? { ...others, [name]: [...keys] } : others
+  const { owed: _owed, ...rest } = store
+
+  return Object.keys(owed).length > 0 ? { ...rest, owed } : rest
+}
+
+export function oweImages(configHome: string, name: string, failed: readonly string[]): void {
+  const dir = backgroundsDir(configHome)
+  const store = readStore(dir)
+  const was = owedOf(store, name)
+  const now = [...new Set([...was, ...failed])]
+
+  if (now.length > was.length) {
+    save(dir, owing(store, name, now), [])
+  }
 }
 
 export function imageKey(origin: Origin): string {
@@ -1129,7 +1308,16 @@ export function installBackdrop(
   rack.pictures = old ? rack.pictures.map((held) => (held === old ? picture : held)) : [...rack.pictures, picture]
   rack.active = key
   store.palettes[name] = rack
-  save(dir, store, [name])
+
+  save(
+    dir,
+    owing(
+      store,
+      name,
+      owedOf(store, name).filter((owed) => owed !== key),
+    ),
+    [name],
+  )
 
   for (const path of stale) {
     if (!written.includes(path)) {
@@ -1276,7 +1464,7 @@ export function writeTune(
     image = figurePath
     cover = false
   } else if (size !== 'fill') {
-    if (undrawn(picture)) {
+    if (standingOf(picture).drawn === 'never') {
       throw new Error(`${picture.stem} was drawn before pictures kept their tint — init draws it again`)
     }
 
@@ -1409,6 +1597,8 @@ function adopted(
     ...(cut ? { cut: `${kept(name, picture.key)}.cut.png` } : {}),
     ...(cut || picture.cut ? { matte: MATTING } : {}),
   }
+
+  delete next.tried
 
   if (sticker) {
     next.sticker = sticker
@@ -1626,14 +1816,10 @@ function recolor(dir: string, name: string, picture: Picture, hue: Hue): Picture
   }
 }
 
-export function inkDue(picture: Picture, paint: Paint): boolean {
-  return (
-    coloringOf(picture) === 'tone' && picture.tone !== undefined && (picture.light === true) !== isLight(paint.colors)
-  )
-}
-
 function due(picture: Picture, paint: Paint): boolean {
-  return coloringOf(picture) !== 'original' && picture.tone !== undefined && picture.tone !== paint.hue.color
+  const standing = standingOf(picture)
+
+  return standing.drawn === 'tinted' && standing.tone !== paint.hue.color
 }
 
 export function retint(configHome: string, paints: ReadonlyMap<string, Paint>): string[] {

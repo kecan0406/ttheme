@@ -39,6 +39,16 @@ export function running(pid: number): boolean {
   }
 }
 
+export type Pointing = 'take' | 'give' | 'keep'
+
+export function pointingOf(startup: string | undefined, take: boolean, ours: boolean): Pointing {
+  if (startup !== undefined) {
+    return take || ours ? 'take' : 'keep'
+  }
+
+  return ours ? 'give' : 'keep'
+}
+
 export function ownedIn(dir: string): string[] {
   return existsSync(dir)
     ? readdirSync(dir).flatMap((file) => (file.startsWith(owned('')) ? [join(dir, file)] : []))

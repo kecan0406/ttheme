@@ -59,6 +59,29 @@ const CHANNELS = new Map([
   [6, 4],
 ])
 
+interface Chunk {
+  kind: string
+  body: Buffer
+  whole: Buffer
+}
+
+function chunksOf(png: Buffer): Chunk[] {
+  const chunks: Chunk[] = []
+
+  for (let at = SIGNATURE.length; at + 8 <= png.length; ) {
+    const end = at + 12 + png.readUInt32BE(at)
+
+    chunks.push({
+      kind: png.toString('latin1', at + 4, at + 8),
+      body: png.subarray(at + 8, end - 4),
+      whole: png.subarray(at, end),
+    })
+    at = end
+  }
+
+  return chunks
+}
+
 interface Scan {
   width: number
   height: number
@@ -86,11 +109,7 @@ function scanned(bytes: Uint8Array): Scan | undefined {
   let palette: Buffer | undefined
   let opacity: Buffer | undefined
 
-  for (let at = 8; at + 12 <= png.length; ) {
-    const size = png.readUInt32BE(at)
-    const kind = png.toString('latin1', at + 4, at + 8)
-    const body = png.subarray(at + 8, at + 8 + size)
-
+  for (const { kind, body } of chunksOf(png)) {
     if (kind === 'IDAT') {
       idat.push(body)
     } else if (kind === 'PLTE') {
@@ -104,8 +123,6 @@ function scanned(bytes: Uint8Array): Scan | undefined {
     } else if (kind === 'IEND') {
       break
     }
-
-    at += 12 + size
   }
 
   if (idat.length === 0 || (type === INDEXED && !palette)) {
@@ -243,24 +260,20 @@ function inflated(scan: Scan): Rgba {
 }
 
 function turnOf(bytes: Uint8Array): number {
-  const png = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-
-  for (let at = 8; at + 12 <= png.length; ) {
-    const size = png.readUInt32BE(at)
-    const kind = png.toString('latin1', at + 4, at + 8)
-
+  for (const { kind, body } of headOf(Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength))) {
     if (kind === 'eXIf') {
-      return exifTurn(png.subarray(at + 8, Math.min(png.length, at + 8 + size)))
+      return exifTurn(body)
     }
-
-    if (kind === 'IDAT' || kind === 'IEND') {
-      return 1
-    }
-
-    at += 12 + size
   }
 
   return 1
+}
+
+function headOf(png: Buffer): Chunk[] {
+  const chunks = chunksOf(png)
+  const end = chunks.findIndex(({ kind }) => kind === 'IDAT' || kind === 'IEND')
+
+  return end < 0 ? chunks : chunks.slice(0, end)
 }
 
 function turned(image: Rgba, turn: number): Rgba {
@@ -287,19 +300,7 @@ function turned(image: Rgba, turn: number): Rgba {
 }
 
 function idatOf(png: Buffer): Buffer {
-  const parts: Buffer[] = []
-
-  for (let at = 8; at + 12 <= png.length; ) {
-    const size = png.readUInt32BE(at)
-
-    if (png.toString('latin1', at + 4, at + 8) === 'IDAT') {
-      parts.push(png.subarray(at + 8, at + 8 + size))
-    }
-
-    at += 12 + size
-  }
-
-  return Buffer.concat(parts)
+  return Buffer.concat(chunksOf(png).flatMap(({ kind, body }) => (kind === 'IDAT' ? [body] : [])))
 }
 
 function readByPngjs(bytes: Uint8Array): Rgba {
@@ -459,22 +460,6 @@ export function flatten(
   return { width, height, data }
 }
 
-function find(bytes: Uint8Array, word: string): number {
-  for (let i = 0; i + word.length <= bytes.length; i++) {
-    let hit = true
-
-    for (let j = 0; j < word.length && hit; j++) {
-      hit = bytes[i + j] === word.charCodeAt(j)
-    }
-
-    if (hit) {
-      return i
-    }
-  }
-
-  return -1
-}
-
 export function pngHead(bytes: Uint8Array): { width: number; height: number; alpha: boolean } | null {
   if (bytes.length < 33 || !isPng(bytes)) {
     return null
@@ -489,9 +474,9 @@ export function pngHead(bytes: Uint8Array): { width: number; height: number; alp
     return { width, height, alpha: true }
   }
 
-  const idat = find(bytes, 'IDAT')
+  const head = headOf(Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength))
 
-  return { width, height, alpha: find(idat === -1 ? bytes : bytes.subarray(0, idat), 'tRNS') !== -1 }
+  return { width, height, alpha: head.some(({ kind }) => kind === 'tRNS') }
 }
 
 export function alphaBox(image: Rgba, threshold = CLEAR): Box | null {
@@ -1089,16 +1074,11 @@ export function retone(bytes: Uint8Array, tone: Hex): Buffer | undefined {
   }
 
   const png = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  const parts: Uint8Array[] = [Buffer.from(SIGNATURE)]
-  let at = SIGNATURE.length
 
-  while (at + 8 <= png.length) {
-    const end = at + 12 + png.readUInt32BE(at)
-    parts.push(png.toString('latin1', at + 4, at + 8) === 'PLTE' ? tonePalette(tone) : png.subarray(at, end))
-    at = end
-  }
-
-  return Buffer.concat(parts)
+  return Buffer.concat([
+    Buffer.from(SIGNATURE),
+    ...chunksOf(png).map(({ kind, whole }) => (kind === 'PLTE' ? tonePalette(tone) : whole)),
+  ])
 }
 
 export function flatIndexed(bytes: Uint8Array, background: Hex, opacity: number): Buffer | undefined {
@@ -1121,20 +1101,11 @@ export function flatIndexed(bytes: Uint8Array, background: Hex, opacity: number)
   }
 
   const png = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  const parts: Uint8Array[] = [Buffer.from(SIGNATURE)]
 
-  for (let at = SIGNATURE.length; at + 8 <= png.length; ) {
-    const end = at + 12 + png.readUInt32BE(at)
-    const kind = png.toString('latin1', at + 4, at + 8)
-
-    if (kind === 'PLTE') {
-      parts.push(chunk('PLTE', laid))
-    } else if (kind !== 'tRNS') {
-      parts.push(png.subarray(at, end))
-    }
-
-    at = end
-  }
-
-  return Buffer.concat(parts)
+  return Buffer.concat([
+    Buffer.from(SIGNATURE),
+    ...chunksOf(png).flatMap(({ kind, whole }) =>
+      kind === 'PLTE' ? [chunk('PLTE', laid)] : kind === 'tRNS' ? [] : [whole],
+    ),
+  ])
 }

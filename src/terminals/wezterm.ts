@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { backgroundsDir } from '../pictures/backdrop.ts'
 import { appearancePath } from '../store/appearance.ts'
+import { backupPath } from '../store/edits.ts'
 import { fromHome, MANAGED, modeFor, modeSetting } from '../store/wiring.ts'
 import { pruneThemes, readText, stripped, tilde } from './common.ts'
 import { wezterm as emitter, weztermModule } from './emit/wezterm.ts'
@@ -136,9 +137,16 @@ export const wezterm: Wiring = {
   ],
   unwire: (at) => ({
     edits: [
-      ...stripped(weztermConfig(at.configHome, at.home), removeLuaBlock),
-      ...stripped(kakuConfig(at.configHome), removeLuaBlock),
-    ],
+      join(at.home, '.wezterm.lua'),
+      join(at.configHome, 'wezterm', 'wezterm.lua'),
+      kakuConfig(at.configHome),
+    ].flatMap((file) =>
+      stripped(file, (content) => {
+        const out = removeLuaBlock(content)
+
+        return out === '' && existsSync(backupPath(file)) ? `${WEZTERM_SKELETON}return config\n` : out
+      }),
+    ),
     removals: [],
     touches: [],
   }),

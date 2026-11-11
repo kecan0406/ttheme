@@ -26,6 +26,20 @@
 - In `ttheme find`, an opaque picture that has a transparent copy folded into it now switches to that copy when you try it. Before, the first try showed nothing.
 - In `ttheme find`, switching site tabs during a search no longer leaves a tab whose loader never ends, and no longer drops or skips posts.
 - In `ttheme find`, a picture dropped on the window while the settings are open or find is closing is ignored, as a paste is, and clipboard text taken in the try view no longer opens a tag field you cannot see.
+- In Warp, `ttheme off` gives your own theme back even when an earlier `off` was cut short or could not write the settings. Before, the theme you had was forgotten and Warp was left on `dark`.
+- In Warp, a palette without a picture that this run just made is no longer named in the settings before Warp has had time to read its file.
+- A picture that cannot be drawn again, such as one with no original kept, is reported once. Before, every `ttheme update` and every `init` reported it again.
+- An `images.json` that does not read is moved away as before, and the one built in its place now has every picture of every palette, with its original and its colors. Before, it kept only the picture each palette showed and could not draw any of them again.
+- Setting ttheme up again with a terminal or an agent skill left out now takes ttheme out of that terminal's config, gives it its own default profile back and removes the skill, and the plan lists each step. Before, they stayed wired.
+- `ttheme add` on a palette you already have fetches the pictures it lists that could not be fetched before.
+- `ttheme on` and `ttheme off` typed when ttheme is already on or off now put the terminal's default profile right, which finishes a switch that was cut short, and removing a marketplace that held your default palette moves the default profile too.
+- A list of works that has never arrived is asked for again a day after a failure. Before, every command that checks for updates asked for it and waited.
+- A release check whose helper died is tried again after an hour, not a day.
+- `ttheme update` stops when the update leaves a version it did not ask for installed. Before, the old version went on to write its own files over the new one's.
+- `ttheme share` finishes a push, or the description and topic on GitHub, that failed the last time, where it used to find nothing to do.
+- Cancelling the palette editor puts back the picture that was showing. Before, it could leave another one of the palette's pictures up.
+- `ttheme palette make --dry-run` no longer asks to make a marketplace when you have none.
+- Uninstalling in WezTerm takes ttheme out of `~/.wezterm.lua` too, and no longer empties a config that held only the starting lines before ttheme.
 
 ## 1.2.109
 

@@ -334,7 +334,9 @@ const ZEROCHAN_ROLES = new Map<string, keyof Named>([
 function unescaped(text: string): string {
   return text.replace(/&(?:#(\d+)|amp|quot|apos|lt|gt);/g, (entity, code: string | undefined) =>
     code
-      ? String.fromCharCode(Number(code))
+      ? Number(code) <= 0x10ffff
+        ? String.fromCodePoint(Number(code))
+        : entity
       : ({ '&amp;': '&', '&quot;': '"', '&apos;': "'", '&lt;': '<', '&gt;': '>' }[entity] ?? entity),
   )
 }

@@ -5,7 +5,17 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import pkg from '../../package.json' with { type: 'json' }
 import { standingLine } from '../tui/notice.ts'
-import { autoWanted, checkLatest, isNewer, newerRelease, releaseLine, standingOf } from './release.ts'
+import {
+  autoWanted,
+  checkLatest,
+  checkOf,
+  isNewer,
+  newerRelease,
+  Replaced,
+  releaseLine,
+  standingOf,
+  upgradeTo,
+} from './release.ts'
 
 test('isNewer compares releases part by part and stays quiet about a version that is not a plain release', () => {
   assert.equal(isNewer('1.0.51', '1.0.50'), true)
@@ -141,6 +151,114 @@ test('npm asks its registry from a folder of its own, never from the shared temp
     assert.deepEqual(held, ['node_modules'])
     assert.equal(existsSync(cwd as string), false)
   } finally {
+    for (const [key, value] of Object.entries(was)) {
+      if (value === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = value
+      }
+    }
+
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a release check is due a day after the registry answered, an hour after a try failed, and an hour after one that never settled', () => {
+  const day = 86_400_000
+  const hour = 3_600_000
+  const now = 10 * day
+  assert.equal(checkOf({ checked: 0 }, now), 'due')
+  assert.equal(checkOf({ checked: now - day + 1, latest: '1.2.30' }, now), 'waiting')
+  assert.equal(checkOf({ checked: now - day, latest: '1.2.30' }, now), 'due')
+  assert.equal(checkOf({ checked: now - 2 * day, failed: now - hour + 1 }, now), 'waiting')
+  assert.equal(checkOf({ checked: now - 2 * day, failed: now - hour }, now), 'due')
+  assert.equal(checkOf({ checked: now - 2 * day, trying: now - 29_000 }, now), 'trying')
+  assert.equal(checkOf({ checked: now - 2 * day, trying: now - 31_000 }, now), 'waiting')
+  assert.equal(standingOf({ checked: now - 2 * day, trying: now - 31_000, latest: '1.2.29' }, now, '1.2.29'), 'failed')
+  assert.equal(checkOf({ checked: now - 2 * day, trying: now - hour }, now), 'due')
+})
+
+test('a background check that fails keeps when the registry last answered, so the next try is an hour away', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-release-'))
+  const was = { PATH: process.env.PATH, XDG_STATE_HOME: process.env.XDG_STATE_HOME }
+
+  try {
+    mkdirSync(join(dir, 'bin'))
+    writeFileSync(join(dir, 'bin', 'npm'), '#!/bin/sh\necho offline >&2\nexit 1\n')
+    chmodSync(join(dir, 'bin', 'npm'), 0o755)
+    mkdirSync(join(dir, 'state', 'ttheme'), { recursive: true })
+    const stamp = join(dir, 'state', 'ttheme', 'release.json')
+    const answered = Date.now() - 2 * 86_400_000
+    writeFileSync(stamp, `${JSON.stringify({ checked: answered, latest: pkg.version, trying: Date.now() })}\n`)
+    process.env.PATH = `${join(dir, 'bin')}:${process.env.PATH}`
+    process.env.XDG_STATE_HOME = join(dir, 'state')
+    assert.equal(await checkLatest(), 1)
+    const seen = JSON.parse(readFileSync(stamp, 'utf8'))
+    assert.equal(seen.checked, answered)
+    assert.equal(seen.trying, undefined)
+    assert.equal(checkOf(seen, seen.failed + 1), 'waiting')
+    assert.equal(checkOf(seen, seen.failed + 3_600_000), 'due')
+  } finally {
+    for (const [key, value] of Object.entries(was)) {
+      if (value === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = value
+      }
+    }
+
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('an update that leaves another ttheme installed than the one asked for stops the old one, and one that changed nothing does not', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-release-'))
+
+  const was = {
+    PATH: process.env.PATH,
+    XDG_STATE_HOME: process.env.XDG_STATE_HOME,
+    XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
+    npm_config_user_agent: process.env.npm_config_user_agent,
+  }
+
+  const log = console.log
+
+  try {
+    const cli = join(dir, 'config', 'ttheme', 'ttheme.js')
+    const npx = join(dir, 'bin', 'npx')
+    mkdirSync(join(dir, 'bin'))
+    mkdirSync(join(dir, 'config', 'ttheme'), { recursive: true })
+    process.env.PATH = `${join(dir, 'bin')}:${process.env.PATH}`
+    process.env.XDG_STATE_HOME = join(dir, 'state')
+    process.env.XDG_CONFIG_HOME = join(dir, 'config')
+    delete process.env.npm_config_user_agent
+    console.log = () => {}
+
+    const left = (status: number, version: string): Error | undefined => {
+      writeFileSync(npx, `#!/bin/sh\nexit ${status}\n`)
+      chmodSync(npx, 0o755)
+      writeFileSync(cli, `console.log(${JSON.stringify(version)})\n`)
+
+      try {
+        upgradeTo('99.0.1', [])
+      } catch (error) {
+        return error instanceof Error ? error : new Error(String(error))
+      }
+
+      return undefined
+    }
+
+    assert.ok(left(0, '99.0.0') instanceof Replaced)
+    assert.ok(left(1, '99.0.0') instanceof Replaced)
+    assert.ok(left(1, '99.0.1') instanceof Replaced)
+    const still = left(1, pkg.version)
+    assert.ok(still && !(still instanceof Replaced))
+    assert.match(still.message, /is still installed$/)
+    const same = left(0, pkg.version)
+    assert.ok(same && !(same instanceof Replaced))
+  } finally {
+    console.log = log
+
     for (const [key, value] of Object.entries(was)) {
       if (value === undefined) {
         delete process.env[key]

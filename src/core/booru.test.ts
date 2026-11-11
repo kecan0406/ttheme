@@ -555,6 +555,7 @@ test('a zerochan post page names its artist, cast and series by tag type, with i
     <ul id="tags">
       <li class="mangaka" data-tag="Inkwell" title="Added by user4127" data-user="user4127"><a>Inkwell</a></li>
       <li class="character primary" data-tag="Wren Tidewell" data-user="user4127"><a>Wren Tidewell</a></li>
+      <li class="character" data-tag="Pip &#128008; &#99999999;" data-user="user4127"><a>Pip</a></li>
       <li class="series fav" data-tag="Moon;Tide" data-user="user4127"><a>Moon;Tide</a></li>
       <li class="game" data-tag="Night Parade &amp; Friends" data-user="user4127"><a>Night Parade</a></li>
       <li class="theme" data-tag="Red Skirt" data-user="user4127"><a>Red Skirt</a></li>
@@ -566,7 +567,11 @@ test('a zerochan post page names its artist, cast and series by tag type, with i
     }</script>`
 
   assert.deepEqual(parseZerochanPage(page), {
-    named: { artist: ['inkwell'], character: ['wren_tidewell'], copyright: ['moon;tide', 'night_parade_&_friends'] },
+    named: {
+      artist: ['inkwell'],
+      character: ['wren_tidewell', 'pip_\u{1f408}_&#99999999;'],
+      copyright: ['moon;tide', 'night_parade_&_friends'],
+    },
     source: '',
     owner: 'user4127',
     posted: '2026-07-29',

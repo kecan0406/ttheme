@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { tarballOf } from '../../tests/tarball.ts'
 import { paletteToml } from '../core/draft.ts'
+import { freshnessOf } from '../core/freshness.ts'
 import { setText } from '../core/sets.ts'
 import { writeBundled } from '../store/available.ts'
 import { cachePath, marketplacesDir } from '../store/sources.ts'
@@ -22,6 +23,35 @@ test('a marketplace is due once a day, never while auto-update is off, and an ho
   assert.equal(isDue(false, undefined, undefined, now), false)
   assert.equal(isDue(true, now - REFRESH_AFTER, now - RETRY_AFTER + 1, now), false)
   assert.equal(isDue(true, now - REFRESH_AFTER, now - RETRY_AFTER, now), true)
+})
+
+test('a copy stands as never fetched, fetched or failed by whichever came last, and a failure only holds back a fetch that is wanted', () => {
+  const hour = RETRY_AFTER
+  assert.deepEqual(freshnessOf(undefined, undefined, now), { last: 'never', due: true })
+  assert.deepEqual(freshnessOf(now - hour, undefined, now), { last: 'fetched', at: now - hour, due: false })
+  assert.deepEqual(freshnessOf(now - REFRESH_AFTER, now - 2 * REFRESH_AFTER, now), {
+    last: 'fetched',
+    at: now - REFRESH_AFTER,
+    due: true,
+  })
+  assert.deepEqual(freshnessOf(undefined, now - 1, now), {
+    last: 'failed',
+    at: now - 1,
+    fetched: undefined,
+    due: false,
+  })
+  assert.deepEqual(freshnessOf(undefined, now - hour, now), {
+    last: 'failed',
+    at: now - hour,
+    fetched: undefined,
+    due: true,
+  })
+  assert.deepEqual(freshnessOf(now - 3 * hour, now - 2 * hour, now), {
+    last: 'failed',
+    at: now - 2 * hour,
+    fetched: now - 3 * hour,
+    due: false,
+  })
 })
 
 const SOURCE = 'ann/ttheme-pastel'
@@ -98,6 +128,42 @@ test('a fetched archive keeps what a marketplace is read from — its file, its 
       assert.deepEqual(Object.keys(kept).sort(), ['sets/neon.toml', 'ttheme-marketplace.toml', 'works/neon.toml'])
     },
   )
+})
+
+test('a copy fetched at one ref never answers for another: its ETag is sent only for the ref it came from', async () => {
+  const asked: (string | null)[] = []
+
+  await withNetwork(
+    async () => new Response(tarballOf(MARKETPLACE), { headers: { etag: '"one"' } }),
+    async (home) => {
+      assert.equal(await attempt(home, `${SOURCE}#v1`), undefined)
+      assert.deepEqual(
+        [JSON.parse(readFileSync(cachePath(home, SOURCE), 'utf8'))].map(({ etag, source }) => [etag, source]),
+        [['"one"', `${SOURCE}#v1`]],
+      )
+
+      const fetched = spyOn(globalThis, 'fetch').mockImplementation(
+        Object.assign(
+          async (_url: string | URL | Request, init?: RequestInit) => {
+            asked.push(new Headers(init?.headers).get('if-none-match'))
+
+            return new Response(tarballOf(MARKETPLACE), { headers: { etag: '"two"' } })
+          },
+          { preconnect },
+        ),
+      )
+
+      try {
+        assert.equal(await attempt(home, `${SOURCE}#v1`), undefined)
+        assert.equal(await attempt(home, `${SOURCE}#v2`), undefined)
+        assert.equal(await attempt(home, `${SOURCE}#v2`), undefined)
+      } finally {
+        fetched.mockRestore()
+      }
+    },
+  )
+
+  assert.deepEqual(asked, ['"one"', null, '"two"'])
 })
 
 test('an archive whose palette and work files hold more than any marketplace is refused', async () => {

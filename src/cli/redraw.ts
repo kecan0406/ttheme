@@ -1,11 +1,10 @@
 import { availableParallelism, homedir } from 'node:os'
 import type { Coloring } from '../core/backdrop-tone.ts'
-import { STICKERING } from '../core/sticker.ts'
 import {
+  type Attempt,
   applyRedraw,
   backgroundsDir,
   coloringOf,
-  inkDue,
   type Paint,
   type Picture,
   paintFor,
@@ -13,10 +12,10 @@ import {
   readStore,
   swapped,
   thumbless,
-  undrawn,
+  triedAs,
+  workFor,
   writeThumb,
 } from '../pictures/backdrop.ts'
-import { MATTING } from '../pictures/cutout.ts'
 import { redrawOne } from '../pictures/redrawing.ts'
 import { Pool } from '../pictures/render.ts'
 import { type View, viewOf } from '../store/available.ts'
@@ -29,16 +28,9 @@ const WORKERS = 4
 
 interface Job {
   name: string
-  key: string
   paint: Paint
-  coloring?: Coloring
-  tried?: Picture
-}
-
-function triedWith(picture: Picture, sticker: boolean): Picture {
-  const { sticker: _old, ...rest } = picture
-
-  return sticker ? { ...rest, sticker: STICKERING } : rest
+  picture: Picture
+  attempt: Attempt
 }
 
 interface Redrawing {
@@ -68,7 +60,7 @@ export async function redrawPictures(
   const sticker = stickerOf(home)
   const shown = (view ?? viewOf(home, undefined, true, Object.keys(store.palettes))).available
   const entries = new Map(shown.palettes.map((entry) => [entry.name, entry]))
-  const swaps: (Job & { picture: Picture })[] = []
+  const swaps: Job[] = []
   const draws: Job[] = []
 
   for (const [name, rack] of Object.entries(store.palettes)) {
@@ -81,22 +73,10 @@ export async function redrawPictures(
     const paint = paintFor(entry)
 
     for (const picture of rack.pictures) {
-      if (ownColors && coloringOf(picture) === 'tone') {
-        draws.push({ name, key: picture.key, paint, coloring: 'original' })
-        continue
-      }
+      const work = workFor(picture, { paint, blur: blurring, sticker }, ownColors)
 
-      const flips = inkDue(picture, paint)
-      const blurred = (picture.blur ?? 0) !== blurring
-      const matted = picture.cut !== undefined && picture.matte !== MATTING
-      const edged = picture.original !== undefined && (picture.sticker ?? 0) !== (sticker ? STICKERING : 0)
-
-      if (undrawn(picture) || blurred || matted) {
-        draws.push({ name, key: picture.key, paint })
-      } else if (edged) {
-        draws.push({ name, key: picture.key, paint, tried: picture })
-      } else if (flips) {
-        swaps.push({ name, key: picture.key, paint, picture })
+      if (work) {
+        ;(work.by === 'draw' ? draws : swaps).push({ name, paint, picture, attempt: work.attempt })
       }
     }
   }
@@ -111,16 +91,17 @@ export async function redrawPictures(
 
   const aligns = alignsFor(readInstalled(home).terminals)
   const drawn: { name: string; picture: Picture }[] = []
+  const tried: { name: string; picture: Picture }[] = []
   let done = 0
 
-  for (const { name, key, paint, picture } of swaps) {
-    const next = swapped(home, name, picture, paint, aligns, user)
+  for (const job of swaps) {
+    const next = swapped(home, job.name, job.picture, job.paint, aligns, user)
 
     if (next) {
-      drawn.push({ name, picture: next })
+      drawn.push({ name: job.name, picture: next })
       step?.(++done, total)
     } else {
-      draws.push({ name, key, paint })
+      draws.push(job)
     }
   }
 
@@ -132,34 +113,31 @@ export async function redrawPictures(
     const pool = new Pool(Math.min(WORKERS, availableParallelism() - 1, draws.length))
 
     const results = await pool.map(
-      draws.map(({ name, key, paint, coloring }) => ({
+      draws.map(({ name, paint, picture, attempt }) => ({
         job: 'redraw' as const,
         home,
         user,
         name,
-        key,
+        key: picture.key,
         paint,
         blur: blurring,
         sticker,
         aligns,
-        ...(coloring ? { coloring } : {}),
+        ...(attempt.coloring === coloringOf(picture) ? {} : { coloring: attempt.coloring }),
       })),
       () => step?.(++done, total),
     )
 
     pool.close()
 
-    draws.forEach(({ name, key, tried }, at) => {
+    draws.forEach(({ name, picture, attempt }, at) => {
       const result = results[at]
 
       if (result instanceof Error || !result) {
         say(
-          `  ▢ ${name} ${key} — ${result instanceof Error ? result.message : 'no original to draw it from'}, left as it was`,
+          `  ▢ ${name} ${picture.key} — ${result instanceof Error ? result.message : 'no original to draw it from'}, left as it was`,
         )
-
-        if (tried) {
-          drawn.push({ name, picture: triedWith(tried, sticker) })
-        }
+        tried.push({ name, picture: triedAs(picture, attempt) })
 
         return
       }
@@ -168,7 +146,7 @@ export async function redrawPictures(
     })
   }
 
-  applyRedraw(home, drawn)
+  applyRedraw(home, [...drawn, ...tried])
   await shrinkBare(home)
 
   if (emit && drawn.length > 0) {

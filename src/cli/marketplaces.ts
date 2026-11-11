@@ -34,6 +34,7 @@ import {
   autoUpdates,
   cachePath,
   defaultLocal,
+  freshness,
   isLocal,
   isRemote,
   localIdentity,
@@ -41,6 +42,7 @@ import {
   marketplacesOf,
   OWNER_KEYS,
   parseSource,
+  readTries,
   refOf,
   sameMarketplace,
   shownSource,
@@ -49,8 +51,8 @@ import { pending } from '../tui/pending.ts'
 import { interactive } from '../tui/terminal.ts'
 import { InputError } from './answer.ts'
 import * as p from './ask.ts'
-import { type Fetched, fetchedAt, fetchMarketplace, readTries, storeMarketplace } from './refresh.ts'
-import { sync } from './sync.ts'
+import { type Fetched, fetchMarketplace, storeMarketplace } from './refresh.ts'
+import { commit } from './sync.ts'
 
 const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const ACTIONS = ['add', 'remove', 'init', 'check']
@@ -132,8 +134,7 @@ function nameTaken(home: string, sources: string[], source: string, name: string
   return sources.find((s) => s !== source && !sameMarketplace(s, source) && nameOf(home, s) === name)
 }
 
-function register(home: string, source: string, name: string, auto?: boolean): void {
-  const state = readInstalled(home)
+function unclaimed(home: string, state: Installed, source: string, name: string): string[] {
   const sources = marketplacesOf(state.marketplaces)
   const taken = nameTaken(home, sources, source, name)
 
@@ -143,6 +144,12 @@ function register(home: string, source: string, name: string, auto?: boolean): v
     )
   }
 
+  return sources
+}
+
+function register(home: string, source: string, name: string, auto?: boolean): void {
+  const state = readInstalled(home)
+  const sources = unclaimed(home, state, source, name)
   const updates = auto === undefined ? { ...state.updates } : { ...state.updates, [source]: auto }
   writeInstalled(home, withMarketplaces(state, sources.includes(source) ? sources : [...sources, source], updates))
 }
@@ -177,17 +184,10 @@ async function fetching(home: string, source: string): Promise<Fetched> {
 async function repin(home: string, was: string, source: string): Promise<Fetched> {
   const fetched = await fetching(home, source)
   const state = readInstalled(home)
-  const sources = marketplacesOf(state.marketplaces)
-  const taken = nameTaken(home, sources, source, fetched.id)
-
-  if (taken) {
-    throw new Error(
-      `${fetched.id} already names the marketplace at ${shownSource(taken)} — \`ttheme marketplace remove ${fetched.id}\` first`,
-    )
-  }
-
+  const sources = unclaimed(home, state, source, fetched.id)
   const { [was]: auto, ...others } = state.updates ?? {}
   const updates = auto === undefined ? others : { ...others, [source]: auto }
+  storeMarketplace(home, fetched)
   writeInstalled(
     home,
     withMarketplaces(
@@ -196,7 +196,6 @@ async function repin(home: string, was: string, source: string): Promise<Fetched
       updates,
     ),
   )
-  storeMarketplace(home, fetched)
 
   return fetched
 }
@@ -233,8 +232,9 @@ async function addSource(home: string, arg: string): Promise<{ source: string; i
 
   const fetched = await fetching(home, source)
   const auto = source === BUILTIN ? undefined : await askAuto(fetched.id)
-  register(home, source, fetched.id, auto)
+  unclaimed(home, readInstalled(home), source, fetched.id)
   storeMarketplace(home, fetched)
+  register(home, source, fetched.id, auto)
   const count = counted(fetched.entries.length)
   console.log(
     source === BUILTIN
@@ -289,8 +289,8 @@ function removeMarketplace(name: string): void {
   const remaining = sources.filter((s) => s !== source)
   const next = withMarketplaces(state, remaining, state.updates ?? {})
   writeInstalled(home, next)
+  commit(home, readMarketplaces(home), state, next)
   dropCache(home, source)
-  sync(home, readMarketplaces(home), next)
   console.log(`Removed ${id ?? name}  ${shownSource(source)}`)
 
   if (kept.length > 0) {
@@ -315,14 +315,16 @@ export function lastUpdate(home: string, source: string, tries = readTries(), no
     return 'updates with ttheme'
   }
 
-  const failed = tries[source]
-  const at = fetchedAt(home, source)
+  const fresh = freshness(home, source, tries, now)
 
-  if (failed && (at === undefined || failed.at > at)) {
-    return `update failed ${ago(failed.at, now)}`
+  switch (fresh.last) {
+    case 'failed':
+      return `update failed ${ago(fresh.at, now)}`
+    case 'never':
+      return 'never updated'
+    case 'fetched':
+      return `updated ${ago(fresh.at, now)}`
   }
-
-  return at === undefined ? 'never updated' : `updated ${ago(at, now)}`
 }
 
 function scaffold(dir: string, identity: Identity): void {

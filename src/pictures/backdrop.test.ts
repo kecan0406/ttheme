@@ -41,6 +41,7 @@ import {
   rescaled,
   retint,
   showImage,
+  standingOf,
   thumbless,
   tryOn,
   tuneOf,
@@ -1025,6 +1026,53 @@ test('a damaged images.json says so, whatever shape it is in', () => {
 
   writeFileSync(join(dir, 'images.json'), '{"version":1,"palettes":{}}')
   assert.deepEqual(readStore(dir).palettes, {})
+})
+
+test('a damaged images.json moved away comes back from the confs: every picture under its palette, with its original, colors and tone', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  const named = { ...TAMSIN, name: 'kai@dust/pip' }
+  const image = { width: 4, height: 4, data: new Uint8Array(64).fill(201) }
+
+  const source = (id: number) => ({
+    site: 'safebooru',
+    id,
+    ext: 'png',
+    bytes: new Uint8Array([id]),
+    from: `safebooru ${id} https://example.test/${id}`,
+    ...(id === 1 ? { artist: ['inkwell'], source: 'https://example.test/art/1', cut: true } : {}),
+  })
+
+  const window = { width: 40, height: 20 }
+  installBackdrop(configHome, named, toneFor(named, 'cursor'), image, source(1), window, 0)
+  installBackdrop(configHome, named, toneFor(named, 'cursor'), image, source(2), window, 0, 'original')
+  showImage(configHome, 'kai@dust/pip', 'safebooru_1')
+  const before = readStore(dir).palettes['kai@dust/pip']
+  assert.ok(before)
+  rmSync(join(dir, 'images.json'))
+  const after = readStore(dir).palettes
+
+  const kept = ({ key, stem, fill, opacity, coloring, tone, from, artist, source: page, original, cut }: Picture) => ({
+    key,
+    stem,
+    fill,
+    opacity,
+    coloring: coloring ?? 'tone',
+    tone,
+    from,
+    artist,
+    page,
+    original,
+    cut,
+  })
+
+  assert.deepEqual(Object.keys(after), ['kai@dust/pip'])
+  assert.equal(after['kai@dust/pip']?.active, 'safebooru_1')
+  assert.deepEqual(after['kai@dust/pip']?.pictures.map(kept), before.pictures.map(kept))
+  assert.deepEqual(
+    after['kai@dust/pip']?.pictures.map((picture) => standingOf(picture).drawn),
+    ['tinted', 'original'],
+  )
 })
 
 const FROST: Colors = {

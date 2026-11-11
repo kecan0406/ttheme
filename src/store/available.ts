@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, statSync, utimesSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { AGENT } from '../core/booru.ts'
 import {
@@ -12,6 +12,7 @@ import {
   wordsOf,
 } from '../core/commons.ts'
 import { boundOf, GATE_RULES, measure, missedRules, shownOf } from '../core/contrast.ts'
+import { REFRESH_AFTER } from '../core/freshness.ts'
 import {
   type Bundle,
   entryProblem,
@@ -28,14 +29,18 @@ import { writeAtomic } from './edits.ts'
 import { readLocal, warning } from './local.ts'
 import {
   cachePath,
+  freshnessAt,
   isLocal,
   isRemote,
   localIdentity,
   type MarketplaceInfo,
   marketplaceSources,
   readMarketplaceInfo,
+  readTries,
   remoteOwner,
   shownSource,
+  WORKS_LIST,
+  writeTry,
 } from './sources.ts'
 import { readTone, tuned } from './tone.ts'
 import { modeFor } from './wiring.ts'
@@ -45,8 +50,6 @@ const TIMEOUT = 20_000
 const COMMONS_URL = 'https://names.ttheme.dev/authority.json'
 
 const COMMONS_MOST = 8 * 1024 * 1024
-
-const COMMONS_EVERY = 24 * 60 * 60 * 1000
 
 export function builtinPath(configHome: string): string {
   return join(configHome, 'ttheme', 'builtin.json')
@@ -78,11 +81,10 @@ export function readCommons(configHome: string): Commons {
 }
 
 export function commonsDue(configHome: string): boolean {
-  try {
-    return Date.now() - statSync(commonsPath(configHome)).mtimeMs >= COMMONS_EVERY
-  } catch {
-    return true
-  }
+  return (
+    process.env.TTHEME_NAME_LOOKUP !== 'off' &&
+    freshnessAt(commonsPath(configHome), WORKS_LIST, readTries(), Date.now(), REFRESH_AFTER).due
+  )
 }
 
 export async function refreshCommons(configHome: string, timeout?: number): Promise<boolean> {
@@ -99,13 +101,11 @@ export async function refreshCommons(configHome: string, timeout?: number): Prom
 
     mkdirSync(dirname(path), { recursive: true })
     writeAtomic(path, next)
+    writeTry(WORKS_LIST, undefined)
 
     return changed
   } catch (error) {
-    if (existsSync(path)) {
-      const now = new Date()
-      utimesSync(path, now, now)
-    }
+    writeTry(WORKS_LIST, error instanceof Error ? error.message : String(error))
 
     throw error
   }
@@ -133,6 +133,7 @@ export function readBundled(configHome: string): Bundled {
 
 export interface Archive {
   etag?: string
+  source?: string
   files: Record<string, string>
 }
 
@@ -177,7 +178,7 @@ export function readMarketplaces(configHome: string, warn = true, bundled?: Bund
 }
 
 function parseArchive(source: string): Archive {
-  let doc: { etag?: unknown; files?: unknown } | null
+  let doc: { etag?: unknown; source?: unknown; files?: unknown } | null
 
   try {
     doc = JSON.parse(source)
@@ -191,7 +192,11 @@ function parseArchive(source: string): Archive {
     throw new Error('is not a copy of a marketplace this ttheme fetched — `ttheme update` fetches it again')
   }
 
-  return { ...(typeof doc?.etag === 'string' ? { etag: doc.etag } : {}), files: files as Record<string, string> }
+  return {
+    ...(typeof doc?.etag === 'string' ? { etag: doc.etag } : {}),
+    ...(typeof doc?.source === 'string' ? { source: doc.source } : {}),
+    files: files as Record<string, string>,
+  }
 }
 
 export function readCachedArchive(configHome: string, source: string): Archive {

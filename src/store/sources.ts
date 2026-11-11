@@ -1,9 +1,11 @@
-import { readFileSync, statSync } from 'node:fs'
+import { mkdirSync, readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { isAbsolute, join, resolve } from 'node:path'
+import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
+import { type Freshness, freshnessOf } from '../core/freshness.ts'
 import { escaped, inert } from '../core/text.ts'
 import { BUILTIN, type Identity, MARKETPLACE_FILE, nameProblem } from '../core/theme.ts'
+import { writeAtomic } from './edits.ts'
 
 export const MARKETPLACE_KEYS = ['$schema', 'name', 'description', 'owner']
 
@@ -119,6 +121,75 @@ export function marketplacesDir(configHome: string): string {
 
 export function cachePath(configHome: string, source: string): string {
   return join(marketplacesDir(configHome), `${repoOf(source).replace('/', '--')}.json`)
+}
+
+export const WORKS_LIST = 'works'
+
+export interface Tried {
+  at: number
+  error: string
+}
+
+function triesPath(): string {
+  return join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'ttheme', 'marketplaces.json')
+}
+
+export function readTries(): Record<string, Tried> {
+  try {
+    const doc = JSON.parse(readFileSync(triesPath(), 'utf8')) as Record<string, Partial<Tried>>
+
+    return Object.fromEntries(
+      Object.entries(doc).filter(
+        (pair): pair is [string, Tried] => typeof pair[1]?.at === 'number' && typeof pair[1].error === 'string',
+      ),
+    )
+  } catch {
+    return {}
+  }
+}
+
+export function writeTry(key: string, error: string | undefined): void {
+  const tries = readTries()
+
+  if (error === undefined) {
+    if (!Object.hasOwn(tries, key)) {
+      return
+    }
+
+    delete tries[key]
+  } else {
+    tries[key] = { at: Date.now(), error }
+  }
+
+  mkdirSync(dirname(triesPath()), { recursive: true })
+  writeAtomic(triesPath(), `${JSON.stringify(tries, null, 2)}\n`)
+}
+
+function writtenAt(path: string | undefined): number | undefined {
+  try {
+    return path === undefined ? undefined : statSync(path).mtimeMs
+  } catch {
+    return undefined
+  }
+}
+
+export function freshnessAt(
+  path: string | undefined,
+  key: string,
+  tries: Readonly<Record<string, Tried>> = readTries(),
+  now = Date.now(),
+  retry?: number,
+): Freshness {
+  return freshnessOf(writtenAt(path), Object.hasOwn(tries, key) ? tries[key]?.at : undefined, now, retry)
+}
+
+export function freshness(
+  configHome: string,
+  source: string,
+  tries: Readonly<Record<string, Tried>> = readTries(),
+  now = Date.now(),
+): Freshness {
+  return freshnessAt(isRemote(source) ? cachePath(configHome, source) : undefined, source, tries, now)
 }
 
 export function localRoot(configHome: string): string {

@@ -3,14 +3,14 @@ import { Cancelled } from '../core/cancelled.ts'
 import { WIRED, type Wired } from '../core/wired.ts'
 import { readMarketplaces } from '../store/available.ts'
 import { systemHost } from '../store/host.ts'
-import { readInstalled, writeInstalled } from '../store/installed.ts'
+import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { WIRINGS } from '../terminals/index.ts'
 import { interactive } from '../tui/terminal.ts'
 import { InputError } from './answer.ts'
 import * as p from './ask.ts'
 import { launch } from './release.ts'
-import { pointDefaults, sync, wiringNext, wiringNotes, wiringPlan, withBases } from './sync.ts'
+import { commit, wiringNext, wiringNotes, wiringPlan } from './sync.ts'
 
 export async function runWire(name: string): Promise<number> {
   if (!(WIRED as readonly string[]).includes(name)) {
@@ -56,12 +56,9 @@ export async function runWire(name: string): Promise<number> {
     throw new Cancelled()
   }
 
-  const based = withBases(config, alone, host, home)
-  const installed = { ...based, terminals: [...state.terminals, id] }
-  writeInstalled(config, installed)
-  sync(config, readMarketplaces(config), installed, home, host)
-  const pointed = pointDefaults(config, based, true, host, home)
-  const next = wiringNext(config, based, pointed, home)
+  const wired = { ...alone, terminals: [...state.terminals, id] }
+  const pointed = commit(config, readMarketplaces(config), state, wired, [id], host, home)
+  const next = wiringNext(config, { ...readInstalled(config), terminals: [id] }, pointed, home)
 
   if (next.length > 0) {
     p.note(next.join('\n'), 'Next')

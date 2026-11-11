@@ -19,6 +19,7 @@ import {
   detectedSkill,
   heldElsewhere,
   offeredSkills,
+  placedSkills,
   placeSkill,
   SKILL,
   SKILL_LABELS,
@@ -71,7 +72,7 @@ import { pickPalettes } from './installs.ts'
 import { redrawPictures } from './redraw.ts'
 import { AUTO_TIMEOUT } from './refresh.ts'
 import { launch } from './release.ts'
-import { pointDefaults, sync, wiringNext, wiringNotes, wiringPlan, withBases } from './sync.ts'
+import { commit, planUnwire, wiringNext, wiringNotes, wiringPlan } from './sync.ts'
 
 export interface InitOptions {
   terminals: Wired[]
@@ -337,6 +338,14 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
   )
 
   const { skills: asked = [], ...wanted } = plan.installed
+
+  for (const path of placedSkills(
+    (kept?.skills ?? []).filter((target) => !asked.includes(target)),
+    plan.agents,
+  )) {
+    rmSync(path, { recursive: true, force: true })
+  }
+
   const { placed, failed } = placeSkill(plan.root, asked, plan.agents)
 
   plan.notes.push(
@@ -346,16 +355,17 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     ),
   )
 
-  const installed = withBases(
+  writeBundled(configHome, plan.bundled)
+
+  const pointed = commit(
     configHome,
+    readMarketplaces(configHome),
+    kept,
     { ...wanted, ...carried, ...(placed.length > 0 ? { skills: placed } : {}) },
+    true,
     host,
     plan.home,
   )
-
-  writeBundled(configHome, plan.bundled)
-  writeInstalled(configHome, installed)
-  sync(configHome, readMarketplaces(configHome), installed, plan.home, host)
 
   for (const e of plan.edits) {
     mkdirSync(dirname(e.file), { recursive: true })
@@ -367,7 +377,27 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     writeAtomic(w.file, w.content)
   }
 
-  return pointDefaults(configHome, installed, true, host, plan.home)
+  return pointed
+}
+
+function unwiringPlan(
+  configHome: string,
+  existing: Installed | undefined,
+  terminals: readonly Wired[],
+  home: string,
+): string[] {
+  const dropped = (existing?.terminals ?? []).filter((id) => !terminals.includes(id))
+
+  return wirings(dropped).flatMap((wiring) => {
+    const { edits, removals } = planUnwire(configHome, [wiring.id], existing, home)
+
+    return [
+      ...edits.map((edit) => `Take ttheme out of ${tilde(edit.file, home)} — ${wiring.name} is no longer wired`),
+      ...(removals.length > 0
+        ? [`Delete ${removals.length} ${removals.length === 1 ? 'file' : 'files'} ttheme wrote for ${wiring.name}`]
+        : []),
+    ]
+  })
 }
 
 function accepted<T>(value: T | typeof p.CANCEL_SYMBOL): T {
@@ -787,9 +817,14 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       ...plan.edits.map((e) => `Edit ${e.file} — a ttheme block: ${e.about}`),
       ...plan.writes.map((w) => `Write ${w.file} — ${w.about}`),
       ...wiringPlan(configHome, plan.installed, home),
+      ...unwiringPlan(configHome, existing, terminals, home),
       ...(skills.length > 0
         ? [`Add the ${SKILL} skill — ${skills.map((target) => tilde(skillPath(target, plan.agents), home)).join(', ')}`]
         : []),
+      ...placedSkills(
+        (existing?.skills ?? []).filter((target) => !skills.includes(target)),
+        plan.agents,
+      ).map((path) => `Delete ${tilde(path, home)} — the ${SKILL} skill ttheme added`),
       `Each config is backed up once to <file>.ttheme.bak before the first edit — \`${launch(runner, 'uninstall')}\` takes it all out`,
       wear
         ? choose

@@ -90,14 +90,6 @@ export function warpBasePath(configHome: string, channel: WarpChannel = 'stable'
   return warpOwn(configHome, channel, 'base')
 }
 
-function warpSystemPath(configHome: string, channel: WarpChannel = 'stable'): string {
-  return warpOwn(configHome, channel, 'system')
-}
-
-function warpContrastPath(configHome: string, channel: WarpChannel = 'stable'): string {
-  return warpOwn(configHome, channel, 'contrast')
-}
-
 const WARP_SECTION = '[appearance.themes]'
 
 const WARP_ACCOUNT = '[account]'
@@ -160,7 +152,7 @@ export function warpSystemValue(value: string): string {
 }
 
 function warpWorn(value: string | undefined): string | undefined {
-  return ours(value) ? /name = "([^"]+)"/.exec(value ?? '')?.[1]?.split(WARP_PART)[0] : undefined
+  return warpOurs(value) ? /name = "([^"]+)"/.exec(value ?? '')?.[1]?.split(WARP_PART)[0] : undefined
 }
 
 function withWarpKey(content: string, key: string, value: string | undefined, header = WARP_SECTION): string {
@@ -186,31 +178,97 @@ function withWarpTheme(content: string, value: string | undefined): string {
   return withWarpKey(content, 'theme', value)
 }
 
-function ours(value: string | undefined): boolean {
+export function warpOurs(value: string | undefined): boolean {
   return value?.includes(`path = "${owned('')}`) === true
 }
 
-function warpBack(content: string, base: string, system: string, made = ''): string {
-  const theme = ours(warpThemeOf(content)) ? withWarpTheme(content, base || WARP_DEFAULT) : content
-  const back = ours(warpSystemOf(content)) ? withWarpKey(theme, WARP_SYSTEM, system || WARP_SYSTEM_DEFAULT) : theme
-
-  return withoutContrast(back, made)
+export interface WarpSide {
+  base?: string
+  system?: string
+  contrast?: string
 }
 
-function withContrast(content: string, made: string): string {
-  const held = warpKeyOf(content, WARP_CONTRAST, WARP_TEXT)
+const WARP_SIDES = ['base', 'system', 'contrast'] as const
 
-  if (held === undefined) {
-    writeAtomic(made, warpSection(content.split('\n'), WARP_TEXT) ? 'key' : 'table')
+export type WarpContrast = 'off' | 'back' | 'kept'
 
-    return withWarpKey(content, WARP_CONTRAST, WARP_NEVER, WARP_TEXT)
+export interface WarpPlan {
+  settings: string
+  side: WarpSide
+}
+
+export function readWarpSide(configHome: string, channel: WarpChannel = 'stable'): WarpSide {
+  return Object.fromEntries(
+    WARP_SIDES.flatMap((kind) => {
+      const path = warpOwn(configHome, channel, kind)
+
+      return existsSync(path) ? [[kind, readText(path)]] : []
+    }),
+  )
+}
+
+export function warpBackOf(content: string, side: WarpSide): string | undefined {
+  return warpOurs(warpThemeOf(content)) ? side.base || WARP_DEFAULT : undefined
+}
+
+function themePlan(content: string, side: WarpSide, value: string | undefined): WarpPlan {
+  const held = warpSystemOf(content)
+
+  if (value === undefined || !warpOurs(value)) {
+    const { base: _base, ...based } = side
+    const next = value === undefined ? content : withWarpTheme(content, value)
+
+    if (!warpOurs(held)) {
+      return { settings: next, side: based }
+    }
+
+    const { system, ...rest } = based
+
+    return { settings: withWarpKey(next, WARP_SYSTEM, system || WARP_SYSTEM_DEFAULT), side: rest }
   }
 
-  if (held !== WARP_NEVER) {
-    rmSync(made, { force: true })
+  const theme = warpThemeOf(content)
+  const based = warpOurs(theme) ? side : { ...side, base: theme ?? '' }
+  const next = withWarpTheme(content, value)
+
+  if (warpKeyOf(content, 'system_theme') !== 'true') {
+    return { settings: next, side: based }
   }
 
-  return content
+  return {
+    settings: withWarpKey(next, WARP_SYSTEM, warpSystemValue(value)),
+    side: warpOurs(held) ? based : { ...based, system: held ?? '' },
+  }
+}
+
+function contrastPlan({ settings, side }: WarpPlan, contrast: WarpContrast): WarpPlan {
+  const held = warpKeyOf(settings, WARP_CONTRAST, WARP_TEXT)
+  const { contrast: made, ...rest } = side
+
+  switch (contrast) {
+    case 'kept':
+      return { settings, side }
+    case 'back':
+      return { settings: withoutContrast(settings, made ?? ''), side: rest }
+    case 'off':
+      if (held === undefined) {
+        return {
+          settings: withWarpKey(settings, WARP_CONTRAST, WARP_NEVER, WARP_TEXT),
+          side: { ...rest, contrast: warpSection(settings.split('\n'), WARP_TEXT) ? 'key' : 'table' },
+        }
+      }
+
+      return { settings, side: held === WARP_NEVER ? side : rest }
+  }
+}
+
+export function warpPlan(
+  content: string,
+  side: WarpSide,
+  value: string | undefined,
+  contrast: WarpContrast = 'kept',
+): WarpPlan {
+  return contrastPlan(themePlan(content, side, value), contrast)
 }
 
 function withoutContrast(content: string, made: string): string {
@@ -231,47 +289,40 @@ function withoutContrast(content: string, made: string): string {
   return lines.join('\n')
 }
 
-function letContrastGo(content: string, made: string): string {
-  const was = readText(made)
-  rmSync(made, { force: true })
+export function applyWarp(
+  configHome: string,
+  channel: WarpChannel,
+  before: WarpSide,
+  plan: WarpPlan,
+  write: (settings: string) => void,
+): void {
+  for (const kind of WARP_SIDES) {
+    const next = plan.side[kind]
 
-  return withoutContrast(content, was)
+    if (next !== undefined && next !== before[kind]) {
+      writeAtomic(warpOwn(configHome, channel, kind), next)
+    }
+  }
+
+  write(plan.settings)
+
+  for (const kind of WARP_SIDES) {
+    if (plan.side[kind] === undefined && before[kind] !== undefined) {
+      rmSync(warpOwn(configHome, channel, kind), { force: true })
+    }
+  }
 }
 
-export function warpWear(content: string, value: string | undefined, configHome: string, channel: WarpChannel): string {
-  const base = warpBasePath(configHome, channel)
-  const system = warpSystemPath(configHome, channel)
-  const held = warpSystemOf(content)
-  const next = value === undefined ? content : withWarpTheme(content, value)
+export function wearWarpTheme(file: string, value: string, configHome: string, channel: WarpChannel): void {
+  const content = readFileSync(file, 'utf8')
+  const side = readWarpSide(configHome, channel)
 
-  if (value === undefined || !ours(value)) {
-    rmSync(base, { force: true })
-
-    if (!ours(held)) {
-      return next
+  applyWarp(configHome, channel, side, warpPlan(content, side, value), (settings) => {
+    if (settings !== content) {
+      editUserFile(file, settings)
+      relink(file)
     }
-
-    const back = withWarpKey(next, WARP_SYSTEM, readText(system) || WARP_SYSTEM_DEFAULT)
-    rmSync(system, { force: true })
-
-    return back
-  }
-
-  const theme = warpThemeOf(content)
-
-  if (!ours(theme)) {
-    writeAtomic(base, theme ?? '')
-  }
-
-  if (warpKeyOf(content, 'system_theme') !== 'true') {
-    return next
-  }
-
-  if (!ours(held)) {
-    writeAtomic(system, held ?? '')
-  }
-
-  return withWarpKey(next, WARP_SYSTEM, warpSystemValue(value))
+  })
 }
 
 const WARP_KNOWN = 260
@@ -324,8 +375,7 @@ function laidOf(dir: string, theme: Theme, picture: ProfileBackground): WarpPict
   return { image: join(dir, warpPictureFile(theme.name, picture.image, theme.background)), opacity: picture.opacity }
 }
 
-function laidFiles(ctx: Ctx, dir: string): Laid {
-  const there = new Set(listing(dir))
+function laidFiles(ctx: Ctx, dir: string, there: ReadonlySet<string> = new Set(listing(dir))): Laid {
   const files = new Map<string, string>()
   const fresh = new Set<string>()
 
@@ -510,17 +560,23 @@ function wearWarp(
     return undefined
   }
 
-  const made = warpContrastPath(at.configHome, channel)
-  const back = ours(warpThemeOf(content)) ? readText(warpBasePath(at.configHome, channel)) || WARP_DEFAULT : undefined
-  const value = wear && theme !== undefined ? warpRef(shelf.dir, theme, wear) : back
-  const worn = warpWear(content, value, at.configHome, channel)
-  const next = keep ? worn : wear ? withContrast(worn, made) : letContrastGo(worn, made)
+  const side = readWarpSide(at.configHome, channel)
+  const value = wear && theme !== undefined ? warpRef(shelf.dir, theme, wear) : warpBackOf(content, side)
+  const plan = warpPlan(content, side, value, keep ? 'kept' : wear ? 'off' : 'back')
+  const moved = plan.settings !== content
 
-  if (next === content) {
-    return undefined
-  }
+  applyWarp(at.configHome, channel, side, plan, (next) => {
+    if (!moved) {
+      return
+    }
 
-  if (theme !== undefined && laid.fresh.has(theme)) {
+    if (theme === undefined || !laid.fresh.has(theme)) {
+      editUserFile(file, next)
+      relink(file)
+
+      return
+    }
+
     backupOnce(file)
     const token = randomUUID()
     mkdirSync(dirname(later), { recursive: true })
@@ -532,12 +588,9 @@ function wearWarp(
       detached: true,
       stdio: 'ignore',
     }).unref()
-  } else {
-    editUserFile(file, next)
-    relink(file)
-  }
+  })
 
-  return file
+  return moved ? file : undefined
 }
 
 export const warp: Wiring = {
@@ -549,9 +602,11 @@ export const warp: Wiring = {
   offered: (_, host) => host.platform !== 'win32',
   present: (setup) => warpChannels(setup.home).length > 0,
   sync(ctx, out) {
+    const shelves = shelvesOf(ctx.home)
+    const there = shelves.map((shelf) => new Set(listing(shelf.dir)))
     out.themes(warp)
 
-    for (const [i, shelf] of shelvesOf(ctx.home).entries()) {
+    for (const [i, shelf] of shelves.entries()) {
       if (i > 0) {
         for (const theme of ctx.themes) {
           for (const { path, content } of emitter.emit?.(theme) ?? []) {
@@ -560,7 +615,7 @@ export const warp: Wiring = {
         }
       }
 
-      const laid = laidFiles(ctx, shelf.dir)
+      const laid = laidFiles(ctx, shelf.dir, there[i])
       writePictures(ctx, out, laid.files, shelf)
 
       for (const channel of shelf.channels) {
@@ -618,12 +673,8 @@ export const warp: Wiring = {
       const file = warpSettings(at.home, at.configHome, channel)
       const content = readText(file)
 
-      const back = warpBack(
-        content,
-        readText(warpBasePath(at.configHome, channel)),
-        readText(warpSystemPath(at.configHome, channel)),
-        readText(warpContrastPath(at.configHome, channel)),
-      )
+      const side = readWarpSide(at.configHome, channel)
+      const back = warpPlan(content, side, warpBackOf(content, side), 'back').settings
 
       if (back === content) {
         unwired.removals.push(...spareBackup(file))

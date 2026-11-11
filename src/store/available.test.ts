@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, statSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
@@ -7,6 +7,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { shelfOf, type Work } from '../core/commons.ts'
 import { paletteToml } from '../core/draft.ts'
+import { REFRESH_AFTER } from '../core/freshness.ts'
 import { type PaletteEntry, parseBuiltin } from '../core/manifest.ts'
 import { grow, SEEDS } from '../core/seeds.ts'
 import { setText } from '../core/sets.ts'
@@ -35,7 +36,7 @@ import {
 } from './available.ts'
 import { readInstalled } from './installed.ts'
 import { setFiles } from './local.ts'
-import { localIdentity } from './sources.ts'
+import { freshnessAt, localIdentity, readTries, WORKS_LIST } from './sources.ts'
 
 function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
@@ -474,66 +475,119 @@ test('a request says who is asking unless the caller names someone', async () =>
   assert.equal(seen[1], 'orla')
 })
 
-function answering(answer: () => Promise<Response>): () => void {
+function answering(answer: () => Promise<Response>, at?: string): () => void {
   const real = globalThis.fetch
+  const state = process.env.XDG_STATE_HOME
 
   globalThis.fetch = Object.assign(answer, { preconnect: real.preconnect })
 
+  if (at !== undefined) {
+    process.env.XDG_STATE_HOME = join(at, 'state')
+  }
+
   return () => {
     globalThis.fetch = real
+
+    if (state === undefined) {
+      delete process.env.XDG_STATE_HOME
+    } else {
+      process.env.XDG_STATE_HOME = state
+    }
   }
+}
+
+const unasked = async (): Promise<Response> => {
+  throw new Error('asked')
 }
 
 test('palettes read without the list of works, which is due until it has come', () => {
   const at = home()
   writeFileSync(join(at, 'ttheme', 'builtin.json'), builtinJson([entry()]))
+  const done = answering(unasked, at)
 
-  assert.deepEqual(readBundled(at).commons, { works: [] })
-  assert.equal(commonsDue(at), true)
+  try {
+    assert.deepEqual(readBundled(at).commons, { works: [] })
+    assert.equal(commonsDue(at), true)
+  } finally {
+    done()
+  }
 })
 
 test('the list of works is fetched as a whole, and says whether it changed', async () => {
   const at = home()
-  const done = answering(async () => new Response(JSON.stringify({ works: [{ ...TIDEWATER, art: { steam: '420' } }] })))
+
+  const done = answering(
+    async () => new Response(JSON.stringify({ works: [{ ...TIDEWATER, art: { steam: '420' } }] })),
+    at,
+  )
 
   try {
     assert.equal(await refreshCommons(at), true)
     assert.equal(await refreshCommons(at), false)
+    assert.deepEqual(readCommons(at), { works: [TIDEWATER] })
+    assert.equal(commonsDue(at), false)
   } finally {
     done()
   }
-
-  assert.deepEqual(readCommons(at), { works: [TIDEWATER] })
-  assert.equal(commonsDue(at), false)
 })
 
-test('a list of works that fails or does not read keeps the copy, and is not asked for again that day', async () => {
+test('a list of works that fails or does not read keeps the copy as old as it was, and is not asked for again that day', async () => {
   const at = home()
-  writeFileSync(join(at, 'ttheme', 'commons.json'), JSON.stringify({ works: [TIDEWATER] }))
-  utimesSync(join(at, 'ttheme', 'commons.json'), new Date(0), new Date(0))
-  const done = answering(async () => new Response('<html>'))
+  const copy = join(at, 'ttheme', 'commons.json')
+  writeFileSync(copy, JSON.stringify({ works: [TIDEWATER] }))
+  utimesSync(copy, new Date(0), new Date(0))
+  const done = answering(async () => new Response('<html>'), at)
 
   try {
     await assert.rejects(refreshCommons(at), /not valid JSON/)
+    assert.deepEqual(readCommons(at), { works: [TIDEWATER] })
+    assert.equal(statSync(copy).mtimeMs, 0)
+    assert.equal(commonsDue(at), false)
+    const failed = readTries()[WORKS_LIST]
+    assert.match(failed?.error ?? '', /not valid JSON/)
+    const tried = failed?.at ?? 0
+    assert.equal(freshnessAt(copy, WORKS_LIST, readTries(), tried + REFRESH_AFTER - 1, REFRESH_AFTER).due, false)
+    assert.equal(freshnessAt(copy, WORKS_LIST, readTries(), tried + REFRESH_AFTER, REFRESH_AFTER).due, true)
+  } finally {
+    done()
+  }
+})
+
+test('a list of works that never came backs off after a failed try instead of being asked for by every verb', async () => {
+  const at = home()
+
+  const done = answering(async () => {
+    throw new Error('offline')
+  }, at)
+
+  try {
+    assert.equal(commonsDue(at), true)
+    await assert.rejects(refreshCommons(at), /offline/)
+    assert.ok(!existsSync(join(at, 'ttheme', 'commons.json')))
+    assert.equal(commonsDue(at), false)
   } finally {
     done()
   }
 
-  assert.deepEqual(readCommons(at), { works: [TIDEWATER] })
-  assert.equal(commonsDue(at), false)
+  const again = answering(async () => new Response(JSON.stringify({ works: [TIDEWATER] })), at)
+
+  try {
+    assert.equal(await refreshCommons(at), true)
+    assert.deepEqual(readTries(), {})
+  } finally {
+    again()
+  }
 })
 
 test('TTHEME_NAME_LOOKUP=off asks nothing for the list of works', async () => {
   const at = home()
-
-  const done = answering(async () => {
-    throw new Error('asked')
-  })
+  const done = answering(unasked, at)
 
   process.env.TTHEME_NAME_LOOKUP = 'off'
 
   try {
     assert.equal(await refreshCommons(at), false)
+    assert.equal(commonsDue(at), false)
   } finally {
     delete process.env.TTHEME_NAME_LOOKUP
     done()

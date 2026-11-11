@@ -1,11 +1,13 @@
 import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import * as prompts from '@clack/prompts'
 import { fetchArt } from '../pictures/art.ts'
 import { loadRef } from '../tui/find/attach.ts'
+import * as terminal from '../tui/terminal.ts'
 import { isCrash } from './cli.ts'
 import { runPalette } from './palette.ts'
 
@@ -181,4 +183,37 @@ test('palette make says which palettes would write over one the marketplace alre
       ['ann@pastel/kit', false],
     ],
   )
+})
+
+test('a dry run of palette make with no marketplace to write into asks for none and makes none', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-palette-'))
+  const listed = '{"terminals":[],"palettes":[]}'
+  mkdirSync(join(home, 'ttheme'), { recursive: true })
+  writeFileSync(join(home, 'ttheme', 'installed.json'), listed)
+  writeFileSync(join(home, 'anchors.json'), JSON.stringify({ wren: { slots: { cursor: ['Hair', '#ff8040'] } } }))
+  const fetched = spyOn(globalThis, 'fetch').mockRejectedValue(new Error('no network in a test'))
+  const out = spyOn(process.stdout, 'write').mockImplementation(() => true)
+  const named = spyOn(prompts, 'text').mockImplementation(async () => 'mine')
+  const asking = spyOn(terminal, 'interactive').mockReturnValue(true)
+  const was = process.env.XDG_CONFIG_HOME
+  process.env.XDG_CONFIG_HOME = home
+
+  try {
+    await runPalette('make', undefined, { anchors: join(home, 'anchors.json'), 'dry-run': true, json: true })
+    assert.equal(named.mock.calls.length, 0)
+  } finally {
+    fetched.mockRestore()
+    out.mockRestore()
+    named.mockRestore()
+    asking.mockRestore()
+
+    if (was === undefined) {
+      delete process.env.XDG_CONFIG_HOME
+    } else {
+      process.env.XDG_CONFIG_HOME = was
+    }
+  }
+
+  assert.ok(!existsSync(join(home, 'ttheme', 'marketplace')))
+  assert.equal(readFileSync(join(home, 'ttheme', 'installed.json'), 'utf8'), listed)
 })
