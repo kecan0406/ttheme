@@ -14,6 +14,7 @@
 - In the builder, a draft the browser refused to store now says `was not kept in this browser` and your other drafts stay listed. Before, it read as a browser that keeps no drafts and the list went empty.
 - The site's header search now opens to say the works did not load when their list fails, and its field folds back when you tab out of it. A header menu also opens on time while the pointer moves between its label and its arrow.
 - On a docs page, the contents list follows the page again when you drag the scrollbar after jumping to a heading.
+- On a docs page, the contents list marks the right heading after the page jumps a long way at once, as a find in the browser or a click in the scrollbar's track does. Before, it kept the heading it had marked before the jump.
 - In the palette editor, `esc` out of a tune puts back the links between a color and its bright one that the tune changed, and `u` takes back a link you switched. Before, the colors went back and the links stayed as the tune left them.
 - In the palette editor, a click or the wheel no longer reaches the colors under the Export or Import menu, and a double click on a color no longer answers the Save changes question.
 - In the palette editor, with the compare with where you started on while you inspect the sample, `esc` leaves the compare first, as the bar says.

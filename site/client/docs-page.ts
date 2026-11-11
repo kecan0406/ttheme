@@ -27,6 +27,10 @@ class DocsPage extends HTMLElement {
 
   #pin: Pin | null = null
 
+  #line = 0
+
+  #settling = 0
+
   #tallying = 0
 
   #frame = 0
@@ -162,8 +166,15 @@ class DocsPage extends HTMLElement {
     this.#mark()
   }
 
+  #settled = () => {
+    for (const id of this.#passed.keys()) this.#passed.set(id, topOf(id) < this.#line)
+    this.#mark()
+  }
+
   #scrolled = () => {
     const pin = this.#pin
+    window.clearTimeout(this.#settling)
+    this.#settling = window.setTimeout(this.#settled, LAND_MS)
 
     if (!pin) return
 
@@ -185,6 +196,7 @@ class DocsPage extends HTMLElement {
     )
 
     const line = Math.ceil(padding + margin) + 4
+    this.#line = line
     this.#passed = new Map(headings.map((heading) => [heading.id, false]))
     this.#spy = new IntersectionObserver(
       (entries) => {
@@ -235,6 +247,7 @@ class DocsPage extends HTMLElement {
     cancelAnimationFrame(this.#frame)
     this.#frame = 0
     this.#spy?.disconnect()
+    window.clearTimeout(this.#settling)
     window.clearTimeout(this.#tallying)
   }
 }
