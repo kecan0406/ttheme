@@ -115,13 +115,13 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
     }
   }
 
-  const stop = () => {
+  const halt = () => {
     clearTimeout(settle)
     clearTimeout(known)
   }
 
   const show = (look: WarpLook, file?: string, laid?: WarpPicture) => {
-    stop()
+    halt()
     settle = setTimeout(() => {
       let theme = file
 
@@ -159,8 +159,13 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
     },
     wear: (_, terminals) => (terminals.includes('warp') ? '' : undefined),
     saved: async () => new Map([['theme', warpThemeOf(readFileSync(settings, 'utf8')) ?? '']]),
+    stop: () => {
+      halt()
+      const content = readFileSync(settings, 'utf8')
+      sweep(views.find((view) => content.includes(`path = "${view}"`)))
+    },
     restore: (saved) => {
-      stop()
+      halt()
       const value = saved.get('theme')
 
       if (value) {

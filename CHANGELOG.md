@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- In Warp, switching from Browse to Preview with `tab` no longer lets the palette you had just moved onto go on a moment after the switch, and Browse takes away the short-lived theme files it made for the palettes it showed. Before, the look still landed after Preview had taken the tab, and every switch after a hover left a `ttheme-….view-….yaml` file in Warp's themes folder.
+
 ## 1.2.107
 
 - In Ghostty, a tab that is running a program takes its own picture sooner after you switch to it with a click or with a shortcut that holds ⌃, ⌥ or ⌘: ttheme now looks the moment macOS reports the click or the key. Before, it looked every 50 to 150 ms, and the previous tab's picture stayed up for as long as that took.

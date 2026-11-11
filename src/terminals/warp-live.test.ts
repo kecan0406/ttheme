@@ -138,6 +138,31 @@ test('closing a TUI in Warp puts back the theme the tab wore and takes its views
   assert.match(readFileSync(settings, 'utf8'), /^\[general\]\nx = 1\n/)
 })
 
+test('a TUI that leaves without putting the theme back stops a hover in Warp where it stands', async () => {
+  const { home, configHome, worn, views } = warp()
+  const live = warpLive(env, true, configHome, home)
+  assert.ok(live)
+  live.paint(palette('pip', '#302010'))
+  await settled()
+  const [pip = ''] = views()
+  assert.equal(worn(), warpThemeValue('pip, dark', pip))
+  live.paint(palette('orla', '#0e2124'))
+  live.stop?.()
+  await settled()
+  assert.equal(worn(), warpThemeValue('pip, dark', pip))
+  assert.deepEqual(views(), [pip])
+  live.paint(palette('quill', '#201030'))
+
+  while (views().length < 2) {
+    await new Promise((resolve) => setTimeout(resolve, 5))
+  }
+
+  live.stop?.()
+  await settled()
+  assert.equal(worn(), warpThemeValue('pip, dark', pip))
+  assert.deepEqual(views(), [pip])
+})
+
 test('init wears the default in Warp through sync alone, and tells the tab wears it', () => {
   const { home, configHome } = warp()
   const live = warpLive(env, true, configHome, home)
