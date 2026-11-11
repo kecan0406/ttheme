@@ -97,7 +97,7 @@ export function ArtCallDialog({ lead, sticker }: { lead: Theme; sticker: string 
     <Dialog id={ART_CALL} aria-labelledby="art-call-title" data-dock class="w-[min(540px,calc(100%-24px))]">
       <div class="flex max-h-[inherit] flex-col">
         <div class="flex h-12 flex-none items-center border-b border-border pl-6 max-[640px]:pl-5">
-          <p class="min-w-0 flex-1 truncate text-sm font-bold">Illustrators wanted</p>
+          <p class="min-w-0 flex-1 truncate text-sm font-bold">Fan art welcome</p>
           <DialogClose
             render={(props) => (
               <Button {...props} variant="ghost" size="icon" class="mr-1.5">
@@ -121,19 +121,22 @@ export function ArtCallDialog({ lead, sticker }: { lead: Theme; sticker: string 
           <div class="grid gap-5 px-7 pt-6 pb-7 max-[640px]:px-4">
             <div class="grid gap-2 text-center">
               <DialogTitle id="art-call-title" class="text-display-sm text-balance">
-                Looking for character art for the banner
+                Are you an illustrator?
+                <br />
+                We're looking for character art for the banner!
               </DialogTitle>
               <p class="text-sm text-pretty text-soft-foreground">
-                If you draw, we'd love to stand one of your pictures behind the terminal on this page.
+                The character behind this terminal is a fan's drawing. If you've drawn a character who has a ttheme
+                palette, we'd love to show yours here too.
               </p>
               <p class="text-sm font-bold text-pretty">
-                Credited with your name and a link to your post. Shown on ttheme.dev only, and taken down whenever you
-                ask.
+                Your art stays yours, shown with your name and a link to your post. Rather not have it here later? Just
+                let us know.
               </p>
             </div>
             <ol class="grid gap-4">
               <Step number={1}>
-                Draw a character who has a ttheme palette.{' '}
+                Find your character among the palettes.{' '}
                 <a
                   href={marketplacePath(BUILTIN)}
                   class="font-semibold text-foreground underline decoration-foreground/40 underline-offset-4 outline-none hover:decoration-foreground focus-visible:ring-2 focus-visible:ring-ring"
@@ -142,7 +145,7 @@ export function ArtCallDialog({ lead, sticker }: { lead: Theme; sticker: string 
                 </a>
               </Step>
               <Step number={2}>
-                Send the link to your post, by whichever is easiest.
+                Send us the link to your post, any way you like.
                 <ul class="mt-2.5 grid">
                   <Way
                     icon={<Brand icon={siGithub} />}
