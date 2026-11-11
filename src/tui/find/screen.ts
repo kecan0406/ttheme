@@ -96,7 +96,7 @@ export interface Tile {
   missing?: boolean
 }
 
-export type Stage = 'fetch' | 'check'
+export type Stage = { step: 'fetch' } | { step: 'rank'; done: number; total: number } | { step: 'check' }
 
 export interface Shown {
   id: number
@@ -127,6 +127,32 @@ export interface TunePanel {
   field: number
 }
 
+export type Mode = { on: 'grid' } | { on: 'try' } | { on: 'tune'; field: number }
+
+export type Work =
+  | { step: 'fetch'; key: number; got: number; size: number }
+  | { step: 'prepare'; key: number }
+  | { step: 'cut'; key: number }
+  | { step: 'failed'; key: number; reason: string }
+
+export interface Panel {
+  at: number
+  advanced: boolean
+  typing?: string
+  counts?: Count[]
+}
+
+export interface Suggestion {
+  value: string
+  count: number
+  palette?: string
+}
+
+export interface Query {
+  text: string
+  suggest?: { list: Suggestion[]; pick?: number }
+}
+
 export interface PaintView {
   scroll: number
   beat: number
@@ -146,19 +172,14 @@ export interface SettingsView {
   hide: Kind[]
   hideTags: string[]
   settings: Row[]
-  panel?: number
-  advanced: boolean
-  typing?: string
-  counts?: Count[]
+  panel?: Panel
 }
 
 export interface BoardsView {
   tiles: Tile[]
   checked: number
   total: number
-  searching: boolean
-  stage: Stage
-  ranking?: { done: number; total: number }
+  hunt?: Stage
   sites: { name: string; arrived: boolean }[]
   focus: number
   top: number
@@ -167,35 +188,28 @@ export interface BoardsView {
 
 export interface TagsView {
   tag: string
-  editing?: string
+  query?: Query
   chosen?: string[]
   chips: TagChip[]
-  suggest?: { value: string; count: number; palette?: string }[]
-  pick?: number
 }
 
 export interface InstallsView {
   installed: number[]
-  queued: number[]
-  installing?: number
-  closing?: boolean
+  queue: number[]
+  closing?: { code: number }
   saved?: { text: string; key: number }
 }
 
 export interface TrialView {
-  mode: 'grid' | 'try'
+  mode: Mode
   scene: number
   details: boolean
   tune: Tuning
   untuned: Tuning
   rescale?: number
   coloring: Coloring
-  tuning?: TunePanel
   fill?: number
-  fetching?: { id: number; got: number; size: number }
-  failed?: number
-  preparing?: number
-  cutting?: number
+  work?: Work
   redraw?: { key: number; from: number; done: boolean }
   shown?: Shown
 }
@@ -235,6 +249,33 @@ export interface FindView
     FinderView {}
 
 export type Owns<Slice> = Readonly<FindView> & Slice
+
+export type Layer =
+  | { on: 'closing' }
+  | { on: 'help'; help: Help }
+  | { on: 'query'; query: Query }
+  | { on: 'panel'; panel: Panel }
+  | Mode
+
+export function layerOf(view: Pick<FindView, 'closing' | 'help' | 'query' | 'panel' | 'mode'>): Layer {
+  if (view.closing) {
+    return { on: 'closing' }
+  }
+
+  if (view.help) {
+    return { on: 'help', help: view.help }
+  }
+
+  if (view.query) {
+    return { on: 'query', query: view.query }
+  }
+
+  if (view.panel) {
+    return { on: 'panel', panel: view.panel }
+  }
+
+  return view.mode
+}
 
 export interface TagChip {
   name: string
@@ -480,11 +521,13 @@ function familyOf(spot: FindSpot): string | undefined {
 }
 
 export function findHovers(view: FindView, { kind }: FindSpot): boolean {
-  if (view.closing) {
+  const layer = layerOf(view)
+
+  if (layer.on === 'closing') {
     return false
   }
 
-  if (view.help) {
+  if (layer.on === 'help') {
     return kind === 'key' || kind === 'topic'
   }
 
@@ -492,19 +535,17 @@ export function findHovers(view: FindView, { kind }: FindSpot): boolean {
     return true
   }
 
-  if (view.editing !== undefined) {
-    return kind === 'suggest'
+  switch (layer.on) {
+    case 'query':
+      return kind === 'suggest'
+    case 'panel':
+      return kind === 'setting' || kind === 'choice'
+    case 'try':
+    case 'tune':
+      return kind === 'scene' || kind === 'field' || kind === 'track' || kind === 'place' || kind === 'coloring'
+    case 'grid':
+      return kind === 'tile' || kind === 'query' || kind === 'site' || kind === 'chip'
   }
-
-  if (view.panel !== undefined) {
-    return kind === 'setting' || kind === 'choice'
-  }
-
-  if (view.mode === 'try') {
-    return kind === 'scene' || kind === 'field' || kind === 'track' || kind === 'place' || kind === 'coloring'
-  }
-
-  return kind === 'tile' || kind === 'query' || kind === 'site' || kind === 'chip'
 }
 
 class Line {
@@ -867,7 +908,9 @@ const TUNE_THUMB = Math.round((TILE.cols * STRIP.rows) / TILE.rows)
 const ROUND = ['╭', '─', '╮', '│', '╰', '╯'] as const
 const HEAVY = ['┏', '━', '┓', '┃', '┗', '┛'] as const
 
-type TuneView = Pick<FindView, 'tuning' | 'tune' | 'untuned' | 'coloring' | 'fill'>
+interface TuneView extends Pick<FindView, 'tune' | 'untuned' | 'coloring' | 'fill'> {
+  tuning?: TunePanel
+}
 
 function tunedField(view: TuneView, field: number): boolean {
   const { tune, untuned } = view
@@ -898,7 +941,8 @@ function tunePanel(
   const r0 = top + (tall ? STRIP.rows + 5 : 2)
   const col = left + 2
   const end = left + wide - 3
-  const browsing = view.tuning === undefined
+  const tuning = view.mode.on === 'tune' ? view.mode : undefined
+  const browsing = tuning === undefined
 
   for (let r = head; r < r0 + 8; r++) {
     lines[r]?.put(left + 1, ' '.repeat(wide - 2))
@@ -929,7 +973,20 @@ function tunePanel(
     }
   }
 
-  tuneRows(lines, r0, col, end, view, accent)
+  tuneRows(
+    lines,
+    r0,
+    col,
+    end,
+    {
+      tune: view.tune,
+      untuned: view.untuned,
+      coloring: view.coloring,
+      fill: view.fill,
+      ...(tuning ? { tuning } : {}),
+    },
+    accent,
+  )
 }
 
 function frameEdge(w: number, h: number): [number, number, string][] {
@@ -1124,11 +1181,13 @@ function frameBox(
 }
 
 function installMark(view: Seen, key: number): Part[] {
-  if (view.installing === key) {
+  const at = view.queue.indexOf(key)
+
+  if (at === 0) {
     return [[`${spin(view)} `, WARN]]
   }
 
-  if (view.queued.includes(key)) {
+  if (at > 0) {
     return [[`${MARKS.queued} `, WARN]]
   }
 
@@ -1136,11 +1195,13 @@ function installMark(view: Seen, key: number): Part[] {
 }
 
 function installState(view: Seen, key: number): Part[] {
-  if (view.installing === key) {
+  const at = view.queue.indexOf(key)
+
+  if (at === 0) {
     return [[`${SEP}${spin(view)} Installing`, WARN]]
   }
 
-  return view.queued.includes(key) ? [[`${SEP}${MARKS.queued} Queued`, WARN]] : []
+  return at > 0 ? [[`${SEP}${MARKS.queued} Queued`, WARN]] : []
 }
 
 function badge(view: Seen, label = view.site, ansi = view.siteAnsi): Part {
@@ -1254,17 +1315,17 @@ function shelf(lines: Line[], images: Placement[], cols: number, view: Seen, acc
 }
 
 function query(line: Line, cols: number, view: Seen, accent: string): void {
-  if (view.editing !== undefined) {
+  if (view.query) {
     const c = line.run(0, [
       ['⌕ ', accent],
-      [view.editing, ''],
+      [view.query.text, ''],
       ['█', accent],
     ])
 
-    const hint = capped(view.suggest?.length ? '  ↑↓ pick  enter searches' : '  enter searches')
+    const hint = capped(view.query.suggest ? '  ↑↓ pick  enter searches' : '  enter searches')
     line.put(
       c,
-      view.editing
+      view.query.text
         ? hint
         : `${capped('  A tag, a post URL or an id, or drop a picture or ctrl+v — ')}${view.tag || capped('esc back')}`,
       D,
@@ -1301,7 +1362,7 @@ function query(line: Line, cols: number, view: Seen, accent: string): void {
 
   line.put(c, `  ${state.join('  ')}`, D)
 
-  if (view.total > 0 || !view.searching) {
+  if (view.total > 0 || !view.hunt) {
     const counter: Part[] = [[`${view.tiles.length}/${view.checked}`, '']]
 
     if (view.checked < view.total) {
@@ -1333,10 +1394,17 @@ function where(view: Seen): string {
 }
 
 function queuedCount(view: Seen): string {
-  return view.queued.length > 0 ? `${SEP}${view.queued.length} queued` : ''
+  return view.queue.length > 1 ? `${SEP}${view.queue.length - 1} queued` : ''
+}
+
+function failedOn(view: Seen, key: number): boolean {
+  return view.work?.step === 'failed' && view.work.key === key
 }
 
 function status(view: Seen, loading?: Part): Part[] | undefined {
+  const { work } = view
+  const [installing] = view.queue
+
   if (view.hint) {
     return [[view.hint, OK]]
   }
@@ -1345,32 +1413,38 @@ function status(view: Seen, loading?: Part): Part[] | undefined {
     return [[view.notice.text, TONED[view.notice.tone]]]
   }
 
-  const behind = view.installing === undefined ? '' : `${SEP}Installing${queuedCount(view)}`
+  if (work?.step === 'failed') {
+    return [[`${work.reason} — ${cap('enter')} tries again`, TONED.error]]
+  }
+
+  const behind = installing === undefined ? '' : `${SEP}Installing${queuedCount(view)}`
 
   if (view.waiting !== undefined) {
     return [[`${view.slow ?? view.site} asked to slow down${SEP}${view.waiting}s${behind}`, WARN]]
   }
 
-  if (view.fetching) {
-    const { id, got, size } = view.fetching
-
-    return mention(`${spin(view)} Fetching ${named(id)}${SEP}${progress(got, size)}${behind}`, id, WARN)
+  if (work?.step === 'fetch') {
+    return mention(
+      `${spin(view)} Fetching ${named(work.key)}${SEP}${progress(work.got, work.size)}${behind}`,
+      work.key,
+      WARN,
+    )
   }
 
-  if (view.cutting !== undefined) {
-    return mention(`${spin(view)} Cutting out ${named(view.cutting)}${behind}`, view.cutting, WARN)
+  if (work?.step === 'cut') {
+    return mention(`${spin(view)} Cutting out ${named(work.key)}${behind}`, work.key, WARN)
   }
 
-  if (view.preparing !== undefined) {
-    return mention(`${spin(view)} Preparing ${named(view.preparing)}${behind}`, view.preparing, WARN)
+  if (work?.step === 'prepare') {
+    return mention(`${spin(view)} Preparing ${named(work.key)}${behind}`, work.key, WARN)
   }
 
-  if (view.installing !== undefined) {
-    const closing = view.closing ? ' — closes when done' : ''
+  if (installing !== undefined) {
+    const closing = layerOf(view).on === 'closing' ? ' — closes when done' : ''
 
     return mention(
-      `${spin(view)} Installing ${view.palette} ← ${named(view.installing)}${queuedCount(view)}${closing}`,
-      view.installing,
+      `${spin(view)} Installing ${view.palette} ← ${named(installing)}${queuedCount(view)}${closing}`,
+      installing,
       WARN,
     )
   }
@@ -1391,11 +1465,11 @@ function status(view: Seen, loading?: Part): Part[] | undefined {
 }
 
 function stageLabel(view: Seen): string {
-  if (view.ranking) {
+  if (view.hunt?.step === 'rank') {
     return 'Ranking previews by palette colors'
   }
 
-  if (view.stage === 'check') {
+  if (view.hunt?.step === 'check') {
     return view.preset === 'cutouts' ? 'Checking PNG headers' : 'Loading previews'
   }
 
@@ -1403,7 +1477,7 @@ function stageLabel(view: Seen): string {
 }
 
 function stageCount(view: Seen, gap: string): string {
-  return view.ranking ? `${gap}${view.ranking.done}/${view.ranking.total}` : ''
+  return view.hunt?.step === 'rank' ? `${gap}${view.hunt.done}/${view.hunt.total}` : ''
 }
 
 function bar(line: Line | undefined, x: number, w: number, view: Seen, k: number, ratio?: number): void {
@@ -1444,7 +1518,7 @@ function loader(lines: (Line | undefined)[], top: number, height: number, room: 
     [stageCount(view, '  '), fg(mix(background, mix(foreground, background, 0.45), k))],
   ])
   const w = Math.min(BAR, room - 8)
-  const ratio = view.ranking && view.ranking.done / view.ranking.total
+  const ratio = view.hunt?.step === 'rank' ? view.hunt.done / view.hunt.total : undefined
   bar(lines[row0 + (height >= 3 ? 2 : 1)], Math.floor((room - w) / 2), w, view, k, ratio)
 
   if (height < 5) {
@@ -1467,10 +1541,9 @@ function redrawing(view: Seen, key: number): boolean {
 }
 
 function pictureBusy(view: Seen, key: number): boolean {
-  return (
-    redrawing(view, key) ||
-    (view.shown?.id !== key && (view.fetching?.id === key || view.cutting === key || view.preparing === key))
-  )
+  const { work } = view
+
+  return redrawing(view, key) || (view.shown?.id !== key && work?.key === key && work.step !== 'failed')
 }
 
 function rail(lines: Line[], cols: number, view: Seen, height: number, content: number, accent: string): void {
@@ -1653,13 +1726,13 @@ function grid(
   rail(lines, cols, view, height, filled, accent)
   const below = Math.max(GRID_TOP, GRID_TOP + filled - view.scroll)
   const room = GRID_TOP + height - below
-  const waiting = view.searching && room >= 2
+  const waiting = view.hunt !== undefined && room >= 2
 
   if (waiting) {
     loader(inside, below, room, cols - 1, view)
   }
 
-  const quiet = view.searching && view.tiles.length === 0
+  const quiet = view.hunt !== undefined && view.tiles.length === 0
 
   if (quiet && !view.notice) {
     const [key, label] = TIPS[Math.floor(beat(view) / TIP_BEATS) % TIPS.length] as [string, string]
@@ -1678,11 +1751,11 @@ function grid(
     lines[rows - 2]?.put(0, scroll.join('   '), D)
   }
 
-  if (view.keyed && !quiet && view.editing === undefined) {
+  if (view.keyed && !quiet && !view.query) {
     gridKeys(lines[rows - 2] as Line, cols, width(scroll.join('   ')), view)
   }
 
-  if (!view.searching && view.tiles.length === 0 && !view.notice && view.tag) {
+  if (!view.hunt && view.tiles.length === 0 && !view.notice && view.tag) {
     lines[GRID_TOP + 1]?.put(
       0,
       view.preset === 'cutouts'
@@ -1694,11 +1767,12 @@ function grid(
 
   const stage = loading(view, waiting, shown)
   const lead = status(view, stage)
+  const closing = layerOf(view).on === 'closing'
   foot(lines[rows - 1] as Line, cols, {
     badge: 'PICTURE SEARCH',
     lead,
     keys:
-      view.closing || (quiet && lead?.[0] === stage)
+      closing || (quiet && lead?.[0] === stage)
         ? []
         : [
             ['←↑↓→', 'move'],
@@ -1709,7 +1783,7 @@ function grid(
             ['/', 'search'],
             ['?', 'keys'],
           ],
-    right: view.closing ? undefined : ['esc', 'back'],
+    right: closing ? undefined : ['esc', 'back'],
   })
 
   return waiting
@@ -1767,7 +1841,11 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
     tunePanel(lines, images, 1, cols - 2 - wide, wide, rows, view, accent)
   }
 
-  if (view.tuning && !beside) {
+  const layer = layerOf(view)
+  const tuning = view.mode.on === 'tune' ? view.mode : undefined
+  const enter = failedOn(view, tile.key) ? 'try again' : 'install'
+
+  if (tuning && !beside) {
     tunePanel(lines, images, 5, 2, Math.min(cols - 4, 60), rows, view, accent)
   } else if (view.details) {
     details(lines, 5, 2, Math.min(cols - 4, Math.max(48, Math.floor(cols * 0.55))), rows - 2, view)
@@ -1779,24 +1857,24 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
     images.push({ id: TRY_ID + view.shown.id, path: view.shown.path, row: 0, col: 0, cols, rows, z: BELOW_BG })
   }
 
-  if (view.tuning) {
+  if (tuning) {
     foot(lines[rows - 1] as Line, cols, {
       badge: 'PICTURE EDIT',
       lead: status(view),
       keys: [
         ['↑↓', 'move'],
         ['←→', 'change'],
-        ...(view.tuning.field === TUNE.colors ? [] : ([['=', 'reset']] as [string, string][])),
+        ...(tuning.field === TUNE.colors ? [] : ([['=', 'reset']] as [string, string][])),
         ['+', 'reset all'],
-        ...(view.tuning.field === TUNE.position
+        ...(tuning.field === TUNE.position
           ? ([['1-9', 'place']] as [string, string][])
-          : view.tuning.field === TUNE.colors
+          : tuning.field === TUNE.colors
             ? []
             : ([['shift+←→', 'by 10']] as [string, string][])),
         ['c', 'colors'],
         ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
         ...pictureHint(', .', view),
-        ['enter', view.failed === tile.key ? 'try again' : 'install'],
+        ['enter', enter],
       ],
       right: ['esc', 'back'],
     })
@@ -1808,19 +1886,20 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   foot(lines[rows - 1] as Line, cols, {
     badge: 'PICTURE PREVIEW',
     lead,
-    keys: view.closing
-      ? []
-      : [
-          ...pictureHint('←→', view),
-          ['↑↓', 'move'],
-          ['enter', view.failed === tile.key ? 'try again' : 'install'],
-          ['c', 'colors'],
-          ['i', 'details'],
-          ...(view.details ? [] : [['shift+←→', 'sample'] as [string, string]]),
-          ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
-          ['?', 'keys'],
-        ],
-    right: view.closing ? undefined : ['esc', 'back'],
+    keys:
+      layer.on === 'closing'
+        ? []
+        : [
+            ...pictureHint('←→', view),
+            ['↑↓', 'move'],
+            ['enter', enter],
+            ['c', 'colors'],
+            ['i', 'details'],
+            ...(view.details ? [] : [['shift+←→', 'sample'] as [string, string]]),
+            ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
+            ['?', 'keys'],
+          ],
+    right: layer.on === 'closing' ? undefined : ['esc', 'back'],
   })
 }
 
@@ -1871,7 +1950,8 @@ const TUNE_KEYS: Key[] = [
   { group: 'Finish', keys: 'esc', does: 'Back to the pictures', press: 'esc' },
 ]
 
-const KEYS: Record<FindView['mode'], Key[]> = {
+const KEYS: Record<Mode['on'], Key[]> = {
+  tune: TUNE_KEYS,
   grid: [
     { group: 'Move', keys: '←↑↓→ / h j k l', does: 'Move between pictures' },
     { group: 'Move', keys: 'pgup  pgdn  home  end', does: 'Move a page, or to either end' },
@@ -1987,7 +2067,7 @@ export function findTopics(view: FindView, press: (key: string) => void): Topic[
   const cuts = view.shown?.cut === 'on' || view.shown?.cut === 'off'
 
   return [
-    ...(view.tuning ? TUNE_KEYS : KEYS[view.mode]).map(({ press: key, ...topic }): Topic => {
+    ...KEYS[view.mode.on].map(({ press: key, ...topic }): Topic => {
       const runs = key !== undefined && (key !== 'x' || cuts)
 
       const run = () => {
@@ -2005,21 +2085,18 @@ export function findTopics(view: FindView, press: (key: string) => void): Topic[
 export const DIGITS = 6
 const TEXT_ROOM = 24
 
-export function pageOf(view: Pick<FindView, 'settings' | 'advanced'>): number[] {
-  return [
-    ...view.settings.flatMap((row, i) => (Boolean(row.advanced) === view.advanced ? [i] : [])),
-    view.settings.length,
-  ]
+export function pageOf(settings: readonly Row[], advanced: boolean): number[] {
+  return [...settings.flatMap((row, i) => (Boolean(row.advanced) === advanced ? [i] : [])), settings.length]
 }
 
 function lowered(label: string): string {
   return label.replace(/^[A-Z](?=[a-z])/, (c) => c.toLowerCase())
 }
 
-function pageAbout(view: Pick<FindView, 'settings' | 'advanced'>): string {
-  const names = view.settings.filter((row) => Boolean(row.advanced) !== view.advanced).map((row) => lowered(row.label))
+function pageAbout(settings: readonly Row[], advanced: boolean): string {
+  const names = settings.flatMap((row) => (Boolean(row.advanced) === advanced ? [] : [lowered(row.label)]))
 
-  return `${view.advanced ? 'Back to' : 'More filters:'} ${names.join(', ')} — enter opens the page, or a from any row`
+  return `${advanced ? 'Back to' : 'More filters:'} ${names.join(', ')} — enter opens the page, or a from any row`
 }
 
 export function stepped(choices: readonly string[], value: string, step: 1 | -1): string {
@@ -2142,24 +2219,24 @@ function standard(row: Row): string {
   return `Default ${row.default && row.default !== row.multi?.none ? row.default : 'none'}`
 }
 
-function tally(view: Seen): string {
+function tally(view: Seen, counts: readonly Count[] | undefined): string {
   if (!view.tag) {
     return ''
   }
 
-  if (!view.counts) {
+  if (!counts) {
     return `${view.tag}: counting…`
   }
 
-  const each = view.counts.map(
+  const each = counts.map(
     ({ site, count }) => `${site} ${count === undefined ? 'no count' : count.toLocaleString('en-US')}`,
   )
 
   return `${view.tag}: ${each.join(SEP)}`
 }
 
-function panelKeys(view: Seen, row: Row | undefined): Foot {
-  const page = view.advanced ? 'basic' : 'advanced'
+function panelKeys(shown: Panel, row: Row | undefined): Foot {
+  const page = shown.advanced ? 'basic' : 'advanced'
 
   if (!row) {
     return {
@@ -2172,7 +2249,7 @@ function panelKeys(view: Seen, row: Row | undefined): Foot {
     }
   }
 
-  if (view.typing !== undefined) {
+  if (shown.typing !== undefined) {
     return {
       keys: [
         ['bksp', 'erase'],
@@ -2207,8 +2284,8 @@ function panelKeys(view: Seen, row: Row | undefined): Foot {
   }
 }
 
-function panel(lines: Line[], cols: number, rows: number, view: Seen, accent: string): void {
-  const at = view.panel ?? 0
+function panel(lines: Line[], cols: number, rows: number, view: Seen, shown: Panel, accent: string): void {
+  const { at } = shown
   const link = view.settings.length
   const label = Math.max(...view.settings.map((row) => width(row.label)))
   const lead = 6 + label
@@ -2220,19 +2297,23 @@ function panel(lines: Line[], cols: number, rows: number, view: Seen, accent: st
 
   const pages = [false, true].map((advanced) => ({
     advanced,
-    rows: pageOf({ settings: view.settings, advanced }).slice(0, -1),
+    rows: pageOf(view.settings, advanced).slice(0, -1),
   }))
 
   const held = view.settings.map((row) => pack(widest(row), room).length)
   const body = Math.max(...pages.map((page) => page.rows.reduce((n, i) => n + (held[i] as number), 0)))
 
   const aboutRoom = Math.max(
-    ...pages.map((page) => wrapped(pageAbout({ settings: view.settings, advanced: page.advanced }), text).length),
+    ...pages.map((page) => wrapped(pageAbout(view.settings, page.advanced), text).length),
     ...view.settings.map((row) => wrapped(row.about, text).length),
   )
 
   const worst = `${view.tag}: ${SITES.map((site) => `${site.name} 0,000,000`).join(SEP)}`
-  const countRoom = view.tag ? Math.max(wrapped(worst, text).length, wrapped(tally(view), text).length) : 0
+
+  const countRoom = view.tag
+    ? Math.max(wrapped(worst, text).length, wrapped(tally(view, shown.counts), text).length)
+    : 0
+
   const h = body + aboutRoom + countRoom + 8
   const x = Math.floor((cols - w) / 2)
   const y = Math.max(1, Math.floor((rows - 1 - h) / 2))
@@ -2245,7 +2326,7 @@ function panel(lines: Line[], cols: number, rows: number, view: Seen, accent: st
 
   let r = y + 2
 
-  for (const i of pageOf(view).slice(0, -1)) {
+  for (const i of pageOf(view.settings, shown.advanced).slice(0, -1)) {
     const row = view.settings[i] as Row
     const focused = i === at
 
@@ -2262,7 +2343,7 @@ function panel(lines: Line[], cols: number, rows: number, view: Seen, accent: st
       lines[r]?.right(x + w - 3, [[standard(row), D]])
     }
 
-    pack(chips(row, focused, view.typing, view.siteAnsi), room).forEach((chipLine, k) => {
+    pack(chips(row, focused, shown.typing, view.siteAnsi), room).forEach((chipLine, k) => {
       let col = x + lead
 
       for (const chip of chipLine) {
@@ -2277,7 +2358,7 @@ function panel(lines: Line[], cols: number, rows: number, view: Seen, accent: st
     r += held[i] as number
   }
 
-  const other = pages.find((page) => page.advanced !== view.advanced)?.rows ?? []
+  const other = pages.find((page) => page.advanced !== shown.advanced)?.rows ?? []
   const linkLine = lines[y + 3 + body]
 
   if (linkLine) {
@@ -2285,7 +2366,7 @@ function panel(lines: Line[], cols: number, rows: number, view: Seen, accent: st
       linkLine.put(x + 2, MARKS.focus, accent)
     }
 
-    const end = linkLine.put(x + 3, view.advanced ? ' ‹ Basic ' : ' Advanced › ', at === link ? glow : B, undefined, {
+    const end = linkLine.put(x + 3, shown.advanced ? ' ‹ Basic ' : ' Advanced › ', at === link ? glow : B, undefined, {
       kind: 'setting',
       index: link,
     })
@@ -2296,14 +2377,14 @@ function panel(lines: Line[], cols: number, rows: number, view: Seen, accent: st
   }
 
   lines[y + 5 + body]?.put(x + 2, '─'.repeat(w - 4), D)
-  wrapped(view.settings[at]?.about ?? pageAbout(view), text).forEach((line, k) => {
+  wrapped(view.settings[at]?.about ?? pageAbout(view.settings, shown.advanced), text).forEach((line, k) => {
     lines[y + 6 + body + k]?.put(x + 4, line)
   })
-  wrapped(tally(view), text).forEach((line, k) => {
+  wrapped(tally(view, shown.counts), text).forEach((line, k) => {
     lines[y + 6 + body + aboutRoom + k]?.put(x + 4, line, D)
   })
   lines[y + h - 1]?.put(x, `╰${'─'.repeat(w - 2)}╯`)
-  const { keys, right } = panelKeys(view, view.settings[at])
+  const { keys, right } = panelKeys(shown, view.settings[at])
   foot(lines[rows - 1] as Line, cols, { keys, right })
 }
 
@@ -2324,13 +2405,12 @@ function helpOver(lines: Line[], cols: number, rows: number, help: Help) {
   }
 }
 
-function suggestions(lines: Line[], view: Seen, accent: string): void {
-  const list = view.suggest ?? []
+function suggestions(lines: Line[], { list, pick }: NonNullable<Query['suggest']>, accent: string): void {
   const said = list.map((item) => (item.count > 0 ? String(item.count) : (item.palette ?? '0')))
   const wide = Math.max(...list.map((item) => width(item.value)))
   const note = Math.max(7, ...said.map(width))
   list.forEach((item, i) => {
-    const on = i === view.pick
+    const on = i === pick
     const line = lines[1 + i]
     line?.run(0, [
       [on ? '▸ ' : '  ', accent, undefined, { kind: 'suggest', index: i }],
@@ -2372,35 +2452,36 @@ export function renderFind(told: FindView, cols: number, rows: number): Frame {
     return { lines: lines.map((l) => l.render()), images, zones: zonesOf(lines), loader: false, tick: false }
   }
 
+  const layer = layerOf(view)
   let waiting = false
 
-  if (view.mode === 'try') {
+  if (view.mode.on === 'grid') {
+    waiting = grid(lines, images, tiles, cols, rows, view, accent)
+  } else {
     trial(lines, images, cols, rows, view, accent)
     const tile = view.tiles[view.focus]
     waiting = tile !== undefined && pictureBusy(view, tile.key)
-  } else {
-    waiting = grid(lines, images, tiles, cols, rows, view, accent)
   }
 
-  if (view.mode === 'grid' && view.editing !== undefined && view.suggest?.length) {
+  if (layer.on === 'query' && layer.query.suggest) {
     for (let r = 1; r < rows - 1; r++) {
       lines[r] = new Line(cols)
     }
 
-    suggestions(lines, view, accent)
+    suggestions(lines, layer.query.suggest, accent)
 
     return { lines: lines.map((l) => l.render()), images: [], zones: zonesOf(lines), loader: false, tick: false }
   }
 
-  if (view.help || view.panel !== undefined) {
-    const keep = view.mode === 'try' ? images : []
+  if (layer.on === 'help' || layer.on === 'panel') {
+    const keep = view.mode.on === 'grid' ? [] : images
 
     for (let r = 0; r < rows; r++) {
       lines[r] = new Line(cols)
     }
 
-    if (view.help) {
-      const drawn = helpOver(lines, cols, rows, view.help)
+    if (layer.on === 'help') {
+      const drawn = helpOver(lines, cols, rows, layer.help)
 
       return {
         lines: drawn.lines,
@@ -2412,7 +2493,7 @@ export function renderFind(told: FindView, cols: number, rows: number): Frame {
       }
     }
 
-    panel(lines, cols, rows, view, accent)
+    panel(lines, cols, rows, view, layer.panel, accent)
 
     return { lines: lines.map((l) => l.render()), images: keep, zones: zonesOf(lines), loader: false, tick: false }
   }
@@ -2420,8 +2501,7 @@ export function renderFind(told: FindView, cols: number, rows: number): Frame {
   const drawn = lines.map((l) => l.render())
 
   return {
-    lines:
-      view.keyed && view.mode === 'try' && !view.tuning && !view.closing ? trialKeys(drawn, cols, rows, view) : drawn,
+    lines: view.keyed && layer.on === 'try' ? trialKeys(drawn, cols, rows, view) : drawn,
     images,
     zones: zonesOf(lines, tiles),
     loader: waiting,

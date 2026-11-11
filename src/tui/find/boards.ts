@@ -59,15 +59,20 @@ interface Board {
   total: number
   focus: number
   top: number
-  searching: boolean
+  state: 'planning' | 'pumping' | 'resting'
   stage: Stage
-  ranking?: { done: number; total: number }
+  round?: Promise<void>
   arrived: Set<string>
   error?: string
   note?: string
 }
 
-function blank(key: string, searching: boolean): Board {
+interface Vetting {
+  pick: Pick
+  passed: Promise<boolean>
+}
+
+function blank(key: string, state: Board['state']): Board {
   return {
     key,
     groups: [],
@@ -85,8 +90,8 @@ function blank(key: string, searching: boolean): Board {
     total: 0,
     focus: 0,
     top: 0,
-    searching,
-    stage: 'fetch',
+    state,
+    stage: { step: 'fetch' },
     arrived: new Set(),
   }
 }
@@ -112,7 +117,6 @@ interface Host {
   tabName: () => string
   tabTo: (site: Site) => void
   forget: () => void
-  halt: () => void
   select: () => void
   enter: () => void
   tell: (notice?: Notice) => void
@@ -121,8 +125,6 @@ interface Host {
 export class Boards {
   board: Board
   readonly posts = new Map<number, Pick>()
-  private gen = 0
-  private pumping = 0
   private readonly boards = new Map<string, Board>()
   private readonly looking = new Map<number, Promise<Look | undefined>>()
   private readonly looked = new Map<number, Look>()
@@ -148,7 +150,6 @@ export class Boards {
   private readonly tabName: () => string
   private readonly tabTo: (site: Site) => void
   private readonly forget: () => void
-  private readonly halt: () => void
   private readonly select: () => void
   private readonly enter: () => void
   private readonly tell: (notice?: Notice) => void
@@ -170,11 +171,10 @@ export class Boards {
     this.tabName = host.tabName
     this.tabTo = host.tabTo
     this.forget = host.forget
-    this.halt = host.halt
     this.select = host.select
     this.enter = host.enter
     this.tell = host.tell
-    this.board = blank(this.boardKey, this.view.tag !== '')
+    this.board = blank(this.boardKey, this.view.tag === '' ? 'resting' : 'planning')
     this.boards.set(this.board.key, this.board)
   }
 
@@ -187,7 +187,8 @@ export class Boards {
   }
 
   still(): void {
-    this.view.searching = false
+    this.board.state = 'resting'
+    this.view.hunt = undefined
   }
 
   focus(index: number): void {
@@ -209,7 +210,7 @@ export class Boards {
     this.paint.glide()
     void this.pump()
 
-    if (view.mode === 'try') {
+    if (view.mode.on !== 'grid') {
       this.select()
     }
 
@@ -234,9 +235,8 @@ export class Boards {
   }
 
   alone(key: string, pick: Pick): void {
-    ++this.gen
     this.forget()
-    const board = blank(key, false)
+    const board = blank(key, 'resting')
     this.board = board
     this.boards.set(board.key, board)
     this.single(board, pick)
@@ -283,7 +283,6 @@ export class Boards {
     )
     view.checked = board.checked
     view.total = board.total
-    view.searching = board.searching
     this.stageOf(board)
     view.note = board.note
     view.focus = Math.max(0, Math.min(board.focus, view.tiles.length - 1))
@@ -297,13 +296,12 @@ export class Boards {
 
   private stageOf(board: Board): void {
     const view = this.view
-    view.stage = board.stage
-    view.ranking = board.ranking
+    view.hunt = board.state === 'resting' ? undefined : board.stage
     view.sites = this.sites().map((site) => ({ name: site.name, arrived: board.arrived.has(site.name) }))
   }
 
   private single(board: Board, pick: Pick): void {
-    board.searching = false
+    board.state = 'resting'
     this.posts.set(postKey(pick.site, pick.post.id), pick)
     board.groups = [{ posts: [pick], open: false }]
     board.checked = 1
@@ -316,11 +314,10 @@ export class Boards {
   }
 
   async jump(site: Site, id: number): Promise<void> {
-    const gen = ++this.gen
     this.tabTo(site)
     this.forget()
     this.tell()
-    const board = blank(`${site.key}|post:${id}`, true)
+    const board = blank(`${site.key}|post:${id}`, 'planning')
     this.board = board
     this.boards.set(board.key, board)
     this.show()
@@ -329,12 +326,12 @@ export class Boards {
     try {
       const post = await this.net.fetchPost(site, id, this.signal)
 
-      if (gen !== this.gen) {
+      if (board !== this.board) {
         return
       }
 
       if (!post) {
-        board.searching = false
+        board.state = 'resting'
         board.error = `${site.name} has no post ${id}`
         this.tell({ text: board.error, tone: 'error' })
         this.show()
@@ -345,12 +342,11 @@ export class Boards {
 
       this.single(board, { site, post })
     } catch (error) {
-      this.fail(gen, error instanceof Error ? error : String(error), site)
+      this.fail(board, error instanceof Error ? error : String(error), site)
     }
   }
 
   async turn(): Promise<void> {
-    this.halt()
     this.forget()
     const known = this.boards.get(this.boardKey)
 
@@ -360,7 +356,6 @@ export class Boards {
       return
     }
 
-    this.gen++
     this.board = known
     this.tell(known.error ? { text: known.error, tone: 'error' } : undefined)
     this.show()
@@ -396,8 +391,7 @@ export class Boards {
   }
 
   async search(): Promise<void> {
-    const gen = ++this.gen
-    const board = blank(this.boardKey, true)
+    const board = blank(this.boardKey, 'planning')
     this.board = board
     this.boards.set(board.key, board)
     this.tell()
@@ -420,21 +414,17 @@ export class Boards {
     board.note = notes.length > 0 ? notes.join('  ') : undefined
 
     if (plans.length === 0) {
-      board.searching = false
+      board.state = 'resting'
     }
 
     this.show()
     this.paint.draw()
-    void this.tally(gen, board, plans)
+    void this.tally(board, plans)
 
     try {
       const owned = await Promise.all(
         plans.map(async (plan) => ({ plan, owners: await this.kept.mateOwners(plan.site) })),
       )
-
-      if (gen !== this.gen) {
-        return
-      }
 
       board.sources = owned.flatMap(({ plan: { site, tags }, owners }) => {
         const by = tagsOf(tags) + 1 <= site.tagBudget ? site.uploadedBy : undefined
@@ -444,37 +434,43 @@ export class Boards {
           { site, tags, page: 0, done: false },
         ]
       })
-      this.show()
-      this.paint.draw()
-      await this.pump()
+      board.state = 'resting'
+
+      if (board === this.board) {
+        await this.pump()
+      }
     } catch (error) {
-      this.fail(gen, error instanceof Error ? error : String(error))
+      this.fail(board, error instanceof Error ? error : String(error))
     }
   }
 
-  private async tally(gen: number, board: Board, plans: { site: Site; tags: string }[]): Promise<void> {
+  private async tally(board: Board, plans: { site: Site; tags: string }[]): Promise<void> {
     const counts = await Promise.allSettled(plans.map(({ site, tags }) => this.net.fetchCount(site, tags, this.signal)))
 
-    if (gen === this.gen) {
-      board.total = counts.reduce(
-        (sum, count) => sum + (count.status === 'fulfilled' && Number.isFinite(count.value) ? count.value : 0),
-        0,
-      )
+    board.total = counts.reduce(
+      (sum, count) => sum + (count.status === 'fulfilled' && Number.isFinite(count.value) ? count.value : 0),
+      0,
+    )
+
+    if (board === this.board) {
       this.show()
       this.paint.draw()
     }
   }
 
-  private fail(gen: number, error: Error | string, site = this.site()): void {
-    if (gen !== this.gen || this.signal.aborted) {
+  private fail(board: Board, error: Error | string, site = this.site()): void {
+    if (this.signal.aborted) {
       return
     }
 
-    this.board.error = reason(site?.name ?? this.tabName(), error)
-    this.board.searching = false
-    this.tell({ text: this.board.error, tone: 'error' })
-    this.show()
-    this.paint.draw()
+    board.error = reason(site?.name ?? this.tabName(), error)
+    board.state = 'resting'
+
+    if (board === this.board) {
+      this.tell({ text: board.error, tone: 'error' })
+      this.show()
+      this.paint.draw()
+    }
   }
 
   private drop(board: Board, site: Site, error: Error | string): void {
@@ -551,7 +547,7 @@ export class Boards {
   }
 
   private async round(board: Board): Promise<void> {
-    board.stage = 'fetch'
+    board.stage = { step: 'fetch' }
     this.staged(board)
 
     const due = SITES.flatMap((site) => {
@@ -629,14 +625,14 @@ export class Boards {
     } else {
       const rough = fitOrder(kept, this.frame(), this.matched)
       const head = rough.slice(0, this.need())
-      const ranking = { done: 0, total: head.length }
-      board.ranking = ranking
+      const ranking = { step: 'rank' as const, done: 0, total: head.length }
+      board.stage = ranking
       this.staged(board)
       await this.looks(head, () => {
         ranking.done++
         this.staged(board)
       })
-      board.ranking = undefined
+      board.stage = { step: 'fetch' }
 
       if (!this.live(board)) {
         return
@@ -645,7 +641,7 @@ export class Boards {
       ordered = [...fitOrder(head, this.frame(), this.matched), ...rough.slice(head.length)]
     }
 
-    board.stage = 'check'
+    board.stage = { step: 'check' }
     this.staged(board)
 
     for (const pick of ordered) {
@@ -808,78 +804,79 @@ export class Boards {
   }
 
   async pump(): Promise<void> {
-    const gen = this.gen
     const board = this.board
 
-    if (this.pumping === gen || board.sources.length === 0) {
+    if (board.state !== 'resting' || board.sources.length === 0) {
       return
     }
 
-    this.pumping = gen
-    const flight: { pick: Pick; passed: Promise<boolean> }[] = []
-    let page: Promise<void> | undefined
+    board.state = 'pumping'
+    this.staged(board)
+    const flight: Vetting[] = []
+    let failure: Error | string | undefined
 
     try {
-      board.searching = true
+      await this.pumped(board, flight)
+    } catch (error) {
+      failure = error instanceof Error ? error : String(error)
+    }
 
-      while (gen === this.gen) {
-        while (flight.length < PROBE && board.queue.length > 0 && this.wants()) {
-          const pick = board.queue.shift() as Pick
-          flight.push({ pick, passed: this.vet(pick) })
-        }
+    board.queue.unshift(...flight.map(({ pick }) => pick))
+    board.state = 'resting'
 
-        this.ahead(board)
+    if (failure !== undefined) {
+      board.round = undefined
+      this.fail(board, failure)
+    } else if (board === this.board) {
+      this.show()
+      this.paint.draw()
+    }
+  }
 
-        if (!page && board.queue.length < PROBE && board.sources.some((s) => !s.done) && this.wants()) {
-          const job = this.round(board).then(() => {
-            if (page === job) {
-              page = undefined
-            }
-          })
+  private async pumped(board: Board, flight: Vetting[]): Promise<void> {
+    while (board === this.board) {
+      while (flight.length < PROBE && board.queue.length > 0 && this.wants()) {
+        const pick = board.queue.shift() as Pick
+        flight.push({ pick, passed: this.vet(pick) })
+      }
 
-          job.catch(() => {})
-          page = job
-        }
+      this.ahead(board)
 
-        const head = flight.shift()
-
-        if (!head) {
-          if (!page) {
-            break
+      if (!board.round && board.queue.length < PROBE && board.sources.some((s) => !s.done) && this.wants()) {
+        const round = this.round(board).then(() => {
+          if (board.round === round) {
+            board.round = undefined
           }
+        })
 
-          await page
-          this.show()
-          this.paint.draw()
-          continue
-        }
+        round.catch(() => {})
+        board.round = round
+      }
 
+      const head = flight[0]
+
+      if (head) {
         const passed = await head.passed
 
-        if (gen !== this.gen) {
+        if (board !== this.board) {
           return
         }
 
+        flight.shift()
         board.checked++
 
         if (passed) {
-          this.admit(head.pick)
+          this.admit(board, head.pick)
         }
-
-        this.show()
-        this.paint.draw()
+      } else if (board.round) {
+        await board.round
+      } else {
+        return
       }
 
-      if (gen === this.gen) {
-        board.searching = false
+      if (board === this.board) {
         this.show()
         this.paint.draw()
-      }
-    } catch (error) {
-      this.fail(gen, error instanceof Error ? error : String(error))
-    } finally {
-      if (this.pumping === gen) {
-        this.pumping = 0
       }
     }
   }
@@ -922,9 +919,8 @@ export class Boards {
     return this.view.preset === 'all' || site.vouched || this.kept.transparent(site, post)
   }
 
-  private admit(pick: Pick): void {
+  private admit(board: Board, pick: Pick): void {
     const { site, post } = pick
-    const board = this.board
     const key = postKey(site, post.id)
     this.posts.set(key, pick)
     const keys = board.kin.get(pick) ?? []

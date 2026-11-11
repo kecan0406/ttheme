@@ -185,8 +185,6 @@ function trialOf(over: Partial<FindView> = {}): string[] {
     hide: [],
     hideTags: [],
     settings: [],
-    panel: undefined,
-    advanced: false,
     colors: {
       cursor: '#6ad0c8',
       selection: '#26423f',
@@ -212,18 +210,16 @@ function trialOf(over: Partial<FindView> = {}): string[] {
       mates: [],
     })),
     installed: [],
-    queued: [],
+    queue: [],
     held: [],
     checked: 0,
     total: 0,
-    searching: false,
-    stage: 'fetch',
     sites: [],
     focus: 1,
     top: 0,
     scroll: 0,
     beat: 0,
-    mode: 'try',
+    mode: { on: 'try' },
     help: undefined,
     scene: 0,
     details: false,
@@ -250,15 +246,16 @@ const PARTS = {
   'help-empty': () => help('zzz'),
   'help-short': () => help('', 12),
   'find-try': () => trialOf(),
-  'find-tune': () => trialOf({ tuning: { field: TUNE.size } }),
+  'find-tune': () => trialOf({ mode: { on: 'tune', field: TUNE.size } }),
   'find-loading': () =>
     trialOf({
       shown: { id: 4241, clear: 24, bytes: 646_144, path: '', cut: 'on' },
-      fetching: { id: 4242, got: 300_000, size: 646_144 },
+      work: { step: 'fetch', key: 4242, got: 300_000, size: 646_144 },
       loaderFrom: 0,
       beat: 99,
     }),
-  'find-redrawing': () => trialOf({ redraw: { key: 4242, from: 99, done: false }, preparing: 4242, beat: 99 }),
+  'find-redrawing': () =>
+    trialOf({ redraw: { key: 4242, from: 99, done: false }, work: { step: 'prepare', key: 4242 }, beat: 99 }),
 } satisfies Record<string, () => string[]>
 
 function isPart(name: string): name is keyof typeof PARTS {

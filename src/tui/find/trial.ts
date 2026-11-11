@@ -8,13 +8,12 @@ import { fillSize, rescaled } from '../../pictures/backdrop.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../../pictures/cutout.ts'
 import type { Pick } from '../../pictures/fit.ts'
 import type { Lane, Renderer, Shown } from '../../pictures/render.ts'
-import { cap } from '../keycaps.ts'
 import { lineStep } from '../keys.ts'
 import type { Hit } from '../zones.ts'
 import type { Boards } from './boards.ts'
 import type { Kept } from './kept.ts'
 import type { Paint } from './paint.ts'
-import type { FindSpot, FindView, Notice, Owns, Tile, TrialView, TunePanel, Tuning } from './screen.ts'
+import type { FindSpot, FindView, Notice, Owns, Tile, TrialView, Tuning, Work } from './screen.ts'
 import { type Grid, heldPath, type Net, origPath, reason } from './session.ts'
 import type { Settings } from './settings.ts'
 import type { Thumbs } from './thumbs.ts'
@@ -86,23 +85,32 @@ interface Host {
   focus: (index: number) => void
   openPage: (post: boolean) => void
   fromClipboard: () => Promise<void>
-  install: (touches?: number) => void
+  install: () => void
+  landed: () => void
   hint: (text: string) => void
+}
+
+interface Job {
+  control: AbortController
+  timer?: NodeJS.Timeout
+  work?: Work
+}
+
+interface Showing {
+  again: boolean
+  over: Promise<Error | undefined>
 }
 
 export class Trial {
   current?: Current
-  presenting = false
-  installAfter?: { key: number; touches: number }
-  private fetch?: AbortController
-  private settle?: NodeJS.Timeout
+  private job?: Job
+  private showing?: Showing
   private direction = 1
   private prefetching = 0
   private readonly clarity = new Map<string, Shown>()
   private readonly rendering = new Map<string, Promise<Shown>>()
   private readonly tunedFiles: string[] = []
   private aheadTail: Promise<unknown> = Promise.resolve()
-  private again = false
   private readonly twins = new Map<string, boolean>()
 
   private readonly view: Owns<TrialView>
@@ -125,7 +133,8 @@ export class Trial {
   private readonly focus: (index: number) => void
   private readonly openPage: (post: boolean) => void
   private readonly fromClipboard: () => Promise<void>
-  private readonly install: (touches?: number) => void
+  private readonly install: () => void
+  private readonly landed: () => void
   private readonly hint: (text: string) => void
 
   constructor(host: Host) {
@@ -150,42 +159,73 @@ export class Trial {
     this.openPage = host.openPage
     this.fromClipboard = host.fromClipboard
     this.install = host.install
+    this.landed = host.landed
     this.hint = host.hint
   }
 
+  get presenting(): boolean {
+    return this.showing !== undefined
+  }
+
   enter(): void {
-    this.view.mode = 'try'
+    if (this.view.mode.on === 'grid') {
+      this.view.mode = { on: 'try' }
+    }
   }
 
   leave(): void {
-    this.view.mode = 'grid'
+    this.cancel()
+
+    if (this.view.work?.step === 'failed') {
+      this.view.work = undefined
+    }
+
+    this.view.mode = { on: 'grid' }
     this.kept.letGo(new Set())
   }
 
   tuneOn(field: number, keep = false): void {
-    if (!keep || !this.view.tuning) {
-      this.view.tuning = { field }
+    if (this.view.mode.on === 'try' || (this.view.mode.on === 'tune' && !keep)) {
+      this.view.mode = { on: 'tune', field }
     }
   }
 
   forget(): void {
+    this.cancel()
     this.current = undefined
     this.view.shown = undefined
   }
 
-  halt(): void {
-    this.fetch?.abort()
-  }
-
   stop(): void {
-    this.fetch?.abort()
-    clearTimeout(this.settle)
+    this.cancel()
   }
 
-  quiet(): void {
-    this.fetch?.abort()
-    clearTimeout(this.settle)
-    this.view.fetching = undefined
+  private cancel(): void {
+    const job = this.job
+
+    if (job) {
+      this.job = undefined
+      job.control.abort()
+      clearTimeout(job.timer)
+      this.cleared(job.work)
+    }
+  }
+
+  private doing(job: Job, work?: Work): void {
+    if (this.job === job) {
+      this.cleared(job.work)
+      job.work = work
+
+      if (work) {
+        this.view.work = work
+      }
+    }
+  }
+
+  private cleared(work: Work | undefined): void {
+    if (work && this.view.work === work) {
+      this.view.work = undefined
+    }
   }
 
   tryPoint(spot: FindSpot): void {
@@ -196,16 +236,21 @@ export class Trial {
       view.details = false
       this.paint.draw()
     } else if (spot.kind === 'field') {
-      view.tuning = spot.field < 0 ? undefined : { field: spot.field }
+      view.mode = spot.field < 0 ? { on: 'try' } : { on: 'tune', field: spot.field }
       this.paint.draw()
     }
   }
 
   slide(field: number, hit: Hit): void {
     const view = this.view
+
+    if (view.mode.on === 'grid') {
+      return
+    }
+
     const along = Math.min(1, Math.max(0, hit.width > 1 ? hit.x / (hit.width - 1) : 0))
     const fill = view.fill ?? 0
-    view.tuning = { field }
+    view.mode = { on: 'tune', field }
 
     if (field === TUNE.size) {
       const top = Math.max(100, fill)
@@ -222,15 +267,15 @@ export class Trial {
     const view = this.view
     const tile = view.tiles[view.focus]
 
-    if (key === 'enter' && tile && view.failed === tile.key) {
-      view.failed = undefined
+    if (key === 'enter' && tile && view.work?.step === 'failed' && view.work.key === tile.key) {
+      view.work = undefined
       this.tell()
-      void this.load(tile)
+      this.begin(tile, 0)
 
       return
     }
 
-    if (view.tuning) {
+    if (view.mode.on === 'tune') {
       this.tuneKey(key)
 
       return
@@ -262,7 +307,7 @@ export class Trial {
     const line = lineStep(key)
 
     if (line !== undefined) {
-      view.tuning = { field: line < 0 ? TUNE.opacity : TUNE.colors }
+      view.mode = { on: 'tune', field: line < 0 ? TUNE.opacity : TUNE.colors }
       this.paint.draw()
 
       return
@@ -299,10 +344,6 @@ export class Trial {
     }
 
     if (key === 'esc') {
-      this.fetch?.abort()
-      clearTimeout(this.settle)
-      view.fetching = undefined
-      view.failed = undefined
       this.leave()
       this.tell()
       this.paint.draw()
@@ -311,7 +352,12 @@ export class Trial {
 
   tuneKey(key: string): void {
     const view = this.view
-    const panel = view.tuning as TunePanel
+    const panel = view.mode
+
+    if (panel.on !== 'tune') {
+      return
+    }
+
     const tune = view.tune
 
     if (key === ',' || key === '.') {
@@ -331,7 +377,7 @@ export class Trial {
 
     if (line !== undefined) {
       const next = panel.field + (line < 0 ? -1 : 1)
-      view.tuning = next < TUNE.colors || next > TUNE.opacity ? undefined : { field: next }
+      view.mode = next < TUNE.colors || next > TUNE.opacity ? { on: 'try' } : { on: 'tune', field: next }
       this.paint.draw()
 
       return
@@ -361,7 +407,7 @@ export class Trial {
     }
 
     if (/^[1-9]$/.test(key)) {
-      panel.field = TUNE.position
+      view.mode = { on: 'tune', field: TUNE.position }
       tune.at = Number(key)
       this.retune()
 
@@ -394,7 +440,7 @@ export class Trial {
     }
 
     if (key === 'enter') {
-      view.tuning = undefined
+      view.mode = { on: 'try' }
       this.install()
       this.paint.draw()
 
@@ -408,7 +454,7 @@ export class Trial {
     }
 
     if (key === 'esc') {
-      view.tuning = undefined
+      view.mode = { on: 'try' }
       this.tryKey('esc')
     }
   }
@@ -431,7 +477,7 @@ export class Trial {
   private retune(): void {
     this.paint.draw()
 
-    if (this.current && this.view.shown?.id === this.current.key) {
+    if (this.current && (this.view.shown?.id === this.current.key || this.showing)) {
       this.reveal()
     }
   }
@@ -439,12 +485,10 @@ export class Trial {
   select(): void {
     const view = this.view
     const tile = view.tiles[view.focus]
-    this.fetch?.abort()
-    clearTimeout(this.settle)
-    view.fetching = undefined
+    this.cancel()
 
-    if (view.failed !== undefined) {
-      view.failed = undefined
+    if (view.work?.step === 'failed') {
+      view.work = undefined
       this.tell()
     }
 
@@ -460,8 +504,20 @@ export class Trial {
       return
     }
 
-    this.settle = setTimeout(() => void this.load(tile), SETTLE)
+    this.begin(tile, SETTLE)
     this.paint.draw()
+  }
+
+  private begin(tile: Tile, wait: number): void {
+    this.cancel()
+    const job: Job = { control: new AbortController() }
+    this.job = job
+
+    if (wait > 0) {
+      job.timer = setTimeout(() => void this.load(tile, job), wait)
+    } else {
+      void this.load(tile, job)
+    }
   }
 
   private near(): Set<number> {
@@ -470,157 +526,166 @@ export class Trial {
     return new Set([focus, focus + this.direction, focus - this.direction].flatMap((at) => tiles[at]?.key ?? []))
   }
 
-  private async load(tile: Tile): Promise<void> {
+  private async load(tile: Tile, job: Job): Promise<void> {
     const view = this.view
     const pick = this.boards.posts.get(tile.key)
+    const { signal } = job.control
     this.kept.letGo(this.near())
 
     if (!pick) {
+      this.ended(job)
+
       return
     }
 
-    const control = new AbortController()
-    this.fetch = control
-    void this.kept.profile(pick, control.signal)
+    void this.kept.profile(pick, signal)
 
     if (!rendition(pick.post)) {
+      this.ended(job)
+
       return
     }
 
     const { site } = pick
-    const board = this.boards.board
     let instead: Pick | undefined
 
     try {
-      await this.net.locate(site, pick.post, control.signal)
-      const version = rendition(pick.post) as Rendition
-      const path = origPath(this.scratch, site, tile.id, version.ext)
-
-      if (!existsSync(path)) {
-        view.fetching = { id: tile.key, got: 0, size: 0 }
-        this.paint.draw()
-      }
-
-      const from = fileOf(site, pick.post, version)
-
-      const size = await this.kept.cached(
-        from.site,
-        path,
-        from.url,
-        (got, total) => {
-          if (view.fetching?.id === tile.key) {
-            view.fetching = { id: tile.key, got, size: total }
-            this.paint.draw()
-          }
-        },
-        tile.key,
-      )
-
-      if (control.signal.aborted) {
-        return
-      }
-
-      view.fetching = undefined
-
-      if (board !== this.boards.board) {
-        return
-      }
-
-      const current: Current = {
-        site,
-        id: tile.id,
-        key: tile.key,
-        path,
-        ext: version.ext,
-        size,
-        using: 'plain',
-        failed: false,
-      }
-
-      view.preparing = tile.key
-      this.paint.flush()
-      const plain = await this.render(current, 'plain')
-
-      if (control.signal.aborted || board !== this.boards.board) {
-        return
-      }
-
-      instead = plain.clear === 0 ? await this.twinOf(pick, path, control.signal) : undefined
-
-      if (instead || control.signal.aborted || board !== this.boards.board) {
-        return
-      }
-
-      if (plain.clear === 0 && canRemoveBackground() && this.settings.setting('TTHEME_FIND_REMOVE_BG') !== 'off') {
-        view.preparing = undefined
-        view.cutting = tile.key
-        this.paint.flush()
-        current.cut = await this.cutOut(site, tile.id, path, control.signal)
-
-        if (control.signal.aborted || board !== this.boards.board) {
-          return
-        }
-
-        view.cutting = undefined
-
-        if (current.cut) {
-          view.preparing = tile.key
-          this.paint.flush()
-          const made = await this.render(current, 'cut').catch(() => undefined)
-
-          if (control.signal.aborted || board !== this.boards.board) {
-            return
-          }
-
-          if (made && keepable(made.clear)) {
-            current.using = 'cut'
-          } else {
-            rmSync(current.cut, { force: true })
-            current.cut = undefined
-            current.failed = true
-          }
-        } else {
-          current.failed = true
-        }
-      }
-
-      this.current = current
-
-      if (view.tiles[view.focus]?.key === tile.key) {
-        await this.present()
-      }
-
-      this.preload()
+      instead = await this.loaded(tile, pick, job)
     } catch (error) {
-      if (!control.signal.aborted && !this.signal.aborted) {
-        const told = reason(site.name, error instanceof Error ? error : String(error))
-        view.failed = tile.key
-        this.tell({ text: `${told} — ${cap('enter')} tries again`, tone: 'error' })
+      if (this.job === job && !this.signal.aborted) {
+        this.job = undefined
+        view.work = {
+          step: 'failed',
+          key: tile.key,
+          reason: reason(site.name, error instanceof Error ? error : String(error)),
+        }
       }
-    } finally {
-      if (view.fetching?.id === tile.key) {
-        view.fetching = undefined
-      }
-
-      if (view.preparing === tile.key) {
-        view.preparing = undefined
-      }
-
-      if (view.cutting === tile.key) {
-        view.cutting = undefined
-      }
-
-      this.paint.draw()
     }
 
-    const next = instead && board === this.boards.board ? this.swapIn(instead) : undefined
+    this.doing(job)
+    this.paint.draw()
+    const next = instead && this.job === job ? this.swapIn(instead) : undefined
 
     if (next) {
-      await this.load(next)
+      await this.load(next, job)
+    } else {
+      this.ended(job)
     }
   }
 
-  private async twinOf(pick: Pick, whole: string, signal: AbortSignal): Promise<Pick | undefined> {
+  private ended(job: Job): void {
+    if (this.job === job) {
+      this.job = undefined
+    }
+  }
+
+  private async loaded(tile: Tile, pick: Pick, job: Job): Promise<Pick | undefined> {
+    const view = this.view
+    const { site } = pick
+    const { signal } = job.control
+    await this.net.locate(site, pick.post, signal)
+    const version = rendition(pick.post) as Rendition
+    const path = origPath(this.scratch, site, tile.id, version.ext)
+    const fetching: Work = { step: 'fetch', key: tile.key, got: 0, size: 0 }
+
+    if (!existsSync(path)) {
+      this.doing(job, fetching)
+      this.paint.draw()
+    }
+
+    const from = fileOf(site, pick.post, version)
+
+    const size = await this.kept.cached(
+      from.site,
+      path,
+      from.url,
+      (got, total) => {
+        if (view.work === fetching) {
+          fetching.got = got
+          fetching.size = total
+          this.paint.draw()
+        }
+      },
+      tile.key,
+    )
+
+    if (this.job !== job) {
+      return undefined
+    }
+
+    const current: Current = {
+      site,
+      id: tile.id,
+      key: tile.key,
+      path,
+      ext: version.ext,
+      size,
+      using: 'plain',
+      failed: false,
+    }
+
+    this.doing(job, { step: 'prepare', key: tile.key })
+    this.paint.flush()
+    const plain = await this.render(current, 'plain')
+
+    if (this.job !== job) {
+      return undefined
+    }
+
+    const twin = plain.clear === 0 ? await this.twinOf(pick, path, job) : undefined
+
+    if (twin || this.job !== job) {
+      return twin
+    }
+
+    if (plain.clear === 0 && canRemoveBackground() && this.settings.setting('TTHEME_FIND_REMOVE_BG') !== 'off') {
+      this.doing(job, { step: 'cut', key: tile.key })
+      this.paint.flush()
+      current.cut = await this.cutOut(site, tile.id, path, signal)
+
+      if (this.job !== job) {
+        return undefined
+      }
+
+      this.doing(job)
+
+      if (current.cut) {
+        this.doing(job, { step: 'prepare', key: tile.key })
+        this.paint.flush()
+        const made = await this.render(current, 'cut').catch(() => undefined)
+
+        if (this.job !== job) {
+          return undefined
+        }
+
+        if (made && keepable(made.clear)) {
+          current.using = 'cut'
+        } else {
+          rmSync(current.cut, { force: true })
+          current.cut = undefined
+          current.failed = true
+        }
+      } else {
+        current.failed = true
+      }
+    }
+
+    this.current = current
+
+    if (view.tiles[view.focus]?.key === tile.key) {
+      const failure = await this.show()
+
+      if (failure) {
+        throw failure
+      }
+    }
+
+    this.preload()
+
+    return undefined
+  }
+
+  private async twinOf(pick: Pick, whole: string, job: Job): Promise<Pick | undefined> {
     const view = this.view
     const group = this.boards.board.groups.find((held) => !held.open && held.posts[0] === pick)
 
@@ -634,50 +699,45 @@ export class Trial {
 
       const version = rendition(other.post)
 
-      if (signal.aborted || version?.ext !== 'png') {
+      if (this.job !== job || version?.ext !== 'png') {
         continue
       }
 
       try {
         const path = origPath(this.scratch, other.site, other.post.id, version.ext)
         const from = fileOf(other.site, other.post, version)
-        view.fetching = { id: key, got: 0, size: 0 }
+        const fetching: Work = { step: 'fetch', key, got: 0, size: 0 }
+        this.doing(job, fetching)
         await this.kept.cached(
           from.site,
           path,
           from.url,
           (got, total) => {
-            if (view.fetching?.id === key) {
-              view.fetching = { id: key, got, size: total }
+            if (view.work === fetching) {
+              fetching.got = got
+              fetching.size = total
               this.paint.draw()
             }
           },
           postKey(pick.site, pick.post.id),
         )
-        view.fetching = undefined
-        view.preparing = key
+        this.doing(job, { step: 'prepare', key })
         this.paint.flush()
         const same = this.twins.get(verdict) ?? (await this.renders.run({ job: 'twin', cut: path, whole }))
         this.twins.set(verdict, same)
 
-        if (same && group?.posts.includes(other) && !signal.aborted) {
+        if (same && group?.posts.includes(other) && this.job === job) {
           group.posts.splice(group.posts.indexOf(other), 1)
           group.posts.unshift(other)
 
           return other
         }
       } catch {
-        if (!signal.aborted) {
+        if (this.job === job) {
           this.twins.set(verdict, false)
         }
       } finally {
-        if (view.fetching?.id === key) {
-          view.fetching = undefined
-        }
-
-        if (view.preparing === key) {
-          view.preparing = undefined
-        }
+        this.doing(job)
       }
     }
 
@@ -758,7 +818,7 @@ export class Trial {
   private preload(): void {
     const view = this.view
 
-    if (view.mode !== 'try') {
+    if (view.mode.on === 'grid') {
       return
     }
 
@@ -937,53 +997,67 @@ export class Trial {
   }
 
   reveal(): void {
-    const view = this.view
-
-    if (this.presenting) {
-      this.again = true
+    if (this.showing) {
+      this.showing.again = true
 
       return
     }
 
-    this.presenting = true
-    view.preparing = this.current?.key
-    this.paint.flush()
-    void this.presented()
+    void this.show().then((failure) => {
+      if (failure) {
+        this.tell({ text: failure.message, tone: 'error' })
+        this.paint.draw()
+      }
+    })
   }
 
-  private async presented(): Promise<void> {
+  private show(): Promise<Error | undefined> {
+    if (this.showing) {
+      this.showing.again = true
+
+      return this.showing.over
+    }
+
+    const showing: Showing = { again: false, over: Promise.resolve(undefined) }
+    this.showing = showing
+    showing.over = this.shows(showing)
+
+    return showing.over
+  }
+
+  private async shows(showing: Showing): Promise<Error | undefined> {
     const view = this.view
+    let failure: Error | undefined
 
-    try {
-      await this.present()
-    } catch (error) {
-      this.tell({ text: error instanceof Error ? error.message : String(error), tone: 'error' })
-    }
+    do {
+      showing.again = false
+      failure = undefined
+      const work: Work | undefined = this.current && { step: 'prepare', key: this.current.key }
 
-    this.presenting = false
+      if (work && !view.work) {
+        view.work = work
+      }
 
-    if (this.again) {
-      this.again = false
-      this.reveal()
+      this.paint.flush()
 
-      return
-    }
+      try {
+        await this.present()
+      } catch (error) {
+        failure = error instanceof Error ? error : new Error(String(error))
+      }
 
-    if (view.preparing === this.current?.key) {
-      view.preparing = undefined
-    }
+      this.cleared(work)
+    } while (showing.again)
+
+    this.showing = undefined
 
     if (view.redraw) {
       view.redraw.done = true
     }
 
-    const asked = this.installAfter
-    this.installAfter = undefined
-
-    if (asked && view.tiles[view.focus]?.key === asked.key) {
-      this.install(asked.touches)
-    }
-
+    this.landed()
     this.paint.draw()
+
+    return failure
   }
 }

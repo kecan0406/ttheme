@@ -10,7 +10,7 @@ import type { Tone as NoticeTone } from '../bar.ts'
 import type { Boards } from './boards.ts'
 import type { Kept } from './kept.ts'
 import type { Paint } from './paint.ts'
-import type { FindView, InstallsView, Notice, Owns, Tuning } from './screen.ts'
+import { type FindView, type InstallsView, layerOf, type Notice, type Owns, type Tuning } from './screen.ts'
 import type { Grid } from './session.ts'
 import type { Thumbs } from './thumbs.ts'
 import { type Current, sameTuning, type Trial } from './trial.ts'
@@ -66,7 +66,7 @@ interface Host {
 export class Installs {
   touches = 0
   private readonly queue: Queued[] = []
-  private leaving?: number
+  private asked?: { key: number; touches: number }
 
   private readonly view: Owns<InstallsView>
   private readonly grid: () => Grid
@@ -117,15 +117,34 @@ export class Installs {
   }
 
   leave(code: number): void {
-    if (this.queue.length === 0) {
+    if (this.queue.length === 0 && !this.asked) {
       this.finish(code)
 
       return
     }
 
-    this.leaving = code
-    this.view.closing = true
+    this.view.closing = { code }
     this.paint.draw()
+  }
+
+  landed(): void {
+    const view = this.view
+    const asked = this.asked
+    this.asked = undefined
+
+    if (asked && view.tiles[view.focus]?.key === asked.key) {
+      this.install(asked.touches)
+    }
+
+    this.rest()
+  }
+
+  private rest(): void {
+    const closing = this.view.closing
+
+    if (closing && this.queue.length === 0 && !this.asked && !this.signal.aborted) {
+      this.finish(closing.code)
+    }
   }
 
   install(touches = this.touches): void {
@@ -138,7 +157,7 @@ export class Installs {
     }
 
     if (this.trial.presenting) {
-      this.trial.installAfter = { key: tile.key, touches }
+      this.asked = { key: tile.key, touches }
 
       return
     }
@@ -179,9 +198,7 @@ export class Installs {
   }
 
   private showQueue(): void {
-    const [running, ...waiting] = this.queue
-    this.view.installing = running?.current.key
-    this.view.queued = waiting.map((queued) => queued.current.key)
+    this.view.queue = this.queue.map((queued) => queued.current.key)
   }
 
   private async installQueue(): Promise<void> {
@@ -192,9 +209,7 @@ export class Installs {
       this.paint.draw()
     }
 
-    if (this.leaving !== undefined && !this.signal.aborted) {
-      this.finish(this.leaving)
-    }
+    this.rest()
   }
 
   private async installOne({ current, from, tune, coloring, framing, post, profiled, touches }: Queued): Promise<void> {
@@ -239,14 +254,7 @@ export class Installs {
       }
       view.installed.push(current.key)
 
-      if (
-        view.mode === 'try' &&
-        !view.tuning &&
-        !view.help &&
-        this.touches === touches &&
-        view.tiles[view.focus]?.key === current.key
-      ) {
-        this.trial.quiet()
+      if (layerOf(view).on === 'try' && this.touches === touches && view.tiles[view.focus]?.key === current.key) {
         this.trial.leave()
       }
     } catch (error) {

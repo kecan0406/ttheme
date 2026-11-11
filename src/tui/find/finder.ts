@@ -44,6 +44,8 @@ import {
   findTopics,
   gridLayout,
   type Info,
+  type Layer,
+  layerOf,
   MIN,
   type Notice,
   type Owns,
@@ -124,7 +126,6 @@ export class Finder {
       enabled: siteSet(read('TTHEME_FIND_SITES')),
       hide: kindSet(read('TTHEME_FIND_HIDE')),
       hideTags: tagList(read('TTHEME_FIND_HIDE_TAGS')),
-      advanced: false,
       settings: SETTINGS.map((setting) => ({
         label: setting.label,
         choices: [...setting.choices],
@@ -145,18 +146,17 @@ export class Finder {
       },
       tiles: [],
       installed: [],
-      queued: [],
+      queue: [],
       held: heldOf(home, entry.name),
       checked: 0,
       total: 0,
-      searching: tag !== '',
-      stage: 'fetch',
+      hunt: tag === '' ? undefined : { step: 'fetch' },
       sites: [],
       focus: 0,
       top: 0,
       scroll: 0,
       beat: 0,
-      mode: 'grid',
+      mode: { on: 'grid' },
       help: undefined,
       scene: Math.max(
         0,
@@ -166,7 +166,7 @@ export class Finder {
       tune: { ...untuned },
       untuned,
       coloring: coloringFor(home),
-      editing: tag === '' ? '' : undefined,
+      query: tag === '' ? { text: '' } : undefined,
       chips: [],
       keyed: process.env.TTHEME_HELP_BOX !== 'off',
     }
@@ -257,7 +257,6 @@ export class Finder {
         this.syncSite()
       },
       forget: () => this.trial.forget(),
-      halt: () => this.trial.halt(),
       select: () => this.trial.select(),
       enter: () => this.trial.enter(),
       tell: (notice) => this.tell(notice),
@@ -283,7 +282,8 @@ export class Finder {
       focus: (index) => this.boards.focus(index),
       openPage: (post) => this.openPage(post),
       fromClipboard: () => this.own.fromClipboard(),
-      install: (touches) => this.installing.install(touches),
+      install: () => this.installing.install(),
+      landed: () => this.installing.landed(),
       hint: (text) => this.hint(text, NOTICE),
     })
     this.installing = new Installs({
@@ -366,7 +366,7 @@ export class Finder {
   }
 
   run(): Promise<number> {
-    const burst = (typed: string) => this.view.editing === undefined && typedDrop(typed)
+    const burst = (typed: string) => layerOf(this.view).on !== 'query' && typedDrop(typed)
 
     return within({ modes: [PASTES, ...pointing()], assume: [HIDE_CURSOR, NO_WRAP], burst }, async (terminal) => {
       this.terminal = terminal
@@ -411,7 +411,10 @@ export class Finder {
           await terminal.ask(FEATURES, (event) => (event.kind === 'attributes' ? true : undefined), 500, false)
         }
 
-        this.own.grabber.start()
+        for (const mode of this.own.grabber.modes()) {
+          terminal.hold(mode)
+        }
+
         terminal.hold(FOCUS)
 
         if (this.start && 'paste' in this.start) {
@@ -431,7 +434,7 @@ export class Finder {
         clearTimeout(this.noticeTimer)
         clearTimeout(this.peekTimer)
         this.trial.stop()
-        this.tags.quietSuggest()
+        this.tags.quiet()
         this.settings.quietCount()
         clearInterval(clock)
         this.paint.stop()
@@ -543,7 +546,7 @@ export class Finder {
     this.boards.scroll()
     this.paint.snap()
 
-    if (this.view.mode === 'try' && this.trial.current) {
+    if (this.view.mode.on !== 'grid' && this.trial.current) {
       this.trial.reveal()
     }
 
@@ -553,9 +556,10 @@ export class Finder {
 
   private key(key: string): void {
     const view = this.view
+    const layer = layerOf(view)
 
     if (key === 'ctrl-c') {
-      if (view.closing) {
+      if (layer.on === 'closing') {
         this.finish(2)
       } else {
         this.installing.leave(2)
@@ -564,7 +568,7 @@ export class Finder {
       return
     }
 
-    if (view.closing) {
+    if (layer.on === 'closing' || key === 'focus-out') {
       return
     }
 
@@ -574,15 +578,11 @@ export class Finder {
       return
     }
 
-    if (key === 'focus-out') {
-      return
-    }
-
-    if (view.help) {
-      const answer = view.help.key(key)
+    if (layer.on === 'help') {
+      const answer = layer.help.key(key)
 
       if (answer !== 'stay') {
-        const run = answer === 'run' ? view.help.chosen()?.run : undefined
+        const run = answer === 'run' ? layer.help.chosen()?.run : undefined
         view.help = undefined
         run?.()
       }
@@ -592,19 +592,19 @@ export class Finder {
       return
     }
 
-    if ((key === 'ctrl-v' || key === 'alt-v') && view.panel === undefined) {
+    if ((key === 'ctrl-v' || key === 'alt-v') && layer.on !== 'panel') {
       void this.own.fromClipboard()
 
       return
     }
 
-    if (view.editing !== undefined) {
+    if (layer.on === 'query') {
       this.tags.editKey(key)
 
       return
     }
 
-    if (view.panel !== undefined) {
+    if (layer.on === 'panel') {
       this.settings.panelKey(key)
 
       return
@@ -628,34 +628,34 @@ export class Finder {
       return
     }
 
-    if (view.mode === 'try') {
-      this.installing.touches++
-      this.trial.tryKey(key)
+    if (layer.on === 'grid') {
+      this.gridKey(key)
 
       return
     }
 
-    this.gridKey(key)
+    this.installing.touches++
+    this.trial.tryKey(key)
   }
 
   private pointer(event: Mouse): void {
-    const view = this.view
+    const layer = layerOf(this.view)
     const hit = this.paint.point(event)
     const spot = hit?.target as FindSpot | undefined
 
-    if (view.closing) {
+    if (layer.on === 'closing') {
       return
     }
 
-    if (view.help) {
-      this.helpPoint(view.help, spot, hit, event)
+    if (layer.on === 'help') {
+      this.helpPoint(layer.help, spot, hit, event)
 
       return
     }
 
     if (event.action === 'wheel') {
       if (!event.sideways) {
-        this.wheel(event.wheel)
+        this.wheel(layer, event.wheel)
       }
 
       return
@@ -666,11 +666,13 @@ export class Finder {
     }
 
     if (spot?.kind === 'track' && hit && event.action !== 'release') {
-      this.trial.slide(spot.field, hit)
+      if (layer.on === 'try' || layer.on === 'tune') {
+        this.trial.slide(spot.field, hit)
+      }
     } else if (event.action === 'press') {
-      this.pressed(spot)
+      this.pressed(layer, spot)
     } else if (event.action === 'release' && hit?.inside) {
-      this.released(spot, event)
+      this.released(layer, spot, event)
     }
   }
 
@@ -692,83 +694,120 @@ export class Finder {
     this.paint.draw()
   }
 
-  private pressed(spot: FindSpot | undefined): void {
-    const view = this.view
-
-    if (view.editing !== undefined || spot === undefined) {
+  private pressed(layer: Layer, spot: FindSpot | undefined): void {
+    if (spot === undefined) {
       return
-    } else if (view.panel !== undefined) {
-      if (spot.kind === 'setting' && spot.index < view.settings.length && view.typing === undefined) {
-        this.settings.point(spot.index)
-        this.paint.draw()
-      }
-    } else if (view.mode === 'try') {
-      this.installing.touches++
-      this.trial.tryPoint(spot)
-    } else if (spot.kind === 'tile') {
-      this.boards.focus(spot.index)
-    } else if (spot.kind === 'query') {
-      this.gridKey('/')
-    } else if (spot.kind === 'site') {
-      this.tab = spot.tab
-      this.syncSite()
-      void this.boards.turn()
+    }
+
+    switch (layer.on) {
+      case 'panel':
+        if (spot.kind === 'setting' && spot.index < this.view.settings.length && layer.panel.typing === undefined) {
+          this.settings.point(spot.index)
+          this.paint.draw()
+        }
+
+        break
+      case 'try':
+      case 'tune':
+        this.installing.touches++
+        this.trial.tryPoint(spot)
+        break
+      case 'grid':
+        if (spot.kind === 'tile') {
+          this.boards.focus(spot.index)
+        } else if (spot.kind === 'query') {
+          this.gridKey('/')
+        } else if (spot.kind === 'site') {
+          this.tab = spot.tab
+          this.syncSite()
+          void this.boards.turn()
+        }
+
+        break
+      default:
     }
   }
 
-  private released(spot: FindSpot | undefined, event: Mouse): void {
-    const view = this.view
-
+  private released(layer: Layer, spot: FindSpot | undefined, event: Mouse): void {
     if (spot?.kind === 'key') {
       this.key(spot.key)
-    } else if (spot?.kind === 'link') {
+
+      return
+    }
+
+    if (spot?.kind === 'link') {
       if (!event.shift && !event.alt && !event.ctrl) {
         this.visit(spot.url)
       }
-    } else if (view.editing !== undefined) {
-      if (spot?.kind === 'suggest') {
-        this.tags.point(spot.index)
-        this.tags.editKey('enter')
-      }
-    } else if (view.panel !== undefined) {
-      this.settings.panelPoint(spot)
-    } else if (view.mode === 'try') {
-      if (spot?.kind === 'place') {
-        this.trial.tuneOn(TUNE.position, true)
-        this.trial.tuneKey(String(spot.at))
-      } else if (spot?.kind === 'coloring') {
-        this.trial.tuneOn(TUNE.colors)
 
-        if (spot.coloring === view.coloring) {
-          this.paint.draw()
-        } else {
-          this.trial.recolor()
+      return
+    }
+
+    switch (layer.on) {
+      case 'query':
+        if (spot?.kind === 'suggest') {
+          this.tags.point(spot.index)
+          this.tags.editKey('enter')
         }
-      }
-    } else if (spot?.kind === 'tile' && event.count === 2) {
-      this.gridKey('enter')
-    } else if (spot?.kind === 'chip') {
-      this.tags.toggle(spot.index)
+
+        break
+      case 'panel':
+        this.settings.panelPoint(spot)
+        break
+      case 'try':
+      case 'tune':
+        if (spot?.kind === 'place') {
+          this.trial.tuneOn(TUNE.position, true)
+          this.trial.tuneKey(String(spot.at))
+        } else if (spot?.kind === 'coloring') {
+          this.trial.tuneOn(TUNE.colors)
+
+          if (spot.coloring === this.view.coloring) {
+            this.paint.draw()
+          } else {
+            this.trial.recolor()
+          }
+        }
+
+        break
+      case 'grid':
+        if (spot?.kind === 'tile' && event.count === 2) {
+          this.gridKey('enter')
+        } else if (spot?.kind === 'chip') {
+          this.tags.toggle(spot.index)
+        }
+
+        break
+      default:
     }
   }
 
-  private wheel(step: number): void {
-    const view = this.view
+  private wheel(layer: Layer, step: number): void {
+    const key = step < 0 ? 'up' : 'down'
 
-    if (view.editing !== undefined) {
-      if (view.suggest?.length) {
-        this.tags.editKey(step < 0 ? 'up' : 'down')
-      }
-    } else if (view.panel !== undefined) {
-      if (view.typing === undefined) {
-        this.settings.panelKey(step < 0 ? 'up' : 'down')
-      }
-    } else if (view.tuning) {
-      this.trial.tuneKey(step < 0 ? 'up' : 'down')
-    } else if (view.mode === 'try') {
-      this.trial.tryKey(step < 0 ? 'left' : 'right')
-    } else {
-      this.boards.focus(view.focus + step * gridLayout(this.cols, this.rows).perRow)
+    switch (layer.on) {
+      case 'query':
+        if (layer.query.suggest) {
+          this.tags.editKey(key)
+        }
+
+        break
+      case 'panel':
+        if (layer.panel.typing === undefined) {
+          this.settings.panelKey(key)
+        }
+
+        break
+      case 'tune':
+        this.trial.tuneKey(key)
+        break
+      case 'try':
+        this.trial.tryKey(step < 0 ? 'left' : 'right')
+        break
+      case 'grid':
+        this.boards.focus(this.view.focus + step * gridLayout(this.cols, this.rows).perRow)
+        break
+      default:
     }
   }
 

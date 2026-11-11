@@ -23,7 +23,7 @@ import {
 } from './attach.ts'
 import type { Boards } from './boards.ts'
 import type { Paint } from './paint.ts'
-import type { FindView, Notice } from './screen.ts'
+import { type FindView, layerOf, type Notice } from './screen.ts'
 import { describe, origPath, previewPath } from './session.ts'
 import type { Tags } from './tags.ts'
 
@@ -89,29 +89,34 @@ export class Own {
   }
 
   stop(): void {
-    this.grabber.stop()
     this.attaching?.abort()
   }
 
-  pasted(text: string): void {
-    const view = this.view
+  private refuses(): boolean {
+    const { on } = layerOf(this.view)
 
-    if (view.editing !== undefined && text.trim() !== '' && !this.picture(text)) {
+    return on === 'closing' || on === 'panel'
+  }
+
+  pasted(text: string): void {
+    const layer = layerOf(this.view)
+
+    if (layer.on === 'closing' || layer.on === 'panel') {
+      return
+    }
+
+    if (layer.on === 'help') {
+      layer.help.paste(text)
+      this.paint.draw()
+
+      return
+    }
+
+    if (layer.on === 'query' && text.trim() !== '' && !this.picture(text)) {
       this.tags.write(plain(text))
       this.tags.suggest()
       this.paint.draw()
 
-      return
-    }
-
-    if (view.help) {
-      view.help.paste(text)
-      this.paint.draw()
-
-      return
-    }
-
-    if (view.closing || view.panel !== undefined) {
       return
     }
 
@@ -153,6 +158,10 @@ export class Own {
       return
     }
 
+    if (this.refuses()) {
+      return
+    }
+
     this.unhelp()
     await this.bring(() => normalize(got.bytes, got.source))
   }
@@ -173,7 +182,7 @@ export class Own {
 
     this.peeked = seen.stamp
 
-    if (!seen.picture || view.closing) {
+    if (!seen.picture || layerOf(view).on === 'closing') {
       return
     }
 
@@ -203,6 +212,14 @@ export class Own {
       return
     }
 
+    await this.clipped(clip)
+  }
+
+  async clipped(clip: Clip): Promise<void> {
+    if (this.refuses()) {
+      return
+    }
+
     this.unhint()
 
     if ('image' in clip) {
@@ -225,7 +242,9 @@ export class Own {
       return
     }
 
-    this.tags.edit()
+    if (layerOf(this.view).on === 'grid') {
+      this.tags.edit()
+    }
 
     this.pasted(text)
   }
@@ -282,7 +301,6 @@ export class Own {
     this.boards.noted(
       skipped > 0 ? `The first picture of ${skipped + 1} — drop one at a time to try the others` : undefined,
     )
-    this.tags.quietSuggest()
     this.tags.shut()
     const id = localId(image.bytes)
     remember(id, image.source)

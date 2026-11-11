@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict'
+import { PassThrough } from 'node:stream'
 import { test } from 'node:test'
 import { crc32, deflateSync } from 'node:zlib'
 import { PNG } from 'pngjs'
 import { jpegSize } from '../../core/jpeg.ts'
 import { decode } from '../keys.ts'
+import { Terminal } from '../terminal.ts'
 import { type Got, Grabber, normalize, pastedRefs } from './attach.ts'
 
 const files = new Set(['/pics/a.png', '/pics/my pic.png', '/pics/b.jpg'])
@@ -103,4 +105,31 @@ test('a drop is accepted, read in chunks and closed', () => {
   grab.take(osc('\x1b]72;t=r:x=2:m=0\x1b\\'))
   assert.equal(sent.at(-1), '\x1b]72;t=r:o=1\x1b\\')
   assert.equal(Buffer.from((got[0] as { bytes: Uint8Array }).bytes).toString(), 'abcd')
+})
+
+test('the paste events and drops a terminal offers are modes the terminal puts back and sets again', () => {
+  const { grab } = grabber()
+  grab.clipboard = true
+  grab.drops = true
+  const input = Object.assign(new PassThrough(), { isTTY: true, setRawMode: () => input })
+  const output = Object.assign(new PassThrough(), { isTTY: true, columns: 80, rows: 24 })
+  let written = ''
+  output.on('data', (chunk) => {
+    written += String(chunk)
+  })
+  const count = (text: string) => written.split(text).length - 1
+  const terminal = new Terminal({ input, output })
+
+  for (const mode of grab.modes()) {
+    terminal.hold(mode)
+  }
+
+  assert.equal(count('\x1b[?5522h'), 1)
+  assert.equal(count('\x1b]72;t=a;'), 1)
+  terminal.reassert()
+  assert.equal(count('\x1b[?5522h'), 2)
+  assert.equal(count('\x1b]72;t=a;'), 2)
+  terminal.close()
+  assert.equal(count('\x1b[?5522l'), 1)
+  assert.equal(count('\x1b]72;t=A\x1b\\'), 1)
 })

@@ -20,6 +20,12 @@
 - The palette editor no longer holds your keys for up to a second after it opens in a terminal that does not report its cell size.
 - In Browse, a marketplace picked in Search after you left the Add marketplace form no longer leaves the arrow keys moving a panel that is not on screen.
 - In Browse, `ctrl+c` on the review of your changes now shows the question it asks, and a name lookup that failed in Search stops showing once you change what you typed.
+- In `ttheme find`, `esc` out of the tag field now drops the suggestion you had picked. Before, opening the field again and pressing `enter` searched for it.
+- Leaving `ttheme find` right after `enter` on a picture that is still being drawn no longer loses that install: find waits for it as it does for the others.
+- In `ttheme find`'s try view, `Preparing…` no longer stays on the foot after its picture is gone, a picture that failed keeps its reason beside `enter try again`, and a tuning you change while a picture first appears is drawn.
+- In `ttheme find`, an opaque picture that has a transparent copy folded into it now switches to that copy when you try it. Before, the first try showed nothing.
+- In `ttheme find`, switching site tabs during a search no longer leaves a tab whose loader never ends, and no longer drops or skips posts.
+- In `ttheme find`, a picture dropped on the window while the settings are open or find is closing is ignored, as a paste is, and clipboard text taken in the try view no longer opens a tag field you cannot see.
 
 ## 1.2.109
 

@@ -56,8 +56,7 @@ export class Tags {
   private readonly related = new Map<string, string[]>()
   private pool: string[] = []
   private relating?: AbortController
-  private suggestTimer?: NodeJS.Timeout
-  private suggesting?: AbortController
+  private asking?: { timer: NodeJS.Timeout; control: AbortController }
 
   private readonly view: Owns<TagsView>
   private readonly paint: Paint
@@ -88,25 +87,26 @@ export class Tags {
   }
 
   edit(): void {
-    if (this.view.editing === undefined) {
-      this.view.editing = ''
-    }
+    this.view.query ??= { text: '' }
   }
 
   write(text: string): void {
-    if (this.view.editing !== undefined) {
-      this.view.editing += text
+    if (this.view.query) {
+      this.view.query.text += text
     }
   }
 
   shut(): void {
-    this.view.editing = undefined
-    this.view.suggest = undefined
-    this.view.pick = undefined
+    this.quiet()
+    this.view.query = undefined
   }
 
   point(index: number): void {
-    this.view.pick = index
+    const shown = this.view.query?.suggest
+
+    if (shown) {
+      shown.pick = index
+    }
   }
 
   retag(text: string): void {
@@ -116,114 +116,104 @@ export class Tags {
 
   editKey(key: string): void {
     const view = this.view
-    const text = view.editing ?? ''
-    const shown = view.suggest ?? []
+    const query = view.query
+
+    if (!query) {
+      return
+    }
+
+    const shown = query.suggest
     const line = lineStep(key)
 
-    if (line !== undefined && shown.length > 0) {
-      const at = view.pick ?? shown.length
-      const next = (at + (line > 0 ? 1 : shown.length)) % (shown.length + 1)
-      view.pick = next === shown.length ? undefined : next
+    if (line !== undefined && shown) {
+      const count = shown.list.length
+      const next = ((shown.pick ?? count) + (line > 0 ? 1 : count)) % (count + 1)
+      shown.pick = next === count ? undefined : next
       this.paint.draw()
 
       return
     }
 
     if (key === 'esc' || key === 'enter') {
-      this.quietSuggest()
-    }
+      const picked = shown?.pick === undefined ? undefined : shown.list[shown.pick]
+      const typed = picked ? query.text.replace(/\S*$/, () => picked.value) : query.text
+      const chosen = key === 'enter' ? typed.trim() : ''
+      this.shut()
 
-    if (key === 'esc') {
-      view.editing = undefined
-
-      if (view.tag === '') {
+      if (chosen) {
+        void this.commit(chosen)
+      } else if (view.tag === '') {
         this.leave(2)
-
-        return
+      } else {
+        this.paint.draw()
       }
-
-      this.paint.draw()
 
       return
     }
 
-    if (key === 'enter') {
-      const picked = view.pick === undefined ? undefined : shown[view.pick]
-      const chosen = picked ? text.replace(/\S*$/, () => picked.value) : text
-      view.editing = undefined
-      view.suggest = undefined
-      view.pick = undefined
-
-      if (chosen.trim()) {
-        void this.commit(chosen.trim())
-
-        return
-      }
-
-      if (view.tag === '') {
-        this.leave(2)
-
-        return
-      }
-
-      this.paint.draw()
-
-      return
-    }
-
-    const next = edit(text, key)
+    const next = edit(query.text, key)
 
     if (next !== undefined) {
-      view.editing = next
+      query.text = next
       this.suggest()
       this.paint.draw()
     }
   }
 
-  quietSuggest(): void {
-    clearTimeout(this.suggestTimer)
-    this.suggesting?.abort()
-    this.suggesting = undefined
+  quiet(): void {
+    clearTimeout(this.asking?.timer)
+    this.asking?.control.abort()
+    this.asking = undefined
   }
 
   suggest(): void {
-    this.quietSuggest()
-    const view = this.view
-    view.pick = undefined
-    const text = view.editing ?? ''
+    this.quiet()
+    const query = this.view.query
+
+    if (!query) {
+      return
+    }
+
+    const text = query.text
     const token = /\S*$/.exec(text)?.[0] ?? ''
 
     if (!completable(token)) {
-      view.suggest = undefined
+      query.suggest = undefined
 
       return
     }
 
     const known = this.ownTags(token).slice(0, KNOWN)
-    view.suggest = known.length > 0 ? known : undefined
+    query.suggest = known.length > 0 ? { list: known } : undefined
+    const control = new AbortController()
 
-    const asked = new AbortController()
-    this.suggesting = asked
-    this.suggestTimer = setTimeout(async () => {
-      try {
-        const found = await this.net.fetchSuggestions(token, AbortSignal.any([this.signal, asked.signal]))
+    const asking = {
+      control,
+      timer: setTimeout(async () => {
+        try {
+          const found = await this.net.fetchSuggestions(token, AbortSignal.any([this.signal, control.signal]))
 
-        if (this.suggesting === asked && view.editing !== undefined) {
+          if (this.asking !== asking) {
+            return
+          }
+
           const counts = new Map(found.map((item) => [item.value, item.count]))
           const names = new Set(known.map((item) => item.value))
 
-          const listed = [
+          const list = [
             ...known.map((item) => ({ ...item, count: counts.get(item.value) ?? 0 })),
             ...found.filter((item) => !names.has(item.value)),
           ].slice(0, SUGGESTED)
 
-          const held = view.pick !== undefined && view.pick < known.length ? view.pick : undefined
-          view.suggest = listed
-          view.pick = held ?? (WRITTEN.test(text) && listed.length > 0 ? 0 : undefined)
+          const held = query.suggest?.pick
+          const pick = held ?? (WRITTEN.test(text) && list.length > 0 ? 0 : undefined)
+          query.suggest = list.length > 0 ? { list, ...(pick === undefined ? {} : { pick }) } : undefined
           this.paint.draw()
-        }
-      } catch {}
-    }, SUGGEST_WAIT)
+        } catch {}
+      }, SUGGEST_WAIT),
+    }
+
+    this.asking = asking
   }
 
   private selected(terms: { tag: string; chosen?: string[] }): string[] {

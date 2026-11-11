@@ -82,23 +82,20 @@ function viewOf(over: Partial<FindView> = {}): FindView {
       row('Sites', ['danbooru', 'konachan', 'yande.re', 'zerochan'], { multi: {}, advanced: true }),
       row('Hide', ['comic', 'monochrome', 'sketch', 'chibi'], { multi: { none: 'none' }, advanced: true }),
     ],
-    panel: 0,
-    advanced: false,
+    panel: { at: 0, advanced: false },
     colors: { cursor: '#ffffff', selection: '#333333', background: '#000000', foreground: '#eeeeee', ansi: [] },
     tiles: [],
     installed: [],
-    queued: [],
+    queue: [],
     held: [],
     checked: 0,
     total: 0,
-    searching: false,
-    stage: 'fetch',
     sites: [],
     focus: 0,
     top: 0,
     scroll: 0,
     beat: 0,
-    mode: 'grid',
+    mode: { on: 'grid' },
     help: undefined,
     scene: 0,
     details: false,
@@ -172,7 +169,7 @@ test('no tile takes a hover frame while find waits to close', () => {
 
   assert.equal(renderFind(view, 100, 30).lines.join('\n').split('╭').length - 1, 2)
   assert.equal(
-    renderFind({ ...view, closing: true }, 100, 30)
+    renderFind({ ...view, closing: { code: 2 } }, 100, 30)
       .lines.join('\n')
       .split('╭').length - 1,
     1,
@@ -186,10 +183,10 @@ test('only what a click would act on in the state find is in lights under the po
   assert.ok(!findHovers(grid, { kind: 'setting', index: 0 }))
   assert.ok(findHovers(viewOf(), { kind: 'setting', index: 0 }))
   assert.ok(!findHovers(viewOf(), { kind: 'tile', index: 0 }))
-  assert.ok(!findHovers(viewOf({ panel: undefined, closing: true }), { kind: 'tile', index: 0 }))
+  assert.ok(!findHovers(viewOf({ panel: undefined, closing: { code: 2 } }), { kind: 'tile', index: 0 }))
   assert.ok(findHovers(grid, { kind: 'key', key: 'esc' }))
-  assert.ok(!findHovers(viewOf({ panel: undefined, mode: 'try' }), { kind: 'tile', index: 0 }))
-  assert.ok(findHovers(viewOf({ panel: undefined, mode: 'try' }), { kind: 'scene', scene: 1 }))
+  assert.ok(!findHovers(viewOf({ panel: undefined, mode: { on: 'try' } }), { kind: 'tile', index: 0 }))
+  assert.ok(findHovers(viewOf({ panel: undefined, mode: { on: 'try' } }), { kind: 'scene', scene: 1 }))
 })
 
 test('the Advanced topic of the help presses the a the grid takes', () => {

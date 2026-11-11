@@ -478,6 +478,9 @@ function pick(offered: string[], wanted: string[]): string | undefined {
   return wanted.find((type) => offered.includes(type))
 }
 
+const CLIPBOARD_EVENTS = { on: '\x1b[?5522h', off: '\x1b[?5522l' }
+const DROPS = { on: `\x1b]72;t=a;${DROP_MIMES.join(' ')}\x1b\\`, off: '\x1b]72;t=A\x1b\\' }
+
 export class Grabber {
   clipboard = false
   drops = false
@@ -494,22 +497,8 @@ export class Grabber {
     this.deliver = deliver
   }
 
-  start(): void {
-    let out = ''
-
-    if (this.clipboard) {
-      out += '\x1b[?5522h'
-    }
-
-    if (this.drops) {
-      out += `\x1b]72;t=a;${DROP_MIMES.join(' ')}\x1b\\`
-    }
-
-    this.send(out)
-  }
-
-  stop(): void {
-    this.send(`${this.clipboard ? '\x1b[?5522l' : ''}${this.drops ? '\x1b]72;t=A\x1b\\' : ''}`)
+  modes(): { on: string; off: string }[] {
+    return [...(this.clipboard ? [CLIPBOARD_EVENTS] : []), ...(this.drops ? [DROPS] : [])]
   }
 
   ask(): void {

@@ -26,6 +26,7 @@ import {
   type Notice,
   type Order,
   type Owns,
+  type Panel,
   pageOf,
   type Row,
   type Setting,
@@ -227,13 +228,19 @@ export class Settings {
   }
 
   point(index: number): void {
-    this.view.panel = index
+    if (this.view.panel) {
+      this.view.panel.at = index
+    }
   }
 
   open(advanced: boolean): void {
-    this.view.advanced = advanced
-    this.view.panel = pageOf(this.view)[0] ?? 0
+    this.view.panel = { at: pageOf(this.view.settings, advanced)[0] ?? 0, advanced }
     this.recount()
+  }
+
+  private shut(): void {
+    this.view.panel = undefined
+    this.quietCount()
   }
 
   swap(): void {
@@ -242,31 +249,32 @@ export class Settings {
 
   panelPoint(spot: FindSpot | undefined): void {
     const view = this.view
+    const panel = view.panel
 
-    if (spot?.kind !== 'setting' && spot?.kind !== 'choice') {
+    if (!panel || (spot?.kind !== 'setting' && spot?.kind !== 'choice')) {
       return
     }
 
     const row = view.settings[spot.index]
 
-    if (view.typing !== undefined) {
-      const typed = view.settings[view.panel ?? 0]
+    if (panel.typing !== undefined) {
+      const typed = view.settings[panel.at]
 
-      if (typed && (spot.index !== view.panel || spot.kind === 'setting')) {
-        this.typeKey(typed, 'enter')
+      if (typed && (spot.index !== panel.at || spot.kind === 'setting')) {
+        this.typeKey(panel, typed, 'enter')
       } else {
         return
       }
     }
 
     if (spot.kind === 'setting' && spot.index === view.settings.length) {
-      view.panel = spot.index
+      panel.at = spot.index
       this.panelKey('enter')
 
       return
     }
 
-    view.panel = spot.index
+    panel.at = spot.index
 
     if (spot.kind === 'choice' && row) {
       if (row.entry === 'text' || spot.choice === undefined) {
@@ -293,36 +301,42 @@ export class Settings {
 
   panelKey(key: string): void {
     const view = this.view
-    const at = view.panel ?? 0
+    const panel = view.panel
+
+    if (!panel) {
+      return
+    }
+
+    const at = panel.at
     const row = view.settings[at]
 
-    if (view.typing !== undefined && row) {
-      this.typeKey(row, key)
+    if (panel.typing !== undefined && row) {
+      this.typeKey(panel, row, key)
 
       return
     }
 
-    const page = pageOf(view)
+    const page = pageOf(view.settings, panel.advanced)
     const line = lineStep(key)
 
     if (line !== undefined) {
       const k = page.indexOf(at) + line
-      view.panel = page[(k + page.length) % page.length] ?? at
+      panel.at = page[(k + page.length) % page.length] ?? at
       this.paint.draw()
 
       return
     }
 
     if (key === 'a' || (key === 'enter' && at === view.settings.length)) {
-      view.advanced = !view.advanced
-      view.panel = pageOf(view)[0] ?? 0
+      panel.advanced = !panel.advanced
+      panel.at = pageOf(view.settings, panel.advanced)[0] ?? 0
       this.paint.draw()
 
       return
     }
 
     if (row?.entry && (key === 'enter' || (row.entry === 'number' && /^[0-9]$/.test(key)))) {
-      view.typing = key === 'enter' ? (row.entry === 'text' ? row.value : '') : key
+      panel.typing = key === 'enter' ? (row.entry === 'text' ? row.value : '') : key
       this.paint.draw()
 
       return
@@ -361,28 +375,23 @@ export class Settings {
       view.settings.forEach((setting, i) => {
         setting.value = this.setting(SETTINGS[i]?.name ?? '')
       })
-      view.panel = undefined
-      view.advanced = false
-      this.quietCount()
+      this.shut()
       this.paint.draw()
 
       return
     }
 
     if (key === 'enter' || key === 's' || key === 'alt-c') {
-      view.panel = undefined
-      view.advanced = false
-      this.quietCount()
+      this.shut()
       this.adopt()
     }
   }
 
-  private typeKey(row: Row, key: string): void {
-    const view = this.view
-    const typed = view.typing ?? ''
+  private typeKey(panel: Panel, row: Row, key: string): void {
+    const typed = panel.typing ?? ''
 
     if (key === 'esc') {
-      view.typing = undefined
+      panel.typing = undefined
       this.paint.draw()
 
       return
@@ -391,7 +400,7 @@ export class Settings {
     if (key === 'enter' || key === 'up' || key === 'down') {
       row.value =
         row.entry === 'number' ? (Number(typed) > 0 ? String(Number(typed)) : 'off') : tagList(typed).join(' ')
-      view.typing = undefined
+      panel.typing = undefined
       this.recount()
 
       if (key === 'enter') {
@@ -410,7 +419,7 @@ export class Settings {
     )
 
     if (next !== undefined) {
-      view.typing = next
+      panel.typing = next
       this.paint.draw()
     }
   }
@@ -422,8 +431,14 @@ export class Settings {
   }
 
   recount(): void {
+    const panel = this.view.panel
     this.quietCount()
-    this.view.counts = undefined
+
+    if (!panel) {
+      return
+    }
+
+    panel.counts = undefined
 
     if (!this.view.tag) {
       return
@@ -477,8 +492,8 @@ export class Settings {
       }),
     )
 
-    if (this.counting === asked && this.view.panel !== undefined) {
-      this.view.counts = counts
+    if (this.counting === asked && this.view.panel) {
+      this.view.panel.counts = counts
       this.paint.draw()
     }
   }

@@ -20,10 +20,12 @@ import {
   type FindSpot,
   findHovers,
   gridLayout,
+  layerOf,
   type Owns,
   type PaintView,
   type Placement,
   place,
+  type Query,
   release,
   renderFind,
   SOLID,
@@ -146,10 +148,11 @@ export class Paint {
 
     const { cols, rows, cell } = this.grid()
     const frame = renderFind(this.view, cols, rows)
+    const layer = layerOf(this.view)
     this.view.loaderFrom = frame.loader ? (this.view.loaderFrom ?? this.view.beat) : undefined
 
-    if (frame.helpTop !== undefined) {
-      this.view.help?.scrolled(frame.helpTop)
+    if (frame.helpTop !== undefined && layer.on === 'help') {
+      layer.help.scrolled(frame.helpTop)
     }
 
     return {
@@ -157,7 +160,7 @@ export class Paint {
       zones: frame.zones,
       hovers: (target) => findHovers(this.view, target as FindSpot),
       after: (wiped) => this.images(frame.images, wiped, cell),
-      ...(this.view.mode === 'grid' && this.view.editing !== undefined ? { cursor: this.caret() } : {}),
+      ...(layer.on === 'query' ? { cursor: this.caret(layer.query) } : {}),
       ticking: frame.tick,
     }
   }
@@ -237,7 +240,7 @@ export class Paint {
       const target = view.top * TILE.height
       const d = target - view.scroll
 
-      if (d === 0 || view.mode !== 'grid') {
+      if (d === 0 || view.mode.on !== 'grid') {
         view.scroll = target
         const settled = this.gliding !== undefined
         this.gliding = undefined
@@ -332,8 +335,8 @@ export class Paint {
     return viewVar(view)
   }
 
-  private caret(): string {
-    return `\x1b[1;${Math.min(this.grid().cols, cells(`⌕ ${this.view.editing ?? ''}`) + 1)}H`
+  private caret(query: Query): string {
+    return `\x1b[1;${Math.min(this.grid().cols, cells(`⌕ ${query.text}`) + 1)}H`
   }
 
   private banded(p: Placement): Placement | undefined {
