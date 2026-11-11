@@ -1,5 +1,3 @@
-import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import {
   BLOCKS,
   blockSet,
@@ -16,10 +14,7 @@ import {
   siteSet,
   tagList,
 } from '../../core/booru.ts'
-import { fetchCount } from '../../pictures/booru-net.ts'
 import { canRemoveBackground } from '../../pictures/cutout.ts'
-import { writeAtomic } from '../../store/edits.ts'
-import { withSetting } from '../../store/wiring.ts'
 import { edit } from '../field.ts'
 import { lineStep } from '../keys.ts'
 import type { Paint } from './paint.ts'
@@ -28,12 +23,16 @@ import {
   DIGITS,
   type FindSpot,
   type FindView,
+  type Notice,
   type Order,
+  type Owns,
   pageOf,
   type Row,
   type Setting,
+  type SettingsView,
   stepped,
 } from './screen.ts'
+import type { Net } from './session.ts'
 
 export const SETTINGS: Setting[] = [
   {
@@ -179,38 +178,44 @@ export function narrowedBy(setting: (name: string) => string): Narrow {
 }
 
 interface Host {
-  view: FindView
+  view: Owns<SettingsView>
   values: Map<string, string>
   paint: Paint
   signal: AbortSignal
-  home: string
+  net: Net
+  keep: (pairs: [string, string][]) => void
   site: () => Site | undefined
   query: (site: Site, terms: Terms) => { tags: string; notes: string[] } | undefined
   adopted: () => void
+  tell: (notice?: Notice) => void
 }
 
 export class Settings {
   private countTimer?: NodeJS.Timeout
   private counting?: AbortController
 
-  private readonly view: FindView
+  private readonly view: Owns<SettingsView>
   private readonly values: Map<string, string>
   private readonly paint: Paint
   private readonly signal: AbortSignal
-  private readonly home: string
+  private readonly net: Net
+  private readonly keep: (pairs: [string, string][]) => void
   private readonly site: () => Site | undefined
   private readonly query: (site: Site, terms: Terms) => { tags: string; notes: string[] } | undefined
   private readonly adopted: () => void
+  private readonly tell: (notice?: Notice) => void
 
   constructor(host: Host) {
     this.view = host.view
     this.values = host.values
     this.paint = host.paint
     this.signal = host.signal
-    this.home = host.home
+    this.net = host.net
+    this.keep = host.keep
     this.site = host.site
     this.query = host.query
     this.adopted = host.adopted
+    this.tell = host.tell
   }
 
   private narrowed(): Narrow {
@@ -219,6 +224,20 @@ export class Settings {
 
   setting(name: string): string {
     return this.values.get(name) as string
+  }
+
+  point(index: number): void {
+    this.view.panel = index
+  }
+
+  open(advanced: boolean): void {
+    this.view.advanced = advanced
+    this.view.panel = pageOf(this.view)[0] ?? 0
+    this.recount()
+  }
+
+  swap(): void {
+    this.view.preset = this.view.preset === 'cutouts' ? 'all' : 'cutouts'
   }
 
   panelPoint(spot: FindSpot | undefined): void {
@@ -449,7 +468,7 @@ export class Settings {
         }
 
         try {
-          const count = await fetchCount(site, plan.tags, signal)
+          const count = await this.net.fetchCount(site, plan.tags, signal)
 
           return { site: site.name, ...(Number.isFinite(count) ? { count } : {}) }
         } catch {
@@ -501,18 +520,12 @@ export class Settings {
   }
 
   private store(pairs: [string, string][]): boolean {
-    const path = join(this.home, 'ttheme', 'config.zsh')
-
     try {
-      const before = existsSync(path) ? readFileSync(path, 'utf8') : ''
-      writeAtomic(
-        path,
-        pairs.reduce((text, [name, value]) => withSetting(text, name, value), before),
-      )
+      this.keep(pairs)
 
       return true
     } catch (error) {
-      this.view.notice = { text: error instanceof Error ? error.message : String(error), tone: 'error' }
+      this.tell({ text: error instanceof Error ? error.message : String(error), tone: 'error' })
 
       return false
     }

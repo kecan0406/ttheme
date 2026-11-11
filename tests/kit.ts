@@ -155,7 +155,7 @@ function help(typed = '', tall = rows): string[] {
     shown.paste(typed)
   }
 
-  return shown.box(p, cols, tall)
+  return shown.box(p, cols, tall).lines
 }
 
 function keys(): string[] {

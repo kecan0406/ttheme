@@ -23,7 +23,7 @@ import {
 } from './attach.ts'
 import type { Boards } from './boards.ts'
 import type { Paint } from './paint.ts'
-import type { FindView } from './screen.ts'
+import type { FindView, Notice } from './screen.ts'
 import { describe, origPath, previewPath } from './session.ts'
 import type { Tags } from './tags.ts'
 
@@ -33,7 +33,7 @@ const PASTE_KEY = process.platform === 'win32' ? 'alt+v' : 'ctrl+v'
 const SCREENSHOT = process.platform === 'darwin' ? 'ctrl+shift+cmd+4 copies a screenshot' : 'copy a picture first'
 
 interface Host {
-  view: FindView
+  view: Readonly<FindView>
   scratch: string
   signal: AbortSignal
   paint: Paint
@@ -44,6 +44,9 @@ interface Host {
   notice: (text: string, tone?: NoticeTone, ms?: number) => void
   hint: (text: string, ms: number) => void
   unhint: () => void
+  unhelp: () => void
+  unsave: () => void
+  tell: (notice?: Notice) => void
 }
 
 export class Own {
@@ -51,7 +54,7 @@ export class Own {
   private peeked?: string
   private attaching?: AbortController
 
-  private readonly view: FindView
+  private readonly view: Readonly<FindView>
   private readonly scratch: string
   private readonly signal: AbortSignal
   private readonly paint: Paint
@@ -61,6 +64,9 @@ export class Own {
   private readonly notice: (text: string, tone?: NoticeTone, ms?: number) => void
   private readonly hint: (text: string, ms: number) => void
   private readonly unhint: () => void
+  private readonly unhelp: () => void
+  private readonly unsave: () => void
+  private readonly tell: (notice?: Notice) => void
 
   constructor(host: Host) {
     this.view = host.view
@@ -73,6 +79,9 @@ export class Own {
     this.notice = host.notice
     this.hint = host.hint
     this.unhint = host.unhint
+    this.unhelp = host.unhelp
+    this.unsave = host.unsave
+    this.tell = host.tell
     this.grabber = new Grabber(
       (text) => host.write(text),
       (got) => void this.got(got),
@@ -88,7 +97,7 @@ export class Own {
     const view = this.view
 
     if (view.editing !== undefined && text.trim() !== '' && !this.picture(text)) {
-      view.editing += plain(text)
+      this.tags.write(plain(text))
       this.tags.suggest()
       this.paint.draw()
 
@@ -144,7 +153,7 @@ export class Own {
       return
     }
 
-    this.view.help = undefined
+    this.unhelp()
     await this.bring(() => normalize(got.bytes, got.source))
   }
 
@@ -172,8 +181,6 @@ export class Own {
   }
 
   async fromClipboard(): Promise<void> {
-    const view = this.view
-
     if (remote()) {
       if (this.grabber.clipboard) {
         this.grabber.ask()
@@ -218,9 +225,7 @@ export class Own {
       return
     }
 
-    if (view.editing === undefined) {
-      view.editing = ''
-    }
+    this.tags.edit()
 
     this.pasted(text)
   }
@@ -250,13 +255,12 @@ export class Own {
   }
 
   private async bring(load: (signal: AbortSignal) => Promise<Loaded>, skipped = 0): Promise<void> {
-    const view = this.view
     this.attaching?.abort()
     const control = new AbortController()
     this.attaching = control
-    view.notice = undefined
-    view.saved = undefined
-    view.note = 'Reading the picture…'
+    this.tell()
+    this.unsave()
+    this.boards.noted('Reading the picture…')
     this.paint.draw()
     let image: Loaded
 
@@ -264,7 +268,7 @@ export class Own {
       image = await load(AbortSignal.any([control.signal, this.signal]))
     } catch (error) {
       if (!control.signal.aborted) {
-        view.note = undefined
+        this.boards.noted()
         this.notice(describe(error instanceof Error ? error : String(error)), 'error', 8000)
       }
 
@@ -275,11 +279,11 @@ export class Own {
       return
     }
 
-    view.note = skipped > 0 ? `The first picture of ${skipped + 1} — drop one at a time to try the others` : undefined
+    this.boards.noted(
+      skipped > 0 ? `The first picture of ${skipped + 1} — drop one at a time to try the others` : undefined,
+    )
     this.tags.quietSuggest()
-    view.editing = undefined
-    view.suggest = undefined
-    view.pick = undefined
+    this.tags.shut()
     const id = localId(image.bytes)
     remember(id, image.source)
     const orig = origPath(this.scratch, LOCAL, id, image.ext)

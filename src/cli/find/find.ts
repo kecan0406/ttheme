@@ -1,9 +1,14 @@
 import { execFile } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { promisify } from 'node:util'
 import type { PaletteEntry } from '../../core/manifest.ts'
+import * as booru from '../../pictures/booru-net.ts'
 import { find, readAvailable } from '../../store/available.ts'
+import { writeAtomic } from '../../store/edits.ts'
 import { readInstalled } from '../../store/installed.ts'
 import { configHome } from '../../store/paths.ts'
+import { withSetting } from '../../store/wiring.ts'
 import { viewsInWindow, viewVar } from '../../terminals/terminal.ts'
 import type { Start } from '../../tui/find/attach.ts'
 import { Finder, type FindIO } from '../../tui/find/finder.ts'
@@ -16,6 +21,15 @@ const spawned = promisify(execFile)
 
 function ioFor(home: string, entry: PaletteEntry): FindIO {
   return {
+    net: booru,
+    store: (pairs) => {
+      const path = join(home, 'ttheme', 'config.zsh')
+      const before = existsSync(path) ? readFileSync(path, 'utf8') : ''
+      writeAtomic(
+        path,
+        pairs.reduce((text, [name, value]) => withSetting(text, name, value), before),
+      )
+    },
     visit,
     aligns: () => alignsFor(readInstalled(home).terminals),
     refreshes: () => refreshesPictures(home),

@@ -6,7 +6,7 @@ import { type Colors, grow, SEEDS } from '../core/seeds.ts'
 import { gatedOf, listOf } from '../core/slots.ts'
 import { parseColor } from '../core/tune.ts'
 import { gateMisses } from './editor-paint.ts'
-import { renderEditor } from './editor-screen.ts'
+import { renderEditor as render } from './editor-screen.ts'
 import { CONTRAST, type EditorOptions, PaletteEditor } from './palette-editor.ts'
 
 const start: Colors = grow(SEEDS)
@@ -29,6 +29,18 @@ function press(e: PaletteEditor, ...keys: string[]): PaletteEditor {
   }
 
   return e
+}
+
+function renderEditor(
+  e: PaletteEditor,
+  cols: number,
+  rows: number,
+  color: boolean,
+  look?: Parameters<typeof render>[4],
+): string[] {
+  e.viewport(cols, rows)
+
+  return render(e, cols, rows, color, look)
 }
 
 function screen(e: PaletteEditor, cols = 95, rows = 30): string {

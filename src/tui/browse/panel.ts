@@ -5,7 +5,7 @@ import { gateFailures } from '../../store/available.ts'
 import { isRemote } from '../../store/sources.ts'
 import { fit, wrapText } from '../ansi.ts'
 import type { Hint } from '../bar.ts'
-import { PaletteList } from '../palette-prompt.ts'
+import { PaletteList, type Scrolled } from '../palette-prompt.ts'
 import { SEP } from '../parts.ts'
 import { ansiFg, FG_RESET, MARKS, type Paint } from '../style.ts'
 import { button, cap, edge, FAILED, MIN_ITEMS, more, whereOf } from './draw.ts'
@@ -21,7 +21,6 @@ interface PanelHost {
   readonly p: Paint
   readonly color: boolean
   readonly startup: string | undefined
-  readonly maxItems: number
   open(): string | undefined
   source(): string
   mark(entry: PaletteEntry): string
@@ -42,7 +41,6 @@ export class Panel {
       mode: 'inside',
       pane: 'panel',
       color: host.color,
-      maxItems: host.maxItems,
       note: (entry) => host.mark(entry),
       pinned: () => this.actions(),
       onFocus: (entry) => host.focus(entry),
@@ -110,7 +108,7 @@ export class Panel {
     }
   }
 
-  draw(width: number, height: number, detail: Detail, top: boolean, lit: boolean): string[] {
+  draw(width: number, height: number, detail: Detail, top: boolean, lit: boolean): Scrolled {
     const { p } = this.host
     const frame = (text: string) => (lit ? p.accent(text) : p.dim(text))
     const inner = width - 4
@@ -126,7 +124,9 @@ export class Panel {
         lines.push('')
       }
 
-      return [edge(p, width, 'top', title, '', lit), ...lines.map(side), edge(p, width, 'bottom', '', '', lit)]
+      return {
+        lines: [edge(p, width, 'top', title, '', lit), ...lines.map(side), edge(p, width, 'bottom', '', '', lit)],
+      }
     }
 
     const pins = this.inside.pins()
@@ -135,27 +135,30 @@ export class Panel {
     const foot = about.length > 0 && body - 1 - bottom - (about.length + 1) >= MIN_ITEMS ? about : []
     const reserved = bottom + (foot.length > 0 ? foot.length + 1 : 0)
     const head = detail.lines.slice(0, Math.max(0, body - 1 - reserved - MIN_ITEMS))
-    this.inside.maxItems = Math.max(1, body - head.length - 1 - reserved)
-    const { lines, above, below } = this.inside.window()
+    const room = Math.max(1, body - head.length - 1 - reserved)
+    const { lines, above, below, scroll } = this.inside.window(room)
     const tree = lines.length > 0 ? lines : [p.dim('   No palettes yet')]
 
-    while (tree.length < this.inside.maxItems) {
+    while (tree.length < room) {
       tree.push('')
     }
 
     const down = below > 0 ? more(p, 1, below, 'panel') : ''
 
-    return [
-      edge(p, width, 'top', title, '', lit),
-      ...head.map(side),
-      side(above > 0 ? more(p, -1, above, 'panel') : ''),
-      ...tree.map(side),
-      ...(reserved > 0 ? [edge(p, width, 'mid', '', down, lit)] : []),
-      ...foot.map(side),
-      ...(foot.length > 0 && bottom > 0 ? [edge(p, width, 'mid', '', '', lit)] : []),
-      ...pins.map(side),
-      edge(p, width, 'bottom', '', reserved > 0 ? '' : down, lit),
-    ]
+    return {
+      lines: [
+        edge(p, width, 'top', title, '', lit),
+        ...head.map(side),
+        side(above > 0 ? more(p, -1, above, 'panel') : ''),
+        ...tree.map(side),
+        ...(reserved > 0 ? [edge(p, width, 'mid', '', down, lit)] : []),
+        ...foot.map(side),
+        ...(foot.length > 0 && bottom > 0 ? [edge(p, width, 'mid', '', '', lit)] : []),
+        ...pins.map(side),
+        edge(p, width, 'bottom', '', reserved > 0 ? '' : down, lit),
+      ],
+      scroll,
+    }
   }
 
   private actions(): Row[] {

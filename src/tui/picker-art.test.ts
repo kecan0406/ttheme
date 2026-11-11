@@ -70,6 +70,7 @@ test('the relations charts go out as pictures over blank cells, again only when 
     check: () => undefined,
   })
 
+  e.viewport(140, 40)
   const layer = PickerLayer.of({ TERM_PROGRAM: 'ghostty' }, ['ghostty'])
   assert.ok(layer)
   layer.measured({ w: 8, h: 16 })

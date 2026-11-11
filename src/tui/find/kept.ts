@@ -13,10 +13,10 @@ import {
 import { shelfOf } from '../../core/commons.ts'
 import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
 import { origins } from '../../pictures/backdrop.ts'
-import { fetchBytes, fetchCredits, fetchPost, fetchProfiles, headOf, locate } from '../../pictures/booru-net.ts'
 import type { Pick } from '../../pictures/fit.ts'
 import { writeAtomic } from '../../store/edits.ts'
 import { Pace } from './pace.ts'
+import type { Net } from './session.ts'
 
 const LULL = 5_000
 
@@ -29,6 +29,7 @@ interface Shelf {
   manifest: Manifest
   entry: PaletteEntry
   signal: AbortSignal
+  net: Net
   credited: () => void
   quieted: (site: string) => void
   arrived: (site: string) => void
@@ -46,6 +47,7 @@ export class Kept {
   private readonly manifest: Manifest
   private readonly entry: PaletteEntry
   private readonly signal: AbortSignal
+  private readonly net: Net
   private readonly credited: () => void
   private readonly arrived: (site: string) => void
 
@@ -54,6 +56,7 @@ export class Kept {
     this.manifest = shelf.manifest
     this.entry = shelf.entry
     this.signal = shelf.signal
+    this.net = shelf.net
     this.credited = shelf.credited
     this.arrived = shelf.arrived
     this.pace = new Pace(LULL, shelf.signal, shelf.quieted)
@@ -72,9 +75,12 @@ export class Kept {
     }
 
     try {
-      const found = await locate(site, post, this.signal)
+      const found = await this.net.locate(site, post, this.signal)
       const from = fileOf(site, post)
-      const alpha = (found === undefined ? await headOf(from.site, from.url, this.signal) : found)?.alpha === true
+
+      const alpha =
+        (found === undefined ? await this.net.headOf(from.site, from.url, this.signal) : found)?.alpha === true
+
       known[post.id] = alpha
 
       return alpha
@@ -151,7 +157,7 @@ export class Kept {
         }
 
         try {
-          return { ...sibling, owner: (await fetchPost(site, sibling.id, this.signal))?.owner ?? '' }
+          return { ...sibling, owner: (await this.net.fetchPost(site, sibling.id, this.signal))?.owner ?? '' }
         } catch {
           return undefined
         }
@@ -185,7 +191,7 @@ export class Kept {
     }
 
     const job = (async () => {
-      const bytes = await fetchBytes(site, url, this.signal, progress)
+      const bytes = await this.net.fetchBytes(site, url, this.signal, progress)
       writeAtomic(path, bytes)
       this.pace.came(site.key)
       this.arrived(site.key)
@@ -219,7 +225,8 @@ export class Kept {
     const due = names.filter((name) => !this.asking.has(name) && known[name] === undefined)
 
     if (due.length > 0) {
-      const job = fetchProfiles(due, signal, true)
+      const job = this.net
+        .fetchProfiles(due, signal, true)
         .then(
           (found) => {
             for (const name of due) {
@@ -250,7 +257,7 @@ export class Kept {
 
     if (!found) {
       try {
-        found = await fetchCredits(site, post.id, signal)
+        found = await this.net.fetchCredits(site, post.id, signal)
       } catch {
         return
       }

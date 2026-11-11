@@ -5,7 +5,6 @@ import { fileOf, postKey, type Rendition, rendition, type Site } from '../../cor
 import type { PaletteEntry } from '../../core/manifest.ts'
 import { resized, TUNE, TUNE_SIZE_LEAST } from '../../core/picture-panel.ts'
 import { fillSize, rescaled } from '../../pictures/backdrop.ts'
-import { locate } from '../../pictures/booru-net.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../../pictures/cutout.ts'
 import type { Pick } from '../../pictures/fit.ts'
 import type { Lane, Renderer, Shown } from '../../pictures/render.ts'
@@ -15,8 +14,8 @@ import type { Hit } from '../zones.ts'
 import type { Boards } from './boards.ts'
 import type { Kept } from './kept.ts'
 import type { Paint } from './paint.ts'
-import type { FindSpot, FindView, Tile, TunePanel, Tuning } from './screen.ts'
-import { type Grid, heldPath, origPath, reason } from './session.ts'
+import type { FindSpot, FindView, Notice, Owns, Tile, TrialView, TunePanel, Tuning } from './screen.ts'
+import { type Grid, heldPath, type Net, origPath, reason } from './session.ts'
 import type { Settings } from './settings.ts'
 import type { Thumbs } from './thumbs.ts'
 
@@ -67,7 +66,7 @@ function clarityKey(
 }
 
 interface Host {
-  view: FindView
+  view: Owns<TrialView>
   grid: () => Grid
   entry: PaletteEntry
   tone: Tone
@@ -75,6 +74,7 @@ interface Host {
   sticker: boolean
   scratch: string
   signal: AbortSignal
+  net: Net
   renders: Renderer
   kept: Kept
   paint: Paint
@@ -82,6 +82,7 @@ interface Host {
   thumbs: Thumbs
   settings: Settings
   inform: () => void
+  tell: (notice?: Notice) => void
   focus: (index: number) => void
   openPage: (post: boolean) => void
   fromClipboard: () => Promise<void>
@@ -104,7 +105,7 @@ export class Trial {
   private again = false
   private readonly twins = new Map<string, boolean>()
 
-  private readonly view: FindView
+  private readonly view: Owns<TrialView>
   private readonly grid: () => Grid
   private readonly entry: PaletteEntry
   private readonly tone: Tone
@@ -112,6 +113,7 @@ export class Trial {
   private readonly sticker: boolean
   private readonly scratch: string
   private readonly signal: AbortSignal
+  private readonly net: Net
   private readonly renders: Renderer
   private readonly kept: Kept
   private readonly paint: Paint
@@ -119,6 +121,7 @@ export class Trial {
   private readonly thumbs: Thumbs
   private readonly settings: Settings
   private readonly inform: () => void
+  private readonly tell: (notice?: Notice) => void
   private readonly focus: (index: number) => void
   private readonly openPage: (post: boolean) => void
   private readonly fromClipboard: () => Promise<void>
@@ -134,6 +137,7 @@ export class Trial {
     this.sticker = host.sticker
     this.scratch = host.scratch
     this.signal = host.signal
+    this.net = host.net
     this.renders = host.renders
     this.kept = host.kept
     this.paint = host.paint
@@ -141,11 +145,26 @@ export class Trial {
     this.thumbs = host.thumbs
     this.settings = host.settings
     this.inform = host.inform
+    this.tell = host.tell
     this.focus = host.focus
     this.openPage = host.openPage
     this.fromClipboard = host.fromClipboard
     this.install = host.install
     this.hint = host.hint
+  }
+
+  enter(): void {
+    this.view.mode = 'try'
+  }
+
+  leave(): void {
+    this.view.mode = 'grid'
+  }
+
+  tuneOn(field: number, keep = false): void {
+    if (!keep || !this.view.tuning) {
+      this.view.tuning = { field }
+    }
   }
 
   forget(): void {
@@ -204,7 +223,7 @@ export class Trial {
 
     if (key === 'enter' && tile && view.failed === tile.key) {
       view.failed = undefined
-      view.notice = undefined
+      this.tell()
       void this.load(tile)
 
       return
@@ -284,7 +303,7 @@ export class Trial {
       view.fetching = undefined
       view.failed = undefined
       view.mode = 'grid'
-      view.notice = undefined
+      this.tell()
       this.paint.draw()
     }
   }
@@ -425,7 +444,7 @@ export class Trial {
 
     if (view.failed !== undefined) {
       view.failed = undefined
-      view.notice = undefined
+      this.tell()
     }
 
     this.inform()
@@ -465,7 +484,7 @@ export class Trial {
     let instead: Pick | undefined
 
     try {
-      await locate(site, pick.post, control.signal)
+      await this.net.locate(site, pick.post, control.signal)
       const version = rendition(pick.post) as Rendition
       const path = origPath(this.scratch, site, tile.id, version.ext)
 
@@ -562,7 +581,7 @@ export class Trial {
       if (!control.signal.aborted && !this.signal.aborted) {
         const told = reason(site.name, error instanceof Error ? error : String(error))
         view.failed = tile.key
-        view.notice = { text: `${told} — ${cap('enter')} tries again`, tone: 'error' }
+        this.tell({ text: `${told} — ${cap('enter')} tries again`, tone: 'error' })
       }
     } finally {
       if (view.fetching?.id === tile.key) {
@@ -735,7 +754,8 @@ export class Trial {
 
       const { site, post } = pick
       this.prefetching++
-      void locate(site, post, this.signal)
+      void this.net
+        .locate(site, post, this.signal)
         .then(async () => {
           const version = rendition(post) as Rendition
           const path = origPath(this.scratch, site, post.id, version.ext)
@@ -915,7 +935,7 @@ export class Trial {
     try {
       await this.present()
     } catch (error) {
-      view.notice = { text: error instanceof Error ? error.message : String(error), tone: 'error' }
+      this.tell({ text: error instanceof Error ? error.message : String(error), tone: 'error' })
     }
 
     this.presenting = false

@@ -24,7 +24,6 @@ interface SearchHost {
   readonly network: Network
   readonly p: Paint
   readonly color: boolean
-  readonly maxItems: number
   redraw(): void
   index(): Promise<Listing>
   names?: (query: string, signal: AbortSignal) => Promise<NameHit[]>
@@ -65,7 +64,6 @@ export class Search {
       layout: 'marketplaces',
       mode: 'cards',
       color: host.color,
-      maxItems: host.maxItems,
       heads: () => [this.row({ kind: 'back' }, true)],
       extras: () => this.found(),
     })

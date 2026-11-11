@@ -160,7 +160,7 @@ export class Help {
     }
   }
 
-  box(p: Paint, cols: number, rows: number): string[] {
+  box(p: Paint, cols: number, rows: number) {
     const shown = this.shown()
     const keysOf = (t: Topic) => capped(t.keys)
     const gw = Math.min(GROUP_MOST, Math.max(5, ...this.topics.map((t) => cells(t.group))))
@@ -201,20 +201,15 @@ export class Help {
     const fits = listed <= space
     const span = fits ? space : Math.max(1, space - 2)
 
-    if (fits) {
-      this.top = 0
-    } else {
-      this.place(tall, span, shown.length)
-    }
-
+    const top = fits ? 0 : this.place(tall, span, shown.length)
     const body: string[] = []
-    let end = this.top
+    let end = top
 
-    while (end < shown.length && (end === this.top || body.length + (texts[end] as string[]).length <= span)) {
+    while (end < shown.length && (end === top || body.length + (texts[end] as string[]).length <= span)) {
       const t = shown[end] as Topic
       const on = end === this.at
       const lead = on ? (t.run ? p.accent(MARKS.focus) : p.dim(MARKS.focus)) : ' '
-      const named = end === this.top || shown[end - 1]?.group !== t.group
+      const named = end === top || shown[end - 1]?.group !== t.group
       const group = named ? p.bold(fit(t.group, gw)) : ' '.repeat(gw)
       const keys = fit(keysOf(t), kw)
       const index = end
@@ -239,7 +234,7 @@ export class Help {
       edge(boxTitle(w, ' Help ', p.dim, p.bold)),
       side(filter),
       side(''),
-      ...(fits ? [] : [side(this.top > 0 ? p.dim(moreOf(-1, this.top)) : '')]),
+      ...(fits ? [] : [side(top > 0 ? p.dim(moreOf(-1, top)) : '')]),
       ...(shown.length > 0 ? body.slice(0, span) : [side(p.dim(`  No keys match '${typed}'`))]),
       ...(fits ? [] : [side(end < shown.length ? p.dim(moreOf(1, shown.length - end)) : '')]),
       ...(more ? [side(''), ...Array.from({ length: most }, (_, i) => side(`${indent}${p.dim(told[i] ?? '')}`))] : []),
@@ -255,21 +250,25 @@ export class Help {
 
     const tallest = Math.max(2, rows - 1)
 
-    return out.length <= tallest ? out : [...out.slice(0, tallest - 1), out.at(-1) as string]
+    return { lines: out.length <= tallest ? out : [...out.slice(0, tallest - 1), out.at(-1) as string], top }
   }
 
-  private place(tall: (from: number, to: number) => number, span: number, count: number): void {
-    if (this.at < this.top) {
-      this.top = this.at
+  scrolled(top: number): void {
+    this.top = top
+  }
+
+  private place(tall: (from: number, to: number) => number, span: number, count: number): number {
+    let top = Math.min(this.top, this.at)
+
+    while (top < this.at && tall(top, this.at + 1) > span) {
+      top++
     }
 
-    while (this.top < this.at && tall(this.top, this.at + 1) > span) {
-      this.top++
+    while (top > 0 && tall(top - 1, count) <= span) {
+      top--
     }
 
-    while (this.top > 0 && tall(this.top - 1, count) <= span) {
-      this.top--
-    }
+    return top
   }
 
   private step(step: number, wrap = true): void {

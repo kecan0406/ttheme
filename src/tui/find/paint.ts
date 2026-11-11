@@ -18,9 +18,10 @@ import { type Frame, Screen } from '../screen.ts'
 import type { Hit } from '../zones.ts'
 import {
   type FindSpot,
-  type FindView,
   findHovers,
   gridLayout,
+  type Owns,
+  type PaintView,
   type Placement,
   place,
   release,
@@ -55,7 +56,7 @@ interface Grid {
 }
 
 interface Canvas {
-  view: FindView
+  view: Owns<PaintView>
   grid: () => Grid
   background: Hex
   renders: Renderer
@@ -80,7 +81,7 @@ export class Paint {
   private readonly bandFiles = new Map<string, { id: number; path: string; ready: boolean }>()
   private nextBand = BAND_ID
 
-  private readonly view: FindView
+  private readonly view: Owns<PaintView>
   private readonly grid: () => Grid
   private readonly background: Hex
   private readonly renders: Renderer
@@ -146,6 +147,10 @@ export class Paint {
     const { cols, rows, cell } = this.grid()
     const frame = renderFind(this.view, cols, rows)
     this.view.loaderFrom = frame.loader ? (this.view.loaderFrom ?? this.view.beat) : undefined
+
+    if (frame.helpTop !== undefined) {
+      this.view.help?.scrolled(frame.helpTop)
+    }
 
     return {
       lines: frame.lines,

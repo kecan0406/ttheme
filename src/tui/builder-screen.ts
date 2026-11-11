@@ -40,7 +40,7 @@ import {
 import { editorBoxTopics } from './editor-topics.ts'
 import { keysBox } from './help.ts'
 import { cap, capped } from './keycaps.ts'
-import { CHANNELS, CONTRAST, type PaletteEditor } from './palette-editor.ts'
+import { CHANNELS, CONTRAST, type Editing } from './palette-editor.ts'
 import { boxEdge, boxed, keyAfter, pillOf, SEP } from './parts.ts'
 import { type Art, type Box, type Drawn, LIGHTS, type Mock } from './picker-art.ts'
 import { BG_RESET, FG_RESET, INK_RESET, LOOKS, MARKS, open, type Paint, painter, RESET, surfaceOf } from './style.ts'
@@ -163,13 +163,13 @@ function slotShort(slot: number): string {
   return slot < BASE.length ? (BASE[slot] as string) : (PAIRS[(slot - BASE.length) % 8] as string)
 }
 
-function swatch(e: PaletteEditor, p: Paint, slot: number, restore: string): string {
+function swatch(e: Editing, p: Paint, slot: number, restore: string): string {
   const glyph = p.color ? MARKS.swatch : ' '
 
   return p.color ? `${p.fg(e.list[slot] as Hex)}${glyph}${restore}` : glyph
 }
 
-function markOf(e: PaletteEditor, p: Paint, slot: number, missed: Set<number>, restore: string): string {
+function markOf(e: Editing, p: Paint, slot: number, missed: Set<number>, restore: string): string {
   return missed.has(slot)
     ? p.bold(MARKS.miss)
     : e.changed(slot)
@@ -183,7 +183,7 @@ function gutterOf(p: Paint, c: Colors, here: boolean): string {
   return here ? (p.color ? `${p.fg(c.cursor)}${MARKS.gutter}${FG_RESET} ` : `${MARKS.gutter} `) : '  '
 }
 
-function baseRow(e: PaletteEditor, p: Paint, c: Colors, slot: number, inner: number, missed: Set<number>): string {
+function baseRow(e: Editing, p: Paint, c: Colors, slot: number, inner: number, missed: Set<number>): string {
   const here = slot === e.slot()
   const restore = here ? p.fg(c.foreground) : FG_RESET
   const name = slotShort(slot).padEnd(12)
@@ -205,7 +205,7 @@ function cellWidth(side: number): number {
   return side >= FULL_SIDE ? 16 : 11
 }
 
-function cellText(e: PaletteEditor, p: Paint, c: Colors, slot: number, side: number, missed: Set<number>): string {
+function cellText(e: Editing, p: Paint, c: Colors, slot: number, side: number, missed: Set<number>): string {
   const width = cellWidth(side)
 
   if (!e.visible(slot)) {
@@ -224,7 +224,7 @@ function cellText(e: PaletteEditor, p: Paint, c: Colors, slot: number, side: num
   return spot({ kind: 'open', slot }, shown, here ? LOOKS.still : LOOKS.bold)
 }
 
-function pairRow(e: PaletteEditor, p: Paint, c: Colors, row: number, side: number, missed: Set<number>): string {
+function pairRow(e: Editing, p: Paint, c: Colors, row: number, side: number, missed: Set<number>): string {
   const normal = BASE.length + row
   const bright = normal + 8
   const here = e.row === normal
@@ -253,7 +253,7 @@ const STROKE_NAMES = ['mouth', 'upper arm', 'lower arm']
 
 const FADED = 0.28
 
-function markLines(e: PaletteEditor, p: Paint, c: Colors, slot: number): string[] {
+function markLines(e: Editing, p: Paint, c: Colors, slot: number): string[] {
   const at = (FACE as readonly string[]).indexOf(SLOT_NAMES[slot] as string)
 
   if (!p.color || at < 0) {
@@ -303,7 +303,7 @@ function markLines(e: PaletteEditor, p: Paint, c: Colors, slot: number): string[
   ]
 }
 
-function aboutBox(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, side: number): string[] {
+function aboutBox(e: Editing, p: Paint, c: Colors, layout: Layout, side: number): string[] {
   const slot = e.slot()
   const label = slotLabel(slot)
   const width = boxWidth(side)
@@ -357,7 +357,7 @@ function planeCell(one: { l: number; c: number; h: number }, width: number, rows
   return { row: Math.floor(sample / 2), col: Math.round(shareOf(one.l, one.c, one.h) * (width - 1)) }
 }
 
-export function onBase(e: PaletteEditor, target: EditorSpot, x: number, width: number): boolean {
+export function onBase(e: Editing, target: EditorSpot, x: number, width: number): boolean {
   const origin = e.origin()
 
   if (!origin) {
@@ -426,7 +426,7 @@ function planeLines(
   })
 }
 
-function notes(e: PaletteEditor, p: Paint, width: number): string[] {
+function notes(e: Editing, p: Paint, width: number): string[] {
   const slot = e.slot()
   const at = e.lch[slot] as { l: number; c: number; h: number }
   const checks = detailChecks(e, slot, at).filter((check) => check.ok === false || check.text.startsWith('Chroma ○'))
@@ -442,7 +442,7 @@ function notes(e: PaletteEditor, p: Paint, width: number): string[] {
   return [...said.slice(0, 3), ...(hint ? [p.dim(hint)] : [])]
 }
 
-function linkLine(e: PaletteEditor, p: Paint, width: number): string | undefined {
+function linkLine(e: Editing, p: Paint, width: number): string | undefined {
   const pair = e.pair(e.slot())
 
   if (!pair) {
@@ -467,7 +467,7 @@ function linkLine(e: PaletteEditor, p: Paint, width: number): string | undefined
   return spread(p.dim(text), keyZone('l', `${p.bold('l')} ${p.dim(pair.on ? 'unlink' : 'link')}`), width)
 }
 
-function valueLine(e: PaletteEditor, p: Paint, width: number): string {
+function valueLine(e: Editing, p: Paint, width: number): string {
   const slot = e.slot()
   const hex = e.list[slot] as Hex
   const at = e.lch[slot] as { l: number; c: number; h: number }
@@ -476,7 +476,7 @@ function valueLine(e: PaletteEditor, p: Paint, width: number): string {
   return spread(typed, e.changed(slot) ? baseButton(p, e, width - cells(typed) - 1) : '', width)
 }
 
-function pickerLines(e: PaletteEditor, p: Paint, outer: number, room: number): Popup {
+function pickerLines(e: Editing, p: Paint, outer: number, room: number): Popup {
   const slot = e.slot()
   const at = e.lch[slot] as { l: number; c: number; h: number }
   const hex = e.list[slot] as Hex
@@ -530,7 +530,7 @@ const FORMATS: [string, Format][] = [
   ['OKLCH', 'oklch'],
 ]
 
-function artLines(e: PaletteEditor, p: Paint, outer: number, room: number): Popup {
+function artLines(e: Editing, p: Paint, outer: number, room: number): Popup {
   const at = e.lch[e.slot()] as { l: number; c: number; h: number }
   const width = outer - 2
   const link = linkLine(e, p, width)
@@ -594,7 +594,7 @@ function artLines(e: PaletteEditor, p: Paint, outer: number, room: number): Popu
 }
 
 function artOf(
-  e: PaletteEditor,
+  e: Editing,
   shown: Colors,
   popup: Required<Popup>['parts'],
   row: number,
@@ -631,7 +631,7 @@ function artOf(
 }
 
 function picker(
-  e: PaletteEditor,
+  e: Editing,
   p: Paint,
   c: Colors,
   side: number,
@@ -663,7 +663,7 @@ function picker(
   return { lines: out, art: pop.parts && artOf(e, c, pop.parts, first, PICKER_COL, pop.lines.length) }
 }
 
-function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: number) {
+function sidebar(e: Editing, p: Paint, c: Colors, layout: Layout, height: number) {
   const side = layout.side
   const failing = gateMisses(e)
   const dot = e.changedOnly ? p.warn(MARKS.on) : ' '
@@ -726,7 +726,7 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
 
 type Side = [buttons: string, right: string]
 
-function topBar(e: PaletteEditor, p: Paint, width: number): string {
+function topBar(e: Editing, p: Paint, width: number): string {
   const mark = p.accent(MARKS.current)
   const titled = `${mark} ${p.bold(e.options.title)}  ${p.dim(e.options.name)}`
   const dirty = e.dirty()
@@ -794,7 +794,7 @@ function groundOf(p: Paint, c: Colors, behind: boolean): string {
 }
 
 function contentRows(
-  e: PaletteEditor,
+  e: Editing,
   p: Paint,
   c: Colors,
   tile: Tile,
@@ -833,7 +833,7 @@ function contentRows(
   })
 }
 
-function popoverRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefined {
+function popoverRows(e: Editing, p: Paint, c: Colors): Cellrow[] | undefined {
   const here = e.slotsHere()
 
   if (!here) {
@@ -880,7 +880,7 @@ function popoverRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefin
   return rows.map((row) => crop(row, 0, POPOVER))
 }
 
-function menuRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefined {
+function menuRows(e: Editing, p: Paint, c: Colors): Cellrow[] | undefined {
   if (!e.menu) {
     return undefined
   }
@@ -913,13 +913,13 @@ function menuRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefined 
   ]
 }
 
-function sceneAt(e: PaletteEditor): number {
+function sceneAt(e: Editing): number {
   const count = tabNames().length
 
   return ((e.scene % count) + count) % count
 }
 
-function titleBar(e: PaletteEditor, p: Paint, ui: Colors, width: number, flat: boolean): Cellrow {
+function titleBar(e: Editing, p: Paint, ui: Colors, width: number, flat: boolean): Cellrow {
   const bar = p.color ? `${flat ? '' : p.bg(barOf(ui))}${p.fg(ui.foreground)}` : ''
   const at = sceneAt(e)
   const chosen = flat ? '' : p.bg(surfaceOf(ui.background, ui.foreground, 'tab'))
@@ -1024,7 +1024,7 @@ export interface Look {
   chrome?: readonly Hex[]
 }
 
-function mockOf(e: PaletteEditor, ui: Colors, ground: Hex, layout: Layout, title: Cellrow, rows: number): Mock {
+function mockOf(e: Editing, ui: Colors, ground: Hex, layout: Layout, title: Cellrow, rows: number): Mock {
   const tabs: Box[] = []
   let col = layout.title.col
 
@@ -1052,7 +1052,7 @@ function mockOf(e: PaletteEditor, ui: Colors, ground: Hex, layout: Layout, title
 }
 
 export function renderBuilder(
-  e: PaletteEditor,
+  e: Editing,
   cols: number,
   rows: number,
   color: boolean,

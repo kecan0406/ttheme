@@ -99,7 +99,11 @@ export class Review {
     )
   }
 
-  frame(cols: number, rows: number): string {
+  scrolled(offset: number): void {
+    this.offset = offset
+  }
+
+  frame(cols: number, rows: number) {
     const { p, hub } = this.host
     const width = cols - 1
     const review = this.phase === 'review'
@@ -117,7 +121,6 @@ export class Review {
     const room = this.host.span()
     const most = Math.max(0, lines.length - room)
     const top = this.phase === 'applying' ? most : Math.min(this.offset, most)
-    this.offset = top
     const shown = lines.slice(top, top + room)
     const below = lines.length - top - shown.length
     const body = [top > 0 ? ` ${this.host.more(-1, top)}` : '', ...shown]
@@ -135,7 +138,7 @@ export class Review {
         ? { badge: 'BROWSE (APPLY)', note: 'Keys wait until it ends', keys: [] }
         : { badge: 'BROWSE (APPLY)', keys: scroll, right: ['enter', 'close'] }
 
-    return [
+    const text = [
       ...(hub ? [fit(hubBar(hub, this.host.color, this.host.inks()), width, false)] : []),
       fit(` ${title}`, width, false),
       ...body.map((line) => fit(line, width, false)),
@@ -143,6 +146,8 @@ export class Review {
     ]
       .slice(0, rows)
       .join('\n')
+
+    return { text, offset: top }
   }
 
   private ended(error?: Error): void {

@@ -21,7 +21,6 @@ import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
 import { TUNE } from '../../core/picture-panel.ts'
 import { SCENES } from '../../core/scenes.ts'
 import { POSITIONS } from '../../core/theme.ts'
-import { pausedUntil } from '../../pictures/booru-net.ts'
 import type { Pick } from '../../pictures/fit.ts'
 import { Renderer } from '../../pictures/render.ts'
 import { blurOf, coloringFor, settingDefault, stickerOf } from '../../store/wiring.ts'
@@ -39,16 +38,18 @@ import { Own } from './own.ts'
 import { Paint } from './paint.ts'
 import {
   FIND_MARKS,
+  type FinderView,
   type FindSpot,
   type FindView,
   findTopics,
   gridLayout,
   type Info,
   MIN,
-  pageOf,
+  type Notice,
+  type Owns,
   type Tuning,
 } from './screen.ts'
-import type { Grid } from './session.ts'
+import type { Grid, Net } from './session.ts'
 import { initial, narrowedBy, orderOf, SETTINGS, Settings, settingValues } from './settings.ts'
 import { Tags } from './tags.ts'
 import { heldOf, Thumbs } from './thumbs.ts'
@@ -60,6 +61,8 @@ const NOTICE = 4000
 const TOP_RIGHT = POSITIONS.indexOf('top-right') + 1
 
 export interface FindIO {
+  net: Net
+  store: (pairs: [string, string][]) => void
   visit: (url: string) => boolean
   aligns: () => boolean
   refreshes: () => boolean
@@ -67,7 +70,8 @@ export interface FindIO {
 }
 
 export class Finder {
-  readonly view: FindView
+  private readonly whole: FindView
+  private readonly view: Owns<FinderView>
   private readonly session = new AbortController()
   private cell = { w: 0, h: 0 }
   private cols = process.stdout.columns || 80
@@ -83,6 +87,7 @@ export class Finder {
 
   private readonly start: Start | undefined
   private readonly visit: (url: string) => boolean
+  private readonly net: Net
   private readonly paint: Paint
   private readonly kept: Kept
   private readonly thumbs: Thumbs
@@ -96,13 +101,14 @@ export class Finder {
   constructor(home: string, manifest: Manifest, entry: PaletteEntry, tag: string, io: FindIO, start?: Start) {
     this.start = start
     this.visit = io.visit
+    this.net = io.net
     const tone = backdropTone(entry)
     const blurring = blurOf(home)
     const sticker = stickerOf(home)
     const values = settingValues(process.env)
     const read = (name: string) => values.get(name) as string
     const untuned: Tuning = { size: 'fill', at: TOP_RIGHT, opacity: tone.opacity }
-    this.view = {
+    this.whole = {
       palette: entry.name,
       tag,
       site: this.tabName,
@@ -164,8 +170,9 @@ export class Finder {
       chips: [],
       keyed: process.env.TTHEME_HELP_BOX !== 'off',
     }
+    this.view = this.whole
     this.paint = new Paint({
-      view: this.view,
+      view: this.whole,
       grid: () => this.grid(),
       background: entry.background,
       renders: this.renders,
@@ -178,6 +185,7 @@ export class Finder {
       manifest,
       entry,
       signal: this.signal,
+      net: this.net,
       credited: () => {
         this.boards.show()
         this.inform()
@@ -187,7 +195,7 @@ export class Finder {
       arrived: (site) => this.thumbs.revive(site),
     })
     this.thumbs = new Thumbs({
-      view: this.view,
+      view: this.whole,
       grid: () => this.grid(),
       home,
       entry,
@@ -199,24 +207,27 @@ export class Finder {
       show: () => this.boards.show(),
     })
     this.settings = new Settings({
-      view: this.view,
+      view: this.whole,
       values,
       paint: this.paint,
       signal: this.signal,
-      home,
+      net: this.net,
       site: () => this.site,
       query: (site, terms) => this.tags.query(site, terms),
       adopted: () => {
         this.boards.clear()
         this.trial.forget()
-        this.view.mode = 'grid'
+        this.trial.leave()
         void this.boards.search()
       },
+      tell: (notice) => this.tell(notice),
+      keep: io.store,
     })
     this.tags = new Tags({
-      view: this.view,
+      view: this.whole,
       paint: this.paint,
       signal: this.signal,
+      net: this.net,
       manifest,
       entry,
       research: () => {
@@ -227,11 +238,12 @@ export class Finder {
       leave: (code) => this.installing.leave(code),
     })
     this.boards = new Boards({
-      view: this.view,
+      view: this.whole,
       grid: () => this.grid(),
       entry,
       scratch: this.scratch,
       signal: this.signal,
+      net: this.net,
       renders: this.renders,
       kept: this.kept,
       paint: this.paint,
@@ -247,10 +259,11 @@ export class Finder {
       forget: () => this.trial.forget(),
       halt: () => this.trial.halt(),
       select: () => this.trial.select(),
-      scroll: () => this.scroll(),
+      enter: () => this.trial.enter(),
+      tell: (notice) => this.tell(notice),
     })
     this.trial = new Trial({
-      view: this.view,
+      view: this.whole,
       grid: () => this.grid(),
       entry,
       tone,
@@ -258,6 +271,7 @@ export class Finder {
       sticker,
       scratch: this.scratch,
       signal: this.signal,
+      net: this.net,
       renders: this.renders,
       kept: this.kept,
       paint: this.paint,
@@ -265,14 +279,15 @@ export class Finder {
       thumbs: this.thumbs,
       settings: this.settings,
       inform: () => this.inform(),
-      focus: (index) => this.focus(index),
+      tell: (notice) => this.tell(notice),
+      focus: (index) => this.boards.focus(index),
       openPage: (post) => this.openPage(post),
       fromClipboard: () => this.own.fromClipboard(),
       install: (touches) => this.installing.install(touches),
       hint: (text) => this.hint(text, NOTICE),
     })
     this.installing = new Installs({
-      view: this.view,
+      view: this.whole,
       grid: () => this.grid(),
       home,
       entry,
@@ -287,13 +302,14 @@ export class Finder {
       thumbs: this.thumbs,
       trial: this.trial,
       notice: (text, tone, ms) => this.notice(text, tone, ms),
+      tell: (notice) => this.tell(notice),
       finish: (code) => this.finish(code),
       aligns: io.aligns,
       refreshes: io.refreshes,
       refresh: io.refresh,
     })
     this.own = new Own({
-      view: this.view,
+      view: this.whole,
       scratch: this.scratch,
       signal: this.signal,
       paint: this.paint,
@@ -304,6 +320,11 @@ export class Finder {
       notice: (text, tone, ms) => this.notice(text, tone, ms),
       hint: (text, ms) => this.hint(text, ms),
       unhint: () => this.unhint(),
+      unhelp: () => {
+        this.view.help = undefined
+      },
+      unsave: () => this.installing.unsave(),
+      tell: (notice) => this.tell(notice),
     })
   }
 
@@ -379,7 +400,7 @@ export class Finder {
             void this.tags.relate(this.view.tag)
           }
         } else {
-          this.view.searching = false
+          this.boards.still()
           this.view.notice = {
             text: 'This terminal does not report its cell size — find needs kitty graphics',
             tone: 'warn',
@@ -471,6 +492,10 @@ export class Finder {
     this.paint.draw()
   }
 
+  private tell(notice?: Notice): void {
+    this.view.notice = notice
+  }
+
   private slow(key: string): void {
     if (this.slowed.has(key)) {
       return
@@ -499,8 +524,8 @@ export class Finder {
   }
 
   private readonly onClock = (): void => {
-    const slow = this.sites.reduce((a, b) => (pausedUntil(b) > pausedUntil(a) ? b : a))
-    const left = Math.ceil((pausedUntil(slow) - Date.now()) / 1000)
+    const slow = this.sites.reduce((a, b) => (this.net.pausedUntil(b) > this.net.pausedUntil(a) ? b : a))
+    const left = Math.ceil((this.net.pausedUntil(slow) - Date.now()) / 1000)
     const waiting = left > 0 ? left : undefined
 
     if (waiting !== this.view.waiting) {
@@ -515,7 +540,7 @@ export class Finder {
     this.rows = process.stdout.rows || this.rows
     this.paint.resized()
     this.thumbs.holdThumbs()
-    this.scroll()
+    this.boards.scroll()
     this.paint.snap()
 
     if (this.view.mode === 'try' && this.trial.current) {
@@ -674,14 +699,14 @@ export class Finder {
       return
     } else if (view.panel !== undefined) {
       if (spot.kind === 'setting' && spot.index < view.settings.length && view.typing === undefined) {
-        view.panel = spot.index
+        this.settings.point(spot.index)
         this.paint.draw()
       }
     } else if (view.mode === 'try') {
       this.installing.touches++
       this.trial.tryPoint(spot)
     } else if (spot.kind === 'tile') {
-      this.focus(spot.index)
+      this.boards.focus(spot.index)
     } else if (spot.kind === 'query') {
       this.gridKey('/')
     } else if (spot.kind === 'site') {
@@ -702,17 +727,17 @@ export class Finder {
       }
     } else if (view.editing !== undefined) {
       if (spot?.kind === 'suggest') {
-        view.pick = spot.index
+        this.tags.point(spot.index)
         this.tags.editKey('enter')
       }
     } else if (view.panel !== undefined) {
       this.settings.panelPoint(spot)
     } else if (view.mode === 'try') {
       if (spot?.kind === 'place') {
-        view.tuning ??= { field: TUNE.position }
+        this.trial.tuneOn(TUNE.position, true)
         this.trial.tuneKey(String(spot.at))
       } else if (spot?.kind === 'coloring') {
-        view.tuning = { field: TUNE.colors }
+        this.trial.tuneOn(TUNE.colors)
 
         if (spot.coloring === view.coloring) {
           this.paint.draw()
@@ -743,7 +768,7 @@ export class Finder {
     } else if (view.mode === 'try') {
       this.trial.tryKey(step < 0 ? 'left' : 'right')
     } else {
-      this.focus(view.focus + step * gridLayout(this.cols, this.rows).perRow)
+      this.boards.focus(view.focus + step * gridLayout(this.cols, this.rows).perRow)
     }
   }
 
@@ -766,7 +791,7 @@ export class Finder {
     const move = line === undefined ? moves.get(key) : line * perRow
 
     if (move !== undefined) {
-      this.focus(view.focus + move)
+      this.boards.focus(view.focus + move)
 
       return
     }
@@ -778,7 +803,7 @@ export class Finder {
     }
 
     if (key === 'enter' && view.tiles[view.focus]) {
-      view.mode = 'try'
+      this.trial.enter()
       view.notice = undefined
       this.trial.select()
 
@@ -792,7 +817,7 @@ export class Finder {
     }
 
     if (key === 'c') {
-      view.preset = view.preset === 'cutouts' ? 'all' : 'cutouts'
+      this.settings.swap()
       void this.boards.turn()
 
       return
@@ -808,7 +833,7 @@ export class Finder {
     }
 
     if (key === '/') {
-      view.editing = ''
+      this.tags.edit()
       this.paint.draw()
 
       return
@@ -827,9 +852,7 @@ export class Finder {
     }
 
     if (key === 's' || key === 'a') {
-      view.advanced = key === 'a'
-      view.panel = pageOf(view)[0] ?? 0
-      this.settings.recount()
+      this.settings.open(key === 'a')
       this.paint.draw()
 
       return
@@ -855,8 +878,7 @@ export class Finder {
       return
     }
 
-    this.view.tag = text
-    this.view.chosen = undefined
+    this.tags.retag(text)
     void this.tags.relate(text)
     this.boards.clear()
     await this.boards.search()
@@ -915,47 +937,5 @@ export class Finder {
       ext: (rendition(post) ?? post).ext,
       uploader: post.owner,
     }
-  }
-
-  private focus(index: number): void {
-    const view = this.view
-
-    if (view.tiles.length === 0) {
-      return
-    }
-
-    const next = Math.max(0, Math.min(view.tiles.length - 1, index))
-
-    if (next === view.focus) {
-      return
-    }
-
-    view.focus = next
-    this.boards.board.focus = next
-    this.scroll()
-    this.paint.glide()
-    void this.boards.pump()
-
-    if (view.mode === 'try') {
-      this.trial.select()
-    }
-
-    this.paint.draw()
-  }
-
-  private scroll(): void {
-    const view = this.view
-    const { perRow, rowsVis } = gridLayout(this.cols, this.rows)
-    const row = Math.floor(view.focus / perRow)
-
-    if (row < view.top) {
-      view.top = row
-    }
-
-    if (row > view.top + rowsVis - 1) {
-      view.top = row - rowsVis + 1
-    }
-
-    this.boards.board.top = view.top
   }
 }

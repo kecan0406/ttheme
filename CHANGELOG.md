@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- In the palette editor, a window that became too small to draw it now takes keys for the size it has. Before, the keys still acted on the larger layout it was last drawn in.
+- The search hint's `decode` and `glitch` effects now change only as the effect steps. Before, moving the pointer over Browse while the hint played scrambled it again.
+
 ## 1.2.103
 
 - In Terminal.app, a picture saved in Preview right after it was tuned could vanish from the tabs showing its palette: the save and a picture still being tried on wrote the same file at once. A save now waits for the picture being drawn, and no other is drawn until the save ends.

@@ -75,6 +75,7 @@ export interface Drawn {
   art: Art | undefined
   mock?: Mock
   charts?: Chart[]
+  helpTop?: number
 }
 
 interface Point {

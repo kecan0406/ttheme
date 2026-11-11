@@ -357,6 +357,17 @@ export interface Card {
   lines: string[]
 }
 
+export interface Scroll {
+  top: number
+  shown: number
+  span: number
+}
+
+export interface Scrolled {
+  lines: string[]
+  scroll?: Scroll
+}
+
 interface PaletteListOptions<X extends Extra = Extra> {
   entries: PaletteEntry[]
   works: readonly Work[]
@@ -798,53 +809,60 @@ export class PaletteList<X extends Extra = Extra> {
     return this.rows.slice(scrolling).flatMap((row, i) => this.renderRow(row, scrolling + i))
   }
 
-  window() {
+  window(room = this.maxItems) {
     const scrolling = this.rows.length - this.fixed
     const blocks = this.rows.slice(0, scrolling).map((row, i) => this.renderRow(row, i))
     const height = (i: number) => blocks[i]?.length ?? 0
-    const room = Math.max(1, this.maxItems)
+    const most = Math.max(1, room)
     const at = Math.max(0, Math.min(this.cursor, scrolling - 1))
-    this.top = Math.min(this.top, at)
+    let top = Math.min(this.top, at)
     let used = 0
 
-    for (let i = this.top; i <= at; i++) {
+    for (let i = top; i <= at; i++) {
       used += height(i)
     }
 
-    while (this.top < at && used > room) {
-      used -= height(this.top)
-      this.top += 1
+    while (top < at && used > most) {
+      used -= height(top)
+      top += 1
     }
 
     let tail = 0
 
-    for (let i = this.top; i < blocks.length; i++) {
+    for (let i = top; i < blocks.length; i++) {
       tail += height(i)
     }
 
-    while (this.top > 0 && tail + height(this.top - 1) <= room) {
-      this.top -= 1
-      tail += height(this.top)
+    while (top > 0 && tail + height(top - 1) <= most) {
+      top -= 1
+      tail += height(top)
     }
 
-    if (!this.placed) {
-      this.shown = this.top
-      this.placed = true
-    }
-
-    const from = this.glide ? Math.max(0, Math.min(this.shown, blocks.length - 1)) : this.top
+    const shown = this.placed ? this.shown : top
+    const from = this.glide ? Math.max(0, Math.min(shown, blocks.length - 1)) : top
     const lines: string[] = []
     let end = from
 
-    while (end < blocks.length && (end === from || lines.length + height(end) <= room)) {
+    while (end < blocks.length && (end === from || lines.length + height(end) <= most)) {
       lines.push(...(blocks[end] ?? []))
       end += 1
     }
 
-    this.span = Math.max(1, end - from)
     lines.push(...(blocks[end] ?? []))
 
-    return { lines: lines.slice(0, room), above: from, below: blocks.length - end }
+    return {
+      lines: lines.slice(0, most),
+      above: from,
+      below: blocks.length - end,
+      scroll: { top, shown, span: Math.max(1, end - from) },
+    }
+  }
+
+  scrolled(scroll: Scroll): void {
+    this.top = scroll.top
+    this.shown = scroll.shown
+    this.span = scroll.span
+    this.placed = true
   }
 
   moving(): boolean {
@@ -1007,18 +1025,22 @@ export class SearchHint {
     this.seed = Math.floor(Math.random() * 997)
   }
 
+  unfold(): void {
+    if (this.step === 0 || this.timer) {
+      return
+    }
+
+    this.timer = setTimeout(() => {
+      this.timer = undefined
+      this.step -= 1
+      this.redraw()
+    }, 60)
+    this.timer.unref?.()
+  }
+
   text(): string {
     if (this.step === 0) {
       return this.example
-    }
-
-    if (!this.timer) {
-      this.timer = setTimeout(() => {
-        this.timer = undefined
-        this.step -= 1
-        this.redraw()
-      }, 60)
-      this.timer.unref?.()
     }
 
     const keep = Math.floor((this.example.length * (8 - this.step)) / 8)
@@ -1029,11 +1051,10 @@ export class SearchHint {
 
     const pool = this.fx === 'decode' ? 'abcdefghijklmnopqrstuvwxyz' : '▓▒░#*+=<>?/-_'
     const still = this.fx === 'decode' ? (ch: string) => !/[a-z0-9]/i.test(ch) : (ch: string) => ch === ' '
+    const noise = (i: number) => (Math.imul(i + 1, 2654435761) ^ Math.imul(this.seed + this.step * 131, 40503)) >>> 0
 
     return [...this.example]
-      .map((ch, i) =>
-        i + ((i * 7 + this.seed) % 3) < keep || still(ch) ? ch : (pool[Math.floor(Math.random() * pool.length)] ?? ch),
-      )
+      .map((ch, i) => (i + ((i * 7 + this.seed) % 3) < keep || still(ch) ? ch : (pool[noise(i) % pool.length] ?? ch)))
       .join('')
   }
 }
@@ -1105,14 +1126,16 @@ export class PalettePrompt {
         () => terminal.cols,
       )
 
-      const view = () => {
+      const fit = () => {
         this.list.maxItems = Math.max(MIN_ITEMS, Math.min(this.most, terminal.rows - FRAME_ROWS))
-
-        return this.draw()
       }
 
-      this.redraw = () => inline.draw(view())
-      terminal.onResize(() => inline.redraw(view()))
+      fit()
+      this.redraw = () => inline.draw(this.frame())
+      terminal.onResize(() => {
+        fit()
+        inline.redraw(this.frame())
+      })
       this.redraw()
 
       try {
@@ -1127,7 +1150,7 @@ export class PalettePrompt {
 
         this.redraw = () => {}
 
-        inline.end(this.draw())
+        inline.end(this.draw().lines)
 
         return state
       } finally {
@@ -1179,23 +1202,34 @@ export class PalettePrompt {
     }
   }
 
-  private draw(): string[] {
+  private frame(): string[] {
+    const { lines, scroll } = this.draw()
+
+    if (scroll) {
+      this.list.scrolled(scroll)
+      this.hint.unfold()
+    }
+
+    return lines
+  }
+
+  private draw(): Scrolled {
     const { dim, accent: bar, warn } = painter(this.color)
     const title = this.scope === 'work' ? 'Works' : 'Palettes'
 
     if (this.state === 'submit') {
-      return [`${dim('◇')} ${title}  ${dim(`${this.list.pickedCount()} picked`)}`]
+      return { lines: [`${dim('◇')} ${title}  ${dim(`${this.list.pickedCount()} picked`)}`] }
     }
 
     if (this.state === 'cancel') {
-      return [`${dim(`◇ ${title}${SEP}cancelled`)}`]
+      return { lines: [`${dim(`◇ ${title}${SEP}cancelled`)}`] }
     }
 
     const typed = this.field.value
     const head = `${bar(MARKS.current)} ${title} ${dim(`(${this.list.matched()}/${this.list.total()}${SEP}${this.list.pickedCount()} picked)`)}`
     const example = this.hint.text()
     const search = `${bar('│')}    ${typed ? `${typed}_` : dim(`Search…${example ? ` e.g. ${example}` : ''}`)}`
-    const { lines, above, below } = this.list.window()
+    const { lines, above, below, scroll } = this.list.window()
 
     const body =
       lines.length > 0
@@ -1216,6 +1250,6 @@ export class PalettePrompt {
         ? `${bar('└')} ${warn(this.error)}`
         : `${bar('└')} ${dim(capped(`↑↓ move${fold}   space pick   type to filter   enter ${go}   esc cancel`))}`
 
-    return [head, search, ...body, more, hint]
+    return { lines: [head, search, ...body, more, hint], scroll }
   }
 }

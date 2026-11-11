@@ -41,25 +41,32 @@ test('a list that glides shows the window it left until stepped, and one that do
       color: false,
     })
 
+  const above = (list: PaletteList): number => {
+    const { above, scroll } = list.window()
+    list.scrolled(scroll)
+
+    return above
+  }
+
   const plain = make()
-  plain.window()
+  above(plain)
   plain.move(-1)
-  assert.equal(plain.window().above, 36)
+  assert.equal(above(plain), 36)
   assert.equal(plain.moving(), false)
 
   const gliding = make()
   gliding.glide = true
-  gliding.window()
+  above(gliding)
   gliding.move(-1)
-  assert.equal(gliding.window().above, 0)
+  assert.equal(above(gliding), 0)
   assert.equal(gliding.moving(), true)
   const seen = [0]
 
   while (gliding.step()) {
-    seen.push(gliding.window().above)
+    seen.push(above(gliding))
   }
 
-  seen.push(gliding.window().above)
+  seen.push(above(gliding))
   assert.equal(seen.at(-1), 36)
   assert.ok(seen.length > 3 && seen.length < 12, `${seen}`)
   assert.deepEqual(

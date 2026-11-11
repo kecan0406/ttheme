@@ -15,15 +15,14 @@ import {
 } from '../../core/booru.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
 import { FACE } from '../../core/slots.ts'
-import { fetchCount, fetchLent, fetchPost, fetchPosts } from '../../pictures/booru-net.ts'
 import { type Frame, fitOrder, interleave, type Pick } from '../../pictures/fit.ts'
 import type { Look, Renderer } from '../../pictures/render.ts'
 import { kinKeys, near, type Size, sameKeys, sameSet } from '../../pictures/works.ts'
 import { LOCAL, sourceLabel } from './attach.ts'
 import type { Kept } from './kept.ts'
 import type { Paint } from './paint.ts'
-import { type FindView, gridLayout, type Stage, type Tile } from './screen.ts'
-import { type Grid, previewPath, reason } from './session.ts'
+import { type BoardsView, gridLayout, type Notice, type Owns, type Stage, type Tile } from './screen.ts'
+import { type Grid, type Net, previewPath, reason } from './session.ts'
 import type { Tags } from './tags.ts'
 import { THUMB, type Thumbs } from './thumbs.ts'
 
@@ -97,11 +96,12 @@ function area(post: Post): number {
 }
 
 interface Host {
-  view: FindView
+  view: Owns<BoardsView>
   grid: () => Grid
   entry: PaletteEntry
   scratch: string
   signal: AbortSignal
+  net: Net
   renders: Renderer
   kept: Kept
   paint: Paint
@@ -114,7 +114,8 @@ interface Host {
   forget: () => void
   halt: () => void
   select: () => void
-  scroll: () => void
+  enter: () => void
+  tell: (notice?: Notice) => void
 }
 
 export class Boards {
@@ -131,11 +132,12 @@ export class Boards {
   private readonly pages = new Map<string, Promise<Post[]>>()
   private showing?: Board
 
-  private readonly view: FindView
+  private readonly view: Owns<BoardsView>
   private readonly grid: () => Grid
   private readonly entry: PaletteEntry
   private readonly scratch: string
   private readonly signal: AbortSignal
+  private readonly net: Net
   private readonly renders: Renderer
   private readonly kept: Kept
   private readonly paint: Paint
@@ -148,7 +150,8 @@ export class Boards {
   private readonly forget: () => void
   private readonly halt: () => void
   private readonly select: () => void
-  private readonly scroll: () => void
+  private readonly enter: () => void
+  private readonly tell: (notice?: Notice) => void
 
   constructor(host: Host) {
     this.view = host.view
@@ -156,6 +159,7 @@ export class Boards {
     this.entry = host.entry
     this.scratch = host.scratch
     this.signal = host.signal
+    this.net = host.net
     this.renders = host.renders
     this.kept = host.kept
     this.paint = host.paint
@@ -168,13 +172,65 @@ export class Boards {
     this.forget = host.forget
     this.halt = host.halt
     this.select = host.select
-    this.scroll = host.scroll
+    this.enter = host.enter
+    this.tell = host.tell
     this.board = blank(this.boardKey, this.view.tag !== '')
     this.boards.set(this.board.key, this.board)
   }
 
   clear(): void {
     this.boards.clear()
+  }
+
+  noted(note?: string): void {
+    this.view.note = note
+  }
+
+  still(): void {
+    this.view.searching = false
+  }
+
+  focus(index: number): void {
+    const view = this.view
+
+    if (view.tiles.length === 0) {
+      return
+    }
+
+    const next = Math.max(0, Math.min(view.tiles.length - 1, index))
+
+    if (next === view.focus) {
+      return
+    }
+
+    view.focus = next
+    this.board.focus = next
+    this.scroll()
+    this.paint.glide()
+    void this.pump()
+
+    if (view.mode === 'try') {
+      this.select()
+    }
+
+    this.paint.draw()
+  }
+
+  scroll(): void {
+    const view = this.view
+    const { cols, rows } = this.grid()
+    const { perRow, rowsVis } = gridLayout(cols, rows)
+    const row = Math.floor(view.focus / perRow)
+
+    if (row < view.top) {
+      view.top = row
+    }
+
+    if (row > view.top + rowsVis - 1) {
+      view.top = row - rowsVis + 1
+    }
+
+    this.board.top = view.top
   }
 
   alone(key: string, pick: Pick): void {
@@ -253,7 +309,7 @@ export class Boards {
     board.checked = 1
     board.total = 1
     this.thumbs.want(pick)
-    this.view.mode = 'try'
+    this.enter()
     this.show()
     this.select()
     this.paint.draw()
@@ -263,7 +319,7 @@ export class Boards {
     const gen = ++this.gen
     this.tabTo(site)
     this.forget()
-    this.view.notice = undefined
+    this.tell()
     const board = blank(`${site.key}|post:${id}`, true)
     this.board = board
     this.boards.set(board.key, board)
@@ -271,7 +327,7 @@ export class Boards {
     this.paint.draw()
 
     try {
-      const post = await fetchPost(site, id, this.signal)
+      const post = await this.net.fetchPost(site, id, this.signal)
 
       if (gen !== this.gen) {
         return
@@ -280,7 +336,7 @@ export class Boards {
       if (!post) {
         board.searching = false
         board.error = `${site.name} has no post ${id}`
-        this.view.notice = { text: board.error, tone: 'error' }
+        this.tell({ text: board.error, tone: 'error' })
         this.show()
         this.paint.draw()
 
@@ -306,7 +362,7 @@ export class Boards {
 
     this.gen++
     this.board = known
-    this.view.notice = known.error ? { text: known.error, tone: 'error' } : undefined
+    this.tell(known.error ? { text: known.error, tone: 'error' } : undefined)
     this.show()
     this.paint.draw()
     await this.pump()
@@ -344,7 +400,7 @@ export class Boards {
     const board = blank(this.boardKey, true)
     this.board = board
     this.boards.set(board.key, board)
-    this.view.notice = undefined
+    this.tell()
 
     const plans = this.sites().flatMap((site) => {
       const query = this.tags.query(site)
@@ -397,7 +453,7 @@ export class Boards {
   }
 
   private async tally(gen: number, board: Board, plans: { site: Site; tags: string }[]): Promise<void> {
-    const counts = await Promise.allSettled(plans.map(({ site, tags }) => fetchCount(site, tags, this.signal)))
+    const counts = await Promise.allSettled(plans.map(({ site, tags }) => this.net.fetchCount(site, tags, this.signal)))
 
     if (gen === this.gen) {
       board.total = counts.reduce(
@@ -416,7 +472,7 @@ export class Boards {
 
     this.board.error = reason(site?.name ?? this.tabName(), error)
     this.board.searching = false
-    this.view.notice = { text: this.board.error, tone: 'error' }
+    this.tell({ text: this.board.error, tone: 'error' })
     this.show()
     this.paint.draw()
   }
@@ -434,7 +490,7 @@ export class Boards {
       board.error = board.note
 
       if (board === this.board) {
-        this.view.notice = { text: board.error, tone: 'error' }
+        this.tell({ text: board.error, tone: 'error' })
       }
     }
   }
@@ -460,7 +516,7 @@ export class Boards {
     let job = this.pages.get(key)
 
     if (!job) {
-      job = fetchPosts(site, tags, page, this.signal).then((posts) => this.borrow(site, posts))
+      job = this.net.fetchPosts(site, tags, page, this.signal).then((posts) => this.borrow(site, posts))
       this.pages.set(key, job)
       job.catch(() => this.pages.delete(key))
     }
@@ -475,7 +531,7 @@ export class Boards {
       try {
         lend(
           asking,
-          await fetchLent(
+          await this.net.fetchLent(
             asking.map((post) => post.md5),
             this.signal,
             true,

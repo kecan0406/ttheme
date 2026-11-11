@@ -30,7 +30,10 @@ test('every topic can be reached in a short help, even the ones with nothing to 
   const seen = new Set<string>()
 
   for (let i = 0; i < 20; i++) {
-    for (const line of help.box(p, 80, 12)) {
+    const { lines, top } = help.box(p, 80, 12)
+    help.scrolled(top)
+
+    for (const line of lines) {
       for (const match of line.matchAll(/(First|Last|Note\d+)/g)) {
         seen.add(match[1] as string)
       }
@@ -57,7 +60,7 @@ test('the help is never taller than the rows it was given, dropping its marks fi
   const help = new Help(topics, legend)
 
   for (const rows of [6, 8, 10, 14]) {
-    assert.ok(help.box(p, 40, rows).length <= rows - 1, `rows ${rows}`)
+    assert.ok(help.box(p, 40, rows).lines.length <= rows - 1, `rows ${rows}`)
   }
 })
 
@@ -75,7 +78,7 @@ test('the screen under the help keeps no click zones but on its last row, the ke
       zone({ kind: 'key', key: '?' }, '? keys'),
     ]
 
-    return overlay(under, help.box(p, 40, 6), 40, 7, 1)
+    return overlay(under, help.box(p, 40, 6).lines, 40, 7, 1)
   })
 
   const kinds = lifted(drawn, targets).zones.map((z) => [z.row, (z.target as { kind: string }).kind])

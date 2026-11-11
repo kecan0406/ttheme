@@ -8,7 +8,7 @@ import type { Renderer } from '../../pictures/render.ts'
 import { LOCAL } from './attach.ts'
 import type { Kept } from './kept.ts'
 import type { Paint } from './paint.ts'
-import { type FindView, HELD, type Held, heldFit, TILE } from './screen.ts'
+import { HELD, type Held, heldFit, type Owns, type ThumbsView, TILE } from './screen.ts'
 import { type Grid, heldPath, previewPath, previewStem } from './session.ts'
 
 export const THUMB = 12
@@ -38,7 +38,7 @@ export function heldOf(home: string, name: string): Held[] {
 }
 
 interface Host {
-  view: FindView
+  view: Owns<ThumbsView>
   grid: () => Grid
   home: string
   entry: PaletteEntry
@@ -60,7 +60,7 @@ export class Thumbs {
   private readonly again = new Map<number, Pick>()
   private readonly retried = new Set<number>()
 
-  private readonly view: FindView
+  private readonly view: Owns<ThumbsView>
   private readonly grid: () => Grid
   private readonly home: string
   private readonly entry: PaletteEntry

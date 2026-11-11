@@ -1,7 +1,25 @@
 import { createHash } from 'node:crypto'
 import { join } from 'node:path'
 import { extension, previewOf, type Site } from '../../core/booru.ts'
+import type * as booru from '../../pictures/booru-net.ts'
 import type { Pick } from '../../pictures/fit.ts'
+
+type Booru = typeof booru
+
+export interface Net {
+  fetchBytes: Booru['fetchBytes']
+  fetchCount: Booru['fetchCount']
+  fetchCredits: Booru['fetchCredits']
+  fetchLent: Booru['fetchLent']
+  fetchPost: Booru['fetchPost']
+  fetchPosts: Booru['fetchPosts']
+  fetchProfiles: Booru['fetchProfiles']
+  fetchRelated: Booru['fetchRelated']
+  fetchSuggestions: Booru['fetchSuggestions']
+  headOf: Booru['headOf']
+  locate: Booru['locate']
+  pausedUntil: Booru['pausedUntil']
+}
 
 export interface Grid {
   cols: number

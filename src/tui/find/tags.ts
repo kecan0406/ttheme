@@ -1,12 +1,12 @@
 import { pickedNames, type Site, tagsOf } from '../../core/booru.ts'
 import { type About, aboutIn, aboutOf, shelvesOf, siteTags, type Work } from '../../core/commons.ts'
 import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
-import { fetchRelated, fetchSuggestions } from '../../pictures/booru-net.ts'
 import { booruTags } from '../../store/available.ts'
 import { edit } from '../field.ts'
 import { lineStep } from '../keys.ts'
 import type { Paint } from './paint.ts'
-import type { FindView } from './screen.ts'
+import type { Owns, TagsView } from './screen.ts'
+import type { Net } from './session.ts'
 import type { Terms } from './settings.ts'
 
 const SUGGEST_WAIT = 150
@@ -41,9 +41,10 @@ function completable(token: string): boolean {
 }
 
 interface Host {
-  view: FindView
+  view: Owns<TagsView>
   paint: Paint
   signal: AbortSignal
+  net: Net
   manifest: Manifest
   entry: PaletteEntry
   research: () => void
@@ -58,9 +59,10 @@ export class Tags {
   private suggestTimer?: NodeJS.Timeout
   private suggesting?: AbortController
 
-  private readonly view: FindView
+  private readonly view: Owns<TagsView>
   private readonly paint: Paint
   private readonly signal: AbortSignal
+  private readonly net: Net
   private readonly manifest: Manifest
   private readonly entry: PaletteEntry
   private readonly about: About | undefined
@@ -73,6 +75,7 @@ export class Tags {
     this.view = host.view
     this.paint = host.paint
     this.signal = host.signal
+    this.net = host.net
     this.manifest = host.manifest
     this.entry = host.entry
     this.about = aboutOf(host.manifest.works, host.entry.subject)
@@ -82,6 +85,33 @@ export class Tags {
     this.leave = host.leave
     this.pool = this.selected(this.view)
     this.syncChips()
+  }
+
+  edit(): void {
+    if (this.view.editing === undefined) {
+      this.view.editing = ''
+    }
+  }
+
+  write(text: string): void {
+    if (this.view.editing !== undefined) {
+      this.view.editing += text
+    }
+  }
+
+  shut(): void {
+    this.view.editing = undefined
+    this.view.suggest = undefined
+    this.view.pick = undefined
+  }
+
+  point(index: number): void {
+    this.view.pick = index
+  }
+
+  retag(text: string): void {
+    this.view.tag = text
+    this.view.chosen = undefined
   }
 
   editKey(key: string): void {
@@ -176,7 +206,7 @@ export class Tags {
     this.suggesting = asked
     this.suggestTimer = setTimeout(async () => {
       try {
-        const found = await fetchSuggestions(token, AbortSignal.any([this.signal, asked.signal]))
+        const found = await this.net.fetchSuggestions(token, AbortSignal.any([this.signal, asked.signal]))
 
         if (this.suggesting === asked && view.editing !== undefined) {
           const counts = new Map(found.map((item) => [item.value, item.count]))
@@ -272,7 +302,9 @@ export class Tags {
       this.relating = asked
 
       try {
-        found = (await fetchRelated(tag, AbortSignal.any([this.signal, asked.signal]))).map((item) => item.value)
+        found = (await this.net.fetchRelated(tag, AbortSignal.any([this.signal, asked.signal]))).map(
+          (item) => item.value,
+        )
       } catch {
         return
       }

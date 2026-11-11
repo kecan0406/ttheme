@@ -127,12 +127,14 @@ export interface TunePanel {
   field: number
 }
 
-export interface FindView {
-  palette: string
-  tag: string
-  site: string
-  siteAnsi: number
-  nextSite: string
+export interface PaintView {
+  scroll: number
+  beat: number
+  loaderFrom?: number
+  pointer?: { row: number; col: number } | undefined
+}
+
+export interface SettingsView {
   preset: Preset
   order: Order
   solo: boolean
@@ -148,11 +150,10 @@ export interface FindView {
   advanced: boolean
   typing?: string
   counts?: Count[]
-  colors: { cursor: Hex; selection: Hex; background: Hex; foreground: Hex; ansi: Hex[] }
+}
+
+export interface BoardsView {
   tiles: Tile[]
-  installed: number[]
-  queued: number[]
-  held: Held[]
   checked: number
   total: number
   searching: boolean
@@ -161,15 +162,30 @@ export interface FindView {
   sites: { name: string; arrived: boolean }[]
   focus: number
   top: number
-  scroll: number
-  beat: number
-  loaderFrom?: number
+  note?: string
+}
+
+export interface TagsView {
+  tag: string
+  editing?: string
+  chosen?: string[]
+  chips: TagChip[]
+  suggest?: { value: string; count: number; palette?: string }[]
+  pick?: number
+}
+
+export interface InstallsView {
+  installed: number[]
+  queued: number[]
+  installing?: number
+  closing?: boolean
+  saved?: { text: string; key: number }
+}
+
+export interface TrialView {
   mode: 'grid' | 'try'
-  help: Help | undefined
   scene: number
   details: boolean
-  pointer?: { row: number; col: number } | undefined
-  info?: Info
   tune: Tuning
   untuned: Tuning
   rescale?: number
@@ -181,22 +197,44 @@ export interface FindView {
   preparing?: number
   cutting?: number
   redraw?: { key: number; from: number; done: boolean }
-  installing?: number
-  closing?: boolean
   shown?: Shown
-  editing?: string
-  chosen?: string[]
-  chips: TagChip[]
-  suggest?: { value: string; count: number; palette?: string }[]
-  pick?: number
-  saved?: { text: string; key: number }
-  note?: string
+}
+
+export interface ThumbsView {
+  held: Held[]
+}
+
+export interface Notice {
+  text: string
+  tone: Tone
+}
+
+export interface FinderView {
+  palette: string
+  site: string
+  siteAnsi: number
+  nextSite: string
+  colors: { cursor: Hex; selection: Hex; background: Hex; foreground: Hex; ansi: Hex[] }
+  help: Help | undefined
+  info?: Info
   hint?: string
-  notice?: { text: string; tone: Tone }
+  notice?: Notice
   waiting?: number
   slow?: string
   keyed?: boolean
 }
+
+export interface FindView
+  extends PaintView,
+    SettingsView,
+    BoardsView,
+    TagsView,
+    InstallsView,
+    TrialView,
+    ThumbsView,
+    FinderView {}
+
+export type Owns<Slice> = Readonly<FindView> & Slice
 
 export interface TagChip {
   name: string
@@ -247,6 +285,7 @@ interface Frame {
   zones: Zone[]
   loader: boolean
   tick: boolean
+  helpTop?: number
 }
 
 const SAMPLE_REACH = 68
@@ -335,15 +374,17 @@ const TONED: Record<Tone, string> = { info: '', ok: OK, warn: WARN, error: open(
 const fg = ansiFg
 const bg = ansiBg
 
-let beating = false
+interface Seen extends Readonly<FindView> {
+  reads: { beat: boolean }
+}
 
-function beat(view: FindView): number {
-  beating = true
+function beat(view: Seen): number {
+  view.reads.beat = true
 
   return view.beat
 }
 
-function spin(view: FindView): string {
+function spin(view: Seen): string {
   return SPINNER[beat(view) % SPINNER.length] as string
 }
 
@@ -612,7 +653,7 @@ function foot(line: Line, cols: number, spec: Foot): void {
   }
 }
 
-function roleSgr(role: string, view: FindView): string {
+function roleSgr(role: string, view: Seen): string {
   if (role === 'd') {
     return D
   }
@@ -644,7 +685,7 @@ function roleSgr(role: string, view: FindView): string {
   return `${m[1] === 'B' ? B : ''}${slotFg(n)}`
 }
 
-function sceneTabs(line: Line | undefined, col: number, room: number, view: FindView, accent: string): void {
+function sceneTabs(line: Line | undefined, col: number, room: number, view: Seen, accent: string): void {
   const at = SCENES.indexOf(sceneAt(view.scene))
 
   const strip = SCENES.flatMap((scene, i): Part[] => [
@@ -670,7 +711,7 @@ function specimen(
   col: number,
   sw: number,
   maxRow: number,
-  view: FindView,
+  view: Seen,
   accent: string,
 ): void {
   const { ansi, cursor } = view.colors
@@ -753,7 +794,7 @@ function artistParts(artists: readonly string[], profiles: Record<string, Profil
   ])
 }
 
-function credits(lines: Line[], row: number, col: number, view: FindView, accent: string): void {
+function credits(lines: Line[], row: number, col: number, view: Seen, accent: string): void {
   const info = view.info
   const artists = info?.artists ?? []
   const site = siteColor(view.tiles[view.focus]?.siteAnsi ?? view.siteAnsi)
@@ -770,7 +811,7 @@ function credits(lines: Line[], row: number, col: number, view: FindView, accent
   })
 }
 
-function details(lines: Line[], row: number, col: number, room: number, maxRow: number, view: FindView): void {
+function details(lines: Line[], row: number, col: number, room: number, maxRow: number, view: Seen): void {
   const info = view.info
   const tile = view.tiles[view.focus]
 
@@ -849,7 +890,7 @@ function tunePanel(
   left: number,
   wide: number,
   rows: number,
-  view: FindView,
+  view: Seen,
   accent: string,
 ): void {
   const tall = rows - top >= 24
@@ -1082,7 +1123,7 @@ function frameBox(
   lines[r0 + h - 1]?.put(c0, `${bottomLeft}${across.repeat(w - 2)}${bottomRight}`, sgr)
 }
 
-function installMark(view: FindView, key: number): Part[] {
+function installMark(view: Seen, key: number): Part[] {
   if (view.installing === key) {
     return [[`${spin(view)} `, WARN]]
   }
@@ -1094,7 +1135,7 @@ function installMark(view: FindView, key: number): Part[] {
   return view.installed.includes(key) ? [['✓ ', OK]] : []
 }
 
-function installState(view: FindView, key: number): Part[] {
+function installState(view: Seen, key: number): Part[] {
   if (view.installing === key) {
     return [[`${SEP}${spin(view)} Installing`, WARN]]
   }
@@ -1102,7 +1143,7 @@ function installState(view: FindView, key: number): Part[] {
   return view.queued.includes(key) ? [[`${SEP}${MARKS.queued} Queued`, WARN]] : []
 }
 
-function badge(view: FindView, label = view.site, ansi = view.siteAnsi): Part {
+function badge(view: Seen, label = view.site, ansi = view.siteAnsi): Part {
   return [` ${label} `, lit(ansi)]
 }
 
@@ -1128,7 +1169,7 @@ function mention(text: string, key: number, sgr: string): Part[] {
   return parts.filter(([part]) => part !== '')
 }
 
-function tabs(line: Line, cols: number, view: FindView): void {
+function tabs(line: Line, cols: number, view: Seen): void {
   const strip = [{ name: 'all', moved: false }, ...SITES].flatMap((site, i): Part[] => {
     const label = `${site.name}${site.moved ? '*' : ''}`
     const [text, sgr] = site.name === view.site ? badge(view, label) : [` ${label} `, D]
@@ -1141,7 +1182,7 @@ function tabs(line: Line, cols: number, view: FindView): void {
   line.run(0, fits ? strip : [badge(view)])
 }
 
-function tagRow(line: Line, cols: number, view: FindView, accent: string): void {
+function tagRow(line: Line, cols: number, view: Seen, accent: string): void {
   if (view.chips.length === 0) {
     return
   }
@@ -1169,7 +1210,7 @@ function tagRow(line: Line, cols: number, view: FindView, accent: string): void 
   line.run(0, parts)
 }
 
-function shelf(lines: Line[], images: Placement[], cols: number, view: FindView, accent: string): void {
+function shelf(lines: Line[], images: Placement[], cols: number, view: Seen, accent: string): void {
   lines[GRID_TOP - 1]?.put(0, '─'.repeat(cols - 1), D)
   const head = lines[HELD.top - 1] as Line
   const fit = heldFit(cols)
@@ -1212,7 +1253,7 @@ function shelf(lines: Line[], images: Placement[], cols: number, view: FindView,
   }
 }
 
-function query(line: Line, cols: number, view: FindView, accent: string): void {
+function query(line: Line, cols: number, view: Seen, accent: string): void {
   if (view.editing !== undefined) {
     const c = line.run(0, [
       ['⌕ ', accent],
@@ -1287,15 +1328,15 @@ function transparent(shown: Shown): Part[] {
   return [shown.clear > 0 ? [`${shown.clear}% transparent`, OK] : ['Opaque', WARN]]
 }
 
-function where(view: FindView): string {
+function where(view: Seen): string {
   return view.site === 'all' ? 'any site' : view.site
 }
 
-function queuedCount(view: FindView): string {
+function queuedCount(view: Seen): string {
   return view.queued.length > 0 ? `${SEP}${view.queued.length} queued` : ''
 }
 
-function status(view: FindView, loading?: Part): Part[] | undefined {
+function status(view: Seen, loading?: Part): Part[] | undefined {
   if (view.hint) {
     return [[view.hint, OK]]
   }
@@ -1349,7 +1390,7 @@ function status(view: FindView, loading?: Part): Part[] | undefined {
   return undefined
 }
 
-function stageLabel(view: FindView): string {
+function stageLabel(view: Seen): string {
   if (view.ranking) {
     return 'Ranking previews by palette colors'
   }
@@ -1361,11 +1402,11 @@ function stageLabel(view: FindView): string {
   return 'Fetching posts'
 }
 
-function stageCount(view: FindView, gap: string): string {
+function stageCount(view: Seen, gap: string): string {
   return view.ranking ? `${gap}${view.ranking.done}/${view.ranking.total}` : ''
 }
 
-function bar(line: Line | undefined, x: number, w: number, view: FindView, k: number, ratio?: number): void {
+function bar(line: Line | undefined, x: number, w: number, view: Seen, k: number, ratio?: number): void {
   const { background, cursor, selection } = view.colors
   const fillTo = ratio === undefined ? -1 : Math.round(w * ratio)
   const seg = Math.max(6, Math.round(w * 0.22))
@@ -1390,11 +1431,11 @@ function bar(line: Line | undefined, x: number, w: number, view: FindView, k: nu
   }
 }
 
-function loaderFade(view: FindView): number {
+function loaderFade(view: Seen): number {
   return view.loaderFrom === undefined ? 0 : Math.min(1, (beat(view) - view.loaderFrom) / FADE)
 }
 
-function loader(lines: (Line | undefined)[], top: number, height: number, room: number, view: FindView): void {
+function loader(lines: (Line | undefined)[], top: number, height: number, room: number, view: Seen): void {
   const { background, foreground } = view.colors
   const k = loaderFade(view)
   const row0 = top + (height >= 5 ? Math.floor((height - 5) / 2) : 0)
@@ -1419,20 +1460,20 @@ function loader(lines: (Line | undefined)[], top: number, height: number, room: 
   )
 }
 
-function redrawing(view: FindView, key: number): boolean {
+function redrawing(view: Seen, key: number): boolean {
   const { redraw } = view
 
   return redraw?.key === key && (!redraw.done || view.beat - redraw.from < frameCells(TUNE_THUMB) / STRIP.step)
 }
 
-function pictureBusy(view: FindView, key: number): boolean {
+function pictureBusy(view: Seen, key: number): boolean {
   return (
     redrawing(view, key) ||
     (view.shown?.id !== key && (view.fetching?.id === key || view.cutting === key || view.preparing === key))
   )
 }
 
-function rail(lines: Line[], cols: number, view: FindView, height: number, content: number, accent: string): void {
+function rail(lines: Line[], cols: number, view: Seen, height: number, content: number, accent: string): void {
   if (content <= height) {
     return
   }
@@ -1446,7 +1487,7 @@ function rail(lines: Line[], cols: number, view: FindView, height: number, conte
   }
 }
 
-function loading(view: FindView, waiting: boolean, shown: Tile[]): Part | undefined {
+function loading(view: Seen, waiting: boolean, shown: Tile[]): Part | undefined {
   if (waiting) {
     return [`${spin(view)} ${stageLabel(view)}${stageCount(view, SEP)}`, D]
   }
@@ -1457,7 +1498,7 @@ function loading(view: FindView, waiting: boolean, shown: Tile[]): Part | undefi
   return ready < due.length ? [`${spin(view)} Loading thumbnails${SEP}${ready}/${due.length}`, D] : undefined
 }
 
-function gridKeys(line: Line, cols: number, used: number, view: FindView): void {
+function gridKeys(line: Line, cols: number, used: number, view: Seen): void {
   const hints: [string, string][] = [
     ['space', 'unfold'],
     ['o', 'open'],
@@ -1489,7 +1530,7 @@ function grid(
   tiles: Zone[],
   cols: number,
   rows: number,
-  view: FindView,
+  view: Seen,
   accent: string,
 ): boolean {
   const { perRow, rowsVis, height } = gridLayout(cols, rows)
@@ -1674,7 +1715,7 @@ function grid(
   return waiting
 }
 
-function trial(lines: Line[], images: Placement[], cols: number, rows: number, view: FindView, accent: string): void {
+function trial(lines: Line[], images: Placement[], cols: number, rows: number, view: Seen, accent: string): void {
   const tile = view.tiles[view.focus]
 
   if (!tile) {
@@ -1783,7 +1824,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   })
 }
 
-function pictureHint(key: string, view: FindView): [string, string][] {
+function pictureHint(key: string, view: Seen): [string, string][] {
   return view.tiles.length > 1 ? [[key, `picture ×${view.tiles.length}`]] : []
 }
 
@@ -2101,7 +2142,7 @@ function standard(row: Row): string {
   return `Default ${row.default && row.default !== row.multi?.none ? row.default : 'none'}`
 }
 
-function tally(view: FindView): string {
+function tally(view: Seen): string {
   if (!view.tag) {
     return ''
   }
@@ -2117,7 +2158,7 @@ function tally(view: FindView): string {
   return `${view.tag}: ${each.join(SEP)}`
 }
 
-function panelKeys(view: FindView, row: Row | undefined): Foot {
+function panelKeys(view: Seen, row: Row | undefined): Foot {
   const page = view.advanced ? 'basic' : 'advanced'
 
   if (!row) {
@@ -2166,7 +2207,7 @@ function panelKeys(view: FindView, row: Row | undefined): Foot {
   }
 }
 
-function panel(lines: Line[], cols: number, rows: number, view: FindView, accent: string): void {
+function panel(lines: Line[], cols: number, rows: number, view: Seen, accent: string): void {
   const at = view.panel ?? 0
   const link = view.settings.length
   const label = Math.max(...view.settings.map((row) => width(row.label)))
@@ -2266,20 +2307,24 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
   foot(lines[rows - 1] as Line, cols, { keys, right })
 }
 
-function helpOver(lines: Line[], cols: number, rows: number, help: Help): string[] {
+function helpOver(lines: Line[], cols: number, rows: number, help: Help) {
   const { badge, keys, right } = help.bar()
   foot(lines[rows - 1] as Line, cols, { badge, keys, ...(right ? { right } : {}) })
+  const box = help.box(painter(true), cols, rows - 1)
 
-  return overlay(
-    lines.map((l) => l.render()),
-    help.box(painter(true), cols, rows - 1),
-    cols,
-    rows,
-    1,
-  )
+  return {
+    lines: overlay(
+      lines.map((l) => l.render()),
+      box.lines,
+      cols,
+      rows,
+      1,
+    ),
+    top: box.top,
+  }
 }
 
-function suggestions(lines: Line[], view: FindView, accent: string): void {
+function suggestions(lines: Line[], view: Seen, accent: string): void {
   const list = view.suggest ?? []
   const said = list.map((item) => (item.count > 0 ? String(item.count) : (item.palette ?? '0')))
   const wide = Math.max(...list.map((item) => width(item.value)))
@@ -2295,7 +2340,7 @@ function suggestions(lines: Line[], view: FindView, accent: string): void {
   })
 }
 
-function trialKeys(drawn: string[], cols: number, rows: number, view: FindView): string[] {
+function trialKeys(drawn: string[], cols: number, rows: number, view: Seen): string[] {
   const reach = view.details ? 2 + Math.max(48, Math.floor(cols * 0.55)) : SAMPLE_REACH
   const wide = Math.min(keysWidth(KEYS.try), cols - reach - 2)
   const box = keysBox(painter(true), KEYS.try, wide)
@@ -2312,12 +2357,12 @@ function zonesOf(lines: Line[], under: Zone[] = []): Zone[] {
   return [...under, ...lines.flatMap((line, row) => line.zones(row))]
 }
 
-export function renderFind(view: FindView, cols: number, rows: number): Frame {
+export function renderFind(told: FindView, cols: number, rows: number): Frame {
   const lines = Array.from({ length: rows }, () => new Line(cols))
   const images: Placement[] = []
   const tiles: Zone[] = []
   const accent = open('accent')
-  beating = false
+  const view: Seen = { ...told, reads: { beat: false } }
 
   if (cols < MIN.cols || rows < MIN.rows) {
     lines[0]?.put(0, 'ttheme find', B + accent)
@@ -2357,7 +2402,14 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
     if (view.help) {
       const drawn = helpOver(lines, cols, rows, view.help)
 
-      return { lines: drawn, images: keep, zones: zonesOf(lines), loader: false, tick: false }
+      return {
+        lines: drawn.lines,
+        images: keep,
+        zones: zonesOf(lines),
+        loader: false,
+        tick: false,
+        helpTop: drawn.top,
+      }
     }
 
     panel(lines, cols, rows, view, accent)
@@ -2373,6 +2425,6 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
     images,
     zones: zonesOf(lines, tiles),
     loader: waiting,
-    tick: beating,
+    tick: view.reads.beat,
   }
 }

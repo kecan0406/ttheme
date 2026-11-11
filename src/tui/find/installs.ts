@@ -10,7 +10,7 @@ import type { Tone as NoticeTone } from '../bar.ts'
 import type { Boards } from './boards.ts'
 import type { Kept } from './kept.ts'
 import type { Paint } from './paint.ts'
-import type { FindView, Tuning } from './screen.ts'
+import type { FindView, InstallsView, Notice, Owns, Tuning } from './screen.ts'
 import type { Grid } from './session.ts'
 import type { Thumbs } from './thumbs.ts'
 import { type Current, sameTuning, type Trial } from './trial.ts'
@@ -41,7 +41,7 @@ interface Queued {
 }
 
 interface Host {
-  view: FindView
+  view: Owns<InstallsView>
   grid: () => Grid
   home: string
   entry: PaletteEntry
@@ -56,6 +56,7 @@ interface Host {
   thumbs: Thumbs
   trial: Trial
   notice: (text: string, tone?: NoticeTone, ms?: number) => void
+  tell: (notice?: Notice) => void
   finish: (code: number) => void
   aligns: () => boolean
   refreshes: () => boolean
@@ -67,7 +68,7 @@ export class Installs {
   private readonly queue: Queued[] = []
   private leaving?: number
 
-  private readonly view: FindView
+  private readonly view: Owns<InstallsView>
   private readonly grid: () => Grid
   private readonly home: string
   private readonly entry: PaletteEntry
@@ -82,6 +83,7 @@ export class Installs {
   private readonly thumbs: Thumbs
   private readonly trial: Trial
   private readonly notice: (text: string, tone?: NoticeTone, ms?: number) => void
+  private readonly tell: (notice?: Notice) => void
   private readonly finish: (code: number) => void
   private readonly aligns: () => boolean
   private readonly refreshes: () => boolean
@@ -103,10 +105,15 @@ export class Installs {
     this.thumbs = host.thumbs
     this.trial = host.trial
     this.notice = host.notice
+    this.tell = host.tell
     this.finish = host.finish
     this.aligns = host.aligns
     this.refreshes = host.refreshes
     this.refresh = host.refresh
+  }
+
+  unsave(): void {
+    this.view.saved = undefined
   }
 
   leave(code: number): void {
@@ -143,7 +150,7 @@ export class Installs {
     }
 
     if (this.queue.length === 0) {
-      view.notice = undefined
+      this.tell()
     }
 
     const tune = toTune(view.tune, view.untuned)
@@ -240,7 +247,7 @@ export class Installs {
         view.tiles[view.focus]?.key === current.key
       ) {
         this.trial.quiet()
-        view.mode = 'grid'
+        this.trial.leave()
       }
     } catch (error) {
       if (!this.signal.aborted) {

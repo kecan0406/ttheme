@@ -5,7 +5,7 @@ import type { Colors } from '../core/seeds.ts'
 import { BASE, type Check, type Format, ruleSlots, slotChecks, slotLabel } from '../core/slots.ts'
 import { cells } from '../core/text.ts'
 import { fit, spread } from './ansi.ts'
-import { type Channel, CONTRAST, gateRows, type PaletteEditor, type Scope } from './palette-editor.ts'
+import { type Channel, CONTRAST, type Editing, gateRows, type Scope } from './palette-editor.ts'
 import { boxEdge, boxed, boxTitle, buttonOf, checkOf, hintOf, moreOf, SEP } from './parts.ts'
 import { FG_RESET, INK_RESET, LOOKS, type Look, MARKS, open, type Paint } from './style.ts'
 import { type KeySpot, keyZone, zone } from './zones.ts'
@@ -20,7 +20,7 @@ export type EditorSpot =
   | { kind: 'field'; field: number }
   | { kind: 'seed'; field: number }
   | { kind: 'scope'; scope: Scope }
-  | { kind: 'view'; view: PaletteEditor['view'] }
+  | { kind: 'view'; view: Editing['view'] }
   | { kind: 'scene'; scene: number }
   | { kind: 'choice'; index: number }
   | { kind: 'plane'; row: number; rows: number }
@@ -52,11 +52,11 @@ export function ink(hex: Hex): Hex {
   return luminance(hex) > 0.35 ? '#000000' : '#ffffff'
 }
 
-export function heldOf(e: PaletteEditor, at: Oklch): number | undefined {
+export function heldOf(e: Editing, at: Oklch): number | undefined {
   return e.held !== undefined && e.held - at.c > 0.0005 ? e.held : undefined
 }
 
-export function baseButton(p: Paint, e: PaletteEditor, room: number, value?: string): string {
+export function baseButton(p: Paint, e: Editing, room: number, value?: string): string {
   const base = e.original[e.slot()] as Hex
   const chip = buttonOf(p, 'base', 'idle')
   const swatch = p.color ? `${p.fg(base)}${MARKS.swatch}${FG_RESET}` : ''
@@ -69,7 +69,7 @@ export function ratioAt(ratio: number, width: number): number {
   return Math.round((Math.log(Math.max(1, ratio)) / Math.log(21)) * (width - 1))
 }
 
-export function contrastLine(p: Paint, e: PaletteEditor, barWidth: number, origin?: number): string {
+export function contrastLine(p: Paint, e: Editing, barWidth: number, origin?: number): string {
   const here = e.mode === 'tune' && e.channel === CONTRAST
   const ratio = e.ratio()
   const { floor } = e.partner()
@@ -88,7 +88,7 @@ export function contrastLine(p: Paint, e: PaletteEditor, barWidth: number, origi
   return `${spot(grip, here ? p.bold('▸◐') : p.dim(' ◐'))} ${spot({ kind: 'bar', channel: CONTRAST }, bar)} ${spot(grip, here ? p.bold(shown) : p.dim(shown))}`
 }
 
-export function fixHint(e: PaletteEditor, slot: number): string | undefined {
+export function fixHint(e: Editing, slot: number): string | undefined {
   if (!e.misses().has(slot)) {
     return undefined
   }
@@ -100,7 +100,7 @@ export function fixHint(e: PaletteEditor, slot: number): string | undefined {
   return 'f moves the colors that fail'
 }
 
-export function detailChecks(e: PaletteEditor, slot: number, at: Oklch): Check[] {
+export function detailChecks(e: Editing, slot: number, at: Oklch): Check[] {
   const checks = slotChecks(e.list, slot)
   const held = heldOf(e, at)
 
@@ -118,7 +118,7 @@ export function lchShort(at: Oklch): string {
   return `${at.l.toFixed(2)} ${at.c.toFixed(3)} ${at.h.toFixed(0).padStart(3)}°`
 }
 
-function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): string[] {
+function gateLines(p: Paint, e: Editing, room: number, wide = LEFT): string[] {
   const rows = gateRows(e.list).sort((a, b) => Number(a.ok !== false) - Number(b.ok !== false))
   const failing = rows.filter((r) => r.ok === false).length
   const checked = (ok: boolean | undefined) => (failing === 0 && ok ? p.ok(MARKS.ok) : checkOf(p, ok))
@@ -225,11 +225,11 @@ export function position(value: number, min: number, max: number, width: number)
   return Math.round(((value - min) / (max - min)) * (width - 1))
 }
 
-export function gateMisses(e: PaletteEditor): number {
+export function gateMisses(e: Editing): number {
   return gateRows(e.list).filter((row) => row.ok === false).length
 }
 
-export function gateBox(p: Paint, e: PaletteEditor, room: number, width: number): string[] {
+export function gateBox(p: Paint, e: Editing, room: number, width: number): string[] {
   if (room < 3) {
     return []
   }
@@ -244,7 +244,7 @@ export function gateBox(p: Paint, e: PaletteEditor, room: number, width: number)
   ]
 }
 
-export function quitDialog(p: Paint, e: PaletteEditor, cols: number): string[] {
+export function quitDialog(p: Paint, e: Editing, cols: number): string[] {
   const width = Math.min(46, cols - 4)
   const edits = e.unsaved()
 

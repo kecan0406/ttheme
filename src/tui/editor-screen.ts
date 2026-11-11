@@ -33,7 +33,15 @@ import { type Start, typedDrop } from './find/attach.ts'
 import { type Help, type HelpSpot, overlay } from './help.ts'
 import { cap, capped } from './keycaps.ts'
 import { CELL_QUERY, type Cell, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './keys.ts'
-import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCOPES } from './palette-editor.ts'
+import {
+  CHANNELS,
+  CONTRAST,
+  type Edited,
+  type Editing,
+  type EditorOptions,
+  PaletteEditor,
+  SCOPES,
+} from './palette-editor.ts'
 import { boxEdge, boxed, checkOf, contrastOf, hintOf, moreOf, pillOf, SEP } from './parts.ts'
 import type { Chart, Drawn, PickerLayer } from './picker-art.ts'
 import { Screen } from './screen.ts'
@@ -45,7 +53,7 @@ const MIN_COLS = 80
 const MIN_ROWS = 24
 const SEED_BAR = 11
 
-function channelLines(p: Paint, e: PaletteEditor, at: Oklch, barWidth: number): string[] {
+function channelLines(p: Paint, e: Editing, at: Oklch, barWidth: number): string[] {
   const held = heldOf(e, at)
 
   return CHANNELS.map((channel, i) => {
@@ -68,7 +76,7 @@ function channelLines(p: Paint, e: PaletteEditor, at: Oklch, barWidth: number): 
   })
 }
 
-function scopeLines(p: Paint, e: PaletteEditor): string[] {
+function scopeLines(p: Paint, e: Editing): string[] {
   if (e.mode !== 'tune' || e.slot() < BASE.length) {
     return []
   }
@@ -105,7 +113,7 @@ function lchLine(p: Paint, at: Oklch): string {
   return `${p.dim('oklch')} ${p.bold(`${at.l.toFixed(3)} ${at.c.toFixed(3)} ${at.h.toFixed(0)}°`)}`
 }
 
-function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): string[] {
+function slotPane(p: Paint, e: Editing, height: number, wide = LEFT): string[] {
   const bad = e.misses()
   const c = colorsOf(e.list)
   const focus = e.slot()
@@ -171,7 +179,7 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
   return [...lines, ...Array.from({ length: Math.max(0, height - lines.length - gate.length) }, () => ''), ...gate]
 }
 
-function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
+function seedPane(p: Paint, e: Editing, height: number): string[] {
   const c = colorsOf(e.list)
 
   const lines = [
@@ -241,7 +249,7 @@ const SPAN = 40
 
 function chart(
   p: Paint,
-  e: PaletteEditor,
+  e: Editing,
   shown: Hex[],
   pick: (o: Oklch) => number,
   top: number,
@@ -289,13 +297,13 @@ function chart(
   })
 }
 
-function litColumns(e: PaletteEditor): Set<number> {
+function litColumns(e: Editing): Set<number> {
   const slots = e.mode === 'tune' ? e.scoped() : [e.slot()]
 
   return new Set(slots.filter((slot) => slot >= BASE.length).map((slot) => (slot - BASE.length) % 8))
 }
 
-function axisLabels(p: Paint, e: PaletteEditor): string {
+function axisLabels(p: Paint, e: Editing): string {
   const lit = litColumns(e)
 
   return `      ${SHORT.map((name, k) => (lit.has(k) ? p.bold(` ${name}  `) : p.dim(` ${name}  `))).join('')}`
@@ -348,7 +356,7 @@ function hueLines(p: Paint, shown: Hex[], pictured: boolean): string[] {
 
 function levelChart(
   name: 'lightness' | 'chroma',
-  e: PaletteEditor,
+  e: Editing,
   shown: Hex[],
   pick: (o: Oklch) => number,
   span: { top: number; bottom: number; rows: number },
@@ -473,14 +481,7 @@ interface Plotted {
   charts: Chart[]
 }
 
-function relations(
-  p: Paint,
-  e: PaletteEditor,
-  width: number,
-  height: number,
-  full: boolean,
-  ink: Hex | undefined,
-): Plotted {
+function relations(p: Paint, e: Editing, width: number, height: number, full: boolean, ink: Hex | undefined): Plotted {
   const shown = e.shown()
   const maxC = Math.max(...shown.slice(BASE.length).map((hex) => oklch(hex).c))
   const topC = Math.max(0.2, Math.ceil(maxC / 0.05) * 0.05)
@@ -530,8 +531,8 @@ function moved(charts: readonly Chart[], rows: number, cols: number): Chart[] {
   }))
 }
 
-function viewTabs(p: Paint, e: PaletteEditor, width: number): string {
-  const tab = (name: string, view: PaletteEditor['view']) =>
+function viewTabs(p: Paint, e: Editing, width: number): string {
+  const tab = (name: string, view: Editing['view']) =>
     spot({ kind: 'view', view }, e.view !== view ? p.dim(` ${name} `) : pillOf(p, name))
 
   return spread(
@@ -541,7 +542,7 @@ function viewTabs(p: Paint, e: PaletteEditor, width: number): string {
   )
 }
 
-function detailPane(p: Paint, e: PaletteEditor, width: number, height: number, ink: Hex | undefined): Plotted {
+function detailPane(p: Paint, e: Editing, width: number, height: number, ink: Hex | undefined): Plotted {
   const slot = e.slot()
   const hex = e.list[slot] as Hex
   const at = e.lch[slot] as Oklch
@@ -602,7 +603,7 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number, i
   return { lines, charts: [] }
 }
 
-function seedSide(p: Paint, e: PaletteEditor, width: number, height: number): string[] {
+function seedSide(p: Paint, e: Editing, width: number, height: number): string[] {
   return [
     spread(`${p.bold('Sample')}  ${p.dim('what the seeds grow')}`, '', width),
     '',
@@ -610,7 +611,7 @@ function seedSide(p: Paint, e: PaletteEditor, width: number, height: number): st
   ]
 }
 
-function openPane(p: Paint, e: PaletteEditor, width: number, height: number): string[] {
+function openPane(p: Paint, e: Editing, width: number, height: number): string[] {
   const choices = e.choices()
   const all = e.options.palettes?.length ?? 0
   const filter = e.filter ? `${p.bold(e.filter)}▏` : p.dim('Type to filter')
@@ -644,7 +645,7 @@ function openPane(p: Paint, e: PaletteEditor, width: number, height: number): st
 const KEEP = ['s', 'g', 'a', 'i']
 const QUITTING = ['y', 'n']
 
-function footer(p: Paint, e: PaletteEditor, width: number): string {
+function footer(p: Paint, e: Editing, width: number): string {
   if (e.help) {
     return barLine(p, e.help.bar(), width)
   }
@@ -757,11 +758,11 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   return barLine(p, { badge, lead, keys, ...(right ? { right } : {}), keep: e.quitting ? QUITTING : KEEP }, width)
 }
 
-export function renderEditor(e: PaletteEditor, cols: number, rows: number, color: boolean, look: Look = {}): string[] {
+export function renderEditor(e: Editing, cols: number, rows: number, color: boolean, look: Look = {}): string[] {
   return drawEditor(e, cols, rows, color, look).lines
 }
 
-export function drawEditor(e: PaletteEditor, cols: number, rows: number, color: boolean, look: Look = {}): Drawn {
+export function drawEditor(e: Editing, cols: number, rows: number, color: boolean, look: Look = {}): Drawn {
   const drawn = drawFrame(e, cols, rows, color, look)
 
   if (cols < MIN_COLS || rows < MIN_ROWS) {
@@ -773,10 +774,13 @@ export function drawEditor(e: PaletteEditor, cols: number, rows: number, color: 
   const solid = (box: string[]) => (ground ? box.map((line) => grounded(line, ground)) : box)
 
   if (e.help) {
+    const box = e.help.box(p, cols, rows - 1)
+
     return {
       ...drawn,
-      lines: overlay(drawn.lines, solid(e.help.box(p, cols, rows - 1)), cols, rows, 1),
+      lines: overlay(drawn.lines, solid(box.lines), cols, rows, 1),
       art: undefined,
+      helpTop: box.top,
     }
   }
 
@@ -797,7 +801,7 @@ export function drawEditor(e: PaletteEditor, cols: number, rows: number, color: 
   return { ...drawn, lines }
 }
 
-function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean, look: Look): Drawn {
+function drawFrame(e: Editing, cols: number, rows: number, color: boolean, look: Look): Drawn {
   const p = painter(color)
 
   if (cols < MIN_COLS || rows < MIN_ROWS) {
@@ -811,8 +815,6 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
 
     return { lines: Array.from({ length: rows }, (_, i) => fit(small[i] ?? '', cols)), art: undefined }
   }
-
-  e.viewport(cols, rows)
 
   if (!e.overlay && e.mode !== 'seeds' && e.view === 'slot') {
     const built = renderBuilder(e, cols, rows, color, look)
@@ -872,7 +874,7 @@ function closesPicker(target: EditorSpot | undefined): boolean {
   return target.kind === 'key' ? !PICKER_KEYS.has(target.key) : !PICKER_SPOTS.has(target.kind)
 }
 
-function pointHelp(e: PaletteEditor, help: Help, hit: Hit | undefined, event: Mouse): void {
+function pointHelp(e: Editing, help: Help, hit: Hit | undefined, event: Mouse): void {
   const target = hit?.target as EditorSpot | HelpSpot | undefined
 
   if (event.action === 'wheel') {
@@ -886,11 +888,11 @@ function pointHelp(e: PaletteEditor, help: Help, hit: Hit | undefined, event: Mo
       e.press('enter')
     }
   } else if (event.action === 'release' && target?.kind !== 'help') {
-    e.help = undefined
+    e.closeHelp()
   }
 }
 
-function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void {
+function pointEditor(e: Editing, hit: Hit | undefined, event: Mouse): void {
   if (e.help) {
     pointHelp(e, e.help, hit, event)
 
@@ -965,25 +967,21 @@ function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void
   } else if (target.kind === 'run') {
     e.point(target.spot)
   } else if (target.kind === 'entry') {
-    e.entry = target.index
+    e.entryTo(target.index)
   } else if (target.kind === 'format') {
-    e.format = target.format
+    e.formatTo(target.format)
   } else if (target.kind === 'channel') {
     e.grip(target.channel)
   } else if (target.kind === 'scope') {
     e.scopeTo(target.scope)
   } else if (target.kind === 'choice') {
-    if (e.overlay === 'open') {
-      e.pick = target.index
-    }
-  } else if (e.typing === undefined && !e.overlay && !e.quitting) {
-    if (target.kind === 'field' && e.mode === 'seeds') {
-      e.field = target.field
-    } else if (target.kind === 'view' && e.mode !== 'seeds') {
-      e.view = target.view
-    } else if (target.kind === 'scene') {
-      e.scene = target.scene
-    }
+    e.pickTo(target.index)
+  } else if (target.kind === 'field') {
+    e.fieldTo(target.field)
+  } else if (target.kind === 'view') {
+    e.viewTo(target.view)
+  } else if (target.kind === 'scene') {
+    e.sceneTo(target.scene)
   }
 }
 
@@ -1007,6 +1005,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
     : { modes: [...MODES, ...pointing()], burst }
 
   return within(terminalOptions, async (terminal) => {
+    editor.viewport(terminal.cols, terminal.rows)
     let away = false
     let over = false
     const own = new Map<string, string>()
@@ -1049,12 +1048,16 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
           return undefined
         }
 
-        const { lines, art, mock, charts } = drawEditor(editor, terminal.cols, terminal.rows, surface.color, {
+        const { lines, art, mock, charts, helpTop } = drawEditor(editor, terminal.cols, terminal.rows, surface.color, {
           behind: editor.pic && backdrop?.laid === true,
           art: layer?.ready === true,
           mock: layer?.ready === true,
           chrome,
         })
+
+        if (helpTop !== undefined) {
+          editor.help?.scrolled(helpTop)
+        }
 
         return {
           lines,
@@ -1111,6 +1114,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
     terminal.write(CLEAR)
     terminal.onHover((event) => screen.hover(event))
     terminal.onResize(() => {
+      editor.viewport(terminal.cols, terminal.rows)
       backdrop?.resized()
       layer?.resized()
       screen.reset(CLEAR)
@@ -1156,19 +1160,19 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
             pointEditor(editor, screen.point(event), event)
           }
 
-          if (editor.copied !== undefined) {
-            terminal.write(`\x1b]52;c;${Buffer.from(editor.copied).toString('base64')}\x07`)
-            editor.copied = undefined
+          const copied = editor.takeCopied()
+
+          if (copied !== undefined) {
+            terminal.write(`\x1b]52;c;${Buffer.from(copied).toString('base64')}\x07`)
           }
 
           if (editor.result) {
             return { edited: editor.result === 'saved' ? editor.edited() : undefined }
           }
 
-          const wants = editor.wants
+          const wants = editor.takeWants()
 
           if (wants) {
-            editor.wants = undefined
             void visit(wants.start)
           }
 

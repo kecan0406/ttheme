@@ -1,13 +1,13 @@
 import { BASE } from '../core/slots.ts'
 import type { Legend, Topic } from './help.ts'
-import type { PaletteEditor } from './palette-editor.ts'
+import type { Editing } from './palette-editor.ts'
 import { MARKS } from './style.ts'
 
 const LEAVE = 'Asks first when something changed: y saves, n discards, esc keeps editing. A second ctrl+c discards.'
 
 const BOX_KEYS = new Set(['n  N', 'f', 'u', 'ctrl+r', 'space'])
 
-export function editorBoxTopics(e: PaletteEditor): Topic[] {
+export function editorBoxTopics(e: Editing): Topic[] {
   const quiet =
     e.options.help !== false &&
     e.mode === 'list' &&
@@ -22,7 +22,7 @@ export function editorBoxTopics(e: PaletteEditor): Topic[] {
   return quiet ? editorTopics(e).filter((t) => BOX_KEYS.has(t.keys)) : []
 }
 
-export function editorTopics(e: PaletteEditor): Topic[] {
+export function editorTopics(e: Editing): Topic[] {
   const list = e.mode === 'list'
   const plain = list && !e.inspect
   const tuning = e.mode === 'tune'
@@ -229,7 +229,7 @@ export function editorTopics(e: PaletteEditor): Topic[] {
   ]
 }
 
-export function editorLegend(e: PaletteEditor): Legend {
+export function editorLegend(e: Editing): Legend {
   if (e.mode === 'seeds') {
     return []
   }

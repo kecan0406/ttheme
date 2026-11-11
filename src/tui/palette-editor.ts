@@ -219,6 +219,8 @@ function alongside(range: { min: number; max: number; step: number; wraps?: bool
   return Math.min(top, Math.round((range.min + (range.max - range.min) * at) / range.step) * range.step)
 }
 
+export type Editing = Readonly<PaletteEditor>
+
 export class PaletteEditor {
   mode: Mode
   seeds: Seeds = SEEDS
@@ -1330,6 +1332,60 @@ export class PaletteEditor {
     this.hold()
     const n = this.scoped().length
     this.say(n > 1 ? `${n} colors move together` : 'This color moves alone')
+  }
+
+  entryTo(entry: number): void {
+    this.entry = entry
+  }
+
+  formatTo(format: Format): void {
+    this.format = format
+  }
+
+  pickTo(pick: number): void {
+    if (this.overlay === 'open') {
+      this.pick = pick
+    }
+  }
+
+  fieldTo(field: number): void {
+    if (this.idle() && this.mode === 'seeds') {
+      this.field = field
+    }
+  }
+
+  viewTo(view: PaletteEditor['view']): void {
+    if (this.idle() && this.mode !== 'seeds') {
+      this.view = view
+    }
+  }
+
+  sceneTo(scene: number): void {
+    if (this.idle()) {
+      this.scene = scene
+    }
+  }
+
+  closeHelp(): void {
+    this.help = undefined
+  }
+
+  takeCopied(): string | undefined {
+    const copied = this.copied
+    this.copied = undefined
+
+    return copied
+  }
+
+  takeWants(): { start?: Start } | undefined {
+    const wants = this.wants
+    this.wants = undefined
+
+    return wants
+  }
+
+  private idle(): boolean {
+    return this.typing === undefined && !this.overlay && !this.quitting
   }
 
   private endTune(): void {
