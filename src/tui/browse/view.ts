@@ -11,9 +11,9 @@ import type { Card, Scrolled } from '../palette-prompt.ts'
 import { SEP } from '../parts.ts'
 import { MARKS } from '../style.ts'
 import { button, cap, EMPTY, FAILED, framed, MIN_ITEMS, more, whereOf } from './draw.ts'
-import type { Laid, Shown } from './model.ts'
+import type { Laid, Modal, Shown } from './model.ts'
 import { browseTopics } from './topics.ts'
-import type { Detail, Found, Marketplace, Row } from './types.ts'
+import type { Detail, Found, Row } from './types.ts'
 
 const LEFT_MIN = 40
 const LEFT_MAX = 60
@@ -40,12 +40,6 @@ export function row(b: Shown, found: Found, idle = false): Row {
 
 export function heads(b: Shown): Row[] {
   return [row(b, { kind: 'new' }, true), row(b, { kind: 'search' })]
-}
-
-export function status(b: Shown, marketplace: Marketplace): string {
-  return b.staged.adds.has(marketplace.source)
-    ? 'Will add'
-    : (b.network.busy.get(marketplace.source) ?? (b.network.failed.has(marketplace.source) ? FAILED : ''))
 }
 
 export function about(b: Shown, top: string, members: PaletteEntry[], matching?: number): Card {
@@ -77,10 +71,11 @@ export function badge(b: Shown, id: string): string {
   }
 
   const auto = isRemote(m.source) && b.staged.auto(m) ? `${MARKS.auto} auto-update` : ''
-  const state = status(b, m)
-  const failed = state === FAILED ? `  ${b.p.error(state)}` : state ? `  ${b.p.dim(state)}` : ''
+  const busy = b.staged.adds.has(m.source) ? 'Will add' : b.network.busy(m.source)
+  const failed = busy === undefined && b.network.failure(m.source) !== undefined
+  const state = failed ? `  ${b.p.error(FAILED)}` : busy ? `  ${b.p.dim(busy)}` : ''
 
-  return `${auto ? `  ${b.p.dim(auto)}` : ''}${failed}`
+  return `${auto ? `  ${b.p.dim(auto)}` : ''}${state}`
 }
 
 export function foundLine(b: Shown, found: Found, focused: boolean, at: number, held: boolean): string {
@@ -102,7 +97,7 @@ export function mark(b: Shown, entry: PaletteEntry): string {
 }
 
 export function counts(b: Shown): string {
-  if (b.showing === 'search') {
+  if (b.place === 'search') {
     return b.search.counts()
   }
 
@@ -121,7 +116,7 @@ export function searchText(b: Shown): string {
     return `${typed}_`
   }
 
-  if (b.showing === 'search') {
+  if (b.place === 'search') {
     return b.p.dim('Search… a work or a marketplace')
   }
 
@@ -131,7 +126,7 @@ export function searchText(b: Shown): string {
 }
 
 export function heading(b: Shown): string {
-  const title = b.showing === 'search' ? 'Search marketplace' : 'Browse'
+  const title = b.place === 'search' ? 'Search marketplace' : 'Browse'
 
   return `${b.p.bold(title)} ${b.p.dim(`(${counts(b)})`)}`
 }
@@ -141,7 +136,7 @@ export function searchBox(b: Shown, width: number): string[] {
 }
 
 export function detail(b: Shown, width: number): Detail {
-  if (b.showing === 'search') {
+  if (b.place === 'search') {
     return b.search.detail(width)
   }
 
@@ -170,7 +165,7 @@ export function foundDetail(b: Shown, row: Found, width: number): Detail {
   if (row.kind === 'new') {
     return {
       title: b.p.bold('Add marketplace'),
-      lines: b.form.lines(width, b.side === 'form', b.beat),
+      lines: b.form.lines(width, b.place === 'form', b.beat),
       brief: capped('enter adds a repository or a folder'),
     }
   }
@@ -184,32 +179,12 @@ export function foundDetail(b: Shown, row: Found, width: number): Detail {
   }
 }
 
-export function footer(b: Shown): Bar {
-  if (b.help) {
-    return b.help.bar()
-  }
-
-  if (b.leaving !== undefined) {
-    const count = b.staged.count()
-
+function question(b: Shown, modal: Exclude<Modal, { kind: 'help' }>): Bar {
+  if (modal.kind === 'remove') {
     return {
       badge: 'BROWSE',
-      lead: `Apply ${count} ${count === 1 ? 'change' : 'changes'} before you leave?`,
-      short: `Apply ${count}?`,
-      keys: [
-        ['y', 'apply'],
-        ['n', 'discard'],
-      ],
-      right: ['esc', 'stay'],
-      keep: ['y', 'n'],
-    }
-  }
-
-  if (b.removing) {
-    return {
-      badge: 'BROWSE',
-      lead: `Remove ${b.removing.id}? Its installed palettes stay installed`,
-      short: `Remove ${b.removing.id}?`,
+      lead: `Remove ${modal.marketplace.id}? Its installed palettes stay installed`,
+      short: `Remove ${modal.marketplace.id}?`,
       keys: [
         ['y', 'remove'],
         ['n', 'keep'],
@@ -219,11 +194,33 @@ export function footer(b: Shown): Bar {
     }
   }
 
-  if (b.showing === 'search') {
+  const count = b.staged.count()
+
+  return {
+    badge: 'BROWSE',
+    lead: `Apply ${count} ${count === 1 ? 'change' : 'changes'} before you leave?`,
+    short: `Apply ${count}?`,
+    keys: [
+      ['y', 'apply'],
+      ['n', 'discard'],
+    ],
+    right: ['esc', 'stay'],
+    keep: ['y', 'n'],
+  }
+}
+
+export function footer(b: Shown): Bar {
+  const modal = b.modal
+
+  if (modal) {
+    return modal.kind === 'help' ? modal.help.bar() : question(b, modal)
+  }
+
+  if (b.place === 'search') {
     return b.search.bar()
   }
 
-  if (b.side === 'form') {
+  if (b.place === 'form') {
     return { badge: 'BROWSE (ADD)', keys: [...b.form.keys(), ['?', 'keys']], right: ['esc', 'cancel'] }
   }
 
@@ -234,14 +231,18 @@ export function footer(b: Shown): Bar {
   return {
     badge: filter ? 'BROWSE (FILTER)' : 'BROWSE',
     ...(b.notice ? { lead: toned(b.p, b.notice.tone, b.notice.text) } : {}),
-    keys: [...(b.side === 'panel' ? b.panel.keys(apply) : cardKeys(b, apply)), ...tail],
-    ...(!filter && b.side === 'panel'
+    keys: [...(b.place === 'panel' ? b.panel.keys(apply) : cardKeys(b, apply)), ...tail],
+    ...(!filter && b.place === 'panel'
       ? { right: ['esc', 'back'] as Hint }
       : b.standing
         ? {}
         : { right: ['esc', filter ? 'clear' : 'cancel'] as Hint }),
     ...(b.standing ? { standing: b.standing, beat: b.beat } : {}),
   }
+}
+
+function inside(b: Shown): boolean {
+  return b.place === 'panel' || b.place === 'form'
 }
 
 export function cardKeys(b: Shown, apply: Hint[]): Hint[] {
@@ -271,8 +272,10 @@ export function drawBrowse(b: Shown, cols: number, rows: number): Drawn {
     return { text: small(b, cols, rows, MIN_ROWS), laid: { scrolls: [] } }
   }
 
-  if (b.review.phase !== 'browse') {
-    const { text, offset } = b.review.frame(cols, rows)
+  const modal = b.modal
+
+  if (b.reviewing()) {
+    const { text, offset } = b.review.frame(cols, rows, modal && modal.kind !== 'help' ? question(b, modal) : undefined)
 
     return { text, laid: { offset, scrolls: [] } }
   }
@@ -304,7 +307,7 @@ export function drawBrowse(b: Shown, cols: number, rows: number): Drawn {
   const widest = Math.max(0, ...view.lines.map((line) => cells(plain(line)) + 3))
   const left = wide ? Math.min(LEFT_MAX, width - PANEL_MIN - 1, Math.max(LEFT_MIN, widest)) : width
 
-  const over = !wide && b.side !== 'cards'
+  const over = !wide && inside(b)
   const main = over ? box(b, width - 1, items + 3) : cards(b, view, wide, left, width, items)
 
   const frame = [
@@ -314,7 +317,7 @@ export function drawBrowse(b: Shown, cols: number, rows: number): Drawn {
     ` ${barLine(b.p, footer(b), width - 1)}`,
   ]
 
-  const help = b.help?.box(b.p, cols, rows)
+  const help = modal?.kind === 'help' ? modal.help.box(b.p, cols, rows) : undefined
   const scrolls: Laid['scrolls'] = [[list, view.scroll]]
 
   if (main.scroll) {
@@ -336,7 +339,7 @@ export function cards(
   items: number,
 ): Scrolled {
   const typed = b.field.value.trim()
-  const none = b.showing !== 'search' && typed !== '' && b.list.matched() === 0
+  const none = b.place !== 'search' && typed !== '' && b.list.matched() === 0
   const empty = none && lines.length + 2 <= items ? ['', b.p.dim(`   No palettes match '${typed}'`)] : []
   const body = [...lines, ...empty].map((line) => ` ${line}`)
 
@@ -368,7 +371,7 @@ export function cards(
 }
 
 export function keysFor(b: Shown, width: number, height: number): string[] {
-  if (!b.keyed || b.side === 'form') {
+  if (!b.keyed || b.place === 'form') {
     return []
   }
 
@@ -380,5 +383,5 @@ export function keysFor(b: Shown, width: number, height: number): string[] {
 export function box(b: Shown, width: number, height: number): Scrolled {
   const top = b.current().focusedRow()?.kind === 'top'
 
-  return b.panel.draw(width, height, detail(b, width - 4), top, b.side !== 'cards')
+  return b.panel.draw(width, height, detail(b, width - 4), top, inside(b))
 }

@@ -144,16 +144,46 @@ function isPicture(text: string): boolean {
 
 type Mode = 'seeds' | 'list' | 'tune'
 
+type Base = Mode | 'inspect'
+
+export type Modal =
+  | { readonly kind: 'help'; readonly help: Help }
+  | { readonly kind: 'quit'; readonly focus: 'yes' | 'no' }
+  | { readonly kind: 'type'; readonly text: string }
+  | { readonly kind: 'open'; readonly filter: string; readonly pick: number }
+  | { readonly kind: 'menu'; readonly menu: Menu; readonly entry: number }
+
+export type Layer = Modal['kind'] | 'before' | Base
+
+type Links = ReadonlyMap<number, Oklch>
+
 interface Snapshot {
   list: Hex[]
   lch: Oklch[]
+  links: Links
 }
 
-interface Step {
-  list: Hex[]
-  lch: Oklch[]
+interface Step extends Snapshot {
   holds: Map<number, number>
-  unlinked: Set<number>
+}
+
+interface Tuning {
+  readonly from: Snapshot
+  holds: Map<number, number>
+  steps: Step[]
+  redos: Step[]
+  last: string | undefined
+}
+
+function sameLinks(one: Links, other: Links): boolean {
+  return (
+    one.size === other.size &&
+    one.entries().every(([bright, by]) => {
+      const there = other.get(bright)
+
+      return there !== undefined && there.l === by.l && there.c === by.c && there.h === by.h
+    })
+  )
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
@@ -189,7 +219,7 @@ export function gateRows(list: Hex[]): GateRow[] {
   })
 }
 
-const ALWAYS = new Set(['reset', 'reset-all', 'hex', 'paste', 'fix', 'open', 'tune', 'follow'])
+const ALWAYS = new Set(['reset', 'reset-all', 'hex', 'paste', 'fix', 'open', 'follow'])
 
 const JUMPS = new Set(['jump', 'hex', 'paste', 'reset'])
 
@@ -222,7 +252,6 @@ function alongside(range: { min: number; max: number; step: number; wraps?: bool
 export type Editing = Readonly<PaletteEditor>
 
 export class PaletteEditor {
-  mode: Mode
   seeds: Seeds = SEEDS
   field = 0
   list: Hex[]
@@ -235,25 +264,16 @@ export class PaletteEditor {
   scope: Scope = 'this'
   view: 'slot' | 'relations' = 'slot'
   scene = 0
-  typing: string | undefined
-  overlay: 'open' | undefined
-  help: Help | undefined
-  quitting = false
-  quitFocus: 'yes' | 'no' = 'yes'
+  modal: Modal | undefined
+  inspect: { readonly spot: Spot | undefined } | undefined
   compare = false
   notice: string | undefined
   noticeTone: Tone = 'info'
-  filter = ''
-  pick = 0
   result: 'saved' | 'cancelled' | undefined
   wants: { start?: Start } | undefined
   pictures: number
-  inspect = false
-  spot: Spot | undefined
   format: Format = 'hex'
   pic = true
-  menu: Menu | undefined
-  entry = 0
   changedOnly = false
   where = false
   size: { cols: number; rows: number } | undefined
@@ -263,41 +283,44 @@ export class PaletteEditor {
   readonly fresh: boolean
   readonly tone: boolean
   private seeded = false
-  private tuneFrom: { list: Hex[]; lch: Oklch[] } | undefined
-  private holds = new Map<number, number>()
+  private tuning: Tuning | undefined
   private clip: Hex | undefined
   private history: Snapshot[] = []
   private future: Snapshot[] = []
   private lastEdit: string | undefined
-  private steps: Step[] = []
-  private redos: Step[] = []
-  private lastStep: string | undefined
-  private links = new Map<number, number>()
-  private unlinked = new Set<number>()
-  private offsets = new Map<number, Oklch>()
+  private links: Links
 
   constructor(options: EditorOptions) {
     this.options = options
     this.tone = options.tone === true
     this.fresh = options.colors === undefined
-    this.mode = this.fresh ? 'seeds' : 'list'
     this.list = listOf(options.colors ?? grow(this.seeds))
     this.lch = this.lchs()
     this.start = this.list
     this.original = options.original ? listOf(options.original) : this.list
     this.pictures = options.pictures ?? 0
     this.startPictures = this.pictures
-    this.chain(this.original)
+    this.links = brightLinks(this.original)
 
     if (options.notice) {
       this.say(options.notice)
     }
   }
 
-  private chain(list: Hex[]): void {
-    this.offsets = brightLinks(list)
-    this.links = new Map([...this.offsets.keys()].map((bright) => [bright, bright - 8]))
-    this.unlinked = new Set()
+  get mode(): Mode {
+    return this.tuning ? 'tune' : this.fresh && !this.seeded ? 'seeds' : 'list'
+  }
+
+  base(): Base {
+    return this.mode === 'list' && this.inspect ? 'inspect' : this.mode
+  }
+
+  under(): 'before' | Base {
+    return this.compare ? 'before' : this.base()
+  }
+
+  layer(): Layer {
+    return this.modal?.kind ?? this.under()
   }
 
   pair(slot: number): { normal: number; bright: number; on: boolean; lift: number } | undefined {
@@ -311,15 +334,13 @@ export class PaletteEditor {
     return {
       normal,
       bright,
-      on: this.linkOf(bright) !== undefined,
+      on: this.links.has(bright),
       lift: (this.lch[bright] as Oklch).l - (this.lch[normal] as Oklch).l,
     }
   }
 
   linkOf(slot: number): number | undefined {
-    const normal = this.links.get(slot)
-
-    return normal !== undefined && !this.unlinked.has(slot) ? normal : undefined
+    return this.links.has(slot) ? slot - 8 : undefined
   }
 
   changed(slot: number): boolean {
@@ -365,7 +386,7 @@ export class PaletteEditor {
   }
 
   get held(): number | undefined {
-    return this.holds.get(this.slot())
+    return this.tuning?.holds.get(this.slot())
   }
 
   colors(): Colors {
@@ -402,31 +423,36 @@ export class PaletteEditor {
   }
 
   choices(): Choice[] {
-    const needle = this.filter.toLowerCase()
+    const needle = this.modal?.kind === 'open' ? this.modal.filter.toLowerCase() : ''
 
     return (this.options.palettes ?? []).filter((c) => c.name.toLowerCase().includes(needle))
   }
 
   paste(text: string): void {
     this.notice = undefined
+    const modal = this.modal
 
-    if (this.help) {
-      this.help.paste(text)
+    switch (modal?.kind) {
+      case 'help':
+        modal.help.paste(text)
 
-      return
+        return
+      case 'open': {
+        const typed = [...text.toLowerCase()].filter((ch) => NAME_CHAR.test(ch)).join('')
+        this.modal = { kind: 'open', filter: modal.filter + typed, pick: 0 }
+
+        return
+      }
+
+      case 'quit':
+      case 'menu':
+        return
+      default:
+        this.pasted(text)
     }
+  }
 
-    if (this.overlay === 'open') {
-      this.filter += [...text.toLowerCase()].filter((ch) => NAME_CHAR.test(ch)).join('')
-      this.pick = 0
-
-      return
-    }
-
-    if (this.quitting || this.menu) {
-      return
-    }
-
+  private pasted(text: string): void {
     if (!this.tone && text.trim() === '') {
       this.findPictures({ clipboard: true })
 
@@ -449,7 +475,7 @@ export class PaletteEditor {
       this.remember('open')
       this.list = listOf(drawn)
       this.lch = this.lchs()
-      this.chain(this.list)
+      this.links = brightLinks(this.list)
       this.say('Took the colors of the share code', 'ok')
 
       return
@@ -463,7 +489,7 @@ export class PaletteEditor {
       return
     }
 
-    this.typing = undefined
+    this.modal = undefined
     this.take(color, 'paste')
   }
 
@@ -476,49 +502,56 @@ export class PaletteEditor {
       return
     }
 
-    if (this.help) {
-      const answer = this.help.key(key)
+    const modal = this.modal
 
-      if (answer !== 'stay') {
-        const run = answer === 'run' ? this.help.chosen()?.run : undefined
-        this.help = undefined
-        run?.()
+    switch (modal?.kind) {
+      case 'help': {
+        const answer = modal.help.key(key)
+
+        if (answer !== 'stay') {
+          const run = answer === 'run' ? modal.help.chosen()?.run : undefined
+          this.modal = undefined
+          run?.()
+        }
+
+        return
       }
 
-      return
+      case 'quit':
+        this.quitKey(modal.focus, key)
+
+        return
+      case 'type':
+        this.type(modal.text, key)
+
+        return
+      case 'open':
+        this.openKey(modal, key)
+
+        return
+      case 'menu':
+        this.menuKey(modal, key)
+
+        return
+      default:
+        this.baseKey(key)
     }
+  }
 
-    if (this.quitting) {
-      this.quitKey(key)
-
-      return
-    }
-
-    if (this.typing !== undefined) {
-      this.type(key)
-
-      return
-    }
-
-    if (this.overlay === 'open') {
-      this.openKey(key)
-
-      return
-    }
-
-    if (this.menu) {
-      this.menuKey(key)
-
-      return
-    }
-
+  private baseKey(key: string): void {
     if (key === '?') {
-      this.help = new Help(editorTopics(this), editorLegend(this))
+      this.modal = { kind: 'help', help: new Help(editorTopics(this), editorLegend(this)) }
 
       return
     }
 
-    if (this.inspect && this.mode === 'list' && this.inspectKey(key)) {
+    if (this.compare && key === 'esc') {
+      this.compare = false
+
+      return
+    }
+
+    if (this.base() === 'inspect' && this.inspectKey(key)) {
       return
     }
 
@@ -544,16 +577,9 @@ export class PaletteEditor {
       return
     }
 
-    if (this.compare && key === 'esc') {
-      this.compare = false
-
-      return
-    }
-
     if (key === 'g' && this.mode !== 'seeds') {
       this.view = this.view === 'slot' ? 'relations' : 'slot'
-      this.inspect = false
-      this.spot = undefined
+      this.inspect = undefined
 
       return
     }
@@ -561,26 +587,26 @@ export class PaletteEditor {
     const line = lineStep(key, true)
     const step = line === undefined ? key : line < 0 ? 'up' : 'down'
 
-    if (this.mode === 'seeds') {
+    if (this.tuning) {
+      this.tuneKey(this.tuning, step)
+    } else if (this.mode === 'seeds') {
       this.seedKey(step)
-    } else if (this.mode === 'tune') {
-      this.tuneKey(step)
     } else {
       this.listKey(step)
     }
   }
 
   select(slot: number): void {
-    if (this.mode === 'seeds' || this.typing !== undefined || this.overlay || this.quitting) {
+    if (this.mode === 'seeds' || this.modal) {
       return
     }
 
-    if (this.mode === 'tune') {
+    if (this.tuning) {
       if (slot === this.slot()) {
         return
       }
 
-      this.tuneKey('enter')
+      this.keep(this.tuning)
     }
 
     this.notice = undefined
@@ -596,46 +622,50 @@ export class PaletteEditor {
     }
   }
 
-  grip(channel: number): boolean {
-    if (this.mode === 'seeds' || this.typing !== undefined || this.overlay || this.quitting) {
-      return false
+  grip(channel: number): void {
+    this.grasp(channel)
+  }
+
+  private grasp(channel: number): Tuning | undefined {
+    if (this.mode === 'seeds' || this.modal) {
+      return undefined
     }
 
     this.notice = undefined
-
-    if (this.mode === 'list') {
-      this.tune()
-    }
-
+    const tuning = this.tuning ?? this.tune()
     this.channel = channel
 
-    return true
+    return tuning
   }
 
   slide(channel: number, fraction: number): void {
-    if (!this.grip(channel)) {
+    const tuning = this.grasp(channel)
+
+    if (!tuning) {
       return
     }
 
     const at = Math.min(1, Math.max(0, fraction))
 
-    this.stepped('point', () => {
+    this.stepped(tuning, 'point', () => {
       if (channel === CONTRAST) {
-        this.reach(21 ** at)
+        this.reach(tuning, 21 ** at)
       } else {
-        this.put(alongside(CHANNELS[channel] as Channel, at))
+        this.put(tuning, alongside(CHANNELS[channel] as Channel, at))
       }
     })
   }
 
   touch(): void {
-    this.lastStep = undefined
+    if (this.tuning) {
+      this.tuning.last = undefined
+    }
   }
 
   sow(field: number, fraction: number): void {
     const seed = SEED_FIELDS[field]
 
-    if (this.mode !== 'seeds' || this.overlay || this.quitting || !seed) {
+    if (this.mode !== 'seeds' || this.modal || !seed) {
       return
     }
 
@@ -650,15 +680,18 @@ export class PaletteEditor {
   scroll(step: number): void {
     const clamp = (value: number, last: number) => Math.min(last, Math.max(0, value + step))
 
-    if (this.overlay === 'open') {
-      this.pick = clamp(this.pick, Math.max(0, this.choices().length - 1))
-    } else if (this.quitting || this.typing !== undefined) {
+    const modal = this.modal
+    const tuning = this.tuning
+
+    if (modal?.kind === 'open') {
+      this.modal = { ...modal, pick: clamp(modal.pick, Math.max(0, this.choices().length - 1)) }
+    } else if (modal) {
       return
+    } else if (tuning) {
+      this.channel = 0
+      this.stepped(tuning, 'l', () => this.step(tuning, -step))
     } else if (this.mode === 'seeds') {
       this.field = clamp(this.field, SEED_FIELDS.length - 1)
-    } else if (this.mode === 'tune') {
-      this.channel = 0
-      this.stepped('l', () => this.step(-step))
     } else {
       this.row = clamp(this.row, ROWS - 1)
       this.lastEdit = undefined
@@ -698,52 +731,46 @@ export class PaletteEditor {
   private leaveSeeds(): void {
     this.start = this.list
     this.original = this.list
-    this.chain(this.original)
+    this.links = brightLinks(this.original)
     this.seeded = true
-    this.mode = 'list'
   }
 
   private leave(): void {
     if (this.dirty()) {
-      this.quitting = true
-      this.quitFocus = 'yes'
+      this.modal = { kind: 'quit', focus: 'yes' }
     } else {
       this.result = 'cancelled'
     }
   }
 
   private interrupt(): void {
-    if (this.quitting) {
-      this.quitting = false
+    const asked = this.modal?.kind === 'quit'
+    this.modal = undefined
+
+    if (asked) {
       this.result = 'cancelled'
 
       return
     }
 
-    this.help = undefined
-    this.overlay = undefined
-    this.filter = ''
-    this.menu = undefined
-    this.typing = undefined
-    this.inspect = false
-    this.spot = undefined
+    this.inspect = undefined
     this.compare = false
 
-    if (this.mode === 'tune') {
-      this.tuneKey('enter')
+    if (this.tuning) {
+      this.keep(this.tuning)
     }
 
     this.leave()
   }
 
-  private quitKey(key: string): void {
+  private quitKey(focus: 'yes' | 'no', key: string): void {
     if (key === 'esc') {
-      this.quitting = false
+      this.modal = undefined
     } else if (['left', 'right', 'h', 'l', 'tab', 'shift-tab'].includes(key)) {
-      this.quitFocus = this.quitFocus === 'yes' ? 'no' : 'yes'
+      this.modal = { kind: 'quit', focus: focus === 'yes' ? 'no' : 'yes' }
     } else if (key === 'y' || key === 'Y' || key === 'n' || key === 'N' || key === 'enter') {
-      const yes = key === 'enter' ? this.quitFocus === 'yes' : key === 'y' || key === 'Y'
-      this.quitting = false
+      const yes = key === 'enter' ? focus === 'yes' : key === 'y' || key === 'Y'
+      this.modal = undefined
 
       if (yes) {
         this.save()
@@ -765,8 +792,7 @@ export class PaletteEditor {
 
   private openPalettes(): void {
     if ((this.options.palettes ?? []).length > 0) {
-      this.overlay = 'open'
-      this.pick = 0
+      this.modal = { kind: 'open', filter: '', pick: 0 }
     } else {
       this.say('No other palettes to take colors from')
     }
@@ -797,7 +823,7 @@ export class PaletteEditor {
     } else if (key === 'enter' || key === 'tab') {
       this.tune()
     } else if (key === '#') {
-      this.typing = ''
+      this.modal = { kind: 'type', text: '' }
     } else if (key === 'c') {
       this.clip = this.list[this.slot()]
       this.say(`Copied ${this.clip}`, 'ok')
@@ -888,11 +914,9 @@ export class PaletteEditor {
     } else if (key === 'w') {
       this.where = !this.where
     } else if (key === 'x' && this.options.exports) {
-      this.menu = 'export'
-      this.entry = 0
+      this.modal = { kind: 'menu', menu: 'export', entry: 0 }
     } else if (key === 'I') {
-      this.menu = 'import'
-      this.entry = 0
+      this.modal = { kind: 'menu', menu: 'import', entry: 0 }
     } else {
       return false
     }
@@ -900,22 +924,26 @@ export class PaletteEditor {
     return true
   }
 
-  private menuKey(key: string): void {
-    const count = this.menu === 'export' ? 3 : 2
+  private menuKey(modal: Modal & { kind: 'menu' }, key: string): void {
+    const count = modal.menu === 'export' ? 3 : 2
     const line = lineStep(key, true)
 
     if (key === 'esc') {
-      this.menu = undefined
+      this.modal = undefined
     } else if (line !== undefined) {
-      this.entry = (this.entry + (line < 0 ? count - 1 : 1)) % count
+      this.modal = { ...modal, entry: (modal.entry + (line < 0 ? count - 1 : 1)) % count }
     } else if (key === 'enter') {
-      this.choose(this.entry)
+      this.choose(modal.entry)
     }
   }
 
   choose(entry: number): void {
-    const menu = this.menu
-    this.menu = undefined
+    if (this.modal?.kind !== 'menu') {
+      return
+    }
+
+    const menu = this.modal.menu
+    this.modal = undefined
 
     if (menu === 'import') {
       if (entry === 0) {
@@ -934,7 +962,7 @@ export class PaletteEditor {
 
     const exports = this.options.exports
 
-    if (menu !== 'export' || !exports) {
+    if (!exports) {
       return
     }
 
@@ -960,15 +988,14 @@ export class PaletteEditor {
       return
     }
 
-    this.inspect = true
-    this.spot = firstSpot(layout, this.slot())
+    this.inspect = { spot: firstSpot(layout, this.slot()) }
   }
 
   private inspectKey(key: string): boolean {
     const layout = this.layout()
 
     if (!layout) {
-      this.inspect = false
+      this.inspect = undefined
 
       return false
     }
@@ -984,13 +1011,12 @@ export class PaletteEditor {
     const way = line === undefined ? ways.get(key) : line < 0 ? 'up' : 'down'
 
     if (key === 'i' || key === 'esc') {
-      this.inspect = false
-      this.spot = undefined
+      this.inspect = undefined
     } else if (way) {
-      this.spot = moveSpot(layout, validSpot(layout, this.spot), way)
+      this.inspect = { spot: moveSpot(layout, validSpot(layout, this.inspect?.spot), way) }
     } else if (key === 'shift-left' || key === 'shift-right') {
       this.scene += key === 'shift-left' ? -1 : 1
-      this.spot = undefined
+      this.inspect = { spot: undefined }
     } else if (key === 'enter') {
       this.jump()
     } else {
@@ -1001,16 +1027,16 @@ export class PaletteEditor {
   }
 
   point(spot: Spot): void {
-    if (this.mode !== 'seeds' && !this.overlay && !this.quitting && this.typing === undefined && this.layout()) {
-      this.inspect = true
-      this.spot = spot
+    if (this.mode !== 'seeds' && !this.modal && this.layout()) {
+      this.inspect = { spot }
     }
   }
 
   slotsHere(): { text: number; ground: number } | undefined {
     const layout = this.layout()
+    const spot = this.inspect?.spot
 
-    return layout && this.spot ? slotsAt(layout, this.spot) : undefined
+    return layout && spot ? slotsAt(layout, spot) : undefined
   }
 
   private jump(): void {
@@ -1021,8 +1047,7 @@ export class PaletteEditor {
     }
 
     const slot = here.ground !== 0 ? here.ground : here.text
-    this.inspect = false
-    this.spot = undefined
+    this.inspect = undefined
     this.show(slot)
     this.select(slot)
   }
@@ -1034,14 +1059,15 @@ export class PaletteEditor {
   }
 
   openSlot(slot: number): void {
-    if (this.mode === 'seeds' || this.typing !== undefined || this.overlay || this.quitting) {
+    if (this.mode === 'seeds' || this.modal) {
       return
     }
 
-    const same = this.mode === 'tune' && slot === this.slot()
+    const tuning = this.tuning
+    const same = tuning !== undefined && slot === this.slot()
 
-    if (this.mode === 'tune') {
-      this.tuneKey('enter')
+    if (tuning) {
+      this.keep(tuning)
     }
 
     if (same) {
@@ -1050,31 +1076,32 @@ export class PaletteEditor {
 
     this.show(slot)
     this.select(slot)
-
-    if (this.mode === 'list') {
-      this.tune()
-    }
+    this.tune()
   }
 
   dismiss(): void {
-    if (this.mode !== 'tune' || this.overlay || this.quitting) {
+    const tuning = this.tuning
+
+    if (!tuning || (this.modal && this.modal.kind !== 'type')) {
       return
     }
 
-    this.typing = undefined
-    this.tuneKey('enter')
+    this.modal = undefined
+    this.keep(tuning)
   }
 
   plane(lightness: number, chroma: number): void {
-    if (!this.grip(0)) {
+    const tuning = this.grasp(0)
+
+    if (!tuning) {
       return
     }
 
-    this.stepped('point', () => {
+    this.stepped(tuning, 'point', () => {
       this.channel = 0
-      this.put(lightness)
+      this.put(tuning, lightness)
       this.channel = 1
-      this.put(chroma)
+      this.put(tuning, chroma)
     })
   }
 
@@ -1091,21 +1118,27 @@ export class PaletteEditor {
     const bright = normal + 8
     const names = `${slotLabel(bright).name} and ${slotLabel(normal).name.toLowerCase()}`
 
-    if (this.mode !== 'tune') {
+    if (!this.tuning) {
       this.remember('link')
     }
 
-    if (this.linkOf(bright) !== undefined) {
-      this.unlinked.add(bright)
+    if (this.links.has(bright)) {
+      this.unlink(bright)
       this.say(`${names} move apart`)
 
       return
     }
 
-    this.links.set(bright, normal)
-    this.unlinked.delete(bright)
-    this.offsets.set(bright, offsetOf(this.lch[normal] as Oklch, this.lch[bright] as Oklch))
+    this.link(normal, bright)
     this.say(`${names} move together`)
+  }
+
+  private link(normal: number, bright: number): void {
+    this.links = new Map(this.links).set(bright, offsetOf(this.lch[normal] as Oklch, this.lch[bright] as Oklch))
+  }
+
+  private unlink(bright: number): void {
+    this.links = new Map(this.links.entries().filter(([slot]) => slot !== bright))
   }
 
   private nextMiss(way: number): void {
@@ -1131,21 +1164,41 @@ export class PaletteEditor {
     }
   }
 
-  private tune(): void {
-    this.remember('tune')
-    this.tuneFrom = { list: this.list, lch: this.lch }
-    this.holds = new Map()
-    this.hold()
-    this.steps = []
-    this.redos = []
-    this.lastStep = undefined
-    this.mode = 'tune'
+  private tune(): Tuning {
+    const tuning: Tuning = { from: this.record(), holds: new Map(), steps: [], redos: [], last: undefined }
+    this.lastEdit = 'tune'
+    this.tuning = tuning
+    this.hold(tuning)
+
+    return tuning
   }
 
-  private hold(): void {
+  private keep(tuning: Tuning): void {
+    const { from } = tuning
+
+    if (this.list.every((c, i) => c === from.list[i]) && sameLinks(this.links, from.links)) {
+      this.history = this.history.filter((snap) => snap !== from)
+    }
+
+    this.tuning = undefined
+  }
+
+  private cancel(tuning: Tuning): void {
+    const { from } = tuning
+    const at = this.history.lastIndexOf(from)
+
+    if (at >= 0) {
+      this.history = this.history.slice(0, at)
+    }
+
+    this.restore(from)
+    this.tuning = undefined
+  }
+
+  private hold(tuning: Tuning): void {
     for (const slot of this.scoped()) {
-      if (!this.holds.has(slot)) {
-        this.holds.set(slot, (this.lch[slot] as Oklch).c)
+      if (!tuning.holds.has(slot)) {
+        tuning.holds.set(slot, (this.lch[slot] as Oklch).c)
       }
     }
   }
@@ -1154,52 +1207,37 @@ export class PaletteEditor {
     return scopeSlots(this.scope, this.slot())
   }
 
-  private tuneKey(key: string): void {
+  private tuneKey(tuning: Tuning, key: string): void {
     const handle = handleOf(key, this.channel === CONTRAST)
 
     if (handle) {
-      this.stepped(handle, () => this.move(key))
+      this.stepped(tuning, handle, () => this.move(tuning, key))
     } else if (key === 'tab' || key === 'shift-tab') {
       this.channel = this.channel === CONTRAST ? 0 : CONTRAST
     } else if (key === 'a') {
       this.rescope()
     } else if (key === '#') {
-      this.typing = ''
+      this.modal = { kind: 'type', text: '' }
     } else if (key === 'l') {
       this.linkKey()
     } else if (key === 'r') {
       this.take(this.original[this.slot()] as Hex, 'reset')
     } else if (key === 'u') {
-      this.unstep()
+      this.unstep(tuning)
     } else if (key === 'ctrl-r') {
-      this.restep()
+      this.restep(tuning)
     } else if (key === 's' || key === 'ctrl-s') {
-      this.tuneKey('enter')
+      this.keep(tuning)
       this.save()
     } else if (key === 'enter') {
-      if (this.tuneFrom && this.list.every((c, i) => c === this.tuneFrom?.list[i])) {
-        this.history.pop()
-      }
-
-      this.endTune()
+      this.keep(tuning)
     } else if (key === 'esc') {
-      if (this.tuneFrom) {
-        this.list = this.tuneFrom.list
-        this.lch = this.tuneFrom.lch
-        this.history.pop()
-      }
-
-      this.endTune()
+      this.cancel(tuning)
     }
   }
 
-  private stepped(handle: string, change: () => void): void {
-    const before: Step = {
-      list: this.list,
-      lch: this.lch,
-      holds: new Map(this.holds),
-      unlinked: new Set(this.unlinked),
-    }
+  private stepped(tuning: Tuning, handle: string, change: () => void): void {
+    const before: Step = { ...this.snapshot(), holds: new Map(tuning.holds) }
 
     change()
 
@@ -1207,16 +1245,16 @@ export class PaletteEditor {
       return
     }
 
-    if (handle !== this.lastStep || JUMPS.has(handle)) {
-      this.steps.push(before)
-      this.redos = []
+    if (handle !== tuning.last || JUMPS.has(handle)) {
+      tuning.steps.push(before)
+      tuning.redos = []
     }
 
-    this.lastStep = handle
+    tuning.last = handle
   }
 
-  private unstep(): void {
-    const last = this.steps.pop()
+  private unstep(tuning: Tuning): void {
+    const last = tuning.steps.pop()
 
     if (!last) {
       this.say('Nothing to undo')
@@ -1224,12 +1262,12 @@ export class PaletteEditor {
       return
     }
 
-    this.redos.push(this.stepNow())
-    this.lay(last)
+    tuning.redos.push({ ...this.snapshot(), holds: tuning.holds })
+    this.lay(tuning, last)
   }
 
-  private restep(): void {
-    const next = this.redos.pop()
+  private restep(tuning: Tuning): void {
+    const next = tuning.redos.pop()
 
     if (!next) {
       this.say('Nothing to redo')
@@ -1237,64 +1275,60 @@ export class PaletteEditor {
       return
     }
 
-    this.steps.push(this.stepNow())
-    this.lay(next)
+    tuning.steps.push({ ...this.snapshot(), holds: tuning.holds })
+    this.lay(tuning, next)
   }
 
-  private stepNow(): Step {
-    return { list: this.list, lch: this.lch, holds: this.holds, unlinked: this.unlinked }
-  }
-
-  private lay(step: Step): void {
+  private lay(tuning: Tuning, step: Step): void {
     this.list = step.list
     this.lch = step.lch
-    this.holds = step.holds
-    this.unlinked = step.unlinked
-    this.lastStep = undefined
+    this.links = step.links
+    tuning.holds = step.holds
+    tuning.last = undefined
   }
 
-  private move(key: string): void {
+  private move(tuning: Tuning, key: string): void {
     const contrastOn = this.channel === CONTRAST
 
     if (key === 'up' || key === 'down' || key === 'pgup' || key === 'pgdn') {
       this.channel = 0
-      this.step((key === 'up' || key === 'pgup' ? 1 : -1) * (key.startsWith('pg') ? FAST : 1))
+      this.step(tuning, (key === 'up' || key === 'pgup' ? 1 : -1) * (key.startsWith('pg') ? FAST : 1))
     } else if (key === 'left' || key === 'right') {
       const sign = key === 'left' ? -1 : 1
 
       if (contrastOn) {
-        this.reach(this.ratio() + sign * 0.1)
+        this.reach(tuning, this.ratio() + sign * 0.1)
       } else {
         this.channel = 1
-        this.step(sign)
+        this.step(tuning, sign)
       }
     } else if (key === 'shift-left' || key === 'shift-right') {
       const sign = key === 'shift-left' ? -1 : 1
 
       if (contrastOn) {
-        this.reach(this.ratio() + sign * 0.5)
+        this.reach(tuning, this.ratio() + sign * 0.5)
       } else {
         this.channel = 2
-        this.step(sign * HUE_STEP)
+        this.step(tuning, sign * HUE_STEP)
       }
     } else if ((key === ',' || key === '.') && !contrastOn) {
       this.channel = 2
-      this.step(key === ',' ? -1 : 1)
+      this.step(tuning, key === ',' ? -1 : 1)
     } else if (key === 'home' || key === 'end') {
       if (contrastOn) {
-        this.reach(key === 'home' ? (this.partner().floor ?? 1) : 21)
+        this.reach(tuning, key === 'home' ? (this.partner().floor ?? 1) : 21)
       } else {
         const channel = CHANNELS[this.channel] as Channel
-        this.put(key === 'home' ? channel.min : channel.wraps ? channel.max - channel.step : channel.max)
+        this.put(tuning, key === 'home' ? channel.min : channel.wraps ? channel.max - channel.step : channel.max)
       }
     } else if (/^[0-9]$/.test(key)) {
       if (contrastOn) {
         if (key !== '0') {
-          this.reach(Number(key))
+          this.reach(tuning, Number(key))
         }
       } else {
         const channel = CHANNELS[this.channel] as Channel
-        this.put(channel.min + ((channel.max - channel.min) * Number(key)) / 10)
+        this.put(tuning, channel.min + ((channel.max - channel.min) * Number(key)) / 10)
       }
     }
   }
@@ -1320,7 +1354,9 @@ export class PaletteEditor {
   }
 
   scopeTo(scope: Scope): void {
-    if (this.mode !== 'tune' || this.typing !== undefined || this.quitting || this.slot() < BASE.length) {
+    const tuning = this.tuning
+
+    if (!tuning || this.modal || this.slot() < BASE.length) {
       return
     }
 
@@ -1329,13 +1365,15 @@ export class PaletteEditor {
     }
 
     this.scope = scope
-    this.hold()
+    this.hold(tuning)
     const n = this.scoped().length
     this.say(n > 1 ? `${n} colors move together` : 'This color moves alone')
   }
 
   entryTo(entry: number): void {
-    this.entry = entry
+    if (this.modal?.kind === 'menu') {
+      this.modal = { ...this.modal, entry }
+    }
   }
 
   formatTo(format: Format): void {
@@ -1343,31 +1381,33 @@ export class PaletteEditor {
   }
 
   pickTo(pick: number): void {
-    if (this.overlay === 'open') {
-      this.pick = pick
+    if (this.modal?.kind === 'open') {
+      this.modal = { ...this.modal, pick }
     }
   }
 
   fieldTo(field: number): void {
-    if (this.idle() && this.mode === 'seeds') {
+    if (!this.modal && this.mode === 'seeds') {
       this.field = field
     }
   }
 
   viewTo(view: PaletteEditor['view']): void {
-    if (this.idle() && this.mode !== 'seeds') {
+    if (!this.modal && this.mode !== 'seeds') {
       this.view = view
     }
   }
 
   sceneTo(scene: number): void {
-    if (this.idle()) {
+    if (!this.modal) {
       this.scene = scene
     }
   }
 
   closeHelp(): void {
-    this.help = undefined
+    if (this.modal?.kind === 'help') {
+      this.modal = undefined
+    }
   }
 
   takeCopied(): string | undefined {
@@ -1382,18 +1422,6 @@ export class PaletteEditor {
     this.wants = undefined
 
     return wants
-  }
-
-  private idle(): boolean {
-    return this.typing === undefined && !this.overlay && !this.quitting
-  }
-
-  private endTune(): void {
-    this.tuneFrom = undefined
-    this.holds = new Map()
-    this.steps = []
-    this.redos = []
-    this.mode = 'list'
   }
 
   partner(): Partner {
@@ -1415,11 +1443,11 @@ export class PaletteEditor {
     return { hex, lch: this.lchOf(hex), ratio: contrast(hex, this.original[this.partner().against] as Hex) }
   }
 
-  private reach(target: number): void {
+  private reach(tuning: Tuning, target: number): void {
     const slot = this.slot()
     const at = this.lch[slot] as Oklch
     const against = this.list[this.partner().against] as Hex
-    const solved = solveLightness(this.list[slot] as Hex, at, this.holds.get(slot) ?? at.c, against, target)
+    const solved = solveLightness(this.list[slot] as Hex, at, tuning.holds.get(slot) ?? at.c, against, target)
 
     if (solved.stops !== undefined) {
       this.say(`The ratio stops at ${solved.stops.toFixed(2)}:1 on this side of the color it is read against`, 'warn')
@@ -1429,13 +1457,13 @@ export class PaletteEditor {
     this.list = this.list.with(slot, solved.hex)
   }
 
-  private step(steps: number): void {
+  private step(tuning: Tuning, steps: number): void {
     const channel = CHANNELS[this.channel] as Channel
     const was = (this.lch[this.slot()] as Oklch)[channel.key]
-    this.put(was + channel.step * steps)
+    this.put(tuning, was + channel.step * steps)
   }
 
-  private put(raw: number): void {
+  private put({ holds }: Tuning, raw: number): void {
     const slot = this.slot()
     const channel = CHANNELS[this.channel] as Channel
 
@@ -1457,13 +1485,13 @@ export class PaletteEditor {
 
       const next = Math.min(rounded, most)
       const delta = next - at.c
-      this.holds.set(slot, next)
+      holds.set(slot, next)
       this.place(slot, at.l, next, at.h)
 
       for (const s of others) {
         const o = this.lch[s] as Oklch
-        const want = round(clamp((this.holds.get(s) ?? o.c) + delta, 0, C_MAX))
-        this.holds.set(s, want)
+        const want = round(clamp((holds.get(s) ?? o.c) + delta, 0, C_MAX))
+        holds.set(s, want)
         this.place(s, o.l, want, o.h)
       }
 
@@ -1476,7 +1504,7 @@ export class PaletteEditor {
     this.place(
       slot,
       channel.key === 'l' ? rounded : at.l,
-      this.holds.get(slot) ?? at.c,
+      holds.get(slot) ?? at.c,
       channel.key === 'h' ? rounded : at.h,
     )
 
@@ -1489,7 +1517,7 @@ export class PaletteEditor {
       this.place(
         s,
         channel.key === 'l' ? round(clamp(o.l + delta, 0, 1)) : o.l,
-        this.holds.get(s) ?? o.c,
+        holds.get(s) ?? o.c,
         channel.key === 'h' ? round((((o.h + delta) % 360) + 360) % 360) : o.h,
       )
     }
@@ -1500,15 +1528,13 @@ export class PaletteEditor {
   private trail(moved: number[]): void {
     const among = new Set(moved)
 
-    for (const [bright, normal] of this.links) {
-      if (this.unlinked.has(bright)) {
-        continue
-      }
+    for (const [bright, by] of this.links) {
+      const normal = bright - 8
 
       if (among.has(bright) && !among.has(normal)) {
-        this.unlinked.add(bright)
+        this.unlink(bright)
       } else if (among.has(normal) && !among.has(bright)) {
-        const moved = following(this.lch[normal] as Oklch, this.offsets.get(bright) as Oklch)
+        const moved = following(this.lch[normal] as Oklch, by)
         this.lch = this.lch.with(bright, moved.lch)
         this.list = this.list.with(bright, moved.hex)
       }
@@ -1522,25 +1548,26 @@ export class PaletteEditor {
   }
 
   private take(color: Hex, edit: string): void {
-    if (this.mode === 'tune') {
-      const slot = this.slot()
+    const tuning = this.tuning
+    const slot = this.slot()
 
-      this.stepped(edit, () => {
-        this.list = this.list.with(slot, color)
-        this.lch = this.lch.with(slot, this.lchOf(color))
-        this.holds.set(slot, (this.lch[slot] as Oklch).c)
-        this.trail([slot])
-      })
-    } else {
-      this.set(this.slot(), color, edit)
+    if (!tuning) {
+      this.set(slot, color, edit)
+
+      return
     }
+
+    this.stepped(tuning, edit, () => {
+      this.list = this.list.with(slot, color)
+      this.lch = this.lch.with(slot, this.lchOf(color))
+      tuning.holds.set(slot, (this.lch[slot] as Oklch).c)
+      this.trail([slot])
+    })
   }
 
-  private type(key: string): void {
-    const typed = this.typing ?? ''
-
+  private type(typed: string, key: string): void {
     if (key === 'esc') {
-      this.typing = undefined
+      this.modal = undefined
     } else if (key === 'enter') {
       const color = parseColor(typed)
 
@@ -1550,31 +1577,30 @@ export class PaletteEditor {
         return
       }
 
-      this.typing = undefined
+      this.modal = undefined
       this.take(color, 'hex')
     } else {
       const next = edit(typed, lowered(key), (ch) => /^[0-9a-z#(),.% ]$/.test(ch) && typed.length < 28)
 
       if (next !== undefined) {
-        this.typing = next
+        this.modal = { kind: 'type', text: next }
       }
     }
   }
 
-  private openKey(key: string): void {
+  private openKey(modal: Modal & { kind: 'open' }, key: string): void {
     const choices = this.choices()
     const line = lineStep(key)
 
     if (key === 'esc') {
-      this.overlay = undefined
-      this.filter = ''
+      this.modal = undefined
     } else if (line !== undefined) {
       const n = Math.max(1, choices.length)
-      this.pick = (this.pick + (line < 0 ? n - 1 : 1)) % n
+      this.modal = { ...modal, pick: (modal.pick + (line < 0 ? n - 1 : 1)) % n }
     } else if (key === 'home' || key === 'end') {
-      this.pick = key === 'home' ? 0 : Math.max(0, choices.length - 1)
+      this.modal = { ...modal, pick: key === 'home' ? 0 : Math.max(0, choices.length - 1) }
     } else if (key === 'enter') {
-      const choice = choices[this.pick]
+      const choice = choices[modal.pick]
 
       if (!choice) {
         return
@@ -1583,32 +1609,37 @@ export class PaletteEditor {
       this.remember('open')
       this.list = listOf(choice.colors)
       this.lch = this.lchs()
-      this.chain(this.list)
-      this.overlay = undefined
-      this.filter = ''
+      this.links = brightLinks(this.list)
+      this.modal = undefined
       this.say(`Took the colors of ${choice.name}`, 'ok')
 
       if (this.mode === 'seeds') {
         this.leaveSeeds()
       }
     } else {
-      const next = edit(this.filter, lowered(key), (ch) => NAME_CHAR.test(ch))
+      const next = edit(modal.filter, lowered(key), (ch) => NAME_CHAR.test(ch))
 
       if (next !== undefined) {
-        this.filter = next
-        this.pick = 0
+        this.modal = { kind: 'open', filter: next, pick: 0 }
       }
     }
   }
 
   private snapshot(): Snapshot {
-    return { list: this.list, lch: this.lch }
+    return { list: this.list, lch: this.lch, links: this.links }
+  }
+
+  private record(): Snapshot {
+    const now = this.snapshot()
+    this.history.push(now)
+    this.future = []
+
+    return now
   }
 
   private remember(edit: string): void {
     if (edit !== this.lastEdit || ALWAYS.has(edit)) {
-      this.history.push(this.snapshot())
-      this.future = []
+      this.record()
     }
 
     this.lastEdit = edit
@@ -1637,9 +1668,7 @@ export class PaletteEditor {
     const from = this.lch[normal] as Oklch
     this.remember('follow')
     this.place(bright, clamp(from.l + 0.06, 0, 1), from.c, from.h)
-    this.links.set(bright, normal)
-    this.unlinked.delete(bright)
-    this.offsets.set(bright, offsetOf(from, this.lch[bright] as Oklch))
+    this.link(normal, bright)
     this.seat(bright)
     this.say(`${slotLabel(bright).name} follows ${slotLabel(normal).name.toLowerCase()}`, 'ok')
   }
@@ -1715,6 +1744,7 @@ export class PaletteEditor {
   private restore(snap: Snapshot): void {
     this.list = snap.list
     this.lch = snap.lch
+    this.links = snap.links
     this.lastEdit = undefined
   }
 }

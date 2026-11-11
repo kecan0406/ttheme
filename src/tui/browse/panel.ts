@@ -88,7 +88,7 @@ export class Panel {
   marketplace(m: Marketplace, width: number): Detail {
     const { p, staged } = this.host
     const auto = isRemote(m.source) ? `Auto-update ${staged.auto(m) ? 'on' : 'off'}` : cap(m.status)
-    const failure = this.host.network.failed.get(m.source)
+    const failure = this.host.network.failure(m.source)
 
     const pending = staged.adds.has(m.source)
       ? ['Will add']
@@ -189,11 +189,12 @@ export class Panel {
     const { p, staged } = this.host
     const [label, note] = this.text(action, source)
 
-    const said = note === FAILED ? p.error(note) : p.dim(note)
+    const failed = action === 'update' && this.host.network.failure(source) !== undefined
+    const said = failed ? p.error(note) : p.dim(note)
 
     return button(p, at, focused, this.mark(action, source), label.padEnd(ACTION_PAD), note ? ` ${said}` : '', {
       pane: 'panel',
-      off: action === 'update' && this.host.network.busy.has(source),
+      off: action === 'update' && this.host.network.busy(source) !== undefined,
       danger: action === 'remove' && !staged.adds.has(source),
     })
   }
@@ -215,7 +216,7 @@ export class Panel {
     const m = staged.known(source)
 
     if (action === 'update') {
-      const note = network.busy.get(source) ?? (network.failed.has(source) ? FAILED : m ? cap(m.status) : '')
+      const note = network.busy(source) ?? (network.failure(source) !== undefined ? FAILED : m ? cap(m.status) : '')
 
       return ['Update now', note]
     }

@@ -35,6 +35,14 @@ interface Named {
   hits: NameHit[]
 }
 
+type Loading = { status: 'idle' } | { status: 'loading' } | { status: 'failed'; why: string }
+
+type Lookup =
+  | { status: 'idle' }
+  | { status: 'waiting'; timer: ReturnType<typeof setTimeout> }
+  | { status: 'asking'; query: string; asking: AbortController }
+  | { status: 'failed'; why: string }
+
 function plural(n: number, one: string): string {
   return `${n} ${one}${n === 1 ? '' : 's'}`
 }
@@ -44,15 +52,10 @@ export class Search {
   readonly results: PaletteList<Row>
   landing: string | undefined
   private listing: Listing | undefined
-  private loading = false
-  private loadError: string | undefined
+  private loading: Loading = { status: 'idle' }
   private named: Named | undefined
-  private naming: string | undefined
-
+  private lookup: Lookup = { status: 'idle' }
   private unopened: string | undefined
-  private nameError: string | undefined
-  private timer: ReturnType<typeof setTimeout> | undefined
-  private asking: AbortController | undefined
   private readonly host: SearchHost
 
   constructor(host: SearchHost) {
@@ -102,8 +105,7 @@ export class Search {
   }
 
   close(): void {
-    clearTimeout(this.timer)
-    this.asking?.abort()
+    this.turn({ status: 'idle' })
   }
 
   lands(source: string): boolean {
@@ -111,23 +113,21 @@ export class Search {
   }
 
   load(): void {
-    if (this.loading) {
+    if (this.loading.status === 'loading') {
       return
     }
 
-    this.loading = true
-    this.loadError = undefined
+    this.loading = { status: 'loading' }
     this.host.redraw()
     this.host.index().then(
       (listing) => {
-        this.loading = false
+        this.loading = { status: 'idle' }
         this.listing = listing
         this.results.refresh()
         this.host.redraw()
       },
       (error: Error) => {
-        this.loading = false
-        this.loadError = inert(error.message)
+        this.loading = { status: 'failed', why: inert(error.message) }
         this.results.refresh()
         this.host.redraw()
       },
@@ -144,8 +144,8 @@ export class Search {
     const { works, markets } = this.tally()
 
     const parts = [
-      ...(this.loading ? ['Loading…'] : []),
-      ...(this.naming ? ['Looking up names…'] : []),
+      ...(this.loading.status === 'loading' ? ['Loading…'] : []),
+      ...(this.lookup.status === 'asking' ? ['Looking up names…'] : []),
       ...(works > 0
         ? [plural(works, 'work'), plural(markets, 'marketplace')]
         : this.listing
@@ -172,36 +172,49 @@ export class Search {
     return found ? this.about(found, width) : EMPTY
   }
 
-  private later(): void {
-    clearTimeout(this.timer)
-    const query = this.query.value.trim()
+  private turn(next: Lookup): void {
+    const was = this.lookup
 
-    if (this.naming && this.naming !== query) {
-      this.asking?.abort()
-      this.naming = undefined
+    if (was.status === 'waiting') {
+      clearTimeout(was.timer)
+    } else if (was.status === 'asking') {
+      was.asking.abort()
     }
 
-    if (!this.host.names || !query || this.named?.query === query) {
+    this.lookup = next
+  }
+
+  private looking(query: string): boolean {
+    return this.lookup.status === 'asking' && this.lookup.query === query
+  }
+
+  private later(): void {
+    const query = this.query.value.trim()
+
+    if (this.looking(query)) {
       return
     }
 
-    this.timer = setTimeout(() => this.ask(query), PAUSE)
-    this.timer.unref?.()
+    if (!this.host.names || !query || this.named?.query === query) {
+      this.turn({ status: 'idle' })
+
+      return
+    }
+
+    const timer = setTimeout(() => this.ask(query), PAUSE)
+    timer.unref?.()
+    this.turn({ status: 'waiting', timer })
   }
 
   private ask(query: string): void {
     const names = this.host.names
 
-    if (!names || !query || this.named?.query === query || this.naming === query) {
+    if (!names || !query || this.named?.query === query || this.looking(query)) {
       return
     }
 
-    clearTimeout(this.timer)
-    this.asking?.abort()
     const asking = new AbortController()
-    this.asking = asking
-    this.naming = query
-    this.nameError = undefined
+    this.turn({ status: 'asking', query, asking })
     this.host.redraw()
     names(query, asking.signal).then(
       (hits) => {
@@ -210,7 +223,7 @@ export class Search {
         }
 
         const waiting = this.focused()?.kind
-        this.naming = undefined
+        this.lookup = { status: 'idle' }
         this.named = { query, hits }
         this.results.refresh()
 
@@ -229,8 +242,7 @@ export class Search {
           return
         }
 
-        this.naming = undefined
-        this.nameError = inert(error.message)
+        this.lookup = { status: 'failed', why: inert(error.message) }
         this.results.refresh()
         this.host.redraw()
       },
@@ -245,7 +257,7 @@ export class Search {
     }
 
     if (found?.kind === 'state') {
-      return this.loading ? [] : [['space', 'load']]
+      return this.loading.status === 'loading' ? [] : [['space', 'load']]
     }
 
     if (found?.kind === 'request' || found?.kind === 'make') {
@@ -356,7 +368,7 @@ export class Search {
   private asked(): string | undefined {
     const query = this.query.value.trim()
 
-    return !query || this.naming === query ? undefined : query
+    return !query || this.looking(query) ? undefined : query
   }
 
   private found(): Row[] {
@@ -438,7 +450,7 @@ export class Search {
     if (found.kind === 'offer') {
       const { offer } = found
       const known = staged.known(offer.source)
-      const failure = network.failed.get(offer.source)
+      const failure = network.failure(offer.source)
 
       const facts = [
         offer.listed ? `${MARKS.star}${offer.listed.stars}` : whereOf(offer.source),
@@ -448,7 +460,7 @@ export class Search {
           : offer.known && staged.adds.has(offer.source)
             ? ['Will add']
             : []),
-        network.busy.get(offer.source) ?? '',
+        network.busy(offer.source) ?? '',
       ].filter(Boolean)
 
       return lit(
@@ -465,12 +477,12 @@ export class Search {
 
     const m = found.listed
     const known = staged.known(m.source)
-    const failure = network.failed.get(m.source)
+    const failure = network.failure(m.source)
 
     const facts = [
       `${MARKS.star}${m.stars}`,
       known ? this.addedNote(known) : counted(m.palettes.length),
-      network.busy.get(m.source) ?? '',
+      network.busy(m.source) ?? '',
     ].filter(Boolean)
 
     return lit(
@@ -548,8 +560,9 @@ export class Search {
           ...wrapText(what, width),
           '',
           ...wrapText([text, note].filter(Boolean).join(' — '), width),
-          ...(this.loadError ? wrapText(this.loadError, width).map((l) => p.error(l)) : []),
-          ...(this.nameError ? wrapText(this.nameError, width).map((l) => p.error(l)) : []),
+          ...[this.loading, this.lookup].flatMap((work) =>
+            work.status === 'failed' ? wrapText(work.why, width).map((l) => p.error(l)) : [],
+          ),
           '',
           ...wrapText('Not listed yet? + Add marketplace adds one by its owner/repo', width),
         ],
@@ -564,11 +577,11 @@ export class Search {
     const { p, staged, network } = this.host
     const known = staged.known(m.source)
 
-    const failure = known || network.busy.has(m.source) ? undefined : network.failed.get(m.source)
+    const failure = known ? undefined : network.failure(m.source)
 
     const note = known
       ? this.addedNote(known)
-      : (network.busy.get(m.source) ?? failure ?? capped('space adds it, enter adds it and goes back'))
+      : (network.busy(m.source) ?? failure ?? capped('space adds it, enter adds it and goes back'))
 
     return {
       title: p.bold(m.id),
@@ -590,13 +603,13 @@ export class Search {
   private stateOf(): [string, string] {
     const query = this.query.value.trim()
 
-    return this.loading
+    return this.loading.status === 'loading'
       ? ['Loading the marketplace list…', '']
-      : this.loadError
+      : this.loading.status === 'failed'
         ? ['The marketplace list did not load', 'space retries']
         : !this.listing
           ? ['Load the marketplace list', 'space loads it']
-          : query && this.naming === query
+          : this.looking(query)
             ? [`Looking up '${query}'…`, '']
             : query
               ? [`No marketplaces match '${query}'`, '']

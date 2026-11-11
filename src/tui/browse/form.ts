@@ -50,7 +50,7 @@ export class AddForm {
   }
 
   fetching(): boolean {
-    return this.adding !== undefined && this.network.busy.has(this.adding)
+    return this.adding !== undefined && this.network.busy(this.adding) !== undefined
   }
 
   lands(source: string): boolean {
@@ -65,6 +65,7 @@ export class AddForm {
   drop(): void {
     if (this.adding !== undefined) {
       this.network.unstage(this.adding)
+      this.adding = undefined
     }
   }
 
@@ -76,7 +77,7 @@ export class AddForm {
     const { p } = this
     const value = this.address.value
     const text = value ? `${value}${focused ? '_' : ''}` : focused ? '_' : p.dim('owner/repo or a folder')
-    const problem = this.error ?? (this.adding === undefined ? undefined : this.network.failed.get(this.adding))
+    const problem = this.error ?? (this.adding === undefined ? undefined : this.network.failure(this.adding))
 
     const status =
       this.adding !== undefined && this.fetching()

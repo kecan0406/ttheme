@@ -8,23 +8,14 @@ const LEAVE = 'Asks first when something changed: y saves, n discards, esc keeps
 const BOX_KEYS = new Set(['n  N', 'f', 'u', 'ctrl+r', 'space'])
 
 export function editorBoxTopics(e: Editing): Topic[] {
-  const quiet =
-    e.options.help !== false &&
-    e.mode === 'list' &&
-    !e.inspect &&
-    !e.compare &&
-    !e.quitting &&
-    !e.menu &&
-    !e.overlay &&
-    !e.help &&
-    e.typing === undefined
+  const quiet = e.options.help !== false && e.layer() === 'list'
 
   return quiet ? editorTopics(e).filter((t) => BOX_KEYS.has(t.keys)) : []
 }
 
 export function editorTopics(e: Editing): Topic[] {
   const list = e.mode === 'list'
-  const plain = list && !e.inspect
+  const plain = e.base() === 'list'
   const tuning = e.mode === 'tune'
   const ansi = e.slot() >= BASE.length
   const others = (e.options.palettes ?? []).length > 0
@@ -186,7 +177,7 @@ export function editorTopics(e: Editing): Topic[] {
       keys: 'i',
       does: 'Inspect the sample',
       more: 'A click on the sample does the same. Arrows move, enter goes to the color, esc goes back.',
-      ...when(roomy && !e.inspect, 'i'),
+      ...when(roomy && plain, 'i'),
     },
     { group: 'View', keys: 'm', does: 'Show only the changed colors', ...when(roomy, 'm') },
     {

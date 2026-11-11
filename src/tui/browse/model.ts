@@ -16,16 +16,21 @@ import { MIN_ITEMS, more } from './draw.ts'
 import { AddForm } from './form.ts'
 import { Network } from './network.ts'
 import { Panel } from './panel.ts'
-import { Review } from './review.ts'
+import { type Phase, Review } from './review.ts'
 import { Search } from './search.ts'
 import { Staged } from './staged.ts'
 import { browseLegend, browseTopics, type TopicsHost } from './topics.ts'
 import type { BrowseIo, BrowseOptions, BrowseResult, Found, Marketplace, Row, Spot } from './types.ts'
 import { about, badge, heads, mark } from './view.ts'
 
-type Side = 'cards' | 'panel' | 'form'
+export type Place = 'cards' | 'panel' | 'form' | 'search'
 
-type View = 'browse' | 'search'
+export type Modal =
+  | { readonly kind: 'help'; readonly help: Help }
+  | { readonly kind: 'leave'; readonly to: number | undefined }
+  | { readonly kind: 'remove'; readonly marketplace: Marketplace }
+
+export type Layer = Modal['kind'] | Exclude<Phase, 'browse'> | Place
 
 type State = 'active' | 'submit' | 'cancel'
 
@@ -60,19 +65,16 @@ export class Browse {
   readonly panel: Panel
   readonly search: Search
   readonly topicsHost: TopicsHost
-  side: Side = 'cards'
-  showing: View = 'browse'
+  place: Place = 'cards'
+  modal: Modal | undefined
   private open: string | undefined
   private split = 0
   readonly hint: SearchHint
   state: State = 'active'
   readonly review: Review
   beat = 0
-  removing: Marketplace | undefined
-  leaving: { to: number | undefined } | undefined
   notice: { text: string; tone: Tone } | undefined
   private goto: number | undefined
-  help: Help | undefined
   readonly keyed: boolean
   private readonly live: boolean
   request: () => void = () => {}
@@ -132,7 +134,7 @@ export class Browse {
       source: () => this.focusedMarketplace()?.source ?? '',
       mark: (entry) => mark(this, entry),
       focus: (entry) => {
-        if (this.side === 'panel') {
+        if (this.place === 'panel') {
           this.focus(entry)
         }
       },
@@ -153,8 +155,7 @@ export class Browse {
       staged: this.staged,
       search: this.search,
       review: this.review,
-      showing: () => this.showing,
-      side: () => this.side,
+      place: () => this.place,
       key: (key) => this.key(key),
       take: (back) => this.take(back),
       back: () => this.back(),
@@ -165,7 +166,7 @@ export class Browse {
     this.follow()
 
     if (opts.search?.trim()) {
-      this.showing = 'search'
+      this.place = 'search'
       this.search.open(opts.search.trim(), this.live)
     }
 
@@ -204,6 +205,18 @@ export class Browse {
     return this.staged.result()
   }
 
+  reviewing(): boolean {
+    return this.review.phase !== 'browse'
+  }
+
+  layer(): Layer {
+    return this.modal?.kind ?? (this.review.phase === 'browse' ? this.place : this.review.phase)
+  }
+
+  free(): boolean {
+    return this.layer() === this.place
+  }
+
   key(key: string): void {
     this.notice = undefined
 
@@ -213,44 +226,49 @@ export class Browse {
       return
     }
 
-    if (this.help) {
-      const answer = this.help.key(key)
+    const modal = this.modal
 
-      if (answer !== 'stay') {
-        const run = answer === 'run' ? this.help.chosen()?.run : undefined
-        this.help = undefined
-        run?.()
-      }
+    switch (modal?.kind) {
+      case 'help': {
+        const answer = modal.help.key(key)
 
-      return
-    }
-
-    if (this.leaving !== undefined) {
-      if (key === 'esc') {
-        this.leaving = undefined
-      } else if (/^[yn]$/i.test(key)) {
-        if (key.toLowerCase() === 'y') {
-          this.review.begin()
-        } else {
-          this.goto = this.leaving.to
-          this.state = 'cancel'
+        if (answer !== 'stay') {
+          const run = answer === 'run' ? modal.help.chosen()?.run : undefined
+          this.modal = undefined
+          run?.()
         }
 
-        this.leaving = undefined
+        return
       }
 
-      return
+      case 'leave':
+        if (key === 'esc') {
+          this.modal = undefined
+        } else if (/^[yn]$/i.test(key)) {
+          this.modal = undefined
+
+          if (key.toLowerCase() === 'y') {
+            this.review.begin()
+          } else {
+            this.goto = modal.to
+            this.state = 'cancel'
+          }
+        }
+
+        return
+      case 'remove':
+        if (key === 'esc' || /^[yn]$/i.test(key)) {
+          this.answer(modal.marketplace, key.toLowerCase() === 'y')
+        }
+
+        return
+      default:
+        this.underKey(key)
     }
+  }
 
-    if (this.removing) {
-      if (key === 'esc' || /^[yn]$/i.test(key)) {
-        this.answer(key.toLowerCase() === 'y')
-      }
-
-      return
-    }
-
-    if (this.review.phase !== 'browse') {
+  private underKey(key: string): void {
+    if (this.reviewing()) {
       if (this.review.steer(key)) {
         this.state = 'submit'
       }
@@ -260,23 +278,16 @@ export class Browse {
 
     if (key === 'alt-u' && this.hub && this.standing?.standing === 'newer') {
       this.leave(HUB_UPDATE)
-
-      return
-    }
-
-    if (this.showing === 'search') {
+    } else if (this.place === 'search') {
       this.searchKey(key)
-
-      return
-    }
-
-    if (this.side === 'form') {
+    } else if (this.place === 'form') {
       this.formKey(key)
-
-      return
+    } else {
+      this.listKey(key, this.place === 'panel')
     }
+  }
 
-    const panel = this.side === 'panel'
+  private listKey(key: string, panel: boolean): void {
     const found = panel ? undefined : this.focusedFound()
     const opens = found?.kind === 'new' || found?.kind === 'search'
     const page = pageStep(key, (panel ? this.panel.inside : this.list).page())
@@ -303,7 +314,7 @@ export class Browse {
         this.leave(undefined)
       }
     } else if (key === '?') {
-      this.help = new Help(browseTopics(this.topicsHost), browseLegend())
+      this.openHelp()
     } else if (page !== undefined) {
       this.move(page)
     } else if (line !== undefined) {
@@ -343,6 +354,10 @@ export class Browse {
     }
   }
 
+  private openHelp(): void {
+    this.modal = { kind: 'help', help: new Help(browseTopics(this.topicsHost), browseLegend()) }
+  }
+
   private searchKey(key: string): void {
     const page = pageStep(key, this.search.results.page())
     const line = lineStep(key)
@@ -354,7 +369,7 @@ export class Browse {
     } else if (key === 'esc' || key === 'left') {
       this.closeSearch()
     } else if (key === '?') {
-      this.help = new Help(browseTopics(this.topicsHost), browseLegend())
+      this.openHelp()
     } else if (page !== undefined) {
       this.move(page)
     } else if (line !== undefined) {
@@ -374,7 +389,7 @@ export class Browse {
     if (key === 'esc' || key === 'left') {
       this.back()
     } else if (key === '?') {
-      this.help = new Help(browseTopics(this.topicsHost), browseLegend())
+      this.openHelp()
     } else if (key === 'tab' || key === 'shift-tab') {
       if (this.hub) {
         this.leave(hubGoto(this.hub, key === 'tab' ? 1 : -1))
@@ -390,7 +405,7 @@ export class Browse {
 
   private openForm(): void {
     this.form.seed(this.field.value.trim())
-    this.side = 'form'
+    this.place = 'form'
     this.list.focus = 'held'
   }
 
@@ -470,20 +485,19 @@ export class Browse {
   }
 
   private openSearch(): void {
-    this.showing = 'search'
+    this.place = 'search'
     this.search.open(this.field.value.trim(), this.live)
   }
 
   private closeSearch(): void {
-    this.showing = 'browse'
-    this.search.landing = undefined
+    this.back()
     this.follow()
   }
 
   private enter(): boolean {
     this.follow()
 
-    if (this.side === 'panel') {
+    if (this.place === 'panel') {
       return true
     }
 
@@ -491,7 +505,7 @@ export class Browse {
       return false
     }
 
-    this.side = 'panel'
+    this.place = 'panel'
     this.list.focus = 'held'
     this.panel.inside.focus = 'lit'
     this.panel.inside.refocus()
@@ -500,11 +514,13 @@ export class Browse {
   }
 
   private back(): void {
-    if (this.side === 'form') {
+    if (this.place === 'form') {
       this.form.drop()
+    } else if (this.place === 'search') {
+      this.search.landing = undefined
     }
 
-    this.side = 'cards'
+    this.place = 'cards'
     this.list.focus = 'lit'
     this.panel.inside.focus = 'off'
   }
@@ -518,32 +534,38 @@ export class Browse {
       this.panel.inside.setEntries(top === undefined ? [] : this.staged.membersOf(top), this.staged.works())
     }
 
-    if (this.side === 'panel' && this.panel.inside.size() === 0) {
+    if (this.place === 'panel' && this.panel.inside.size() === 0) {
       this.back()
     }
   }
 
   pasted(text: string): void {
-    if (this.help) {
-      this.help.paste(text)
+    if (this.modal?.kind === 'help') {
+      this.modal.help.paste(text)
 
       return
     }
 
-    if (this.review.phase !== 'browse' || this.removing || this.leaving !== undefined) {
-      return
-    }
+    switch (this.layer()) {
+      case 'search':
+        this.search.paste(text)
 
-    if (this.showing === 'search') {
-      this.search.paste(text)
-    } else if (this.side === 'form') {
-      if (!this.form.fetching()) {
-        this.form.address.paste(text)
-        this.form.edited()
-      }
-    } else {
-      this.field.paste(text)
-      this.typed()
+        return
+      case 'form':
+        if (!this.form.fetching()) {
+          this.form.address.paste(text)
+          this.form.edited()
+        }
+
+        return
+      case 'cards':
+      case 'panel':
+        this.field.paste(text)
+        this.typed()
+
+        return
+      default:
+        return
     }
   }
 
@@ -554,29 +576,32 @@ export class Browse {
       this.notice = undefined
     }
 
-    if (this.help) {
+    if (this.modal?.kind === 'help') {
+      const { help } = this.modal
+
       if (event.action === 'wheel') {
-        this.help.wheel(event.wheel)
+        help.wheel(event.wheel)
       } else if (event.action === 'press' && event.button === 'left' && spot?.kind === 'topic') {
-        this.help.point(spot.index)
+        help.point(spot.index)
       } else if (event.action === 'release' && spot?.kind === 'key' && hit?.inside) {
         this.key(spot.key)
       } else if (event.action === 'release' && spot?.kind === 'topic') {
-        if (hit?.inside && event.count >= 2 && this.help.point(spot.index)) {
+        if (hit?.inside && event.count >= 2 && help.point(spot.index)) {
           this.key('enter')
         }
       } else if (event.action === 'release' && spot?.kind !== 'help') {
-        this.help = undefined
+        this.modal = undefined
       }
 
       return
     }
 
     const free = this.free()
+    const reviewing = this.reviewing()
 
     if (event.action === 'wheel') {
-      if (!event.sideways && (free || this.review.phase !== 'browse')) {
-        this.wheel(event.wheel, this.split > 0 && event.col >= this.split)
+      if (!event.sideways && (free || reviewing)) {
+        this.wheel(event.wheel, reviewing, this.split > 0 && event.col >= this.split)
       }
 
       return
@@ -596,9 +621,9 @@ export class Browse {
       if (spot.kind === 'key') {
         this.key(spot.key)
       } else if (spot.kind === 'page') {
-        if (this.review.phase !== 'browse') {
+        if (reviewing) {
           this.review.scroll(spot.step * this.span())
-        } else if (free && this.side === (spot.pane ? 'panel' : 'cards')) {
+        } else if (free && (spot.pane ? this.place === 'panel' : this.place === 'cards' || this.place === 'search')) {
           this.move(spot.step * (spot.pane ? this.panel.inside : this.current()).page())
         }
       } else if (spot.kind === 'hub') {
@@ -611,12 +636,8 @@ export class Browse {
     }
   }
 
-  free(): boolean {
-    return this.review.phase === 'browse' && this.leaving === undefined && !this.removing
-  }
-
   private point(spot: RowSpot): void {
-    if (this.showing === 'search') {
+    if (this.place === 'search') {
       this.search.results.point(spot.at)
 
       return
@@ -634,14 +655,14 @@ export class Browse {
     this.list.point(spot.at)
   }
 
-  private wheel(step: number, panel: boolean): void {
-    if (this.review.phase !== 'browse') {
+  private wheel(step: number, reviewing: boolean, panel: boolean): void {
+    if (reviewing) {
       this.review.scroll(step)
 
       return
     }
 
-    if (this.showing === 'search') {
+    if (this.place === 'search') {
       this.move(step, false)
 
       return
@@ -659,7 +680,7 @@ export class Browse {
   }
 
   private openRow(spot: RowSpot, count: number): void {
-    if (this.showing === 'search') {
+    if (this.place === 'search') {
       if (spot.part === 'box' || count === 2) {
         this.take(count === 2)
       }
@@ -742,15 +763,15 @@ export class Browse {
   }
 
   current(): PaletteList<Row> {
-    return this.showing === 'search' ? this.search.results : this.list
+    return this.place === 'search' ? this.search.results : this.list
   }
 
   private move(delta: number, wrap = true): void {
-    ;(this.side === 'panel' ? this.panel.inside : this.current()).move(delta, wrap)
+    ;(this.place === 'panel' ? this.panel.inside : this.current()).move(delta, wrap)
   }
 
   private onAction(): boolean {
-    return this.side === 'panel' && this.panel.onAction()
+    return this.place === 'panel' && this.panel.onAction()
   }
 
   private act(): void {
@@ -770,7 +791,7 @@ export class Browse {
       this.back()
       this.reload()
     } else {
-      this.removing = marketplace
+      this.modal = { kind: 'remove', marketplace }
     }
   }
 
@@ -825,7 +846,7 @@ export class Browse {
     const clash = this.staged.named(marketplace.id)
 
     if (clash) {
-      this.network.failed.set(source, `${marketplace.id} already names the marketplace at ${clash.shown}`)
+      this.network.fail(source, `${marketplace.id} already names the marketplace at ${clash.shown}`)
       this.search.landing = undefined
     } else {
       this.stage(marketplace)
@@ -840,13 +861,12 @@ export class Browse {
     return row?.kind === 'extra' ? row.extra.found : undefined
   }
 
-  private answer(yes: boolean): void {
-    const marketplace = this.removing
-    this.removing = undefined
+  private answer(marketplace: Marketplace, yes: boolean): void {
+    this.modal = undefined
 
-    if (marketplace && yes) {
+    if (yes) {
       this.remove(marketplace)
-    } else if (marketplace) {
+    } else {
       this.notice = { text: inert(`${marketplace.id} kept`), tone: 'ok' }
     }
   }
@@ -880,7 +900,7 @@ export class Browse {
 
   private leave(to: number | undefined): void {
     if (this.staged.dirty()) {
-      this.leaving = { to }
+      this.modal = { kind: 'leave', to }
 
       return
     }
@@ -890,13 +910,11 @@ export class Browse {
   }
 
   private interrupt(): void {
-    if (this.leaving) {
-      this.goto = this.leaving.to
+    if (this.modal?.kind === 'leave') {
+      this.goto = this.modal.to
       this.state = 'cancel'
     } else if ((this.review.phase === 'browse' || this.review.phase === 'review') && this.staged.dirty()) {
-      this.help = undefined
-      this.removing = undefined
-      this.leaving = { to: undefined }
+      this.modal = { kind: 'leave', to: undefined }
     } else {
       this.state = 'cancel'
     }
@@ -920,11 +938,11 @@ export class Browse {
   }
 
   query(): string {
-    return (this.showing === 'search' ? this.search.query : this.field).value
+    return (this.place === 'search' ? this.search.query : this.field).value
   }
 
   hinting(): boolean {
-    return !this.query() && this.showing !== 'search'
+    return !this.query() && this.place !== 'search'
   }
 
   columns(): number {
@@ -948,8 +966,8 @@ export class Browse {
       this.review.scrolled(offset)
     }
 
-    if (help !== undefined) {
-      this.help?.scrolled(help)
+    if (help !== undefined && this.modal?.kind === 'help') {
+      this.modal.help.scrolled(help)
     }
 
     for (const [list, scroll] of scrolls) {

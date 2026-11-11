@@ -2,6 +2,7 @@ import type { Legend, Topic } from '../help.ts'
 import { type HubTab, hubNext } from '../hub.ts'
 import type { PaletteList } from '../palette-prompt.ts'
 import { MARKS } from '../style.ts'
+import type { Place } from './model.ts'
 import type { Review } from './review.ts'
 import type { Search } from './search.ts'
 import type { Staged } from './staged.ts'
@@ -13,8 +14,7 @@ export interface TopicsHost {
   readonly staged: Staged
   readonly search: Search
   readonly review: Review
-  showing(): 'browse' | 'search'
-  side(): 'cards' | 'panel' | 'form'
+  place(): Place
   key(key: string): void
   take(back: boolean): void
   back(): void
@@ -48,7 +48,7 @@ export function browseTopics(host: TopicsHost): Topic[] {
     { group: 'Filter', keys: 'ctrl+u', does: 'Clear the filter' },
   ]
 
-  if (host.showing() === 'search') {
+  if (host.place() === 'search') {
     return [
       ...moving,
       { group: 'Move', keys: '← / esc', does: 'Back to Browse', run: () => host.closeSearch(), onBar: true },
@@ -88,8 +88,8 @@ export function browseTopics(host: TopicsHost): Topic[] {
     ]
   }
 
-  const form = host.side() === 'form'
-  const panel = host.side() === 'panel'
+  const form = host.place() === 'form'
+  const panel = host.place() === 'panel'
   const when = (on: boolean, run: () => void) => (on ? { run } : {})
 
   return [

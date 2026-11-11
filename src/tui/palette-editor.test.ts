@@ -6,7 +6,8 @@ import { type Colors, grow, SEEDS } from '../core/seeds.ts'
 import { gatedOf, listOf } from '../core/slots.ts'
 import { parseColor } from '../core/tune.ts'
 import { gateMisses } from './editor-paint.ts'
-import { renderEditor as render } from './editor-screen.ts'
+import { pointEditor, renderEditor as render } from './editor-screen.ts'
+import type { Help } from './help.ts'
 import { CONTRAST, type EditorOptions, PaletteEditor } from './palette-editor.ts'
 
 const start: Colors = grow(SEEDS)
@@ -21,6 +22,10 @@ function editor(opts: Partial<EditorOptions> = {}): PaletteEditor {
     check: () => undefined,
     ...opts,
   })
+}
+
+function helpOf(e: PaletteEditor): Help | undefined {
+  return e.modal?.kind === 'help' ? e.modal.help : undefined
 }
 
 function press(e: PaletteEditor, ...keys: string[]): PaletteEditor {
@@ -189,10 +194,10 @@ test('esc asks to save changes: y saves, n leaves without saving, esc and other 
   assert.match(screen(e), /\[EDIT \(QUIT\)\] Save changes\?/)
   assert.match(renderEditor(e, 80, 24, false).join('\n'), /1 color changed/)
   press(e, 'x', 'q')
-  assert.equal(e.quitting, true)
+  assert.equal(e.modal?.kind, 'quit')
   assert.equal(e.result, undefined)
   press(e, 'esc')
-  assert.equal(e.quitting, false)
+  assert.equal(e.modal, undefined)
   assert.equal(e.result, undefined)
   press(e, 'esc', 'y')
   assert.equal(e.result, undefined)
@@ -212,7 +217,7 @@ test('the dialog’s enter takes the focused choice, and arrows move the focus',
 
 test('a window too small for the editor still asks whether to save when esc leaves with changes', () => {
   const e = press(editor(), 'tab', '9', 'enter', 'esc')
-  assert.equal(e.quitting, true)
+  assert.equal(e.modal?.kind, 'quit')
   const small = renderEditor(e, 120, 20, false).join('\n')
   assert.match(small, /Needs 80×24 — now 120×20/)
   assert.match(small, /Save changes\? {3}y save {3}n discard {3}esc keep editing/)
@@ -225,30 +230,30 @@ test('ctrl-c leaves the editor as esc does, asking first when something changed,
   assert.equal(press(editor(), 'ctrl-c').result, 'cancelled')
   const e = press(editor(), 'tab', '9', 'ctrl-c')
   assert.equal(e.mode, 'list')
-  assert.equal(e.quitting, true)
+  assert.equal(e.modal?.kind, 'quit')
   assert.equal(e.result, undefined)
   press(e, 'ctrl-c')
   assert.equal(e.result, 'cancelled')
   const picking = press(editor(), 'tab', '9', 'enter', 'o', 'd', 'a', 'ctrl-c', 'esc', 'o')
-  assert.equal(picking.filter, '')
+  assert.deepEqual(picking.modal, { kind: 'open', filter: '', pick: 0 })
 })
 
 test('while compare is on, the help offers no esc to leave or to undo a tune, since esc only turns compare off', () => {
   const tuning = press(editor(), 'tab', '9', ' ', '?')
 
   for (const key of 'cancel the tune') {
-    tuning.help?.key(key)
+    helpOf(tuning)?.key(key)
   }
 
-  assert.match(tuning.help?.shown()[0]?.does ?? '', /Cancel the tune/)
-  assert.equal(tuning.help?.chosen(), undefined)
+  assert.match(helpOf(tuning)?.shown()[0]?.does ?? '', /Cancel the tune/)
+  assert.equal(helpOf(tuning)?.chosen(), undefined)
   const listing = press(editor(), 'tab', '9', 'enter', ' ', '?')
 
   for (const key of 'second ctrl+c') {
-    listing.help?.key(key)
+    helpOf(listing)?.key(key)
   }
 
-  assert.equal(listing.help?.chosen(), undefined)
+  assert.equal(helpOf(listing)?.chosen(), undefined)
 })
 
 test('the screen fits 80×24 and says what it needs below that', () => {
@@ -440,6 +445,22 @@ test('a bright follows its normal until it is tuned on its own, and l links it a
   assert.notEqual(e.colors().ansi[9], alone)
 })
 
+test('esc in tune puts back the links the tune broke, and u takes back a link as it takes back a color', () => {
+  const e = press(editor(), ...RED, 'right', 'tab', 'up')
+  assert.equal(e.linkOf(13), undefined)
+  press(e, 'esc')
+  assert.equal(e.linkOf(13), 5)
+  press(e, 'tab', 'l', 'esc')
+  assert.equal(e.linkOf(13), 5)
+  press(e, 'tab', 'up', 'enter')
+  assert.equal(e.linkOf(13), undefined)
+  press(e, 'u')
+  assert.equal(e.linkOf(13), 5)
+  assert.deepEqual(e.colors(), start)
+  press(e, 'l', 'u')
+  assert.equal(e.linkOf(13), 5)
+})
+
 test('a bright that starts away from its normal’s hue is not linked until l asks', () => {
   const e = editor({ colors: { ...start, ansi: start.ansi.map((c, i) => (i === 9 ? '#5aa0ff' : c)) as string[] } })
   assert.equal(e.linkOf(13), undefined)
@@ -472,7 +493,7 @@ test('editing a tone marks the slots off the original colors, and leaves other p
   )
   assert.equal(e.dirty(), false)
   press(e, 'p', 'ctrl-v', 'o')
-  assert.equal(e.overlay, undefined)
+  assert.equal(e.modal, undefined)
   assert.equal(e.wants, undefined)
   press(e, 'R')
   assert.equal(e.changes(), 0)
@@ -483,49 +504,102 @@ test('a spot on the sample finds its slots, and enter goes to the slot', () => {
   const e = editor()
   e.viewport(140, 40)
   e.point({ pane: 'shell', line: 16, run: 3 })
-  assert.equal(e.inspect, true)
+  assert.deepEqual(e.inspect, { spot: { pane: 'shell', line: 16, run: 3 } })
   assert.deepEqual(e.slotsHere(), { text: 5, ground: 0 })
   press(e, 'enter')
-  assert.equal(e.inspect, false)
+  assert.equal(e.inspect, undefined)
   assert.equal(e.slot(), 5)
   e.viewport(80, 24)
   press(e, 'i')
-  assert.equal(e.inspect, false)
+  assert.equal(e.inspect, undefined)
   assert.match(e.notice ?? '', /96×28/)
 })
 
 test('? lists what each key does, typing filters the list and enter runs the one chosen', () => {
   const e = press(editor(), '?')
-  assert.ok(e.help)
+  assert.ok(helpOf(e))
   press(e, ...'relations', 'enter')
-  assert.equal(e.help, undefined)
+  assert.equal(e.modal, undefined)
   assert.equal(e.view, 'relations')
   press(e, '?', 'esc')
-  assert.equal(e.help, undefined)
+  assert.equal(e.modal, undefined)
   assert.equal(e.result, undefined)
 })
 
 test('a paste while the editor asks to save or while a menu is open changes no slot', () => {
   const e = press(editor(), 'tab', 'up', 'enter', 'esc')
-  assert.equal(e.quitting, true)
+  assert.equal(e.modal?.kind, 'quit')
   const before = e.colors()
   e.paste('#ff0000')
   assert.deepEqual(e.colors(), before)
-  assert.equal(e.quitting, true)
+  assert.equal(e.modal?.kind, 'quit')
   e.viewport(140, 40)
   press(e, 'esc', 'I')
-  assert.equal(e.menu, 'import')
+  assert.deepEqual(e.modal, { kind: 'menu', menu: 'import', entry: 0 })
   e.paste('#ff0000')
   assert.deepEqual(e.colors(), before)
+})
+
+test('a click or the wheel under the Import menu moves nothing and opens no picker', () => {
+  const e = editor()
+  e.viewport(140, 40)
+  press(e, 'I')
+  e.openSlot(5)
+  e.select(7)
+  e.grip(0)
+  e.point({ pane: 'shell', line: 16, run: 3 })
+  e.scroll(1)
+  assert.equal(e.mode, 'list')
+  assert.equal(e.slot(), 0)
+  assert.equal(e.inspect, undefined)
+  assert.deepEqual(e.modal, { kind: 'menu', menu: 'import', entry: 0 })
+})
+
+test('a double click on a color under the Save changes question answers nothing', () => {
+  const e = press(editor(), 'tab', '9', 'enter', 'esc')
+  assert.equal(e.modal?.kind, 'quit')
+
+  pointEditor(
+    e,
+    { target: { kind: 'slot', slot: 5 }, x: 0, y: 0, exact: { x: 0.5, y: 0.5 }, width: 10, height: 1, inside: true },
+    {
+      kind: 'mouse',
+      action: 'release',
+      button: 'left',
+      wheel: 0,
+      sideways: false,
+      row: 0,
+      col: 0,
+      shift: false,
+      alt: false,
+      ctrl: false,
+      count: 2,
+    },
+  )
+  assert.equal(e.result, undefined)
+  assert.equal(e.modal?.kind, 'quit')
+})
+
+test('while compare is on over inspect, esc turns compare off first, as the bar says', () => {
+  const e = editor()
+  e.viewport(140, 40)
+  press(e, 'i', ' ')
+  assert.match(renderEditor(e, 140, 40, false).at(-1) ?? '', /^\[EDIT \(BEFORE\)\] .* esc back$/)
+  press(e, 'esc')
+  assert.equal(e.compare, false)
+  assert.ok(e.inspect)
+  assert.match(renderEditor(e, 140, 40, false).at(-1) ?? '', /^\[EDIT \(INSPECT\)\] /)
+  press(e, 'esc')
+  assert.equal(e.inspect, undefined)
 })
 
 test('a paste into the palette picker keeps only what a typed key could add, so no escape reaches the frame', () => {
   const e = editor()
   e.viewport(140, 40)
   press(e, 'I', 'enter')
-  assert.equal(e.overlay, 'open')
+  assert.equal(e.modal?.kind, 'open')
   e.paste('\x1b]\x07Dawn\u202e\x85')
-  assert.equal(e.filter, 'dawn')
+  assert.deepEqual(e.modal, { kind: 'open', filter: 'dawn', pick: 0 })
   assert.deepEqual(
     e.choices().map((choice) => choice.name),
     ['kai@dust/dawn'],

@@ -39,6 +39,7 @@ import {
   type Edited,
   type Editing,
   type EditorOptions,
+  type Modal,
   PaletteEditor,
   SCOPES,
 } from './palette-editor.ts'
@@ -559,7 +560,7 @@ function detailPane(p: Paint, e: Editing, width: number, height: number, ink: He
   const right = slot >= BASE.length ? p.dim('Uses underlined below') : ''
   const lines = [spread(`${p.bold(name)}  ${p.dim(about)}`, e.view === 'relations' ? '' : right, width), '']
   const block = p.color ? `${p.fg(hex)}${'█'.repeat(8)}${FG_RESET}  ` : ''
-  const typed = e.typing !== undefined ? `${p.bold(`${e.typing}▏`)}` : undefined
+  const typed = e.modal?.kind === 'type' ? `${p.bold(`${e.modal.text}▏`)}` : undefined
   const [r, g, b] = rgb(hex)
   lines.push(`${block}${typed ?? lchLine(p, at)}`, `${block}${p.dim(`${hex}${SEP}rgb ${r} ${g} ${b}`)}`)
 
@@ -611,13 +612,19 @@ function seedSide(p: Paint, e: Editing, width: number, height: number): string[]
   ]
 }
 
-function openPane(p: Paint, e: Editing, width: number, height: number): string[] {
+function openPane(
+  p: Paint,
+  e: Editing,
+  { filter: typed, pick }: Modal & { kind: 'open' },
+  width: number,
+  height: number,
+): string[] {
   const choices = e.choices()
   const all = e.options.palettes?.length ?? 0
-  const filter = e.filter ? `${p.bold(e.filter)}▏` : p.dim('Type to filter')
+  const filter = typed ? `${p.bold(typed)}▏` : p.dim('Type to filter')
   const room = height - 2
   const span = choices.length <= room ? room : room - 1
-  const top = Math.max(0, Math.min(e.pick - Math.floor(span / 2), choices.length - span))
+  const top = Math.max(0, Math.min(pick - Math.floor(span / 2), choices.length - span))
   const below = Math.max(0, choices.length - top - span)
   const nameWidth = Math.min(40, Math.max(12, ...choices.map((c) => cells(c.name))))
 
@@ -625,7 +632,7 @@ function openPane(p: Paint, e: Editing, width: number, height: number): string[]
     spread(`  ${p.bold('Take colors from')}  ${filter}`, p.dim(`${choices.length}/${all}`), width),
     top > 0 ? `  ${p.dim(moreOf(-1, top))}` : '',
     ...choices.slice(top, top + span).map((choice, k) => {
-      const here = top + k === e.pick
+      const here = top + k === pick
       const c = choice.colors
 
       const swatches = p.color
@@ -638,124 +645,148 @@ function openPane(p: Paint, e: Editing, width: number, height: number): string[]
       return spot({ kind: 'choice', index: top + k }, `${gutter}${here ? p.bold(label) : label}  ${swatches}`)
     }),
     ...(below > 0 ? [`  ${p.dim(moreOf(1, below))}`] : []),
-    ...(choices.length === 0 ? [`  ${p.dim(`No palettes match '${e.filter}'`)}`] : []),
+    ...(choices.length === 0 ? [`  ${p.dim(`No palettes match '${typed}'`)}`] : []),
   ]
 }
 
 const KEEP = ['s', 'g', 'a', 'i']
 const QUITTING = ['y', 'n']
 
+interface Foot {
+  badge: string
+  lead?: string
+  keys: Hint[]
+  right: Hint
+}
+
+function askFoot(p: Paint, modal: Exclude<Modal, { kind: 'help' }>): Foot {
+  switch (modal.kind) {
+    case 'quit':
+      return {
+        badge: 'EDIT (QUIT)',
+        lead: 'Save changes?',
+        keys: [
+          ['←→', 'choose'],
+          ['enter', 'confirm'],
+          ['y', 'save'],
+          ['n', 'discard'],
+        ],
+        right: ['esc', 'keep editing'],
+      }
+    case 'type':
+      return {
+        badge: 'EDIT (TYPE)',
+        lead: p.dim('#rrggbb, rgb(r g b) or oklch(l c h)'),
+        keys: [
+          ['enter', 'set'],
+          ['ctrl+u', 'clear'],
+        ],
+        right: ['esc', 'back'],
+      }
+    case 'open':
+      return {
+        badge: 'EDIT (OPEN)',
+        keys: [
+          ['↑↓', 'palette'],
+          ['a-z', 'filter'],
+          ['enter', 'take its colors'],
+        ],
+        right: ['esc', 'close'],
+      }
+    case 'menu':
+      return {
+        badge: modal.menu === 'export' ? 'EDIT (EXPORT)' : 'EDIT (IMPORT)',
+        keys: [
+          ['↑↓', 'move'],
+          ['enter', 'choose'],
+        ],
+        right: ['esc', 'close'],
+      }
+  }
+}
+
+function groundFoot(e: Editing): Foot {
+  switch (e.under()) {
+    case 'before':
+      return {
+        badge: 'EDIT (BEFORE)',
+        lead: 'The colors you started from',
+        keys: [['space', 'back to yours']],
+        right: ['esc', 'back'],
+      }
+    case 'seeds':
+      return {
+        badge: 'EDIT (SEEDS)',
+        keys: [
+          ['↑↓', 'move'],
+          ['←→', 'change'],
+          ['shift+←→', 'by 5'],
+          ['enter', 'tune colors'],
+          ['o', 'open a palette'],
+          ['p', 'find picture'],
+          ['?', 'keys'],
+        ],
+        right: ['esc', 'cancel'],
+      }
+    case 'tune':
+      return {
+        badge: 'EDIT (TUNE)',
+        keys: [
+          ['↑↓', 'L'],
+          ['←→', e.channel === CONTRAST ? 'ratio' : 'C'],
+          ['shift+←→', 'H'],
+          ['u', 'undo'],
+          ['r', 'reset'],
+          ['tab', MARKS.contrast],
+          ...(e.slot() >= BASE.length ? ([['a', 'scope']] as Hint[]) : []),
+          [e.channel === CONTRAST ? '1-9' : '0-9', e.channel === CONTRAST ? 'ratio' : 'jump'],
+          ['#', 'type'],
+          ['enter', 'keep'],
+        ],
+        right: ['esc', 'cancel'],
+      }
+    case 'inspect':
+      return {
+        badge: 'EDIT (INSPECT)',
+        keys: [
+          ['←→↑↓', 'move'],
+          ['shift+←→', 'tab'],
+          ['enter', 'go to color'],
+          ['i', 'back'],
+        ],
+        right: ['esc', 'back'],
+      }
+    case 'list':
+      return {
+        badge: 'EDIT',
+        keys: [
+          ['↑↓', 'move'],
+          ['←→', 'normal or bright'],
+          ['enter', 'tune'],
+          ['#', 'type'],
+          ['g', e.view === 'slot' ? 'relations' : 'colors'],
+          ['p', 'find picture'],
+          ['s', 'save'],
+          ['?', 'keys'],
+        ],
+        right: ['esc', 'cancel'],
+      }
+  }
+}
+
 function footer(p: Paint, e: Editing, width: number): string {
-  if (e.help) {
-    return barLine(p, e.help.bar(), width)
+  const modal = e.modal
+
+  if (modal?.kind === 'help') {
+    return barLine(p, modal.help.bar(), width)
   }
 
-  let badge = 'EDIT'
-  let lead = ''
-  let keys: Hint[] = []
-  let right: Hint | undefined
+  const foot = modal ? askFoot(p, modal) : groundFoot(e)
+  const keys = foot.keys.filter(([key]) => (e.options.find || key !== 'p') && (e.roomy || key !== 'i'))
+  const lead = e.notice ? toned(p, e.noticeTone, e.notice) : (foot.lead ?? '')
+  const keep = modal?.kind === 'quit' ? QUITTING : KEEP
 
-  if (e.quitting) {
-    badge = 'EDIT (QUIT)'
-    lead = 'Save changes?'
-    keys = [
-      ['←→', 'choose'],
-      ['enter', 'confirm'],
-      ['y', 'save'],
-      ['n', 'discard'],
-    ]
-    right = ['esc', 'keep editing']
-  } else if (e.typing !== undefined) {
-    badge = 'EDIT (TYPE)'
-    lead = p.dim('#rrggbb, rgb(r g b) or oklch(l c h)')
-    keys = [
-      ['enter', 'set'],
-      ['ctrl+u', 'clear'],
-    ]
-    right = ['esc', 'back']
-  } else if (e.overlay === 'open') {
-    badge = 'EDIT (OPEN)'
-    keys = [
-      ['↑↓', 'palette'],
-      ['a-z', 'filter'],
-      ['enter', 'take its colors'],
-    ]
-    right = ['esc', 'close']
-  } else if (e.menu) {
-    badge = e.menu === 'export' ? 'EDIT (EXPORT)' : 'EDIT (IMPORT)'
-    keys = [
-      ['↑↓', 'move'],
-      ['enter', 'choose'],
-    ]
-    right = ['esc', 'close']
-  } else if (e.compare) {
-    badge = 'EDIT (BEFORE)'
-    lead = 'The colors you started from'
-    keys = [['space', 'back to yours']]
-    right = ['esc', 'back']
-  } else if (e.mode === 'seeds') {
-    badge = 'EDIT (SEEDS)'
-    keys = [
-      ['↑↓', 'move'],
-      ['←→', 'change'],
-      ['shift+←→', 'by 5'],
-      ['enter', 'tune colors'],
-      ['o', 'open a palette'],
-      ['p', 'find picture'],
-      ['?', 'keys'],
-    ]
-    right = ['esc', 'cancel']
-  } else if (e.mode === 'tune') {
-    badge = 'EDIT (TUNE)'
-    keys = [
-      ['↑↓', 'L'],
-      ['←→', e.channel === CONTRAST ? 'ratio' : 'C'],
-      ['shift+←→', 'H'],
-      ['u', 'undo'],
-      ['r', 'reset'],
-      ['tab', MARKS.contrast],
-      ...(e.slot() >= BASE.length ? ([['a', 'scope']] as Hint[]) : []),
-      [e.channel === CONTRAST ? '1-9' : '0-9', e.channel === CONTRAST ? 'ratio' : 'jump'],
-      ['#', 'type'],
-      ['enter', 'keep'],
-    ]
-    right = ['esc', 'cancel']
-  } else if (e.inspect) {
-    badge = 'EDIT (INSPECT)'
-    keys = [
-      ['←→↑↓', 'move'],
-      ['shift+←→', 'tab'],
-      ['enter', 'go to color'],
-      ['i', 'back'],
-    ]
-    right = ['esc', 'back']
-  } else {
-    keys = [
-      ['↑↓', 'move'],
-      ['←→', 'normal or bright'],
-      ['enter', 'tune'],
-      ['#', 'type'],
-      ['g', e.view === 'slot' ? 'relations' : 'colors'],
-      ['p', 'find picture'],
-      ['s', 'save'],
-      ['?', 'keys'],
-    ]
-    right = ['esc', 'cancel']
-  }
-
-  if (!e.options.find) {
-    keys = keys.filter(([key]) => key !== 'p')
-  }
-
-  if (!e.roomy) {
-    keys = keys.filter(([key]) => key !== 'i')
-  }
-
-  if (e.notice) {
-    lead = toned(p, e.noticeTone, e.notice)
-  }
-
-  return barLine(p, { badge, lead, keys, ...(right ? { right } : {}), keep: e.quitting ? QUITTING : KEEP }, width)
+  return barLine(p, { badge: foot.badge, lead, keys, right: foot.right, keep }, width)
 }
 
 export function renderEditor(e: Editing, cols: number, rows: number, color: boolean, look: Look = {}): string[] {
@@ -773,8 +804,10 @@ export function drawEditor(e: Editing, cols: number, rows: number, color: boolea
   const ground = (drawn.mock || drawn.charts) && look.chrome?.[0] ? p.bg(look.chrome[0]) : ''
   const solid = (box: string[]) => (ground ? box.map((line) => grounded(line, ground)) : box)
 
-  if (e.help) {
-    const box = e.help.box(p, cols, rows - 1)
+  const modal = e.modal
+
+  if (modal?.kind === 'help') {
+    const box = modal.help.box(p, cols, rows - 1)
 
     return {
       ...drawn,
@@ -784,11 +817,11 @@ export function drawEditor(e: Editing, cols: number, rows: number, color: boolea
     }
   }
 
-  if (!e.quitting) {
+  if (modal?.kind !== 'quit') {
     return drawn
   }
 
-  const dialog = solid(quitDialog(p, e, cols))
+  const dialog = solid(quitDialog(p, e, modal.focus, cols))
   const col = Math.floor((cols - cells(dialog[0] as string)) / 2)
   const top = Math.max(0, Math.floor((drawn.lines.length - dialog.length) / 2))
 
@@ -808,7 +841,7 @@ function drawFrame(e: Editing, cols: number, rows: number, color: boolean, look:
     const small = [
       p.bold('ttheme palette editor'),
       `Needs ${MIN_COLS}×${MIN_ROWS} — now ${cols}×${rows}`,
-      e.quitting
+      e.modal?.kind === 'quit'
         ? `Save changes?   ${[hintOf(p, 'y', 'save'), hintOf(p, 'n', 'discard'), hintOf(p, 'esc', 'keep editing')].join('   ')}`
         : p.dim(capped('esc cancel')),
     ]
@@ -816,7 +849,9 @@ function drawFrame(e: Editing, cols: number, rows: number, color: boolean, look:
     return { lines: Array.from({ length: rows }, (_, i) => fit(small[i] ?? '', cols)), art: undefined }
   }
 
-  if (!e.overlay && e.mode !== 'seeds' && e.view === 'slot') {
+  const picking = e.modal?.kind === 'open' ? e.modal : undefined
+
+  if (!picking && e.mode !== 'seeds' && e.view === 'slot') {
     const built = renderBuilder(e, cols, rows, color, look)
 
     if (built) {
@@ -836,8 +871,8 @@ function drawFrame(e: Editing, cols: number, rows: number, color: boolean, look:
   let body: string[]
   let charts: Chart[] = []
 
-  if (e.overlay === 'open') {
-    body = openPane(p, e, cols, height)
+  if (picking) {
+    body = openPane(p, e, picking, cols, height)
   } else {
     const right = cols - LEFT - 2
     const left = e.mode === 'seeds' ? seedPane(p, e, height) : slotPane(p, e, height, LEFT - 1)
@@ -892,9 +927,24 @@ function pointHelp(e: Editing, help: Help, hit: Hit | undefined, event: Mouse): 
   }
 }
 
-function pointEditor(e: Editing, hit: Hit | undefined, event: Mouse): void {
-  if (e.help) {
-    pointHelp(e, e.help, hit, event)
+function reaches(e: Editing, target: EditorSpot): boolean {
+  switch (e.modal?.kind) {
+    case 'quit':
+      return target.kind === 'key'
+    case 'type':
+      return target.kind === 'key' || target.kind === 'format'
+    case 'open':
+      return target.kind === 'key' || target.kind === 'choice'
+    case 'menu':
+      return target.kind === 'key' || target.kind === 'entry'
+    default:
+      return true
+  }
+}
+
+export function pointEditor(e: Editing, hit: Hit | undefined, event: Mouse): void {
+  if (e.modal?.kind === 'help') {
+    pointHelp(e, e.modal.help, hit, event)
 
     return
   }
@@ -913,11 +963,11 @@ function pointEditor(e: Editing, hit: Hit | undefined, event: Mouse): void {
 
   const target = hit?.target as EditorSpot | undefined
 
-  if (event.action === 'press' && e.mode === 'tune' && e.roomy && !e.overlay && closesPicker(target)) {
+  if (event.action === 'press' && e.mode === 'tune' && e.roomy && closesPicker(target)) {
     e.dismiss()
   }
 
-  if (!hit || !target) {
+  if (!hit || !target || !reaches(e, target)) {
     return
   }
 
@@ -934,7 +984,7 @@ function pointEditor(e: Editing, hit: Hit | undefined, event: Mouse): void {
       e.choose(target.index)
     } else if (event.count === 2 && target.kind === 'slot' && e.mode === 'list') {
       e.press('enter')
-    } else if (event.count === 2 && target.kind === 'choice' && e.overlay === 'open') {
+    } else if (event.count === 2 && target.kind === 'choice' && e.modal?.kind === 'open') {
       e.press('enter')
     }
 
@@ -998,7 +1048,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
   const editor = new PaletteEditor(options)
   const backdrop = surface.backdrop
   const layer = surface.layer
-  const burst = (typed: string) => editor.typing === undefined && typedDrop(typed)
+  const burst = (typed: string) => editor.modal?.kind !== 'type' && typedDrop(typed)
 
   const terminalOptions = surface.hosted
     ? { modes: [PASTES, ...pointing()], assume: [HIDE_CURSOR, NO_WRAP], burst }
@@ -1055,13 +1105,13 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
           chrome,
         })
 
-        if (helpTop !== undefined) {
-          editor.help?.scrolled(helpTop)
+        if (helpTop !== undefined && editor.modal?.kind === 'help') {
+          editor.modal.help.scrolled(helpTop)
         }
 
         return {
           lines,
-          hovers: (target) => !editor.quitting || (target as EditorSpot).kind === 'key',
+          hovers: (target) => reaches(editor, target as EditorSpot),
           after: () =>
             `${
               (editor.pic
@@ -1132,7 +1182,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
     } else if (backdrop || layer) {
       const probe = new CellProbe()
       void terminal
-        .ask(CELL_QUERY, (event) => probe.see(event), 1000)
+        .ask(CELL_QUERY, (event) => probe.see(event), 1000, false)
         .then((cell) => {
           if (cell) {
             backdrop?.measured(cell)

@@ -369,6 +369,24 @@ test('esc in the form goes back to the marketplaces keeping what was typed, and 
   )
 })
 
+test('a marketplace the form asked for and left, then added from Search, is added there and Search keeps its keys', async () => {
+  const neon = marketplace('bob/ttheme-neon', 'bob@neon', ['glow'])
+  const index = () => Promise.resolve(listing(listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow'])))
+  const fetch = () => new Promise<Marketplace>((resolve) => setTimeout(() => resolve(neon), 60))
+
+  const { frames, panel } = await drive(
+    [...ADD, ...'bob/ttheme-neon', '\r', '\x1b', 120, DOWN, '\r', 20, ' ', 20, UP, 20, '\x03', '\x03'],
+    { io: io({ index, fetch }) },
+  )
+
+  assert.deepEqual(
+    panel.adds.map((m) => m.id),
+    ['bob@neon'],
+  )
+  assert.match(frames, /^ ▌ {2}● bob@neon .*Will add/m)
+  assert.match(frames.split(FRAME).findLast((frame) => frame.includes('[SEARCH]')) ?? '', /\[SEARCH\] enter back/)
+})
+
 test('a failed update says so on its marketplace’s card, and the panel gives the reason', async () => {
   const { frames } = await drive([DOWN, '\x1b'], { due: ['alice/ttheme-pastel'] })
   assert.match(frames, /● alice@pastel {2}Update failed/)
@@ -402,6 +420,17 @@ test('ctrl-c or esc with something staged asks before leaving, esc stays, and a 
   const { frames, last, result, ran } = await drive([...ORLA, ' ', '\x03', '\x1b', '\x1b', '\x1b', '\x03'])
   assert.match(frames, /\[BROWSE\] Apply 1 change before you leave\? {3}y apply {3}n discard +esc stay/)
   assert.match(last, /Apply 1 change before you leave\?/)
+  assert.equal(result, 'cancel')
+  assert.equal(ran, false)
+})
+
+test('ctrl-c on the review asks there before leaving, and esc goes back to the review', async () => {
+  const { frames, result, ran } = await drive([...ORLA, ' ', '\r', 20, '\x03', 20, '\x1b', 20, '\x1b', '\x03', '\x03'])
+  const shown = frames.split(FRAME)
+  const asked = shown.findIndex((frame) => /Review changes[\s\S]*Apply 1 change before you leave\?/.test(frame))
+  assert.ok(asked > 0, 'the review shows the question')
+  assert.match(shown[asked] ?? '', /y apply {3}n discard +esc stay/)
+  assert.match(shown[asked + 1] ?? '', /Review changes[\s\S]*\[BROWSE \(APPLY\)\] enter apply +esc back/)
   assert.equal(result, 'cancel')
   assert.equal(ran, false)
 })
@@ -573,6 +602,20 @@ test('a search taken back while its longer name is asked keeps the works it foun
   })
 
   assert.match(frames.split(FRAME).findLast((frame) => frame.includes('星降')) ?? '', /Starfall/)
+})
+
+test('a name lookup that failed stops saying so once the search text changes', async () => {
+  const { frames } = await drive([...SEARCH, 20, ...'orl', 800, '\x15', 30, '\x1b', '\x1b'], {
+    io: io({
+      index: () => Promise.reject(new Error('cannot reach the list')),
+      names: () => Promise.reject(new Error('the name service is away')),
+    }),
+  })
+
+  const last = frames.split(FRAME).findLast((frame) => frame.includes('[SEARCH]')) ?? ''
+  assert.match(frames, /│ the name service is away +│/)
+  assert.match(last, /│ cannot reach the list +│/)
+  assert.doesNotMatch(last, /the name service is away/)
 })
 
 test('a search handed in by preview opens Search marketplace on it and asks at once', async () => {

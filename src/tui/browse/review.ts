@@ -14,7 +14,7 @@ import { MARKS, type Paint, SPINNER } from '../style.ts'
 import type { Staged } from './staged.ts'
 import type { BrowseResult, Report } from './types.ts'
 
-type Phase = 'browse' | 'review' | 'applying' | 'done'
+export type Phase = 'browse' | 'review' | 'applying' | 'done'
 
 interface ReviewHost {
   readonly staged: Staged
@@ -103,7 +103,7 @@ export class Review {
     this.offset = offset
   }
 
-  frame(cols: number, rows: number) {
+  frame(cols: number, rows: number, asked?: Bar) {
     const { p, hub } = this.host
     const width = cols - 1
     const review = this.phase === 'review'
@@ -132,11 +132,13 @@ export class Review {
     body.push(below > 0 ? ` ${this.host.more(1, below)}` : '')
     const scroll: Hint[] = most > 0 ? [['↑↓', 'scroll']] : []
 
-    const bar: Bar = review
-      ? { badge: 'BROWSE (APPLY)', keys: [...scroll, ['enter', 'apply']], right: ['esc', 'back'] }
-      : this.phase === 'applying'
-        ? { badge: 'BROWSE (APPLY)', note: 'Keys wait until it ends', keys: [] }
-        : { badge: 'BROWSE (APPLY)', keys: scroll, right: ['enter', 'close'] }
+    const bar: Bar =
+      asked ??
+      (review
+        ? { badge: 'BROWSE (APPLY)', keys: [...scroll, ['enter', 'apply']], right: ['esc', 'back'] }
+        : this.phase === 'applying'
+          ? { badge: 'BROWSE (APPLY)', note: 'Keys wait until it ends', keys: [] }
+          : { badge: 'BROWSE (APPLY)', keys: scroll, right: ['enter', 'close'] })
 
     const text = [
       ...(hub ? [fit(hubBar(hub, this.host.color, this.host.inks()), width, false)] : []),

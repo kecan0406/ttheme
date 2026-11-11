@@ -111,6 +111,31 @@ test('a terminal that never answers is not waited on for long, and one that neve
   other.close()
 })
 
+test('two questions asked at once each get their own answer, and keys wait only for the one that holds them', async () => {
+  const { input, output, settle } = streams()
+  const terminal = new Terminal({ input, output })
+  const taken: Inbound[] = []
+  terminal.listen((events) => taken.push(...events))
+  const status = terminal.ask('\x1b[5n', (event) => (event.kind === 'status' ? 'status' : undefined), 200)
+
+  const attributes = terminal.ask(
+    '\x1b[c',
+    (event) => (event.kind === 'attributes' ? 'attributes' : undefined),
+    200,
+    false,
+  )
+
+  input.write('a')
+  await settle()
+  assert.deepEqual(taken, [])
+  input.write('\x1b[0n')
+  await settle()
+  assert.deepEqual(taken, [{ kind: 'key', key: 'a' }])
+  input.write('\x1b[?62c')
+  assert.deepEqual(await Promise.all([status, attributes]), ['status', 'attributes'])
+  terminal.close()
+})
+
 test('over ssh the mouse takes clicks and drags and asks for no moves', () => {
   const [mode] = pointing({ SSH_CONNECTION: '10.0.0.1 22 10.0.0.2 22' })
   assert.ok(mode && !mode.on.includes('1003'))

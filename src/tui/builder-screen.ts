@@ -40,7 +40,7 @@ import {
 import { editorBoxTopics } from './editor-topics.ts'
 import { keysBox } from './help.ts'
 import { cap, capped } from './keycaps.ts'
-import { CHANNELS, CONTRAST, type Editing } from './palette-editor.ts'
+import { CHANNELS, CONTRAST, type Editing, type Modal } from './palette-editor.ts'
 import { boxEdge, boxed, keyAfter, pillOf, SEP } from './parts.ts'
 import { type Art, type Box, type Drawn, LIGHTS, type Mock } from './picker-art.ts'
 import { BG_RESET, FG_RESET, INK_RESET, LOOKS, MARKS, open, type Paint, painter, RESET, surfaceOf } from './style.ts'
@@ -471,7 +471,9 @@ function valueLine(e: Editing, p: Paint, width: number): string {
   const slot = e.slot()
   const hex = e.list[slot] as Hex
   const at = e.lch[slot] as { l: number; c: number; h: number }
-  const typed = e.typing !== undefined ? p.bold(`${e.typing}▏`) : keyZone('#', p.bold(colorText(e.format, hex, at)))
+
+  const typed =
+    e.modal?.kind === 'type' ? p.bold(`${e.modal.text}▏`) : keyZone('#', p.bold(colorText(e.format, hex, at)))
 
   return spread(typed, e.changed(slot) ? baseButton(p, e, width - cells(typed) - 1) : '', width)
 }
@@ -758,7 +760,9 @@ function topBar(e: Editing, p: Paint, width: number): string {
             ),
           ]
         : []),
-      ...(e.options.exports ? [button('x', 'Export ▾', e.menu === 'export', keyed)] : []),
+      ...(e.options.exports
+        ? [button('x', 'Export ▾', e.modal?.kind === 'menu' && e.modal.menu === 'export', keyed)]
+        : []),
     ].join('  '),
   ]
 
@@ -880,22 +884,18 @@ function popoverRows(e: Editing, p: Paint, c: Colors): Cellrow[] | undefined {
   return rows.map((row) => crop(row, 0, POPOVER))
 }
 
-function menuRows(e: Editing, p: Paint, c: Colors): Cellrow[] | undefined {
-  if (!e.menu) {
-    return undefined
-  }
-
-  const items = e.menu === 'export' ? ['Share code', 'Add command', 'Set file'] : ['Another palette', 'A share code']
+function menuRows({ menu, entry }: Modal & { kind: 'menu' }, p: Paint, c: Colors): Cellrow[] {
+  const items = menu === 'export' ? ['Share code', 'Add command', 'Set file'] : ['Another palette', 'A share code']
 
   const width = 24
   const base = p.color ? `${p.bg(c.background)}${p.fg(c.foreground)}` : ''
   const dim = p.color ? `${base}${open('dim')}` : ''
-  const title = e.menu === 'export' ? 'Copy ' : 'Take from '
+  const title = menu === 'export' ? 'Copy ' : 'Take from '
 
   return [
     [{ text: `┌ ${title}${'─'.repeat(Math.max(0, width - 3 - title.length))}┐`, sgr: dim }],
     ...items.map((item, index): Cellrow => {
-      const here = index === e.entry
+      const here = index === entry
       const target: EditorSpot = { kind: 'entry', index }
 
       return [
@@ -1077,7 +1077,7 @@ export function renderBuilder(
 
   const side = popped.lines
   const behind = look.behind === true
-  const pinned = e.inspect ? validSpot(layout, e.spot) : undefined
+  const pinned = e.inspect ? validSpot(layout, e.inspect.spot) : undefined
   const pictured = p.color && look.mock === true
   const stage = p.color && !pictured ? p.bg(stageOf(ui)) : ''
   const grid: Cellrow[] = Array.from({ length: rows - 3 }, () => [{ text: ' '.repeat(layout.width), sgr: stage }])
@@ -1123,11 +1123,9 @@ export function renderBuilder(
     }
   }
 
-  const menu = menuRows(e, p, c)
-
-  if (menu) {
-    const col = Math.max(0, layout.width - 24 - (e.menu === 'import' ? 12 : 2))
-    menu.forEach((row, i) => {
+  if (e.modal?.kind === 'menu') {
+    const col = Math.max(0, layout.width - 24 - (e.modal.menu === 'import' ? 12 : 2))
+    menuRows(e.modal, p, c).forEach((row, i) => {
       put(2 + i, col, row)
     })
   }

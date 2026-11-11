@@ -244,7 +244,7 @@ export function gateBox(p: Paint, e: Editing, room: number, width: number): stri
   ]
 }
 
-export function quitDialog(p: Paint, e: Editing, cols: number): string[] {
+export function quitDialog(p: Paint, e: Editing, focus: 'yes' | 'no', cols: number): string[] {
   const width = Math.min(46, cols - 4)
   const edits = e.unsaved()
 
@@ -253,8 +253,8 @@ export function quitDialog(p: Paint, e: Editing, cols: number): string[] {
     ...(e.added > 0 ? [`${e.added} ${e.added === 1 ? 'picture' : 'pictures'} added`] : []),
   ]
 
-  const yes = keyZone('y', buttonOf(p, 'Yes', e.quitFocus === 'yes' ? 'focus' : 'idle'))
-  const no = keyZone('n', buttonOf(p, 'No', e.quitFocus === 'no' ? 'focus' : 'idle', true))
+  const yes = keyZone('y', buttonOf(p, 'Yes', focus === 'yes' ? 'focus' : 'idle'))
+  const no = keyZone('n', buttonOf(p, 'No', focus === 'no' ? 'focus' : 'idle', true))
   const buttons = `${yes}  ${no}`
   const hints = [hintOf(p, 'y', 'save'), hintOf(p, 'n', 'discard'), hintOf(p, 'esc', 'keep editing')].join('   ')
   const row = (content: string) => boxed(p, content, width)

@@ -124,7 +124,7 @@ export class Terminal {
   private resized: (() => void) | undefined
   private hovered: ((event: Mouse | undefined) => void) | undefined
   private queued: Inbound[] = []
-  private asking: { pick: (event: Inbound) => boolean; hold: boolean } | undefined
+  private asks: { pick: (event: Inbound) => boolean; hold: boolean }[] = []
   private reject: (error: Error) => void = ignore
   private open = true
   private aborted = false
@@ -277,17 +277,13 @@ export class Terminal {
 
       const done = (value: T | undefined) => {
         clearTimeout(timer)
-
-        if (this.asking === asking) {
-          this.asking = undefined
-        }
-
+        this.asks = this.asks.filter((one) => one !== asking)
         resolve(value)
         this.release()
       }
 
       const timer = setTimeout(() => done(undefined), wait)
-      this.asking = asking
+      this.asks.push(asking)
       this.write(query)
     })
   }
@@ -388,21 +384,23 @@ export class Terminal {
       this.hold(KEYBOARD)
     }
 
-    const still = this.sift(events)
-    const asking = this.asking
-    const passed = asking ? still.filter((event) => !asking.pick(event)) : still
+    const passed = this.sift(events).filter((event) => !this.asks.some((ask) => ask.pick(event)))
 
     if (passed.length === 0) {
       return
     }
 
-    if (!this.take || this.asking?.hold) {
+    if (!this.take || this.held()) {
       this.queued.push(...passed)
 
       return
     }
 
     this.take(passed)
+  }
+
+  private held(): boolean {
+    return this.asks.some((ask) => ask.hold)
   }
 
   private sift(events: Inbound[]): Inbound[] {
@@ -432,7 +430,7 @@ export class Terminal {
   }
 
   private release(): void {
-    if (this.take && this.queued.length > 0) {
+    if (this.take && !this.held() && this.queued.length > 0) {
       const queued = this.queued
       this.queued = []
       this.take(queued)

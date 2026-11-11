@@ -6,11 +6,11 @@ interface Fresh {
   updates: string[]
 }
 
+type Status = { kind: 'fetching'; staging: boolean } | { kind: 'updating' } | { kind: 'failed'; why: string }
+
 export class Network {
-  readonly busy = new Map<string, string>()
-  readonly failed = new Map<string, string>()
+  private readonly sources = new Map<string, Status>()
   private readonly fetched = new Map<string, Marketplace>()
-  private readonly staging = new Set<string>()
   private readonly inflight = new Set<Promise<unknown>>()
   private readonly io: BrowseIo
   private readonly redraw: () => void
@@ -32,6 +32,22 @@ export class Network {
     await Promise.allSettled(this.inflight)
   }
 
+  busy(source: string): string | undefined {
+    const status = this.sources.get(source)
+
+    return status?.kind === 'fetching' ? 'Fetching…' : status?.kind === 'updating' ? 'Updating…' : undefined
+  }
+
+  failure(source: string): string | undefined {
+    const status = this.sources.get(source)
+
+    return status?.kind === 'failed' ? status.why : undefined
+  }
+
+  fail(source: string, why: string): void {
+    this.sources.set(source, { kind: 'failed', why })
+  }
+
   fetch(source: string, arrive: (marketplace: Marketplace) => void, lost: () => void): void {
     const got = this.fetched.get(source)
 
@@ -41,29 +57,32 @@ export class Network {
       return
     }
 
-    this.staging.add(source)
+    const status = this.sources.get(source)
 
-    if (this.busy.has(source)) {
+    if (status?.kind === 'updating') {
       return
     }
 
-    this.failed.delete(source)
-    this.busy.set(source, 'Fetching…')
+    this.sources.set(source, { kind: 'fetching', staging: true })
+
+    if (status?.kind === 'fetching') {
+      return
+    }
+
     this.track(this.io.fetch(source)).then(
       (marketplace) => {
-        this.busy.delete(source)
+        const landed = this.sources.get(source)
+        this.sources.delete(source)
         this.fetched.set(source, marketplace)
 
-        if (this.staging.delete(source)) {
+        if (landed?.kind === 'fetching' && landed.staging) {
           arrive(marketplace)
         }
 
         this.redraw()
       },
       (error: Error) => {
-        this.busy.delete(source)
-        this.staging.delete(source)
-        this.failed.set(source, inert(error.message))
+        this.fail(source, inert(error.message))
         lost()
         this.redraw()
       },
@@ -71,31 +90,31 @@ export class Network {
   }
 
   refresh(source: string, done: (fresh: Fresh) => void): void {
-    if (this.busy.has(source)) {
+    if (this.busy(source) !== undefined) {
       return
     }
 
-    this.failed.delete(source)
-    this.busy.set(source, 'Updating…')
+    this.sources.set(source, { kind: 'updating' })
     this.track(this.io.refresh(source)).then(
       (fresh) => {
-        this.busy.delete(source)
+        this.sources.delete(source)
         done(fresh)
         this.redraw()
       },
       (error: Error) => {
-        this.busy.delete(source)
-        this.failed.set(source, `Update failed: ${inert(error.message)}`)
+        this.fail(source, `Update failed: ${inert(error.message)}`)
         this.redraw()
       },
     )
   }
 
   unstage(source: string): void {
-    this.staging.delete(source)
+    if (this.sources.get(source)?.kind === 'fetching') {
+      this.sources.set(source, { kind: 'fetching', staging: false })
+    }
   }
 
   updating(): boolean {
-    return this.busy.values().some((text) => text === 'Updating…')
+    return this.sources.values().some((status) => status.kind === 'updating')
   }
 }
