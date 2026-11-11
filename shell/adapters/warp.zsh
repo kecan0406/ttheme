@@ -389,6 +389,7 @@ __tt_warp_live() {
       live=1
     else
       zf_rm -f -- $f 2>/dev/null
+      [[ $pid == <-> ]] && unset "TTHEME_WARP_WAITED[$pid]"
     fi
   done
   (( live ))
