@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.108
+
 - In Warp, switching from Browse to Preview with `tab` no longer lets the palette you had just moved onto go on a moment after the switch, and Browse takes away the short-lived theme files it made for the palettes it showed. Before, the look still landed after Preview had taken the tab, and every switch after a hover left a `ttheme-….view-….yaml` file in Warp's themes folder.
 - The palette list of `ttheme init` and `ttheme share` now puts the tab's look back when its window closes or the process is told to stop while it is open. Before, the look of the palette under the cursor stayed on, and in Warp it stayed as the theme.
 - A picture put in again, the same post from `ttheme find` or from an update, keeps the one it replaces until the new one is written and recorded. Before, the old picture's files were deleted first, so an install that failed or was cut short left the palette naming a picture that was gone.
