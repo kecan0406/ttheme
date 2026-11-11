@@ -51,16 +51,11 @@ export function ArtCallPill() {
   )
 }
 
-function Step({ number, children }: PropsWithChildren<{ number: number }>) {
+function Point({ children }: PropsWithChildren) {
   return (
-    <li class="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-2.5 text-sm">
-      <span
-        aria-hidden="true"
-        class="grid size-8 place-items-center rounded-full bg-accent text-xs font-bold text-primary"
-      >
-        {number}
-      </span>
-      <div class="pt-1.5">{children}</div>
+    <li class="grid grid-cols-[0.375rem_minmax(0,1fr)] items-baseline gap-x-3 border-t border-border py-2.5 last:border-b">
+      <i aria-hidden="true" class="size-1.5 -translate-y-px rounded-full bg-primary" />
+      <span>{children}</span>
     </li>
   )
 }
@@ -97,7 +92,7 @@ export function ArtCallDialog({ lead, sticker }: { lead: Theme; sticker: string 
     <Dialog id={ART_CALL} aria-labelledby="art-call-title" data-dock class="w-[min(540px,calc(100%-24px))]">
       <div class="flex max-h-[inherit] flex-col">
         <div class="flex h-12 flex-none items-center border-b border-border pl-6 max-[640px]:pl-5">
-          <p class="min-w-0 flex-1 truncate text-sm font-bold">Fan art welcome</p>
+          <p class="min-w-0 flex-1 truncate text-sm font-bold">Illustrators welcome</p>
           <DialogClose
             render={(props) => (
               <Button {...props} variant="ghost" size="icon" class="mr-1.5">
@@ -118,66 +113,66 @@ export function ArtCallDialog({ lead, sticker }: { lead: Theme; sticker: string 
               <Icon node={Plus} />
             </span>
           </div>
-          <div class="grid gap-5 px-7 pt-6 pb-7 max-[640px]:px-4">
+          <div class="grid gap-6 px-7 pt-6 pb-7 text-sm max-[640px]:px-4">
             <div class="grid gap-2 text-center">
               <DialogTitle id="art-call-title" class="text-display-sm text-balance">
                 Are you an illustrator?
                 <br />
-                We're looking for character art for the banner!
+                We're looking for character art for the top of this page ✦
               </DialogTitle>
-              <p class="text-sm font-bold text-pretty">
-                Your art stays yours, shown with your name and a link to your post. Rather not have it here later? Just
-                let us know.
-              </p>
+              <p class="text-pretty text-soft-foreground">We'd love to feature your cool or cute art here!</p>
             </div>
-            <ol class="grid gap-4">
-              <Step number={1}>
-                Find your character among the palettes.{' '}
+            <ul class="grid text-soft-foreground">
+              <Point>
+                Any character with a ttheme palette is welcome.{' '}
                 <a
                   href={marketplacePath(BUILTIN)}
                   class="font-semibold text-foreground underline decoration-foreground/40 underline-offset-4 outline-none hover:decoration-foreground focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Browse Palettes
                 </a>
-              </Step>
-              <Step number={2}>
-                Send us the link to your post, any way you like.
-                <ul class="mt-2.5 grid">
-                  <Way
-                    icon={<Brand icon={siGithub} />}
-                    name="GitHub"
-                    address={REPO}
-                    action={
-                      <LinkButton variant="outline" size="sm" href={ART_FORM} target="_blank" rel="noopener">
-                        Open the Form
-                        <NewTab />
-                      </LinkButton>
-                    }
-                  />
-                  <Way
-                    icon={<Icon node={Mail} class="size-4 flex-none" />}
-                    name="Email"
-                    address={ART_MAIL}
-                    action={
-                      <LinkButton variant="outline" size="sm" href={`mailto:${ART_MAIL}`}>
-                        Write an Email
-                      </LinkButton>
-                    }
-                  />
-                  <Way
-                    icon={<Brand icon={siX} />}
-                    name="X"
-                    address={`@${ART_X}`}
-                    action={
-                      <LinkButton variant="outline" size="sm" href={`https://x.com/${ART_X}`} target="_blank" rel="noopener">
-                        Send a DM
-                        <NewTab />
-                      </LinkButton>
-                    }
-                  />
-                </ul>
-              </Step>
-            </ol>
+              </Point>
+              <Point>Your drawing stays yours, with your name and a link to your post right beside it.</Point>
+              <Point>If you ever want it taken down, just tell us.</Point>
+            </ul>
+            <div class="grid gap-2.5">
+              <h3 class="font-bold">Say hello, whichever way suits you</h3>
+              <ul class="grid">
+                <Way
+                  icon={<Brand icon={siGithub} />}
+                  name="GitHub"
+                  address={REPO}
+                  action={
+                    <LinkButton variant="outline" size="sm" href={ART_FORM} target="_blank" rel="noopener">
+                      Open the Form
+                      <NewTab />
+                    </LinkButton>
+                  }
+                />
+                <Way
+                  icon={<Icon node={Mail} class="size-4 flex-none" />}
+                  name="Email"
+                  address={ART_MAIL}
+                  action={
+                    <LinkButton variant="outline" size="sm" href={`mailto:${ART_MAIL}`}>
+                      Write an Email
+                    </LinkButton>
+                  }
+                />
+                <Way
+                  icon={<Brand icon={siX} />}
+                  name="X"
+                  address={`@${ART_X}`}
+                  action={
+                    <LinkButton variant="outline" size="sm" href={`https://x.com/${ART_X}`} target="_blank" rel="noopener">
+                      Send a DM
+                      <NewTab />
+                    </LinkButton>
+                  }
+                />
+              </ul>
+            </div>
+            <p class="text-center text-xs text-muted-foreground">Thank you for drawing the characters we love.</p>
           </div>
         </div>
       </div>
