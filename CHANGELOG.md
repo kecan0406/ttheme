@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.106
+
 - A first search in Browse answers sooner: what it ranks by now comes with the names it finds, in one round of requests where it took two or three, and it reads about a third fewer files. Before, it read each work's own record to put a series' works together.
 
 ## 1.2.105
