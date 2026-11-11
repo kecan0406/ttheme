@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.104
+
 - In the palette editor, a window that became too small to draw it now takes keys for the size it has. Before, the keys still acted on the larger layout it was last drawn in.
 - The search hint's `decode` and `glitch` effects now change only as the effect steps. Before, moving the pointer over Browse while the hint played scrambled it again.
 
