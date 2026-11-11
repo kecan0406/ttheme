@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A first search in Browse answers sooner: what it ranks by now comes with the names it finds, in one round of requests where it took two or three, and it reads about a third fewer files. Before, it read each work's own record to put a series' works together.
+
 ## 1.2.105
 
 - The release line at the right end of the bare `ttheme`'s key bar is now one badge that stays where it is: `v1.2.104` in gray with a spinner while a check runs, green with `✓` when it is the latest, red with `✗` when the check failed, and the new version in yellow with `⇡` beside `alt+u update`. Before, the line changed length with each state and pushed `esc cancel` sideways when a check ended. The bar no longer shows `esc cancel` or `esc clear` there; the key still works.

@@ -8,7 +8,7 @@
         "@biomejs/biome": "^2.6.3",
         "@clack/prompts": "^1.8.1",
         "@jsquash/jpeg": "^1.6.0",
-        "@kecan0406/aninames": "^0.8.0",
+        "@kecan0406/aninames": "^0.9.1",
         "@material/material-color-utilities": "^0.4.0",
         "@oxlint/plugins": "1.90.0",
         "@types/bun": "^1.4.4",
@@ -52,7 +52,7 @@
 
     "@jsquash/jpeg": ["@jsquash/jpeg@1.6.0", "", {}, "sha512-zwN46Awh1VM6gXlIcALwb5WzqK5H2e6+Awcs1QP8AvS8ohsK/sbE4esvmH4jhlhW7+CgiUUww66vg0aTnlSIMA=="],
 
-    "@kecan0406/aninames": ["@kecan0406/aninames@0.8.0", "", { "dependencies": { "es-hangul": "2.4.0" } }, "sha512-5wOwD6WCLlzLBi9W5SREmmh0WxcPbrcAz7knXYe3AlKKKrmnBbYYGUj1Z8R7UFS8LCUes1yeYZJLEZJUMovVfg=="],
+    "@kecan0406/aninames": ["@kecan0406/aninames@0.9.1", "", { "dependencies": { "es-hangul": "2.4.0" } }, "sha512-mbBh9+ODMvGuDS3P135qqvmnOw+jhu/9SJj7NWbkChb0X4TcrJumOG3ud9asV+vAV/Jma/b7R8TNBqJ9dV8AAg=="],
 
     "@material/material-color-utilities": ["@material/material-color-utilities@0.4.0", "", {}, "sha512-dlq6VExJReb8dhjj3a/yTigr3ncNwoFmL5Iy2ENtbDX03EmNeOEdZ+vsaGrj7RTuO+mB7L58II4LCsl4NpM8uw=="],
 
