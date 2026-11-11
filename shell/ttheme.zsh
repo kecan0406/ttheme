@@ -461,40 +461,43 @@ __tt_dir_rule() {
 }
 
 __tt_dir_sync() {
-  local REPLY="" spec=""
+  local REPLY="" spec="" bare="" worn=$TTHEME_PIN_SPEC
   [[ -n $TTHEME_STARTUP ]] || return 0
   __tt_dir_rule "$PWD" || REPLY=""
   if [[ -n $REPLY ]]; then
     spec=${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]}
-    [[ $REPLY == "$TTHEME_PIN" && $spec == "$TTHEME_PIN_SPEC" ]] && return 0
-    if [[ -z $TTHEME_PIN ]]; then
-      TTHEME_BASE_SPEC=$TTHEME_SPEC TTHEME_BASE_BARE=""
-      __tt_bare && TTHEME_BASE_BARE=1
-    fi
-  else
-    [[ -n $TTHEME_PIN ]] || return 0
-    if [[ $TTHEME_SPEC == "$TTHEME_PIN_SPEC" ]]; then
-      if [[ -n $TTHEME_BASE_BARE ]]; then
-        spec=$TTHEME_BASE_SPEC
-        __tt_pin_forget
-        __tt_unwear "$spec"
-        return 0
-      fi
-      spec=$TTHEME_BASE_SPEC
-      [[ -n $spec ]] || { __tt_osc_reset; TTHEME_SPEC= }
-    fi
-  fi
-  if [[ -n $REPLY ]]; then
+    [[ $REPLY == "$TTHEME_PIN" && $spec == "$worn" ]] && return 0
+    [[ -n $TTHEME_PIN ]] || __tt_look_keep TTHEME_BASE_SPEC TTHEME_BASE_BARE
     TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
-  else
-    __tt_pin_forget
+    [[ -n $spec && $spec != "$TTHEME_SPEC" ]] && __tt_wear "$spec"
+    return 0
   fi
-  [[ -n $spec && $spec != "$TTHEME_SPEC" ]] || return 0
-  __tt_wear "$spec"
+  [[ -n $TTHEME_PIN ]] || return 0
+  spec=$TTHEME_BASE_SPEC bare=$TTHEME_BASE_BARE
+  __tt_pin_forget
+  [[ $TTHEME_SPEC == "$worn" ]] || return 0
+  [[ -z $bare && $spec == "$TTHEME_SPEC" ]] || __tt_look_back "$spec" "$bare"
   return 0
 }
 
 __tt_bare() { [[ -z $TTHEME_PAINTED && -n $TTHEME_SPEC && $TTHEME_SPEC == "${TTHEME_PALETTE[$TTHEME_STARTUP]}" ]] }
+
+__tt_look_keep() {
+  typeset -g $1=$TTHEME_SPEC $2=""
+  __tt_bare && typeset -g $2=1
+  return 0
+}
+
+__tt_look_back() {
+  if [[ -n $2 ]]; then
+    __tt_unwear "$1"
+  elif [[ -n $1 ]]; then
+    __tt_wear "$1"
+  else
+    __tt_osc_reset
+    TTHEME_SPEC=
+  fi
+}
 
 __tt_unwear() {
   __tt_osc_reset
@@ -798,14 +801,7 @@ __tt_ssh_back() {
   local back=$TTHEME_SSH_BACK worn=$TTHEME_SSH_SPEC bare=$TTHEME_SSH_BARE
   TTHEME_SSH_BACK="" TTHEME_SSH_SPEC="" TTHEME_SSH_BARE=""
   [[ $TTHEME_SPEC == "$worn" && $back != "$worn" ]] || return 0
-  if [[ -n $bare ]]; then
-    __tt_unwear "$back"
-  elif [[ -n $back ]]; then
-    __tt_wear "$back"
-  else
-    __tt_osc_reset
-    TTHEME_SPEC=
-  fi
+  __tt_look_back "$back" "$bare"
 }
 
 __tt_ran() {
@@ -816,8 +812,8 @@ __tt_ran() {
   [[ -n $TTHEME_STARTUP ]] || return 0
   [[ $3 == *ssh* ]] && __tt_ssh_host "$3" && __tt_ssh_rule "$REPLY" || return 0
   name=$TTHEME_PINS[$REPLY]
-  TTHEME_SSH_BACK=$TTHEME_SPEC TTHEME_SSH_SPEC=$TTHEME_PALETTE[$name] TTHEME_SSH_BARE=""
-  __tt_bare && TTHEME_SSH_BARE=1
+  __tt_look_keep TTHEME_SSH_BACK TTHEME_SSH_BARE
+  TTHEME_SSH_SPEC=$TTHEME_PALETTE[$name]
   [[ $TTHEME_SSH_SPEC == "$TTHEME_SPEC" ]] || __tt_wear "$TTHEME_SSH_SPEC" "$name"
   return 0
 }
@@ -997,14 +993,9 @@ __tt_pin_save() {
     fi
   fi
   if [[ $spec != "$TTHEME_SPEC" ]]; then
-    if (( bare )) && [[ -z $TTHEME_PIN && -n $spec && $spec == "$3" && $spec == "${TTHEME_PALETTE[$TTHEME_STARTUP]}" ]]; then
-      __tt_unwear "$spec"
-    elif [[ -n $spec ]]; then
-      __tt_wear "$spec"
-    else
-      __tt_osc_reset
-      TTHEME_SPEC=
-    fi
+    k=""
+    (( bare )) && [[ -z $TTHEME_PIN && -n $spec && $spec == "$3" && $spec == "${TTHEME_PALETTE[$TTHEME_STARTUP]}" ]] && k=1
+    __tt_look_back "$spec" "$k"
   fi
   __tt_label "$name"
   name=$REPLY
