@@ -9,6 +9,7 @@ import { OWN_NAME } from '@/lib/sessions'
 import { type Line, linesOf } from '@/lib/terminal'
 import { BUILTIN, paint, type Theme } from '@/lib/themes'
 import { headlineEm, wearStyle } from '@/lib/wear'
+import { ArtCallPill, ArtCallTab } from './art-call'
 import { InitRow } from './command-row'
 import { TerminalScreen } from './terminal'
 import { TerminalFrame, WINDOW_TITLE } from './terminal-frame'
@@ -122,8 +123,9 @@ export function LeadCredits() {
 
 function CastTabs({ cast }: { cast: Theme[] }) {
   return (
-    <RadioGroup variant="fit" label="terminal tabs" class="mx-2 flex-none">
-      {cast.map((theme, at) => (
+    <div class="mx-2 flex flex-none items-center gap-1.5">
+      <RadioGroup variant="fit" label="terminal tabs" class="flex-none">
+        {cast.map((theme, at) => (
         <RadioGroupItem variant="fit" name="lead-tab" value={theme.name} checked={at === 0}>
           <i
             aria-hidden="true"
@@ -134,8 +136,10 @@ function CastTabs({ cast }: { cast: Theme[] }) {
             {theme.name}
           </span>
         </RadioGroupItem>
-      ))}
-    </RadioGroup>
+        ))}
+      </RadioGroup>
+      <ArtCallTab />
+    </div>
   )
 }
 
@@ -154,6 +158,7 @@ function CastPills({ cast }: { cast: Theme[] }) {
           </RadioGroupItem>
         ))}
       </RadioGroup>
+      <ArtCallPill />
     </div>
   )
 }
@@ -188,7 +193,7 @@ export function LeadHero({ cast }: { cast: Theme[] }) {
         </LinkButton>
         <InitRow class="bg-muted" />
       </div>
-      {cast.length > 1 ? <CastPills cast={cast} /> : null}
+      <CastPills cast={cast} />
       <TerminalFrame
         data-lead-window
         raised
@@ -208,7 +213,7 @@ export function LeadHero({ cast }: { cast: Theme[] }) {
           ) : undefined
         }
       >
-        {cast.length > 1 ? <CastTabs cast={cast} /> : null}
+        <CastTabs cast={cast} />
         <TerminalScreen
           lines={WINDOW_LINES}
           decorative

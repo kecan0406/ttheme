@@ -5,6 +5,7 @@ import { castOf } from '@/lib/lead-cast'
 import { json } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { leadsOf } from '@/lib/works'
+import { ArtCallDialog } from './art-call'
 import { CommandRow, InitRow } from './command-row'
 import { CharacterCard, CommunityCard, FreeCard, MakeCard, PictureCard } from './home-features'
 import { LeadCredits, LeadHero, LeadWorld } from './lead-stage'
@@ -124,6 +125,7 @@ export function Home({
         </div>
       </main>
       <LandingFooter facts={facts} />
+      <ArtCallDialog lead={theme} sticker={stickers[theme.name] as string} />
       <kaomoji-rain>
         <div aria-hidden="true" class="pointer-events-none fixed inset-0 z-50 overflow-hidden" />
       </kaomoji-rain>

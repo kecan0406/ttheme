@@ -1,0 +1,24 @@
+name: Offer art for the banner
+description: A picture you drew, to stand behind the terminal on ttheme.dev
+body:
+  - type: input
+    id: post
+    attributes:
+      label: Link to your post
+      description: Where you posted the picture, such as X or pixiv.
+      placeholder: https://
+    validations:
+      required: true
+  - type: input
+    id: character
+    attributes:
+      label: Character
+      description: The character's palette, as `ttheme use` takes it.
+      placeholder: souryuu-asuka-langley
+    validations:
+      required: true
+  - type: input
+    id: credit
+    attributes:
+      label: Name to credit
+      description: Optional. Left empty, the credit uses the name on the post.
