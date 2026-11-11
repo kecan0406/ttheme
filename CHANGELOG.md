@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.103
+
 - In Terminal.app, a picture saved in Preview right after it was tuned could vanish from the tabs showing its palette: the save and a picture still being tried on wrote the same file at once. A save now waits for the picture being drawn, and no other is drawn until the save ends.
 
 ## 1.2.102
