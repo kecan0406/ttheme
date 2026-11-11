@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.109
+
 - A preview that ends without cleaning up after itself, its tab closed or its shell killed while it is open, no longer leaves its short-lived files in the terminal's folder for good. The next change ttheme makes now removes Warp's `ttheme-….view-….yaml` themes, with the picture only such a theme named, and Konsole's `ttheme-view.….colorscheme` schemes, once the process that made them is gone and Warp's settings name another theme. Before, only the preview that made one ever removed it.
 
 ## 1.2.108
