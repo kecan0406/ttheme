@@ -159,6 +159,7 @@ export class Trial {
 
   leave(): void {
     this.view.mode = 'grid'
+    this.kept.letGo(new Set())
   }
 
   tuneOn(field: number, keep = false): void {
@@ -302,7 +303,7 @@ export class Trial {
       clearTimeout(this.settle)
       view.fetching = undefined
       view.failed = undefined
-      view.mode = 'grid'
+      this.leave()
       this.tell()
       this.paint.draw()
     }
@@ -463,9 +464,16 @@ export class Trial {
     this.paint.draw()
   }
 
+  private near(): Set<number> {
+    const { tiles, focus } = this.view
+
+    return new Set([focus, focus + this.direction, focus - this.direction].flatMap((at) => tiles[at]?.key ?? []))
+  }
+
   private async load(tile: Tile): Promise<void> {
     const view = this.view
     const pick = this.boards.posts.get(tile.key)
+    this.kept.letGo(this.near())
 
     if (!pick) {
       return
@@ -495,12 +503,18 @@ export class Trial {
 
       const from = fileOf(site, pick.post, version)
 
-      const size = await this.kept.cached(from.site, path, from.url, (got, total) => {
-        if (view.fetching?.id === tile.key) {
-          view.fetching = { id: tile.key, got, size: total }
-          this.paint.draw()
-        }
-      })
+      const size = await this.kept.cached(
+        from.site,
+        path,
+        from.url,
+        (got, total) => {
+          if (view.fetching?.id === tile.key) {
+            view.fetching = { id: tile.key, got, size: total }
+            this.paint.draw()
+          }
+        },
+        tile.key,
+      )
 
       if (control.signal.aborted) {
         return
@@ -628,12 +642,18 @@ export class Trial {
         const path = origPath(this.scratch, other.site, other.post.id, version.ext)
         const from = fileOf(other.site, other.post, version)
         view.fetching = { id: key, got: 0, size: 0 }
-        await this.kept.cached(from.site, path, from.url, (got, total) => {
-          if (view.fetching?.id === key) {
-            view.fetching = { id: key, got, size: total }
-            this.paint.draw()
-          }
-        })
+        await this.kept.cached(
+          from.site,
+          path,
+          from.url,
+          (got, total) => {
+            if (view.fetching?.id === key) {
+              view.fetching = { id: key, got, size: total }
+              this.paint.draw()
+            }
+          },
+          postKey(pick.site, pick.post.id),
+        )
         view.fetching = undefined
         view.preparing = key
         this.paint.flush()
@@ -647,7 +667,9 @@ export class Trial {
           return other
         }
       } catch {
-        this.twins.set(verdict, false)
+        if (!signal.aborted) {
+          this.twins.set(verdict, false)
+        }
       } finally {
         if (view.fetching?.id === key) {
           view.fetching = undefined
@@ -760,7 +782,7 @@ export class Trial {
           const version = rendition(post) as Rendition
           const path = origPath(this.scratch, site, post.id, version.ext)
           const from = fileOf(site, post, version)
-          await this.kept.cached(from.site, path, from.url)
+          await this.kept.cached(from.site, path, from.url, undefined, tile.key)
 
           return this.inTurn(() =>
             this.render(

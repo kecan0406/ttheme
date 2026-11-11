@@ -24,6 +24,13 @@ interface Known {
   urls: string[]
 }
 
+interface Coming {
+  job: Promise<number>
+  stop: AbortController
+  posts: Set<number>
+  held: boolean
+}
+
 interface Shelf {
   home: string
   manifest: Manifest
@@ -39,7 +46,7 @@ export class Kept {
   private readonly answers = new Map<string, Record<string, unknown>>()
   private readonly owners = new Map<string, Map<string, string[]>>()
   private readonly crediting = new Map<number, Promise<void>>()
-  private readonly inflight = new Map<string, Promise<number>>()
+  private readonly inflight = new Map<string, Coming>()
   private readonly asking = new Map<string, Promise<void>>()
   readonly pace: Pace
 
@@ -179,33 +186,71 @@ export class Kept {
     return owners
   }
 
-  async cached(site: Site, path: string, url: string, progress?: (got: number, size: number) => void): Promise<number> {
+  cached(
+    site: Site,
+    path: string,
+    url: string,
+    progress?: (got: number, size: number) => void,
+    post?: number,
+  ): Promise<number> {
     if (existsSync(path)) {
-      return statSync(path).size
+      return Promise.resolve(statSync(path).size)
     }
 
-    const running = this.inflight.get(path)
+    let coming = this.inflight.get(path)
 
-    if (running) {
-      return running
+    if (!coming || coming.stop.signal.aborted) {
+      coming = this.fetch(site, path, url, progress)
+    }
+
+    if (post === undefined) {
+      coming.held = true
+    } else {
+      coming.posts.add(post)
+    }
+
+    return coming.job
+  }
+
+  letGo(but: ReadonlySet<number>): void {
+    for (const coming of this.inflight.values()) {
+      if (!coming.held && ![...coming.posts].some((post) => but.has(post))) {
+        coming.stop.abort()
+      }
+    }
+  }
+
+  private fetch(site: Site, path: string, url: string, progress?: (got: number, size: number) => void): Coming {
+    const stop = new AbortController()
+    const ended = () => stop.abort(this.signal.reason)
+
+    if (this.signal.aborted) {
+      ended()
+    } else {
+      this.signal.addEventListener('abort', ended, { once: true })
     }
 
     const job = (async () => {
-      const bytes = await this.net.fetchBytes(site, url, this.signal, progress)
-      writeAtomic(path, bytes)
-      this.pace.came(site.key)
-      this.arrived(site.key)
+      try {
+        const bytes = await this.net.fetchBytes(site, url, stop.signal, progress)
+        writeAtomic(path, bytes)
+        this.pace.came(site.key)
+        this.arrived(site.key)
 
-      return bytes.length
+        return bytes.length
+      } finally {
+        this.signal.removeEventListener('abort', ended)
+
+        if (this.inflight.get(path)?.stop === stop) {
+          this.inflight.delete(path)
+        }
+      }
     })()
 
-    this.inflight.set(path, job)
+    const coming: Coming = { job, stop, posts: new Set(), held: false }
+    this.inflight.set(path, coming)
 
-    try {
-      return await job
-    } finally {
-      this.inflight.delete(path)
-    }
+    return coming
   }
 
   private keep<T>(site: Site, name: string): Record<string, T> {
