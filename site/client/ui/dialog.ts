@@ -24,6 +24,28 @@ async function hide(dialog: HTMLDialogElement, reason: Reason) {
   dialog.close()
 }
 
+let pressed: HTMLDialogElement | null = null
+
+function outside(dialog: HTMLDialogElement, event: MouseEvent): boolean {
+  const box = dialog.getBoundingClientRect()
+
+  return event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom
+}
+
+document.addEventListener('pointerdown', (event) => {
+  const dialog = event.target
+
+  pressed = isDialog(dialog) && dialog.open && outside(dialog, event) ? dialog : null
+})
+
+document.addEventListener('click', (event) => {
+  const dialog = event.target
+
+  if (!isDialog(dialog) || dialog !== pressed || !outside(dialog, event)) return
+  pressed = null
+  void hide(dialog, 'outside-press')
+})
+
 document.addEventListener('click', (event) => {
   const trigger = (event.target as Element | null)?.closest('[data-slot="dialog-trigger"]')
   const dialog = document.getElementById(trigger?.getAttribute('commandfor') ?? '')
