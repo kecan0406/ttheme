@@ -42,15 +42,18 @@ __tt_ghostty_modules() {
 } 2>/dev/null
 
 __tt_ghostty_follows() {
-  local -a at
-  (( TTHEME_GHOSTTY_FOLLOWS < 0 )) || return $(( ! TTHEME_GHOSTTY_FOLLOWS ))
-  TTHEME_GHOSTTY_FOLLOWS=0
-  [[ $TERM_PROGRAM == ghostty && -z $TTHEME_GHOSTTY_EMBEDDED && -o interactive && -n $TTY ]] && (( $+commands[osascript] && ! TTHEME_TMUX )) || return 1
-  if zstat -A at +mtime -- $TTHEME_GHOSTTY_TABS/.blind 2>/dev/null && [[ "$(<$TTHEME_GHOSTTY_TABS/.blind)" == "${TERM_PROGRAM_VERSION:--}" ]]; then
-    zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
-    (( EPOCHSECONDS - at[1] < 86400 )) && return 1
+  if (( TTHEME_GHOSTTY_FOLLOWS < 0 )); then
+    TTHEME_GHOSTTY_FOLLOWS=0
+    [[ $TERM_PROGRAM == ghostty && -z $TTHEME_GHOSTTY_EMBEDDED && -o interactive && -n $TTY ]] && (( $+commands[osascript] && ! TTHEME_TMUX )) && TTHEME_GHOSTTY_FOLLOWS=1
   fi
-  TTHEME_GHOSTTY_FOLLOWS=1
+  (( TTHEME_GHOSTTY_FOLLOWS )) && ! __tt_ghostty_blind
+}
+
+__tt_ghostty_blind() {
+  local -a at
+  zstat -A at +mtime -- $TTHEME_GHOSTTY_TABS/.blind 2>/dev/null && [[ "$(<$TTHEME_GHOSTTY_TABS/.blind)" == "${TERM_PROGRAM_VERSION:--}" ]] || return 1
+  zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
+  (( EPOCHSECONDS - at[1] < 86400 ))
 }
 
 __tt_ghostty_publish() {
@@ -91,10 +94,6 @@ __tt_blurred() {
 __tt_ghostty_follow() {
   local fd lock=$TTHEME_GHOSTTY_TABS/.follow
   __tt_ghostty_follows && [[ -d $TTHEME_GHOSTTY_TABS ]] || return 0
-  if [[ -e $TTHEME_GHOSTTY_TABS/.blind ]]; then
-    TTHEME_GHOSTTY_FOLLOWS=-1
-    __tt_ghostty_follows || return 0
-  fi
   [[ -e $lock ]] || : >>| $lock 2>/dev/null || return 0
   zsystem flock -t 0 -f fd $lock 2>/dev/null || return 0
   zsystem flock -u $fd
@@ -262,7 +261,7 @@ __tt_ghostty_follower() {
   local -a at
   cd /
   __tt_ghostty_modules
-  zsystem flock -t 0 -f fd $TTHEME_GHOSTTY_TABS/.follow 2>/dev/null || return 0
+  zsystem flock -t 1 -f fd $TTHEME_GHOSTTY_TABS/.follow 2>/dev/null || return 0
   trap '' HUP
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/adapters/ghostty.zsh 2>/dev/null && TTHEME_GHOSTTY_CODE=$at[1]
   __tt_ghostty_owner $PPID

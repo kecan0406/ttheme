@@ -118,7 +118,7 @@ __tt_pv_shows() {
 
 __tt_pv_want() {
   REPLY=""
-  if (( te )); then
+  if [[ $screen == edit ]]; then
     __tt_pv_shows $tename
   elif [[ -n $an ]]; then
     __tt_pv_shows $an
@@ -128,7 +128,7 @@ __tt_pv_want() {
 
 __tt_pv_focus() {
   local spec=""
-  if (( ! te )) && [[ ${rtype[cur]} == thm ]]; then
+  if [[ $screen != edit && ${rtype[cur]} == thm ]]; then
     an=${rval[cur]} spec=${TTHEME_PALETTE[${rval[cur]}]}
   fi
   if (( ! resized )); then
@@ -565,7 +565,7 @@ __tt_pv_foot() {
   elif [[ -n $pick ]]; then
     __tt_label "$pick"
     badge='PREVIEW (APPLY)' pre="$REPLY → "
-    (( te )) && badge="$tb (APPLY)"
+    [[ $screen == edit ]] && badge="$tb (APPLY)"
     for (( i = 1; i <= ${#plabel}; i++ )); do
       (( i > 1 )) && lead+=" "
       if (( i != pk )) && (( color )) && [[ $mhov == "pick $i" ]]; then
@@ -580,7 +580,7 @@ __tt_pv_foot() {
     done
     if [[ $mode == pin ]]; then
       badge='PREVIEW (PIN)'
-      (( te )) && badge="$tb (PIN)"
+      [[ $screen == edit ]] && badge="$tb (PIN)"
       __tt_pin_where "${pkeys[pk]}"
       note=$REPLY
     elif (( pk == 2 )); then
@@ -590,15 +590,15 @@ __tt_pv_foot() {
     fi
     kk=(←→ enter) kl=(choose confirm)
     rk=esc right=$b$ke$z$d" back"$z
-  elif (( te && tfocus == 0 )); then
+  elif [[ $screen == edit ]] && (( tfocus == 0 )); then
     badge=$tb kk=(enter ↑↓ s shift+enter '?') kl=("edit palette" move save apply keys)
     (( tbtn )) && kl[1]="reset palette"
     (( ${TTHEME_TUNED[(Ie)$tename]} )) && kk[2]=↑↓←→
     rk=esc right=$b$ke$z$d" cancel"$z
-  elif (( te && tfocus == 2 )); then
+  elif [[ $screen == edit ]] && (( tfocus == 2 )); then
     badge=$tb kk=(enter ↑↓ s '?') kl=(apply move save keys)
     rk=esc right=$b$ke$z$d" cancel"$z
-  elif (( te )); then
+  elif [[ $screen == edit ]]; then
     badge=$tb
     kk=(↑↓ ←→ s) kl=(move change save)
     if [[ -n $tune ]] && (( tf == 5 )); then
@@ -621,13 +621,13 @@ __tt_pv_foot() {
     fi
     kk+=(shift+enter '?') kl+=(apply keys)
     rk=esc right=$b$ke$z$d" cancel"$z
-  elif (( sample )); then
+  elif [[ $screen == sample ]]; then
     badge='PREVIEW (SAMPLE)' kk=(↑↓ shift+←→ enter '?') kl=(move sample use keys)
     rk=esc right=$b$ke$z$d" back"$z
-  elif (( gmenu )); then
+  elif [[ $screen == group ]]; then
     badge=GROUP kk=(↑↓ space) kl=(move pick)
     rk=esc right=$b$ke$z$d" close"$z
-  elif (( conf )); then
+  elif [[ $screen == settings ]]; then
     badge=SETTINGS kk=(↑↓ ←→ enter) kl=(move change save)
     rk=esc right=$b$ke$z$d" cancel"$z
   else
@@ -874,11 +874,11 @@ __tt_pv_keys() {
   top=$(( ph - ${#hk} - 2 ))
   (( top >= ${2:-0} )) || return 0
   sbot=$(( top - 1 ))
-  if (( gmenu )); then
+  if [[ $screen == group ]]; then
     __tt_pv_topics group box
   elif [[ -n $pick ]]; then
     __tt_pv_topics pick box
-  elif (( te && tfocus != 1 )); then
+  elif [[ $screen == edit ]] && (( tfocus != 1 )); then
     hk=("$hk[1]") hd=("$hd[1]")
   fi
   tw=$(( se - x - kw - 3 ))
@@ -894,11 +894,8 @@ __tt_pv_keys() {
 
 __tt_pv_help() {
   (( TTHEME_PALETTES_IN )) || __tt_palettes
-  local z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] blank where=list
-  (( te )) && where=panel
-  (( sample )) && where=sample
-  (( gmenu )) && where=group
-  (( conf )) && where=settings
+  local z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] blank where=$screen
+  [[ $screen == edit ]] && where=panel
   local -a hg=() hk=() hd=() hl=() hn=() wn=() reply=()
   local -i i j k r x y w hh floor tw kw=0 dw=0 rows used n c0 r0
   __tt_pv_topics $where
@@ -927,7 +924,8 @@ __tt_pv_help() {
   if (( ! split || sw < 48 )); then
     hh=$(( used + 4 ))
     x=$(( (pw - w) / 2 + 1 )) y=$(( (ph - hh) / 2 ))
-    floor=$(( te && ! split ? 4 : pvhd + 2 ))
+    floor=$(( pvhd + 2 ))
+    [[ $screen == edit ]] && (( ! split )) && floor=4
     (( y < floor )) && y=$floor
     (( y > ph - hh )) && y=$(( ph - hh ))
     (( y < 1 )) && y=1
@@ -1188,7 +1186,7 @@ __tt_pv_regroup() {
 }
 
 __tt_pv_gopen() {
-  gmenu=1
+  screen=group
   gm=${gitems[(Ie)TTHEME_GROUP:$TTHEME_GROUP]}
   (( gm )) || gm=1
 }
@@ -1226,7 +1224,7 @@ __tt_pv_gmenu() {
     up|k) __tt_pv_gstep -1 ;;
     down|j) __tt_pv_gstep 1 ;;
     ' '|$'\r') __tt_pv_gpick $gm ;;
-    esc|altg|©) gmenu=0 ;;
+    esc|altg|©) screen=list ;;
     '?') help=1 ;;
   esac
   return 0
@@ -1247,7 +1245,7 @@ __tt_pv_chip() {
   gap=$(( (split ? sc - 1 : se) - lw - ${(m)#key} - 2 ))
   if (( ! color )); then
     REPLY=$'\e['$at'G'"[$text]"
-  elif (( gmenu )) || [[ $mhov == group && $mhp == 1 ]]; then
+  elif [[ $screen == group || ( $mhov == group && $mhp == 1 ) ]]; then
     REPLY=$'\e['$at'G'$pl" $text "$TTHEME_SGR[/pill]
   elif [[ $mhov == group ]]; then
     REPLY=$'\e['$at'G'$TTHEME_SGR[hot]" $text "$TTHEME_SGR[/hot]
@@ -1353,7 +1351,7 @@ __tt_pv_unconf() {
   for (( i = 1; i <= ${#cvars}; i++ )); do
     __tt_pv_conf_put ${cvars[i]} "${csnap[i]}"
   done
-  conf=0
+  screen=list
 }
 
 __tt_pv_conf_job() {
@@ -1396,12 +1394,12 @@ __tt_pv_conf_save() {
     [[ ${(P)var} == "${csnap[i]}" ]] || pairs+=($var "${(P)var}")
   done
   if (( ! ${#pairs} )); then
-    conf=0
+    screen=list
     return 0
   fi
   if __tt_config_write "${pairs[@]}"; then
     __tt_tilde "$TTHEME_CONFIG"
-    conf=0 msg="Saved  $REPLY" msgt=200
+    screen=list msg="Saved  $REPLY" msgt=200
     tab=${pairs[(Ie)TTHEME_TAB_PALETTE]}
     if (( ${pairs[(Ie)TTHEME_MODE]} )); then
       kind=remode
@@ -1428,22 +1426,28 @@ __tt_pv_conf_save() {
   fi
 }
 
-__tt_pv_remoded() {
-  local v n o a p REPLY
+__tt_pv_reread() {
+  local v n o REPLY
   local -a reply held
   __tt_specs_named
   held=($reply)
   __tt_name_of "$orig"
   o=$REPLY
-  __tt_name_of "$applied"
-  a=$REPLY
-  __tt_name_of "$painted"
-  p=$REPLY
   __tt_palettes_load && __tt_reloaded
   for v n in $held; do
     [[ -n ${TTHEME_PALETTE[$n]} ]] && typeset -g $v=${TTHEME_PALETTE[$n]}
   done
   [[ -n ${TTHEME_PALETTE[$o]} ]] && orig=${TTHEME_PALETTE[$o]}
+  return 0
+}
+
+__tt_pv_remoded() {
+  local a p REPLY
+  __tt_name_of "$applied"
+  a=$REPLY
+  __tt_name_of "$painted"
+  p=$REPLY
+  __tt_pv_reread
   [[ -n ${TTHEME_PALETTE[$a]} ]] && applied=${TTHEME_PALETTE[$a]}
   __tt_reload
   [[ -n ${TTHEME_PALETTE[$p]} ]] && __tt_pv_paint "${TTHEME_PALETTE[$p]}"
@@ -1603,7 +1607,7 @@ __tt_pv_draw() {
   local out line cnt ex ag="" ac="" gc="" pl="" hm="" sb="" dd="" zz="" state=on src="" nflt="" rsub="" REPLY
   local -i lw sw split sc sbot=$ph cend teend se=$(( pw - 1 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
   local -a held
-  (( gmenu )) && set --
+  [[ $screen == group ]] && set --
   bgstrip="" bgframe=""
   if [[ -n $flt ]]; then
     __tt_pv_norm "$flt"
@@ -1614,7 +1618,7 @@ __tt_pv_draw() {
   split=$(( sw > 0 )) sc=$(( pw - sw ))
   hd=$(( tall ? hub + 4 : 2 )) pvhd=$hd
   h=$(( ph - hd - 3 ))
-  (( conf && ! split )) && h=$(( ph - hd - 5 - ${#cvars} ))
+  [[ $screen == settings ]] && (( ! split )) && h=$(( ph - hd - 5 - ${#cvars} ))
   reach=()
   if [[ -n $pick && $mode == pin ]]; then
     if (( split )); then
@@ -1674,11 +1678,11 @@ __tt_pv_draw() {
     __tt_pv_flush
     return 0
   fi
-  if (( sample )); then
+  if [[ $screen == sample ]]; then
     __tt_pv_whole
     return 0
   fi
-  if (( te && ! split )); then
+  if [[ $screen == edit ]] && (( ! split )); then
     __tt_pv_te_draw
     return 0
   fi
@@ -1782,7 +1786,7 @@ __tt_pv_draw() {
     out+=$line$'\e[K\n'
   done
   __tt_pv_foot $se
-  (( gmenu )) && __tt_pv_gdraw
+  [[ $screen == group ]] && __tt_pv_gdraw
   if (( split )); then
     if (( help && sw >= 48 )); then
       __tt_pv_help
@@ -1792,12 +1796,12 @@ __tt_pv_draw() {
       for (( k = 1; k <= ${#reach} && k + 2 < ph - 1; k++ )); do
         out+=$'\e['$(( k + 2 ))';'$(( sc + 2 ))'H'${reach[k]}
       done
-    elif (( conf )); then
+    elif [[ $screen == settings ]]; then
       __tt_pv_conf_panel 3 $(( sc + 2 )) $(( se - 2 ))
       __tt_tilde "$TTHEME_CONFIG"
       src=$REPLY
       __tt_pv_box 1 $(( cend < ph - 1 ? cend : ph - 1 )) Settings "$src"
-    elif (( te )); then
+    elif [[ $screen == edit ]]; then
       __tt_pv_te_head $sc $se
       __tt_pv_te_panel $sc $se 3 $(( ph - 1 ))
       __tt_pv_keys panel $teend
@@ -1817,7 +1821,7 @@ __tt_pv_draw() {
       for (( k = 1; k <= ${#reach}; k++ )); do
         out+=$'\e['$(( ph - 1 - ${#reach} + k ))';1H'${reach[k]}
       done
-    elif (( conf )); then
+    elif [[ $screen == settings ]]; then
       __tt_pv_head $(( ph - 3 - ${#cvars} )) 1 $lw Settings
       __tt_pv_conf_panel $(( ph - 2 - ${#cvars} )) 1 $lw
     fi
@@ -2007,7 +2011,7 @@ __tt_pv_getch() {
     (( vspin )) && t=0.08
     [[ -n $pvjob ]] && t=0.08
     __tt_pv_bg_busy && t=0.05
-    (( gstep )) && t=0.06
+    (( gstep )) && __tt_pv_hints && t=0.06
     step=$(( t * 100 + 0.5 ))
     at=$EPOCHREALTIME
     read -sk 1 -t $t 2>/dev/null && return 0
@@ -2029,8 +2033,9 @@ __tt_pv_getch() {
     fi
     (( vchk )) && __tt_pv_standing && return 1
     (( vspin )) && __tt_pv_spin
+    __tt_pv_hints || continue
     (( gstep )) && { gstep=$(( gstep - 1 )); tick=1; return 1 }
-    (( ! te && SECONDS >= exnext )) && { __tt_pv_roll; gstep=8; tick=1; return 1 }
+    (( SECONDS >= exnext )) && { __tt_pv_roll; gstep=8; tick=1; return 1 }
   done
 }
 
@@ -2232,7 +2237,7 @@ __tt_pv_hovered() {
       fi
     elif (( help || ! mhlive )); then
       now=""
-    elif (( gmenu )) && [[ $f[4] != (gpick|group) ]]; then
+    elif [[ $screen == group && $f[4] != (gpick|group) ]]; then
       now=""
     else
       case $f[4] in
@@ -2267,8 +2272,8 @@ __tt_pv_mouse() {
     fi
     __tt_pv_spot $mrow $mcol
     mzone=$REPLY
-    if (( gmenu )) && [[ ${${=mzone}[4]} != (gpick|gbox|group) ]]; then
-      gmenu=0 mzone=""
+    if [[ $screen == group && ${${=mzone}[4]} != (gpick|gbox|group) ]]; then
+      screen=list mzone=""
       return 0
     fi
   fi
@@ -2288,13 +2293,27 @@ __tt_pv_mouse() {
   esac
 }
 
+__tt_pv_layer() {
+  if (( help )); then
+    REPLY=help
+  elif [[ -n $pick ]]; then
+    REPLY=pick
+  else
+    REPLY=$screen
+  fi
+}
+
+__tt_pv_hints() { [[ $screen != (edit|sample) ]] }
+
 __tt_pv_free() {
-  (( ! conf && ! te && ! help )) && [[ -z $pick && -z $tune ]]
+  local REPLY
+  __tt_pv_layer
+  [[ $REPLY == (list|sample|group) ]]
 }
 
 __tt_pv_press() {
   [[ $4 == tereset ]] || tearm=0
-  if (( ! te )) && [[ $4 == (te*|track|place|colors) ]]; then
+  if [[ $screen != edit && $4 == (te*|track|place|colors) ]]; then
     __tt_pv_free && [[ ${rtype[cur]} == thm ]] || return 0
     __tt_te_open ${rval[cur]}
   fi
@@ -2368,8 +2387,8 @@ __tt_pv_release() {
       ;;
     gpick) __tt_pv_gpick $5 ;;
     group)
-      if (( gmenu )); then
-        gmenu=0
+      if [[ $screen == group ]]; then
+        screen=list
       elif __tt_pv_free; then
         __tt_pv_gopen
       fi
@@ -2401,30 +2420,35 @@ __tt_pv_bg_track() {
 }
 
 __tt_pv_wheel() {
+  local REPLY
   local -i i
-  if (( help )); then
-    return 0
-  elif (( gmenu )); then
-    __tt_pv_gstep $mwheel edge
-  elif (( conf )); then
-    (( cf += mwheel ))
-    (( cf < 1 )) && cf=1
-    (( cf > ${#cvars} )) && cf=${#cvars}
-  elif (( te )); then
-    key=down
-    (( mwheel < 0 )) && key=up
-    __tt_pv_te
-    return
-  elif (( sample )); then
-    key=down
-    (( mwheel < 0 )) && key=up
-    __tt_pv_sampling
-    return
-  elif [[ -z $pick && -z $tune ]] && (( ${#rval} )); then
-    i=$(( cur + mwheel ))
-    [[ ${rtype[i]} == rule ]] && (( i += mwheel ))
-    (( i >= 1 && i <= ${#rval} )) && cur=$i
-  fi
+  __tt_pv_layer
+  case $REPLY in
+    group) __tt_pv_gstep $mwheel edge ;;
+    settings)
+      (( cf += mwheel ))
+      (( cf < 1 )) && cf=1
+      (( cf > ${#cvars} )) && cf=${#cvars}
+      ;;
+    edit)
+      key=down
+      (( mwheel < 0 )) && key=up
+      __tt_pv_te
+      return
+      ;;
+    sample)
+      key=down
+      (( mwheel < 0 )) && key=up
+      __tt_pv_sampling
+      return
+      ;;
+    list)
+      (( ${#rval} )) || return 0
+      i=$(( cur + mwheel ))
+      [[ ${rtype[i]} == rule ]] && (( i += mwheel ))
+      (( i >= 1 && i <= ${#rval} )) && cur=$i
+      ;;
+  esac
   return 0
 }
 
@@ -2458,6 +2482,7 @@ __tt_pv_lost() {
 
 __tt_pv_back() {
   printf '\e[?2026h\e[?25l\e[?2004h%s' "$pvmouse"
+  __tt_pv_bg_back
   mhand=0
   __tt_pv_unhover
   __tt_pv_lost
@@ -2516,8 +2541,12 @@ __tt_te_unsaved() {
 
 __tt_te_save_image() {
   __tt_te_unsaved || return 0
+  local REPLY
   __tt_pv_tune_keep
-  __tt_pv_bg_save > /dev/null 2>&1
+  if ! __tt_pv_bg_save > /dev/null 2>&1; then
+    __tt_label $tename
+    msg="Could not save the background of $REPLY" msgt=300
+  fi
   bgedit=() bgswap=() bgview=()
   __tt_pv_bg_reset $tename
   bgload[$tename]=""
@@ -2597,7 +2626,7 @@ __tt_te_rows() {
 
 __tt_te_open() {
   local name=$1 REPLY
-  tename=$name tfocus=0 tetop=0 msgt=0 te=1 tbtn=0 tearm=0
+  tename=$name tfocus=0 tetop=0 msgt=0 screen=edit tbtn=0 tearm=0
   (( bgcw )) && __tt_pv_bg_state $name && __tt_pv_tune_open $name
   __tt_te_image && __tt_te_to_image 1
   resized=1
@@ -2606,7 +2635,7 @@ __tt_te_open() {
 
 __tt_te_close() {
   [[ -n $tune ]] && __tt_pv_untune
-  te=0 tfocus=0 tename="" tetop=0 tbtn=0 tearm=0 help=0 pick="" resized=1
+  screen=list tfocus=0 tename="" tetop=0 tbtn=0 tearm=0 help=0 pick="" resized=1
   return 0
 }
 
@@ -2617,7 +2646,11 @@ __tt_te_saved() {
   bgview=()
   __tt_pv_bg_reset $name
   bgload[$name]=""
-  if (( te )) && [[ $tename == "$name" && -n $tune ]]; then
+  if (( $3 )); then
+    __tt_label $name
+    msg="Could not save the background of $REPLY" msgt=300
+  fi
+  if [[ $screen == edit && $tename == "$name" && -n $tune ]]; then
     __tt_pv_bg_reopen $name "$tpick" $tf
   fi
   return 0
@@ -2700,14 +2733,8 @@ __tt_pv_unpaint() {
   fi
 }
 
-__tt_te_follow() {
-  [[ $orig == "$1" && -n ${TTHEME_PALETTE[$2]} ]] || return 0
-  orig=${TTHEME_PALETTE[$2]}
-  TTHEME_SPEC=$orig
-}
-
 __tt_te_edit() {
-  local name=$tename err back=$applied was=${TTHEME_PALETTE[$tename]} REPLY
+  local name=$tename err back=$applied REPLY
   local -i rc
   __tt_te_save_image
   __tt_pv_untune
@@ -2717,8 +2744,7 @@ __tt_te_edit() {
   rc=$?
   err=${${err//$'\n'/ }## #}
   if (( rc == 0 )); then
-    __tt_palettes_load && __tt_reloaded
-    __tt_te_follow "$was" $name
+    __tt_pv_reread
     __tt_reload
     back=${TTHEME_PALETTE[$name]:-$back}
   fi
@@ -2743,21 +2769,18 @@ __tt_te_reset() {
   __tt_pv_behind_wait
   local name=$tename
   __tt_te_save_image
-  pvjobkeep=("${TTHEME_PALETTE[$name]}")
   tbtn=0 tearm=0
   __tt_pv_behind $name "$tpick" __tt_te_was_reset "Putting the original colors back" __tt_te_reset_job $name
 }
 
 __tt_te_was_reset() {
-  local name=$1 err=$2 was=$pvjobkeep[1] shown REPLY
+  local name=$1 err=$2 shown REPLY
   local -i rc=$3
-  pvjobkeep=()
   resized=1 bgdim=()
   if (( rc == 0 )); then
     __tt_name_of "$applied"
     shown=$REPLY
-    __tt_palettes_load && __tt_reloaded
-    __tt_te_follow "$was" $name
+    __tt_pv_reread
     __tt_reload
     if [[ $shown == "$name" && -n ${TTHEME_PALETTE[$name]} ]]; then
       __tt_pv_paint "${TTHEME_PALETTE[$name]}" && applied=${TTHEME_PALETTE[$name]}
@@ -2769,7 +2792,7 @@ __tt_te_was_reset() {
     __tt_label $name
     msg=${err:-"Could not reset the colors of $REPLY"} msgt=300
   fi
-  if (( te )) && [[ $tename == "$name" ]] && __tt_pv_bg_state $name; then
+  if [[ $screen == edit && $tename == "$name" ]] && __tt_pv_bg_state $name; then
     __tt_pv_bg_reopen $name "$tpick" $tf
   fi
   return 0
@@ -2876,6 +2899,7 @@ __tt_te_button() {
 }
 
 __tt_pv_te() {
+  [[ $key == $'\r' ]] || tearm=0
   case $key in
     $'\x03') return 1 ;;
     $'\x05') return 0 ;;
@@ -3207,7 +3231,7 @@ __tt_pv_sampling() {
   local -i i k n=${#rval} step=1
   case $key in
     $'\x03') return 1 ;;
-    esc|$'\t') sample=0 ;;
+    esc|$'\t') screen=list ;;
     '?') help=1 ;;
     sleft) scene=$(( scene - 1 )) ;;
     sright) scene=$(( scene + 1 )) ;;
@@ -3222,7 +3246,7 @@ __tt_pv_sampling() {
       done
       ;;
     $'\r'|senter)
-      sample=0
+      screen=list
       __tt_pv_handle
       return
       ;;
@@ -3231,9 +3255,9 @@ __tt_pv_sampling() {
 }
 
 __tt_pv_handle() {
-  local name
+  local name REPLY
   if [[ $key == mouse && $mact == move ]]; then
-    mhrow=$mrow mhcol=$mcol mhlive=1
+    mzone="" mhrow=$mrow mhcol=$mcol mhlive=1
     __tt_pv_hovered
     return 0
   fi
@@ -3243,37 +3267,36 @@ __tt_pv_handle() {
     __tt_pv_mouse
     return
   fi
-  if (( help )); then
-    case $key in
-      $'\x03') return 1 ;;
-      '?'|esc) help=0 ;;
-    esac
-    return 0
-  fi
-  if [[ -n $pick ]]; then
-    __tt_pv_pick
-    return
-  fi
-  if (( sample )); then
-    __tt_pv_sampling
-    return
-  fi
-  if (( te )); then
-    __tt_pv_te
-    return
-  fi
-  if [[ -n $tune ]]; then
-    __tt_pv_tune
-    return
-  fi
-  if (( conf )); then
-    __tt_pv_conf
-    return
-  fi
-  if (( gmenu )); then
-    __tt_pv_gmenu
-    return
-  fi
+  __tt_pv_layer
+  case $REPLY in
+    help)
+      case $key in
+        $'\x03') return 1 ;;
+        '?'|esc) help=0 ;;
+      esac
+      return 0
+      ;;
+    pick)
+      __tt_pv_pick
+      return
+      ;;
+    sample)
+      __tt_pv_sampling
+      return
+      ;;
+    edit)
+      __tt_pv_te
+      return
+      ;;
+    settings)
+      __tt_pv_conf
+      return
+      ;;
+    group)
+      __tt_pv_gmenu
+      return
+      ;;
+  esac
   case $key in
     $'\x03') return 1 ;;
     esc|$'\x15')
@@ -3354,7 +3377,7 @@ __tt_pv_handle() {
     ' ') [[ ${rtype[cur]} == (hdr|cat) ]] && __tt_pv_toggle ;;
     $'\t')
       if [[ ${rtype[cur]} == thm ]]; then
-        sample=1
+        screen=sample
       elif (( hub )); then
         __tt_pv_screen 1 || return 1
       fi
@@ -3363,7 +3386,7 @@ __tt_pv_handle() {
     altu) [[ -z $pick ]] && (( hub && vnew )) && { pvupdate=1; return 1 } ;;
     altg) __tt_pv_gopen ;;
     altc)
-      conf=1 cf=1 csnap=()
+      screen=settings cf=1 csnap=()
       for name in $cvars; do
         csnap+=("${(P)name}")
       done
@@ -3424,12 +3447,12 @@ __tt_preview() {
   local -a bgorder=() pvjobkeep=()
   local -A bgfrom=() bgurl=() bgby=() bgsent=() bgcost=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
   local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgcred=() bgpage=() bgprof=()
-  local conf=0 cf=1
-  local -i gmenu=0 gm=1
+  local screen=list cf=1
+  local -i gm=1
   local -a gitems=(TTHEME_GROUP:work TTHEME_GROUP:marketplace TTHEME_SORT:abc TTHEME_SORT:cast)
   local -A gshow=(abc A-Z cast "Cast order")
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=()
-  local te=0 tfocus=0 tetop=0 tbtn=0 tearm=0 tename="" sample=0
+  local tfocus=0 tetop=0 tbtn=0 tearm=0 tename=""
   local -i pvgone=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
   local -F mlast=0 pvsized=0
   local mact="" mzone="" pvmouse="" pasted="" pvrest="" mhov=""
@@ -3479,7 +3502,7 @@ __tt_preview() {
       (( EPOCHREALTIME - pvsized < 0.2 )) || __tt_pv_size
       (( mhrow )) && __tt_pv_hovered
       printf '\e[?2026h'
-      if (( tick && ! te )); then
+      if (( tick )) && __tt_pv_hints; then
         __tt_pv_draw hint
       else
         __tt_pv_focus
@@ -3520,7 +3543,7 @@ __tt_preview() {
     else
       __tt_pv_unpaint
     fi
-    (( conf )) && __tt_pv_unconf
+    [[ $screen == settings ]] && __tt_pv_unconf
     local pointed=$pvmouse
     __tt_pv_pointer off
     printf '\e[?2004l\e[?7h'
@@ -3530,7 +3553,7 @@ __tt_preview() {
     [[ -n $tty ]] && stty "$tty" 2>/dev/null
     TTHEME_RAW=0
     [[ -n $tune ]] && __tt_pv_untune
-    __tt_pv_bg_save
+    __tt_pv_bg_save || :
     if [[ -n $spec ]]; then
       TTHEME_SPEC=$spec
       if [[ $mode == pin ]]; then

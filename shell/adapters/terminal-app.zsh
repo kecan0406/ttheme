@@ -202,14 +202,18 @@ __tt_bg_refresh() {
 }
 
 __tt_pv_bg_open() {
-  setopt localoptions nomonitor nonotify
   bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bganchor=0 TTHEME_BG_FAILED=()
   local REPLY
   __tt_bg_shown && bginc=$REPLY
   (( TTHEME_TMUX )) && return 0
   __tt_bg_cells
   TTHEME_TYPED=
-  __tt_terminal_wired && [[ -n $TTY ]] || return 0
+  __tt_pv_bg_back
+}
+
+__tt_pv_bg_back() {
+  setopt localoptions nomonitor nonotify
+  (( ! TTHEME_TERMINAL_PID && ! TTHEME_TMUX )) && __tt_terminal_wired && [[ -n $TTY ]] || return 0
   coproc osascript -l JavaScript $TTHEME_HOME/terminal-app.js serve 2>/dev/null
   exec {TTHEME_TERMINAL_RFD}<&p {TTHEME_TERMINAL_WFD}>&p
   TTHEME_TERMINAL_PID=$!

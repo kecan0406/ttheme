@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- In Preview's editor, a background that could not be saved now says `Could not save the background of` and the palette's name. Before, the bar said `Saved` and the change was gone.
+- A palette edited or reset from Preview inside a pinned directory now leaves with the directory: `cd` out puts back what the tab showed before the pin. Before, the pin's palette stayed on.
+- In Preview's editor, the wheel no longer moves the rows behind the apply question, any key but `enter` drops an armed `Reset? enter again`, and a button let go outside the window no longer stops rows from lighting under the pointer until the next press.
+- In Terminal.app, Preview stays as quick after it comes back from Browse, `ttheme find` or the palette editor as it was before. Before, every palette you moved onto after that started `osascript` again.
+- In Ghostty, a shell that started while Ghostty was marked as unable to name its front tab follows the front tab again once the mark runs out or is removed. Before, that shell never did until it was restarted.
+- A shell that ends at its prompt, with `ctrl+d`, now turns focus reporting off as it goes. Before, the program it was started from could get `^[[I` and `^[[O` typed into it whenever the window gained or lost focus.
+- In iTerm2 under `auto`, a mode switch that was killed midway no longer makes every later appearance report read as part of a switch still running.
+
 ## 1.2.109
 
 - A preview that ends without cleaning up after itself, its tab closed or its shell killed while it is open, no longer leaves its short-lived files in the terminal's folder for good. The next change ttheme makes now removes Warp's `ttheme-….view-….yaml` themes, with the picture only such a theme named, and Konsole's `ttheme-view.….colorscheme` schemes, once the process that made them is gone and Warp's settings name another theme. Before, only the preview that made one ever removed it.

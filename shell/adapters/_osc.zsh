@@ -117,6 +117,8 @@ __tt_cell() { return 1 }
 
 __tt_pv_bg_open() { : }
 
+__tt_pv_bg_back() { : }
+
 __tt_pv_bg_show() { : }
 
 __tt_pv_bg_busy() { return 1 }

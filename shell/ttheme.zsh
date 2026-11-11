@@ -117,7 +117,7 @@ __tt_follow() {
   [[ -n $TTHEME_STARTUP && "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" != "$1" && -z $TTHEME_PAINTED ]] || return 1
   __tt_active && __tt_takes_default || return 1
   TTHEME_SPEC=${TTHEME_PALETTE[$TTHEME_STARTUP]}
-  TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+  __tt_pin_forget
   __tt_pins_load
   __tt_dir_sync
   return 0
@@ -133,13 +133,12 @@ __tt_gone() {
   TTHEME_SPEC=
   __tt_reload
   __tt_reset_reloaded $bg
-  print -n $'\e[?1004l'
-  (( TTHEME_APPEARANCE_ON )) && print -n $'\e[?2031l'
-  for hook in precmd:__tt_prompt precmd:__tt_precmd precmd:__tt_prompted precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_ran chpwd:__tt_chpwd; do
+  __tt_bye
+  for hook in $TTHEME_HOOKS; do
     add-zsh-hook -d ${hook%%:*} ${hook#*:}
   done
+  TTHEME_HOOKS=()
   (( $+functions[add-zle-hook-widget] )) && add-zle-hook-widget -d line-init __tt_line_init
-  __tt_bye
   unfunction ttheme
 }
 
@@ -169,6 +168,8 @@ typeset -g TTHEME_PINS_RAW="" TTHEME_PINS_AT=""
 typeset -gA TTHEME_PINS=()
 typeset -g TTHEME_PIN="" TTHEME_PIN_SPEC="" TTHEME_BASE_SPEC="" TTHEME_BASE_BARE=""
 typeset -g TTHEME_SSH_SPEC="" TTHEME_SSH_BACK="" TTHEME_SSH_BARE=""
+
+__tt_pin_forget() { TTHEME_PIN="" TTHEME_PIN_SPEC="" TTHEME_BASE_SPEC="" TTHEME_BASE_BARE="" }
 
 __tt_tilde() { REPLY=${1/#$HOME\//\~/} }
 
@@ -298,6 +299,7 @@ __tt_active() {
 }
 
 typeset -g TTHEME_HEARD=""
+typeset -ga TTHEME_HOOKS=()
 typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0 TTHEME_FRONT=-1 TTHEME_RAN=0 TTHEME_APPEARANCE=0 TTHEME_APPEARANCE_RESETS=0 TTHEME_APPEARANCE_ON=0
 
 __tt_put() {
@@ -473,15 +475,20 @@ __tt_dir_sync() {
     [[ -n $TTHEME_PIN ]] || return 0
     if [[ $TTHEME_SPEC == "$TTHEME_PIN_SPEC" ]]; then
       if [[ -n $TTHEME_BASE_BARE ]]; then
-        TTHEME_PIN="" TTHEME_PIN_SPEC="" TTHEME_BASE_BARE=""
-        __tt_unwear "$TTHEME_BASE_SPEC"
+        spec=$TTHEME_BASE_SPEC
+        __tt_pin_forget
+        __tt_unwear "$spec"
         return 0
       fi
       spec=$TTHEME_BASE_SPEC
       [[ -n $spec ]] || { __tt_osc_reset; TTHEME_SPEC= }
     fi
   fi
-  TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
+  if [[ -n $REPLY ]]; then
+    TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
+  else
+    __tt_pin_forget
+  fi
   [[ -n $spec && $spec != "$TTHEME_SPEC" ]] || return 0
   __tt_wear "$spec"
   return 0
@@ -499,7 +506,7 @@ __tt_unwear() {
 
 __tt_resume() {
   local REPLY="" name=$TTHEME_STARTUP
-  TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC= TTHEME_BASE_BARE=
+  __tt_pin_forget
   __tt_pins_load
   if __tt_dir_rule "$PWD" && [[ -n ${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]} ]]; then
     name=$TTHEME_PINS[$REPLY]
@@ -681,6 +688,13 @@ __tt_modes() {
   [[ -e $TTHEME_STATE_DIR/mode.lock ]] && return 0
   zf_mkdir -p $TTHEME_STATE_DIR 2>/dev/null
   { : >>| $TTHEME_STATE_DIR/mode.lock } 2>/dev/null
+}
+
+__tt_remoding() {
+  local pid
+  [[ -r $TTHEME_STATE_DIR/remode ]] || return 1
+  pid=$(<$TTHEME_STATE_DIR/remode)
+  [[ $pid == <1-> ]] && kill -0 $pid 2>/dev/null
 }
 
 __tt_remode() {
@@ -979,7 +993,7 @@ __tt_pin_save() {
       TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
     else
       spec=$TTHEME_BASE_SPEC
-      TTHEME_PIN="" TTHEME_PIN_SPEC=""
+      __tt_pin_forget
     fi
   fi
   if [[ $spec != "$TTHEME_SPEC" ]]; then
@@ -2030,7 +2044,7 @@ __tt_enlist() {
   zmodload -F zsh/files b:zf_mkdir b:zf_rm 2>/dev/null
   [[ -d $dir ]] || zf_mkdir -p $dir 2>/dev/null || return 0
   : >| $dir/$$ 2>/dev/null
-  add-zsh-hook zshexit __tt_bye
+  __tt_arm zshexit __tt_bye
 }
 
 if (( ! ${+functions[TRAPURG]} )); then
@@ -2053,7 +2067,13 @@ __tt_woken() {
 __tt_bye() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   zf_rm -f -- $TTHEME_STATE_DIR/shells/$$ 2>/dev/null
+  [[ -t 1 ]] && (( TTHEME_FOCUS || TTHEME_APPEARANCE_ON )) && __tt_preexec
   return 0
+}
+
+__tt_arm() {
+  add-zsh-hook $1 $2
+  TTHEME_HOOKS+=($1:$2)
 }
 
 __tt_stamp() {
@@ -2078,24 +2098,24 @@ __tt_hook() {
   __tt_enlist
   zle -N __tt_line_init
   add-zle-hook-widget line-init __tt_line_init
-  add-zsh-hook chpwd __tt_chpwd
-  add-zsh-hook precmd __tt_prompt
+  __tt_arm chpwd __tt_chpwd
+  __tt_arm precmd __tt_prompt
   if (( ! TTHEME_TMUX )); then
-    add-zsh-hook preexec __tt_ran
-    add-zsh-hook precmd __tt_unmux
+    __tt_arm preexec __tt_ran
+    __tt_arm precmd __tt_unmux
   fi
   if __tt_follows_focus || (( TTHEME_TMUX )); then
-    add-zsh-hook precmd __tt_precmd
-    add-zsh-hook preexec __tt_preexec
+    __tt_arm precmd __tt_precmd
+    __tt_arm preexec __tt_preexec
     __tt_bind_focus
   else
     __tt_sync
   fi
   if __tt_reports_appearance; then
     __tt_bind_appearance
-    add-zsh-hook preexec __tt_preexec
+    __tt_arm preexec __tt_preexec
   fi
-  __tt_follows_prompt && add-zsh-hook precmd __tt_prompted
+  __tt_follows_prompt && __tt_arm precmd __tt_prompted
   return 0
 }
 

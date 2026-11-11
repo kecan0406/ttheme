@@ -285,7 +285,7 @@ bgsrc=(); __tt_bg_load ttheme/hiiragi-kagami; bgsize[ttheme/hiiragi-kagami]=100 
 __tt_bg_write ttheme/hiiragi-kagami || { print -u2 "__tt_bg_write (a picture's own tuning) failed"; exit 1 }
 [[ -e $bgd/ttheme--hiiragi-kagami.1a2b3c4d.tune.conf && -e $bgd/ttheme--hiiragi-kagami.1a2b3c4d.off.conf && ! -e $bgd/ttheme--hiiragi-kagami.tune.conf && $(grep -c config-file $bgd/ttheme--hiiragi-kagami.conf) == 2 ]] ||
   { print -u2 "tuning did not go to the picture the conf names:"; ls $bgd; cat $bgd/ttheme--hiiragi-kagami.conf; exit 1 }
-te=1 tfocus=1 tename=ttheme/hiiragi-kagami bgcw=8 tune=ttheme/hiiragi-kagami tpick=ttheme/hiiragi-kagami tf=1 help=0 pick= conf=0 msgt=0 flt= color=0
+screen=edit tfocus=1 tename=ttheme/hiiragi-kagami bgcw=8 tune=ttheme/hiiragi-kagami tpick=ttheme/hiiragi-kagami tf=1 help=0 pick= msgt=0 flt= color=0
 out=; __tt_pv_foot 80
 [[ $out == *"f find"* && $out == *"s save"* ]] || { print -u2 "an EDIT bar on a picture with several images dropped the find or save key: $out"; exit 1 }
 out=; __tt_pv_foot 200
@@ -322,7 +322,7 @@ plain=${out//$'\e[K'/}
   local drawn
   local -a rows
   for pw ph in 20 5 12 2 30 1 39 24; do
-    drawn=$(rtype=() rval=() flt= resized=0 bgcw=0 hub=0 conf=0 pick= help=0 te=0 tune= msgt=0 osdt=0 color=1 __tt_pv_draw)
+    drawn=$(rtype=() rval=() flt= resized=0 bgcw=0 hub=0 pick= help=0 screen=list tune= msgt=0 osdt=0 color=1 __tt_pv_draw)
     rows=("${(@f)${drawn//$'\e['[0-9;?]#[A-Za-z]/}}")
     (( ${#rows} <= ph )) || { print -u2 "preview's too-small notice drew ${#rows} rows into a window of $ph and scrolled it"; exit 1 }
     for text in $rows; do
@@ -331,12 +331,12 @@ plain=${out//$'\e[K'/}
   done
   local long=someone@mine/own-palette-with-a-long-name-up-to-forty
   pw=40 ph=12
-  drawn=$(rtype=() rval=() flt=${(l:26::z:)} resized=0 bgcw=0 hub=0 conf=0 pick= help=0 te=0 tune= msgt=0 osdt=0 color=1 __tt_pv_draw)
+  drawn=$(rtype=() rval=() flt=${(l:26::z:)} resized=0 bgcw=0 hub=0 pick= help=0 screen=list tune= msgt=0 osdt=0 color=1 __tt_pv_draw)
   for text in "${(@f)${drawn//$'\e['[0-9;?]#[A-Za-z]/}}"; do
     (( ${(m)#text} <= pw )) || { print -u2 "a filter that matched nothing ran past a window $pw wide: $text"; exit 1 }
   done
   for flt in ${(l:60::z:)} ${(l:30::み:)}; do
-    drawn=$(rtype=() rval=() resized=0 bgcw=0 hub=0 conf=0 pick= help=0 te=0 tune= msgt=0 osdt=0 color=1 __tt_pv_draw)
+    drawn=$(rtype=() rval=() resized=0 bgcw=0 hub=0 pick= help=0 screen=list tune= msgt=0 osdt=0 color=1 __tt_pv_draw)
     for text in "${(@f)${drawn//$'\e['[0-9;?]#[A-Za-z]/}}"; do
       (( ${(m)#text} <= pw )) || { print -u2 "a filter typed before the window narrowed ran past a window $pw wide: $text"; exit 1 }
     done
@@ -347,7 +347,7 @@ plain=${out//$'\e[K'/}
   text=${${out//$'\e['[0-9;?]#[A-Za-z]/}}
   (( ${(m)#text} <= 36 )) || { print -u2 "a long palette name ran past the panel head: $text"; exit 1 }
   for pw in 50 80; do
-    out= pick=$long pk=1 mode=hub te=0 help=0 msgt=0 color=1
+    out= pick=$long pk=1 mode=hub screen=list help=0 msgt=0 color=1
     __tt_pv_foot $pw
     text=${${out//$'\e['[0-9;?]#[A-Za-z]/}}
     (( ${(m)#text} <= pw )) || { print -u2 "the bar under a pick ran past a window $pw wide: $text"; exit 1 }
@@ -464,7 +464,7 @@ plain=${out//$'\e[K'/}
     __tt_pv_paste
     [[ $pasted == 'a b' && $pvrest == x ]] || { print -u2 "a paste read in pieces lost its end or the key after it: ${(q+)pasted} then ${(q+)pvrest}"; exit 1 }
     pvrest=
-    flt=ki rtype=() rval=() cur=1 help=0 pick= te=0 tune= conf=0
+    flt=ki rtype=() rval=() cur=1 help=0 pick= screen=list tune=
     for key in $'\u2066' $'\u202e' $'\u061c' t; do
       __tt_pv_handle
     done
@@ -511,7 +511,7 @@ REPLY=; __tt_bg_coloring ttheme/hiiragi-kagami; first=$REPLY
 REPLY=; __tt_bg_coloring ttheme/hiiragi-kagami:safebooru_3
 [[ $first == tone && $REPLY == original ]] ||
   { print -u2 "the conf's colors line did not reach its picture: active=$first other=$REPLY (${(kv)bgcolors})"; exit 1 }
-te=1 tfocus=1 tename=ttheme/hiiragi-kagami bgcw=8 tune=ttheme/hiiragi-kagami tpick=ttheme/hiiragi-kagami:safebooru_3 tf=4 color=0 out= off=0 msgt=0 help=0 pick= conf=0 flt=
+screen=edit tfocus=1 tename=ttheme/hiiragi-kagami bgcw=8 tune=ttheme/hiiragi-kagami tpick=ttheme/hiiragi-kagami:safebooru_3 tf=4 color=0 out= off=0 msgt=0 help=0 pick= flt=
 __tt_pv_bg_panel ttheme/hiiragi-kagami:safebooru_3 4 1 60
 [[ $out == *Colors* && $out == *"[original]"* && $out == *" tinted "* ]] ||
   { print -u2 "the tuning panel did not show the picture's colors: $out"; exit 1 }
@@ -526,7 +526,7 @@ bgsrc=(); __tt_bg_load ttheme/hiiragi-kagami
 REPLY=; __tt_bg_coloring ttheme/hiiragi-kagami:safebooru_3
 [[ $REPLY == tone && ${#bgcolors} == 0 ]] ||
   { print -u2 "a picture drawn in tone again kept its colors mark: $REPLY (${(kv)bgcolors})"; exit 1 }
-te=0 tune= tpick= bgcw=0 out=
+screen=list tune= tpick= bgcw=0 out=
 (
   __tt_pv_draw() { : }
   __tt_pv_bg_close() { print closed >> $bgd/closed.log }
@@ -543,7 +543,7 @@ te=0 tune= tpick= bgcw=0 out=
     "background-image = ttheme--hiiragi-kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
     "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.tune.conf" "config-file = ?ttheme--hiiragi-kagami.1a2b3c4d.off.conf" > $bgd/ttheme--hiiragi-kagami.conf
   bgsrc=() bgcolors=() bgedit=() bgview=() bgswap=() tsnaps=()
-  te=1 tfocus=1 tename=ttheme/hiiragi-kagami bgcw=8 color=0 msgt=0 help=0 pick= conf=0 flt=
+  screen=edit tfocus=1 tename=ttheme/hiiragi-kagami bgcw=8 color=0 msgt=0 help=0 pick= flt=
   __tt_pv_tune_open ttheme/hiiragi-kagami
   bgoff[ttheme/hiiragi-kagami]=1 tf=1 key=c
   rm -f $bgd/cli.log
@@ -566,6 +566,31 @@ te=0 tune= tpick= bgcw=0 out=
     { print -u2 "the Colors row did not switch back on an arrow key: $(<$bgd/cli.log) tf=$tf"; exit 1 }
 ) || exit 1
 tune= tpick= bgcw=0 out=
+(
+  __tt_bg_write() { return 1 }
+  __tt_bg_settle() { : }
+  bgedit=(ttheme/hiiragi-kagami 1) bgswap=()
+  __tt_pv_bg_save behind > /dev/null 2>&1 && { print -u2 "a background that could not be written was reported as saved"; exit 1 }
+  screen=edit tename=ttheme/hiiragi-kagami tune= msg=Saved msgt=0
+  __tt_te_saved ttheme/hiiragi-kagami "" 1
+  [[ $msg == "Could not save the background of "* ]] || { print -u2 "a save that failed left the bar saying: $msg"; exit 1 }
+) || exit 1
+(
+  old=$TTHEME_PALETTE[ttheme/akemi-homura] new=$TTHEME_PALETTE[ttheme/kita-ikuyo] base=$TTHEME_PALETTE[ttheme/hatsune-miku]
+  orig=$old TTHEME_SPEC=$old TTHEME_PIN_SPEC=$old TTHEME_BASE_SPEC=$base
+  __tt_palettes_load() { TTHEME_PALETTE[ttheme/akemi-homura]=$new }
+  __tt_reloaded() { : }
+  __tt_pv_reread
+  [[ $orig == "$new" && $TTHEME_SPEC == "$new" && $TTHEME_PIN_SPEC == "$new" && $TTHEME_BASE_SPEC == "$base" ]] ||
+    { print -u2 "a palette edited from preview left the tab's pin holding its old colors, so leaving the pinned directory would keep the pin on"; exit 1 }
+) || exit 1
+(
+  moved=0
+  __tt_pv_te() { moved=1 }
+  screen=edit pick=ttheme/hiiragi-kagami help=0 mwheel=1
+  __tt_pv_wheel
+  (( ! moved )) || { print -u2 "the wheel moved the editor's rows under the apply question"; exit 1 }
+) || exit 1
 TTHEME_STARTUP=ttheme/hatsune-miku
 proj=$XDG_CONFIG_HOME/proj
 mkdir -p $proj/sub/deep $proj-sibling
@@ -1181,8 +1206,13 @@ forks_of __tt_bg_send $bgd/ttheme--hiiragi-kagami.png
   (( REPLY == 0 )) || { print -u2 "reading an iTerm2 appearance report forks ($REPLY processes)"; exit 1 }
   __tt_appearance_of light && [[ $REPLY == light ]] || { print -u2 "an iTerm2 tab showing ttheme/hatsune-miku's light mode was not heard as light"; exit 1 }
   ! __tt_appearance_of dark || { print -u2 "an iTerm2 tab still showing the mode it wears was heard as a change"; exit 1 }
-  : >| $TTHEME_STATE_DIR/remode
+  print -r -- $$ >| $TTHEME_STATE_DIR/remode
   __tt_appearance_of dark && [[ $REPLY == dark ]] || { print -u2 "an iTerm2 tab back in the mode it wears went unheard while a remode ran"; exit 1 }
+  sleep 0 &
+  gone=$!
+  wait $gone
+  print -r -- $gone >| $TTHEME_STATE_DIR/remode
+  ! __tt_appearance_of dark || { print -u2 "the mark of a remode that was killed kept an iTerm2 tab hearing a remode"; exit 1 }
   rm -f $TTHEME_STATE_DIR/remode
   TTHEME_ITERM_DYED=1
   ! __tt_appearance_of light || { print -u2 "an iTerm2 tab an OSC color dyed was heard"; exit 1 }
@@ -1926,7 +1956,11 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH HTTPS_PROXY=http://proxy.invalid:3128 
   answer blind
   __tt_ghostty_check && { print -u2 "the follower kept going on a Ghostty that cannot name the terminal in front"; exit 1 }
   [[ "$(<$TTHEME_GHOSTTY_TABS/.blind)" == 1.3.2 ]] || { print -u2 "a blind Ghostty was not remembered by its version"; exit 1 }
+  follows=$TTHEME_GHOSTTY_FOLLOWS TTHEME_GHOSTTY_FOLLOWS=1
+  __tt_ghostty_follows && { print -u2 "a shell kept following a Ghostty marked blind"; exit 1 }
   rm -f $TTHEME_GHOSTTY_TABS/.blind
+  __tt_ghostty_follows || { print -u2 "a shell that met the blind mark never followed again once the mark was gone"; exit 1 }
+  TTHEME_GHOSTTY_FOLLOWS=$follows
   answer none
   for i in {1..6}; do __tt_ghostty_check || { print -u2 "the follower gave up after $i answers naming no terminal within seconds"; exit 1 }; done
   [[ ! -e $TTHEME_GHOSTTY_TABS/.blind ]] || { print -u2 "a few seconds of answers naming no terminal marked Ghostty blind"; exit 1 }

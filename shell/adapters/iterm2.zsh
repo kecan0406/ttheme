@@ -37,7 +37,7 @@ __tt_appearance_of() {
   __tt_iterm_dark $other && now=1
   (( was != now )) || return 1
   if (( heard == was )); then
-    [[ -e $TTHEME_STATE_DIR/remode ]] || return 1
+    __tt_remoding || return 1
     REPLY=$TTHEME_MODE_WORN
   elif [[ $TTHEME_MODE_WORN == light ]]; then
     REPLY=dark

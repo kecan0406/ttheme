@@ -1,6 +1,6 @@
 typeset -ga TTHEME_BG_POSITIONS=(top-left top-center top-right center-left center center-right bottom-left bottom-center bottom-right)
 typeset -gi TTHEME_BG_JOB=0
-typeset -g TTHEME_BG_JOBKEY=""
+typeset -g TTHEME_BG_JOBKEY="" TTHEME_BG_NOTE="Loading the background"
 typeset -gF TTHEME_BG_ASKED=0
 typeset -ga TTHEME_BG_WANT=()
 typeset -gA TTHEME_BG_FAILED=()
@@ -16,7 +16,7 @@ __tt_bg_ask() {
     return 0
   fi
   TTHEME_BG_WANT=("$key" "$@") TTHEME_BG_ASKED=$EPOCHREALTIME
-  msg="Loading the background" msgt=500
+  msg=$TTHEME_BG_NOTE msgt=500
   (( TTHEME_BG_JOB )) || [[ -n $pvjob ]] || __tt_bg_start
   return 0
 }
@@ -52,7 +52,12 @@ __tt_bg_settle() {
     zselect -t 1
   done
   __tt_bg_ended
-  [[ $msg == "Loading the background" ]] && msg="" msgt=0
+  __tt_bg_quiet
+  return 0
+}
+
+__tt_bg_quiet() {
+  [[ $msg == "$TTHEME_BG_NOTE" ]] && msg="" msgt=0
   return 0
 }
 
@@ -64,7 +69,7 @@ __tt_pv_bg_poll() {
   __tt_bg_reap && done=0
   (( ! TTHEME_BG_JOB && ${#TTHEME_BG_WANT} && EPOCHREALTIME - TTHEME_BG_ASKED >= 0.15 )) && [[ -z $pvjob ]] && __tt_bg_start
   __tt_pv_bg_busy && return $done
-  [[ $msg == "Loading the background" ]] && msg="" msgt=0
+  __tt_bg_quiet
   return 0
 }
 
@@ -753,7 +758,7 @@ __tt_pv_bg_redone() {
   bgload[$name]="" bgedit[$name]=1
   __tt_label $name
   msg=${err:-"Background  $REPLY"} msgt=$(( rc ? 300 : 200 ))
-  (( te )) && [[ $tename == "$name" ]] || return 0
+  [[ $screen == edit && $tename == "$name" ]] || return 0
   if [[ -r ${TTHEME_CONFIG:h}/backgrounds/${${name/@/--}/\//--}.conf ]]; then
     __tt_pv_bg_reopen $name "$tpick" $tf
   else
@@ -1006,12 +1011,14 @@ __tt_pv_bg_save_behind() { __tt_pv_bg_save behind 2>/dev/null }
 __tt_pv_bg_save() {
   local img name lab note err REPLY
   local -a saved=()
+  local -i lost=0
   [[ $1 == behind ]] || __tt_bg_settle
   (( ${#bgedit} + ${#bgswap} )) || return 0
   for img in ${(ok)bgedit}; do
     if ! __tt_bg_write $img; then
       __tt_label ${img%:*}
       print -u2 "ttheme: could not save the background of $REPLY"
+      lost=1
       continue
     fi
     (( ${saved[(Ie)${img%:*}]} )) || saved+=(${img%:*})
@@ -1019,13 +1026,14 @@ __tt_pv_bg_save() {
   for name in ${(ok)bgswap}; do
     if ! err=$(__tt_cli image $name show ${bgswap[$name]} 2>&1); then
       print -u2 -r -- "$err"
+      lost=1
       continue
     fi
     (( ${saved[(Ie)$name]} )) || saved+=($name)
   done
   if [[ $1 == behind ]]; then
     print -r -- $saved
-    return 0
+    return $lost
   fi
   for name in $saved; do
     __tt_label $name
@@ -1047,5 +1055,5 @@ __tt_pv_bg_save() {
     fi
   done
   (( ${#saved} )) && __tt_bg_saved $saved
-  return 0
+  return $lost
 }

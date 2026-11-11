@@ -405,7 +405,7 @@ __tt_warp_follower() {
   emulate -L zsh
   local fd REPLY
   cd /
-  __tt_warp_db && zsystem flock -t 0 -f fd $TTHEME_WARP_TABS/.follow 2>/dev/null || return 0
+  __tt_warp_db && zsystem flock -t 1 -f fd $TTHEME_WARP_TABS/.follow 2>/dev/null || return 0
   trap '' HUP PIPE
   __tt_warp_code
   TTHEME_WARP_CODE=$REPLY TTHEME_WARP_LIVED=$EPOCHREALTIME
@@ -676,7 +676,7 @@ __tt_pv_bg_close() {
   (( ${+bgedit[$bgname]} )) || [[ -n $bgname && ${bgview[${bgname%:*}]} == "$bgname" ]] || __tt_warp_unview "$applied"
   (( bgcw )) && { printf '\e_Ga=d,d=A,q=2\e\\'; __tt_pv_bg_lost }
   [[ -z $bgcut ]] || { ( zselect -t 1000; rm -rf -- $bgcut ) &!; bgcut="" }
-  [[ $msg == "Loading the background" ]] && msg="" msgt=0
+  __tt_bg_quiet
   (( ${#TTHEME_WARP_LAID} + ${#TTHEME_WARP_MADE} )) || return 0
   local -a made=($TTHEME_WARP_MADE) laid=($TTHEME_WARP_LAID)
   TTHEME_WARP_MADE=() TTHEME_WARP_LAID=() TTHEME_WARP_KNOWN=()
