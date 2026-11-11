@@ -393,10 +393,14 @@ export async function pickPalettes(
     onFocus: live ? (entry) => process.stdout.write(live.paint(entry)) : undefined,
   })
 
-  const done = await prompt.prompt()
+  let done: Awaited<ReturnType<PalettePrompt['prompt']>>
 
-  if (live) {
-    process.stdout.write(live.restore(saved))
+  try {
+    done = await prompt.prompt()
+  } finally {
+    if (live) {
+      process.stdout.write(live.restore(saved))
+    }
   }
 
   if (done === 'cancel') {
