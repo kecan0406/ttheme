@@ -403,6 +403,7 @@ __tt_warp_code() {
 __tt_warp_follower() {
   emulate -L zsh
   local fd REPLY
+  cd /
   __tt_warp_db && zsystem flock -t 0 -f fd $TTHEME_WARP_TABS/.follow 2>/dev/null || return 0
   trap '' HUP PIPE
   __tt_warp_code

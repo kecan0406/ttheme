@@ -1625,6 +1625,9 @@ done
   __tt_warp_live && { print -u2 "the follower kept going with every tab closed"; exit 1 }
   [[ -z $(print -r $TTHEME_WARP_TABS/[0-9a-f]*(N)) ]] || { print -u2 "the follower left closed tabs behind"; exit 1 }
   rm -rf $TTHEME_WARP_TABS $TTHEME_HOME/warp.base
+  cd $XDG_CONFIG_HOME
+  __tt_warp_follower
+  [[ $PWD == / ]] || { print -u2 "Warp's follower stayed in the folder of the tab that started it: $PWD"; exit 1 }
 ) || exit 1
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
@@ -1994,6 +1997,9 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH HTTPS_PROXY=http://proxy.invalid:3128 
   __tt_ghostty_live && { print -u2 "the follower kept going with every tab closed"; exit 1 }
   [[ -z $(print -r $TTHEME_GHOSTTY_TABS/[^.]*(N)) ]] || { print -u2 "the follower left closed tabs behind"; exit 1 }
   rm -rf $TTHEME_GHOSTTY_TABS $XDG_CONFIG_HOME/ttys
+  cd $XDG_CONFIG_HOME
+  __tt_ghostty_follower
+  [[ $PWD == / ]] || { print -u2 "Ghostty's follower stayed in the folder of the tab that started it: $PWD"; exit 1 }
 ) || exit 1
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh

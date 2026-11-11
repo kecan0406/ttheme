@@ -260,6 +260,7 @@ __tt_ghostty_follower() {
   emulate -L zsh
   local fd REPLY
   local -a at
+  cd /
   __tt_ghostty_modules
   zsystem flock -t 0 -f fd $TTHEME_GHOSTTY_TABS/.follow 2>/dev/null || return 0
   trap '' HUP

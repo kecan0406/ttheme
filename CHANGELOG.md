@@ -6,6 +6,7 @@
 - The palette list of `ttheme init` and `ttheme share` now puts the tab's look back when its window closes or the process is told to stop while it is open. Before, the look of the palette under the cursor stayed on, and in Warp it stayed as the theme.
 - A picture put in again, the same post from `ttheme find` or from an update, keeps the one it replaces until the new one is written and recorded. Before, the old picture's files were deleted first, so an install that failed or was cut short left the palette naming a picture that was gone.
 - In `ttheme find`'s try view, a full-size picture stops downloading once you have moved two pictures on from it, and every one stops when you leave the view. The picture shown and the one on each side of it keep coming. Before, each picture you paused on downloaded to its end, so a quick pass over six had six downloads running at once.
+- The helper that follows the front tab in Ghostty and in Warp no longer stays in the folder of the tab that started it. Before, it kept that folder in use for as long as the terminal stayed open, which can keep a disk from ejecting.
 
 ## 1.2.107
 
