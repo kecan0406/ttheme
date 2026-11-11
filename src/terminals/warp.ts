@@ -20,7 +20,7 @@ import type { Theme } from '../core/theme.ts'
 import { inOther, owned, stem } from '../core/theme.ts'
 import type { ProfileBackground } from '../pictures/conf.ts'
 import { backupOnce, editUserFile, listing, relink, spareBackup, symlinked, writeAtomic } from '../store/edits.ts'
-import { dataHome, readText, tilde } from './common.ts'
+import { dataHome, readText, running, tilde } from './common.ts'
 import { warp as emitter, WARP_PART, type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from './emit/warp.ts'
 import type { At, Ctx, Out, Unwired, Wiring } from './types.ts'
 
@@ -367,6 +367,14 @@ function indexed(path: string): boolean {
   }
 }
 
+const VIEW = /\.view-(\d+)-\d+\.yaml$/
+
+function abandoned(file: string): boolean {
+  const [, maker] = VIEW.exec(file) ?? []
+
+  return maker !== undefined && file.startsWith(owned('')) && !running(Number(maker))
+}
+
 function writePictures(ctx: Ctx, out: Out, files: Map<string, string>, shelf: WarpShelf): void {
   const { dir } = shelf
 
@@ -438,7 +446,9 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>, shelf: Wa
     file.startsWith(owned('')) && !file.includes('.view-') && file.endsWith(`.${extension}`)
 
   for (const file of readdirSync(dir)) {
-    if (owns(file, 'yaml') && !kept.has(file) && !current.includes(`path = "${file}"`)) {
+    const gone = owns(file, 'yaml') ? !kept.has(file) : abandoned(file)
+
+    if (gone && !current.includes(`path = "${file}"`)) {
       out.remove(join(dir, file))
     }
   }

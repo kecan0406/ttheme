@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A preview that ends without cleaning up after itself, its tab closed or its shell killed while it is open, no longer leaves its short-lived files in the terminal's folder for good. The next change ttheme makes now removes Warp's `ttheme-….view-….yaml` themes, with the picture only such a theme named, and Konsole's `ttheme-view.….colorscheme` schemes, once the process that made them is gone and Warp's settings name another theme. Before, only the preview that made one ever removed it.
+
 ## 1.2.108
 
 - In Warp, switching from Browse to Preview with `tab` no longer lets the palette you had just moved onto go on a moment after the switch, and Browse takes away the short-lived theme files it made for the palettes it showed. Before, the look still landed after Preview had taken the tab, and every switch after a hover left a `ttheme-….view-….yaml` file in Warp's themes folder.

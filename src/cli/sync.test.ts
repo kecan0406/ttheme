@@ -795,6 +795,50 @@ test("sync gives a palette's Warp theme its picture under a name of its own, and
   assert.deepEqual([...decodePng(readFileSync(join(themes, ahead))).data], [255, 255, 255, 255, r, g, b, 255])
 })
 
+test("sync drops the Warp theme a preview left behind once its process is gone and Warp's settings name another, with the picture only it named", () => {
+  const configHome = fixture()
+  const home = fixture()
+  const state: Installed = { terminals: ['warp'], palettes: ['ttheme/orla'] }
+  sync(configHome, manifest, state, home)
+  const themes = warpThemes(home)
+  const gone = spawnSync(process.execPath, ['-e', '']).pid
+  const view = (maker: number, n: number) => `${owned('ttheme/orla')}.view-${maker}-${n}.yaml`
+  const picture = (version: string) => `${owned('ttheme/orla')}.${version}.png`
+
+  const leave = (file: string, png: string) => {
+    writeFileSync(join(themes, png), '')
+    writeFileSync(
+      join(themes, file),
+      `name: "ttheme/orla, dark, picture"\nbackground_image:\n  path: "${join(themes, png)}"\n  opacity: 20\n`,
+    )
+  }
+
+  leave(view(process.pid, 1), picture('0000000a'))
+  leave(view(gone, 1), picture('0000000b'))
+  leave(view(gone, 2), picture('0000000c'))
+  const settings = warpSettings(home, configHome)
+  mkdirSync(join(settings, '..'), { recursive: true })
+  writeFileSync(
+    settings,
+    `[appearance.themes]\ntheme = ${warpThemeValue('ttheme/orla, dark, picture', view(gone, 2))}\n`,
+  )
+
+  const left = () =>
+    readdirSync(themes)
+      .filter((file) => file.includes('.view-') || /\.0000000[abc]\.png$/.test(file))
+      .sort()
+
+  sync(configHome, manifest, state, home)
+  assert.deepEqual(
+    left(),
+    [view(process.pid, 1), view(gone, 2), picture('0000000a'), picture('0000000c')].sort(),
+    'the view of a process still running stays, and so does the one the settings named',
+  )
+  assert.doesNotMatch(readFileSync(settings, 'utf8'), /\.view-/)
+  sync(configHome, manifest, state, home)
+  assert.deepEqual(left(), [view(process.pid, 1), picture('0000000a')].sort())
+})
+
 test('Warp wears the plain theme of a palette whose picture cannot be read', () => {
   const configHome = fixture()
   const home = fixture()

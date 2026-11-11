@@ -6,7 +6,7 @@ import type { Theme } from '../core/theme.ts'
 import { owned } from '../core/theme.ts'
 import { editUserFile, spareBackup } from '../store/edits.ts'
 import type { Host } from '../store/host.ts'
-import { dataHome, ownedIn, readText, tilde } from './common.ts'
+import { dataHome, ownedIn, readText, running, tilde } from './common.ts'
 import { konsole as emitter, konsoleScheme } from './emit/konsole.ts'
 import type { At, Ctx, Defaults, Moment, Out, Wiring } from './types.ts'
 
@@ -162,6 +162,7 @@ export function konsoleProfile(theme: Theme, parent: string): string {
 }
 
 const VERSIONED = /^ttheme-(.+)\.([0-9a-f]{8})\.colorscheme$/
+const VIEWED = /^ttheme-view\.(\d+)\.\d+\.colorscheme$/
 
 function versionOf(text: string): string {
   return createHash('sha1').update(text).digest('hex').slice(0, 8)
@@ -180,7 +181,9 @@ function schemes(ctx: Ctx, out: Out): void {
   }
 
   for (const file of ownedIn(dir)) {
-    if (VERSIONED.test(basename(file)) && !keep.has(file)) {
+    const [, maker] = VIEWED.exec(basename(file)) ?? []
+
+    if (maker === undefined ? VERSIONED.test(basename(file)) && !keep.has(file) : !running(Number(maker))) {
       out.remove(file)
     }
   }

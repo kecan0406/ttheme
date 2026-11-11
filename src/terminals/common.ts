@@ -29,6 +29,16 @@ export function dataHome(home: string): string {
   return process.env.XDG_DATA_HOME || join(home, '.local', 'share')
 }
 
+export function running(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+
+    return true
+  } catch (error) {
+    return error instanceof Error && 'code' in error && error.code === 'EPERM'
+  }
+}
+
 export function ownedIn(dir: string): string[] {
   return existsSync(dir)
     ? readdirSync(dir).flatMap((file) => (file.startsWith(owned('')) ? [join(dir, file)] : []))

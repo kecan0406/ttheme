@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -186,6 +187,22 @@ test('sync gives every installed palette a profile on top of the user’s own, a
   assert.match(
     readFileSync(join(configHome, 'ttheme', 'palettes.zsh'), 'utf8'),
     /^typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'$/m,
+  )
+})
+
+test('sync drops the scheme a painted tab left behind once its shell is gone, and keeps one whose shell still runs', () => {
+  const { configHome, home } = fixture()
+  const state: Installed = { terminals: ['konsole'], palettes: ['neutral'], konsoleBase: 'Mine.profile' }
+  const dir = konsoleData(home)
+  mkdirSync(dir, { recursive: true })
+  const gone = spawnSync(process.execPath, ['-e', '']).pid
+  writeFileSync(join(dir, `ttheme-view.${gone}.3.colorscheme`), '')
+  writeFileSync(join(dir, `ttheme-view.${gone}.4.colorscheme`), '')
+  writeFileSync(join(dir, `ttheme-view.${process.pid}.1.colorscheme`), '')
+  sync(configHome, manifest, state, home)
+  assert.deepEqual(
+    readdirSync(dir).filter((file) => file.startsWith('ttheme-view.')),
+    [`ttheme-view.${process.pid}.1.colorscheme`],
   )
 })
 
