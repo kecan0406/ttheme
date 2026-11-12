@@ -113,7 +113,9 @@ function wall(site: Site): Error {
 
   return accountOf(site)
     ? new Error(`${site.name} still challenges with ${site.account.wants} — your network may be blocked there`)
-    : Object.assign(new Error(`${site.name} wants ${site.account.wants}`), { account: site.account.setting })
+    : Object.assign(new Error(`${site.name} wants ${site.account.wants} — set ${site.account.setting}`), {
+        account: site.account.setting,
+      })
 }
 
 export function redirected(from: string, to: string): string {

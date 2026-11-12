@@ -144,6 +144,7 @@ export const SETTINGS: Setting[] = [
             choices: [],
             entry: 'text' as const,
             read: site.account.read,
+            unread: site.account.unread,
             advanced: true,
           },
         ]
@@ -427,7 +428,14 @@ export class Settings {
     }
 
     if (key === 'enter' || key === 'up' || key === 'down') {
-      row.value = committed(row, typed)
+      const value = committed(row, typed)
+
+      if (row.read && typed.trim() && !value) {
+        this.tell({ text: row.unread ?? `Not a value ${row.label} takes`, tone: 'warn' })
+      } else {
+        row.value = value
+      }
+
       panel.typing = undefined
       this.recount()
 

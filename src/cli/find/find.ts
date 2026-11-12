@@ -25,14 +25,15 @@ function ioFor(home: string, entry: PaletteEntry): FindIO {
     store: (pairs) => {
       const path = join(home, 'ttheme', 'config.zsh')
       const before = existsSync(path) ? readFileSync(path, 'utf8') : ''
-      writeAtomic(
-        path,
-        pairs.reduce((text, [name, value]) => withSetting(text, name, value), before),
-      )
 
       for (const [name, value] of pairs) {
         process.env[name] = value
       }
+
+      writeAtomic(
+        path,
+        pairs.reduce((text, [name, value]) => withSetting(text, name, value), before),
+      )
     },
     visit,
     aligns: () => alignsFor(readInstalled(home).terminals),

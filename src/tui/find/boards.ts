@@ -467,16 +467,23 @@ export class Boards {
     }
   }
 
+  private told(name: string, error: Error | string): string {
+    const account = wantedAccount(error)
+    const site = account ? SITES.find((one) => one.account?.setting === account) : undefined
+
+    return site?.account ? `${site.name} wants ${site.account.wants} — a sets it` : reason(name, error)
+  }
+
   private want(board: Board, error: Error | string): void {
     const account = wantedAccount(error)
 
-    if (account && !board.wants) {
-      board.wants = account
-      board.note &&= `${board.note} — a sets it`
-      board.error &&= `${board.error} — a sets it`
+    if (!account) {
+      return
     }
 
-    if (account && board === this.board && this.site()?.account?.setting === account) {
+    board.wants = account
+
+    if (board === this.board && this.site()?.account?.setting === account) {
       this.asks(account)
     }
   }
@@ -486,7 +493,7 @@ export class Boards {
       return
     }
 
-    board.error = reason(site?.name ?? this.tabName(), error)
+    board.error = this.told(site?.name ?? this.tabName(), error)
     board.state = 'resting'
     this.want(board, error)
 
@@ -504,7 +511,7 @@ export class Boards {
       }
     }
 
-    board.note = [board.note, reason(site.name, error)].filter(Boolean).join('  ')
+    board.note = [board.note, this.told(site.name, error)].filter(Boolean).join('  ')
     this.want(board, error)
 
     if (board.arrived.size === 0 && board.sources.every((source) => source.done)) {

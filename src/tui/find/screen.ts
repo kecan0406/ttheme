@@ -61,6 +61,7 @@ export interface Setting {
   multi?: { read(raw: string | undefined): string[]; none?: string }
   entry?: Entry
   read?: (raw: string | undefined) => string
+  unread?: string
   advanced?: boolean
 }
 
@@ -73,6 +74,7 @@ export interface Row {
   multi?: { none?: string }
   entry?: Entry
   read?: (raw: string | undefined) => string
+  unread?: string
   advanced?: boolean
   cursor: number
 }
@@ -227,6 +229,7 @@ export interface Notice {
 }
 
 export interface AccountAsk {
+  key: string
   site: string
   siteAnsi: number
   title: string

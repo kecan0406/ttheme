@@ -26,7 +26,7 @@ import { Renderer } from '../../pictures/render.ts'
 import { blurOf, coloringFor, settingDefault, stickerOf } from '../../store/wiring.ts'
 import { CLEAR } from '../../terminals/terminal.ts'
 import type { Tone as NoticeTone } from '../bar.ts'
-import { edit } from '../field.ts'
+import { edit, plain } from '../field.ts'
 import { Help } from '../help.ts'
 import { CELL_QUERY, CellProbe, type Inbound, lineStep, type Mouse } from '../keys.ts'
 import { FOCUS, HIDE_CURSOR, NO_WRAP, PASTES, pointing, type Terminal, within } from '../terminal.ts'
@@ -64,12 +64,12 @@ const FEATURES = '\x1b[?5522$p\x1b]72;t=q\x1b\\\x1b[c'
 const NOTICE = 4000
 const ACCOUNT_MOST = 200
 
-function stepOf(key: string): number {
-  if (key === 'down' || key === 'tab') {
-    return 1
-  }
+function moves(key: string): boolean {
+  return lineStep(key) !== undefined || key === 'tab' || key === 'shift-tab'
+}
 
-  return key === 'up' || key === 'shift-tab' ? -1 : 0
+function siteOf(ask: AccountAsk): Site | undefined {
+  return SITES.find((site) => site.key === ask.key)
 }
 
 const TOP_RIGHT = POSITIONS.indexOf('top-right') + 1
@@ -148,6 +148,7 @@ export class Finder {
         about: setting.about,
         entry: setting.entry,
         ...(setting.read ? { read: setting.read } : {}),
+        ...(setting.unread ? { unread: setting.unread } : {}),
         advanced: setting.advanced,
         cursor: 0,
       })),
@@ -968,11 +969,12 @@ export class Finder {
     const site = SITES.find((one) => one.account?.setting === setting)
     const account = site?.account
 
-    if (!site || !account || this.declined.has(site.key) || this.view.account) {
+    if (!site || !account || this.declined.has(site.key) || layerOf(this.view).on !== 'grid') {
       return
     }
 
     this.view.account = {
+      key: site.key,
       site: site.name,
       siteAnsi: site.ansi,
       title: `${site.name} wants ${account.wants}`,
@@ -989,7 +991,7 @@ export class Finder {
 
   private typeAccount(typed: string): void {
     const ask = this.view.account
-    const account = SITES.find((site) => site.name === ask?.site)?.account
+    const account = ask && siteOf(ask)?.account
 
     if (ask && account) {
       ask.typed = typed
@@ -1002,7 +1004,7 @@ export class Finder {
 
   private accountKey(ask: AccountAsk, key: string): void {
     if (key === 'esc') {
-      const site = SITES.find((one) => one.name === ask.site)
+      const site = siteOf(ask)
 
       if (site) {
         this.declined.add(site.key)
@@ -1032,9 +1034,7 @@ export class Finder {
       return
     }
 
-    const step = stepOf(key)
-
-    if (step !== 0) {
+    if (moves(key)) {
       ask.focus = ask.read && ask.focus === 'field' ? 'save' : 'field'
       this.paint.draw()
 
@@ -1056,7 +1056,7 @@ export class Finder {
     }
 
     if ('text' in said) {
-      this.typeAccount(`${ask.typed}${said.text.replace(/\s+/g, ' ').trim()}`)
+      this.typeAccount([...`${ask.typed}${plain(said.text).trim()}`].slice(0, ACCOUNT_MOST).join(''))
     } else {
       ask.note = said.note
       this.paint.draw()
@@ -1064,7 +1064,7 @@ export class Finder {
   }
 
   private saveAccount(ask: AccountAsk): void {
-    const account = SITES.find((one) => one.name === ask.site)?.account
+    const account = siteOf(ask)?.account
 
     if (ask.read && account) {
       this.view.account = undefined
