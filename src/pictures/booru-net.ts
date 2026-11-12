@@ -2,7 +2,8 @@ import { setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { profilesOf } from '../core/artists.ts'
 import {
-  AGENT,
+  accountOf,
+  agentFor,
   type Credit,
   credit,
   extension,
@@ -105,6 +106,16 @@ function challenged(response: Response): boolean {
   )
 }
 
+function wall(site: Site): Error {
+  if (!site.account) {
+    return new Error(`${site.name} is behind a Cloudflare challenge`)
+  }
+
+  return accountOf(site)
+    ? new Error(`${site.name} still challenges with ${site.account.wants} — your network may be blocked there`)
+    : Object.assign(new Error(`${site.name} wants ${site.account.wants}`), { account: site.account.setting })
+}
+
 export function redirected(from: string, to: string): string {
   const next = new URL(to, from)
 
@@ -129,10 +140,12 @@ async function get(
     }
 
     const host = new URL(at).host
+    const agent = agentFor(site)
+    const fenced = `${host} ${agent}`
     const now = Date.now()
 
-    if (spare && (walled.get(host) ?? 0) > now) {
-      throw new Error(`${site.name} is behind a Cloudflare challenge`)
+    if (spare && (walled.get(fenced) ?? 0) > now) {
+      throw wall(site)
     }
 
     const wait = (paused.get(host)?.until ?? 0) - now
@@ -151,7 +164,7 @@ async function get(
 
     try {
       response = await fetch(at, {
-        headers: { 'User-Agent': AGENT, Referer: `${site.origin}/`, ...headers },
+        headers: { 'User-Agent': agent, Referer: `${site.origin}/`, ...headers },
         redirect: 'manual',
         signal: AbortSignal.any([signal, first ? first.signal : AbortSignal.timeout(timeout)]),
       })
@@ -193,16 +206,15 @@ async function get(
 
     if (!response.ok) {
       await response.body?.cancel()
-      const wall = challenged(response)
+      const walls = challenged(response)
 
-      if (wall) {
-        walled.set(host, Date.now() + MAX_WAIT)
+      if (walls) {
+        walled.set(fenced, Date.now() + MAX_WAIT)
       }
 
-      throw Object.assign(
-        new Error(wall ? `${site.name} is behind a Cloudflare challenge` : `${site.name} answered ${response.status}`),
-        { status: response.status },
-      )
+      throw Object.assign(walls ? wall(site) : new Error(`${site.name} answered ${response.status}`), {
+        status: response.status,
+      })
     }
 
     return response

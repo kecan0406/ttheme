@@ -12,6 +12,7 @@ import {
   SITES,
   type Site,
   tagsOf,
+  wantedAccount,
 } from '../../core/booru.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
 import { FACE } from '../../core/slots.ts'
@@ -65,6 +66,7 @@ interface Board {
   arrived: Set<string>
   error?: string
   note?: string
+  wants?: string
 }
 
 interface Vetting {
@@ -120,6 +122,7 @@ interface Host {
   select: () => void
   enter: () => void
   tell: (notice?: Notice) => void
+  asks: (account: string) => void
 }
 
 export class Boards {
@@ -153,6 +156,7 @@ export class Boards {
   private readonly select: () => void
   private readonly enter: () => void
   private readonly tell: (notice?: Notice) => void
+  private readonly asks: (account: string) => void
 
   constructor(host: Host) {
     this.view = host.view
@@ -174,6 +178,7 @@ export class Boards {
     this.select = host.select
     this.enter = host.enter
     this.tell = host.tell
+    this.asks = host.asks
     this.board = blank(this.boardKey, this.view.tag === '' ? 'resting' : 'planning')
     this.boards.set(this.board.key, this.board)
   }
@@ -184,6 +189,10 @@ export class Boards {
 
   noted(note?: string): void {
     this.view.note = note
+  }
+
+  wanted(): string | undefined {
+    return this.board.wants
   }
 
   still(): void {
@@ -458,6 +467,20 @@ export class Boards {
     }
   }
 
+  private want(board: Board, error: Error | string): void {
+    const account = wantedAccount(error)
+
+    if (account && !board.wants) {
+      board.wants = account
+      board.note &&= `${board.note} — a sets it`
+      board.error &&= `${board.error} — a sets it`
+    }
+
+    if (account && board === this.board && this.site()?.account?.setting === account) {
+      this.asks(account)
+    }
+  }
+
   private fail(board: Board, error: Error | string, site = this.site()): void {
     if (this.signal.aborted) {
       return
@@ -465,6 +488,7 @@ export class Boards {
 
     board.error = reason(site?.name ?? this.tabName(), error)
     board.state = 'resting'
+    this.want(board, error)
 
     if (board === this.board) {
       this.tell({ text: board.error, tone: 'error' })
@@ -481,6 +505,7 @@ export class Boards {
     }
 
     board.note = [board.note, reason(site.name, error)].filter(Boolean).join('  ')
+    this.want(board, error)
 
     if (board.arrived.size === 0 && board.sources.every((source) => source.done)) {
       board.error = board.note

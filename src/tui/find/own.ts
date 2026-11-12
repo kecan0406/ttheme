@@ -47,7 +47,12 @@ interface Host {
   unhelp: () => void
   unsave: () => void
   tell: (notice?: Notice) => void
+  fill: (said: Said) => void
 }
+
+type Said = { text: string } | { note: string }
+
+const NO_TEXT = 'No text on the clipboard'
 
 export class Own {
   readonly grabber: Grabber
@@ -67,6 +72,7 @@ export class Own {
   private readonly unhelp: () => void
   private readonly unsave: () => void
   private readonly tell: (notice?: Notice) => void
+  private readonly fill: (said: Said) => void
 
   constructor(host: Host) {
     this.view = host.view
@@ -82,6 +88,7 @@ export class Own {
     this.unhelp = host.unhelp
     this.unsave = host.unsave
     this.tell = host.tell
+    this.fill = host.fill
     this.grabber = new Grabber(
       (text) => host.write(text),
       (got) => void this.got(got),
@@ -92,6 +99,16 @@ export class Own {
     this.attaching?.abort()
   }
 
+  private filled(said: Said): boolean {
+    if (layerOf(this.view).on !== 'account') {
+      return false
+    }
+
+    this.fill('text' in said && !said.text.trim() ? { note: NO_TEXT } : said)
+
+    return true
+  }
+
   private refuses(): boolean {
     const { on } = layerOf(this.view)
 
@@ -100,6 +117,10 @@ export class Own {
 
   pasted(text: string): void {
     const layer = layerOf(this.view)
+
+    if (this.filled({ text })) {
+      return
+    }
 
     if (layer.on === 'closing' || layer.on === 'panel') {
       return
@@ -140,6 +161,12 @@ export class Own {
   }
 
   private async got(got: Got): Promise<void> {
+    if (
+      this.filled(got.kind === 'text' ? { text: got.text } : { note: got.kind === 'error' ? got.message : NO_TEXT })
+    ) {
+      return
+    }
+
     if (got.kind === 'error') {
       this.notice(got.message, 'error')
 
@@ -197,7 +224,9 @@ export class Own {
         return
       }
 
-      this.notice('Over SSH the clipboard is not here — drop the file')
+      if (!this.filled({ note: 'Over SSH the clipboard is not here — paste with your terminal' })) {
+        this.notice('Over SSH the clipboard is not here — drop the file')
+      }
 
       return
     }
@@ -207,7 +236,11 @@ export class Own {
     try {
       clip = await readClipboard(join(this.scratch, `clipboard-${Date.now()}.png`))
     } catch (error) {
-      this.notice(`Could not read the clipboard: ${describe(error instanceof Error ? error : String(error))}`, 'error')
+      const why = `Could not read the clipboard: ${describe(error instanceof Error ? error : String(error))}`
+
+      if (!this.filled({ note: why })) {
+        this.notice(why, 'error')
+      }
 
       return
     }
@@ -216,6 +249,10 @@ export class Own {
   }
 
   async clipped(clip: Clip): Promise<void> {
+    if (this.filled('text' in clip ? { text: clip.text } : { note: NO_TEXT })) {
+      return
+    }
+
     if (this.refuses()) {
       return
     }

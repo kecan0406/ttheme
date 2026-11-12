@@ -3,7 +3,7 @@ import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { type Anchors, type Problem, readAnchors } from '../core/anchors.ts'
 import { bestBase, parseScheme, type Ranked, ROLE_BASE, roleBase } from '../core/base.ts'
-import { AGENT, MAX_PIXELS } from '../core/booru.ts'
+import { agentFor, LENDER, MAX_PIXELS } from '../core/booru.ts'
 import type { Hex } from '../core/color.ts'
 import {
   aboutOf,
@@ -301,7 +301,7 @@ async function consensus(tag: string | undefined, flags: PaletteFlags): Promise<
   }
 
   const query = new URLSearchParams({ query: `${tag} solo`, category: 'general', limit: '150' })
-  const response = await reach(`${RELATED}?${query}`, RELATED_TIMEOUT, undefined, { 'User-Agent': AGENT })
+  const response = await reach(`${RELATED}?${query}`, RELATED_TIMEOUT, undefined, { 'User-Agent': agentFor(LENDER) })
   const related = readRelated(await response.json().catch(() => undefined))
 
   if (!related) throw new Error('safebooru answered something ttheme cannot read')

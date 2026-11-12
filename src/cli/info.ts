@@ -4,7 +4,7 @@ import { arch, platform, release } from 'node:os'
 import pkg from '../../package.json' with { type: 'json' }
 import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
-import { SETTING_NAMES, settingDefault } from '../store/wiring.ts'
+import { SETTING_NAMES, settingDefault, settingPrivate } from '../store/wiring.ts'
 import { detectTerminal, editorOf, type Terminal, TRAITS } from '../terminals/terminal.ts'
 
 type Env = Record<string, string | undefined>
@@ -123,9 +123,11 @@ function settingsLine(env: Env): string | undefined {
   const changed = SETTING_NAMES.flatMap((name) => {
     const value = env[name]
 
-    return value === undefined || value === settingDefault(name)
-      ? []
-      : [`${name}=${/\s/.test(value) ? JSON.stringify(value) : value}`]
+    if (value === undefined || value === settingDefault(name)) {
+      return []
+    }
+
+    return [settingPrivate(name) ? `${name}=set` : `${name}=${/\s/.test(value) ? JSON.stringify(value) : value}`]
   })
 
   return changed.length > 0 ? changed.join(' ') : undefined

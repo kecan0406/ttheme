@@ -29,6 +29,10 @@ function ioFor(home: string, entry: PaletteEntry): FindIO {
         path,
         pairs.reduce((text, [name, value]) => withSetting(text, name, value), before),
       )
+
+      for (const [name, value] of pairs) {
+        process.env[name] = value
+      }
     },
     visit,
     aligns: () => alignsFor(readInstalled(home).terminals),

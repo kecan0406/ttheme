@@ -38,6 +38,70 @@ function setting(key: string): string | undefined {
   return typeof process === 'undefined' ? undefined : process.env[key]
 }
 
+export interface Account {
+  setting: string
+  label: string
+  about: string
+  wants: string
+  field: string
+  ask: string
+  unread: string
+  profile(origin: string): string
+  read(raw: string | undefined): string
+  sign(agent: string, value: string): string
+}
+
+const DANBOORU_ACCOUNT: Account = {
+  setting: 'TTHEME_FIND_DANBOORU_USER',
+  label: 'Danbooru id',
+  about: 'Your danbooru user number, or your profile link — danbooru answers only requests that carry it',
+  wants: 'your user id',
+  field: 'User id',
+  unread: 'Not a user number or a profile link',
+  ask: 'danbooru answers only requests that carry your user number. Log in, open your profile and paste its address or the number.',
+  profile: (origin) => `${origin}/profile`,
+  read: (raw) => {
+    const typed = (raw ?? '').trim()
+    const id = /^\d+$/.test(typed) ? typed : /\/users\/(\d+)(?:[/?#.]|$)/.exec(typed)?.[1]
+
+    return id && Number(id) > 0 ? String(Number(id)) : ''
+  },
+  sign: (agent, value) => `${agent}; user #${value}`,
+}
+
+const ZEROCHAN_ACCOUNT: Account = {
+  setting: 'TTHEME_FIND_ZEROCHAN_USER',
+  label: 'Zerochan name',
+  about: 'Your zerochan username, which zerochan asks every request to carry',
+  wants: 'your username',
+  field: 'Username',
+  unread: 'Not a username zerochan takes',
+  ask: 'zerochan asks every request to carry your username. Log in and type the name you log in with.',
+  profile: (origin) => `${origin}/login`,
+  read: (raw) => {
+    const typed = (raw ?? '').trim()
+
+    return /^[\x21-\x7e](?:[\x20-\x7e]{0,62}[\x21-\x7e])?$/.test(typed) ? typed : ''
+  },
+  sign: (agent, value) => `${agent} - ${value}`,
+}
+
+export function accountOf(site: Site): string {
+  return site.account ? site.account.read(setting(site.account.setting)) : ''
+}
+
+export function wantedAccount(error: unknown): string | undefined {
+  const account = error instanceof Error ? (error as { account?: unknown }).account : undefined
+
+  return typeof account === 'string' ? account : undefined
+}
+
+export function agentFor(site: Site): string {
+  const value = accountOf(site)
+
+  return site.account && value ? site.account.sign(AGENT, value) : AGENT
+}
+
 const HOSTS = hostMap(setting('TTHEME_FIND_HOSTS'))
 const CUTOUTS = cutoutMap(setting('TTHEME_FIND_CUTOUTS'))
 
@@ -98,6 +162,7 @@ export interface Site {
   vouched: boolean
   scored: boolean
   ansi: number
+  account?: Account
   missing?: number
   ratings: Record<Rating, Set<string>>
   rate(levels: readonly Rating[]): string
@@ -406,6 +471,7 @@ interface Spec {
   cutouts: string[]
   vouched: boolean
   ansi: number
+  account?: Account
 }
 
 export function cutoutMap(spec: string | undefined): Map<string, string[]> {
@@ -686,6 +752,7 @@ export const SITES: Site[] = [
     cutouts: ['transparent_background'],
     vouched: false,
     ansi: 2,
+    account: DANBOORU_ACCOUNT,
   }),
   moebooru({
     key: 'konachan',
@@ -710,6 +777,7 @@ export const SITES: Site[] = [
     cutouts: ['transparent_background'],
     vouched: false,
     ansi: 3,
+    account: ZEROCHAN_ACCOUNT,
   }),
 ]
 

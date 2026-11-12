@@ -97,6 +97,7 @@ function shelf() {
     select: () => {},
     enter: () => {},
     tell: () => {},
+    asks: () => {},
   })
 
   return { at, view, boards, planned, checks }

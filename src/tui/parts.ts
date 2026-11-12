@@ -135,6 +135,14 @@ export function boxTitle(
   return `${edge(line.slice(0, 2).join(''))}${paint(title)}${edge(line.slice(end).join(''))}`
 }
 
+export function framed(p: Paint, width: number, text: string, lit = false): string[] {
+  const frame = (part: string) => (lit ? p.accent(part) : p.dim(part))
+  const edge = (left: string, right: string) => frame(`${left}${'─'.repeat(width - 2)}${right}`)
+  const side = frame('│')
+
+  return [edge('╭', '╮'), `${side} ${fit(text, width - 4)} ${side}`, edge('╰', '╯')]
+}
+
 export function boxed(p: Paint, content: string, width: number): string {
   return `${p.dim('│')}${fit(content, width - 2)}${p.dim('│')}`
 }

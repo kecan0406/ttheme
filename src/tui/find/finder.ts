@@ -26,6 +26,7 @@ import { Renderer } from '../../pictures/render.ts'
 import { blurOf, coloringFor, settingDefault, stickerOf } from '../../store/wiring.ts'
 import { CLEAR } from '../../terminals/terminal.ts'
 import type { Tone as NoticeTone } from '../bar.ts'
+import { edit } from '../field.ts'
 import { Help } from '../help.ts'
 import { CELL_QUERY, CellProbe, type Inbound, lineStep, type Mouse } from '../keys.ts'
 import { FOCUS, HIDE_CURSOR, NO_WRAP, PASTES, pointing, type Terminal, within } from '../terminal.ts'
@@ -37,6 +38,7 @@ import { Kept } from './kept.ts'
 import { Own } from './own.ts'
 import { Paint } from './paint.ts'
 import {
+  type AccountAsk,
   FIND_MARKS,
   type FinderView,
   type FindSpot,
@@ -60,6 +62,16 @@ import { Trial } from './trial.ts'
 const ALL_ANSI = 4
 const FEATURES = '\x1b[?5522$p\x1b]72;t=q\x1b\\\x1b[c'
 const NOTICE = 4000
+const ACCOUNT_MOST = 200
+
+function stepOf(key: string): number {
+  if (key === 'down' || key === 'tab') {
+    return 1
+  }
+
+  return key === 'up' || key === 'shift-tab' ? -1 : 0
+}
+
 const TOP_RIGHT = POSITIONS.indexOf('top-right') + 1
 
 export interface FindIO {
@@ -84,6 +96,7 @@ export class Finder {
   private noticeTimer?: NodeJS.Timeout
   private peekTimer?: NodeJS.Timeout
   private readonly slowed = new Set<string>()
+  private readonly declined = new Set<string>()
   private done?: (code: number) => void
   private readonly scratch = mkdtempSync(join(tmpdir(), 'ttheme-find-'))
 
@@ -134,6 +147,7 @@ export class Finder {
         multi: setting.multi && { none: setting.multi.none },
         about: setting.about,
         entry: setting.entry,
+        ...(setting.read ? { read: setting.read } : {}),
         advanced: setting.advanced,
         cursor: 0,
       })),
@@ -260,6 +274,7 @@ export class Finder {
       select: () => this.trial.select(),
       enter: () => this.trial.enter(),
       tell: (notice) => this.tell(notice),
+      asks: (account) => this.ask(account),
     })
     this.trial = new Trial({
       view: this.whole,
@@ -325,6 +340,7 @@ export class Finder {
       },
       unsave: () => this.installing.unsave(),
       tell: (notice) => this.tell(notice),
+      fill: (said) => this.fillAccount(said),
     })
   }
 
@@ -578,6 +594,12 @@ export class Finder {
       return
     }
 
+    if (layer.on === 'account') {
+      this.accountKey(layer.account, key)
+
+      return
+    }
+
     if (layer.on === 'help') {
       const answer = layer.help.key(key)
 
@@ -649,6 +671,25 @@ export class Finder {
 
     if (layer.on === 'help') {
       this.helpPoint(layer.help, spot, hit, event)
+
+      return
+    }
+
+    if (layer.on === 'account') {
+      if (event.action !== 'release' || !hit?.inside) {
+        return
+      }
+
+      if (spot?.kind === 'account') {
+        if (spot.act === 'save') {
+          this.saveAccount(layer.account)
+        } else {
+          layer.account.focus = 'field'
+          this.paint.draw()
+        }
+      } else if (spot?.kind === 'key' || spot?.kind === 'link') {
+        this.released(layer, spot, event)
+      }
 
       return
     }
@@ -891,7 +932,7 @@ export class Finder {
     }
 
     if (key === 's' || key === 'a') {
-      this.settings.open(key === 'a')
+      this.settings.open(key === 'a', this.boards.wanted())
       this.paint.draw()
 
       return
@@ -921,6 +962,114 @@ export class Finder {
     void this.tags.relate(text)
     this.boards.clear()
     await this.boards.search()
+  }
+
+  private ask(setting: string): void {
+    const site = SITES.find((one) => one.account?.setting === setting)
+    const account = site?.account
+
+    if (!site || !account || this.declined.has(site.key) || this.view.account) {
+      return
+    }
+
+    this.view.account = {
+      site: site.name,
+      siteAnsi: site.ansi,
+      title: `${site.name} wants ${account.wants}`,
+      about: account.ask,
+      field: account.field,
+      link: account.profile(site.origin),
+      unread: account.unread,
+      typed: '',
+      read: '',
+      focus: 'field',
+    }
+    this.paint.draw()
+  }
+
+  private typeAccount(typed: string): void {
+    const ask = this.view.account
+    const account = SITES.find((site) => site.name === ask?.site)?.account
+
+    if (ask && account) {
+      ask.typed = typed
+      ask.read = account.read(typed)
+      ask.focus = 'field'
+      ask.note = undefined
+      this.paint.draw()
+    }
+  }
+
+  private accountKey(ask: AccountAsk, key: string): void {
+    if (key === 'esc') {
+      const site = SITES.find((one) => one.name === ask.site)
+
+      if (site) {
+        this.declined.add(site.key)
+      }
+
+      this.view.account = undefined
+      this.paint.draw()
+
+      return
+    }
+
+    if (key === 'ctrl-o') {
+      this.visit(ask.link)
+
+      return
+    }
+
+    if (key === 'ctrl-v' || key === 'alt-v') {
+      void this.own.fromClipboard()
+
+      return
+    }
+
+    if (key === 'enter') {
+      this.saveAccount(ask)
+
+      return
+    }
+
+    const step = stepOf(key)
+
+    if (step !== 0) {
+      ask.focus = ask.read && ask.focus === 'field' ? 'save' : 'field'
+      this.paint.draw()
+
+      return
+    }
+
+    const next = edit(ask.typed, key, (ch) => /^[\x20-\x7e]$/.test(ch) && ask.typed.length < ACCOUNT_MOST)
+
+    if (next !== undefined) {
+      this.typeAccount(next)
+    }
+  }
+
+  private fillAccount(said: { text: string } | { note: string }): void {
+    const ask = this.view.account
+
+    if (!ask) {
+      return
+    }
+
+    if ('text' in said) {
+      this.typeAccount(`${ask.typed}${said.text.replace(/\s+/g, ' ').trim()}`)
+    } else {
+      ask.note = said.note
+      this.paint.draw()
+    }
+  }
+
+  private saveAccount(ask: AccountAsk): void {
+    const account = SITES.find((one) => one.name === ask.site)?.account
+
+    if (ask.read && account) {
+      this.view.account = undefined
+      this.settings.put(account.setting, ask.read)
+    }
   }
 
   private openPage(post: boolean): void {

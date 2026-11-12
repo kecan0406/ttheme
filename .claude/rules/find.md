@@ -31,7 +31,7 @@ paths:
 - Nothing draws once the session is aborted, and no timer outlives it.
 - Every link is marked `⧉ ` in the color of the site it opens.
 - A post is marked as a link only where the terminal opens OSC 8 links (`linkable`), and in the CLI only on a TTY.
-- A paste while find asks a question, waits to close or shows a panel is dropped.
+- A paste while find asks a question, waits to close or shows a panel is dropped; the account dialog's field takes one.
 
 ## Pictures
 

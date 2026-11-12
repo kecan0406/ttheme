@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- find's danbooru tab works again once it has your danbooru user number. Since late October danbooru answers only requests that carry one, and the tab said `danbooru is behind a Cloudflare challenge`. Now a dialog asks for it the first time the tab is refused: it links your profile, takes the number or the profile's address typed or pasted (`⌘V`, or `ctrl+v` with the focus anywhere in it), and searches again once you save. `esc` closes it for the session, and `a` then opens the filters at **Danbooru id** (`TTHEME_FIND_DANBOORU_USER`).
+- **Zerochan name** (`TTHEME_FIND_ZEROCHAN_USER`) sends your zerochan username with find's requests there, as zerochan asks. Each site gets only its own, and `ttheme info` shows that one is set, never what it is.
+
 ## 1.2.110
 
 - In Preview's editor, a background that could not be saved now says `Could not save the background of` and the palette's name. Before, the bar said `Saved` and the change was gone.

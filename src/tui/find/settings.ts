@@ -134,6 +134,21 @@ export const SETTINGS: Setting[] = [
     choices: ['off', 'on'],
     advanced: true,
   },
+  ...SITES.flatMap((site) =>
+    site.account
+      ? [
+          {
+            name: site.account.setting,
+            label: site.account.label,
+            about: site.account.about,
+            choices: [],
+            entry: 'text' as const,
+            read: site.account.read,
+            advanced: true,
+          },
+        ]
+      : [],
+  ),
 ]
 
 export function initial(setting: Setting, raw: string | undefined): string {
@@ -145,11 +160,23 @@ export function initial(setting: Setting, raw: string | undefined): string {
     return /^\d+$/.test(raw ?? '') && Number(raw) > 0 ? String(Number(raw)) : 'off'
   }
 
+  if (setting.read) {
+    return setting.read(raw)
+  }
+
   if (setting.entry === 'text') {
     return tagList(raw).join(' ')
   }
 
   return setting.choices.find((choice) => choice === raw) ?? (setting.choices[0] as string)
+}
+
+function committed(row: Row, typed: string): string {
+  if (row.entry === 'number') {
+    return Number(typed) > 0 ? String(Number(typed)) : 'off'
+  }
+
+  return row.read ? row.read(typed) : tagList(typed).join(' ')
 }
 
 export interface Terms {
@@ -233,8 +260,10 @@ export class Settings {
     }
   }
 
-  open(advanced: boolean): void {
-    this.view.panel = { at: pageOf(this.view.settings, advanced)[0] ?? 0, advanced }
+  open(advanced: boolean, name?: string): void {
+    const named = SETTINGS.findIndex((setting) => setting.name === name)
+    const at = named >= 0 && Boolean(SETTINGS[named]?.advanced) === advanced ? named : undefined
+    this.view.panel = { at: at ?? pageOf(this.view.settings, advanced)[0] ?? 0, advanced }
     this.recount()
   }
 
@@ -398,8 +427,7 @@ export class Settings {
     }
 
     if (key === 'enter' || key === 'up' || key === 'down') {
-      row.value =
-        row.entry === 'number' ? (Number(typed) > 0 ? String(Number(typed)) : 'off') : tagList(typed).join(' ')
+      row.value = committed(row, typed)
       panel.typing = undefined
       this.recount()
 
@@ -495,6 +523,15 @@ export class Settings {
     if (this.counting === asked && this.view.panel) {
       this.view.panel.counts = counts
       this.paint.draw()
+    }
+  }
+
+  put(name: string, value: string): void {
+    const row = this.view.settings[SETTINGS.findIndex((setting) => setting.name === name)]
+
+    if (row) {
+      row.value = value
+      this.adopt()
     }
   }
 

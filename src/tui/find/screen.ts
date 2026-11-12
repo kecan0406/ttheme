@@ -27,11 +27,12 @@ import { linked } from '../ansi.ts'
 import type { Tone } from '../bar.ts'
 import { type Help, type HelpSpot, keysBox, keysWidth, type Legend, overlay, type Topic } from '../help.ts'
 import { cap, capped } from '../keycaps.ts'
-import { moreOf, SEP } from '../parts.ts'
+import { boxEdge, boxed, boxTitle, buttonOf, framed, moreOf, SEP } from '../parts.ts'
 import { megabytes, progress } from '../pending.ts'
 import {
   ansiBg,
   ansiFg,
+  FG_RESET,
   LOOKS,
   type Look,
   MARKS,
@@ -42,7 +43,7 @@ import {
   slotBg,
   slotFg,
 } from '../style.ts'
-import { cover, hintKey, type KeySpot, type Zone, zone } from '../zones.ts'
+import { cover, hintKey, type KeySpot, unzoned, type Zone, zone } from '../zones.ts'
 
 export type Preset = 'cutouts' | 'all'
 
@@ -59,6 +60,7 @@ export interface Setting {
   choices: string[]
   multi?: { read(raw: string | undefined): string[]; none?: string }
   entry?: Entry
+  read?: (raw: string | undefined) => string
   advanced?: boolean
 }
 
@@ -70,6 +72,7 @@ export interface Row {
   default: string
   multi?: { none?: string }
   entry?: Entry
+  read?: (raw: string | undefined) => string
   advanced?: boolean
   cursor: number
 }
@@ -223,7 +226,22 @@ export interface Notice {
   tone: Tone
 }
 
+export interface AccountAsk {
+  site: string
+  siteAnsi: number
+  title: string
+  about: string
+  field: string
+  link: string
+  unread: string
+  typed: string
+  read: string
+  focus: 'field' | 'save'
+  note?: string
+}
+
 export interface FinderView {
+  account?: AccountAsk
   palette: string
   site: string
   siteAnsi: number
@@ -252,14 +270,19 @@ export type Owns<Slice> = Readonly<FindView> & Slice
 
 export type Layer =
   | { on: 'closing' }
+  | { on: 'account'; account: AccountAsk }
   | { on: 'help'; help: Help }
   | { on: 'query'; query: Query }
   | { on: 'panel'; panel: Panel }
   | Mode
 
-export function layerOf(view: Pick<FindView, 'closing' | 'help' | 'query' | 'panel' | 'mode'>): Layer {
+export function layerOf(view: Pick<FindView, 'closing' | 'account' | 'help' | 'query' | 'panel' | 'mode'>): Layer {
   if (view.closing) {
     return { on: 'closing' }
+  }
+
+  if (view.account) {
+    return { on: 'account', account: view.account }
   }
 
   if (view.help) {
@@ -307,6 +330,7 @@ export type FindSpot =
   | KeySpot
   | HelpSpot
   | { kind: 'link'; url: string }
+  | { kind: 'account'; act: 'field' | 'save' }
   | { kind: 'tile'; index: number }
   | { kind: 'query' }
   | { kind: 'site'; tab: number }
@@ -536,6 +560,8 @@ export function findHovers(view: FindView, { kind }: FindSpot): boolean {
   }
 
   switch (layer.on) {
+    case 'account':
+      return kind === 'account'
     case 'query':
       return kind === 'suggest'
     case 'panel':
@@ -2388,6 +2414,53 @@ function panel(lines: Line[], cols: number, rows: number, view: Seen, shown: Pan
   foot(lines[rows - 1] as Line, cols, { keys, right })
 }
 
+function accountDialog(ask: AccountAsk, cols: number): string[] {
+  const p = painter(true)
+  const w = Math.min(62, cols - 4)
+  const row = (content: string) => boxed(p, content, w)
+  const room = w - 6
+  const ink = slotFg(ask.siteAnsi)
+  const shown = clip(ask.link.replace(/^https?:\/\//, ''), room - 2)
+
+  const link = zone(
+    { kind: 'link', url: ask.link } satisfies FindSpot,
+    `${ink}${MARKS.link} ${linked(shown, ask.link)}${FG_RESET}`,
+    LOOKS.bold,
+  )
+
+  const told = ask.note
+    ? p.warn(clip(ask.note, room))
+    : ask.read
+      ? p.dim(`→ ${ask.read}`)
+      : ask.typed.trim()
+        ? p.warn(ask.unread)
+        : ''
+
+  const typing = ask.focus === 'field'
+  const empty = typing ? '_' : p.dim(ask.field)
+  const box = framed(p, w - 6, ask.typed ? `${ask.typed}${typing ? '_' : ''}` : empty, typing)
+  const field = box.map((line) => zone({ kind: 'account', act: 'field' } satisfies FindSpot, line, LOOKS.soft))
+  const saveState = ask.read ? (ask.focus === 'save' ? 'focus' : 'idle') : 'off'
+  const saveChip = buttonOf(p, 'Save', saveState)
+  const save = ask.read ? zone({ kind: 'account', act: 'save' } satisfies FindSpot, saveChip, LOOKS.flat) : saveChip
+
+  return [
+    boxTitle(w, ` ${ask.title} `, p.dim, p.bold),
+    row(''),
+    ...wrapped(ask.about, room).map((line) => row(`  ${line}`)),
+    row(''),
+    row(`  ${link}`),
+    row(''),
+    row(`  ${ask.field}`),
+    ...field.map((line) => row(`  ${line}`)),
+    row(`  ${told}`),
+    row(''),
+    row(`${' '.repeat(Math.max(0, Math.floor((w - 2 - columns(save)) / 2)))}${save}`),
+    row(''),
+    p.dim(boxEdge(w, 'bottom')),
+  ]
+}
+
 function helpOver(lines: Line[], cols: number, rows: number, help: Help) {
   const { badge, keys, right } = help.bar()
   foot(lines[rows - 1] as Line, cols, { badge, keys, ...(right ? { right } : {}) })
@@ -2471,6 +2544,45 @@ export function renderFind(told: FindView, cols: number, rows: number): Frame {
     suggestions(lines, layer.query.suggest, accent)
 
     return { lines: lines.map((l) => l.render()), images: [], zones: zonesOf(lines), loader: false, tick: false }
+  }
+
+  if (layer.on === 'account') {
+    const dialog = accountDialog(layer.account, cols)
+    const w = Math.max(...dialog.map((line) => columns(unzoned(line))))
+    const x = Math.floor((cols - w) / 2)
+    const y = Math.max(0, Math.min(Math.max(1, Math.floor((rows - dialog.length) / 2)), rows - 1 - dialog.length))
+    lines[rows - 2] = new Line(cols)
+    lines[rows - 1] = new Line(cols)
+    foot(lines[rows - 1] as Line, cols, {
+      badge: 'PICTURE SEARCH',
+      keys: [
+        ['↑↓', 'move'],
+        ['enter', 'save'],
+        ['ctrl+v', 'paste'],
+        ['ctrl+o', 'profile'],
+      ],
+      right: ['esc', 'close'],
+    })
+
+    return {
+      lines: overlay(
+        lines.map((l) => l.render()),
+        dialog,
+        cols,
+        rows,
+        1,
+      ),
+      images: images.filter(
+        (image) =>
+          image.col + image.cols <= x ||
+          image.col >= x + w ||
+          image.row + image.rows <= y ||
+          image.row >= y + dialog.length,
+      ),
+      zones: [],
+      loader: waiting,
+      tick: view.reads.beat,
+    }
   }
 
   if (layer.on === 'help' || layer.on === 'panel') {

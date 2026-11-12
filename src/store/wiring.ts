@@ -173,10 +173,26 @@ export const CONFIG_SETTINGS = {
     doc: '# send a find site somewhere else, as key=https://host pairs — e.g. "danbooru=https://danbooru.donmai.us" (default none)',
     default: '',
   },
+  TTHEME_FIND_DANBOORU_USER: {
+    doc: "# your danbooru user number, sent with find's requests there: danbooru answers only requests that carry one (default none)",
+    default: '',
+    private: true,
+  },
+  TTHEME_FIND_ZEROCHAN_USER: {
+    doc: "# your zerochan username, sent with find's requests there as zerochan asks (default none)",
+    default: '',
+    private: true,
+  },
 } as const
 
 export function settingDefault(name: string): string | undefined {
   return CONFIG_SETTINGS[name as keyof typeof CONFIG_SETTINGS]?.default
+}
+
+export function settingPrivate(name: string): boolean {
+  const setting = CONFIG_SETTINGS[name as keyof typeof CONFIG_SETTINGS]
+
+  return setting !== undefined && 'private' in setting && setting.private
 }
 
 const PLAIN_SETTING = /^[\w ,.:@%+/-]*$/

@@ -835,9 +835,9 @@ test('a site behind a Cloudflare challenge is spared what find borrows from it, 
   const { signal } = new AbortController()
 
   try {
-    await assert.rejects(fetchPosts(dan, 'x', 0, signal), /behind a Cloudflare challenge/)
-    await assert.rejects(fetchLent(['0'.repeat(32)], signal, true), /behind a Cloudflare challenge/)
-    await assert.rejects(fetchPosts(dan, 'x', 0, signal), /behind a Cloudflare challenge/)
+    await assert.rejects(fetchPosts(dan, 'x', 0, signal), /danbooru wants your user id/)
+    await assert.rejects(fetchLent(['0'.repeat(32)], signal, true), /danbooru wants your user id/)
+    await assert.rejects(fetchPosts(dan, 'x', 0, signal), /danbooru wants your user id/)
     assert.equal(asked.length, 2)
     assert.ok(asked.every((url) => !url.includes('md5')))
   } finally {

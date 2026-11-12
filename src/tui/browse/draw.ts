@@ -61,13 +61,6 @@ export function lit(focused: boolean, text: string): string {
   return `${focused ? `${MARKS.gutter} ` : '  '} ${text}`
 }
 
-export function framed(p: Paint, width: number, text: string): string[] {
-  const edge = (left: string, right: string) => p.dim(`${left}${'─'.repeat(width - 2)}${right}`)
-  const side = p.dim('│')
-
-  return [edge('╭', '╮'), `${side} ${fit(text, width - 4)} ${side}`, edge('╰', '╯')]
-}
-
 export function edge(
   p: Paint,
   width: number,

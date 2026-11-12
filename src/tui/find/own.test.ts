@@ -33,6 +33,7 @@ function desk(mode: Mode, panel?: Panel) {
     unhelp: () => did.push('unhelp'),
     unsave: () => {},
     tell: () => {},
+    fill: () => {},
   })
 
   return { own, did }
