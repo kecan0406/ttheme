@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.110
+
 - In Preview's editor, a background that could not be saved now says `Could not save the background of` and the palette's name. Before, the bar said `Saved` and the change was gone.
 - A palette edited or reset from Preview inside a pinned directory now leaves with the directory: `cd` out puts back what the tab showed before the pin. Before, the pin's palette stayed on.
 - In Preview's editor, the wheel no longer moves the rows behind the apply question, any key but `enter` drops an armed `Reset? enter again`, and a button let go outside the window no longer stops rows from lighting under the pointer until the next press.
