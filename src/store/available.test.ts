@@ -7,7 +7,6 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { shelfOf, type Work } from '../core/commons.ts'
 import { paletteToml } from '../core/draft.ts'
-import { REFRESH_AFTER } from '../core/freshness.ts'
 import { type PaletteEntry, parseBuiltin } from '../core/manifest.ts'
 import { grow, SEEDS } from '../core/seeds.ts'
 import { setText } from '../core/sets.ts'
@@ -531,7 +530,7 @@ test('the list of works is fetched as a whole, and says whether it changed', asy
   }
 })
 
-test('a list of works that fails or does not read keeps the copy as old as it was, and is not asked for again that day', async () => {
+test('a list of works that fails or does not read keeps the copy as old as it was, and is asked for again after an hour like a marketplace', async () => {
   const at = home()
   const copy = join(at, 'ttheme', 'commons.json')
   writeFileSync(copy, JSON.stringify({ works: [TIDEWATER] }))
@@ -545,9 +544,7 @@ test('a list of works that fails or does not read keeps the copy as old as it wa
     assert.equal(commonsDue(at), false)
     const failed = readTries()[WORKS_LIST]
     assert.match(failed?.error ?? '', /not valid JSON/)
-    const tried = failed?.at ?? 0
-    assert.equal(freshnessAt(copy, WORKS_LIST, readTries(), tried + REFRESH_AFTER - 1, REFRESH_AFTER).due, false)
-    assert.equal(freshnessAt(copy, WORKS_LIST, readTries(), tried + REFRESH_AFTER, REFRESH_AFTER).due, true)
+    assert.equal(freshnessAt(copy, WORKS_LIST, readTries(), (failed?.at ?? 0) + 60 * 60 * 1000).due, true)
   } finally {
     done()
   }

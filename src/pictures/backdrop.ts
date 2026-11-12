@@ -9,6 +9,7 @@ import {
   readSync,
   renameSync,
   rmSync,
+  statSync,
 } from 'node:fs'
 import { basename, join } from 'node:path'
 import { artworkOf, creditLine, linksOf, pagesOf } from '../core/artists.ts'
@@ -804,8 +805,30 @@ export function freshenConfs(configHome: string): void {
   }
 }
 
+const STRAY_AFTER = 24 * 60 * 60 * 1000
+
+function strays(dir: string, name: string, rack: Rack | undefined, now: number): string[] {
+  const held = new Set(rack?.pictures.map((picture) => picture.stem))
+  const head = `${fileStem(name)}.`
+
+  return listing(dir).filter((file) => {
+    const stem = file.slice(0, head.length + 8)
+
+    if (!file.startsWith(head) || !/^[0-9a-f]{8}[.@]/.test(file.slice(head.length)) || held.has(stem)) {
+      return false
+    }
+
+    try {
+      return now - statSync(join(dir, file)).mtimeMs >= STRAY_AFTER
+    } catch {
+      return false
+    }
+  })
+}
+
 function save(dir: string, store: Store, names: string[]): void {
   writeAtomic(storePath(dir), `${JSON.stringify(store, null, 2)}\n`)
+  const now = Date.now()
 
   for (const name of names) {
     const rack = rackIn(store, name)
@@ -815,6 +838,10 @@ function save(dir: string, store: Store, names: string[]): void {
       writeAtomic(conf, confText(dir, rack))
     } else {
       rmSync(conf, { force: true })
+    }
+
+    for (const file of strays(dir, name, rack, now)) {
+      rmSync(join(dir, file), { force: true })
     }
   }
 }

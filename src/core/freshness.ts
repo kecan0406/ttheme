@@ -6,16 +6,11 @@ export type Freshness =
   | { last: 'fetched'; at: number; due: boolean }
   | { last: 'failed'; at: number; fetched: number | undefined; due: boolean }
 
-export function freshnessOf(
-  fetched: number | undefined,
-  failed: number | undefined,
-  now: number,
-  retry = RETRY_AFTER,
-): Freshness {
+export function freshnessOf(fetched: number | undefined, failed: number | undefined, now: number): Freshness {
   const old = fetched === undefined || now - fetched >= REFRESH_AFTER
 
   if (failed !== undefined && (fetched === undefined || failed > fetched)) {
-    return { last: 'failed', at: failed, fetched, due: old && now - failed >= retry }
+    return { last: 'failed', at: failed, fetched, due: old && now - failed >= RETRY_AFTER }
   }
 
   return fetched === undefined ? { last: 'never', due: true } : { last: 'fetched', at: fetched, due: old }

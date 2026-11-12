@@ -12,7 +12,6 @@ import {
   wordsOf,
 } from '../core/commons.ts'
 import { boundOf, GATE_RULES, measure, missedRules, shownOf } from '../core/contrast.ts'
-import { REFRESH_AFTER } from '../core/freshness.ts'
 import {
   type Bundle,
   entryProblem,
@@ -36,7 +35,6 @@ import {
   type MarketplaceInfo,
   marketplaceSources,
   readMarketplaceInfo,
-  readTries,
   remoteOwner,
   shownSource,
   WORKS_LIST,
@@ -81,10 +79,7 @@ export function readCommons(configHome: string): Commons {
 }
 
 export function commonsDue(configHome: string): boolean {
-  return (
-    process.env.TTHEME_NAME_LOOKUP !== 'off' &&
-    freshnessAt(commonsPath(configHome), WORKS_LIST, readTries(), Date.now(), REFRESH_AFTER).due
-  )
+  return process.env.TTHEME_NAME_LOOKUP !== 'off' && freshnessAt(commonsPath(configHome), WORKS_LIST).due
 }
 
 export async function refreshCommons(configHome: string, timeout?: number): Promise<boolean> {

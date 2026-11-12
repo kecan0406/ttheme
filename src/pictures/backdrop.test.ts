@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -1072,6 +1081,40 @@ test('a damaged images.json moved away comes back from the confs: every picture 
   assert.deepEqual(
     after['kai@dust/pip']?.pictures.map((picture) => standingOf(picture).drawn),
     ['tinted', 'original'],
+  )
+})
+
+test('a drawing no picture names is taken away a day later, when its palette is next saved, never while it may still be on its way in', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  install(configHome, 1)
+  install(configHome, 2)
+  const old = new Date(Date.now() - 25 * 60 * 60 * 1000)
+
+  for (const file of ['tamsin.0a1b2c3d.png', 'tamsin.0a1b2c3d@fill-40.png', 'tamsin.0a1b2c3d.tune.conf']) {
+    writeFileSync(join(dir, file), 'stray')
+    utimesSync(join(dir, file), old, old)
+  }
+
+  writeFileSync(join(dir, 'tamsin.4e5f6a7b.png'), 'on its way in')
+  writeFileSync(join(dir, 'tamsina.0a1b2c3d.png'), 'another palette')
+  utimesSync(join(dir, 'tamsina.0a1b2c3d.png'), old, old)
+  const held = readdirSync(dir).filter((file) => !file.includes('0a1b2c3d') || file.startsWith('tamsina.'))
+
+  for (const file of held) {
+    utimesSync(join(dir, file), old, old)
+  }
+
+  utimesSync(join(dir, 'tamsin.4e5f6a7b.png'), new Date(), new Date())
+  showImage(configHome, 'tamsin', 'safebooru_1')
+  assert.deepEqual(
+    readdirSync(dir).filter((file) => file.includes('0a1b2c3d')),
+    ['tamsina.0a1b2c3d.png'],
+  )
+  assert.ok(existsSync(join(dir, 'tamsin.4e5f6a7b.png')))
+  assert.deepEqual(
+    held.filter((file) => !existsSync(join(dir, file))),
+    [],
   )
 })
 

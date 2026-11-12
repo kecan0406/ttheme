@@ -34,7 +34,8 @@
 - Setting ttheme up again with a terminal or an agent skill left out now takes ttheme out of that terminal's config, gives it its own default profile back and removes the skill, and the plan lists each step. Before, they stayed wired.
 - `ttheme add` on a palette you already have fetches the pictures it lists that could not be fetched before.
 - `ttheme on` and `ttheme off` typed when ttheme is already on or off now put the terminal's default profile right, which finishes a switch that was cut short, and removing a marketplace that held your default palette moves the default profile too.
-- A list of works that has never arrived is asked for again a day after a failure. Before, every command that checks for updates asked for it and waited.
+- The list of works is asked for again an hour after a failure, as a marketplace is. Before, a copy that failed to update waited a day, and a list that had never arrived was asked for by every command that checks for updates.
+- A drawing left behind by an install or a redraw that was cut short, one no picture names any more, is removed a day later, the next time its palette's pictures are saved. Before, nothing removed it.
 - A release check whose helper died is tried again after an hour, not a day.
 - `ttheme update` stops when the update leaves a version it did not ask for installed. Before, the old version went on to write its own files over the new one's.
 - `ttheme share` finishes a push, or the description and topic on GitHub, that failed the last time, where it used to find nothing to do.

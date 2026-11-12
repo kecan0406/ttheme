@@ -178,9 +178,8 @@ export function freshnessAt(
   key: string,
   tries: Readonly<Record<string, Tried>> = readTries(),
   now = Date.now(),
-  retry?: number,
 ): Freshness {
-  return freshnessOf(writtenAt(path), Object.hasOwn(tries, key) ? tries[key]?.at : undefined, now, retry)
+  return freshnessOf(writtenAt(path), Object.hasOwn(tries, key) ? tries[key]?.at : undefined, now)
 }
 
 export function freshness(
