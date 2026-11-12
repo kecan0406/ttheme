@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   checks:
@@ -20,10 +21,12 @@ jobs:
           persist-credentials: false
       - id: lane
         uses: ./.github/actions/lane
-      - uses: ./.github/actions/setup
+      - if: steps.lane.outputs.lane != 'checked'
+        uses: ./.github/actions/setup
         with:
           save: true
-      - env:
+      - if: steps.lane.outputs.lane != 'checked'
+        env:
           TASK: ${{ steps.lane.outputs.lane == 'site' && 'ci:site' || 'ci:checks' }}
         run: mise run "$TASK"
 
