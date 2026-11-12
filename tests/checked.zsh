@@ -22,10 +22,8 @@ listed() {
 }
 
 push() {
-  setopt extended_glob
-  local lane='(site/*|docs/*|[^/]#.md|*/AGENTS.md|.claude/rules/*.md|.agents/skills/*.md)'
   local checked="" ref sha remote base tree now log
-  local -a changed outside differ rest
+  local -a lane=(${(f)"$(<tests/lane)"}) changed outside differ rest
   [[ -r $stamp ]] && checked=$(<$stamp)
   while read -r ref sha remote base; do
     [[ $remote == refs/heads/main && -n ${sha//0} ]] || continue
@@ -46,13 +44,9 @@ push() {
       print -u2 "pre-push: refused — main has commits this push lacks: git fetch, rebase onto origin/main and push again"
       return 1
     fi
-    if [[ -n ${base//0} ]]; then
-      changed=(${(f)"$(git diff --name-only $base $sha)"})
-    else
-      changed=(${(f)"$(git ls-tree -r --name-only $sha)"})
-    fi
-    outside=(${changed:#$~lane})
-    if (( $#outside )) && [[ -n $checked ]] && differ=(${(f)"$(git diff --name-only $checked $sha 2>/dev/null)"}) && rest=(${differ:#$~lane}) && (( ! $#rest )); then
+    [[ -n ${base//0} ]] || base=$(git hash-object -t tree /dev/null)
+    outside=(${(f)"$(git diff --no-renames --name-only $base $sha -- $lane)"})
+    if (( $#outside )) && [[ -n $checked ]] && differ=(${(f)"$(git diff --no-renames --name-only $checked $sha -- $lane 2>/dev/null)"}) && (( ! $#differ )); then
       outside=()
     fi
     if (( $#outside )); then

@@ -315,12 +315,16 @@ description = "the ci workflow's commit, lint, type, unit, bundle and site check
 depends = ["commits", "lint", "check", "test", "bin:check", "site:check"]
 
 [tasks."ci:site"]
-description = "what the pre-push hook checks in place of ci when a push to main changes only site/, docs/, Markdown and the instruction files: the commit subjects, lint, site:check and the tests that read those files"
+description = "what the pre-push hook checks in place of ci, and the ci workflow in place of ci:checks, ci:shells and parity, when a push changes only what tests/lane leaves out (site/, docs/, Markdown and the instruction files): the commit subjects, lint, site:check and the tests that read those files"
 depends = ["commits", "lint", "site:check", "test ./site ./tests/agents.test.ts ./src/terminals/index.test.ts"]
 
 [tasks."ci:shells"]
 description = "the ci workflow's checks that drive a real zsh through a pty or tmux and wait on what it draws: shell:check, the TUI screens and the cost ratchet, in a job of its own so the compilers in ci:checks never starve their waits"
 depends = ["shell:check", "tui", "costs"]
+
+[tasks.log]
+description = "git log without the commits whose subject names the site or a release, nor Dependabot's bumps of site/ and their merges, so the CLI's history reads on its own; git log's options follow — `mise run log --oneline -20`"
+run = "git log --invert-grep -E --grep='^(site|release): ' --grep='^Merge pull request #[0-9]+ from [^ ]+/dependabot/bun/site/' --grep='^build\\(deps(-dev)?\\): .* in /site( |$)'"
 
 [tasks.commits]
 description = "every commit origin/main lacks has a subject of `<area>: <summary>` in 72 characters at most, an area AGENTS.md (\"Commits\") lists and no full stop"

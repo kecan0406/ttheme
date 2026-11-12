@@ -1,0 +1,6 @@
+:(exclude)site/
+:(exclude)docs/
+:(exclude,glob)*.md
+:(exclude,glob)**/AGENTS.md
+:(exclude,glob).claude/rules/**/*.md
+:(exclude,glob).agents/skills/**/*.md

@@ -1,0 +1,20 @@
+name: lane
+description: site when the change this run checks touches only what tests/lane leaves out (site/, docs/, Markdown and the instruction files), all otherwise — a pull request against its base, a push to a branch against its before, and a tag, a dispatch or a base it cannot fetch always all. Run it after actions/checkout.
+outputs:
+  lane:
+    description: site or all
+    value: ${{ steps.lane.outputs.lane }}
+runs:
+  using: composite
+  steps:
+    - id: lane
+      shell: bash
+      env:
+        BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.ref_type == 'branch' && github.event.before || '' }}
+      run: |
+        mapfile -t lane < tests/lane
+        if [ -n "${BASE//0}" ] && git fetch -q --no-tags --depth=1 origin "$BASE" && git diff --quiet --no-renames "$BASE" "$GITHUB_SHA" -- "${lane[@]}"; then
+          echo lane=site >> "$GITHUB_OUTPUT"
+        else
+          echo lane=all >> "$GITHUB_OUTPUT"
+        fi

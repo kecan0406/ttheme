@@ -18,10 +18,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - id: lane
+        uses: ./.github/actions/lane
       - uses: ./.github/actions/setup
         with:
           save: true
-      - run: mise run ci:checks
+      - env:
+          TASK: ${{ steps.lane.outputs.lane == 'site' && 'ci:site' || 'ci:checks' }}
+        run: mise run "$TASK"
 
   shells:
     if: github.ref != 'refs/heads/main' || !startsWith(github.event.head_commit.message, 'release:')
@@ -31,8 +35,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup
-      - run: mise run ci:shells
+      - id: lane
+        uses: ./.github/actions/lane
+      - if: steps.lane.outputs.lane == 'all'
+        uses: ./.github/actions/setup
+      - if: steps.lane.outputs.lane == 'all'
+        run: mise run ci:shells
 
   parity:
     if: github.ref != 'refs/heads/main' || !startsWith(github.event.head_commit.message, 'release:')
@@ -55,8 +63,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup
-      - run: mise run parity --only ${{ matrix.terminals }} --slots ${{ matrix.slots }}
+      - id: lane
+        uses: ./.github/actions/lane
+      - if: steps.lane.outputs.lane == 'all'
+        uses: ./.github/actions/setup
+      - if: steps.lane.outputs.lane == 'all'
+        run: mise run parity --only ${{ matrix.terminals }} --slots ${{ matrix.slots }}
 
   ci:
     if: always() && github.ref_type != 'tag' && (github.ref != 'refs/heads/main' || !startsWith(github.event.head_commit.message, 'release:'))

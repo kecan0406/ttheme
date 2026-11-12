@@ -33,6 +33,7 @@ function repository() {
   git('config', 'user.name', 'Tester')
   mkdirSync(join(dir, 'tests'))
   copyFileSync(join(ROOT, 'tests', 'checked.zsh'), join(dir, 'tests', 'checked.zsh'))
+  copyFileSync(join(ROOT, 'tests', 'lane'), join(dir, 'tests', 'lane'))
 
   const base = commit('base', { 'package.json': '{}\n', 'CHANGELOG.md': '# Changelog\n', 'code.ts': 'one\n' })
   commit('work', { 'code.ts': 'two\n' })
@@ -48,7 +49,7 @@ function repository() {
       input: `refs/heads/main ${head} refs/heads/main ${base}\n`,
     })
 
-  return { commit, push }
+  return { commit, git, push }
 }
 
 test('a release commit over the tree ci passed goes through the push check', () => {
@@ -67,4 +68,14 @@ test('a release commit that changes anything else is refused', () => {
   const pushed = push(commit('release: 1.0.1', { 'package.json': '{"version":"1.0.1"}\n', 'code.ts': 'three\n' }))
   assert.notEqual(pushed.status, 0)
   assert.match(pushed.stderr, /refused/)
+})
+
+test('a push that moves code under site/ is refused', () => {
+  const { git, push } = repository()
+  mkdirSync(join(git('rev-parse', '--show-toplevel'), 'site'))
+  git('mv', 'code.ts', 'site/code.ts')
+  git('commit', '-q', '-m', 'site: move the code')
+  const pushed = push(git('rev-parse', 'HEAD'))
+  assert.notEqual(pushed.status, 0)
+  assert.match(pushed.stderr, /code\.ts/)
 })
