@@ -1,11 +1,9 @@
 import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { AGENT } from '../core/booru.ts'
 import { bodyWithin, reach } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
-
-const BROWSER =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'
 
 const MOST = 32 * 1024 * 1024
 const TIMEOUT = 30_000
@@ -49,12 +47,9 @@ export async function fetchArt(ref: string): Promise<{ bytes: Uint8Array; path: 
   if (url.host === WIKIA) url.searchParams.set('format', 'original')
 
   const response = await reach(url.href, TIMEOUT, undefined, {
-    'user-agent': BROWSER,
+    'user-agent': AGENT,
     accept: 'image/png,image/jpeg,image/*;q=0.8',
     referer: refererOf(url),
-    'sec-fetch-dest': 'image',
-    'sec-fetch-mode': 'no-cors',
-    'sec-fetch-site': 'cross-site',
   })
 
   const bytes = await bodyWithin(response, MOST, `${url.host} sent a picture over ${MOST / 1024 / 1024} MB`)
