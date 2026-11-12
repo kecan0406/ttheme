@@ -10,7 +10,9 @@ function answering(listing: { name: string; type: string }[]) {
   return spyOn(globalThis, 'fetch').mockImplementation(
     Object.assign(
       async (url: string | URL | Request) =>
-        String(url).includes('api.github.com') ? Response.json(listing) : new Response('background = #000000\n'),
+        new URL(String(url)).hostname === 'api.github.com'
+          ? Response.json(listing)
+          : new Response('background = #000000\n'),
       { preconnect: () => {} },
     ),
   )
