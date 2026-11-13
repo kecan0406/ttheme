@@ -67,7 +67,7 @@ __tt_palettes_load() {
   local -a at=("")
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/start.zsh 2>/dev/null
   if [[ $1 != any ]] && ! __tt_ours; then
-    TTHEME_PALETTES_AT=$at[1]
+    TTHEME_PALETTES_AT=$at[1] TTHEME_BEHIND=1
     return 1
   fi
   unset TTHEME_PALETTE TTHEME_SUBJECT TTHEME_ALSO TTHEME_SHORT
@@ -613,7 +613,7 @@ __tt_release() {
   __tt_release_tty && __tt_active || return 0
   local -a at=("") reply
   local f=$TTHEME_STATE_DIR/release.json fd latest="" spawn=0 tell=0 hub=$1 fmt=$TTHEME_OUTDATED REPLY
-  if [[ -z $hub && -z $TTHEME_TOLD_BEHIND && -n $TTHEME_LAYER ]]; then
+  if [[ -z $hub && -n $TTHEME_BEHIND && -z $TTHEME_TOLD_BEHIND && -n $TTHEME_LAYER ]]; then
     __tt_current
     if [[ -n $REPLY && $REPLY != $TTHEME_LAYER ]]; then
       TTHEME_TOLD_BEHIND=$REPLY fmt=$TTHEME_INSTALLED
@@ -633,7 +633,7 @@ __tt_release() {
   TTHEME_RELEASE_AT=$at[1]
   __tt_release_next $checked "$latest" $told $since
   (( EPOCHSECONDS >= checked / 1000 + period && EPOCHSECONDS >= failed / 1000 + 3600 )) && spawn=1
-  [[ -z $hub && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && __tt_release_stuck $now $told $since && tell=1
+  [[ -z $hub && -z $TTHEME_TOLD_BEHIND && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && __tt_release_stuck $now $told $since && tell=1
   (( spawn || tell )) || return 0
   zmodload -F zsh/system b:zsystem 2>/dev/null
   zmodload -F zsh/files b:zf_mkdir 2>/dev/null
@@ -644,7 +644,7 @@ __tt_release() {
   __tt_release_seen $f
   checked=$reply[1] latest=$reply[2] told=$reply[3] trying=$reply[4] failed=$reply[5] since=$reply[6]
   (( EPOCHSECONDS >= checked / 1000 + period && EPOCHSECONDS >= failed / 1000 + 3600 )) && spawn=1 checked=$now trying=$now
-  [[ -z $hub && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && __tt_release_stuck $now $told $since && tell=1 told=$now
+  [[ -z $hub && -z $TTHEME_TOLD_BEHIND && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && __tt_release_stuck $now $told $since && tell=1 told=$now
   __tt_release_next $checked "$latest" $told $since
   (( spawn || tell )) && __tt_release_put $checked "$latest" $told $trying $failed $since "$reply[7]" "$reply[8]"
   zstat -F %s.%N -A at +mtime -- $f 2>/dev/null

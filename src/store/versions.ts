@@ -1,7 +1,8 @@
-import { existsSync, mkdirSync, readdirSync, realpathSync, renameSync, rmSync, symlinkSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, realpathSync, renameSync, rmSync, statSync, symlinkSync } from 'node:fs'
 import { basename, join } from 'node:path'
 
 const RELEASE = /^\d+\.\d+\.\d+$/
+const HOUR = 60 * 60 * 1000
 
 export function versionsDir(configHome: string): string {
   return join(configHome, 'ttheme', 'versions')
@@ -61,8 +62,12 @@ export function pruneVersions(configHome: string, keep: readonly (string | undef
     return
   }
 
+  const stale = Date.now() - HOUR
+
   for (const name of readdirSync(root)) {
-    if (!name.startsWith('.') && !keep.includes(name)) {
+    const left = name.startsWith('.') && (statSync(join(root, name), { throwIfNoEntry: false })?.mtimeMs ?? 0) < stale
+
+    if (left || (!name.startsWith('.') && !keep.includes(name))) {
       rmSync(join(root, name), { recursive: true, force: true })
     }
   }

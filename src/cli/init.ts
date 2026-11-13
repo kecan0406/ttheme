@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -41,7 +41,7 @@ import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, startupPalette, worn, writeInstalled } from '../store/installed.ts'
 import { configHome as configDir } from '../store/paths.ts'
 import { marketplacesOf } from '../store/sources.ts'
-import { currentVersion, placeVersion, pointCurrent, pruneVersions, versionsDir } from '../store/versions.ts'
+import { placeVersion, pointCurrent, pruneVersions, versionsDir } from '../store/versions.ts'
 import { coloringFor, configFile, modeFor, modeSetting, upsertBlock, withSetting, zshrcBlock } from '../store/wiring.ts'
 import { tilde } from '../terminals/common.ts'
 import { WIRINGS, wirings } from '../terminals/index.ts'
@@ -306,7 +306,7 @@ function summary(state: Installed): string {
   ].join('  ')
 }
 
-function placeCode(plan: InitPlan, configHome: string, host: Host): string | undefined {
+function placeCode(plan: InitPlan, configHome: string, host: Host): void {
   placeVersion(configHome, pkg.version, (dir) => {
     for (const c of plan.code) {
       mkdirSync(dirname(join(dir, c.to)), { recursive: true })
@@ -325,13 +325,26 @@ function placeCode(plan: InitPlan, configHome: string, host: Host): string | und
   for (const name of FLAT) {
     rmSync(join(configHome, 'ttheme', name), { recursive: true, force: true })
   }
+}
 
-  return was
+function installedVersion(configHome: string): string | undefined {
+  try {
+    const out = execFileSync(process.execPath, [join(configHome, 'ttheme', 'ttheme.js'), '--version'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      env: { ...process.env, TTHEME_AUTO_UPDATE: 'off' },
+    })
+
+    return /^\d+\.\d+\.\d+$/.test(out.trim()) ? out.trim() : undefined
+  } catch {
+    return undefined
+  }
 }
 
 export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired, Pointed> {
   const configHome = dirname(dirname(plan.settings.file))
-  const was = placeCode(plan, configHome, host)
+  const was = installedVersion(configHome)
+  placeCode(plan, configHome, host)
 
   if (was && was !== pkg.version) {
     noteUpdate(was)
@@ -792,7 +805,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   p.intro(`Setting up ttheme ${paint.accent(pkg.version)}`)
 
   if (existing) {
-    const from = currentVersion(configHome)
+    const from = installedVersion(configHome)
 
     const keep = accepted(
       await p.confirm({

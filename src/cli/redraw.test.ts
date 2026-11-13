@@ -4,6 +4,7 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { writeBundled } from '../../tests/bundled.ts'
 import { inMode, type Manifest, type PaletteEntry } from '../core/manifest.ts'
 import { encodeRgba, type Rgba } from '../core/png.ts'
 import { STICKERING } from '../core/sticker.ts'
@@ -23,7 +24,7 @@ import {
   type Work,
   workFor,
 } from '../pictures/backdrop.ts'
-import { readAvailable, writeBundled } from '../store/available.ts'
+import { readAvailable } from '../store/available.ts'
 import { readInstalled, writeInstalled } from '../store/installed.ts'
 import { shelfFor } from './craft.ts'
 import { moveColors } from './init.ts'

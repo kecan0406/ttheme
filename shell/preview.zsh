@@ -548,19 +548,25 @@ __tt_pv_standing() {
 
 __tt_pv_notes() {
   local -a reply a b
-  local url=$TTHEME_RELEASES
+  local url=$TTHEME_RELEASES fd
   __tt_release_seen $TTHEME_STATE_DIR/release.json
   [[ -n $reply[7] ]] || return 0
   a=(${(s:.:)reply[7]}) b=(${(s:.:)TTHEME_VERSION})
   (( a[1] == b[1] && a[2] == b[2] && b[3] - a[3] == 1 )) && url+=/tag/v$TTHEME_VERSION
-  if [[ -z $SSH_CONNECTION ]]; then
-    if [[ $OSTYPE == darwin* ]]; then
-      open $url </dev/null >/dev/null 2>&1 &!
-    else
-      xdg-open $url </dev/null >/dev/null 2>&1 &!
-    fi
+  if [[ -n $SSH_CONNECTION ]]; then
+    msg=$url msgt=300
+  elif [[ $OSTYPE == darwin* ]]; then
+    open $url </dev/null >/dev/null 2>&1 &!
+  else
+    xdg-open $url </dev/null >/dev/null 2>&1 &!
   fi
-  __tt_release_put $reply[1] "$reply[2]" $reply[3] $reply[4] $reply[5] $reply[6] "$reply[7]" $TTHEME_VERSION
+  zmodload -F zsh/system b:zsystem 2>/dev/null
+  [[ -e $TTHEME_STATE_DIR/release.lock ]] || { : >>| $TTHEME_STATE_DIR/release.lock } 2>/dev/null
+  if zsystem flock -t 1 -f fd $TTHEME_STATE_DIR/release.lock 2>/dev/null; then
+    __tt_release_seen $TTHEME_STATE_DIR/release.json
+    __tt_release_put $reply[1] "$reply[2]" $reply[3] $reply[4] $reply[5] $reply[6] "$reply[7]" $TTHEME_VERSION
+    zsystem flock -u $fd
+  fi
   __tt_pv_standing
   return 0
 }

@@ -5,6 +5,7 @@ import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { writeBundled } from '../../tests/bundled.ts'
 import { shelfOf, type Work } from '../core/commons.ts'
 import { paletteToml } from '../core/draft.ts'
 import { type PaletteEntry, parseBuiltin } from '../core/manifest.ts'
@@ -30,7 +31,6 @@ import {
   untuned,
   updatesOf,
   whyNot,
-  writeBundled,
   writeKept,
 } from './available.ts'
 import { readInstalled } from './installed.ts'

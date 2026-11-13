@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- ttheme now updates itself. A day after a new release comes out, it installs it in the background and changes nothing you set: settings, palettes, pins and pictures stay as they are. A tab that was already open keeps its version and says once `ttheme 1.2.112 is installed — new tabs run it`; `exec zsh` or a new tab runs the new one. The first `ttheme` after an update shows `alt+u notes`, which opens what changed. `TTHEME_AUTO_UPDATE=off` turns it off, and `ttheme update` still updates at once.
+- ttheme now updates itself. A day after it first sees a newer release, it installs the newest one in the background and changes nothing you set: settings, palettes, pins and pictures stay as they are. A tab that was already open keeps its version and says once `ttheme 1.2.112 is installed — new tabs run it`; `exec zsh` or a new tab runs the new one. The first `ttheme` after an update shows `alt+u notes`, which opens what changed. `TTHEME_AUTO_UPDATE=off` turns it off, and `ttheme update` still updates at once.
 - The command now lives in `~/.config/ttheme/versions/`, one folder per release, with `current` pointing at the one in use.
 - An update no longer writes the settings a release adds into `config.zsh`. Such a setting keeps its default until you add it, and the Configuration page lists every one.
 

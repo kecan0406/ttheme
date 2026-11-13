@@ -62,12 +62,6 @@ export interface Bundled {
   commons: Commons
 }
 
-export function writeBundled(configHome: string, { builtin, commons }: Bundled): void {
-  mkdirSync(dirname(builtinPath(configHome)), { recursive: true })
-  writeAtomic(builtinPath(configHome), `${JSON.stringify(builtin, null, 2)}\n`)
-  writeCommons(configHome, commons)
-}
-
 export function writeCommons(configHome: string, commons: Commons): void {
   if (commons.works.length > 0) {
     writeAtomic(commonsPath(configHome), `${JSON.stringify(commons, null, 2)}\n`)

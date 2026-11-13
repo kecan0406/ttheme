@@ -9,6 +9,7 @@ import { writeAtomic } from '../store/edits.ts'
 import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { currentVersion } from '../store/versions.ts'
+import { settingValue } from '../store/wiring.ts'
 import { colorless } from '../terminals/osc.ts'
 import {
   advise,
@@ -67,8 +68,13 @@ export function isNewer(latest: string, running: string): boolean {
   return (gap ?? 0) > 0
 }
 
-export function autoWanted(env: NodeJS.ProcessEnv = process.env): boolean {
-  return env.TTHEME_AUTO_UPDATE !== 'off' && (env.CI === undefined || env.CI === '' || env.CI === 'false')
+export function autoWanted(
+  env: NodeJS.ProcessEnv = process.env,
+  setting: () => string = () => settingValue(configHome(), 'TTHEME_AUTO_UPDATE'),
+): boolean {
+  const auto = env.TTHEME_AUTO_UPDATE ?? setting()
+
+  return auto !== 'off' && (env.CI === undefined || env.CI === '' || env.CI === 'false')
 }
 
 function seenPath(): string {
@@ -187,8 +193,9 @@ function kept(seen: Seen): Pick<Seen, 'told' | 'from' | 'noted'> {
   }
 }
 
-export function answered(seen: Seen, now: number, latest: string): Seen {
-  const since = latest === seen.latest && seen.since !== undefined ? seen.since : now
+export function answered(seen: Seen, now: number, latest: string, running: string = pkg.version): Seen {
+  const waiting = seen.since !== undefined && seen.latest !== undefined && isNewer(seen.latest, running)
+  const since = waiting && seen.since !== undefined ? seen.since : now
 
   return { checked: now, latest, since, ...kept(seen) }
 }

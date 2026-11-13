@@ -42,10 +42,15 @@ test('isNewer compares releases part by part and stays quiet about a version tha
 })
 
 test('nothing is checked in the background with TTHEME_AUTO_UPDATE off or on CI', () => {
-  assert.equal(autoWanted({}), true)
-  assert.equal(autoWanted({ CI: 'false' }), true)
-  assert.equal(autoWanted({ TTHEME_AUTO_UPDATE: 'off' }), false)
-  assert.equal(autoWanted({ CI: 'true' }), false)
+  const on = () => 'on'
+  assert.equal(autoWanted({}, on), true)
+  assert.equal(autoWanted({ CI: 'false' }, on), true)
+  assert.equal(autoWanted({ TTHEME_AUTO_UPDATE: 'off' }, on), false)
+  assert.equal(autoWanted({ CI: 'true' }, on), false)
+  assert.equal(
+    autoWanted({}, () => 'off'),
+    false,
+  )
 })
 
 test('a release check stands as under way, failed, newer, current or unknown by what its stamp holds', () => {
@@ -68,9 +73,10 @@ test('a release check stands as under way, failed, newer, current or unknown by 
 test('a newer release installs itself a day after it was first seen, and the notes link the one release it skipped to', () => {
   const day = 24 * 60 * 60 * 1000
   const now = 10 * day
-  const seen = answered({ checked: now - day, latest: '1.2.30', since: now - day }, now, '1.2.30')
+  const seen = answered({ checked: now - day, latest: '1.2.30', since: now - day }, now, '1.2.30', '1.2.29')
   assert.equal(seen.since, now - day)
-  assert.equal(answered(seen, now, '1.2.31').since, now)
+  assert.equal(answered(seen, now, '1.2.31', '1.2.29').since, now - day)
+  assert.equal(answered(seen, now, '1.2.31', '1.2.30').since, now)
   assert.equal(installDue(seen, now, '1.2.29'), '1.2.30')
   assert.equal(installDue({ ...seen, since: now - day + 1 }, now, '1.2.29'), undefined)
   assert.equal(installDue(seen, now, '1.2.30'), undefined)
