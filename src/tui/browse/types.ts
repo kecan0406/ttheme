@@ -49,6 +49,7 @@ export interface BrowseOptions {
   hub?: HubTab
   mark?: readonly Hex[]
   release?: () => ReleaseLine
+  notes?: () => string | undefined
   lookups?: boolean
   search?: string
   color?: boolean

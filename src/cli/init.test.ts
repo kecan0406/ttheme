@@ -99,6 +99,8 @@ function makeFixture(): InitPaths {
     'bin/ttheme.js.map': 'map',
     'bin/package.json': '{"type":"module"}',
     'shell/ttheme.zsh': 'ttheme layer',
+    'shell/entry.zsh': 'ttheme entry',
+    'shell/entry.js': 'ttheme cli entry',
     'shell/preview.zsh': 'preview',
     'shell/launch-tab.zsh': '#!/bin/zsh -f',
     'shell/adapters/_osc.zsh': 'osc',
@@ -134,17 +136,24 @@ test('planInit places the runtime layer and touches only .zshrc', () => {
   const paths = makeFixture()
   const plan = planInit(options({ terminals: ['ghostty', 'kitty'] }), paths)
   const tthemeDir = join(paths.configHome, 'ttheme')
-  const targets = plan.copies.map((c) => c.to)
+
+  assert.deepEqual(
+    plan.copies.map((c) => c.to),
+    [join(tthemeDir, 'ttheme.zsh'), join(tthemeDir, 'ttheme.js'), join(tthemeDir, 'launch-tab.zsh')],
+  )
 
   for (const expected of [
-    join(tthemeDir, 'ttheme.js'),
-    join(tthemeDir, 'package.json'),
-    join(tthemeDir, 'ttheme.zsh'),
-    join(tthemeDir, 'preview.zsh'),
-    join(tthemeDir, 'launch-tab.zsh'),
-    join(tthemeDir, 'adapters', '_osc.zsh'),
+    'ttheme.js',
+    'package.json',
+    'builtin.json',
+    'ttheme.zsh',
+    'preview.zsh',
+    join('adapters', '_osc.zsh'),
   ]) {
-    assert.ok(targets.includes(expected), `missing copy target ${expected}`)
+    assert.ok(
+      plan.code.some((c) => c.to === expected),
+      `missing code file ${expected}`,
+    )
   }
 
   assert.deepEqual(
@@ -354,6 +363,7 @@ test('an upgrade keeps what is installed and only replaces the layer', () => {
     readFileSync(configPath, 'utf8').replace(/^# : \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}'),
   )
   writeFileSync(join(paths.root, 'shell', 'ttheme.zsh'), 'ttheme layer, next version')
+  const settings = readFileSync(configPath, 'utf8')
   const current = installedState(paths.configHome)
   assert.ok(current)
   applyInit(planUpgrade(current, paths))
@@ -363,8 +373,11 @@ test('an upgrade keeps what is installed and only replaces the layer', () => {
     off: true,
     palettes: ['ttheme/ember', 'ttheme/juno'],
   })
-  assert.match(readFileSync(configPath, 'utf8'), /^: \$\{TTHEME_FX:=glitch\}$/m)
-  assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'ttheme.zsh'), 'utf8'), 'ttheme layer, next version')
+  assert.equal(readFileSync(configPath, 'utf8'), settings)
+  assert.equal(
+    readFileSync(join(paths.configHome, 'ttheme', 'current', 'ttheme.zsh'), 'utf8'),
+    'ttheme layer, next version',
+  )
 })
 
 test('an upgrade lets the new layer ask again whether Ghostty names the terminal in front', () => {
@@ -446,7 +459,7 @@ test('an upgrade keeps what came from marketplaces when the caches it finds are 
   const state = { terminals: ['ghostty' as const], marketplaces: ['ttheme', 'alice/pastel', dust], palettes }
   writeFileSync(join(home, 'installed.json'), JSON.stringify(state))
   sync(paths.configHome, readMarketplaces(paths.configHome), state)
-  writeFileSync(join(home, 'builtin.json'), JSON.stringify({ palettes: 'another shape' }))
+  writeFileSync(join(home, 'current', 'builtin.json'), JSON.stringify({ palettes: 'another shape' }))
   writeFileSync(
     join(home, 'marketplaces', 'alice--pastel.json'),
     JSON.stringify({ ...bundleFixture(), owner: 'alice', name: 'pastel' }),

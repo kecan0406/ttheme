@@ -204,14 +204,23 @@ ttheme update                  # ttheme itself, then every marketplace
 ttheme update alice@pastel     # ttheme itself, then one marketplace
 ```
 
-The built-in palettes change with a new ttheme release, which `ttheme update`
-installs through npx or bunx, whichever ran `init`; other marketplaces are
-fetched again. An installed palette keeps the colors it was installed with until
-you take its update: `ttheme update` names the palettes that have one, and
-Browse marks them `⇡`, where `ctrl+r` stages one for `enter` to apply. Your
-tuning stays on top. `TTHEME_AUTO_UPDATE=off` in `ttheme config` stops the daily
-release check and the refetch of a marketplace you switched to update on its
-own.
+ttheme updates itself. Once a day it asks for the newest release, and a day
+after it first sees one it installs it in the background, through npx or bunx,
+whichever ran `init`. An update replaces the command and nothing you set: your
+settings, palettes, pins and pictures stay as they are. A tab that is already
+open keeps the version it started with and says once that a newer one is
+installed; `exec zsh` or a new tab runs it, and `ttheme` in that tab asks for
+the same until then. The first `ttheme` after an update shows `alt+u notes`,
+which opens the release notes.
+
+`ttheme update` does the same at once, then fetches the other marketplaces
+again. The built-in palettes change with a new ttheme release. An installed
+palette keeps the colors it was installed with until you take its update:
+`ttheme update` names the palettes that have one, and Browse marks them `⇡`,
+where `ctrl+r` stages one for `enter` to apply. Your tuning stays on top.
+`TTHEME_AUTO_UPDATE=off` in `ttheme config` stops the daily release check, the
+background install and the refetch of a marketplace you switched to update on
+its own.
 
 ## Pictures
 

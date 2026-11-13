@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- ttheme now updates itself. A day after a new release comes out, it installs it in the background and changes nothing you set: settings, palettes, pins and pictures stay as they are. A tab that was already open keeps its version and says once `ttheme 1.2.112 is installed — new tabs run it`; `exec zsh` or a new tab runs the new one. The first `ttheme` after an update shows `alt+u notes`, which opens what changed. `TTHEME_AUTO_UPDATE=off` turns it off, and `ttheme update` still updates at once.
+- The command now lives in `~/.config/ttheme/versions/`, one folder per release, with `current` pointing at the one in use.
+- An update no longer writes the settings a release adds into `config.zsh`. Such a setting keeps its default until you add it, and the Configuration page lists every one.
+
 ## 1.2.111
 
 - find's danbooru tab works again once it has your danbooru user number. Since late October danbooru answers only requests that carry one, and the tab said `danbooru is behind a Cloudflare challenge`. Now a dialog asks for it the first time the tab is refused: it links your profile, takes the number or the profile's address typed or pasted (`⌘V`, or `ctrl+v` with the focus anywhere in it), and searches again once you save. `esc` closes it for the session, and `a` then opens the filters at **Danbooru id** (`TTHEME_FIND_DANBOORU_USER`).

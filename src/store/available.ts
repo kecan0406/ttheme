@@ -50,7 +50,7 @@ const COMMONS_URL = 'https://names.ttheme.dev/authority.json'
 const COMMONS_MOST = 8 * 1024 * 1024
 
 export function builtinPath(configHome: string): string {
-  return join(configHome, 'ttheme', 'builtin.json')
+  return join(configHome, 'ttheme', 'current', 'builtin.json')
 }
 
 export function commonsPath(configHome: string): string {
@@ -63,8 +63,12 @@ export interface Bundled {
 }
 
 export function writeBundled(configHome: string, { builtin, commons }: Bundled): void {
+  mkdirSync(dirname(builtinPath(configHome)), { recursive: true })
   writeAtomic(builtinPath(configHome), `${JSON.stringify(builtin, null, 2)}\n`)
+  writeCommons(configHome, commons)
+}
 
+export function writeCommons(configHome: string, commons: Commons): void {
   if (commons.works.length > 0) {
     writeAtomic(commonsPath(configHome), `${JSON.stringify(commons, null, 2)}\n`)
   }

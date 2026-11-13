@@ -115,7 +115,7 @@ sandboxed() {
   env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" TTHEME_AUTO_UPDATE=off TTHEME_KEYS=text "$@"
 }
 cli() {
-  sandboxed node "$tmp/.config/ttheme/ttheme.js" "$@" > /dev/null
+  sandboxed node "$tmp/.config/ttheme/current/ttheme.js" "$@" > /dev/null
 }
 layer() {
   sandboxed zsh -c 'source "$HOME/.config/ttheme/ttheme.zsh"; __tt_reload_ghostty() { :; }; '"$1"
@@ -128,7 +128,7 @@ run_init() {
   sandboxed GHOSTTY_RESOURCES_DIR=x node "$tmp/package/bin/ttheme.js" init --yes < /dev/null > /dev/null
 }
 run_init
-for f in ttheme/ttheme.js ttheme/package.json ttheme/ttheme.zsh ttheme/preview.zsh ttheme/palettes.zsh ttheme/config.zsh ttheme/adapters/_osc.zsh ttheme/ghostty.conf ghostty/config; do
+for f in ttheme/current/ttheme.js ttheme/current/package.json ttheme/current/builtin.json ttheme/ttheme.zsh ttheme/launch-tab.zsh ttheme/current/ttheme.zsh ttheme/current/preview.zsh ttheme/palettes.zsh ttheme/config.zsh ttheme/current/adapters/_osc.zsh ttheme/ghostty.conf ghostty/config; do
   [ -e "$tmp/.config/$f" ] || { echo "bin:check failed: missing $f"; exit 1; }
 done
 layer '(( ${#TTHEME_PALETTE} == 0 ))' ||
@@ -147,7 +147,7 @@ cli add ryoumen-sukuna
 grep -q '^theme = ttheme-ttheme--geto-suguru\.dark$' "$tmp/.config/ttheme/ghostty.conf" ||
   { echo "bin:check failed: an add undid the default keep saved"; exit 1; }
 printf 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' | base64 -d > "$tmp/dot.png"
-sandboxed node "$tmp/.config/ttheme/ttheme.js" palette measure "$tmp/dot.png" --preview --json | grep -q '"status": "done"' ||
+sandboxed node "$tmp/.config/ttheme/current/ttheme.js" palette measure "$tmp/dot.png" --preview --json | grep -q '"status": "done"' ||
   { echo "bin:check failed: palette measure did not read a PNG"; exit 1; }
 mkdir -p "$tmp/.cache/ttheme/schemes"
 printf 'Probe\n' > "$tmp/.cache/ttheme/schemes/.index"
@@ -160,7 +160,7 @@ printf 'Probe\n' > "$tmp/.cache/ttheme/schemes/.index"
   done
 } > "$tmp/.cache/ttheme/schemes/Probe"
 printf '{ "probe": { "slots": { "cursor": ["hair", "#ffa040"], "ansi5": ["eyes", "#c080ff"], "selection": ["coat", "#402a20"] } } }\n' > "$tmp/anchors.json"
-sandboxed node "$tmp/.config/ttheme/ttheme.js" palette make --anchors "$tmp/anchors.json" --dry-run --json | grep -q '"status": "done"' ||
+sandboxed node "$tmp/.config/ttheme/current/ttheme.js" palette make --anchors "$tmp/anchors.json" --dry-run --json | grep -q '"status": "done"' ||
   { echo "bin:check failed: palette make could not make a palette from anchors"; exit 1; }
 code=0
 cli palette make --anchors "$tmp/missing.json" --json 2> /dev/null || code=$?

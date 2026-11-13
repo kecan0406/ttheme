@@ -107,14 +107,14 @@ wire() {
   local label=$1 named
   shift
   node $ROOT/bin/ttheme.js init --yes > /dev/null
-  (( $# == 0 )) || node $SANDBOX/.config/ttheme/ttheme.js add $@ > /dev/null
+  (( $# == 0 )) || node $SANDBOX/.config/ttheme/current/ttheme.js add $@ > /dev/null
   if (( BRING )); then
     bring
     node $ROOT/bin/ttheme.js init --yes > /dev/null
   fi
   if (( PICTURED && $# )); then
     named=$(bun $ROOT/tests/picture.ts $SANDBOX/.config ${@[-1]})
-    node $SANDBOX/.config/ttheme/ttheme.js image $named tuned > /dev/null
+    node $SANDBOX/.config/ttheme/current/ttheme.js image $named tuned > /dev/null
   fi
   print -r -- "ttheme sandbox — $SANDBOX"
   print -r -- "palettes: $label"

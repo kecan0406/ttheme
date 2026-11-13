@@ -30,6 +30,8 @@ typeset -gA IDENTITY=(
 )
 trap 'stop; rm -rf $WORK' EXIT
 
+TT_VER=${${(M)${(f)"$(<$ROOT/package.json)"}:#*\"version\":*}//[^0-9.]/}
+
 home() {
   local h=$WORK/$1 tab=$2 src=${3:-$ROOT/shell}
   mkdir -p $h
@@ -39,7 +41,15 @@ home() {
   print -rl -- 'autoload -Uz compinit && compinit -u -d $HOME/.zcompdump' "PROMPT='bench> '" > $h/.zshrc
   [[ -n $tab ]] || return 0
   mkdir -p $h/.config/ttheme
-  cp -R $src/ttheme.zsh $src/preview.zsh(N) $src/adapters $ROOT/dist/shell/palettes.zsh $ROOT/dist/shell/start.zsh $h/.config/ttheme/
+  if [[ -r $src/entry.zsh ]]; then
+    mkdir -p $h/.config/ttheme/versions/$TT_VER
+    cp -R $src/ttheme.zsh $src/preview.zsh(N) $src/adapters $h/.config/ttheme/versions/$TT_VER/
+    cp $src/entry.zsh $h/.config/ttheme/ttheme.zsh
+    ln -s versions/$TT_VER $h/.config/ttheme/current
+  else
+    cp -R $src/ttheme.zsh $src/preview.zsh(N) $src/adapters $h/.config/ttheme/
+  fi
+  cp $ROOT/dist/shell/palettes.zsh $ROOT/dist/shell/start.zsh $h/.config/ttheme/
   setting $h 'typeset -ga TTHEME_TERMINALS=(konsole warp)' "typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'" 'typeset -g TTHEME_STARTUP=ttheme/izumi-konata'
   mkdir -p $h/.warp/themes $h/.config/warp-terminal $h/.local/share/warp-terminal/themes
   print -rl -- '[appearance.themes]' 'theme = "dark"' | tee $h/.warp/settings.toml > $h/.config/warp-terminal/settings.toml
@@ -54,7 +64,7 @@ home() {
 
 compiled() {
   local f
-  for f in $1/*.zsh(N) $1/adapters/*.zsh(N); do
+  for f in $1/*.zsh(N) $1/adapters/*.zsh(N) $1/current/*.zsh(N) $1/current/adapters/*.zsh(N); do
     [[ $f == */config.zsh ]] || zcompile -UR -- $f.zwc $f
   done
 }
@@ -473,7 +483,7 @@ releasing() {
   mkdir -p $h/bin $h/.state/ttheme
   print -rl -- '#!/bin/sh' "echo \"\$@\" >> $log" > $h/bin/node
   chmod +x $h/bin/node
-  print -r -- "{\"checked\":$(( EPOCHSECONDS * 1000 - 172800000 )),\"latest\":\"99.0.0\"}" > $h/.state/ttheme/release.json
+  print -r -- "{\"checked\":$(( EPOCHSECONDS * 1000 - 172800000 )),\"latest\":\"99.0.0\",\"since\":$(( EPOCHSECONDS * 1000 - 259200000 ))}" > $h/.state/ttheme/release.json
   TERMINAL=$term EXTRA=(TTHEME_AUTO_UPDATE=on PATH=$h/bin:$PATH)
   start $name || return 1
   upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$term: no prompt after the command typed ahead"; return 1 }
@@ -516,7 +526,7 @@ check() {
   print -rl -- "$WORK/paste/a ttheme/kita-ikuyo" "$WORK/paste/a/b ttheme/ayanami-rei" > $WORK/paste/.config/ttheme/pins
   pasting paste
   home back off
-  print -r -- "const { execSync } = require('node:child_process'); if (process.argv[2] === 'browse') { execSync('stty rows 10 cols 30', { stdio: 'inherit' }); process.exit(21) } process.exit(1)" > $WORK/back/.config/ttheme/ttheme.js
+  print -r -- "const { execSync } = require('node:child_process'); if (process.argv[2] === 'browse') { execSync('stty rows 10 cols 30', { stdio: 'inherit' }); process.exit(21) } process.exit(1)" > $WORK/back/.config/ttheme/current/ttheme.js
   returning back
   home ahead off
   ahead ahead

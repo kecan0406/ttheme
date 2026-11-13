@@ -64,7 +64,8 @@ fixture_home() {
   home=$(mktemp -d)
   env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home TTHEME_AUTO_UPDATE=off ZDOTDIR=$home GHOSTTY_RESOURCES_DIR=x \
     node $ROOT/bin/ttheme.js init --yes < /dev/null > /dev/null
-  cp $FIXTURE/builtin.json $FIXTURE/commons.json $home/ttheme/
+  cp $FIXTURE/builtin.json $home/ttheme/current/
+  cp $FIXTURE/commons.json $home/ttheme/
   if [[ $state == marketplace ]]; then
     cp -R $ROOT/tests/marketplace $home/shop
     env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home TTHEME_AUTO_UPDATE=off \

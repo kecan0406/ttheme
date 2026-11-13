@@ -3,8 +3,12 @@ trap "rm -rf $XDG_CONFIG_HOME" EXIT
 export HOME=$XDG_CONFIG_HOME/home TTHEME_KEYS=text
 mkdir -p $HOME
 unset TERM_PROGRAM GHOSTTY_RESOURCES_DIR KITTY_WINDOW_ID WEZTERM_PANE ALACRITTY_WINDOW_ID KONSOLE_VERSION ITERM_SESSION_ID WT_SESSION WARP_TERMINAL_SESSION_UUID XDG_STATE_HOME
-mkdir -p $XDG_CONFIG_HOME/ttheme
-cp -R shell/ttheme.zsh shell/preview.zsh shell/adapters dist/shell/palettes.zsh dist/shell/start.zsh $XDG_CONFIG_HOME/ttheme/
+tt_ver=${${(M)${(f)"$(<package.json)"}:#*\"version\":*}//[^0-9.]/}
+mkdir -p $XDG_CONFIG_HOME/ttheme/versions/$tt_ver
+cp -R shell/ttheme.zsh shell/preview.zsh shell/adapters $XDG_CONFIG_HOME/ttheme/versions/$tt_ver/
+cp dist/shell/palettes.zsh dist/shell/start.zsh $XDG_CONFIG_HOME/ttheme/
+cp shell/entry.zsh $XDG_CONFIG_HOME/ttheme/ttheme.zsh
+ln -s versions/$tt_ver $XDG_CONFIG_HOME/ttheme/current
 source $XDG_CONFIG_HOME/ttheme/ttheme.zsh
 b64d() {
   local in=$(cat)
@@ -99,7 +103,7 @@ out=$(__tt_preview hub </dev/null 2>&1) && { print -u2 "preview ran without a tt
   __tt_pv_read && [[ $key == mouse && $mact == move && -z $pvrest ]] || { print -u2 "the mouse report after an esc read as $key, leaving ${(q+)pvrest}"; exit 1 }
 ) || exit 1
 EDITOR=true ttheme config > /dev/null || { print -u2 "ttheme config broke"; exit 1 }
-source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh
+source $TTHEME_CODE/adapters/ghostty.zsh
 REPLY=; __tt_b64 26 22 29
 [[ $REPLY == GhYd ]] || { print -u2 "__tt_b64 broke on 3 bytes: $REPLY"; exit 1 }
 REPLY=; __tt_b64 26 22 29 204
@@ -195,7 +199,7 @@ __tt_bg_load wall
   rm -f $bgd/ttheme--hiiragi-kagami.png $bgd/ttheme--hiiragi-kagami.tune.conf $bgd/ttheme--hiiragi-kagami@60-center-1600x960.png $XDG_CONFIG_HOME/bake.log $XDG_CONFIG_HOME/cli.log
 ) || exit 1
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/_wired.zsh
+  source $TTHEME_CODE/adapters/_wired.zsh
   TTHEME_TMUX=0 TTHEME_GHOSTTY_EMBEDDED=1 TTHEME_GHOSTTY_SENT=0
   kill() { print -u2 "a Ghostty built into another app was sent a signal: kill $*"; exit 1 }
   pkill() { print -u2 "a Ghostty built into another app signaled every Ghostty: pkill $*"; exit 1 }
@@ -783,20 +787,24 @@ TTHEME_STARTUP=
   put "{\"checked\":$(( now - 86400000 - 5000 ))}"
   tab
   (( spawned == 2 )) || { print -u2 "a check a day old was not started: spawned=$spawned"; exit 1 }
-  put "{\"checked\":$now,\"latest\":\"1.2.30\"}"
+  put "{\"checked\":$now,\"latest\":\"1.2.30\",\"since\":$(( now - 3600000 ))}"
+  tab
+  [[ ! -s $err ]] || { print -u2 "a release known for an hour was told before the background install had its two days: $(<$err)"; exit 1 }
+  old=$(( now - 172800000 - 5000 ))
+  put "{\"checked\":$now,\"latest\":\"1.2.30\",\"since\":$old}"
   tab
   [[ $(<$err) == "ttheme 1.2.30 is out, you have 1.2.29" ]] || { print -u2 "a newer release was not told: [$(<$err)]"; exit 1 }
-  [[ $(<$stamp) == "{\"checked\":$now,\"latest\":\"1.2.30\",\"told\":"<13->"}" ]] || { print -u2 "telling did not record when: $(<$stamp)"; exit 1 }
+  [[ $(<$stamp) == "{\"checked\":$now,\"latest\":\"1.2.30\",\"told\":"<13->",\"since\":$old}" ]] || { print -u2 "telling did not record when: $(<$stamp)"; exit 1 }
   (( spawned == 2 )) || { print -u2 "telling started a check: spawned=$spawned"; exit 1 }
   tab
   [[ ! -s $err ]] || { print -u2 "a release was told twice in a day: $(<$err)"; exit 1 }
-  put "{\"checked\":$now,\"latest\":\"1.2.30\",\"told\":$(( now - 90000000 ))}"
+  put "{\"checked\":$now,\"latest\":\"1.2.30\",\"told\":$(( now - 90000000 )),\"since\":$old}"
   tab
   [[ -s $err ]] || { print -u2 "a release was not told again a day later"; exit 1 }
   sec=$EPOCHSECONDS
   while (( EPOCHSECONDS == sec )); do sleep 0.02; done
   due=$(( EPOCHSECONDS + 2 ))
-  put "{\"checked\":$(( EPOCHSECONDS * 1000 )),\"latest\":\"1.2.30\",\"told\":$(( due * 1000 - 86400000 ))}"
+  put "{\"checked\":$(( EPOCHSECONDS * 1000 )),\"latest\":\"1.2.30\",\"told\":$(( due * 1000 - 86400000 )),\"since\":$old}"
   tab
   [[ ! -s $err ]] || { print -u2 "a release was told again within a day: $(<$err)"; exit 1 }
   while (( EPOCHSECONDS < due )); do sleep 0.05; done
@@ -1057,7 +1065,7 @@ touch -t 203001010000 $TTHEME_HOME/start.zsh
 __tt_fresh
 [[ $TTHEME_STARTUP == ttheme/ayanami-rei && -n ${TTHEME_PALETTE[ttheme/hatsune-miku]} ]] || { print -u2 "a rewritten start.zsh did not reload: startup=$TTHEME_STARTUP"; exit 1 }
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/windows-terminal.zsh
+  source $TTHEME_CODE/adapters/windows-terminal.zsh
   integer asks=0 naps=0 paints=0
   __tt_active() { return 0 }
   __tt_osc_apply() { (( ++paints )); shown=${1%% *}; export TTHEME_PAINTED=1 }
@@ -1122,7 +1130,7 @@ __tt_fresh
 ) || exit 1
 (
   integer paints=0
-  source $XDG_CONFIG_HOME/ttheme/adapters/editor.zsh
+  source $TTHEME_CODE/adapters/editor.zsh
   __tt_osc_apply() { (( ++paints )) }
   __tt_dir_sync() { : }
   export TTHEME_PAINTED=1
@@ -1168,7 +1176,7 @@ __tt_fresh
 ) || exit 1
 adapter=$TTHEME_ADAPTER
 TTHEME_ITERM_SHOWN=default TTHEME_STARTUP=ttheme/hatsune-miku
-source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
+source $TTHEME_CODE/adapters/iterm2.zsh
 REPLY=; __tt_bg_shown && [[ $REPLY == ttheme/hatsune-miku ]] || { print -u2 "a tab on ttheme: default did not read the startup picture: $REPLY"; exit 1 }
 TTHEME_STARTUP=ttheme/ayanami-rei
 REPLY=; __tt_bg_shown && [[ $REPLY == ttheme/ayanami-rei ]] || { print -u2 "a tab on ttheme: default did not follow a new default: $REPLY"; exit 1 }
@@ -1243,16 +1251,16 @@ forks_of __tt_bg_dim $bgd/dim.png
 __tt_bg_dim $bgd/dim.png && [[ $bgdim[$bgd/dim.png] == "1880 1008" ]] || { print -u2 "__tt_bg_dim misread a PNG header: ${bgdim[$bgd/dim.png]}"; exit 1 }
 __tt_bg_dim $bgd/ttheme--hiiragi-kagami@fill-42.png && { print -u2 "__tt_bg_dim took an empty file for a picture"; exit 1 }
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/kitty.zsh
+  source $TTHEME_CODE/adapters/kitty.zsh
   forks_of __tt_apply "$TTHEME_PALETTE[ttheme/hatsune-miku]"
   (( REPLY == 0 )) || { print -u2 "a kitty paint forks again ($REPLY processes) — every preview hover pays it"; exit 1 }
-  source $XDG_CONFIG_HOME/ttheme/adapters/wezterm.zsh
+  source $TTHEME_CODE/adapters/wezterm.zsh
   forks_of __tt_shown ttheme/hatsune-miku force
   (( REPLY == 0 )) || { print -u2 "a WezTerm picture change forks again ($REPLY processes)"; exit 1 }
 ) || exit 1
 for pictured in ghostty iterm2 kitty; do
   (
-    source $XDG_CONFIG_HOME/ttheme/adapters/$pictured.zsh
+    source $TTHEME_CODE/adapters/$pictured.zsh
     print -r -- "config-file = ?ttheme--hatsune-miku.conf" > $bgd/shown.conf
     TTHEME_ITERM_SHOWN=ttheme/hatsune-miku
     forks_of __tt_shown ttheme/hiiragi-kagami force
@@ -1260,7 +1268,7 @@ for pictured in ghostty iterm2 kitty; do
   ) || exit 1
 done
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/wezterm.zsh
+  source $TTHEME_CODE/adapters/wezterm.zsh
   typeset -A bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgdim=() bgtunef=() bgofff=() bgimages=()
   print -rn -- $'\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\x07\x58\0\0\x03\xf0\x08\x06' > $bgd/ttheme--akemi-homura@fill-50.png
   print -l "background-image = ttheme--akemi-homura@fill-50.png" "background-image-fit = cover" "background-image-opacity = 0.3" > $bgd/ttheme--akemi-homura.conf
@@ -1280,7 +1288,7 @@ done
   [[ $(<$bgd/view.out) == *$'\e]1337;SetUserVar=ttheme_view=\a' ]] || { print -u2 "closing preview in WezTerm left its view up"; exit 1 }
 ) || exit 1
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
+  source $TTHEME_CODE/adapters/iterm2.zsh
   __tt_cli() { print -r -- "$*" >> $bgd/bake.log; [[ $1 == bake && -z $FAILING ]] && { sleep 0.2; : >| $3 } }
   print -rn -- $'\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\x07\x58\0\0\x03\xf0\x08\x06' > $bgd/tall.png
   typeset -A bgsent=() bgcost=()
@@ -1314,7 +1322,7 @@ done
   rm -rf $bgcut $bgd/tall.png $bgd/bake.log
 ) || exit 1
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
+  source $TTHEME_CODE/adapters/iterm2.zsh
   __tt_cli() { [[ $1 == bake ]] && { sleep 0.2; : >| $3 }; print -r -- $1 >> $bgd/order.log }
   noted() { : }
   print -rn -- $'\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\x07\x58\0\0\x03\xf0\x08\x06' > $bgd/tall.png
@@ -1341,7 +1349,7 @@ done
 ) || exit 1
 (
   TTHEME_TERMINALS=(konsole) TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false' TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_TMUX=0
-  source $XDG_CONFIG_HOME/ttheme/adapters/konsole.zsh
+  source $TTHEME_CODE/adapters/konsole.zsh
   cursor=${${=TTHEME_PALETTE[ttheme/kaito]}[3]}
   [[ "$(__tt_apply "$TTHEME_PALETTE[ttheme/kaito]")" == $'\e]50;ColorScheme=ttheme-ttheme--kaito;UseCustomCursorColor=true;customCursorColor='$cursor$'\a' ]] ||
     { print -u2 "a Konsole paint did not switch the tab to the palette's color scheme: ${(V)$(__tt_apply "$TTHEME_PALETTE[ttheme/kaito]")}"; exit 1 }
@@ -1386,7 +1394,7 @@ done
   TTHEME_ITERM_PROFILES=$XDG_CONFIG_HOME/ttheme.json
   print -r -- '{}' > $TTHEME_ITERM_PROFILES
   touch -t 202001010000 $TTHEME_ITERM_PROFILES
-  source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
+  source $TTHEME_CODE/adapters/iterm2.zsh
   [[ "$(__tt_apply "$TTHEME_PALETTE[ttheme/kaito]")" == $'\e]1337;SetProfile=ttheme: ttheme/kaito\a' ]] ||
     { print -u2 "an iTerm2 that lets the shell switch profiles was painted rather than moved to the palette's profile: ${(V)$(__tt_apply "$TTHEME_PALETTE[ttheme/kaito]")}"; exit 1 }
   forks_of __tt_apply "$TTHEME_PALETTE[ttheme/kaito]"
@@ -1423,7 +1431,7 @@ done
     { print -u2 "an iTerm2 that may not let the shell switch profiles was not painted and reset in OSC colors"; exit 1 }
 ) || exit 1
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  source $TTHEME_CODE/adapters/warp.zsh
   TTHEME_TERMINALS=()
   out=$(ttheme use ttheme/kaito 2>&1) && { print -u2 "ttheme use ran in a Warp ttheme does not wire"; exit 1 }
   [[ $out == *"wire it with"* ]] || { print -u2 "an unwired Warp refused ttheme use without saying how to wire it: $out"; exit 1 }
@@ -1432,7 +1440,7 @@ done
   ! __tt_paints || { print -u2 "the layer claimed it can paint a Warp that has no settings.toml"; exit 1 }
 ) || exit 1
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  source $TTHEME_CODE/adapters/warp.zsh
   mkdir -p $XDG_CONFIG_HOME/warp $XDG_CONFIG_HOME/dotwarp $XDG_CONFIG_HOME/warpthemes
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/warp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/warpthemes TTHEME_TERMINALS=(warp)
   TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_SPEC=$TTHEME_PALETTE[ttheme/hatsune-miku] TTHEME_WARP_FOLLOWS=0 WARP_TERMINAL_SESSION_UUID=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -1532,7 +1540,7 @@ done
   rm -rf $TTHEME_WARP_TABS
 ) || exit 1
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  source $TTHEME_CODE/adapters/warp.zsh
   mkdir -p $XDG_CONFIG_HOME/oswarp $XDG_CONFIG_HOME/oswarpthemes
   rm -f $TTHEME_HOME/warp.base $TTHEME_HOME/warp.system
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/oswarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/oswarpthemes TTHEME_TERMINALS=(warp)
@@ -1570,7 +1578,7 @@ done
     '- - warp warp-terminal'; do
     w=(${=want})
     __CFBundleIdentifier=${w[1]#-} TERM_PROGRAM_VERSION=${w[2]#-}
-    source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+    source $TTHEME_CODE/adapters/warp.zsh
     if [[ $OSTYPE == darwin* ]]; then
       at=$HOME/.$w[3]/settings.toml
     else
@@ -1581,7 +1589,7 @@ done
   done
 ) || exit 1
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  source $TTHEME_CODE/adapters/warp.zsh
   (( $+commands[sqlite3] )) || { print -u2 "sqlite3 is missing — Warp's tab switches are read with it"; exit 1 }
   mkdir -p $XDG_CONFIG_HOME/fwarp $XDG_CONFIG_HOME/fwarpthemes
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/fwarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/fwarpthemes TTHEME_TERMINALS=(warp)
@@ -1623,7 +1631,7 @@ done
   __tt_warp_tick
   [[ ! -s $XDG_CONFIG_HOME/wrote ]] || { print -u2 "the follower wrote Warp's settings again with nothing changed"; exit 1 }
   unfunction __tt_warp_set
-  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  source $TTHEME_CODE/adapters/warp.zsh
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/fwarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/fwarpthemes TTHEME_WARP_DB=$XDG_CONFIG_HOME/fwarp/warp.sqlite
   sqlite3 $TTHEME_WARP_DB 'update windows set active_tab_index = 1 where id = 1'
   __tt_warp_tick
@@ -1660,7 +1668,7 @@ done
   [[ $PWD == / ]] || { print -u2 "Warp's follower stayed in the folder of the tab that started it: $PWD"; exit 1 }
 ) || exit 1
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  source $TTHEME_CODE/adapters/warp.zsh
   mkdir -p $XDG_CONFIG_HOME/warpview $XDG_CONFIG_HOME/warpviewthemes
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/warpview/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/warpviewthemes TTHEME_TERMINALS=(warp)
   print -rl -- '[appearance.themes]' 'theme = "Dracula"' > $TTHEME_WARP_SETTINGS
@@ -1890,7 +1898,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH HTTPS_PROXY=http://proxy.invalid:3128 
   [[ "$(<$calls)" == sync ]] || { print -u2 "a failed sync still reloaded or refreshed: $(<$calls)"; exit 1 }
 ) || exit 1
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh
+  source $TTHEME_CODE/adapters/ghostty.zsh
   TTHEME_TERMINALS=(ghostty) TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_TMUX=0 TERM_PROGRAM_VERSION=1.3.2
   reloads=0 asks=$XDG_CONFIG_HOME/asks
   __tt_reload_ghostty() { (( ++reloads )) }
@@ -2036,7 +2044,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH HTTPS_PROXY=http://proxy.invalid:3128 
   [[ $PWD == / ]] || { print -u2 "Ghostty's follower stayed in the folder of the tab that started it: $PWD"; exit 1 }
 ) || exit 1
 (
-  source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh
+  source $TTHEME_CODE/adapters/ghostty.zsh
   __tt_ghostty_modules
   TTHEME_TERMINALS=(ghostty) TTHEME_STARTUP=ttheme/hatsune-miku TTHEME_TMUX=0 TTHEME_FRONT=1 TERM_PROGRAM_VERSION=1.3.2
   reloads=0 asks=$XDG_CONFIG_HOME/asks

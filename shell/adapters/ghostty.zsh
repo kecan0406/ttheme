@@ -1,4 +1,4 @@
-source "$TTHEME_HOME/adapters/_bg.zsh"
+source "$TTHEME_CODE/adapters/_bg.zsh"
 
 typeset -g TTHEME_GHOSTTY_TABS=$TTHEME_STATE_DIR/ghostty TTHEME_GHOSTTY_FRONT="" TTHEME_GHOSTTY_BLUR="" TTHEME_GHOSTTY_HEARD="" TTHEME_GHOSTTY_CODE=""
 typeset -gF TTHEME_GHOSTTY_ASKED=0 TTHEME_GHOSTTY_WANT=0 TTHEME_GHOSTTY_HUSH=0 TTHEME_GHOSTTY_TOLD=0 TTHEME_GHOSTTY_NONE_AT=0
@@ -178,7 +178,7 @@ __tt_ghostty_tick() {
   local -a at rec
   local -F now=$EPOCHREALTIME
   integer seen
-  [[ -n $TTHEME_GHOSTTY_CODE ]] && zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/adapters/ghostty.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_GHOSTTY_CODE" ]] && return 1
+  [[ -n $TTHEME_GHOSTTY_CODE ]] && zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/current/adapters/ghostty.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_GHOSTTY_CODE" ]] && return 1
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/start.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_PALETTES_AT" ]] && __tt_palettes_load && TTHEME_GHOSTTY_WANT=$now
   at=("")
   zstat -F %s.%N -A at +mtime -- $TTHEME_PINS_FILE 2>/dev/null
@@ -263,7 +263,7 @@ __tt_ghostty_follower() {
   __tt_ghostty_modules
   zsystem flock -t 1 -f fd $TTHEME_GHOSTTY_TABS/.follow 2>/dev/null || return 0
   trap '' HUP
-  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/adapters/ghostty.zsh 2>/dev/null && TTHEME_GHOSTTY_CODE=$at[1]
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/current/adapters/ghostty.zsh 2>/dev/null && TTHEME_GHOSTTY_CODE=$at[1]
   __tt_ghostty_owner $PPID
   TTHEME_GHOSTTY_PID=$REPLY
   __tt_ghostty_check || return 0

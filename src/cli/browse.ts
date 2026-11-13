@@ -53,7 +53,7 @@ import {
   refreshMarketplace,
   storeMarketplace,
 } from './refresh.ts'
-import { autoWanted, releaseLine } from './release.ts'
+import { autoWanted, notesSeen, releaseLine, releaseNotes } from './release.ts'
 import { commit, forget } from './sync.ts'
 import { updatable } from './upstreams.ts'
 import { visit } from './visit.ts'
@@ -326,7 +326,19 @@ export async function runBrowse(): Promise<number> {
     works: view.works,
     sort: sortOf(process.env.TTHEME_SORT),
     ...(startup ? { startup } : {}),
-    ...(hub ? { hub, release: () => releaseLine(), ...(mark.length === 3 ? { mark } : {}) } : {}),
+    ...(hub
+      ? {
+          hub,
+          release: () => releaseLine(),
+          notes: () => {
+            const url = releaseNotes()
+            notesSeen()
+
+            return url
+          },
+          ...(mark.length === 3 ? { mark } : {}),
+        }
+      : {}),
     due: auto ? dueSources(home, state) : [],
     io: browseIo(home, state, fetched, lookups.signal, (result, report) =>
       into({ say: report.say, set: report.status }, () => applyBrowse(home, marketplaces, result, fetched)),

@@ -15,8 +15,8 @@ changes until you confirm.
 
    ttheme requires Node.js `>=22` and zsh, which macOS ships, with bunx too. It
    asks a few questions, lists every file it will change, and writes nothing
-   until you say yes. `ttheme update` later updates it the same way, through npx
-   or bunx.
+   until you say yes. ttheme then updates itself in the background, through npx
+   or bunx, and keeps every setting you made.
 
    See [Terminal support](../reference/terminals.md) for the terminals it wires.
 

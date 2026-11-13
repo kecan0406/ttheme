@@ -397,7 +397,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'latest',
     args: [],
     about:
-      'Ask the npm registry for the newest ttheme — through npm, or Bun when bunx ran init; a command or a shell prompt starts this in the background once a day',
+      'Ask the npm registry for the newest ttheme and install it a day after it was first seen — through npm, or Bun when bunx ran init; a command or a shell prompt starts this in the background once a day',
     section: 'setup',
     hidden: true,
   },

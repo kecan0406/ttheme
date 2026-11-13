@@ -237,7 +237,7 @@ async function run(place: Place, argv: string[], extra: Record<string, string> =
 }
 
 export function cli(place: Place, ...args: string[]): Promise<string> {
-  return run(place, ['node', join(place.configHome, 'ttheme', 'ttheme.js'), ...args])
+  return run(place, ['node', join(place.configHome, 'ttheme', 'current', 'ttheme.js'), ...args])
 }
 
 const OWN_SCHEME = [

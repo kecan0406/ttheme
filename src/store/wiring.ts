@@ -102,7 +102,7 @@ export const CONFIG_SETTINGS = {
     default: 'original',
   },
   TTHEME_AUTO_UPDATE: {
-    doc: '# checks in the background: on refreshes the marketplaces you set to update on their own once a day and says when a newer ttheme is out; off leaves both to ttheme update (default on)',
+    doc: '# checks in the background: on refreshes the marketplaces you set to update on their own once a day and installs a newer ttheme a day after it comes out, keeping every setting; off leaves both to ttheme update (default on)',
     default: 'on',
   },
   TTHEME_MARKETPLACE_LOOKUP: {

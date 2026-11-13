@@ -1,4 +1,5 @@
-typeset -g TTHEME_HOME=${${(%):-%x}:A:h} TTHEME_PALETTES_AT="" TTHEME_APPEARANCE_AT=""
+typeset -g TTHEME_CODE=${${(%):-%x}:A:h}
+typeset -g TTHEME_HOME=${TTHEME_CODE:h:h} TTHEME_LAYER=${(M)${TTHEME_CODE:t}:#<->.<->.<->} TTHEME_PALETTES_AT="" TTHEME_APPEARANCE_AT=""
 typeset -gi TTHEME_PALETTES_IN=0
 
 zmodload -F zsh/stat b:zstat 2>/dev/null
@@ -38,10 +39,37 @@ typeset -gA TTHEME_KEYCAPS=(
 )
 typeset -ga TTHEME_KEYMODS=(ctrl ⌃ alt ⌥ shift ⇧ cmd ⌘)
 
+__tt_ours() {
+  local line
+  [[ -n $TTHEME_LAYER ]] || return 0
+  {
+    while IFS= read -r line; do
+      [[ $line == 'typeset -g TTHEME_VERSION='* ]] && { [[ ${line#*=} == $TTHEME_LAYER ]]; return }
+    done
+  } < $TTHEME_HOME/start.zsh 2>/dev/null
+  return 1
+}
+
+__tt_current() {
+  REPLY=${(M)${${:-$TTHEME_HOME/current}:A:t}:#<->.<->.<->}
+}
+
+__tt_behind() {
+  local REPLY
+  [[ -n $TTHEME_LAYER ]] || return 1
+  __tt_current
+  [[ -n $REPLY && $REPLY != $TTHEME_LAYER ]] || return 1
+  print -ru2 -- "ttheme: $REPLY is installed — \`exec zsh\` or a new tab runs it"
+}
+
 __tt_palettes_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local -a at=("")
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/start.zsh 2>/dev/null
+  if [[ $1 != any ]] && ! __tt_ours; then
+    TTHEME_PALETTES_AT=$at[1]
+    return 1
+  fi
   unset TTHEME_PALETTE TTHEME_SUBJECT TTHEME_ALSO TTHEME_SHORT
   (( ! TTHEME_PALETTES_IN )) || source $TTHEME_HOME/palettes.zsh || TTHEME_PALETTES_IN=0
   source $TTHEME_HOME/start.zsh || return 1
@@ -153,7 +181,10 @@ __tt_off_here() {
 }
 
 if [[ -r $TTHEME_HOME/start.zsh ]]; then
-  __tt_palettes_load
+  __tt_palettes_load || {
+    node $TTHEME_HOME/current/ttheme.js sync </dev/null >/dev/null 2>&1
+    __tt_palettes_load any
+  }
 else
   print -u2 "ttheme: start.zsh not found — run \`npx @kecan0406/ttheme@latest init\`"
   return 1
@@ -407,10 +438,10 @@ __tt_mend() {
   done
 }
 
-source "$TTHEME_HOME/adapters/_osc.zsh"
-source "$TTHEME_HOME/adapters/_wired.zsh"
-[[ -r $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh ]] &&
-  source "$TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh"
+source "$TTHEME_CODE/adapters/_osc.zsh"
+source "$TTHEME_CODE/adapters/_wired.zsh"
+[[ -r $TTHEME_CODE/adapters/$TTHEME_ADAPTER.zsh ]] &&
+  source "$TTHEME_CODE/adapters/$TTHEME_ADAPTER.zsh"
 
 __tt_empty() {
   print -u2 'ttheme: no palettes installed yet — run `ttheme` in a terminal to pick some, or `ttheme add <palette>`'
@@ -522,8 +553,8 @@ typeset -g TTHEME_RELEASE_AT=-
 typeset -gi TTHEME_RELEASE_NEXT=0
 
 __tt_release_seen() {
-  local raw c l t y f
-  reply=(0 "" 0 0 0)
+  local raw c l t y f s fr n
+  reply=(0 "" 0 0 0 0 "" "")
   [[ -r $1 ]] || return 1
   raw=$(<$1) 2>/dev/null
   [[ $raw == *'"checked":'* ]] && c=${${raw#*'"checked":'}%%[^0-9]*}
@@ -531,12 +562,18 @@ __tt_release_seen() {
   [[ $raw == *'"told":'* ]] && t=${${raw#*'"told":'}%%[^0-9]*}
   [[ $raw == *'"trying":'* ]] && y=${${raw#*'"trying":'}%%[^0-9]*}
   [[ $raw == *'"failed":'* ]] && f=${${raw#*'"failed":'}%%[^0-9]*}
+  [[ $raw == *'"since":'* ]] && s=${${raw#*'"since":'}%%[^0-9]*}
+  [[ $raw == *'"from":"'* ]] && fr=${${raw#*'"from":"'}%%\"*}
+  [[ $raw == *'"noted":"'* ]] && n=${${raw#*'"noted":"'}%%\"*}
   [[ $c == <-> ]] || c=0
   [[ $t == <-> ]] || t=0
   [[ $y == <-> ]] || y=0
   [[ $f == <-> ]] || f=0
+  [[ $s == <-> ]] || s=0
   [[ $l == <->.<->.<-> ]] || l=""
-  reply=($c "$l" $t $y $f)
+  [[ $fr == <->.<->.<-> ]] || fr=""
+  [[ $n == <->.<->.<-> ]] || n=""
+  reply=($c "$l" $t $y $f $s "$fr" "$n")
 }
 
 __tt_release_put() {
@@ -545,6 +582,9 @@ __tt_release_put() {
   (( $3 )) && json+=",\"told\":$3"
   (( $4 )) && json+=",\"trying\":$4"
   (( $5 )) && json+=",\"failed\":$5"
+  (( $6 )) && json+=",\"since\":$6"
+  [[ -n $7 ]] && json+=",\"from\":\"$7\""
+  [[ -n $8 ]] && json+=",\"noted\":\"$8\""
   json+="}"
   __tt_put $TTHEME_STATE_DIR/release.json "$json"
 }
@@ -557,8 +597,10 @@ __tt_newer() {
 __tt_release_tty() { [[ -t 2 ]] }
 
 __tt_release_next() {
+  integer told=$3
+  (( $4 && $4 + 172800000 > told + 86400000 )) && told=$(( $4 + 172800000 - 86400000 ))
   TTHEME_RELEASE_NEXT=$(( $1 / 1000 + 86400 ))
-  [[ -n $2 ]] && __tt_newer $2 $TTHEME_VERSION && (( $3 / 1000 + 86400 < TTHEME_RELEASE_NEXT )) && TTHEME_RELEASE_NEXT=$(( $3 / 1000 + 86400 ))
+  [[ -n $2 ]] && __tt_newer $2 $TTHEME_VERSION && (( told / 1000 + 86400 < TTHEME_RELEASE_NEXT )) && TTHEME_RELEASE_NEXT=$(( told / 1000 + 86400 ))
   return 0
 }
 
@@ -568,21 +610,30 @@ __tt_release_spawn() {
 
 __tt_release() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  [[ $TTHEME_AUTO_UPDATE == off || ${CI:-false} != false ]] && return 0
   __tt_release_tty && __tt_active || return 0
-  (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
   local -a at=("") reply
-  local f=$TTHEME_STATE_DIR/release.json fd latest="" spawn=0 tell=0 hub=$1 fmt=$TTHEME_OUTDATED
-  integer checked told trying failed period=86400 now=$(( EPOCHSECONDS * 1000 ))
+  local f=$TTHEME_STATE_DIR/release.json fd latest="" spawn=0 tell=0 hub=$1 fmt=$TTHEME_OUTDATED REPLY
+  if [[ -z $hub && -z $TTHEME_TOLD_BEHIND && -n $TTHEME_LAYER ]]; then
+    __tt_current
+    if [[ -n $REPLY && $REPLY != $TTHEME_LAYER ]]; then
+      TTHEME_TOLD_BEHIND=$REPLY fmt=$TTHEME_INSTALLED
+      [[ -t 2 && -z $NO_COLOR && $TERM != dumb && -n $TTHEME_INSTALLED_COLOR ]] && fmt=$TTHEME_INSTALLED_COLOR
+      [[ -n $fmt ]] && printf "$fmt\n" $REPLY >&2
+      return 0
+    fi
+  fi
+  [[ $TTHEME_AUTO_UPDATE == off || ${CI:-false} != false ]] && return 0
+  (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
+  integer checked told trying failed since period=86400 now=$(( EPOCHSECONDS * 1000 ))
   [[ $hub == hub ]] && period=3600
   zstat -F %s.%N -A at +mtime -- $f 2>/dev/null
   [[ -z $hub && $at[1] == "$TTHEME_RELEASE_AT" ]] && (( EPOCHSECONDS < TTHEME_RELEASE_NEXT )) && return 0
   __tt_release_seen $f
-  checked=$reply[1] latest=$reply[2] told=$reply[3] trying=$reply[4] failed=$reply[5]
+  checked=$reply[1] latest=$reply[2] told=$reply[3] trying=$reply[4] failed=$reply[5] since=$reply[6]
   TTHEME_RELEASE_AT=$at[1]
-  __tt_release_next $checked "$latest" $told
+  __tt_release_next $checked "$latest" $told $since
   (( EPOCHSECONDS >= checked / 1000 + period && EPOCHSECONDS >= failed / 1000 + 3600 )) && spawn=1
-  [[ -z $hub && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && (( now - told >= 86400000 )) && tell=1
+  [[ -z $hub && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && __tt_release_stuck $now $told $since && tell=1
   (( spawn || tell )) || return 0
   zmodload -F zsh/system b:zsystem 2>/dev/null
   zmodload -F zsh/files b:zf_mkdir 2>/dev/null
@@ -591,11 +642,11 @@ __tt_release() {
   zsystem flock -t 0 -f fd $TTHEME_STATE_DIR/release.lock 2>/dev/null || return 0
   spawn=0 tell=0
   __tt_release_seen $f
-  checked=$reply[1] latest=$reply[2] told=$reply[3] trying=$reply[4] failed=$reply[5]
+  checked=$reply[1] latest=$reply[2] told=$reply[3] trying=$reply[4] failed=$reply[5] since=$reply[6]
   (( EPOCHSECONDS >= checked / 1000 + period && EPOCHSECONDS >= failed / 1000 + 3600 )) && spawn=1 checked=$now trying=$now
-  [[ -z $hub && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && (( now - told >= 86400000 )) && tell=1 told=$now
-  __tt_release_next $checked "$latest" $told
-  (( spawn || tell )) && __tt_release_put $checked "$latest" $told $trying $failed
+  [[ -z $hub && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && __tt_release_stuck $now $told $since && tell=1 told=$now
+  __tt_release_next $checked "$latest" $told $since
+  (( spawn || tell )) && __tt_release_put $checked "$latest" $told $trying $failed $since "$reply[7]" "$reply[8]"
   zstat -F %s.%N -A at +mtime -- $f 2>/dev/null
   TTHEME_RELEASE_AT=$at[1]
   zsystem flock -u $fd
@@ -603,6 +654,10 @@ __tt_release() {
   [[ -t 2 && -z $NO_COLOR && $TERM != dumb && -n $TTHEME_OUTDATED_COLOR ]] && fmt=$TTHEME_OUTDATED_COLOR
   (( tell )) && [[ -n $fmt ]] && printf "$fmt\n" $latest $TTHEME_VERSION >&2
   return 0
+}
+
+__tt_release_stuck() {
+  (( $1 - $2 >= 86400000 && $3 && $1 - $3 >= 172800000 ))
 }
 
 __tt_chpwd() {
@@ -1848,7 +1903,7 @@ __tt_cli() {
     (( $+parameters[$k] )) && pass+=("$k=${(P)k}")
   done
   __tt_cli_env "$@"
-  env $pass node $TTHEME_HOME/ttheme.js "$@"
+  env $pass node $TTHEME_HOME/current/ttheme.js "$@"
 }
 
 __tt_installs() {
@@ -2028,7 +2083,7 @@ __tt_next() {
   REPLY=${TTHEME_PALETTE[$TTHEME_ORDER[idx]]}
 }
 
-source "$TTHEME_HOME/preview.zsh"
+source "$TTHEME_CODE/preview.zsh"
 
 __tt_enlist() {
   local dir=$TTHEME_STATE_DIR/shells
@@ -2114,6 +2169,7 @@ ttheme() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local REPLY was
   integer ret
+  __tt_behind && return 1
   __tt_stamp
   was=$REPLY
   __tt_verb "$@"

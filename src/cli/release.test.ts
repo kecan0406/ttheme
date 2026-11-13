@@ -1,16 +1,29 @@
 import assert from 'node:assert/strict'
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import pkg from '../../package.json' with { type: 'json' }
 import { standingLine } from '../tui/notice.ts'
 import {
+  answered,
   autoWanted,
   checkLatest,
   checkOf,
+  installDue,
   isNewer,
   newerRelease,
+  notesUrl,
+  RELEASES,
   Replaced,
   releaseLine,
   standingOf,
@@ -44,6 +57,25 @@ test('a release check stands as under way, failed, newer, current or unknown by 
   assert.equal(standingOf({ checked: now, latest: '1.2.30' }, now, '1.2.29'), 'newer')
   assert.equal(standingOf({ checked: now, latest: '1.2.28' }, now, '1.2.29'), 'current')
   assert.equal(standingOf({ checked: now }, now, '1.2.29'), 'unknown')
+  assert.equal(standingOf({ checked: now, latest: '1.2.29', from: '1.2.27' }, now, '1.2.29'), 'updated')
+  assert.equal(standingOf({ checked: now, latest: '1.2.30', from: '1.2.27' }, now, '1.2.29'), 'newer')
+  assert.equal(
+    standingOf({ checked: now, latest: '1.2.29', from: '1.2.27', noted: '1.2.29' }, now, '1.2.29'),
+    'current',
+  )
+})
+
+test('a newer release installs itself a day after it was first seen, and the notes link the one release it skipped to', () => {
+  const day = 24 * 60 * 60 * 1000
+  const now = 10 * day
+  const seen = answered({ checked: now - day, latest: '1.2.30', since: now - day }, now, '1.2.30')
+  assert.equal(seen.since, now - day)
+  assert.equal(answered(seen, now, '1.2.31').since, now)
+  assert.equal(installDue(seen, now, '1.2.29'), '1.2.30')
+  assert.equal(installDue({ ...seen, since: now - day + 1 }, now, '1.2.29'), undefined)
+  assert.equal(installDue(seen, now, '1.2.30'), undefined)
+  assert.equal(notesUrl('1.2.29', '1.2.30'), `${RELEASES}/tag/v1.2.30`)
+  assert.equal(notesUrl('1.2.27', '1.2.30'), RELEASES)
 })
 
 test('the standing line names the newer release where there is one', () => {
@@ -224,7 +256,7 @@ test('an update that leaves another ttheme installed than the one asked for stop
   const log = console.log
 
   try {
-    const cli = join(dir, 'config', 'ttheme', 'ttheme.js')
+    const home = join(dir, 'config', 'ttheme')
     const npx = join(dir, 'bin', 'npx')
     mkdirSync(join(dir, 'bin'))
     mkdirSync(join(dir, 'config', 'ttheme'), { recursive: true })
@@ -237,7 +269,9 @@ test('an update that leaves another ttheme installed than the one asked for stop
     const left = (status: number, version: string): Error | undefined => {
       writeFileSync(npx, `#!/bin/sh\nexit ${status}\n`)
       chmodSync(npx, 0o755)
-      writeFileSync(cli, `console.log(${JSON.stringify(version)})\n`)
+      mkdirSync(join(home, 'versions', version), { recursive: true })
+      rmSync(join(home, 'current'), { force: true })
+      symlinkSync(join('versions', version), join(home, 'current'))
 
       try {
         upgradeTo('99.0.1', [])

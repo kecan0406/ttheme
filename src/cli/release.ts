@@ -8,6 +8,7 @@ import { type Runner, runnerOf } from '../core/runner.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
+import { currentVersion } from '../store/versions.ts'
 import { colorless } from '../terminals/osc.ts'
 import {
   advise,
@@ -38,13 +39,17 @@ export function launch(runner: Runner, verb: string): string {
 const DAY = 24 * 60 * 60 * 1000
 const TIMEOUT = 10_000
 const BUSY = 30_000
+const INSTALLING = 5 * 60 * 1000
 
 interface Seen {
   checked: number
   latest?: string
+  since?: number
   told?: number
   trying?: number
   failed?: number
+  from?: string
+  noted?: string
 }
 
 const RELEASE = /^(\d+)\.(\d+)\.(\d+)$/
@@ -77,9 +82,12 @@ function readSeen(): Seen {
     return {
       checked: typeof doc.checked === 'number' ? doc.checked : 0,
       ...(typeof doc.latest === 'string' ? { latest: doc.latest } : {}),
+      ...(typeof doc.since === 'number' ? { since: doc.since } : {}),
       ...(typeof doc.told === 'number' ? { told: doc.told } : {}),
       ...(typeof doc.trying === 'number' ? { trying: doc.trying } : {}),
       ...(typeof doc.failed === 'number' ? { failed: doc.failed } : {}),
+      ...(typeof doc.from === 'string' && RELEASE.test(doc.from) ? { from: doc.from } : {}),
+      ...(typeof doc.noted === 'string' && RELEASE.test(doc.noted) ? { noted: doc.noted } : {}),
     }
   } catch {
     return { checked: 0 }
@@ -171,17 +179,34 @@ function began(seen: Seen, now: number): Seen {
   return { ...seen, trying: now }
 }
 
-function answered(seen: Seen, now: number, latest: string): Seen {
-  return { checked: now, latest, ...(seen.told !== undefined ? { told: seen.told } : {}) }
+function kept(seen: Seen): Pick<Seen, 'told' | 'from' | 'noted'> {
+  return {
+    ...(seen.told !== undefined ? { told: seen.told } : {}),
+    ...(seen.from !== undefined ? { from: seen.from } : {}),
+    ...(seen.noted !== undefined ? { noted: seen.noted } : {}),
+  }
+}
+
+export function answered(seen: Seen, now: number, latest: string): Seen {
+  const since = latest === seen.latest && seen.since !== undefined ? seen.since : now
+
+  return { checked: now, latest, since, ...kept(seen) }
 }
 
 function failing(seen: Seen, now: number): Seen {
   return {
     checked: seen.checked,
     ...(seen.latest !== undefined ? { latest: seen.latest } : {}),
-    ...(seen.told !== undefined ? { told: seen.told } : {}),
+    ...(seen.since !== undefined ? { since: seen.since } : {}),
+    ...kept(seen),
     failed: now,
   }
+}
+
+export function installDue(seen: Seen, now: number, running: string = pkg.version): string | undefined {
+  const { latest, since } = seen
+
+  return latest && since !== undefined && isNewer(latest, running) && now - since >= DAY ? latest : undefined
 }
 
 export function startReleaseCheck(now = Date.now()): void {
@@ -205,13 +230,60 @@ export async function checkLatest(): Promise<number> {
   try {
     const latest = await fetchLatest()
     writeSeen(answered(readSeen(), Date.now(), latest))
-
-    return 0
   } catch {
     writeSeen(failing(readSeen(), Date.now()))
 
     return 1
   }
+
+  const due = installDue(readSeen(), Date.now())
+
+  if (due && autoWanted() && runsInstalled()) {
+    installQuietly(due)
+  }
+
+  return 0
+}
+
+function installQuietly(latest: string): void {
+  const by = runner()
+  const cwd = askDir(by)
+
+  spawnSync(by, [...TOOLS[by].flags, `${pkg.name}@${latest}`, 'init', '--yes'], {
+    cwd,
+    stdio: 'ignore',
+    timeout: INSTALLING,
+    env: { ...process.env, npm_config_prefer_online: 'true', npm_config_update_notifier: 'false' },
+  })
+
+  rmSync(cwd, { recursive: true, force: true })
+}
+
+export function noteUpdate(from: string): void {
+  try {
+    writeSeen({ ...readSeen(), from })
+  } catch {}
+}
+
+export function notesSeen(): void {
+  try {
+    writeSeen({ ...readSeen(), noted: pkg.version })
+  } catch {}
+}
+
+export const RELEASES = `${pkg.repository.url.replace(/^git\+/, '').replace(/\.git$/, '')}/releases`
+
+export function notesUrl(from: string, to: string = pkg.version): string {
+  const [a, b] = [RELEASE.exec(from), RELEASE.exec(to)]
+  const next = a && b && a[1] === b[1] && a[2] === b[2] && Number(b[3]) - Number(a[3]) === 1
+
+  return next ? `${RELEASES}/tag/v${to}` : RELEASES
+}
+
+export function releaseNotes(): string | undefined {
+  const { from } = readSeen()
+
+  return from ? notesUrl(from) : undefined
 }
 
 export function standingOf(seen: Seen, now: number, running: string = pkg.version): Standing {
@@ -223,27 +295,39 @@ export function standingOf(seen: Seen, now: number, running: string = pkg.versio
     return 'failed'
   }
 
-  if (seen.latest === undefined) {
-    return 'unknown'
+  if (seen.latest !== undefined && isNewer(seen.latest, running)) {
+    return 'newer'
   }
 
-  return isNewer(seen.latest, running) ? 'newer' : 'current'
+  const updated = updatedOf(seen, running)
+
+  if (updated === 'updated') {
+    return updated
+  }
+
+  return seen.latest === undefined ? 'unknown' : 'current'
+}
+
+function updatedOf(seen: Seen, running: string = pkg.version): Standing {
+  return seen.from !== undefined && seen.noted !== running && isNewer(running, seen.from) ? 'updated' : 'unknown'
 }
 
 export function releaseLine(now = Date.now(), env: NodeJS.ProcessEnv = process.env): ReleaseLine {
   const seen = readSeen()
-  const standing = autoWanted(env) ? standingOf(seen, now) : 'unknown'
+  const standing = autoWanted(env) ? standingOf(seen, now) : updatedOf(seen)
 
   return { standing, line: standingLine(standing, pkg.version, seen.latest) }
 }
 
 function installedCli(home = configHome()): string {
-  return join(home, 'ttheme', 'ttheme.js')
+  return join(home, 'ttheme', 'current', 'ttheme.js')
 }
 
 function runsInstalled(): boolean {
   try {
-    return realpathSync(process.argv[1] as string) === realpathSync(installedCli())
+    const running = realpathSync(process.argv[1] as string)
+
+    return [installedCli(), join(configHome(), 'ttheme', 'ttheme.js')].some((cli) => realpathSync(cli) === running)
   } catch {
     return false
   }
@@ -284,6 +368,10 @@ export function tellRelease(now = Date.now()): void {
     return
   }
 
+  if (runsInstalled() && now - (seen.since ?? now) < 2 * DAY) {
+    return
+  }
+
   if (process.stderr.isTTY) {
     try {
       writeSeen({ ...seen, told: now })
@@ -319,7 +407,7 @@ export function upgradeTo(latest: string, args: readonly string[]): number {
   }
 
   const cli = installedCli()
-  const now = spawnSync(process.execPath, [cli, '--version'], { encoding: 'utf8' }).stdout?.trim()
+  const now = currentVersion(configHome())
 
   if (ran.status !== 0 && now === pkg.version) {
     throw new Error(`${by} stopped with status ${ran.status} — ttheme ${pkg.version} is still installed`)

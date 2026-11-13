@@ -1,4 +1,4 @@
-source "$TTHEME_HOME/adapters/_bg.zsh"
+source "$TTHEME_CODE/adapters/_bg.zsh"
 
 typeset -g TTHEME_WARP_NAME=warp TTHEME_WARP_APP=dev.warp.Warp-Stable TTHEME_WARP_DIR=warp-terminal
 case ${__CFBundleIdentifier-}/${TERM_PROGRAM_VERSION-} in
@@ -397,7 +397,7 @@ __tt_warp_live() {
 
 __tt_warp_code() {
   local -a at
-  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/adapters/warp.zsh 2>/dev/null
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/current/adapters/warp.zsh 2>/dev/null
   REPLY=$at[1]
 }
 

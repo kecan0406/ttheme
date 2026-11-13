@@ -92,7 +92,8 @@ function home(sources: string[] = ['ttheme']): string {
 
 test('readMarketplaces can take the bundled palettes and works, so an upgrade never parses the copies it is about to replace', () => {
   const at = home()
-  writeFileSync(join(at, 'ttheme', 'builtin.json'), JSON.stringify({ palettes: 'another shape' }))
+  mkdirSync(join(at, 'ttheme', 'current'))
+  writeFileSync(join(at, 'ttheme', 'current', 'builtin.json'), JSON.stringify({ palettes: 'another shape' }))
   writeFileSync(join(at, 'ttheme', 'commons.json'), JSON.stringify({ works: [] }))
   assert.throws(() => readMarketplaces(at, false), /no version, gate or palettes/)
   const bundled = { builtin: parseBuiltin(builtinJson([entry()])), commons: { works: [TIDEWATER] } }
@@ -501,7 +502,8 @@ const unasked = async (): Promise<Response> => {
 
 test('palettes read without the list of works, which is due until it has come', () => {
   const at = home()
-  writeFileSync(join(at, 'ttheme', 'builtin.json'), builtinJson([entry()]))
+  mkdirSync(join(at, 'ttheme', 'current'))
+  writeFileSync(join(at, 'ttheme', 'current', 'builtin.json'), builtinJson([entry()]))
   const done = answering(unasked, at)
 
   try {

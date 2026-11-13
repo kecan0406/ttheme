@@ -22,10 +22,11 @@ import { publisherOf, slugOf } from '../core/theme.ts'
 import { configTemplate, SETTING_NAMES } from '../store/wiring.ts'
 import { TRAITS } from '../terminals/terminal.ts'
 import { HUB_CLOSED, HUB_SWITCH, HUB_TABS, HUB_UPDATE } from '../tui/hub.ts'
-import { outdatedLines, STANDING_LINES } from '../tui/notice.ts'
+import { installedLines, outdatedLines, STANDING_LINES } from '../tui/notice.ts'
 import { PREVIEW_KEYS } from '../tui/preview-keys.ts'
 import { painter, SPINNER } from '../tui/style.ts'
 import { TONE_RULE, toneLine } from '../tui/tone-view.ts'
+import { RELEASES } from './release.ts'
 import { bannerHead, helpText, VERB_SPECS } from './verbs.ts'
 
 const UNQUOTABLE = /["$`\\]/
@@ -126,6 +127,9 @@ export function shellTables(palettes: PaletteEntry[], works: readonly Work[], co
     `typeset -g TTHEME_VERSION=${pkg.version}`,
     `typeset -g TTHEME_OUTDATED=${quote(outdatedLines(painter(false), '%s', '%s', 'ttheme update').join('\n'))}`,
     `typeset -g TTHEME_OUTDATED_COLOR=${quote(outdatedLines(painter(true), '%s', '%s', 'ttheme update').join('\n'))}`,
+    `typeset -g TTHEME_INSTALLED=${quote(installedLines(painter(false), '%s').join('\n'))}`,
+    `typeset -g TTHEME_INSTALLED_COLOR=${quote(installedLines(painter(true), '%s').join('\n'))}`,
+    `typeset -g TTHEME_RELEASES=${RELEASES}`,
   ]
 
   const layered = Object.entries(layer).map(([key, value]) => `typeset -g ${key}=${quote(value)}`)

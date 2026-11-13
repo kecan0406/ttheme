@@ -9,7 +9,9 @@ Settings live in `~/.config/ttheme/config.zsh`. `ttheme config` opens it in
 there picks how the list is grouped and sorted. On a Mac where option types
 characters, those two work while the filter is empty, and type `ç` and `©` once
 it holds text. Each default sits on a commented line, so a default a later
-version changes reaches you; a line you uncomment keeps your value. A variable
+version changes reaches you; a line you uncomment keeps your value. A setting a
+later version adds is not written into the file: it keeps its default until you
+add it. A variable
 exported before ttheme loads wins over the file, as
 [Environment variables](environment.md) says.
 
@@ -28,7 +30,9 @@ write the rest.
 | `pins` | Your folder and ssh pins | `ttheme pin`, `ttheme unpin` |
 | `backgrounds/` | Your pictures and how each is shown | `ttheme find`, `ttheme image` |
 
-The other files there, such as `ttheme.zsh` and `ttheme.js`, are the command
-itself, which `init` and `ttheme update` replace. What ttheme remembers between
+The command itself is in `versions/`, one folder per release, and `current`
+points at the one new tabs run; `ttheme.zsh`, `ttheme.js` and `launch-tab.zsh` only load it.
+An update adds a folder and moves `current`, and never writes the files above.
+The other files there are made again from yours. What ttheme remembers between
 runs, such as the last release it told you about, is in
 `~/.local/state/ttheme`.

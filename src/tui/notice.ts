@@ -28,7 +28,19 @@ export function outdatedLines(p: Paint, latest: string, running: string, command
   ]
 }
 
-export type Standing = 'unknown' | 'checking' | 'current' | 'newer' | 'failed'
+export function installedLines(p: Paint, version: string): string[] {
+  if (!p.color) {
+    return ['', `ttheme ${version} is installed — new tabs run it, \`exec zsh\` runs it here`, '']
+  }
+
+  return [
+    '',
+    `${markOf(p)}  ${p.good(MARKS.ok)} ttheme ${p.bold(p.good(version))} is installed — new tabs run it, ${p.bold('exec zsh')} runs it here`,
+    '',
+  ]
+}
+
+export type Standing = 'unknown' | 'checking' | 'current' | 'newer' | 'updated' | 'failed'
 
 export interface ReleaseLine {
   standing: Standing
@@ -40,6 +52,7 @@ export const STANDING_LINES: Record<Standing, string> = {
   checking: 'v%1$s',
   current: `${MARKS.ok} v%1$s`,
   newer: `${MARKS.update} v%2$s`,
+  updated: `${MARKS.ok} v%1$s`,
   failed: `${MARKS.miss} v%1$s`,
 }
 

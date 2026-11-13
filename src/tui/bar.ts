@@ -22,12 +22,21 @@ export interface Bar {
 const KEPT = ['?', 'enter']
 
 const UPDATE_KEY: Hint = ['alt+u', 'update']
+const NOTES_KEY: Hint = ['alt+u', 'notes']
+
+export function keyed(standing: ReleaseLine | undefined): boolean {
+  return standing?.standing === 'newer' || standing?.standing === 'updated'
+}
 
 function releaseOf(p: Paint, standing: ReleaseLine, beat: number): string {
   const badge = (look: (text: string) => string, label: string) => (p.color ? look(` ${label} `) : label)
 
   if (standing.standing === 'newer') {
     return `${hintOf(p, ...UPDATE_KEY)}   ${keyZone(UPDATE_KEY[0], badge(p.alert, standing.line))}`
+  }
+
+  if (standing.standing === 'updated') {
+    return `${hintOf(p, ...NOTES_KEY)}   ${keyZone(NOTES_KEY[0], badge(p.good, standing.line))}`
   }
 
   if (standing.standing === 'checking') {
@@ -79,7 +88,7 @@ export function barLine(p: Paint, bar: Bar, width: number): string {
 
     const drop = keys.findLastIndex(([key], i) => i > 0 && !kept.has(key))
 
-    if (standing && standing.standing !== 'newer') {
+    if (standing && !keyed(standing)) {
       standing = undefined
     } else if (note) {
       note = undefined

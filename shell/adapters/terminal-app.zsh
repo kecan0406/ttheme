@@ -1,4 +1,4 @@
-source "$TTHEME_HOME/adapters/_bg.zsh"
+source "$TTHEME_CODE/adapters/_bg.zsh"
 
 typeset -g TTHEME_TERMINAL_BASE="" TTHEME_TERMINAL_VIEW="" TTHEME_TERMINAL_LAID=""
 typeset -gA TTHEME_TERMINAL_OUT=()

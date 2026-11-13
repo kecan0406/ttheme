@@ -520,11 +520,11 @@ __tt_pv_standing() {
   local -a reply
   local standing=unknown latest="" was=$vline
   integer now
-  vchk=0 vwarn=0 vnew=0 vgood=0
+  vchk=0 vwarn=0 vnew=0 vgood=0 vnote=0
+  __tt_release_seen $TTHEME_STATE_DIR/release.json
   if [[ $TTHEME_AUTO_UPDATE != off && ${CI:-false} == false ]]; then
     (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
     now=$(( EPOCHSECONDS * 1000 ))
-    __tt_release_seen $TTHEME_STATE_DIR/release.json
     latest=$reply[2]
     if (( reply[4] && now - reply[4] < 30000 )); then
       standing=checking vchk=1
@@ -535,12 +535,34 @@ __tt_pv_standing() {
       __tt_newer $latest $TTHEME_VERSION && standing=newer vwarn=1 vnew=1 vgood=0
     fi
   fi
+  if (( ! vchk && ! vwarn )) && [[ -n $reply[7] && $reply[8] != $TTHEME_VERSION ]] && __tt_newer $TTHEME_VERSION $reply[7]; then
+    standing=updated vgood=1 vnote=1
+  fi
   if [[ $standing == newer ]]; then
     printf -v vline $TTHEME_STANDING[$standing] $TTHEME_VERSION $latest
   else
     printf -v vline $TTHEME_STANDING[$standing] $TTHEME_VERSION
   fi
   [[ $vline != "$was" ]]
+}
+
+__tt_pv_notes() {
+  local -a reply a b
+  local url=$TTHEME_RELEASES
+  __tt_release_seen $TTHEME_STATE_DIR/release.json
+  [[ -n $reply[7] ]] || return 0
+  a=(${(s:.:)reply[7]}) b=(${(s:.:)TTHEME_VERSION})
+  (( a[1] == b[1] && a[2] == b[2] && b[3] - a[3] == 1 )) && url+=/tag/v$TTHEME_VERSION
+  if [[ -z $SSH_CONNECTION ]]; then
+    if [[ $OSTYPE == darwin* ]]; then
+      open $url </dev/null >/dev/null 2>&1 &!
+    else
+      xdg-open $url </dev/null >/dev/null 2>&1 &!
+    fi
+  fi
+  __tt_release_put $reply[1] "$reply[2]" $reply[3] $reply[4] $reply[5] $reply[6] "$reply[7]" $TTHEME_VERSION
+  __tt_pv_standing
+  return 0
 }
 
 __tt_pv_foot() {
@@ -673,6 +695,7 @@ __tt_pv_foot() {
         ver=$TTHEME_SGR[chip]" $ver "$z
       fi
       (( vnew )) && ver=$b$ku$z$d" update"$z"   "$ver
+      (( vnote )) && ver=$b$ku$z$d" notes"$z"   "$ver
     fi
   fi
   if (( color )) && [[ -n $rk && $mhov == "key $rk" ]]; then
@@ -744,7 +767,7 @@ __tt_pv_barline() {
       at=$i
       break
     done
-    if [[ -n $ver ]] && (( ! vnew )); then
+    if [[ -n $ver ]] && (( ! vnew && ! vnote )); then
       ver=""
     elif [[ -n $note ]]; then
       note=""
@@ -814,7 +837,7 @@ __tt_pv_barline() {
   if [[ -n $right ]]; then
     pvz+=("$ph $(( rend - rwid + 1 )) $rend key $rk")
   fi
-  [[ -n $ver ]] && (( vnew )) && pvz+=("$ph $(( end - vwid + 1 )) $end key alt+u")
+  [[ -n $ver ]] && (( vnew || vnote )) && pvz+=("$ph $(( end - vwid + 1 )) $end key alt+u")
   return 0
 }
 
@@ -3383,7 +3406,10 @@ __tt_pv_handle() {
       fi
       ;;
     stab) (( hub )) && { __tt_pv_screen -1 || return 1 } ;;
-    altu) [[ -z $pick ]] && (( hub && vnew )) && { pvupdate=1; return 1 } ;;
+    altu)
+      [[ -z $pick ]] && (( hub && vnew )) && { pvupdate=1; return 1 }
+      [[ -z $pick ]] && (( hub && vnote )) && __tt_pv_notes
+      ;;
     altg) __tt_pv_gopen ;;
     altc)
       screen=settings cf=1 csnap=()
@@ -3432,7 +3458,7 @@ __tt_preview() {
   zmodload -F zsh/zselect b:zselect 2>/dev/null
   [[ $functions[TRAPURG] == *__tt_woken* ]] && trap '' URG
   local mode=$1 pdir=${2:-$PWD} hubwas=""
-  local -i hub=0 hubleft=0 vchk=0 vwarn=0 vnew=0 vgood=0 vspin=0 pvupdate=0
+  local -i hub=0 hubleft=0 vchk=0 vwarn=0 vnew=0 vgood=0 vnote=0 vspin=0 pvupdate=0
   local vline=""
   [[ $mode == hub ]] && hub=1
   if [[ ! -t 0 || ! -t 1 ]]; then

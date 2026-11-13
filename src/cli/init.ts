@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync } from 'node:child_process'
+import { spawnSync } from 'node:child_process'
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -34,13 +34,14 @@ import {
   readMarketplaces,
   readPackaged,
   refreshCommons,
-  writeBundled,
+  writeCommons,
 } from '../store/available.ts'
 import { compileZsh, editUserFile, writeAtomic } from '../store/edits.ts'
 import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, startupPalette, worn, writeInstalled } from '../store/installed.ts'
 import { configHome as configDir } from '../store/paths.ts'
 import { marketplacesOf } from '../store/sources.ts'
+import { currentVersion, placeVersion, pointCurrent, pruneVersions, versionsDir } from '../store/versions.ts'
 import { coloringFor, configFile, modeFor, modeSetting, upsertBlock, withSetting, zshrcBlock } from '../store/wiring.ts'
 import { tilde } from '../terminals/common.ts'
 import { WIRINGS, wirings } from '../terminals/index.ts'
@@ -71,7 +72,7 @@ import { build } from './build.ts'
 import { pickPalettes } from './installs.ts'
 import { redrawPictures } from './redraw.ts'
 import { AUTO_TIMEOUT } from './refresh.ts'
-import { launch } from './release.ts'
+import { launch, noteUpdate } from './release.ts'
 import { commit, planUnwire, wiringNext, wiringNotes, wiringPlan } from './sync.ts'
 
 export interface InitOptions {
@@ -96,6 +97,7 @@ interface InitPlan {
   home: string
   root: string
   agents: AgentHomes
+  code: { from: string; to: string }[]
   copies: { from: string; to: string; executable?: boolean }[]
   edits: { file: string; block: string; about: string }[]
   writes: { file: string; content: string; about: string }[]
@@ -106,9 +108,11 @@ interface InitPlan {
   notes: string[]
 }
 
-function copyDir(from: string, to: string): InitPlan['copies'] {
+function copyDir(from: string, to: string): InitPlan['code'] {
   return readdirSync(from).map((f) => ({ from: join(from, f), to: join(to, f) }))
 }
+
+const FLAT = ['ttheme.js.map', 'package.json', 'preview.zsh', 'preview.zsh.zwc', 'adapters', 'builtin.json']
 
 function manifestOf({ builtin, commons }: Bundled): Manifest {
   return { ...builtin, works: commons.works }
@@ -117,14 +121,20 @@ function manifestOf({ builtin, commons }: Bundled): Manifest {
 export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const home = join(paths.configHome, 'ttheme')
 
+  const code: InitPlan['code'] = [
+    { from: join(paths.root, 'bin', 'ttheme.js'), to: 'ttheme.js' },
+    { from: join(paths.root, 'bin', 'ttheme.js.map'), to: 'ttheme.js.map' },
+    { from: join(paths.root, 'bin', 'package.json'), to: 'package.json' },
+    { from: join(paths.root, 'dist', 'builtin.json'), to: 'builtin.json' },
+    { from: join(paths.root, 'shell', 'ttheme.zsh'), to: 'ttheme.zsh' },
+    { from: join(paths.root, 'shell', 'preview.zsh'), to: 'preview.zsh' },
+    ...copyDir(join(paths.root, 'shell', 'adapters'), 'adapters'),
+  ]
+
   const copies: InitPlan['copies'] = [
-    { from: join(paths.root, 'bin', 'ttheme.js'), to: join(home, 'ttheme.js') },
-    { from: join(paths.root, 'bin', 'ttheme.js.map'), to: join(home, 'ttheme.js.map') },
-    { from: join(paths.root, 'bin', 'package.json'), to: join(home, 'package.json') },
-    { from: join(paths.root, 'shell', 'ttheme.zsh'), to: join(home, 'ttheme.zsh') },
-    { from: join(paths.root, 'shell', 'preview.zsh'), to: join(home, 'preview.zsh') },
+    { from: join(paths.root, 'shell', 'entry.zsh'), to: join(home, 'ttheme.zsh') },
+    { from: join(paths.root, 'shell', 'entry.js'), to: join(home, 'ttheme.js'), executable: true },
     { from: join(paths.root, 'shell', 'launch-tab.zsh'), to: join(home, 'launch-tab.zsh'), executable: true },
-    ...copyDir(join(paths.root, 'shell', 'adapters'), join(home, 'adapters')),
   ]
 
   const shells = paths.shells ?? ['zsh']
@@ -187,6 +197,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     home: paths.home,
     root: paths.root,
     agents: { home: paths.home, claude: paths.claudeHome ?? join(paths.home, '.claude') },
+    code,
     copies,
     edits,
     writes,
@@ -275,20 +286,12 @@ export function planUpgrade(state: Installed, paths: InitPaths): InitPlan {
   const notes =
     gone.length > 0 ? [`Dropped ${gone.join(', ')} — no longer in any marketplace`, ...plan.notes] : plan.notes
 
-  return { ...plan, installed, notes }
-}
-
-function installedVersion(configHome: string): string | undefined {
-  try {
-    const out = execFileSync(process.execPath, [join(configHome, 'ttheme', 'ttheme.js'), '--version'], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    })
-
-    return out.trim() || undefined
-  } catch {
-    return undefined
+  const settings = {
+    file: plan.settings.file,
+    content: existsSync(plan.settings.file) ? readFileSync(plan.settings.file, 'utf8') : plan.settings.content,
   }
+
+  return { ...plan, edits: [], writes: [], settings, installed, notes }
 }
 
 function summary(state: Installed): string {
@@ -303,7 +306,37 @@ function summary(state: Installed): string {
   ].join('  ')
 }
 
+function placeCode(plan: InitPlan, configHome: string, host: Host): string | undefined {
+  placeVersion(configHome, pkg.version, (dir) => {
+    for (const c of plan.code) {
+      mkdirSync(dirname(join(dir, c.to)), { recursive: true })
+      copyFileSync(c.from, join(dir, c.to))
+    }
+
+    compileZsh(
+      plan.code.flatMap((c) => (c.to.endsWith('.zsh') ? [join(dir, c.to)] : [])),
+      host,
+    )
+  })
+
+  const was = pointCurrent(configHome, pkg.version)
+  pruneVersions(configHome, [pkg.version, was])
+
+  for (const name of FLAT) {
+    rmSync(join(configHome, 'ttheme', name), { recursive: true, force: true })
+  }
+
+  return was
+}
+
 export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired, Pointed> {
+  const configHome = dirname(dirname(plan.settings.file))
+  const was = placeCode(plan, configHome, host)
+
+  if (was && was !== pkg.version) {
+    noteUpdate(was)
+  }
+
   for (const c of plan.copies) {
     mkdirSync(dirname(c.to), { recursive: true })
     rmSync(c.to, { force: true })
@@ -319,13 +352,15 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     plan.copies.flatMap((c) => (c.to.endsWith('.zsh') && !c.executable ? [c.to] : [])),
     host,
   )
-  writeAtomic(plan.settings.file, plan.settings.content)
+
+  if (!existsSync(plan.settings.file) || readFileSync(plan.settings.file, 'utf8') !== plan.settings.content) {
+    writeAtomic(plan.settings.file, plan.settings.content)
+  }
 
   for (const f of plan.forget) {
     rmSync(f, { force: true })
   }
 
-  const configHome = dirname(dirname(plan.settings.file))
   const kept = installedState(configHome)
 
   const carried = Object.fromEntries(
@@ -355,7 +390,7 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     ),
   )
 
-  writeBundled(configHome, plan.bundled)
+  writeCommons(configHome, plan.bundled.commons)
 
   const pointed = commit(
     configHome,
@@ -481,7 +516,10 @@ async function askMode(configHome: string, terminals: readonly Wired[], again: b
 }
 
 function verify(plan: InitPlan): void {
+  const placed = join(versionsDir(dirname(dirname(plan.settings.file))), pkg.version)
+
   const missing = [
+    ...plan.code.filter((c) => !existsSync(join(placed, c.to))).map((c) => join(placed, c.to)),
     ...plan.copies.filter((c) => !existsSync(c.to)).map((c) => c.to),
     ...(existsSync(plan.settings.file) ? [] : [plan.settings.file]),
     ...plan.edits.filter((e) => !readFileSync(e.file, 'utf8').includes('# ttheme begin')).map((e) => e.file),
@@ -754,7 +792,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   p.intro(`Setting up ttheme ${paint.accent(pkg.version)}`)
 
   if (existing) {
-    const from = installedVersion(configHome)
+    const from = currentVersion(configHome)
 
     const keep = accepted(
       await p.confirm({
