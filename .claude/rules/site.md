@@ -9,7 +9,7 @@ The design system is the Design System artifact https://claude.ai/artifact/D3Ttw
 
 ## Server and pages
 
-- `elysia` stays pinned to `2.0.0-rc.0`; a bump is a deliberate step.
+- `elysia` stays pinned to `2.0.0-rc.3`; a bump is a deliberate step.
 - Never use `@elysia/html`.
 - `onError('global', …)` goes before every route in the chain.
 - A group's `derive` answers a miss with `status(404, …)`, never a thrown error class.

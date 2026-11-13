@@ -8,7 +8,7 @@ Rules every coding agent needs in this repository: the gate, the hard rules, the
 
 ## Setup and the gate
 
-Every dev command is a `mise` task (`mise tasks`); `package.json` has no scripts and takes none. The toolchain is bun 1.3 and node 22, the oldest `engines` allows. The checks need zsh, tmux and sqlite3 on `PATH`.
+Every dev command is a `mise` task (`mise tasks`); `package.json` has no scripts and takes none. The toolchain is bun 1.4 and node 22, the oldest `engines` allows. The checks need zsh, tmux and sqlite3 on `PATH`.
 
 Run `mise run format`, then `mise run ci`, once, right before a change leaves your hands: a pull request, a merge, a push to `main` or `mise run release`. `ci` is exactly what CI runs and takes a minute or two, and `format` first fixes most of what lint would fail on. A push to `main` is itself a deploy (the site on Vercel, Pages).
 

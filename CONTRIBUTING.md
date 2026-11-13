@@ -186,7 +186,7 @@ sqlite3 on your `PATH`.
 ```sh
 git clone https://github.com/kecan0406/ttheme
 cd ttheme
-mise install   # bun 1.3 and node 22
+mise install   # bun 1.4 and node 22
 bun install
 git config core.hooksPath .githooks   # a push to main runs the checks CI would
 ```

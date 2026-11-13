@@ -3,27 +3,27 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@kitajs/html": "5.0.0-next.1",
+    "@kitajs/html": "5.0.0-next.2",
     "@resvg/resvg-wasm": "2.6.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "elysia": "2.0.0-rc.0",
-    "lucide": "^1.68.0",
-    "marked": "18.1.3",
-    "simple-icons": "^16.36.0",
+    "elysia": "2.0.0-rc.3",
+    "lucide": "^1.72.0",
+    "marked": "18.2.0",
+    "simple-icons": "^16.37.0",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource/biz-udgothic": "^5.3.0",
     "@fontsource/nunito": "^5.3.0",
-    "@kitajs/ts-html-plugin": "5.0.0-next.2",
-    "@tailwindcss/postcss": "^4.3.4",
+    "@kitajs/ts-html-plugin": "5.0.0-next.3",
+    "@tailwindcss/postcss": "^4.3.5",
     "@types/bun": "1.4.4",
     "@types/subset-font": "^2.3.0",
     "postcss": "^8.5.32",
     "subset-font": "^2.9.0",
-    "tailwindcss": "^4.3.4",
+    "tailwindcss": "^4.3.5",
     "typescript": "^6.0.2"
   }
 }

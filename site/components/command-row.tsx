@@ -116,7 +116,7 @@ function ChoiceTabs<V extends string>({ tabs, class: className }: { tabs: Tabbed
       {tabs.values.map((value) => (
         <Toggle value={value} pressed={value === tabs.values[0]} class={cn(TAB, tabs.on[value])}>
           <BrandIcon icon={tabs.marks[value]} class="size-3" />
-          <span>{value}</span>
+          <span safe>{value}</span>
         </Toggle>
       ))}
     </ToggleGroup>
