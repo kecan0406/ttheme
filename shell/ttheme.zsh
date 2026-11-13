@@ -656,6 +656,28 @@ __tt_release() {
   return 0
 }
 
+# Once after an update, as the hub quits: the notes of the one release it moved
+# up by, or the list when it skipped some.
+__tt_release_notes() {
+  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  local -a reply a b
+  local url=$TTHEME_RELEASES fmt=$TTHEME_UPDATED fd
+  __tt_release_seen $TTHEME_STATE_DIR/release.json
+  [[ -n $reply[7] && $reply[8] != $TTHEME_VERSION ]] && __tt_newer $TTHEME_VERSION $reply[7] || return 0
+  a=(${(s:.:)reply[7]}) b=(${(s:.:)TTHEME_VERSION})
+  (( a[1] == b[1] && a[2] == b[2] && b[3] - a[3] == 1 )) && url+=/tag/v$TTHEME_VERSION
+  [[ -t 1 && -z $NO_COLOR && $TERM != dumb && -n $TTHEME_UPDATED_COLOR ]] && fmt=$TTHEME_UPDATED_COLOR
+  [[ -n $fmt ]] && printf "$fmt\n" $TTHEME_VERSION $url
+  zmodload -F zsh/system b:zsystem 2>/dev/null
+  [[ -e $TTHEME_STATE_DIR/release.lock ]] || { : >>| $TTHEME_STATE_DIR/release.lock } 2>/dev/null
+  if zsystem flock -t 1 -f fd $TTHEME_STATE_DIR/release.lock 2>/dev/null; then
+    __tt_release_seen $TTHEME_STATE_DIR/release.json
+    __tt_release_put $reply[1] "$reply[2]" $reply[3] $reply[4] $reply[5] $reply[6] "$reply[7]" $TTHEME_VERSION
+    zsystem flock -u $fd
+  fi
+  return 0
+}
+
 __tt_release_stuck() {
   (( $1 - $2 >= 86400000 && $3 && $1 - $3 >= 172800000 ))
 }
@@ -2205,6 +2227,7 @@ __tt_verb() {
     if [[ -t 0 && -t 1 ]]; then
       if (( ${#TTHEME_PALETTE} )); then
         __tt_preview hub
+        __tt_release_notes
       else
         __tt_installs browse
       fi

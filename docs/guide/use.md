@@ -210,8 +210,8 @@ background, through npx or bunx, whichever ran `init`. An update replaces the co
 settings, palettes, pins and pictures stay as they are. A tab that is already
 open keeps the version it started with and says once that a newer one is
 installed; `exec zsh` or a new tab runs it, and `ttheme` in that tab asks for
-the same until then. The first `ttheme` after an update shows `alt+u notes`,
-which opens the release notes.
+the same until then. The first `ttheme` after an update prints a link to its release
+notes as you quit it.
 
 `ttheme update` does the same at once, then fetches the other marketplaces
 again. The built-in palettes change with a new ttheme release. An installed

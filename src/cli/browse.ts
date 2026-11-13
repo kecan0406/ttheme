@@ -53,7 +53,7 @@ import {
   refreshMarketplace,
   storeMarketplace,
 } from './refresh.ts'
-import { autoWanted, notesSeen, releaseLine, releaseNotes } from './release.ts'
+import { autoWanted, releaseLine } from './release.ts'
 import { commit, forget } from './sync.ts'
 import { updatable } from './upstreams.ts'
 import { visit } from './visit.ts'
@@ -330,12 +330,6 @@ export async function runBrowse(): Promise<number> {
       ? {
           hub,
           release: () => releaseLine(),
-          notes: () => {
-            const url = releaseNotes()
-            notesSeen()
-
-            return url
-          },
           ...(mark.length === 3 ? { mark } : {}),
         }
       : {}),

@@ -252,6 +252,10 @@ export const LOOKS = {
       return swapped(inner, 'chip', pressed ? 'pill' : 'hot')
     }
 
+    if (inner.includes(open('good'))) {
+      return `${open('under')}${inner}${close('under')}`
+    }
+
     return filled(inner, pressed ? 'pill' : 'chip')
   },
   danger: (inner) => (inner.includes(open('chip')) ? swapped(inner, 'chip', 'danger') : inner),

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- After an update, the first `ttheme` prints `Updated to <version>` and a link to what changed as you quit it, in place of the `alt+u notes` key.
+
 ## 1.2.112
 
 - ttheme now updates itself. A day after it first sees a newer release, it installs the newest one in the background and changes nothing you set: settings, palettes, pins and pictures stay as they are. A tab that was already open keeps its version and says once `ttheme 1.2.112 is installed — new tabs run it`; `exec zsh` or a new tab runs the new one. The first `ttheme` after an update shows `alt+u notes`, which opens what changed. `TTHEME_AUTO_UPDATE=off` turns it off, and `ttheme update` still updates at once.

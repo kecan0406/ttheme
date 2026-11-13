@@ -2,8 +2,8 @@ import { cells } from '../core/text.ts'
 import { fit, spread } from './ansi.ts'
 import type { ReleaseLine } from './notice.ts'
 import { hintOf, pillOf } from './parts.ts'
-import { type Paint, SPINNER } from './style.ts'
-import { keyZone } from './zones.ts'
+import { LOOKS, type Paint, SPINNER } from './style.ts'
+import { keyZone, zone } from './zones.ts'
 
 export type Hint = [string, string]
 
@@ -22,10 +22,9 @@ export interface Bar {
 const KEPT = ['?', 'enter']
 
 const UPDATE_KEY: Hint = ['alt+u', 'update']
-const NOTES_KEY: Hint = ['alt+u', 'notes']
 
 export function keyed(standing: ReleaseLine | undefined): boolean {
-  return standing?.standing === 'newer' || standing?.standing === 'updated'
+  return standing?.standing === 'newer'
 }
 
 function releaseOf(p: Paint, standing: ReleaseLine, beat: number): string {
@@ -35,18 +34,16 @@ function releaseOf(p: Paint, standing: ReleaseLine, beat: number): string {
     return `${hintOf(p, ...UPDATE_KEY)}   ${keyZone(UPDATE_KEY[0], badge(p.alert, standing.line))}`
   }
 
-  if (standing.standing === 'updated') {
-    return `${hintOf(p, ...NOTES_KEY)}   ${keyZone(NOTES_KEY[0], badge(p.good, standing.line))}`
-  }
-
   if (standing.standing === 'checking') {
     return badge(p.chip, `${SPINNER[beat % SPINNER.length]} ${standing.line}`)
   }
 
-  return badge(
+  const shown = badge(
     standing.standing === 'failed' ? p.danger : standing.standing === 'current' ? p.good : p.chip,
     standing.line,
   )
+
+  return standing.notes ? zone({ kind: 'notes', url: standing.notes }, shown, LOOKS.flat) : shown
 }
 
 export type Tone = 'ok' | 'warn' | 'error' | 'info'

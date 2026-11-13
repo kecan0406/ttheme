@@ -350,9 +350,9 @@ test("preview's click zones sit on the keys its bar shows, where the Node screen
       const spans = new Set<string>()
 
       for (const zone of zones) {
-        const [, from, to, , key] = zone.split(' ')
+        const [, from, to, kind, key] = zone.split(' ')
 
-        if (key === 'alt+u') {
+        if (kind === 'notes' || key === 'alt+u') {
           continue
         }
 

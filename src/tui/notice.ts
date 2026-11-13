@@ -40,11 +40,16 @@ export function installedLines(p: Paint, version: string): string[] {
   ]
 }
 
-export type Standing = 'unknown' | 'checking' | 'current' | 'newer' | 'updated' | 'failed'
+export function updatedLine(p: Paint, version: string, url: string): string {
+  return p.color ? `Updated to ${p.bold(p.good(version))}  ${url}` : `Updated to ${version}  ${url}`
+}
+
+export type Standing = 'unknown' | 'checking' | 'current' | 'newer' | 'failed'
 
 export interface ReleaseLine {
   standing: Standing
   line: string
+  notes?: string
 }
 
 export const STANDING_LINES: Record<Standing, string> = {
@@ -52,7 +57,6 @@ export const STANDING_LINES: Record<Standing, string> = {
   checking: 'v%1$s',
   current: `${MARKS.ok} v%1$s`,
   newer: `${MARKS.update} v%2$s`,
-  updated: `${MARKS.ok} v%1$s`,
   failed: `${MARKS.miss} v%1$s`,
 }
 

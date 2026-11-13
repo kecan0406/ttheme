@@ -272,26 +272,7 @@ export function noteUpdate(from: string): void {
   } catch {}
 }
 
-export function notesSeen(): void {
-  try {
-    writeSeen({ ...readSeen(), noted: pkg.version })
-  } catch {}
-}
-
 export const RELEASES = `${pkg.repository.url.replace(/^git\+/, '').replace(/\.git$/, '')}/releases`
-
-export function notesUrl(from: string, to: string = pkg.version): string {
-  const [a, b] = [RELEASE.exec(from), RELEASE.exec(to)]
-  const next = a && b && a[1] === b[1] && a[2] === b[2] && Number(b[3]) - Number(a[3]) === 1
-
-  return next ? `${RELEASES}/tag/v${to}` : RELEASES
-}
-
-export function releaseNotes(): string | undefined {
-  const { from } = readSeen()
-
-  return from ? notesUrl(from) : undefined
-}
 
 export function standingOf(seen: Seen, now: number, running: string = pkg.version): Standing {
   if (checkOf(seen, now) === 'trying') {
@@ -306,24 +287,14 @@ export function standingOf(seen: Seen, now: number, running: string = pkg.versio
     return 'newer'
   }
 
-  const updated = updatedOf(seen, running)
-
-  if (updated === 'updated') {
-    return updated
-  }
-
   return seen.latest === undefined ? 'unknown' : 'current'
-}
-
-function updatedOf(seen: Seen, running: string = pkg.version): Standing {
-  return seen.from !== undefined && seen.noted !== running && isNewer(running, seen.from) ? 'updated' : 'unknown'
 }
 
 export function releaseLine(now = Date.now(), env: NodeJS.ProcessEnv = process.env): ReleaseLine {
   const seen = readSeen()
-  const standing = autoWanted(env) ? standingOf(seen, now) : updatedOf(seen)
+  const standing = autoWanted(env) ? standingOf(seen, now) : 'unknown'
 
-  return { standing, line: standingLine(standing, pkg.version, seen.latest) }
+  return { standing, line: standingLine(standing, pkg.version, seen.latest), notes: `${RELEASES}/tag/v${pkg.version}` }
 }
 
 function installedCli(home = configHome()): string {

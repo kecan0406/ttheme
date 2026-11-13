@@ -67,6 +67,7 @@ A Ghostty reload is logged as a line in `~/reload.log` in the sandbox home inste
 - Go through the scripts, never `mise run sandbox` bare, which opens a window in front of the user on no screen in particular.
 - One sandbox at a time, subagents included: every start wipes the directory and closes a previous sandbox window, the user's own `mise run sandbox` included.
 - A leftover instance: `pkill -f -- "--config-file=${TMPDIR%/}/ttheme-sandbox/"` for Ghostty; `pkill -f -- '^[^ ]*/iTerm2 -suite ttheme-sandbox( |$)'`, then `pkill -f -- "^$HOME/Library/Application Support/ttheme-sandbox/iTermServer"` for iTerm2. Keep the `^` anchors.
+- Every mode runs with `TTHEME_AUTO_UPDATE=off`, so the version badge is gray without ✓: put `TTHEME_AUTO_UPDATE=on` before the script to see it as a user does.
 - `pgrep ghostty` from Claude's shell misses the user's Ghostty.
 - Ghostty's log: `/usr/bin/log show --info --last 2m --predicate 'process == "ghostty"'`.
 - To test Ghostty and iTerm2 wired together, add `ghostty` inside an iTerm2 run, never the reverse, and first define a logging `__tt_reload_ghostty` in `$ZDOTDIR/.zshrc` and the run's shell.

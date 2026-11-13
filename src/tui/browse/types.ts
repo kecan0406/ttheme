@@ -49,7 +49,6 @@ export interface BrowseOptions {
   hub?: HubTab
   mark?: readonly Hex[]
   release?: () => ReleaseLine
-  notes?: () => string | undefined
   lookups?: boolean
   search?: string
   color?: boolean
@@ -107,5 +106,6 @@ export type Spot =
   | KeySpot
   | HubSpot
   | HelpSpot
+  | { kind: 'notes'; url: string }
   | { kind: 'page'; step: number; pane?: string }
   | { kind: 'form' }

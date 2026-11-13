@@ -520,7 +520,7 @@ __tt_pv_standing() {
   local -a reply
   local standing=unknown latest="" was=$vline
   integer now
-  vchk=0 vwarn=0 vnew=0 vgood=0 vnote=0
+  vchk=0 vwarn=0 vnew=0 vgood=0
   __tt_release_seen $TTHEME_STATE_DIR/release.json
   if [[ $TTHEME_AUTO_UPDATE != off && ${CI:-false} == false ]]; then
     (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
@@ -535,9 +535,6 @@ __tt_pv_standing() {
       __tt_newer $latest $TTHEME_VERSION && standing=newer vwarn=1 vnew=1 vgood=0
     fi
   fi
-  if (( ! vchk && ! vwarn )) && [[ -n $reply[7] && $reply[8] != $TTHEME_VERSION ]] && __tt_newer $TTHEME_VERSION $reply[7]; then
-    standing=updated vgood=1 vnote=1
-  fi
   if [[ $standing == newer ]]; then
     printf -v vline $TTHEME_STANDING[$standing] $TTHEME_VERSION $latest
   else
@@ -547,12 +544,7 @@ __tt_pv_standing() {
 }
 
 __tt_pv_notes() {
-  local -a reply a b
-  local url=$TTHEME_RELEASES fd
-  __tt_release_seen $TTHEME_STATE_DIR/release.json
-  [[ -n $reply[7] ]] || return 0
-  a=(${(s:.:)reply[7]}) b=(${(s:.:)TTHEME_VERSION})
-  (( a[1] == b[1] && a[2] == b[2] && b[3] - a[3] == 1 )) && url+=/tag/v$TTHEME_VERSION
+  local url=$TTHEME_RELEASES/tag/v$TTHEME_VERSION
   if [[ -n $SSH_CONNECTION ]]; then
     msg=$url msgt=300
   elif [[ $OSTYPE == darwin* ]]; then
@@ -560,14 +552,6 @@ __tt_pv_notes() {
   else
     xdg-open $url </dev/null >/dev/null 2>&1 &!
   fi
-  zmodload -F zsh/system b:zsystem 2>/dev/null
-  [[ -e $TTHEME_STATE_DIR/release.lock ]] || { : >>| $TTHEME_STATE_DIR/release.lock } 2>/dev/null
-  if zsystem flock -t 1 -f fd $TTHEME_STATE_DIR/release.lock 2>/dev/null; then
-    __tt_release_seen $TTHEME_STATE_DIR/release.json
-    __tt_release_put $reply[1] "$reply[2]" $reply[3] $reply[4] $reply[5] $reply[6] "$reply[7]" $TTHEME_VERSION
-    zsystem flock -u $fd
-  fi
-  __tt_pv_standing
   return 0
 }
 
@@ -695,13 +679,14 @@ __tt_pv_foot() {
         ver=$al" $ver "$z
       elif (( vwarn )); then
         ver=$TTHEME_SGR[danger]" $ver "$z
+      elif (( vgood )) && [[ $mhov == notes ]]; then
+        ver=$TTHEME_SGR[under]$TTHEME_SGR[good]" $ver "$z
       elif (( vgood )); then
         ver=$TTHEME_SGR[good]" $ver "$z
       else
         ver=$TTHEME_SGR[chip]" $ver "$z
       fi
       (( vnew )) && ver=$b$ku$z$d" update"$z"   "$ver
-      (( vnote )) && ver=$b$ku$z$d" notes"$z"   "$ver
     fi
   fi
   if (( color )) && [[ -n $rk && $mhov == "key $rk" ]]; then
@@ -773,7 +758,7 @@ __tt_pv_barline() {
       at=$i
       break
     done
-    if [[ -n $ver ]] && (( ! vnew && ! vnote )); then
+    if [[ -n $ver ]] && (( ! vnew )); then
       ver=""
     elif [[ -n $note ]]; then
       note=""
@@ -843,7 +828,11 @@ __tt_pv_barline() {
   if [[ -n $right ]]; then
     pvz+=("$ph $(( rend - rwid + 1 )) $rend key $rk")
   fi
-  [[ -n $ver ]] && (( vnew || vnote )) && pvz+=("$ph $(( end - vwid + 1 )) $end key alt+u")
+  if [[ -n $ver ]] && (( vnew )); then
+    pvz+=("$ph $(( end - vwid + 1 )) $end key alt+u")
+  elif [[ -n $ver ]] && (( ! vchk )); then
+    pvz+=("$ph $(( end - vwid + 1 )) $end notes")
+  fi
   return 0
 }
 
@@ -2371,6 +2360,7 @@ __tt_pv_press() {
 __tt_pv_release() {
   (( TTHEME_PALETTES_IN )) || __tt_palettes
   case $4 in
+    notes) __tt_pv_notes ;;
     key)
       __tt_pv_word $5 || return 0
       key=$REPLY
@@ -3414,7 +3404,6 @@ __tt_pv_handle() {
     stab) (( hub )) && { __tt_pv_screen -1 || return 1 } ;;
     altu)
       [[ -z $pick ]] && (( hub && vnew )) && { pvupdate=1; return 1 }
-      [[ -z $pick ]] && (( hub && vnote )) && __tt_pv_notes
       ;;
     altg) __tt_pv_gopen ;;
     altc)
@@ -3464,7 +3453,7 @@ __tt_preview() {
   zmodload -F zsh/zselect b:zselect 2>/dev/null
   [[ $functions[TRAPURG] == *__tt_woken* ]] && trap '' URG
   local mode=$1 pdir=${2:-$PWD} hubwas=""
-  local -i hub=0 hubleft=0 vchk=0 vwarn=0 vnew=0 vgood=0 vnote=0 vspin=0 pvupdate=0
+  local -i hub=0 hubleft=0 vchk=0 vwarn=0 vnew=0 vgood=0 vspin=0 pvupdate=0
   local vline=""
   [[ $mode == hub ]] && hub=1
   if [[ ! -t 0 || ! -t 1 ]]; then

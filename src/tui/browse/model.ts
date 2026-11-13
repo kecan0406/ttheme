@@ -56,7 +56,6 @@ export class Browse {
   readonly p: Paint
   readonly hub: HubTab | undefined
   private readonly release: (() => ReleaseLine) | undefined
-  private readonly notes: (() => string | undefined) | undefined
   standing: ReleaseLine | undefined
   readonly owns: boolean
   readonly output: (Writable & { columns?: number; rows?: number }) | undefined
@@ -92,7 +91,6 @@ export class Browse {
     this.hub = opts.hub
     this.inks = opts.mark
     this.release = opts.release
-    this.notes = opts.notes
     this.standing = opts.release?.()
     this.owns = opts.owns ?? false
     this.output = opts.output
@@ -280,8 +278,6 @@ export class Browse {
 
     if (key === 'alt-u' && this.hub && this.standing?.standing === 'newer') {
       this.leave(HUB_UPDATE)
-    } else if (key === 'alt-u' && this.hub && this.standing?.standing === 'updated') {
-      this.readNotes()
     } else if (this.place === 'search') {
       this.searchKey(key)
     } else if (this.place === 'form') {
@@ -289,16 +285,6 @@ export class Browse {
     } else {
       this.listKey(key, this.place === 'panel')
     }
-  }
-
-  private readNotes(): void {
-    const url = this.notes?.()
-
-    if (url && !this.io.visit(url)) {
-      this.notice = { text: url, tone: 'info' }
-    }
-
-    this.standing = this.release?.()
   }
 
   private listKey(key: string, panel: boolean): void {
@@ -643,6 +629,10 @@ export class Browse {
       } else if (spot.kind === 'hub') {
         if (free && this.hub && spot.tab !== this.hub) {
           this.leave(hubTo(spot.tab))
+        }
+      } else if (spot.kind === 'notes') {
+        if (!this.io.visit(spot.url)) {
+          this.notice = { text: spot.url, tone: 'info' }
         }
       } else if (spot.kind === 'row' && free) {
         this.openRow(spot, event.count)

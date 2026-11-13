@@ -364,14 +364,16 @@ main() {
   local node
   node=$(node -p process.execPath 2>/dev/null) && print -r -- "path=(${(q)node:h} \$path)" > $SANDBOX/.zshenv
   (( $#zshenv )) && cat -- $zshenv[-1] >> $SANDBOX/.zshenv
+  local auto=${TTHEME_AUTO_UPDATE:-off}
   isolate
+  export TTHEME_AUTO_UPDATE=$auto
   if (( $#here )); then
     wire $label $palettes
     print -r -- "exit leaves; files stay until the next run"
     cd $HOME
     exec zsh -il
   fi
-  export XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache ZDOTDIR=$SANDBOX TTHEME_AUTO_UPDATE=${TTHEME_AUTO_UPDATE:-off}
+  export XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache ZDOTDIR=$SANDBOX
   local front=""
   (( $+commands[lsappinfo] )) && [[ $(lsappinfo info -only pid "$(lsappinfo front)") =~ 'pid"?[[:space:]]*=[[:space:]]*([0-9]+)' ]] && front=$match[1]
   if (( $#iterm )); then
