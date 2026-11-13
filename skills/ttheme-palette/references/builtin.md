@@ -27,4 +27,4 @@ A work and its cast exist wherever aninames' index holds them, not only in the a
 
 ## Finishing
 
-Finish with `mise run build` and `mise run ci`. A palette change ships as a patch release, one palette per pull request (`.github/pull_request_template.md`).
+Finish with `mise run build` and `mise run ci`. A palette change ships with the next weekly release, one palette per pull request (`.github/pull_request_template.md`).

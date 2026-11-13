@@ -258,8 +258,11 @@ depends = ["build"]
 run = "rm -rf pages && bun src/cli/pages.ts pages && bun site/readme.ts pages"
 
 [tasks.release]
-description = "bump the version, turn CHANGELOG.md's `## Unreleased` into it, tag it and push once HEAD is checked — `mise run ci` runs first unless it already passed on this very tree — then watch the release workflow publish it on npm and cut the GitHub release, and wait until npm serves it — `mise run release 1.0.0`"
-usage = 'arg "<version>" help="x.y.z, or patch | minor | major"'
+description = "bump the version, turn CHANGELOG.md's `## Unreleased` into it, tag it and push once HEAD is checked — `mise run ci` runs first unless it already passed on this very tree — then watch the release workflow publish it on npm and cut the GitHub release, and wait until npm serves it. Releases go out once a week: it refuses within six days of the last one that was not a hotfix, unless --hotfix — `mise run release patch`"
+usage = '''
+arg "<version>" help="x.y.z, or patch | minor | major"
+flag "--hotfix" help="release now, between weekly releases, for a regression, a broken install or update, or lost user data"
+'''
 run = '''
 set -e
 zsh tests/checked.zsh clean
@@ -267,6 +270,12 @@ case "${usage_version}" in
   major|minor|patch) version=$(jq -r .version package.json | awk -F. -v part="${usage_version}" '{ if (part == "major") print $1 + 1 ".0.0"; else if (part == "minor") print $1 "." $2 + 1 ".0"; else print $1 "." $2 "." $3 + 1 }') ;;
   *) version="${usage_version}" ;;
 esac
+git fetch -q --tags origin
+last=$(git for-each-ref 'refs/tags/v*' --sort=-creatordate --format='%(creatordate:unix) %(contents:subject)' | grep -v ' hotfix$' | head -1 | cut -d' ' -f1)
+if [ -z "${usage_hotfix:-}" ] && [ -n "$last" ] && [ $(( $(date +%s) - last )) -lt $(( 6 * 86400 )) ]; then
+  echo "release: the last weekly release was $(( ($(date +%s) - last) / 86400 )) days ago, and releases go out once a week — keep the lines under ## Unreleased for the next one, or pass --hotfix for a regression, a broken install or update, or lost user data"
+  exit 1
+fi
 times=$(npm view @kecan0406/ttheme time --json)
 if printf '%s' "$times" | jq -e --arg v "$version" 'has($v)' > /dev/null; then
   echo "release: npm had $version once, and never takes a version twice, even one unpublished — pick the next"
@@ -285,7 +294,7 @@ npm version "$version" --no-git-tag-version > /dev/null
 awk -v version="$version" '{ print } $0 == "## Unreleased" { print ""; print "## " version }' CHANGELOG.md > CHANGELOG.md.new
 mv CHANGELOG.md.new CHANGELOG.md
 git commit -q -m "release: $version" -- package.json CHANGELOG.md
-git tag -a "v$version" -m "release: $version"
+git tag -a "v$version" -m "release: $version${usage_hotfix:+ hotfix}"
 git push --atomic --follow-tags origin HEAD:main
 tag="v$version"
 run=
