@@ -1,10 +1,9 @@
 import { ArrowRight } from 'lucide'
 import { LinkButton } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { CREDITS_PATH } from '@/lib/art'
 import { marketplacePath } from '@/lib/gallery'
 import { BrandIcon, Icon } from '@/lib/icons'
-import { CAST, OTHER_ART, STICKER_CREDITS, STICKER_SIZES, stickerSet } from '@/lib/lead-cast'
+import { CAST, STICKER_CREDITS, STICKER_SIZES, stickerSet } from '@/lib/lead-cast'
 import { OWN_NAME } from '@/lib/sessions'
 import { type Line, linesOf } from '@/lib/terminal'
 import { BUILTIN, paint, type Theme } from '@/lib/themes'
@@ -56,7 +55,6 @@ export function LeadWorld({ stickers }: { stickers: Record<string, string> }) {
           />
         ))}
       </div>
-      <div data-lead-photo hidden />
     </div>
   )
 }
@@ -112,11 +110,6 @@ export function LeadCredits() {
           )}
         </p>
       ))}
-      <p data-lead-credit={OTHER_ART} data-on="false">
-        <a href={CREDITS_PATH}>
-          <b>Art credits</b>
-        </a>
-      </p>
     </div>
   )
 }

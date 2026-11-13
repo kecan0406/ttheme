@@ -1,10 +1,9 @@
 import { LeadUse } from '@/components/home'
-import { isCast, OTHER_ART } from '@/lib/lead-cast'
+import { isCast } from '@/lib/lead-cast'
 import { html } from '@/lib/render'
 import { inMode, type Theme } from '@/lib/themes'
 import { announce, fadeThrough, fill, readJson, reducedMotion } from './dom'
 import { mode } from './mode'
-import { searchIndex } from './search-index'
 import { SparkleBurst } from './sparkle-burst'
 import { choose, onMode, onWear, recall, show } from './wear'
 
@@ -15,8 +14,6 @@ const IN_VIEW = 0.25
 const WIDE = '(min-width: 1180px)'
 
 const PICKS = 'input[name="lead-tab"], input[name="lead-pill"]'
-
-const PHOTO_SIZES = '(min-width: 1180px) 50vw, 86vw'
 
 function wake(sticker: HTMLImageElement) {
   const { src, srcset } = sticker.dataset
@@ -118,10 +115,6 @@ class LeadShowcase extends HTMLElement {
 
   get #solid(): HTMLElement | null {
     return this.querySelector('[data-lead-solid]')
-  }
-
-  get #photo(): HTMLElement | null {
-    return this.querySelector('[data-lead-photo]')
   }
 
   get #stickers(): HTMLImageElement[] {
@@ -317,7 +310,7 @@ class LeadShowcase extends HTMLElement {
 
       for (const sticker of stickers) sticker.dataset.on = String(sticker === shown)
 
-      if (shown) this.#credit(theme.name)
+      this.#credit(shown ? theme.name : null)
     }
 
     if (still) {
@@ -329,65 +322,6 @@ class LeadShowcase extends HTMLElement {
       wake(shown)
       shown.decode().then(wear, wear)
     } else wear()
-
-    this.#frameArt(theme)
-  }
-
-  #frameArt(theme: Theme) {
-    const photo = this.#photo
-
-    if (!photo) return
-
-    if (isCast(theme.name)) {
-      photo.hidden = true
-      photo.replaceChildren()
-
-      return
-    }
-
-    this.#credit(photo.hidden ? null : OTHER_ART)
-    searchIndex().then(
-      (index) => {
-        const art = index.works.find((work) => work.id === theme.work?.id)?.art
-
-        if (this.#worn !== theme) return
-
-        if (!art) {
-          photo.hidden = true
-          photo.replaceChildren()
-          this.#credit(null)
-
-          return
-        }
-
-        const image = new Image()
-
-        image.alt = ''
-        image.decoding = 'async'
-
-        if (art.srcset) {
-          image.srcset = art.srcset
-          image.sizes = PHOTO_SIZES
-        }
-
-        image.src = art.src
-
-        const place = () => {
-          if (this.#worn !== theme) return
-          const before = [...photo.children]
-
-          photo.hidden = false
-          photo.append(image)
-          this.#credit(OTHER_ART)
-          Promise.allSettled(image.getAnimations().map((animation) => animation.finished)).then(() => {
-            for (const old of before) old.remove()
-          })
-        }
-
-        image.decode().then(place, place)
-      },
-      () => {},
-    )
   }
 
   #draw(theme: Theme, still = false) {

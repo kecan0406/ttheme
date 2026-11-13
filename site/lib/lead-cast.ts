@@ -41,8 +41,6 @@ export const STICKER_CREDITS: readonly StickerCredit[] = [
   },
 ]
 
-export const OTHER_ART = 'other-art'
-
 export const STICKER_SIZES = '(min-width: 1180px) min(148.4vh, 104.4vw, 1679px), 199vw'
 
 export function stickerSet(stickers: Record<string, string>, name: string): string {
