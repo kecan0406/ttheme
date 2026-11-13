@@ -85,6 +85,6 @@ While a change goes back and forth with the person you work for, run no check un
 
 ## Maintainers only
 
-- Release only with `mise run release <x.y.z | patch | minor | major>`; never tag, publish or edit a release by hand. Releases go out once a week, and every update a user's ttheme installs is one they see, so a change waits under `## Unreleased` for the next one, built-in palettes too. The task refuses within six days of the last weekly release; `--hotfix` is only for a regression, a broken install or update, or lost user data.
+- Release only with `mise run release <x.y.z | patch | minor | major>`; never tag, publish or edit a release by hand. Releases go out once a week, on Tuesday, when `train.yml` opens a `Weekly release` issue for the lines waiting; every update a user's ttheme installs is one they see, so a change waits under `## Unreleased` for the next one, built-in palettes too. The task refuses within six days of the last weekly release; `--hotfix` is only for a regression, a broken install or update, or lost user data.
 - A release that breaks something: the maintainer points `latest` back at the last good version (`npm dist-tag add @kecan0406/ttheme@<good> latest`, their own login and 2FA), then a hotfix ships the fix. Installs wait a day after they first see a version, and that day is the window.
 - Actions are pinned to full SHAs, which the repository requires; Dependabot moves the pins.
