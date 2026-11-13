@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.113
+
 - After an update, the first `ttheme` prints `Updated to <version>` and a link to what changed as you quit it, in place of the `alt+u notes` key.
 
 ## 1.2.112
