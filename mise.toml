@@ -271,9 +271,8 @@ case "${usage_version}" in
   *) version="${usage_version}" ;;
 esac
 git fetch -q --tags origin
-last=$(git for-each-ref 'refs/tags/v*' --sort=-creatordate --format='%(creatordate:unix) %(contents:subject)' | grep -v ' hotfix$' | head -1 | cut -d' ' -f1)
-if [ -z "${usage_hotfix:-}" ] && [ -n "$last" ] && [ $(( $(date +%s) - last )) -lt $(( 6 * 86400 )) ]; then
-  echo "release: the last weekly release was $(( ($(date +%s) - last) / 86400 )) days ago, and releases go out once a week, on Tuesday — keep the lines under ## Unreleased for the next one, or pass --hotfix for a regression, a broken install or update, or lost user data"
+if [ -z "${usage_hotfix:-}" ] && ! days=$(sh tests/train.sh); then
+  echo "release: the last weekly release was $days days ago, and releases go out once a week, on Tuesday — keep the lines under ## Unreleased for the next one, or pass --hotfix for a regression, a broken install or update, or lost user data"
   exit 1
 fi
 times=$(npm view @kecan0406/ttheme time --json)

@@ -1,7 +1,8 @@
 name: train
 
 # Tuesday 10:00 in Seoul. Releases go out weekly (AGENTS.md); this opens the
-# reminder when CHANGELOG.md has lines waiting, and release.yml closes it.
+# reminder when CHANGELOG.md has lines waiting and the last weekly release is
+# six days old, as `mise run release` asks, and release.yml closes it.
 on:
   schedule:
     - cron: '0 1 * * 2'
@@ -21,12 +22,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - name: open the weekly release issue
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           lines=$(awk '/^## / { on = ($0 == "## Unreleased"); next } on && /^- /' CHANGELOG.md)
           [ -n "$lines" ] || exit 0
+          sh tests/train.sh > /dev/null || exit 0
           gh label create release --color FBCA04 --description 'The weekly release is due' --force > /dev/null
           [ -z "$(gh issue list --label release --state open --json number --jq '.[].number')" ] || exit 0
           count=$(printf '%s\n' "$lines" | grep -c .)
