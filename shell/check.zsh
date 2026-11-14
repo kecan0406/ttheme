@@ -2115,4 +2115,32 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH HTTPS_PROXY=http://proxy.invalid:3128 
   wait $alive 2>/dev/null
   rm -rf $TTHEME_GHOSTTY_TABS $XDG_CONFIG_HOME/ttys $XDG_CONFIG_HOME/read $asks
 ) || exit 1
+(
+  cd $XDG_CONFIG_HOME
+  ran=$XDG_CONFIG_HOME/ran
+  bad='PWD[$(:>ran)]'
+  for pair in "iterm2 "$'\e]1337;ReportCellSize=17.0;8.0;2.0\e\\' "warp "$'\e[4;600;800t\e[8;30;100t' "terminal-app "$'\e[4;600;800t\e[8;30;100t'; do
+    source $TTHEME_CODE/adapters/${pair%% *}.zsh
+    answer=${pair#* }
+    __tt_ask() { REPLY=$answer }
+    bgch= bgcw=
+    __tt_bg_cells
+    [[ $bgch == (34|40) && $bgcw == 16 ]] || { print -u2 "${pair%% *} did not read its cell size from the terminal's answer: $bgch x $bgcw"; exit 1 }
+  done
+  for pair in "iterm2 "$'\e]1337;ReportCellSize='$bad$';8.0;2.0\e\\' "warp "$'\e[4;600;800t\e[8;30;100t\e]0;[4;'$bad';1' "warp "$'\e[4;600;800t\e[8;30;100t\e]0;[8;'$bad';1' \
+    "terminal-app "$'\e[4;600;800t\e[8;30;100t\e]0;[4;'$bad';1'; do
+    source $TTHEME_CODE/adapters/${pair%% *}.zsh
+    answer=${pair#* }
+    __tt_ask() { REPLY=$answer }
+    bgch= bgcw=
+    ( __tt_bg_cells ) 2>/dev/null
+    [[ ! -e $ran ]] || { print -u2 "${pair%% *} ran a command an answer to its cell size question carried"; exit 1 }
+    __tt_bg_cells 2>/dev/null
+    [[ -z $bgch$bgcw ]] || { print -u2 "${pair%% *} took a cell size from an answer that is not one: $bgch x $bgcw"; exit 1 }
+  done
+  source $TTHEME_CODE/adapters/terminal-app.zsh
+  TTHEME_STATE_DIR=$XDG_CONFIG_HOME/shapestate
+  ( __tt_terminal_shape "$bad;1" ) 2>/dev/null
+  [[ ! -e $ran && ! -e $TTHEME_STATE_DIR/terminal-app.window ]] || { print -u2 "Terminal.app's window shape took an answer that is not two numbers"; exit 1 }
+) || exit 1
 print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$adapter"

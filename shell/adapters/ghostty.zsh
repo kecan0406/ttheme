@@ -147,7 +147,7 @@ __tt_ghostty_take() {
   if [[ -n $ans[4] ]]; then
     at=("")
     zstat -F %s.%N -A at +mtime -- ${TTHEME_CONFIG:h}/backgrounds/shown.conf 2>/dev/null
-    [[ -n $at[1] ]] && (( at[1] > ans[4] )) && return 0
+    [[ -n $at[1] && $ans[4] == <->(|.<->) ]] && (( at[1] > ans[4] )) && return 0
   fi
   __tt_ghostty_key $ans[2]
   key=$REPLY
@@ -189,6 +189,7 @@ __tt_ghostty_tick() {
   fi
   for f in $TTHEME_GHOSTTY_TABS/[^.]*(N); do
     key=${f:t}
+    [[ $key != *[^A-Za-z0-9._-]* ]] || continue
     rec=(${=${"$(<$f)"}})
     zstat -F %s.%N -A at +atime -- ${rec[4]:-/nonexistent} 2>/dev/null || continue
     if [[ $at[1] == "${TTHEME_GHOSTTY_SEEN[$key]}" ]]; then

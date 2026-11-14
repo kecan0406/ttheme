@@ -186,7 +186,7 @@ __tt_bg_cells() {
   resp=$REPLY
   [[ $resp == *ReportCellSize=*($'\a'|$'\e\\') ]] || return 0
   p=(${(s:;:)${${resp##*ReportCellSize=}%%($'\a'|$'\e\\')*}})
-  (( ${#p} == 3 )) || return 0
+  (( ${#p} == 3 )) && [[ -z ${p:#<->(|.<->)} ]] || return 0
   bgch=${$(( p[1] * p[3] + 0.5 ))%.*} bgcw=${$(( p[2] * p[3] + 0.5 ))%.*}
 }
 

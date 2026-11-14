@@ -490,6 +490,7 @@ __tt_bg_cells() {
   resp=$REPLY
   [[ $resp == *'[4;'<1->';'<1->t* && $resp == *'[8;'<1->';'<1->t* ]] || return 0
   px=(${(s:;:)${${resp##*\[4;}%%t*}}) cells=(${(s:;:)${${resp##*\[8;}%%t*}})
+  [[ "$px" == <1->' '<1-> && "$cells" == <1->' '<1-> ]] || return 0
   bgch=$(( 2 * px[1] / cells[1] )) bgcw=$(( 2 * px[2] / cells[2] ))
 }
 

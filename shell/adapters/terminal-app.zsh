@@ -34,7 +34,7 @@ __tt_heard() { TTHEME_TERMINAL_BASE=$1 }
 __tt_terminal_shape() {
   local -a hw=(${(s:;:)1})
   local f=$TTHEME_STATE_DIR/terminal-app.window want was=""
-  (( ${#hw} == 2 )) || return 0
+  [[ $1 == <1->';'<1-> ]] || return 0
   want=$hw[2]x$hw[1]
   [[ -r $f ]] && was=$(<$f)
   [[ $want != "$was" ]] || return 0
@@ -186,6 +186,7 @@ __tt_bg_cells() {
   resp=$REPLY
   [[ $resp == *'[4;'<1->';'<1->t* && $resp == *'[8;'<1->';'<1->t* ]] || return 0
   px=(${(s:;:)${${resp##*\[4;}%%t*}}) cells=(${(s:;:)${${resp##*\[8;}%%t*}})
+  [[ "$px" == <1->' '<1-> && "$cells" == <1->' '<1-> ]] || return 0
   bgch=$(( 2 * px[1] / cells[1] )) bgcw=$(( 2 * px[2] / cells[2] ))
 }
 

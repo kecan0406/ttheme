@@ -53,6 +53,7 @@ paths:
 
 - Every function the shell calls on its own, and every block that runs while the layer is sourced, starts with `emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}`.
 - Every question to the terminal goes through `__tt_ask`.
+- An answer from the terminal, a line of a file or a file's name is matched whole against a number pattern before it reaches arithmetic or an arithmetic subscript: zsh runs a `$(…)` it finds there.
 - Open the tty as `{ exec {fd}<>/dev/tty } 2>/dev/null`, never `exec {fd}<>/dev/tty 2>/dev/null`.
 - Never run `stty` inside zle or preview, and run preview's `stty -echo -icanon` in the foreground, never from `$(…)`.
 - Inside double quotes spell an escape in `${var//pattern/replacement}` through a variable (`local e=$'\e'`), never `$'…'`.

@@ -168,6 +168,7 @@ __tt_bg_load() {
   local -a fills lines src pics pd
   (( ${+bgsrc[$name]} )) && return 0
   [[ $name == *:* ]] && key=${name##*:}
+  [[ $key != *[^A-Za-z0-9._-]* ]] || return 0
   file=${${pal/@/--}/\//--}
   bgfrom[$name]="" bgurl[$name]="" bgby[$name]="" bgtunef[$name]=$file.tune.conf bgofff[$name]=$file.off.conf bgimages[$name]=1
   if [[ -n $key ]]; then
@@ -185,13 +186,14 @@ __tt_bg_load() {
     case $line in
       'config-file = ?'*.tune.conf) bgtunef[$name]=${line#config-file = \?} ;;
       'config-file = ?'*.off.conf) bgofff[$name]=${line#config-file = \?} ;;
-      '# image '*/<->) bgimages[$name]=${line##*/} bgact[$pal]=${${line#\# image }%% *} ;;
+      '# image '*/<->) pd=(${=line#\# image }); [[ $pd[1] == *[^A-Za-z0-9._-]* ]] || bgimages[$name]=${line##*/} bgact[$pal]=$pd[1] ;;
       '# colors '*) pd=(${=line#\# colors }); [[ -n $key ]] || bgcolors[$pal:$pd[1]]=$pd[2] ;;
       '# credit '*) [[ -n $key ]] || { line=${line#\# credit }; bgcred[$pal:${line%% *}]=${line#* } } ;;
       '# source '*) [[ -n $key ]] || { line=${line#\# source }; bgpage[$pal:${line%% *}]="${line##* } ${${line#* }% *}" } ;;
       '# profile '*) [[ -n $key ]] || { line=${line#\# profile }; bgprof[$pal:${line%% *}]+=${bgprof[$pal:${line%% *}]:+$'\n'}${line#* } } ;;
       '# picture '*)
         pd=(${=line#\# picture })
+        [[ $pd[1] != *[^A-Za-z0-9._-]* ]] || continue
         bgpic[$pal:$pd[1]]=${(j: :)pd[2,-1]}
         pics+=($pd[1])
         ;;
@@ -225,6 +227,7 @@ __tt_bg_load() {
       *@<20-999>-*-<->x<->.png|*@<20-99>-*.png) stem=${REPLY%@*} size=${${REPLY##*@}%%-*} ;;
       *.png) stem=${REPLY%.png}; [[ $fit == cover ]] && size=fill ;;
     esac
+    [[ $size == (fill|<->) ]] || size=100
     (( pass == 1 )) && bgdef[$name]="$size $at $op" bgbase[$name]=$REPLY
   done
   bgsize[$name]=$size bgpos[$name]=$at bgop[$name]=$op bgoff[$name]=0 bgshot[$name]="" bgshotkey[$name]="" bgfocus[$name]=50
@@ -460,7 +463,8 @@ __tt_bg_send() {
     __tt_bg_transmit ${bgsent[$1]} "$1"
     while (( ${#bgorder} > 1 && bgbytes > 134217728 )); do
       printf '\e_Ga=d,d=I,i=%d,q=2\e\\' ${bgsent[$bgorder[1]]}
-      (( bgbytes -= bgcost[$bgorder[1]] ))
+      cost=${bgcost[$bgorder[1]]:-0}
+      (( bgbytes -= cost ))
       unset "bgsent[$bgorder[1]]" "bgcost[$bgorder[1]]"
       shift bgorder
     done

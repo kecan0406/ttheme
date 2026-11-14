@@ -1554,7 +1554,7 @@ __tt_map_line() {
     [[ -n ${TTHEME_PALETTE[$name]} ]] || flag="not installed"
     [[ -d $at ]] || flag+="${flag:+, }no such directory"
   fi
-  lp+=("$2") lpw+=($3) ll+=("$4") lat+=("$at") lpal+=("$name") lnote+=("$note") lflag+=("$flag")
+  lp+=("$2") lpw+=($3) ll+=("${4//[[:cntrl:]]/}") lat+=("$at") lpal+=("$name") lnote+=("$note") lflag+=("$flag")
 }
 
 __tt_map_walk() {
