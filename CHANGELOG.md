@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Security: in iTerm2, Warp and Terminal.app, what the terminal answered when asked for its cell or window size went into arithmetic unchecked, so an answer made to hold a command could run it as the bare `ttheme` opened, as `ttheme share` ran or, in Terminal.app, as a shell started. It took something able to put text in the terminal's input at that moment, a paste or a terminal that sends text back. The answers are now read only as numbers. kitty, Konsole, WezTerm and Ghostty were not affected.
+- ttheme now installs by itself only a release that has been out for a day and that npm holds a build provenance for, and never one past the release npm calls `latest`. Before, a tab already waiting for an update took whatever was newest at its next daily check, however new. `ttheme update` still installs the newest at once.
+- A request find follows to another site's host no longer carries your danbooru user number or zerochan username: they go to their own site only.
+- In WezTerm and kitty, text printed in a tab can no longer make the window show a picture from outside ttheme's folders.
+- `ttheme palette measure` refuses a scratch folder in the temp folder that is someone else's or a link. On a computer shared with other users, one of them could have used it to have a fetched picture written over a file of yours.
+- find no longer makes a link of a source address with a user part before its host, which the screen showed as if it were the host.
+- `ttheme info` now says only that `TTHEME_FIND_HIDE_TAGS` and `TTHEME_FIND_HOSTS` are set, never what they hold.
+
 ## 1.2.113
 
 - After an update, the first `ttheme` prints `Updated to <version>` and a link to what changed as you quit it, in place of the `alt+u notes` key.
