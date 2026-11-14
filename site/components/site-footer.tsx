@@ -168,13 +168,18 @@ export function LandingFooter({ facts }: { facts: Facts }) {
   )
 }
 
-export function SiteFooter({ facts, current = '' }: { facts: Facts; current?: string }) {
+export function SiteFooter({ facts, current = '', wide = false }: { facts: Facts; current?: string; wide?: boolean }) {
   return (
     <footer
       data-site-footer
       class="relative isolate mt-auto before:absolute before:inset-0 before:-z-1 before:border-t before:border-border before:bg-glass before:backdrop-blur-[14px] before:backdrop-saturate-130"
     >
-      <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-6">
+      <div
+        class={cn(
+          'mx-auto grid grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-6',
+          wide ? 'w-[min(1600px,calc(100%-40px))]' : 'w-[min(1280px,calc(100%-40px))]',
+        )}
+      >
         <div class="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 max-[640px]:grid-cols-2 max-[640px]:gap-6">
           <Brand />
           <Columns current={current} />

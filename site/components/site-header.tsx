@@ -21,7 +21,17 @@ const NAV = [
 const ITEM =
   'rounded-sm px-3 text-sm leading-13 font-medium whitespace-nowrap text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary header-tight:px-2.5 header-icons:px-2'
 
-export function SiteHeader({ current, facts, fixed = false }: { current: string; facts: Facts; fixed?: boolean }) {
+export function SiteHeader({
+  current,
+  facts,
+  fixed = false,
+  wide = false,
+}: {
+  current: string
+  facts: Facts
+  fixed?: boolean
+  wide?: boolean
+}) {
   const stars = facts.repo?.stars ?? null
 
   return (
@@ -34,7 +44,7 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
       <div
         class={cn(
           'relative mx-auto flex min-h-13 flex-wrap items-stretch justify-between gap-x-4',
-          fixed ? 'w-full px-5' : 'w-[min(1280px,calc(100%-40px))]',
+          fixed ? 'w-full px-5' : wide ? 'w-[min(1600px,calc(100%-40px))]' : 'w-[min(1280px,calc(100%-40px))]',
         )}
       >
         <div class="flex flex-wrap items-stretch gap-x-3 header-tight:gap-x-1.5">

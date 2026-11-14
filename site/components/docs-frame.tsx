@@ -187,9 +187,9 @@ export function DocsFrame({
 }>) {
   return (
     <div class="ground flex min-h-dvh flex-col">
-      <SiteHeader current={DOCS_PATH} facts={facts} />
-      <div data-docs class="mx-auto w-[min(1280px,calc(100%-40px))] pt-3 pb-12">
-        <docs-page class="grid grid-cols-[minmax(0,1fr)] items-start gap-3 docs-side:grid-cols-[15.5rem_minmax(0,1fr)] docs-toc:grid-cols-[15.5rem_minmax(0,1fr)_13.5rem]">
+      <SiteHeader current={DOCS_PATH} facts={facts} wide />
+      <div data-docs class="mx-auto w-[min(1600px,calc(100%-40px))] pt-3 pb-12">
+        <docs-page class="grid grid-cols-[minmax(0,1fr)] items-start gap-3 docs-side:grid-cols-[15.5rem_minmax(0,1fr)] docs-toc:grid-cols-[15.5rem_minmax(0,1fr)_13.5rem] docs-wide:grid-cols-[16.5rem_minmax(0,1fr)_14.5rem]">
           <PopoverTrigger
             popover="docs-menu"
             dialog={false}
@@ -203,7 +203,7 @@ export function DocsFrame({
           <DocsNav path={path} />
           <main
             id="content"
-            class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-md docs-side:p-6"
+            class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-md docs-side:p-6 docs-wide:p-8"
           >
             {children}
             <footer class="grid gap-3 pt-3">
@@ -256,7 +256,7 @@ export function DocsFrame({
           </LinkButton>
         </docs-page>
       </div>
-      <SiteFooter facts={facts} />
+      <SiteFooter facts={facts} wide />
     </div>
   )
 }

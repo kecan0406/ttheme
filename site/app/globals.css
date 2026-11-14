@@ -11,6 +11,7 @@
 @custom-variant bar-squeezed (@media (900px <= width < 1104px) and (height >= 600px));
 @custom-variant docs-side (@container docs (width >= 760px));
 @custom-variant docs-toc (@container docs (width >= 1080px));
+@custom-variant docs-wide (@container docs (width >= 1360px));
 @custom-variant split (&:is([data-palette-preview]:has(input[name='scene'][value='all']:checked) *));
 
 @font-face {
@@ -2599,9 +2600,20 @@ pill-train {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: calc(var(--spacing) * 3);
-  max-width: 72ch;
   color: var(--foreground);
   text-wrap: pretty;
+}
+
+/* Sentences wrap at 72ch; screens, files, tables and rows take the card's whole width. */
+[data-doc-body]
+  :is(h2, h3, p, ul, ol, blockquote, [data-slot='callout']):not(
+    [data-slot='steps'],
+    figure *,
+    [data-slot='table'] *,
+    [data-slot='callout'] *,
+    blockquote *
+  ) {
+  max-width: 72ch;
 }
 
 [data-doc-body] > section,
