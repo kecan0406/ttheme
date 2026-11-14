@@ -204,9 +204,10 @@ ttheme update                  # ttheme itself, then every marketplace
 ttheme update alice@pastel     # ttheme itself, then one marketplace
 ```
 
-ttheme updates itself. Once a day it asks for the newest release, and a day
-after it first sees one newer than itself it installs the newest, in the
-background, through npx or bunx, whichever ran `init`. An update replaces the command and nothing you set: your
+ttheme updates itself. Once a day it asks for the newest release, and it
+installs the newest one that has been out for a day and that the registry
+holds a build provenance for, in the background, through npx or bunx,
+whichever ran `init`. An update replaces the command and nothing you set: your
 settings, palettes, pins and pictures stay as they are. A tab that is already
 open keeps the version it started with and says once that a newer one is
 installed; `exec zsh` or a new tab runs it, and `ttheme` in that tab asks for

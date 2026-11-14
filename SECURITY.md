@@ -7,11 +7,14 @@ as a new release.
 
 ttheme writes marked blocks into `~/.zshrc` and your terminals' config files,
 runs zsh code at every prompt, fetches the marketplaces you add from GitHub,
-asks npm's registry once a day whether a newer ttheme is out, reads the
-marketplace index Browse's search lists from GitHub Pages, asks
+asks npm's registry once a day whether a newer ttheme is out and installs one
+that has been out for a day through npx or bunx, reads the marketplace index Browse's search lists from GitHub Pages, asks
 names.ttheme.dev what a title typed in that search means, reads its list of
 works from there when it installs and once a day, downloads the pictures a
 palette lists when `add`, Browse or `update` installs it, and `find` downloads
-pictures from the booru sites listed in `src/core/booru.ts`. Anything
-that lets a palette, a marketplace, the index or a downloaded picture run code,
-or write outside ttheme's own blocks and directories, is in scope.
+pictures from the booru sites listed in `src/core/booru.ts`. `ttheme palette`
+reads base color schemes from GitHub and fetches the picture at the address
+you give it to measure, and publishing a marketplace runs your own `gh`.
+Anything that lets a palette, a marketplace, the index, a downloaded picture or
+what a terminal answers run code, or write outside ttheme's own blocks and
+directories, is in scope.

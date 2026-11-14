@@ -19,11 +19,11 @@ import {
   autoWanted,
   checkLatest,
   checkOf,
-  installDue,
   isNewer,
   newerRelease,
   Replaced,
   releaseLine,
+  ripest,
   standingOf,
   upgradeTo,
 } from './release.ts'
@@ -62,16 +62,35 @@ test('a release check stands as under way, failed, newer, current or unknown by 
   assert.equal(standingOf({ checked: now }, now, '1.2.29'), 'unknown')
 })
 
-test('a newer release installs itself a day after it was first seen', () => {
+test('a newer release is known since it was first seen, while more come out', () => {
   const day = 24 * 60 * 60 * 1000
   const now = 10 * day
   const seen = answered({ checked: now - day, latest: '1.2.30', since: now - day }, now, '1.2.30', '1.2.29')
   assert.equal(seen.since, now - day)
   assert.equal(answered(seen, now, '1.2.31', '1.2.29').since, now - day)
   assert.equal(answered(seen, now, '1.2.31', '1.2.30').since, now)
-  assert.equal(installDue(seen, now, '1.2.29'), '1.2.30')
-  assert.equal(installDue({ ...seen, since: now - day + 1 }, now, '1.2.29'), undefined)
-  assert.equal(installDue(seen, now, '1.2.30'), undefined)
+})
+
+test('the release that installs itself is the newest one out for a day, however long a newer one was known', () => {
+  const day = 24 * 60 * 60 * 1000
+  const now = Date.parse('2031-03-10T00:00:00.000Z')
+  const at = (ago: number) => new Date(now - ago).toISOString()
+
+  const times = {
+    created: at(90 * day),
+    modified: at(0),
+    '1.2.29': at(9 * day),
+    '1.2.30': at(3 * day),
+    '1.2.31': at(day),
+    '1.2.32': at(day - 1),
+    '1.3.0-beta.1': at(5 * day),
+  }
+
+  assert.equal(ripest(times, now, '1.2.29'), '1.2.31')
+  assert.equal(ripest([times], now, '1.2.29'), '1.2.31')
+  assert.equal(ripest(times, now, '1.2.31'), undefined)
+  assert.equal(ripest({ '1.2.32': 'soon' }, now, '1.2.29'), undefined)
+  assert.equal(ripest('1.2.32', now, '1.2.29'), undefined)
 })
 
 test('the standing line names the newer release where there is one', () => {

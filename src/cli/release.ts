@@ -24,14 +24,20 @@ import { painter } from '../tui/style.ts'
 
 interface Tool {
   name: string
-  asks: readonly [string, ...string[]]
+  asks: (spec: string, ...fields: string[]) => [string, ...string[]]
   flags: readonly string[]
 }
 
 const TOOLS: Record<Runner, Tool> = {
-  npx: { name: 'npm', asks: ['npm', 'view', `${pkg.name}@latest`, 'version', '--prefer-online'], flags: ['--yes'] },
-  bunx: { name: 'Bun', asks: ['bun', 'info', `${pkg.name}@latest`, 'version'], flags: [] },
+  npx: {
+    name: 'npm',
+    asks: (spec, ...fields) => ['npm', 'view', spec, ...fields, '--prefer-online'],
+    flags: ['--yes'],
+  },
+  bunx: { name: 'Bun', asks: (spec, ...fields) => ['bun', 'info', spec, ...fields], flags: [] },
 }
+
+const PROVEN = /^https:\/\/slsa\.dev\/provenance\//
 
 export function launch(runner: Runner, verb: string): string {
   return `${runner} ${pkg.name}@latest ${verb}`
@@ -116,9 +122,9 @@ function askDir(runner: Runner): string {
   return dir
 }
 
-function fetchLatest(timeout = TIMEOUT): Promise<string> {
+function asked(spec: string, fields: readonly string[], timeout = TIMEOUT): Promise<string> {
   const by = runner()
-  const [tool, ...args] = TOOLS[by].asks
+  const [tool, ...args] = TOOLS[by].asks(spec, ...fields)
   const cwd = askDir(by)
 
   return new Promise((resolve, reject) => {
@@ -149,18 +155,48 @@ function fetchLatest(timeout = TIMEOUT): Promise<string> {
           return
         }
 
-        const version = stdout.trim()
-
-        if (!RELEASE.test(version)) {
-          reject(new Error('the npm registry named no version'))
-
-          return
-        }
-
-        resolve(version)
+        resolve(stdout.trim())
       },
     )
   })
+}
+
+async function fetchLatest(timeout = TIMEOUT): Promise<string> {
+  const version = await asked(`${pkg.name}@latest`, ['version'], timeout)
+
+  if (!RELEASE.test(version)) {
+    throw new Error('the npm registry named no version')
+  }
+
+  return version
+}
+
+export function ripest(times: unknown, now: number, running: string = pkg.version): string | undefined {
+  const published: unknown = Array.isArray(times) ? times[0] : times
+
+  if (!published || typeof published !== 'object') {
+    return undefined
+  }
+
+  return Object.entries(published)
+    .filter(([version, at]) => isNewer(version, running) && typeof at === 'string' && now - Date.parse(at) >= DAY)
+    .map(([version]) => version)
+    .reduce<string | undefined>(
+      (best, version) => (best === undefined || isNewer(version, best) ? version : best),
+      undefined,
+    )
+}
+
+async function fetchRipe(now: number): Promise<string | undefined> {
+  const version = ripest(JSON.parse(await asked(pkg.name, ['time', '--json'])), now)
+
+  if (version === undefined) {
+    return undefined
+  }
+
+  const proof = await asked(`${pkg.name}@${version}`, ['dist.attestations.provenance.predicateType']).catch(() => '')
+
+  return PROVEN.test(proof) ? version : undefined
 }
 
 function failedAt(seen: Seen, now: number): number | undefined {
@@ -210,12 +246,6 @@ function failing(seen: Seen, now: number): Seen {
   }
 }
 
-export function installDue(seen: Seen, now: number, running: string = pkg.version): string | undefined {
-  const { latest, since } = seen
-
-  return latest && since !== undefined && isNewer(latest, running) && now - since >= DAY ? latest : undefined
-}
-
 export function startReleaseCheck(now = Date.now()): void {
   const seen = readSeen()
 
@@ -234,8 +264,10 @@ export function startReleaseCheck(now = Date.now()): void {
 }
 
 export async function checkLatest(): Promise<number> {
+  let latest: string
+
   try {
-    const latest = await fetchLatest()
+    latest = await fetchLatest()
     writeSeen(answered(readSeen(), Date.now(), latest))
   } catch {
     writeSeen(failing(readSeen(), Date.now()))
@@ -243,10 +275,12 @@ export async function checkLatest(): Promise<number> {
     return 1
   }
 
-  const due = installDue(readSeen(), Date.now())
+  if (isNewer(latest, pkg.version) && autoWanted() && runsInstalled()) {
+    const ripe = await fetchRipe(Date.now()).catch(() => undefined)
 
-  if (due && autoWanted() && runsInstalled()) {
-    installQuietly(due)
+    if (ripe !== undefined) {
+      installQuietly(ripe)
+    }
   }
 
   return 0
