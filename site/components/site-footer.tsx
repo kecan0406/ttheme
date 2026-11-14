@@ -149,14 +149,16 @@ export function LandingFooter({ facts }: { facts: Facts }) {
           <Columns current="/" plain />
         </div>
       </div>
-      <div aria-hidden="true" data-lead-footer-pills>
-        {SLOTS.map((slot) => (
-          <i
-            class="block h-2.5 min-w-1.5 rounded-full inset-ring inset-ring-foreground/16 forced-color-adjust-none motion-safe:animate-dance"
-            style={`background:var(--a${slot});width:${slot % 3 === 0 ? 28 : 12}px;animation-delay:${slot * -0.6}s`}
-          />
-        ))}
-      </div>
+      <pill-train>
+        <div aria-hidden="true" data-lead-footer-pills>
+          {SLOTS.map((slot) => (
+            <i
+              class="block h-2.5 min-w-1.5 rounded-full inset-ring inset-ring-foreground/16 forced-color-adjust-none motion-safe:animate-dance"
+              style={`background:var(--a${slot});width:${slot % 3 === 0 ? 28 : 12}px;animation-delay:${slot * -0.6}s`}
+            />
+          ))}
+        </div>
+      </pill-train>
       <div data-lead-footer-line class="text-xs text-muted-foreground">
         <span>MIT</span>
         <span translate="no" safe>{`v${facts.version}`}</span>

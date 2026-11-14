@@ -1420,17 +1420,22 @@ lead-showcase > [data-site-header] {
   color: var(--bg);
 }
 
+pill-train {
+  display: contents;
+}
+
 [data-lead-footer-pills] {
   position: absolute;
   top: 50%;
   right: max(12px, calc(var(--track) - 24px));
-  z-index: 2;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: calc(var(--spacing) * 1.5);
   width: calc(var(--spacing) * 55);
   translate: 0 -50%;
+  pointer-events: none;
 }
 
 [data-lead-footer-line] {
@@ -1493,7 +1498,8 @@ lead-showcase > [data-site-header] {
   }
 
   [data-lead-footer-pills] {
-    position: static;
+    position: relative;
+    inset: auto;
     width: auto;
     margin: calc(var(--spacing) * 12) var(--track) 0;
     translate: none;

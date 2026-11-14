@@ -22,6 +22,7 @@ declare namespace JSX {
     'mode-switch': HtmlTag
     'palette-builder': HtmlTag
     'palette-picker': HtmlTag
+    'pill-train': HtmlTag
     'pins-player': HtmlTag
     'route-progress': HtmlTag
     'site-menus': HtmlTag
