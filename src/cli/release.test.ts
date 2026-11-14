@@ -86,11 +86,12 @@ test('the release that installs itself is the newest one out for a day, however 
     '1.3.0-beta.1': at(5 * day),
   }
 
-  assert.equal(ripest(times, now, '1.2.29'), '1.2.31')
-  assert.equal(ripest([times], now, '1.2.29'), '1.2.31')
-  assert.equal(ripest(times, now, '1.2.31'), undefined)
-  assert.equal(ripest({ '1.2.32': 'soon' }, now, '1.2.29'), undefined)
-  assert.equal(ripest('1.2.32', now, '1.2.29'), undefined)
+  assert.equal(ripest(times, now, '1.2.32', '1.2.29'), '1.2.31')
+  assert.equal(ripest([times], now, '1.2.32', '1.2.29'), '1.2.31')
+  assert.equal(ripest(times, now, '1.2.30', '1.2.29'), '1.2.30')
+  assert.equal(ripest(times, now, '1.2.32', '1.2.31'), undefined)
+  assert.equal(ripest({ '1.2.32': 'soon' }, now, '1.2.32', '1.2.29'), undefined)
+  assert.equal(ripest('1.2.32', now, '1.2.32', '1.2.29'), undefined)
 })
 
 test('the standing line names the newer release where there is one', () => {

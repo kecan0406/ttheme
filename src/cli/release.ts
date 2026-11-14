@@ -171,24 +171,25 @@ async function fetchLatest(timeout = TIMEOUT): Promise<string> {
   return version
 }
 
-export function ripest(times: unknown, now: number, running: string = pkg.version): string | undefined {
+export function ripest(times: unknown, now: number, latest: string, running: string = pkg.version): string | undefined {
   const published: unknown = Array.isArray(times) ? times[0] : times
+  let best = running
 
   if (!published || typeof published !== 'object') {
     return undefined
   }
 
-  return Object.entries(published)
-    .filter(([version, at]) => isNewer(version, running) && typeof at === 'string' && now - Date.parse(at) >= DAY)
-    .map(([version]) => version)
-    .reduce<string | undefined>(
-      (best, version) => (best === undefined || isNewer(version, best) ? version : best),
-      undefined,
-    )
+  for (const [version, at] of Object.entries(published)) {
+    if (isNewer(version, best) && !isNewer(version, latest) && typeof at === 'string' && now - Date.parse(at) >= DAY) {
+      best = version
+    }
+  }
+
+  return best === running ? undefined : best
 }
 
-async function fetchRipe(now: number): Promise<string | undefined> {
-  const version = ripest(JSON.parse(await asked(pkg.name, ['time', '--json'])), now)
+async function fetchRipe(now: number, latest: string): Promise<string | undefined> {
+  const version = ripest(JSON.parse(await asked(pkg.name, ['time', '--json'])), now, latest)
 
   if (version === undefined) {
     return undefined
@@ -276,7 +277,7 @@ export async function checkLatest(): Promise<number> {
   }
 
   if (isNewer(latest, pkg.version) && autoWanted() && runsInstalled()) {
-    const ripe = await fetchRipe(Date.now()).catch(() => undefined)
+    const ripe = await fetchRipe(Date.now(), latest).catch(() => undefined)
 
     if (ripe !== undefined) {
       installQuietly(ripe)
