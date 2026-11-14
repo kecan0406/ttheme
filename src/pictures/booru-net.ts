@@ -149,8 +149,8 @@ async function get(
       throw new Error(`${site.name} pointed at something that is not a web address`)
     }
 
-    const host = new URL(at).host
-    const agent = within(new URL(at).hostname, site) ? agentFor(site) : AGENT
+    const { host, hostname } = new URL(at)
+    const agent = within(hostname, site) ? agentFor(site) : AGENT
     const fenced = `${host} ${agent}`
     const now = Date.now()
 
