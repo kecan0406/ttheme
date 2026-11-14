@@ -735,7 +735,7 @@ export function triedAs(picture: Picture, attempt: Attempt): Picture {
 }
 
 function word(name: string): string {
-  return name.replace(/\p{Bidi_Control}/gu, '').replace(/[\s,\p{Cc}]+/gu, '_')
+  return name.replace(/\p{Bidi_Control}/gu, '').replace(/[\s,\p{Cc}]+/gu, '_') || '_'
 }
 
 function byline(picture: Picture): string {

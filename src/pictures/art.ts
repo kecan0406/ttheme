@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { lstatSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { AGENT } from '../core/booru.ts'
@@ -17,7 +18,19 @@ const SIGNATURES: [number[], string][] = [
 ]
 
 export function artDir(): string {
-  return join(tmpdir(), 'ttheme-measure')
+  const dir = join(tmpdir(), 'ttheme-measure')
+  mkdirSync(dir, { recursive: true, mode: 0o700 })
+  const held = lstatSync(dir)
+
+  if (
+    !held.isDirectory() ||
+    (held.mode & 0o022) !== 0 ||
+    (process.getuid !== undefined && held.uid !== process.getuid())
+  ) {
+    throw new Error(`${dir} is not a folder only you can write to — remove it and measure again`)
+  }
+
+  return dir
 }
 
 export function artKey(ref: string): string {

@@ -2,6 +2,7 @@ import { setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { profilesOf } from '../core/artists.ts'
 import {
+  AGENT,
   accountOf,
   agentFor,
   type Credit,
@@ -54,6 +55,13 @@ const TRIES = 3
 const HOPS = 3
 
 const WEB = /^https?:/i
+
+function within(hostname: string, site: Site): boolean {
+  const home = new URL(site.origin).hostname
+  const apex = /^[\d.]+$|:/.test(home) ? home : home.split('.').slice(-2).join('.')
+
+  return hostname === apex || hostname.endsWith(`.${apex}`)
+}
 
 const paused = new Map<string, { site: string; until: number }>()
 
@@ -142,7 +150,7 @@ async function get(
     }
 
     const host = new URL(at).host
-    const agent = agentFor(site)
+    const agent = within(new URL(at).hostname, site) ? agentFor(site) : AGENT
     const fenced = `${host} ${agent}`
     const now = Date.now()
 
