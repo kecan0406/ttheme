@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto'
 import {
   appendFileSync,
   chmodSync,
@@ -51,9 +52,9 @@ function traced(...paths: string[]): void {
 export function writeAtomic(path: string, content: string | Uint8Array, aside?: string): void {
   const real = existsSync(path) ? realpathSync(path) : path
   mkdirSync(dirname(real), { recursive: true })
-  const tmp = join(aside ?? dirname(real), `${basename(real)}.ttheme-${process.pid}`)
+  const tmp = join(aside ?? dirname(real), `${basename(real)}.ttheme-${randomInt(2 ** 48 - 1)}`)
   const mode = existsSync(real) ? statSync(real).mode & 0o7777 : undefined
-  writeFileSync(tmp, content, mode === undefined ? {} : { mode })
+  writeFileSync(tmp, content, mode === undefined ? { flag: 'wx' } : { flag: 'wx', mode })
 
   if (mode !== undefined) {
     chmodSync(tmp, mode)

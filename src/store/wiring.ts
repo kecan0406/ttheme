@@ -164,6 +164,7 @@ export const CONFIG_SETTINGS = {
   TTHEME_FIND_HIDE_TAGS: {
     doc: '# more tags find leaves out, spaced — e.g. "cosplay multiple_girls" (default none)',
     default: '',
+    private: true,
   },
   TTHEME_FIND_PNG: {
     doc: '# on lists PNG originals only — a zerochan post counts only where danbooru holds the same file (default off)',
@@ -172,6 +173,7 @@ export const CONFIG_SETTINGS = {
   TTHEME_FIND_HOSTS: {
     doc: '# send a find site somewhere else, as key=https://host pairs — e.g. "danbooru=https://danbooru.donmai.us" (default none)',
     default: '',
+    private: true,
   },
   TTHEME_FIND_DANBOORU_USER: {
     doc: "# your danbooru user number, sent with find's requests there: danbooru answers only requests that carry one (default none)",

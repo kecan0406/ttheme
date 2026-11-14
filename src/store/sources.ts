@@ -93,6 +93,7 @@ export function parseSource(arg: string, cwd = process.cwd()): string {
     !OWNER.test(owner) ||
     !repo ||
     !REPO_NAME.test(repo) ||
+    /^\.+$/.test(repo) ||
     rest.length > 0 ||
     extra.length > 0 ||
     (ref !== undefined && refProblem(ref))
