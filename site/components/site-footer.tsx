@@ -10,30 +10,30 @@ import { Wordmark } from './wordmark'
 
 const COLUMNS: { title: string; links: { label: string; href: string; brand?: SimpleIcon }[] }[] = [
   {
-    title: 'browse',
+    title: 'Browse',
     links: [
-      { label: 'works', href: BROWSE_PATH },
-      { label: 'marketplaces', href: MARKETPLACES_PATH },
-      { label: 'built-in', href: marketplacePath(BUILTIN) },
+      { label: 'Works', href: BROWSE_PATH },
+      { label: 'Marketplaces', href: MARKETPLACES_PATH },
+      { label: 'Built-in', href: marketplacePath(BUILTIN) },
     ],
   },
   {
-    title: 'your own',
+    title: 'Your Own',
     links: [
-      { label: 'make a palette', href: '/builder' },
-      { label: 'publish a marketplace', href: '/docs/guide/make#publish-a-marketplace' },
-      { label: 'marketplaces on GitHub', href: 'https://github.com/topics/ttheme-marketplace', brand: siGithub },
+      { label: 'Make a Palette', href: '/builder' },
+      { label: 'Publish a Marketplace', href: '/docs/guide/make#publish-a-marketplace' },
+      { label: 'Marketplaces on GitHub', href: 'https://github.com/topics/ttheme-marketplace', brand: siGithub },
     ],
   },
   {
-    title: 'project',
+    title: 'Project',
     links: [
-      { label: 'docs', href: '/docs' },
-      { label: 'github', href: REPO_URL, brand: siGithub },
+      { label: 'Docs', href: '/docs' },
+      { label: 'GitHub', href: REPO_URL, brand: siGithub },
       { label: 'npm', href: NPM_URL, brand: siNpm },
-      { label: 'x', href: X_URL, brand: siX },
-      { label: 'report a bug', href: `${REPO_URL}/issues/new/choose` },
-      { label: 'credits', href: CREDITS_PATH },
+      { label: 'X', href: X_URL, brand: siX },
+      { label: 'Report a Bug', href: `${REPO_URL}/issues/new/choose` },
+      { label: 'Credits', href: CREDITS_PATH },
     ],
   },
 ]
@@ -70,7 +70,7 @@ function Brand() {
         <Mark />
         <Wordmark />
       </a>
-      <p class="text-xs font-medium tracking-wide text-muted-foreground">use your favorite character</p>
+      <p class="text-xs font-medium tracking-wide text-muted-foreground">Use your favorite character</p>
     </div>
   )
 }
@@ -90,7 +90,7 @@ function Columns({ current, plain = false }: { current: string; plain?: boolean 
         <div
           class={cn(
             'grid content-start gap-3',
-            column.title === 'your own' && 'max-[640px]:order-3 max-[640px]:col-span-2',
+            column.title === 'Your Own' && 'max-[640px]:order-3 max-[640px]:col-span-2',
           )}
           style={plain ? undefined : `--key:var(--sg${index})`}
         >
@@ -144,7 +144,7 @@ export function LandingFooter({ facts }: { facts: Facts }) {
               <Mark />
               <Wordmark />
             </a>
-            <p class="text-base font-medium">use your favorite character</p>
+            <p class="text-base font-medium">Use your favorite character</p>
           </div>
           <Columns current="/" plain />
         </div>
@@ -162,7 +162,7 @@ export function LandingFooter({ facts }: { facts: Facts }) {
       <div data-lead-footer-line class="text-xs text-muted-foreground">
         <span>MIT</span>
         <span translate="no" safe>{`v${facts.version}`}</span>
-        <span>a palette is colors and post numbers, never code</span>
+        <span>A palette is colors and post numbers, never code</span>
       </div>
     </footer>
   )
@@ -185,8 +185,8 @@ export function SiteFooter({ facts, current = '', wide = false }: { facts: Facts
           <Columns current={current} />
         </div>
         <div class="flex flex-wrap justify-between gap-x-4 gap-y-1.5 border-t pt-5 text-xs text-muted-foreground">
-          <span safe>{`free and open, MIT, v${facts.version}`}</span>
-          <span>a palette is colors and post numbers, never code</span>
+          <span safe>{`Free and open, MIT, v${facts.version}`}</span>
+          <span>A palette is colors and post numbers, never code</span>
         </div>
       </div>
     </footer>

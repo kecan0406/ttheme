@@ -14,7 +14,7 @@ const MARGIN = 72
 const MESH = facetMesh()
 
 const HEADLINE = [
-  { text: 'use your', accent: false },
+  { text: 'Use your', accent: false },
   { text: 'favorite', accent: false },
   { text: 'anime', accent: true },
   { text: 'character', accent: true },
@@ -379,7 +379,7 @@ function palette(kit: Raster, card: Extract<Card, { kind: 'palette' | 'share' }>
   ]
 
   const below = 300 + (rows.length - 1) * size * 0.92
-  const label = card.kind === 'share' ? 'shared palette' : (theme.work?.name ?? theme.marketplace)
+  const label = card.kind === 'share' ? 'Shared palette' : (theme.work?.name ?? theme.marketplace)
   const sub = card.kind === 'palette' && theme.work && !isBuiltin(theme) ? theme.marketplace : null
   const ui = kit.family.ui
   out.push(
@@ -416,7 +416,7 @@ function marketplace(kit: Raster, card: Extract<Card, { kind: 'marketplace' }>, 
   const top = 250 + (rows.length - 1) * size * 0.92 + 58
 
   const out = [
-    wordmark(kit, k, 'marketplace'),
+    wordmark(kit, k, 'Marketplace'),
     ...rows.map((row, at) => display(kit, row, MARGIN, 250 + at * size * 0.92, size, k.accent)),
     ...balanced(kit, clip(about, 240), 28, window.left)
       .slice(0, 3)

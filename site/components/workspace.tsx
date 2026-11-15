@@ -15,7 +15,7 @@ import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { SCENES, type Scene, sceneLines, useOf } from '@/lib/sessions'
 import type { GateRule, Marketplace, Theme } from '@/lib/themes'
-import { cn, plural } from '@/lib/utils'
+import { capitalize, cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 import { byWork, leadOf, leadsOf, ribbon } from '@/lib/works'
 import type { Where, WorkspaceData } from '@/lib/workspace'
@@ -127,7 +127,7 @@ export function PaletteFacts({ theme, gate }: { theme: Theme; gate: GateRule[] }
               class="h-1.75 w-11 rounded-full forced-color-adjust-none"
               style={`background:${ribbon(theme)}`}
             />
-            colors
+            Colors
           </Button>
         )}
       />
@@ -165,12 +165,12 @@ export function SlotsPanel({ theme }: { theme: Theme }) {
     <>
       <div class="flex items-baseline justify-between gap-3">
         <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">colors</p>
-        <p class="text-xs text-muted-foreground">click a color to copy it</p>
+        <p class="text-xs text-muted-foreground">Click a color to copy it</p>
       </div>
       <ByMode theme={theme} render={(shown) => <SwatchGrid theme={shown} />} />
       {theme.from && (
         <p class="text-xs text-muted-foreground" safe>
-          {`from ${theme.from}`}
+          {`From ${theme.from}`}
         </p>
       )}
     </>
@@ -188,7 +188,7 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
         const { work, themes } = shelf
         const lead = leadOf(shelf)
         const open = themes.includes(current)
-        const title = work?.name ?? 'originals'
+        const title = work?.name ?? 'Originals'
 
         return (
           <Collapsible
@@ -244,7 +244,7 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
         )
       })}
       <p data-empty hidden class="px-2 py-3 text-sm text-muted-foreground">
-        no palette matches <span aria-hidden="true">( ˘ω˘ )</span>
+        No palette matches <span aria-hidden="true">( ˘ω˘ )</span>
       </p>
     </nav>
   )
@@ -314,7 +314,7 @@ export function MarketplaceWorkspace({
                 <InputGroupInput
                   type="search"
                   name="query"
-                  placeholder="search works, palettes"
+                  placeholder="Search works, palettes"
                   aria-label="search works and palettes"
                   aria-keyshortcuts="Meta+K Control+K"
                   spellcheck="false"
@@ -375,7 +375,7 @@ export function MarketplaceWorkspace({
                       <span data-mark aria-hidden="true">
                         ❯
                       </span>
-                      {view}
+                      {escapeHtml(capitalize(view))}
                     </RadioGroupItem>
                   ))}
                 </RadioGroup>

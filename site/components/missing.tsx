@@ -15,7 +15,7 @@ export function Missing({ title, text, facts }: { title: string; text: string; f
             {text}
           </p>
           <a href="/" class="text-sm font-medium text-primary underline-offset-4 hover:underline">
-            back home
+            Back home
           </a>
         </div>
       </main>

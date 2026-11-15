@@ -89,7 +89,7 @@ function CopyButton({ command, class: className }: { command: string; class?: st
       aria-label={`copy ${command}`}
       data-copy={command}
       data-copy-hold="1400"
-      data-copy-status="copied (・ω・)"
+      data-copy-status="Copied (・ω・)"
     >
       <Icon node={Copy} class="group-data-copied/copy:hidden" />
       <Icon node={Check} class="hidden text-success group-data-copied/copy:block" />

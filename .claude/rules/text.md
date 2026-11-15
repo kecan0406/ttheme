@@ -14,7 +14,13 @@ How every screen, CLI message and docs page is worded.
 
 Every screen and message is written in sentence case: the first word and proper
 nouns take a capital, everything else is lowercase. Never all lowercase as a
-look, and never Title Case.
+look, and Title Case only for docs and navigation.
+
+- **Title Case**: docs and navigation — a docs page's title and headings, the
+  page names in the docs sidebar and the header's menus, the site's nav labels
+  and menu links (`Browse Works`, `Open Builder`), and the Markdown headings of
+  `README.md` and `CONTRIBUTING.md`. Small words (`a`, `and`, `the`) stay
+  lowercase, and a name or anything typed (`ttheme`, `init`, `tmux`) as spelled.
 
 - **Sentence case**: box and panel titles (`Settings`, `Help`), row, column,
   tab and checkbox labels (`Min score`, `Select all`), buttons (`Advanced ›`),

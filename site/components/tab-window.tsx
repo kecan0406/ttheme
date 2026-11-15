@@ -79,7 +79,7 @@ export function TabWindow({ tabs, active, next }: { tabs: WindowTab[]; active: n
       </div>
       <div class="flex flex-none flex-wrap items-end justify-between gap-x-6 gap-y-3 px-5.5 pb-5.5">
         <div class="grid gap-1">
-          <h3 class="font-display text-display-md font-black">a different one per tab</h3>
+          <h3 class="font-display text-display-md font-black">A different one per tab</h3>
           <p class="text-sm text-(--fg)/80">This tab only. Every other tab keeps its own.</p>
         </div>
         <div data-tab-use class="w-80 max-w-full">

@@ -115,7 +115,7 @@ function worksIn(groups: readonly WorkShelf[]): number {
 
 function neighborOf(group: WorkShelf, shelf: Shelf): Neighbor {
   return {
-    name: group.work?.name ?? 'originals',
+    name: group.work?.name ?? 'Originals',
     lead: leadOf(group),
     palettes: group.themes,
     path: group.work ? workPath(group.work.id) : marketplacePath(shelf.id),

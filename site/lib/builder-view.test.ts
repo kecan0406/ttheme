@@ -37,7 +37,7 @@ test('a draft the browser refused to write is named as not kept, apart from a br
     ok: false,
     text: 'orla was not kept in this browser — export before you leave',
   })
-  expect(statusOf(open, { state: 'none' }).text).toBe('this browser keeps no drafts — export before you leave')
+  expect(statusOf(open, { state: 'none' }).text).toBe('This browser keeps no drafts — export before you leave')
   expect(statusOf(open, { state: 'kept', stored }).ok).toBe(true)
 })
 

@@ -1,10 +1,6 @@
-import { ArrowRight } from 'lucide'
-import { InitRow } from '@/components/command-row'
-import { LinkButton } from '@/components/ui/button'
-import { COMMANDS, type Command, sectionId } from '@/lib/commands'
-import { bodyOf, DOC_PAGES, DOCS, DOCS_PATH, type DocPage, docAt, guideOf } from '@/lib/docs'
+import { COMMANDS, type Command, sectionId, sectionTitle } from '@/lib/commands'
+import { bodyOf, DOCS_HOME, type DocPage, guideOf, homeBody } from '@/lib/docs'
 import type { Facts } from '@/lib/facts'
-import { Icon } from '@/lib/icons'
 import { renderInline } from '@/lib/markdown'
 import { SETTING_GROUPS } from '@/lib/settings'
 import { DocGroupIcon } from './doc-group-icon'
@@ -106,7 +102,7 @@ function CommandsBody() {
         <section>
           <h2 id={sectionId(section)}>
             <HeadingAnchor id={sectionId(section)}>
-              <span safe>{section.title}</span>
+              <span safe>{sectionTitle(section)}</span>
             </HeadingAnchor>
           </h2>
           {section.commands.map((command) => (
@@ -183,70 +179,24 @@ export function DocsPage({
   )
 }
 
-function StartHere() {
-  const quick = docAt('guide', 'quickstart')
-
-  return quick ? (
-    <section aria-labelledby="start-here" class="grid gap-3 rounded-xl border border-border bg-muted/65 px-4 py-3">
-      <div class="grid gap-1">
-        <h2 id="start-here" class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">
-          start here
-        </h2>
-        <p class="max-w-[62ch] text-pretty text-foreground" safe>
-          {quick.description}
-        </p>
-      </div>
-      <InitRow class="bg-card" />
-      <div class="flex flex-wrap gap-2">
-        <LinkButton href={quick.path}>
-          <span safe>{quick.title.toLowerCase()}</span>
-          <Icon node={ArrowRight} />
-        </LinkButton>
-      </div>
-    </section>
-  ) : null
-}
-
-export function DocsIndex({ facts, about }: { facts: Facts; about: string }) {
-  const [first] = DOC_PAGES
+export function DocsIndex({ facts, icons }: { facts: Facts; icons: Readonly<Record<string, string>> }) {
+  const home = DOCS_HOME
+  const safeLede = home.safeLede
+  const safeBody = homeBody(icons)
+  const toc = home.toc.filter((heading) => heading.depth === 2)
 
   return (
-    <DocsFrame facts={facts} path={DOCS_PATH} toc={[]} next={first && { title: first.title, path: first.path }}>
+    <DocsFrame facts={facts} path={home.path} toc={toc} next={home.next} source={home.file}>
       <header class="grid gap-3">
-        <h1 class="font-display text-display-lg font-black">docs</h1>
-        <p class="max-w-[62ch] text-pretty text-soft-foreground" safe>
-          {about}
+        <h1 class="font-display text-display-lg font-black text-balance" safe>
+          {home.title}
+        </h1>
+        <p data-lede class="max-w-[62ch] text-pretty text-soft-foreground">
+          {safeLede}
         </p>
+        <TocDetails toc={toc} />
       </header>
-      <StartHere />
-      <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,17rem),1fr))] items-start gap-3">
-        {DOCS.map((group) => (
-          <section
-            class="grid content-start gap-3 rounded-xl border border-border bg-card px-4 py-3"
-            aria-labelledby={`index-${group.slug}`}
-          >
-            <h2
-              id={`index-${group.slug}`}
-              class="flex items-center gap-1.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase"
-            >
-              <DocGroupIcon group={group.slug} class="size-3.25 flex-none" />
-              <span safe>{group.title}</span>
-            </h2>
-            <ul class="grid gap-3">
-              {group.pages.map((page) => (
-                <li class="grid gap-0.5">
-                  <a href={page.path} class="font-semibold text-foreground transition-colors hover:text-primary" safe>
-                    {page.title}
-                  </a>
-                  <span class="text-sm text-muted-foreground" safe>
-                    {page.description}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
+      <div data-doc-body>{safeBody}</div>
     </DocsFrame>
   )
 }

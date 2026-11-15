@@ -1,3 +1,4 @@
+import { capitalize } from '@/lib/utils'
 import type { Named } from '@/lib/view-types'
 import { Verdict } from './slot-list'
 
@@ -18,7 +19,7 @@ function InspectorRow({ kind, slot, s, tag }: { kind: string; slot: number; s: N
         </span>
         {tag ? (
           <span class="rounded-full bg-muted px-1.5 text-2xs font-semibold text-soft-foreground" safe>
-            {tag}
+            {capitalize(tag)}
           </span>
         ) : null}
       </span>
@@ -60,17 +61,17 @@ export function InspectorPopover({
             {snippet}
           </span>
         </div>
-        <InspectorRow kind="text" slot={text} s={slots[text] as Named} tag={tag} />
-        <InspectorRow kind="ground" slot={ground} s={slots[ground] as Named} tag="" />
+        <InspectorRow kind="Text" slot={text} s={slots[text] as Named} tag={tag} />
+        <InspectorRow kind="Ground" slot={ground} s={slots[ground] as Named} tag="" />
         <div class="flex items-center justify-between gap-3 border-t border-border px-3 py-2 text-xs text-muted-foreground">
-          contrast
+          Contrast
           <span class="flex items-center gap-2">
             <b class="font-mono font-semibold text-foreground" safe>
               {`${ratio.toFixed(2)}:1`}
             </b>
             <Verdict ok={level !== null} />
             <span class={level ? 'font-semibold text-success' : 'font-semibold text-destructive'}>
-              {level ?? 'under 4.5:1'}
+              {level ?? 'Under 4.5:1'}
             </span>
           </span>
         </div>

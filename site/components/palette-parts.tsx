@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { luminance, passes } from '@/lib/gate'
 import { Icon } from '@/lib/icons'
 import type { GateRule, Theme } from '@/lib/themes'
-import { cn } from '@/lib/utils'
+import { capitalize, cn } from '@/lib/utils'
 
 export function ChecksHead({ summary }: { summary: string }) {
   return (
@@ -15,6 +15,11 @@ export function ChecksHead({ summary }: { summary: string }) {
       </p>
     </div>
   )
+}
+
+// A rule that opens with a slot name (`ansi0 luminance`) keeps it as spelled.
+export function ruleLabel(label: string): string {
+  return label.startsWith('ansi') ? label : capitalize(label)
 }
 
 export function SectionLabel({ icon, children }: PropsWithChildren<{ icon: JSX.Element }>) {
@@ -49,7 +54,7 @@ export function GateList({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
         return (
           <div class="grid grid-cols-[1fr_auto_auto] items-center gap-2.5 border-b border-border/60 py-1.5 text-sm last:border-b-0">
             <span class="text-soft-foreground" safe>
-              {rule.label}
+              {ruleLabel(rule.label)}
             </span>
             <code class="font-mono text-xs tabular-nums" safe>
               {applies ? reading(value, rule.unit) : '—'}

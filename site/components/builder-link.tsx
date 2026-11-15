@@ -102,12 +102,12 @@ export function LinkSection({ shared }: { shared: Shared }) {
         <Button variant="outline" size="sm" class="group/copy" data-copy={code} data-copy-hold="1200">
           <Icon node={Copy} class="group-data-copied/copy:hidden" />
           <Icon node={Check} class="hidden group-data-copied/copy:block" />
-          copy code
+          Copy code
         </Button>
         <Button variant="outline" size="sm" class="group/copy" data-copy={link} data-copy-hold="1200">
           <Icon node={Link} class="group-data-copied/copy:hidden" />
           <Icon node={Check} class="hidden group-data-copied/copy:block" />
-          copy link
+          Copy link
         </Button>
       </div>
       <Installs shared={shared} />

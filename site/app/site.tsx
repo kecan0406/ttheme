@@ -292,7 +292,7 @@ function noMarketplace(id: string): Response {
 function noWork(): Response {
   return page(
     { title: 'ttheme — no such work', description: STORE, status: 404, cache: RETRY },
-    <Missing title="no such work" text="No marketplace has a palette of this work yet." facts={facts} />,
+    <Missing title="No such work" text="No marketplace has a palette of this work yet." facts={facts} />,
   )
 }
 
@@ -307,7 +307,7 @@ async function foundWork(id: string): Promise<Response> {
     return page(
       { title: 'ttheme — something went wrong', description: 'Try again in a moment.', status: 502, cache: 'no-store' },
       <Missing
-        title="something went wrong"
+        title="Something went wrong"
         text="The name index did not answer. Try again in a moment."
         facts={facts}
       />,
@@ -372,7 +372,7 @@ export const site = new Elysia({ name: 'site' })
   .onError('global', NotFound, () =>
     page(
       { title: 'ttheme — no such page', description: 'Nothing lives at this address.', status: 404, cache: RETRY },
-      <Missing title="no such page" text="Nothing lives at this address." facts={facts} />,
+      <Missing title="No such page" text="Nothing lives at this address." facts={facts} />,
     ),
   )
   .onError('global', ({ error }) => {
@@ -380,7 +380,7 @@ export const site = new Elysia({ name: 'site' })
 
     return page(
       { title: 'ttheme — something went wrong', description: 'Try again in a moment.', status: 500, cache: 'no-store' },
-      <Missing title="something went wrong" text="Try again in a moment." facts={facts} />,
+      <Missing title="Something went wrong" text="Try again in a moment." facts={facts} />,
     )
   })
   .macro({
@@ -456,7 +456,7 @@ export const site = new Elysia({ name: 'site' })
     if (!category)
       return page(
         { title: 'ttheme — no such page', description: STORE, status: 404, cache: RETRY },
-        <Missing title="no such page" text="Nothing lives at this address." facts={facts} />,
+        <Missing title="No such page" text="Nothing lives at this address." facts={facts} />,
       )
 
     const path = categoryPath(category.slug)
@@ -526,7 +526,7 @@ export const site = new Elysia({ name: 'site' })
         ld: [crumbs(DOCS_TRAIL)],
         cache: FIXED,
       },
-      <DocsIndex facts={facts} about={docsMeta().description} />,
+      <DocsIndex facts={facts} icons={assets.terminals} />,
     ),
   )
   .get(`${DOCS_PATH}/:group/:slug`, ({ params }) => {
@@ -562,7 +562,7 @@ export const site = new Elysia({ name: 'site' })
           cache: RETRY,
         },
         <Missing
-          title="broken share link"
+          title="Broken share link"
           text={`This link does not open a palette — ${found.message}`}
           facts={facts}
         />,

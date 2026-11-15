@@ -98,7 +98,7 @@ function FoundRow({ work }: { work: FoundWork }) {
         </span>
         <Native native={work.native} lang={work.lang} />
       </span>
-      <span class="flex-none text-xs text-muted-foreground">no palettes yet</span>
+      <span class="flex-none text-xs text-muted-foreground">No palettes yet</span>
     </ComboboxLink>
   )
 }
@@ -121,7 +121,7 @@ function MarketRow({ markets, query }: { markets: SearchMarket[]; query: string 
             is a marketplace
           </>
         ) : (
-          <span safe>{`marketplaces matching “${query}”`}</span>
+          <span safe>{`Marketplaces matching “${query}”`}</span>
         )}
       </span>
       <Icon node={ArrowRight} class="size-4 flex-none text-muted-foreground" />
@@ -143,11 +143,11 @@ export interface SearchView {
 
 export function SearchRows({ view }: { view: SearchView }) {
   if (view.state === 'loading') {
-    return <p class={NOTE}>loading the works…</p>
+    return <p class={NOTE}>Loading the works…</p>
   }
 
   if (view.state === 'unloaded') {
-    return <p class={NOTE}>the works did not load</p>
+    return <p class={NOTE}>The works did not load</p>
   }
 
   const empty = view.hits.length === 0 && view.found.length === 0
@@ -162,28 +162,28 @@ export function SearchRows({ view }: { view: SearchView }) {
       ))}
       {view.markets.length > 0 ? <MarketRow markets={view.markets} query={view.query} /> : null}
       {view.state === 'naming' ? (
-        <p class="px-2.5 py-2 text-xs text-muted-foreground" safe>{`looking up “${view.query}”…`}</p>
+        <p class="px-2.5 py-2 text-xs text-muted-foreground" safe>{`Looking up “${view.query}”…`}</p>
       ) : null}
       {empty && view.state !== 'naming' ? (
         <div class={NOTE}>
           <strong class="font-semibold text-foreground">
             <span safe>
-              {view.state === 'failed' ? `no work matches “${view.query}”` : `no work called “${view.label}” yet`}
+              {view.state === 'failed' ? `No work matches “${view.query}”` : `No work called “${view.label}” yet`}
             </span>{' '}
             <span aria-hidden="true">( ˘ω˘ )</span>
           </strong>
           <span>
             {view.state === 'failed'
-              ? 'the name lookup did not answer — ask for one, or make it yourself.'
-              : 'look for its work by title, ask for one, or make it yourself.'}
+              ? 'The name lookup did not answer — ask for one, or make it yourself.'
+              : 'Look for its work by title, ask for one, or make it yourself.'}
           </span>
           <span class="mt-2 flex flex-wrap justify-center gap-2">
             <LinkButton variant="outline" size="sm" href={view.request} target="_blank" rel="noopener">
-              request a character
+              Request a character
               <NewTab />
             </LinkButton>
             <LinkButton size="sm" href={view.make}>
-              make one
+              Make one
             </LinkButton>
           </span>
         </div>
@@ -218,7 +218,7 @@ export function SearchPreview({ hit, inUse = false }: { hit: Hit | null; inUse?:
       />
       {inUse ? (
         <Badge variant="glass" class="absolute top-3.5 left-3.5">
-          in use
+          In use
         </Badge>
       ) : null}
       <div class="relative grid min-w-0 gap-1 px-4 pb-4">
@@ -272,7 +272,7 @@ export function SiteSearch() {
             <ComboboxInput
               list={SEARCH_LIST}
               label="search works and characters"
-              placeholder="search works"
+              placeholder="Search works"
               name="q"
               enterkeyhint="search"
               aria-keyshortcuts="Meta+K Control+K"

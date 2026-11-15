@@ -196,7 +196,7 @@ function groupsOf(starts: Start[]): StartGroup[] {
     const { work, publisher } = palettes[0] as Start
 
     return {
-      title: work?.name ?? 'originals',
+      title: work?.name ?? 'Originals',
       native: work ? work.native : publisher,
       lang: work?.lang ?? undefined,
       palettes: palettes.map((start) => ({
@@ -609,7 +609,7 @@ class PaletteBuilder extends HTMLElement {
 
     if (shown) {
       shown.hidden = problem === undefined
-      shown.textContent = problem ? `the name ${problem}` : ''
+      shown.textContent = problem ? `The name ${problem}` : ''
     }
 
     const title = this.querySelector('[data-export-name]')
@@ -656,7 +656,7 @@ class PaletteBuilder extends HTMLElement {
     const body = this.querySelector<HTMLElement>('[data-panel-body="seeds"]')
     const first = this.querySelector('[data-first-tab]')
 
-    if (first) first.textContent = seeds ? 'seeds' : 'colors'
+    if (first) first.textContent = seeds ? 'Seeds' : 'Colors'
 
     if (body) body.hidden = !seeds
 
@@ -1168,7 +1168,7 @@ class PaletteBuilder extends HTMLElement {
       const draft = textDraft(file ?? 'the text', text)
       this.#startFrom({ name: draft.name, draft }, true)
     } catch (failure) {
-      say(`${file ?? (codeOf(text) ? 'the link' : 'the text')} does not open — ${(failure as Error).message}`)
+      say(`${file ?? (codeOf(text) ? 'The link' : 'The text')} does not open — ${(failure as Error).message}`)
     }
   }
 

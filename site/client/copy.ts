@@ -33,7 +33,7 @@ async function copy(button: HTMLElement) {
   else select(button)
   announce(copied ? 'copied' : `couldn't copy, press ${KEYS}`)
 
-  if (status) flash(button, copied ? status : `press ${KEYS}`, hold)
+  if (status) flash(button, copied ? status : `Press ${KEYS}`, hold)
   window.clearTimeout(restoring.get(button))
   restoring.set(
     button,

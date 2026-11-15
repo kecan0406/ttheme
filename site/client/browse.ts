@@ -123,14 +123,14 @@ abstract class Browse extends HTMLElement {
 
     if (title)
       title.textContent = naming
-        ? `looking up “${query}”…`
+        ? `Looking up “${query}”…`
         : within
-          ? `no ${within} work matches “${query}”`
+          ? `No ${within} work matches “${query}”`
           : query
             ? answer?.found.length
-              ? `no palettes for “${answer.label}” yet`
-              : `no work called “${answer?.label ?? query}” yet`
-            : 'no palettes yet'
+              ? `No palettes for “${answer.label}” yet`
+              : `No work called “${answer?.label ?? query}” yet`
+            : 'No palettes yet'
 
     if (every) every.hidden = naming
 
@@ -138,8 +138,8 @@ abstract class Browse extends HTMLElement {
       text.hidden = naming || within !== ''
       text.textContent =
         query && this.names.failed === query
-          ? 'the name lookup did not answer — ask for one, or make it yourself.'
-          : 'look for its work by title, ask for one, or make it yourself.'
+          ? 'The name lookup did not answer — ask for one, or make it yourself.'
+          : 'Look for its work by title, ask for one, or make it yourself.'
     }
 
     if (face) face.hidden = naming

@@ -3,7 +3,7 @@ import { Toggle } from '@/components/ui/toggle'
 import { ToggleGroup } from '@/components/ui/toggle-group'
 import { Icon } from '@/lib/icons'
 import type { Mode } from '@/lib/mode'
-import { cn } from '@/lib/utils'
+import { capitalize, cn } from '@/lib/utils'
 
 const CELLS = [
   {
@@ -32,13 +32,18 @@ export function WindowMode({ class: className }: { class?: string }) {
         type="button"
         data-mode-reset
         aria-label="follow the page"
-        title="follow the page"
+        title="Follow the page"
         class={cn(CELL, 'hidden in-data-[window-mode]:flex')}
       >
         <Icon node={RotateCcw} class="size-3.5" />
       </button>
       {CELLS.map((cell) => (
-        <Toggle value={cell.mode} aria-label={cell.mode} title={cell.mode} class={cn(CELL, 'flex', cell.on)}>
+        <Toggle
+          value={cell.mode}
+          aria-label={cell.mode}
+          title={capitalize(cell.mode)}
+          class={cn(CELL, 'flex', cell.on)}
+        >
           <Icon node={cell.icon} class="size-3.5" />
         </Toggle>
       ))}

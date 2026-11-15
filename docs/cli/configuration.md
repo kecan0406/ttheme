@@ -13,7 +13,7 @@ version changes reaches you; a line you uncomment keeps your value. A setting a
 later version adds is not written into the file: it keeps its default until you
 add it. A variable
 exported before ttheme loads wins over the file, as
-[Environment variables](environment.md) says.
+[Environment Variables](environment.md) says.
 
 ## Files
 

@@ -1,29 +1,18 @@
 import type { Children } from '@kitajs/html'
-import {
-  ArrowRight,
-  History,
-  type IconNode,
-  Link,
-  Monitor,
-  Paintbrush,
-  Palette,
-  SlidersHorizontal,
-  Sprout,
-  Terminal,
-  Variable,
-} from 'lucide'
+import { ArrowRight, History, type IconNode, Link, Sprout } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { LinkButton } from '@/components/ui/button'
 import { MeltCard, MeltLink } from '@/components/ui/melt-card'
 import { Popover } from '@/components/ui/popover'
 import { BROWSE_PATH, initOf, MARKETPLACES_PATH } from '@/lib/gallery'
 import { Icon, NewTab } from '@/lib/icons'
-import type { DocIcon, MenuArt, MenuDoc, MenuFacts, MenuPlace, MenuWork } from '@/lib/menu'
+import type { MenuArt, MenuDoc, MenuFacts, MenuPlace, MenuWork } from '@/lib/menu'
 import { makePath } from '@/lib/names'
-import { cn } from '@/lib/utils'
+import { capitalize, cn } from '@/lib/utils'
 import { focusOf, WORN_FACETS } from '@/lib/works'
 import { CommandRow } from './command-row'
 import { DocGroupIcon } from './doc-group-icon'
+import { DocIconTile } from './doc-icon'
 import { Dots } from './dots'
 import { Mark } from './mark'
 import { WorkArt } from './work-art'
@@ -54,15 +43,6 @@ const CORNER = 'absolute top-3.5 left-3.5'
 const NAME = 'truncate font-display text-display-sm font-black'
 
 const STRIPES = 'absolute inset-x-0 top-0 -z-10 h-[84%]'
-
-const DOC_ICONS: Record<DocIcon, { icon: IconNode; tone: string }> = {
-  use: { icon: Palette, tone: 'bg-(--a6)/14 text-(--a6)' },
-  make: { icon: Paintbrush, tone: 'bg-(--a5)/14 text-(--a5)' },
-  terminals: { icon: Monitor, tone: 'bg-(--a4)/16 text-(--a4)' },
-  commands: { icon: Terminal, tone: 'bg-(--a2)/14 text-(--a2)' },
-  settings: { icon: SlidersHorizontal, tone: 'bg-(--a3)/14 text-(--a3)' },
-  environment: { icon: Variable, tone: 'bg-(--a1)/14 text-(--a1)' },
-}
 
 function MenuFoot({ children }: { children: Children }) {
   return (
@@ -128,7 +108,7 @@ export function InUseCard({
         class="absolute inset-x-0 top-0 -z-10 h-[86%]"
       />
       <Badge variant="glass" class={CORNER}>
-        in use
+        In use
       </Badge>
       <span class={BODY}>
         <span class="flex min-w-0 items-center gap-2 text-sm">
@@ -136,7 +116,7 @@ export function InUseCard({
           <span translate="no" class="min-w-0 truncate font-display font-extrabold after:content-(--wear-name)" />
         </span>
         <span data-in-use-work translate="no" class={NAME} safe>
-          {work?.name ?? 'originals'}
+          {work?.name ?? 'Originals'}
         </span>
         {work?.native ? (
           <span
@@ -161,13 +141,13 @@ function PlaceRow({ place }: { place: MenuPlace }) {
     >
       <a href={place.href} class="flex min-w-0 flex-1 items-center gap-3.5 outline-none">
         <Cover art={place.cover} />
-        <Text title={place.label} />
+        <Text title={capitalize(place.label)} />
       </a>
       {place.genres.length > 0 ? (
         <span class="flex flex-none flex-col items-end gap-1.5">
           {place.genres.map((genre) => (
             <LinkButton variant="outline" size="chip" href={genre.href}>
-              <span safe>{genre.label}</span>
+              <span safe>{capitalize(genre.label)}</span>
             </LinkButton>
           ))}
         </span>
@@ -185,7 +165,7 @@ function MarketsRow({ markets }: { markets: MenuFacts['markets'] }) {
             <WorkArt art={cover.art} facets={cover.facets} sizes="30px" class="relative size-full" />
           ))}
         </span>
-        <Text title="marketplaces">
+        <Text title="Marketplaces">
           <span translate="no" safe>
             {markets.ids.join(', ')}
           </span>
@@ -217,7 +197,7 @@ export function BrowseMenu({ menu }: { menu: MenuFacts }) {
         </ul>
       </div>
       <MenuFoot>
-        <span>palettes of your favorite characters</span>
+        <span>Palettes of your favorite characters</span>
         <MenuGo href={BROWSE_PATH} label="Browse Works" />
       </MenuFoot>
     </Popover>
@@ -229,10 +209,10 @@ export function BuilderCard() {
     <MeltLink size="feature" href="/builder">
       <span data-slot="stripes" data-melt aria-hidden="true" class={STRIPES} />
       <Badge variant="glass" class={CORNER}>
-        start
+        Start
       </Badge>
       <span class={BODY}>
-        <span class={NAME}>palette builder</span>
+        <span class={NAME}>Palette Builder</span>
         <span class="text-sm text-soft-foreground">Tune twenty colors, checked as you go</span>
       </span>
     </MeltLink>
@@ -256,7 +236,7 @@ export function DraftCard({
     <MeltLink size="feature" href={href} style={slots.join(';')}>
       <span data-slot="stripes" data-melt aria-hidden="true" class={STRIPES} />
       <Badge variant="glass" class={CORNER}>
-        draft
+        Draft
       </Badge>
       <span class={BODY}>
         <span translate="no" class={NAME} safe>
@@ -317,9 +297,9 @@ export function BuilderMenu({ menu }: { menu: MenuFacts }) {
           <ToolRow
             href={makePath(null)}
             visual={<Tinted icon={Sprout} tone="bg-(--a2)/14 text-(--a2)" />}
-            title="blank"
+            title="Blank"
           >
-            twenty colors from a few seeds
+            Twenty colors from a few seeds
           </ToolRow>
           <ToolRow
             href={BUILDER_START}
@@ -330,29 +310,29 @@ export function BuilderMenu({ menu }: { menu: MenuFacts }) {
                 ))}
               </span>
             }
-            title="from a palette"
+            title="From a Palette"
           >
-            one you like, then tune it
+            One you like, then tune it
           </ToolRow>
           <ToolRow
             href={BUILDER_OPEN}
             visual={<Tinted icon={Link} tone="bg-accent text-primary" />}
-            title="open a link, code or file"
+            title="Open a Link, Code or File"
           >
-            a share link, a <span translate="no">tt8:</span> code or a <span translate="no">.toml</span>
+            A share link, a <span translate="no">tt8:</span> code or a <span translate="no">.toml</span>
           </ToolRow>
           <ToolRow
             href={BUILDER_DRAFTS}
             visual={<Tinted icon={History} tone="bg-muted text-soft-foreground" />}
-            title="drafts"
+            title="Drafts"
           >
-            <span data-drafts>kept in this browser</span>
+            <span data-drafts>Kept in this browser</span>
           </ToolRow>
         </ul>
       </div>
       <MenuFoot>
         <span>
-          share it as a link, install it with <code class="font-mono text-code text-foreground">ttheme add</code>
+          Share it as a link, install it with <code class="font-mono text-code text-foreground">ttheme add</code>
         </span>
         <MenuGo href="/builder" label="Open Builder" />
       </MenuFoot>
@@ -361,14 +341,10 @@ export function BuilderMenu({ menu }: { menu: MenuFacts }) {
 }
 
 function DocRow({ doc }: { doc: MenuDoc }) {
-  const { icon, tone } = DOC_ICONS[doc.icon]
-
   return (
     <li>
       <a href={doc.path} class={`${ROW} gap-3 py-2`}>
-        <span aria-hidden="true" class={`grid size-10 flex-none place-items-center rounded-lg ${tone}`}>
-          <Icon node={icon} class="size-4.5" />
-        </span>
+        <DocIconTile icon={doc.icon} />
         <Text title={doc.label}>
           <span safe>{doc.blurb}</span>
         </Text>
@@ -397,7 +373,7 @@ export function DocsMenu({ menu }: { menu: MenuFacts }) {
             <Mark />
           </span>
           <Badge variant="glass" class={CORNER}>
-            start here
+            Start here
           </Badge>
           <div class="grid min-w-0 gap-1 px-4.5 pb-4">
             <a

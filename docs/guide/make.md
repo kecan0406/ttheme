@@ -1,9 +1,9 @@
-# Make a palette
+# Make a Palette
 
 Tune twenty colors in the palette editor, check them against the contrast
 checks, and share the result as a link or a marketplace.
 
-## Start a palette
+## Start a Palette
 
 ```sh
 ttheme new dusk                                    # from blank
@@ -22,7 +22,7 @@ accents share, and how far the brights sit from them. Whatever you pick, the twe
 contrast check. `enter` moves on to the colors. `--from` and `edit` skip the
 seeds.
 
-## Tune the colors
+## Tune the Colors
 
 The twenty colors are the background, foreground, cursor and selection, then the
 eight ANSI colors with their bright pairs, each shown as lightness, chroma and
@@ -50,7 +50,7 @@ palette changes, `ttheme update` names yours and Browse marks it `⇡`, where
 changed stays yours, and `ttheme edit` then opens on it, where `r` takes the
 upstream's color.
 
-## Tune a palette that is not yours
+## Tune a Palette That Is Not Yours
 
 ```sh
 ttheme edit hatsune-miku   # a built-in palette: your changes are kept as its tuning
@@ -68,7 +68,7 @@ palette's marketplace gives, in `~/.config/ttheme/tone.json`.
 - In the editor, `R` puts every color back and `s` after it drops your tuning.
   **Reset palette** in the panel does the same.
 
-## Contrast checks
+## Contrast Checks
 
 ```sh
 ttheme check hatsune-miku         # every check's numbers for a palette
@@ -97,7 +97,7 @@ mock terminal.
 | `cvd-red-green` | red and green apart for a deuteranope | a dichromat simulation |
 | `cursor` | cursor on the background ≥ 4.5:1 | WCAG AA, the letter under a block cursor |
 
-## With a coding agent
+## With a Coding Agent
 
 `init` offers the `ttheme-palette` skill to coding agents such as Claude Code.
 Ask one for a character's palette and it researches the character, measures the
@@ -113,7 +113,7 @@ update it first: run `init` again, `npx skills add kecan0406/ttheme`, or update
 the plugin, whichever way you added it. A ttheme older than the skill asks you
 to run `npx @kecan0406/ttheme@latest init`.
 
-## On the web
+## On the Web
 
 [ttheme.dev/builder](https://ttheme.dev/builder) is the same builder in the
 browser: start from any palette, a share link or blank seeds, and tune both
@@ -127,7 +127,7 @@ When a search on [ttheme.dev/browse](https://ttheme.dev/browse) finds
 no palette of a work, **make one** opens the builder on blank
 seeds under its name, and **request a character** asks for it on GitHub.
 
-## Share a link
+## Share a Link
 
 A share link carries the palette itself, so nothing is uploaded or stored. It
 opens the palette in the builder, and `ttheme add` installs it from there.
@@ -148,7 +148,7 @@ link to a palette you already have installs yours when the colors match and
 leaves it out when they differ. In the editor, pasting a link takes its colors
 into the palette you are editing.
 
-## Publish a marketplace
+## Publish a Marketplace
 
 A marketplace is a GitHub repository of palettes. Anyone can add it with one
 command, and what you push reaches them as an update they take. There is nothing

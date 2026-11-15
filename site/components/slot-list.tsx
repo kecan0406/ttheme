@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Icon } from '@/lib/icons'
 import type { GateLine } from '@/lib/view-types'
-import { reading } from './palette-parts'
+import { reading, ruleLabel } from './palette-parts'
 
 export function Marks({ miss }: { miss: boolean }) {
   return miss ? (
@@ -76,7 +76,7 @@ export function GateRows({ lines, names }: { lines: GateLine[]; names: string[] 
           <li class="grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1 py-2 pr-3 pl-4">
             <Verdict ok={ok} />
             <span class="text-sm text-soft-foreground" safe>
-              {rule.label}
+              {ruleLabel(rule.label)}
             </span>
             <span class="inline-flex items-center gap-2">
               <code class="font-mono text-xs tabular-nums" safe>

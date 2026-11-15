@@ -251,7 +251,7 @@ class SiteMenus extends HTMLElement {
         DraftCard({
           name: latest.name,
           colors: latest.made,
-          when: `edited ${ago(latest.at)}`,
+          when: `Edited ${ago(latest.at)}`,
           href: `/builder?${new URLSearchParams({ [DRAFT_KEY]: latest.id })}`,
         }),
       ),

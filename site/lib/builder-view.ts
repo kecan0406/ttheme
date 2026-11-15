@@ -352,7 +352,7 @@ export function dotsOf(list: Hex[], slots: readonly string[]): Hex[] {
 export function seedRowsOf(seeds: Seeds): SeedRow[] {
   return SEED_FIELDS.map((field) => ({
     key: field.key,
-    label: field.label.toLowerCase(),
+    label: field.label,
     min: field.min,
     max: field.max,
     step: field.step,
@@ -478,7 +478,7 @@ export function linkOf(sharing: Sharing, name: string, problem: string | undefin
 }
 
 export function statusOf(edit: Edit, shelf: Shelf): StatusView {
-  if (shelf.state === 'none') return { ok: false, text: 'this browser keeps no drafts — export before you leave' }
+  if (shelf.state === 'none') return { ok: false, text: 'This browser keeps no drafts — export before you leave' }
 
   if (shelf.state === 'refused')
     return { ok: false, text: `${edit.name} was not kept in this browser — export before you leave` }
@@ -488,8 +488,8 @@ export function statusOf(edit: Edit, shelf: Shelf): StatusView {
   const named = nameTrouble(edit.name)
 
   return named
-    ? { ok: false, text: `kept in this browser, but the name ${named}` }
-    : { ok: true, text: `kept in this browser as ${edit.name}${writesOther(edit) ? ', both modes' : ''}` }
+    ? { ok: false, text: `Kept in this browser, but the name ${named}` }
+    : { ok: true, text: `Kept in this browser as ${edit.name}${writesOther(edit) ? ', both modes' : ''}` }
 }
 
 const SLOT_VARS = ['--bg', '--fg', '--cu', '--se', ...Array.from({ length: 16 }, (_, i) => `--a${i}`)]

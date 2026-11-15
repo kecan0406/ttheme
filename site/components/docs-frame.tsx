@@ -7,7 +7,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { Kbd } from '@/components/ui/kbd'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { RowLink } from '@/components/ui/row'
-import { DOCS, DOCS_PATH, type DocLink, REPOSITORY } from '@/lib/docs'
+import { DOCS, DOCS_HOME, DOCS_PATH, type DocLink, REPOSITORY } from '@/lib/docs'
 import type { Facts } from '@/lib/facts'
 import { BrandIcon, Icon } from '@/lib/icons'
 import type { Heading } from '@/lib/markdown'
@@ -57,6 +57,17 @@ function DocsNav({ path }: { path: string }) {
           </InputGroupAddon>
         </InputGroup>
       </search>
+      <ul data-group class="mt-2.5 grid">
+        <li data-terms={termsOf(DOCS_HOME.title, DOCS_HOME.title, DOCS_HOME.toc)}>
+          <RowLink
+            href={DOCS_PATH}
+            aria-current={path === DOCS_PATH ? 'page' : undefined}
+            class="h-auto py-1 font-medium"
+          >
+            {escapeHtml(DOCS_HOME.title)}
+          </RowLink>
+        </li>
+      </ul>
       {DOCS.map((group) => (
         <section data-group class="grid gap-0.5">
           <p class="mt-2.5 mb-0.5 flex items-center gap-1.5 px-2.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase">
@@ -217,7 +228,7 @@ export function DocsFrame({
                 <p class="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
                   {made ? (
                     <span>
-                      made from{' '}
+                      Made from{' '}
                       <code class="font-mono" safe>
                         {source}
                       </code>
@@ -230,7 +241,7 @@ export function DocsFrame({
                     class="ml-auto inline-flex items-center gap-1.5 font-medium text-soft-foreground transition-colors hover:text-foreground"
                   >
                     <BrandIcon icon={siGithub} class="size-3" />
-                    {made ? 'view the source on github' : 'edit this page on github'}
+                    {made ? 'View the Source on GitHub' : 'Edit This Page on GitHub'}
                   </a>
                 </p>
               ) : null}
@@ -241,7 +252,7 @@ export function DocsFrame({
             href="#top"
             variant="glass"
             size="icon-lg"
-            aria-label="Back to top"
+            aria-label="Back to Top"
             data-to-top
             hidden
             class="fixed right-5 bottom-5 z-40 shadow-md"
@@ -251,7 +262,7 @@ export function DocsFrame({
               aria-hidden="true"
               class="pointer-events-none absolute top-1/2 right-full mr-2.5 -translate-y-1/2 translate-x-1 rounded-md border border-border bg-popover px-2 py-1 text-xs font-medium whitespace-nowrap text-popover-foreground opacity-0 shadow-md transition-[opacity,translate] duration-150 group-hover/button:translate-x-0 group-hover/button:opacity-100 group-focus-visible/button:translate-x-0 group-focus-visible/button:opacity-100"
             >
-              Back to top
+              Back to Top
             </span>
           </LinkButton>
         </docs-page>

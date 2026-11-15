@@ -2,6 +2,7 @@ import { escapeHtml } from '@kitajs/html'
 import { Check, ChevronRight, Copy, type IconNode, Info, Lightbulb, TriangleAlert } from 'lucide'
 import { Marked, Renderer, type Token, type Tokens } from 'marked'
 import { ChoiceRow, CommandRow, TABBED, type Tabbed } from '@/components/command-row'
+import { DocIconTile } from '@/components/doc-icon'
 import { HeadingAnchor } from '@/components/heading-anchor'
 import { PinsPlayer } from '@/components/pins-player'
 import { TerminalScreen } from '@/components/terminal'
@@ -11,6 +12,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { highlightHtml } from '@/lib/highlight'
 import { Icon } from '@/lib/icons'
+import type { DocIcon } from '@/lib/menu'
 import { idsOf, playPins, readPins, swatchOf } from '@/lib/pins-play'
 import { html } from '@/lib/render'
 import { textLines, widthOf } from '@/lib/terminal'
@@ -43,6 +45,7 @@ interface Place {
   verbs: readonly string[]
   theme: (id: string) => Theme | undefined
   terminal: (name: string) => { url: string; icon: string | undefined } | undefined
+  docIcon: (path: string) => DocIcon | undefined
 }
 
 type Tone = 'note' | 'tip' | 'warning'
@@ -105,7 +108,7 @@ function copyButton(text: string, label: string): string {
       aria-label={label}
       data-copy={text}
       data-copy-hold="1400"
-      data-copy-status="copied (・ω・)"
+      data-copy-status="Copied (・ω・)"
     >
       <Icon node={Copy} class="group-data-copied/copy:hidden" />
       <Icon node={Check} class="hidden text-success group-data-copied/copy:block" />
@@ -274,6 +277,24 @@ function grouped(tokens: Token[]): Token[] {
   return out
 }
 
+interface Featured {
+  link: Tokens.Link
+  about: Token[]
+}
+
+/* A list item that is only `[Page](page.md): what it holds`. */
+function featuredOf(item: Tokens.ListItem): Featured | undefined {
+  const [first, ...others] = item.tokens
+
+  if (others.length > 0 || (first?.type !== 'text' && first?.type !== 'paragraph')) return undefined
+  const [link, colon, ...rest] = first.tokens ?? []
+
+  if (link?.type !== 'link' || colon?.type !== 'text' || !colon.text.startsWith(': ')) return undefined
+  const text = colon.text.slice(2)
+
+  return { link: link as Tokens.Link, about: [{ ...colon, raw: text, text }, ...rest] }
+}
+
 function startsBold(item: Tokens.ListItem): boolean {
   const [first] = item.tokens
 
@@ -378,6 +399,29 @@ function markdown(doc: Doc, place: Place): Marked {
           : `<code>${escapeHtml(text)}</code>`
       },
       list(token) {
+        const featured = token.ordered ? [] : token.items.map(featuredOf)
+
+        const cards = featured.flatMap((each) => {
+          if (!each) return []
+          const href = place.resolve(each.link.href)
+          const [path = '', anchor] = href.split('#')
+          const icon = place.docIcon(path)
+
+          if (!icon) return []
+          doc.targets.push(anchor ? { path, anchor } : { path })
+
+          return [{ href, icon, title: plainOf(each.link.tokens), safeAbout: this.parser.parseInline(each.about) }]
+        })
+
+        if (cards.length > 0 && cards.length === token.items.length) {
+          const items = cards.map(
+            (card) =>
+              `<li><a href="${escapeHtml(card.href)}">${html(<DocIconTile icon={card.icon} />)}<span><strong>${escapeHtml(card.title)}</strong><span>${card.safeAbout}</span></span></a></li>`,
+          )
+
+          return `<ul data-slot="featured">${items.join('')}</ul>\n`
+        }
+
         const out = Renderer.prototype.list.call(this, token)
 
         return token.ordered && token.items.every(startsBold) ? out.replace(/^<ol/, '<ol data-slot="steps"') : out

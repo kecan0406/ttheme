@@ -1,5 +1,6 @@
 import type { FoundWork } from '@/lib/found'
 import { type Marketplace, shortName, type Theme, type WorkRef } from '@/lib/themes'
+import { capitalize } from '@/lib/utils'
 
 interface Meta {
   title: string
@@ -18,7 +19,7 @@ export function siteMeta(): Meta {
 
 export function builderMeta(): Meta {
   return {
-    title: 'builder — make a terminal palette of your own | ttheme',
+    title: 'Builder — make a terminal palette of your own | ttheme',
     description:
       'Tune twenty terminal colors against the contrast checks, in dark and light, then take the palette as a .toml file, a share link or a marketplace of your own.',
   }
@@ -26,42 +27,42 @@ export function builderMeta(): Meta {
 
 export function docsMeta(): Meta {
   return {
-    title: 'docs — install, use and make terminal palettes | ttheme',
+    title: 'Docs — install, use and make terminal palettes | ttheme',
     description: 'How to install ttheme, use and pin palettes, and make palettes of your own.',
   }
 }
 
 export function docMeta(title: string, group: string, description: string): Meta {
   return {
-    title: `${title} — ${group} | ttheme docs`,
+    title: `${title} — ${group} | ttheme Docs`,
     description,
   }
 }
 
 export function creditsMeta(): Meta {
   return {
-    title: 'credits — where the pictures come from | ttheme',
+    title: 'Credits — where the pictures come from | ttheme',
     description: 'Where the key art and the character pictures on ttheme.dev come from: TMDB and AniList.',
   }
 }
 
 export function browseMeta(): Meta {
   return {
-    title: 'browse works — terminal themes of your favorite characters | ttheme',
+    title: 'Browse works — terminal themes of your favorite characters | ttheme',
     description: 'Every anime, game and series with a ttheme palette, built in or from a community marketplace.',
   }
 }
 
 export function browseCategoryMeta(label: string): Meta {
   return {
-    title: `${label} terminal themes — browse works | ttheme`,
+    title: `${capitalize(label)} terminal themes — browse works | ttheme`,
     description: `Every ${label} work with a ttheme palette, built in or from a community marketplace.`,
   }
 }
 
 export function marketplacesMeta(): Meta {
   return {
-    title: 'browse marketplaces — built-in and community terminal themes | ttheme',
+    title: 'Browse marketplaces — built-in and community terminal themes | ttheme',
     description: 'The palettes built into ttheme and the marketplaces anyone publishes from a GitHub repository.',
   }
 }
@@ -69,7 +70,7 @@ export function marketplacesMeta(): Meta {
 export function marketplaceMeta(marketplace: Marketplace | null): Meta {
   if (!marketplace)
     return {
-      title: 'built-in marketplace — character terminal themes | ttheme',
+      title: 'Built-in marketplace — character terminal themes | ttheme',
       description: 'The terminal color schemes that come with ttheme, one for each character.',
     }
 

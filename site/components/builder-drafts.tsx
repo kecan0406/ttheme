@@ -24,14 +24,14 @@ export function DraftEntries({ list }: { list: DraftList }) {
       {list.deleted === null ? null : (
         <p class="flex h-8 items-center gap-2 pr-1 pl-2 text-xs text-muted-foreground">
           <span class="min-w-0 flex-1 truncate">
-            deleted{' '}
+            Deleted{' '}
             <b class="font-display font-extrabold text-foreground" translate="no" safe>
               {list.deleted}
             </b>
           </span>
           <Button variant="ghost" size="xs" data-draft-undo>
             <Icon node={Undo2} />
-            undo
+            Undo
           </Button>
         </p>
       )}
@@ -54,7 +54,7 @@ export function DraftEntries({ list }: { list: DraftList }) {
                     {draft.name}
                   </span>
                   <span class="flex-none text-xs text-muted-foreground" safe>
-                    {draft.current ? 'editing' : draft.when}
+                    {draft.current ? 'Editing' : draft.when}
                   </span>
                 </button>
                 {draft.current ? null : (
@@ -74,10 +74,10 @@ export function DraftEntries({ list }: { list: DraftList }) {
         </section>
       ))}
       {list.count === 0 ? (
-        <p class="px-2 py-6 text-center text-sm text-muted-foreground">no drafts in this browser</p>
+        <p class="px-2 py-6 text-center text-sm text-muted-foreground">No drafts in this browser</p>
       ) : list.groups.length === 0 ? (
         <p class="px-2 py-6 text-center text-sm text-muted-foreground">
-          {escapeHtml(`no draft matches '${list.query}'`)} <span aria-hidden="true">( ˘ω˘ )</span>
+          {escapeHtml(`No draft matches '${list.query}'`)} <span aria-hidden="true">( ˘ω˘ )</span>
         </p>
       ) : null}
     </>
@@ -106,7 +106,7 @@ export function DraftsPanel({ list }: { list: DraftList }) {
             type="search"
             data-draft-search
             aria-label="search the drafts"
-            placeholder="search the drafts"
+            placeholder="Search the drafts"
             spellcheck="false"
             autocomplete="off"
             autocapitalize="none"

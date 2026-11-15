@@ -21,7 +21,7 @@ import { WorkArt } from './work-art'
 export function OptionsNote({ failed = false }: { failed?: boolean }) {
   return (
     <p class="px-2.5 py-2 text-xs text-muted-foreground">
-      {failed ? "couldn't load the palettes" : 'loading the palettes…'}
+      {failed ? "Couldn't load the palettes" : 'Loading the palettes…'}
     </p>
   )
 }
@@ -43,7 +43,7 @@ export function PaletteOptions({
         const pictured = shelf.work ? arts.get(shelf.work.id) : undefined
 
         return (
-          <ComboboxGroup label={shelf.work?.name ?? 'originals'} data-shelf data-lead={lead.name}>
+          <ComboboxGroup label={shelf.work?.name ?? 'Originals'} data-shelf data-lead={lead.name}>
             <MeltCard size="shelf" style={tileLook(worn ?? lead)}>
               {pictured ? (
                 <WorkArt
@@ -57,11 +57,11 @@ export function PaletteOptions({
                 />
               ) : null}
               <Badge variant="glass" data-shelf-use class="absolute top-2 right-2">
-                in use
+                In use
               </Badge>
               <p aria-hidden="true" translate="no" class="relative mb-1 grid min-w-0 justify-items-start gap-px px-1.5">
                 <span class="max-w-full truncate font-display text-base leading-tight font-black" safe>
-                  {shelf.work?.name ?? 'originals'}
+                  {shelf.work?.name ?? 'Originals'}
                 </span>
                 {shelf.work?.native ? (
                   <span
@@ -93,7 +93,7 @@ export function PaletteOptions({
         )
       })}
       <ComboboxEmpty class="px-2.5 py-2 text-xs text-muted-foreground">
-        no palette matches <span aria-hidden="true">( ˘ω˘ )</span>
+        No palette matches <span aria-hidden="true">( ˘ω˘ )</span>
       </ComboboxEmpty>
     </>
   )
@@ -131,7 +131,7 @@ export function PalettePicker() {
             <ComboboxInput
               list="wear-options"
               label="search palettes"
-              placeholder="search palettes"
+              placeholder="Search palettes"
               enterkeyhint="go"
               data-initial-focus
               class="h-9 w-full min-w-0 rounded-xl border border-border bg-card pr-3 pl-9 text-sm transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-faint-foreground hover:border-input focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/35"

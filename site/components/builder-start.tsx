@@ -23,15 +23,15 @@ export const HEAD =
 
 export function StartEntries({ list }: { list: StartList }) {
   if (list.state === 'loading') {
-    return <p class="px-2 py-6 text-center text-sm text-muted-foreground">loading the palettes…</p>
+    return <p class="px-2 py-6 text-center text-sm text-muted-foreground">Loading the palettes…</p>
   }
 
   if (list.state === 'failed') {
     return (
       <div class="grid justify-items-center gap-2 px-2 py-6 text-center text-sm text-muted-foreground">
-        the palettes did not load
+        The palettes did not load
         <Button variant="outline" size="sm" data-start-retry>
-          try again
+          Try again
         </Button>
       </div>
     )
@@ -75,7 +75,7 @@ export function StartEntries({ list }: { list: StartList }) {
         </ComboboxGroup>
       ))}
       <ComboboxEmpty class="px-2 py-6 text-center text-sm text-muted-foreground">
-        no palette matches <span aria-hidden="true">( ˘ω˘ )</span>
+        No palette matches <span aria-hidden="true">( ˘ω˘ )</span>
       </ComboboxEmpty>
     </>
   )
@@ -87,12 +87,12 @@ export function StartPopover() {
       <div class="grid gap-0.5 border-b border-border p-2">
         <button type="button" data-start-blank class={ITEM}>
           <Icon node={Sprout} class="size-4 flex-none text-primary" />
-          <b class="font-semibold">blank</b>
+          <b class="font-semibold">Blank</b>
         </button>
         <Collapsible data-open-box>
           <CollapsibleTrigger class={ITEM}>
             <Icon node={FolderOpen} class="size-4 flex-none text-primary" />
-            <b class="font-semibold">open a link, code or file</b>
+            <b class="font-semibold">Open a link, code or file</b>
           </CollapsibleTrigger>
           <CollapsiblePanel>
             <div class="grid gap-2 px-2 pt-1 pb-2">
@@ -108,10 +108,10 @@ export function StartPopover() {
               />
               <div class="flex flex-wrap items-center gap-2">
                 <Button size="sm" data-open-go>
-                  open
+                  Open
                 </Button>
                 <Button variant="outline" size="sm" data-open-file>
-                  choose a .toml
+                  Choose a .toml
                 </Button>
                 <input type="file" accept=".toml,text/plain" data-open-input hidden aria-label="a .toml file" />
               </div>
@@ -127,7 +127,7 @@ export function StartPopover() {
             <ComboboxInput
               list="builder-start-list"
               label="search the palettes"
-              placeholder="search the palettes"
+              placeholder="Search the palettes"
               enterkeyhint="search"
               class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-faint-foreground"
             />

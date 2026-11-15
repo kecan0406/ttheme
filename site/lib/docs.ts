@@ -10,6 +10,7 @@ import environment from '../../docs/cli/environment.md' with { type: 'text' }
 import make from '../../docs/guide/make.md' with { type: 'text' }
 import quickstart from '../../docs/guide/quickstart.md' with { type: 'text' }
 import use from '../../docs/guide/use.md' with { type: 'text' }
+import indexText from '../../docs/index.md' with { type: 'text' }
 import terminals from '../../docs/reference/terminals.md' with { type: 'text' }
 import { GATE_RULES } from '../../src/core/contrast.ts'
 
@@ -61,7 +62,7 @@ const NAV: Group[] = [
     slug: 'guide',
     title: 'Guide',
     pages: [
-      { slug: 'quickstart', label: 'Quick start', text: quickstart },
+      { slug: 'quickstart', label: 'Get Started', text: quickstart },
       {
         slug: 'use',
         label: 'Use ttheme',
@@ -70,7 +71,7 @@ const NAV: Group[] = [
       },
       {
         slug: 'make',
-        label: 'Make a palette',
+        label: 'Make a Palette',
         text: make,
         menu: { blurb: 'Tune twenty colors and share them as a link', icon: 'make' },
       },
@@ -96,7 +97,7 @@ const NAV: Group[] = [
       },
       {
         slug: 'environment',
-        label: 'Environment variables',
+        label: 'Environment Variables',
         text: environment,
         menu: { blurb: 'Folders, proxy, editor and colors', icon: 'environment' },
       },
@@ -108,7 +109,7 @@ const NAV: Group[] = [
     pages: [
       {
         slug: 'terminals',
-        label: 'Terminal support',
+        label: 'Terminal Support',
         text: terminals,
         menu: { blurb: 'What each terminal shows, and what it cannot', icon: 'terminals' },
       },
@@ -121,7 +122,12 @@ const MADE_FROM: Record<Made, string> = {
   settings: 'src/store/wiring.ts',
 }
 
-export const DOC_FILES = NAV.flatMap((group) => group.pages.map((page) => `docs/${group.slug}/${page.slug}.md`))
+const INDEX_FILE = 'docs/index.md'
+
+export const DOC_FILES = [
+  INDEX_FILE,
+  ...NAV.flatMap((group) => group.pages.map((page) => `docs/${group.slug}/${page.slug}.md`)),
+]
 
 const VERBS = COMMANDS.sections.flatMap((section) => section.commands.map((command) => command.name))
 
@@ -129,11 +135,11 @@ function pathOf(group: string, slug: string): string {
   return `${DOCS_PATH}/${group}/${slug}`
 }
 
-function resolver(group: string, slug: string): (href: string) => string {
+function resolver(from: string, here: string): (href: string) => string {
   return (href) => {
-    if (href.startsWith('#')) return `${pathOf(group, slug)}${href}`
+    if (href.startsWith('#')) return `${here}${href}`
     const [file = '', anchor] = href.split('#')
-    const parts = `docs/${group}/${file}`.split('/')
+    const parts = `${from.slice(0, from.lastIndexOf('/'))}/${file}`.split('/')
     const joined: string[] = []
 
     for (const part of parts) {
@@ -145,12 +151,14 @@ function resolver(group: string, slug: string): (href: string) => string {
     const hash = anchor ? `#${anchor}` : ''
     const page = /^docs\/([^/]+)\/([^/]+)\.md$/.exec(target)
 
+    if (target === INDEX_FILE) return `${DOCS_PATH}${hash}`
+
     if (page && DOC_FILES.includes(target)) return `${pathOf(page[1] as string, page[2] as string)}${hash}`
 
     if (!target.startsWith('docs/') && /\.(md|toml|json|ts)$/.test(target))
       return `${REPOSITORY}/blob/main/${target}${hash}`
 
-    throw new Error(`docs/${group}/${slug}.md links to ${href}, which is no docs page`)
+    throw new Error(`${from} links to ${href}, which is no docs page`)
   }
 }
 
@@ -169,9 +177,9 @@ function madeToc(made: Made | undefined): Heading[] {
 
 type Icons = Readonly<Record<string, string>>
 
-function placeOf(group: GroupSlug, slug: string, icons: Icons): Parameters<typeof renderDoc>[1] {
+function placeOf(from: string, here: string, icons: Icons): Parameters<typeof renderDoc>[1] {
   return {
-    resolve: resolver(group, slug),
+    resolve: resolver(from, here),
     verbs: VERBS,
     theme: (id) => themes.find((theme) => theme.id === id),
     terminal: (name) => {
@@ -181,14 +189,18 @@ function placeOf(group: GroupSlug, slug: string, icons: Icons): Parameters<typeo
         ? { url: terminal.url, icon: Object.hasOwn(icons, terminal.id) ? icons[terminal.id] : undefined }
         : undefined
     },
+    docIcon: (path) =>
+      NAV.flatMap((group) => group.pages.map((entry) => ({ path: pathOf(group.slug, entry.slug), entry }))).find(
+        (each) => each.path === path,
+      )?.entry.menu?.icon,
   }
 }
 
 const FLAT = NAV.flatMap((group) =>
   group.pages.map((entry) => {
-    const doc = renderDoc(entry.text, placeOf(group.slug, entry.slug, {}))
-
     const file = `docs/${group.slug}/${entry.slug}.md`
+    const doc = renderDoc(entry.text, placeOf(file, pathOf(group.slug, entry.slug), {}))
+
     const extra = madeToc(entry.made)
 
     return {
@@ -223,10 +235,25 @@ export const DOCS: DocGroup[] = NAV.map((group) => ({
   pages: DOC_PAGES.filter((page) => page.group.slug === group.slug),
 }))
 
+export interface DocsHome extends Doc {
+  path: string
+  file: string
+  next?: DocLink
+}
+
+const FIRST = DOC_PAGES[0]
+
+export const DOCS_HOME: DocsHome = {
+  ...renderDoc(indexText, placeOf(INDEX_FILE, DOCS_PATH, {})),
+  path: DOCS_PATH,
+  file: INDEX_FILE,
+  ...(FIRST ? { next: { title: FIRST.title, path: FIRST.path } } : {}),
+}
+
 function broken(): string[] {
-  return DOC_PAGES.flatMap((page) =>
+  return [DOCS_HOME, ...DOC_PAGES].flatMap((page) =>
     page.targets.flatMap((target) => {
-      const to = DOC_PAGES.find((other) => other.path === target.path)
+      const to = [DOCS_HOME, ...DOC_PAGES].find((other) => other.path === target.path)
 
       if (!to) return [`${page.file} links to ${target.path}, which is no docs page`]
 
@@ -254,7 +281,11 @@ export function bodyOf(page: DocPage, icons: Icons): string {
 
   if (!entry) throw new Error(`${page.path} is missing from the nav table`)
 
-  return renderDoc(entry.text, placeOf(page.group.slug, page.slug, icons)).safeBody
+  return renderDoc(entry.text, placeOf(page.file, page.path, icons)).safeBody
+}
+
+export function homeBody(icons: Icons): string {
+  return renderDoc(indexText, placeOf(INDEX_FILE, DOCS_PATH, icons)).safeBody
 }
 
 export function docAt(group: string, slug: string): DocPage | undefined {

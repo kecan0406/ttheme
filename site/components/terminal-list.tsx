@@ -64,7 +64,7 @@ export function TerminalList({ icons }: { icons: Record<string, string> }) {
       <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div class="grid gap-2">
           <h2 id="terminals" class="font-display text-display-lg font-black">
-            works where you already type
+            Works where you already type
           </h2>
           <p class="text-soft-foreground">
             One <code class="font-mono">init</code> wires every terminal you pick, and each tab repaints only itself.
@@ -74,7 +74,7 @@ export function TerminalList({ icons }: { icons: Record<string, string> }) {
           href="/docs/reference/terminals"
           class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline-offset-4 hover:underline"
         >
-          what each one can do
+          What each one can do
           <Icon node={ArrowRight} class="size-3.5" />
         </a>
       </div>
@@ -113,7 +113,7 @@ export function TerminalList({ icons }: { icons: Record<string, string> }) {
         <LinkButton variant="outline" href={REQUEST_URL} target="_blank" rel="noopener">
           <BrandIcon icon={siGithub} class="size-4" />
           <span>
-            request a{' '}
+            Request a{' '}
             <span class="whitespace-nowrap">
               terminal
               <NewTab class="ml-1 inline-block size-3.5 align-middle" />

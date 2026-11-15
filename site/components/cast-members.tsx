@@ -49,7 +49,7 @@ export function Member({ member, lang }: { member: FoundCast; lang: string | nul
           )}
           <small class="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
             <Icon node={Plus} class="size-3" />
-            make a palette
+            Make a palette
           </small>
         </span>
       </a>
@@ -106,7 +106,7 @@ export function CastSearch({ id, work, lang }: { id: string; work: string; lang:
           <InputGroupInput
             type="search"
             name="cast"
-            placeholder="find another character"
+            placeholder="Find another character"
             aria-label="find another character"
             spellcheck="false"
             autocomplete="off"
@@ -124,13 +124,13 @@ export function CastSearch({ id, work, lang }: { id: string; work: string; lang:
 export function CastAsking({ query }: { query: string }) {
   return (
     <p class={NOTE}>
-      looking up <span safe>“{query}”</span>…
+      Looking up <span safe>“{query}”</span>…
     </p>
   )
 }
 
 export function CastFailed() {
-  return <p class={NOTE}>the name lookup did not answer — try again in a moment.</p>
+  return <p class={NOTE}>The name lookup did not answer — try again in a moment.</p>
 }
 
 export function CastFound({
@@ -161,7 +161,7 @@ export function CastFound({
   return (
     <div class="grid justify-items-start gap-3.5">
       <p class={NOTE}>
-        no{' '}
+        No{' '}
         <span translate="no" class="font-semibold text-foreground" safe>
           “{query}”
         </span>{' '}
@@ -172,7 +172,7 @@ export function CastFound({
         <span aria-hidden="true">( ˘ω˘ )</span>
       </p>
       <LinkButton variant="outline" size="sm" href={requestUrl(`${query}, ${work}`)} target="_blank" rel="noopener">
-        request a character
+        Request a character
         <NewTab />
       </LinkButton>
     </div>

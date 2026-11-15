@@ -10,7 +10,7 @@ import { BROWSE_PATH, marketplacePath, palettePath, type Shelf } from '@/lib/gal
 import { Icon, NewTab } from '@/lib/icons'
 import { makePath } from '@/lib/names'
 import { BUILTIN, type Theme } from '@/lib/themes'
-import { cn, plural } from '@/lib/utils'
+import { capitalize, cn, plural } from '@/lib/utils'
 import type { CastSlot, Neighbor, WorkMarket, WorkPage } from '@/lib/work-page'
 import { ribbon, WORN_FACETS } from '@/lib/works'
 import { requestUrl } from '../../src/core/names.ts'
@@ -97,7 +97,7 @@ function Request({ work }: { work: string }) {
         </span>
         <span class="grid w-full justify-items-center gap-px">
           <b class="font-display text-base leading-snug font-extrabold text-soft-foreground transition-colors group-hover/who:text-foreground">
-            request
+            Request
           </b>
           <small class="inline-flex items-center gap-1 font-display text-xs font-extrabold text-muted-foreground">
             a character
@@ -299,7 +299,7 @@ function Market({
                 </CollapsibleTrigger>
                 <CollapsiblePanel>
                   <p data-missing-note hidden class="mx-3 mt-1.5 text-sm text-muted-foreground max-sm:mx-1.5">
-                    no <span data-missing-who translate="no"></span> palette here yet
+                    No <span data-missing-who translate="no"></span> palette here yet
                   </p>
                   <ol
                     aria-label={`${work} palettes in ${shelf.id}`}
@@ -326,7 +326,7 @@ function Market({
               href={marketplacePath(shelf.id)}
               class="inline-flex items-center gap-1.5 justify-self-start rounded-sm pl-2.5 text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
             >
-              see all {catalog.works} works in{' '}
+              See all {catalog.works} works in{' '}
               <span translate="no" safe>
                 {shelf.id}
               </span>
@@ -355,7 +355,7 @@ function WorkHead({
 
   return (
     <div class="relative mx-auto grid min-h-133 w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] content-end gap-1.5 pt-15 pb-8 max-sm:min-h-102">
-      <Crumbs trail={[{ label: 'browse', href: BROWSE_PATH }, { label: 'works' }]} />
+      <Crumbs trail={[{ label: 'Browse', href: BROWSE_PATH }, { label: 'Works' }]} />
       <h1 translate="no" class="font-display text-display-xl font-black text-balance [overflow-wrap:anywhere]" safe>
         {name}
       </h1>
@@ -373,7 +373,7 @@ function WorkHead({
         <p class="flex flex-wrap gap-x-3 text-sm text-soft-foreground">
           {links.map((link) => (
             <a href={link.href} class="underline-offset-4 hover:text-foreground hover:underline" safe>
-              {link.label}
+              {capitalize(link.label)}
             </a>
           ))}
         </p>
@@ -390,7 +390,7 @@ const FAMILY = 'grid max-w-[68ch] gap-2'
 function RestOfCast({ rest, total, lang }: { rest: FoundCast[]; total: number; lang: string | null }) {
   return rest.length === 0 ? null : (
     <Collapsible class="group/more grid grid-cols-[minmax(0,1fr)] gap-5">
-      <CollapsibleTrigger class={SHOW_ALL}>show all {total}</CollapsibleTrigger>
+      <CollapsibleTrigger class={SHOW_ALL}>Show all {total}</CollapsibleTrigger>
       <CollapsiblePanel>
         <ul class={CAST}>
           {rest.map((member) => (
@@ -422,7 +422,7 @@ function FamilyRow({ work }: { work: FamilyWork }) {
         {work.name}
       </span>
       <span class="flex-none font-mono text-xs text-muted-foreground" safe>
-        {[work.medium, work.year].filter((part) => part !== null).join(', ')}
+        {capitalize([work.medium, work.year].filter((part) => part !== null).join(', '))}
       </span>
     </li>
   )
@@ -440,7 +440,7 @@ function Family({ works }: { works: FamilyWork[] }) {
       </ol>
       {rest.length === 0 ? null : (
         <Collapsible class="group/more grid grid-cols-[minmax(0,1fr)]">
-          <CollapsibleTrigger class={cn(SHOW_ALL, 'mt-2.5')}>show all {works.length}</CollapsibleTrigger>
+          <CollapsibleTrigger class={cn(SHOW_ALL, 'mt-2.5')}>Show all {works.length}</CollapsibleTrigger>
           <CollapsiblePanel>
             <ol class={FAMILY}>
               {rest.map((work) => (
@@ -458,7 +458,7 @@ function NoPalettes({ work }: { work: FoundWork }) {
   return (
     <div class="grid justify-items-start gap-3.5">
       <p class="text-soft-foreground">
-        no marketplace has a palette of{' '}
+        No marketplace has a palette of{' '}
         <span translate="no" class="font-semibold text-foreground" safe>
           {work.name}
         </span>{' '}
@@ -466,10 +466,10 @@ function NoPalettes({ work }: { work: FoundWork }) {
       </p>
       <span class="flex flex-wrap gap-2">
         <LinkButton size="sm" href={makePath(work.id)}>
-          make one
+          Make one
         </LinkButton>
         <LinkButton variant="outline" size="sm" href={PUBLISH_PATH}>
-          publish a marketplace
+          Publish a marketplace
         </LinkButton>
       </span>
     </div>
@@ -490,7 +490,7 @@ export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts
             {cast.length === 0 ? null : (
               <section aria-labelledby="characters" class={SECTION}>
                 <h2 id="characters" class={HEADING}>
-                  characters <span class={COUNT}>{cast.length}</span>
+                  Characters <span class={COUNT}>{cast.length}</span>
                 </h2>
                 <Members cast={cast} lang={work.lang} />
                 <CastSearch id={work.id} work={work.name} lang={work.lang} />
@@ -498,14 +498,14 @@ export function FoundView({ page, facts, path }: { page: FoundPage; facts: Facts
             )}
             <section aria-labelledby="marketplaces" class={SECTION}>
               <h2 id="marketplaces" class={HEADING}>
-                marketplaces <span class={COUNT}>0</span>
+                Marketplaces <span class={COUNT}>0</span>
               </h2>
               <NoPalettes work={work} />
             </section>
             {family.length < 2 ? null : (
               <section aria-labelledby="works" class={SECTION}>
                 <h2 id="works" class={HEADING}>
-                  works <span class={COUNT}>{family.length}</span>
+                  Works <span class={COUNT}>{family.length}</span>
                 </h2>
                 <Family works={family} />
               </section>
@@ -534,7 +534,7 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
             <section aria-labelledby="characters" class={SECTION}>
               <div class="flex items-baseline gap-3.5">
                 <h2 id="characters" class={HEADING}>
-                  characters <span class={COUNT}>{cast.length + more.length}</span>
+                  Characters <span class={COUNT}>{cast.length + more.length}</span>
                 </h2>
                 <button
                   type="button"
@@ -542,7 +542,7 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
                   hidden
                   class="rounded-sm text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  show all
+                  Show all
                 </button>
               </div>
               <ul class={CAST}>
@@ -559,7 +559,7 @@ export function WorkView({ page, facts, path }: { page: WorkPage; facts: Facts; 
             </section>
             <section aria-labelledby="marketplaces" class={SECTION}>
               <h2 id="marketplaces" class={HEADING}>
-                marketplaces <span class={COUNT}>{markets.length}</span>
+                Marketplaces <span class={COUNT}>{markets.length}</span>
               </h2>
               <div class="grid grid-cols-[minmax(0,1fr)]">
                 {markets.map((market) => (

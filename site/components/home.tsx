@@ -16,11 +16,11 @@ import { TerminalList } from './terminal-list'
 
 const STEPS = [
   {
-    title: 'install',
+    title: 'Install',
     text: 'Needs Node 22+ and zsh. Asks which terminals and palettes to bring, shows every file it will change, and writes nothing until you confirm.',
   },
   {
-    title: 'browse',
+    title: 'Browse',
     text: 'Pick more in Browse, the second tab of ttheme, work by work.',
     command: 'ttheme',
   },
@@ -88,7 +88,7 @@ export function Home({
               class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-12 py-12 lead-stacked:gap-4 lead-stacked:pt-18"
             >
               <h2 id="features" class="font-display text-display-lg font-black">
-                everything a tab needs
+                Everything a tab needs
               </h2>
               <feature-cards class="grid auto-rows-[16.75rem] grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
                 <PerTab leads={leads} />
@@ -107,7 +107,7 @@ export function Home({
 
           <section aria-labelledby="install" class="grid gap-6 py-12">
             <h2 id="install" class="font-display text-display-lg font-black">
-              three commands
+              Three commands
             </h2>
             <ol class="grid grid-cols-3 rounded-3xl border bg-card shadow-sm max-[1080px]:grid-cols-1">
               {STEPS.map((step, index) => (
@@ -115,7 +115,7 @@ export function Home({
                   {step.command ? <CommandRow command={step.command} /> : <InitRow />}
                 </Step>
               ))}
-              <Step number={3} title="use" text="This tab only. Every other tab keeps its own.">
+              <Step number={3} title="Use" text="This tab only. Every other tab keeps its own.">
                 <div data-lead-use class="contents">
                   <LeadUse theme={theme} />
                 </div>

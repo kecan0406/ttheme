@@ -59,7 +59,7 @@ export function CharacterCard({ characters }: { characters: FeatureCharacter[] }
             </label>
           ))}
         </div>
-        <Copy title="a palette per character">
+        <Copy title="A palette per character">
           Each one built around the character, with three signature colors you'll recognise at a glance.
         </Copy>
       </div>
@@ -83,7 +83,7 @@ export function CommunityCard({ community }: { community: FeatureCommunity | nul
         </>
       ) : null}
       <div class="relative grid gap-1 px-5.5 pb-5">
-        <Copy title="more from the community">
+        <Copy title="More from the community">
           Browse palettes other fans publish, and add a whole marketplace with one command.
         </Copy>
       </div>
@@ -121,7 +121,7 @@ export function PictureCard({ picture }: { picture: FeaturePicture | null }) {
             class="pointer-events-none absolute top-3.5 left-5.5 text-code"
           />
           <label class="absolute top-23 left-5.5 inline-flex h-7 items-center gap-2 rounded-full bg-glass px-3 text-xs font-medium inset-ring inset-ring-foreground/14 backdrop-blur-[14px] backdrop-saturate-130">
-            strength
+            Strength
             <input
               type="range"
               min="15"
@@ -136,7 +136,7 @@ export function PictureCard({ picture }: { picture: FeaturePicture | null }) {
         </>
       ) : null}
       <div class="relative grid gap-1 px-5.5 pb-5">
-        <Copy title="a picture behind the text">
+        <Copy title="A picture behind the text">
           Tint a picture into the palette's background and set how strongly it shows behind the text.
         </Copy>
       </div>
@@ -149,7 +149,7 @@ export function MakeCard() {
     <MeltLink href="/builder">
       <span data-slot="stripes" data-melt aria-hidden="true" class="absolute inset-x-0 top-0 -z-10 h-2/3" />
       <div class="relative grid gap-1 px-5.5 pb-5">
-        <Copy title="make your own">
+        <Copy title="Make your own">
           <code class="font-mono text-code text-foreground">ttheme new</code> opens a palette editor in your terminal,
           and <code class="font-mono text-code text-foreground">ttheme share</code> turns the result into a link anyone
           can open.
@@ -166,7 +166,7 @@ export function FreeCard() {
         MIT
       </span>
       <div class="grid gap-1 px-5.5 pb-5">
-        <Copy title="free and open">MIT licensed, free to use and to change.</Copy>
+        <Copy title="Free and open">MIT licensed, free to use and to change.</Copy>
       </div>
     </MeltCard>
   )

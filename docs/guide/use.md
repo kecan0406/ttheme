@@ -3,7 +3,7 @@
 Try palettes on, use one in a tab or as the default, pin one to a folder, switch
 between light and dark, add palettes and pictures, and take it all back out.
 
-## Try palettes on
+## Try Palettes On
 
 Run `ttheme` on its own. It opens Preview, where the tab shows every palette you
 installed as the cursor lands on it, so you choose by looking.
@@ -51,7 +51,7 @@ installed as the cursor lands on it, so you choose by looking.
   Browse, the picture preview, the edit panel and the palette editor.
   `TTHEME_HELP_BOX=off`, or **Help** in `alt+c`, turns it off.
 
-## This tab, new tabs and the default
+## This Tab, New Tabs and the Default
 
 `enter` on a palette asks where it goes. **Default** makes it the palette new tabs
 open with, in every terminal you wired; **This tab** uses it in this tab alone.
@@ -79,7 +79,7 @@ ttheme default hatsune-miku      # the default for new tabs
 - A change made in one tab reaches every other tab that sits idle at its prompt
   at once. A tab busy with a program catches up at its next prompt.
 
-## Pin a folder or an ssh host
+## Pin a Folder or an ssh Host
 
 A pin gives a folder, or an ssh host, its own palette. A tab shows it while it
 is there and puts back what it showed before when it leaves.
@@ -131,7 +131,7 @@ ttheme unpin ssh:teal
 Pins live in `~/.config/ttheme/pins`, one per line, and the file is yours to edit
 (`~/work/**  ttheme/izumi-konata`, where `path/**` covers everything below the path).
 
-## Light, dark and auto
+## Light, Dark and Auto
 
 Every palette comes in a light and a dark mode, and one setting picks the mode
 all of them show in.
@@ -153,7 +153,7 @@ gets the other by the same rules: each color keeps its hue, its lightness moves
 to the other side, and the colors that identify the character are kept apart.
 Your tuning belongs to the mode it was made in.
 
-## Add and update palettes
+## Add and Update Palettes
 
 Palettes come from marketplaces. The built-in one ships with ttheme, and anyone
 can publish another from a GitHub repository. A palette is someone's take on a
@@ -228,7 +228,7 @@ its own.
 A palette can carry a picture of its character behind your text. ttheme ships
 none: pictures are downloaded to your machine, into `~/.config/ttheme/backgrounds`,
 cut out and kept faint enough that your text still passes the contrast checks.
-[Terminal support](../reference/terminals.md) says which terminals draw them.
+[Terminal Support](../reference/terminals.md) says which terminals draw them.
 
 In `ttheme`, the panel beside the list belongs to the palette under the cursor, and
 `→` moves into it. The **Pictures** row holds the palette's pictures; `enter` on an empty frame opens
@@ -272,7 +272,7 @@ paste beside a screenshot.
 [Configuration](../cli/configuration.md) lists `TTHEME_BG_COLORS`, `TTHEME_BG_STICKER`, `TTHEME_BG_BLUR`
 and every `TTHEME_FIND_*` filter.
 
-## What init changes
+## What init Changes
 
 `init` adds one guarded block to each config it wires and keeps everything else
 in `~/.config/ttheme`. ttheme sets colors only, never a font or a shader, and
@@ -297,10 +297,10 @@ comes back byte for byte; one you edited keeps its backup.
 > Your own palettes live in `~/.config/ttheme/marketplace` and go with the rest.
 > [Publish them](make.md#publish-a-marketplace) or copy the folder first.
 
-## When something goes wrong
+## When Something Goes Wrong
 
 - **The `ttheme` command is not found.** Tabs opened before `init` started their
-  shell without it. Start the shell again, as in [Quick start](quickstart.md).
+  shell without it. Start the shell again, as in [Get Started](quickstart.md).
 - **A terminal shows no palette.** Quit and reopen iTerm2, Konsole, Terminal.app
   or Contour once. If ttheme never wired that terminal, run `init` again from
   inside it, answer **No, set it up again**, and mark it where it says
@@ -308,7 +308,7 @@ comes back byte for byte; one you edited keeps its backup.
 - **`init` stops without asking anything.** It asks in a terminal and stops where
   there is none. Run it in a terminal tab, or add `--yes`.
 - **A command cannot reach the network behind a proxy.** Set `HTTPS_PROXY`, as
-  [Environment variables](../cli/environment.md#network) says; it needs Node.js
+  [Environment Variables](../cli/environment.md#network) says; it needs Node.js
   22.21 or newer.
 
 When none of these fits, `ttheme info` prints what a bug report needs (before

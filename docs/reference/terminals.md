@@ -1,4 +1,4 @@
-# Terminal support
+# Terminal Support
 
 ttheme wires eleven terminals, and every one of them shows a palette per tab. Nothing
 is emulated: a terminal that cannot express something does not get it.
@@ -32,7 +32,7 @@ by hand stays until you change it.
 iTerm2, Konsole, Terminal.app and Contour read their profiles when they start, so
 restart each once after `init`.
 
-## Per terminal
+## Per Terminal
 
 - **Ghostty** reloads its config when the default changes. It shows one picture
   for the whole app, decided by the tab in front, so a tab you switch to can show

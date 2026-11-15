@@ -46,7 +46,7 @@ import { artFor } from '@/lib/key-art'
 import { makePath } from '@/lib/names'
 import { json } from '@/lib/render'
 import { BUILTIN, type Theme } from '@/lib/themes'
-import { cn } from '@/lib/utils'
+import { capitalize, cn } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 import { byWork, facetStyle, focusOf, leadOf, tileLook, WORN_FACETS, type WorkEntry } from '@/lib/works'
 import { requestUrl } from '../../src/core/names.ts'
@@ -69,18 +69,18 @@ const LENSES: { lens: Lens; href: string }[] = [
 
 const WORK_SORTS = {
   name: { label: 'a–z', icon: ArrowDownAZ },
-  palettes: { label: 'most palettes', icon: ArrowDownWideNarrow },
+  palettes: { label: 'Most palettes', icon: ArrowDownWideNarrow },
 } satisfies Record<string, Option>
 
 const MARKET_SORTS = {
-  popular: { label: 'popular', icon: Star },
-  updated: { label: 'updated', icon: Clock },
+  popular: { label: 'Popular', icon: Star },
+  updated: { label: 'Updated', icon: Clock },
   name: { label: 'a–z', icon: ArrowDownAZ },
 } satisfies Record<Sort, Option>
 
 const VIEWS = {
-  shelves: { label: 'shelves', icon: GalleryHorizontalEnd },
-  covers: { label: 'covers', icon: LayoutGrid },
+  shelves: { label: 'Shelves', icon: GalleryHorizontalEnd },
+  covers: { label: 'Covers', icon: LayoutGrid },
 } satisfies Record<string, Option>
 
 const PUBLISH = ['ttheme marketplace init', 'ttheme marketplace check']
@@ -107,8 +107,8 @@ function stacksIn(shelf: Shelf): Stack[] {
 
     return {
       id: work?.id ?? null,
-      name: work?.name ?? 'originals',
-      note: work ? (work.native ?? `led by ${lead.name}`) : null,
+      name: work?.name ?? 'Originals',
+      note: work ? (work.native ?? `Led by ${lead.name}`) : null,
       lang: work?.lang ?? undefined,
       themes,
       lead,
@@ -130,7 +130,7 @@ function Lenses({ lens, counts }: { lens: Lens; counts: Record<Lens, number> }) 
           aria-current={one.lens === lens ? 'page' : undefined}
           class="relative inline-flex items-baseline gap-2.5 pb-2 font-display text-display-lg font-black text-muted-foreground transition-colors hover:text-soft-foreground aria-[current=page]:text-foreground"
         >
-          {one.lens}
+          {escapeHtml(capitalize(one.lens))}
           <span class="font-mono text-sm font-normal tracking-normal text-muted-foreground tabular-nums">
             {counts[one.lens]}
           </span>
@@ -182,7 +182,7 @@ function Choice({
   return (
     <RadioGroup variant="underline" label={name} class={cn('w-auto flex-[1_1_auto] justify-end gap-5', className)}>
       <span aria-hidden="true" class="pb-3 text-sm text-muted-foreground" safe>
-        {name}
+        {capitalize(name)}
       </span>
       {Object.entries(options).map(([value, option]) => (
         <RadioGroupItem variant="underline" name={name} value={value} checked={value === first}>
@@ -218,25 +218,25 @@ function Empty({ everyWork = false }: { everyWork?: boolean }) {
   return (
     <div data-empty hidden class="grid justify-items-center gap-1 py-15 text-center text-muted-foreground">
       <strong class="block font-semibold text-foreground">
-        <span data-empty-title>no palettes yet</span>{' '}
+        <span data-empty-title>No palettes yet</span>{' '}
         <span data-empty-face aria-hidden="true">
           ( ˘ω˘ )
         </span>
       </strong>
-      <span data-empty-text>ask for one, or make it yourself.</span>
+      <span data-empty-text>Ask for one, or make it yourself.</span>
       <span data-empty-ask hidden class="mt-3 flex flex-wrap justify-center gap-2">
         <LinkButton variant="outline" size="sm" href={requestUrl('')} target="_blank" rel="noopener" data-request>
-          request a character
+          Request a character
           <NewTab />
         </LinkButton>
         <LinkButton size="sm" href={makePath(null)} data-make>
-          make one
+          Make one
         </LinkButton>
       </span>
       {everyWork ? (
         <span data-empty-every hidden class="mt-3 flex justify-center">
           <LinkButton variant="outline" size="sm" href={BROWSE_PATH} data-keep-query>
-            search every work
+            Search every work
           </LinkButton>
         </span>
       ) : null}
@@ -288,7 +288,7 @@ function Categories({ categories, current }: { categories: readonly Category[]; 
           aria-current={one.slug === current ? 'page' : undefined}
           class="relative -mb-px flex-none px-0.5 pb-3 text-sm font-medium whitespace-nowrap text-soft-foreground transition-colors duration-150 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:after:opacity-100 max-sm:mb-0"
         >
-          {one.label}
+          {escapeHtml(capitalize(one.label))}
         </a>
       ))}
     </nav>
@@ -304,7 +304,7 @@ function Genres({ category, entries }: { category: CategorySlug; entries: WorkEn
     <fieldset aria-label="genre" data-genre-filter class="flex flex-wrap items-center gap-2">
       {genres.map((genre) => (
         <Toggle variant="chip" value={genre.slug}>
-          <span>{genre.label}</span>
+          <span safe>{capitalize(genre.label)}</span>
           <b data-genre-count class="font-mono text-xs font-normal text-muted-foreground tabular-nums">
             {entries.filter((entry) => genresFrom(entry.places).includes(genre.slug)).length}
           </b>
@@ -341,7 +341,7 @@ export function BrowseWorks({
       >
         <Head
           lens="works"
-          heading={category ? `browse ${category.label} works` : 'browse works'}
+          heading={category ? `Browse ${category.label} works` : 'Browse works'}
           counts={{ works: entries.length, marketplaces: shelves.length }}
           clear={category ? categoryPath(category.slug) : BROWSE_PATH}
         >
@@ -349,7 +349,7 @@ export function BrowseWorks({
           <Choice name="sort" options={WORK_SORTS} first="name" />
         </Head>
         {category ? <Genres category={category.slug} entries={entries} /> : null}
-        <Hint href={MARKETPLACES_PATH} label="see marketplaces" />
+        <Hint href={MARKETPLACES_PATH} label="See marketplaces" />
         <p data-summary hidden class="text-sm text-soft-foreground">
           <b data-summary-count class="font-mono font-normal text-foreground tabular-nums"></b>{' '}
           <span data-summary-text></span>
@@ -367,10 +367,10 @@ export function BrowseWorks({
             <h2 id={`group-${group.id}`} class="flex items-baseline gap-2 font-display text-display-sm font-black">
               {group.href ? (
                 <a href={group.href} data-keep-query class="transition-colors hover:text-primary" safe>
-                  {group.label}
+                  {capitalize(group.label)}
                 </a>
               ) : (
-                <span safe>{group.label}</span>
+                <span safe>{capitalize(group.label)}</span>
               )}
               <span
                 data-group-count
@@ -607,10 +607,10 @@ function PublishCover() {
         <Icon node={Plus} class="size-6" />
       </span>
       <Badge variant="glass" class="absolute top-3 left-3">
-        your marketplace here
+        Your marketplace here
       </Badge>
       <div class="relative grid min-w-0 gap-1.5 px-4 pb-4">
-        <h2 class="font-display text-display-sm font-black">publish your own</h2>
+        <h2 class="font-display text-display-sm font-black">Publish your own</h2>
         <p class="text-sm text-pretty text-soft-foreground">
           A GitHub repository of palettes, a file for each work. Give it the{' '}
           <code class="font-mono text-xs text-foreground">ttheme-marketplace</code> topic and it shows up here within
@@ -626,7 +626,7 @@ function Publish({ class: className }: { class?: string }) {
   return (
     <section aria-labelledby="publish" class={cn('mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 border-t pt-9', className)}>
       <h2 id="publish" class="font-display text-display-sm font-black">
-        publish your own
+        Publish your own
       </h2>
       <p class="max-w-[620px] text-sm text-pretty text-soft-foreground">
         A marketplace is a GitHub repository of palettes, a file for each work:{' '}
@@ -645,7 +645,7 @@ function Publish({ class: className }: { class?: string }) {
         <li class="grid grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-2.5">
           <span class="font-mono text-xs text-muted-foreground">{PUBLISH.length + 1}</span>
           <span class="px-3 text-sm text-soft-foreground">
-            push it to GitHub with the <code class="font-mono text-xs text-foreground">ttheme-marketplace</code> topic
+            Push it to GitHub with the <code class="font-mono text-xs text-foreground">ttheme-marketplace</code> topic
           </span>
         </li>
       </ol>
@@ -661,14 +661,14 @@ export function BrowseMarketplaces({ shelves, works, facts }: { shelves: Shelf[]
       <browse-marketplaces class="group/browse grid grid-cols-[minmax(0,1fr)] gap-5">
         <Head
           lens="marketplaces"
-          heading="browse marketplaces"
+          heading="Browse marketplaces"
           counts={{ works, marketplaces: shelves.length }}
           clear={MARKETPLACES_PATH}
         >
           <Choice name="sort" options={MARKET_SORTS} first={FIRST_SORT} />
           <Choice name="view" options={VIEWS} first="shelves" class="flex-none pl-6" />
         </Head>
-        <Hint href={BROWSE_PATH} label="see them as works" />
+        <Hint href={BROWSE_PATH} label="See them as works" />
         <div
           data-shelves
           class="grid grid-cols-[minmax(0,1fr)] gap-12 pt-3 group-has-[[value=covers]:checked]/browse:hidden"

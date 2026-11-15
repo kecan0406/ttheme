@@ -1,4 +1,4 @@
-# Quick start
+# Get Started
 
 Install ttheme, load its command and pick a palette. Nothing in your configs
 changes until you confirm.
@@ -18,7 +18,7 @@ changes until you confirm.
    until you say yes. ttheme then updates itself in the background, through npx
    or bunx, and keeps every setting you made.
 
-   See [Terminal support](../reference/terminals.md) for the terminals it wires.
+   See [Terminal Support](../reference/terminals.md) for the terminals it wires.
 
 2. **Load the command.**
 
@@ -49,5 +49,5 @@ changes until you confirm.
    becomes the default for new tabs or stays in this tab, and `esc` leaves the
    tab as it was.
 
-For everything else, see [Use ttheme](use.md), [Make a palette](make.md) and
+For everything else, see [Use ttheme](use.md), [Make a Palette](make.md) and
 [Commands](../cli/commands.md).

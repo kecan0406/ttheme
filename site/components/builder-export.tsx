@@ -6,6 +6,7 @@ import { TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
 import type { FileView, LinkView, MarketView } from '@/lib/builder-view'
 import { highlightHtml } from '@/lib/highlight'
 import { Icon, NewTab } from '@/lib/icons'
+import { capitalize } from '@/lib/utils'
 import { CommandRow, InitRow } from './command-row'
 
 const PANEL = 'grid content-start gap-4 pt-5'
@@ -17,7 +18,7 @@ const STEP = 'text-2xs font-bold tracking-caps text-muted-foreground uppercase'
 function Problem({ text }: { text: string }) {
   return (
     <p class="rounded-xl border border-destructive/45 bg-destructive/8 px-3.5 py-2.5 text-sm text-destructive" safe>
-      {text}
+      {capitalize(text)}
     </p>
   )
 }
@@ -37,7 +38,7 @@ export function FilePanel({ view }: { view: FileView }) {
       </pre>
       {view.others.length > 0 ? (
         <p class={NOTE}>
-          also in this set:{' '}
+          Also in this set:{' '}
           <span translate="no" class="font-mono" safe>
             {view.others.join(', ')}
           </span>
@@ -45,7 +46,7 @@ export function FilePanel({ view }: { view: FileView }) {
       ) : null}
       {view.left.length > 0 ? (
         <p class={NOTE}>
-          left out until their problems are fixed:{' '}
+          Left out until their problems are fixed:{' '}
           <span translate="no" class="font-mono" safe>
             {view.left.join(', ')}
           </span>
@@ -54,18 +55,18 @@ export function FilePanel({ view }: { view: FileView }) {
       <div class="flex flex-wrap gap-2">
         <LinkButton data-download-toml download={view.file} href="#">
           <Icon node={Download} />
-          <span safe>{`download ${view.file}`}</span>
+          <span safe>{`Download ${view.file}`}</span>
         </LinkButton>
         <Button
           variant="outline"
           class="group/copy"
           data-copy={view.text}
           data-copy-hold="1200"
-          data-copy-status="copied (・ω・)"
+          data-copy-status="Copied (・ω・)"
         >
           <Icon node={Copy} class="group-data-copied/copy:hidden" />
           <Icon node={Check} class="hidden group-data-copied/copy:block" />
-          copy
+          Copy
         </Button>
       </div>
       <p class={STEP}>then, in your terminal</p>
@@ -79,7 +80,7 @@ export function FilePanel({ view }: { view: FileView }) {
 export function LinkPanel({ view }: { view: LinkView }) {
   if (view.failed) return <Problem text={view.failed} />
 
-  if (!view.link || !view.code) return <p class={NOTE}>making the link…</p>
+  if (!view.link || !view.code) return <p class={NOTE}>Making the link…</p>
 
   return (
     <>
@@ -98,13 +99,13 @@ export function LinkPanel({ view }: { view: LinkView }) {
         {view.link}
       </code>
       <div class="flex flex-wrap gap-2">
-        <Button class="group/copy" data-copy={view.link} data-copy-hold="1400" data-copy-status="copied (・ω・)">
+        <Button class="group/copy" data-copy={view.link} data-copy-hold="1400" data-copy-status="Copied (・ω・)">
           <Icon node={Link} class="group-data-copied/copy:hidden" />
           <Icon node={Check} class="hidden group-data-copied/copy:block" />
-          copy link
+          Copy link
         </Button>
         <LinkButton variant="outline" href={view.link} target="_blank" rel="noopener">
-          open its page
+          Open its page
           <NewTab />
         </LinkButton>
       </div>
@@ -121,7 +122,7 @@ export function MarketSteps({ view }: { view: MarketView }) {
     <>
       <LinkButton data-download-zip download={view.zip} href="#" class="w-fit">
         <Icon node={Download} />
-        <span safe>{`download ${view.zip}`}</span>
+        <span safe>{`Download ${view.zip}`}</span>
       </LinkButton>
       <p class={STEP}>then</p>
       <p class={NOTE}>Unzip it and push the folder to GitHub as a repository of its own:</p>
@@ -145,7 +146,7 @@ function MarketPanel({ view, description }: { view: MarketView; description: str
     <>
       <div class="grid gap-3 min-[560px]:grid-cols-2">
         <label for="builder-market-owner" class="grid gap-1.5 text-sm">
-          <span class="text-muted-foreground">your GitHub handle</span>
+          <span class="text-muted-foreground">Your GitHub handle</span>
           <Input
             id="builder-market-owner"
             data-market="owner"
@@ -161,7 +162,7 @@ function MarketPanel({ view, description }: { view: MarketView; description: str
           />
         </label>
         <label for="builder-market-name" class="grid gap-1.5 text-sm">
-          <span class="text-muted-foreground">marketplace name</span>
+          <span class="text-muted-foreground">Marketplace name</span>
           <Input
             id="builder-market-name"
             data-market="name"
@@ -177,12 +178,12 @@ function MarketPanel({ view, description }: { view: MarketView; description: str
           />
         </label>
         <label for="builder-market-about" class="grid gap-1.5 text-sm min-[560px]:col-span-2">
-          <span class="text-muted-foreground">description</span>
+          <span class="text-muted-foreground">Description</span>
           <Input
             id="builder-market-about"
             data-market="description"
             value={description}
-            placeholder="what the palettes are"
+            placeholder="What the palettes are"
             maxlength="200"
             autocomplete="off"
             class="h-9 text-sm"
@@ -218,7 +219,7 @@ export function ExportDialog({
       <div class="grid max-h-[calc(100dvh-48px)] grid-rows-[auto_auto_minmax(0,1fr)] gap-4 px-6 pt-6 pb-6 max-[560px]:px-4">
         <DialogHeader class="pr-12">
           <DialogTitle id="builder-export-title" class="text-display-sm">
-            export{' '}
+            Export{' '}
             <span data-export-name translate="no" safe>
               {file.name}
             </span>
@@ -233,7 +234,7 @@ export function ExportDialog({
             class="h-10"
           >
             <Icon node={FileCode} class="size-4" />
-            toml
+            TOML
           </TabsTrigger>
           <TabsTrigger
             value="link"
@@ -243,7 +244,7 @@ export function ExportDialog({
             class="h-10"
           >
             <Icon node={Link} class="size-4" />
-            link
+            Link
           </TabsTrigger>
           <TabsTrigger
             value="market"
@@ -253,7 +254,7 @@ export function ExportDialog({
             class="h-10"
           >
             <Icon node={Package} class="size-4" />
-            marketplace
+            Marketplace
           </TabsTrigger>
         </TabsList>
         <div class="-mx-1 min-h-0 overflow-y-auto overscroll-contain px-1">

@@ -38,7 +38,7 @@ function Credit({ picture }: { picture: Picture }) {
       {names ? (
         <>
           <span class="text-soft-foreground" safe>
-            {`by ${names}`}
+            {`By ${names}`}
           </span>
           <Slash />
         </>

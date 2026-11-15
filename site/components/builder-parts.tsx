@@ -44,7 +44,7 @@ import type {
 import { Icon } from '@/lib/icons'
 import type { Mode } from '@/lib/mode'
 import { shortName } from '@/lib/themes'
-import { cn } from '@/lib/utils'
+import { capitalize, cn } from '@/lib/utils'
 import { FORMATS, planeRows, type SlotView } from '@/lib/view-types'
 import { PLANE_BOTTOM, PLANE_TOP } from '../../src/core/plane.ts'
 import { Dots } from './dots'
@@ -86,13 +86,13 @@ export function StartLabel({ source }: { source: string | null }) {
       <Icon node={Sparkles} class="size-3.5" />
       {source ? (
         <>
-          <span>from</span>
+          <span>From</span>
           <span class="min-w-0 truncate font-semibold text-foreground" translate="no" safe>
             {shortName(source)}
           </span>
         </>
       ) : (
-        <span>start</span>
+        <span>Start</span>
       )}
     </>
   )
@@ -105,7 +105,7 @@ export function ChangedLabel({ count }: { count: number }) {
       <span>
         {count === 0 ? (
           <>
-            <span class="max-[560px]:hidden bar-squeezed:hidden">nothing</span>
+            <span class="max-[560px]:hidden bar-squeezed:hidden">Nothing</span>
             <span class="hidden max-[560px]:inline bar-squeezed:inline">0</span>
           </>
         ) : (
@@ -162,7 +162,7 @@ export function BuilderBar({
               class="absolute top-full left-1 z-30 mt-1 rounded-lg border border-border bg-popover px-2 py-0.75 text-xs whitespace-nowrap text-destructive shadow-md"
               safe
             >
-              {problem ? `the name ${problem}` : ''}
+              {problem ? `The name ${problem}` : ''}
             </p>
           </div>
           <span data-draft data-bar-dots aria-hidden="true" class="flex flex-none gap-1">
@@ -197,13 +197,13 @@ export function BuilderBar({
           )}
         />
         <span class="flex flex-none">
-          <Button variant="ghost" size="icon-sm" data-undo aria-label="undo" title="undo" disabled>
+          <Button variant="ghost" size="icon-sm" data-undo aria-label="undo" title="Undo" disabled>
             <Icon node={Undo2} />
           </Button>
-          <Button variant="ghost" size="icon-sm" data-redo aria-label="redo" title="redo" disabled>
+          <Button variant="ghost" size="icon-sm" data-redo aria-label="redo" title="Redo" disabled>
             <Icon node={Redo2} />
           </Button>
-          <Button variant="ghost" size="icon-sm" data-reset aria-label="reset" title="reset" disabled={changed === 0}>
+          <Button variant="ghost" size="icon-sm" data-reset aria-label="reset" title="Reset" disabled={changed === 0}>
             <Icon node={RotateCcw} />
           </Button>
         </span>
@@ -217,7 +217,7 @@ export function BuilderBar({
               data-link-only
               data-copy={link}
               data-copy-hold="1400"
-              data-copy-status="copied (・ω・)"
+              data-copy-status="Copied (・ω・)"
             >
               <Icon node={Link} class="group-data-copied/copy:hidden" />
               <Icon node={Check} class="hidden group-data-copied/copy:block" />
@@ -228,7 +228,7 @@ export function BuilderBar({
                 <Button {...props} size="sm" data-add>
                   <Icon node={Plus} />
                   <span>
-                    add<span class="max-[560px]:sr-only bar-squeezed:sr-only"> to ttheme</span>
+                    Add<span class="max-[560px]:sr-only bar-squeezed:sr-only"> to ttheme</span>
                   </span>
                 </Button>
               )}
@@ -240,7 +240,7 @@ export function BuilderBar({
           render={(props) => (
             <Button {...props} size="sm" data-export-open hidden={link !== null}>
               <Icon node={Download} />
-              <span class="max-[360px]:sr-only bar-squeezed:sr-only">export</span>
+              <span class="max-[360px]:sr-only bar-squeezed:sr-only">Export</span>
             </Button>
           )}
         />
@@ -310,10 +310,10 @@ export function SeedsPanel({ seeds, list, gate }: { seeds: SeedRow[]; list: stri
       </div>
       <div class="flex gap-2 px-4">
         <Button size="sm" data-seeds-keep>
-          keep these colors
+          Keep these colors
         </Button>
         <Button variant="ghost" size="sm" data-seeds-cancel>
-          cancel
+          Cancel
         </Button>
       </div>
     </section>
@@ -333,7 +333,7 @@ export function GateChecks({ gate, names }: { gate: Gate; names: string[] }) {
   return (
     <>
       <div class="px-4 pt-4 pb-1">
-        <ChecksHead summary={`passes ${gate.passed} of ${gate.lines.length}`} />
+        <ChecksHead summary={`Passes ${gate.passed} of ${gate.lines.length}`} />
       </div>
       <GateRows lines={gate.lines} names={names} />
     </>
@@ -411,7 +411,7 @@ function LinkButton({ pair }: { pair: PairView }) {
       pressed={on}
       data-link={String(pair.bright.slot)}
       aria-label={label}
-      title={on ? `${pair.bright.name} follows ${pair.normal.name.toLowerCase()}` : label}
+      title={on ? `${pair.bright.name} follows ${pair.normal.name.toLowerCase()}` : capitalize(label)}
       class="grid size-6 place-items-center rounded-full text-faint-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-pressed:text-primary"
     >
       <Icon node={on ? Link2 : Unlink} class="size-3.5" />
@@ -460,16 +460,16 @@ export function ColorsPanel({ rows, format }: { rows: Rows; format: RowFormat })
           class="grid h-7 grid-cols-[56px_minmax(0,1fr)_24px_minmax(0,1fr)] items-end gap-1 pr-3 pb-1.5 pl-4 text-2xs font-semibold text-muted-foreground"
         >
           <span />
-          <span class="pl-1">normal 0–7</span>
+          <span class="pl-1">Normal 0–7</span>
           <span />
-          <span class="pl-1">bright 8–15</span>
+          <span class="pl-1">Bright 8–15</span>
         </div>
         <div data-draft data-pair-rows>
           <PairRows pairs={rows.pairs} />
         </div>
       </Group>
       <p data-rows-empty hidden={!rows.empty} class="px-4 py-6 text-center text-sm text-muted-foreground">
-        nothing changed yet <span aria-hidden="true">( ˘ω˘ )</span>
+        Nothing changed yet <span aria-hidden="true">( ˘ω˘ )</span>
       </p>
       <div data-picker hidden class="absolute inset-x-3 z-20" />
     </section>
@@ -507,7 +507,7 @@ export function ContrastHead({ p }: { p: PickerView }) {
         <b class="font-mono font-semibold tabular-nums" safe>{`${partner.ratio.toFixed(2)}:1`}</b>
         {ok === null ? null : (
           <span class={cn('text-2xs font-semibold', ok ? 'text-success' : 'text-warning')} safe>
-            {ok ? `≥ ${partner.floor}` : `under ${partner.floor}`}
+            {ok ? `≥ ${partner.floor}` : `Under ${partner.floor}`}
           </span>
         )}
       </span>
@@ -537,7 +537,7 @@ export function Use({ s, panes }: { s: SlotView; panes: string[] }) {
         {s.use}
       </p>
       <p class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        <span>shown in</span>
+        <span>Shown in</span>
         {panes.map((name, i) => (
           <span>
             <span safe>{name}</span>{' '}
@@ -560,7 +560,7 @@ export function PickerActions({ p }: { p: PickerView }) {
           render={(props) => (
             <Button {...props} variant="outline" size="sm" data-picker-link>
               <Icon node={p.link === 'on' ? Link2 : Unlink} class="size-3.5" />
-              {p.link === 'on' ? 'follows its normal' : 'moves alone'}
+              {p.link === 'on' ? 'Follows its normal' : 'Moves alone'}
             </Button>
           )}
         />
@@ -568,7 +568,7 @@ export function PickerActions({ p }: { p: PickerView }) {
       {p.origin ? (
         <Button variant="outline" size="sm" data-picker-back>
           <Icon node={RotateCcw} class="size-3.5" />
-          <span safe>{`back to ${p.origin.hex}`}</span>
+          <span safe>{`Back to ${p.origin.hex}`}</span>
         </Button>
       ) : null}
     </>
@@ -752,7 +752,7 @@ export function Picker({ p, track, panes }: { p: PickerView; track: string; pane
         </Button>
       </div>
       <p data-bad hidden class="-mt-1.5 text-xs text-destructive">
-        reads as #rrggbb, rgb(r g b) or oklch(l c h)
+        Reads as #rrggbb, rgb(r g b) or oklch(l c h)
       </p>
       <ul data-checks class="grid gap-1.5">
         <Checks s={s} />
@@ -766,7 +766,7 @@ export function Picker({ p, track, panes }: { p: PickerView; track: string; pane
         class="group/where flex h-10 items-center gap-2.5 rounded-lg border border-border px-3 text-left text-sm font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Icon node={Eye} class="size-4 text-muted-foreground" />
-        show where it's used
+        Show where it's used
         <span
           aria-hidden="true"
           class="relative ml-auto h-4.5 w-7.5 flex-none rounded-full bg-input transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-3.5 after:rounded-full after:bg-card after:shadow-sm after:transition-transform group-data-pressed/where:bg-primary group-data-pressed/where:after:translate-x-3"
@@ -793,7 +793,7 @@ export function MarkTile({ about }: { about: AboutView }) {
 export function FileNote({ about }: { about: AboutView }) {
   return (
     <>
-      saved in{' '}
+      Saved in{' '}
       <code class="rounded-sm bg-muted px-1 font-mono text-soft-foreground" translate="no" safe>
         {about.file}
       </code>
@@ -825,7 +825,7 @@ export function Modes({ modes }: { modes: ModesView }) {
       {modes.own || modes.tuned > 0 ? (
         <Button variant="outline" size="sm" data-follow-mirror class="justify-self-start">
           <Icon node={Blend} class="size-3.5" />
-          follow the mirror instead
+          Follow the mirror instead
         </Button>
       ) : null}
     </>
@@ -839,7 +839,7 @@ export function PicturesBox({ about }: { about: AboutView }) {
     <>
       <label class="flex items-center gap-2 text-sm">
         <input type="checkbox" data-keep-pictures checked={about.keep} class="size-4 accent-primary" />
-        <span safe>{`keep its ${about.pictures.length === 1 ? 'picture' : `${about.pictures.length} pictures`}`}</span>
+        <span safe>{`Keep its ${about.pictures.length === 1 ? 'picture' : `${about.pictures.length} pictures`}`}</span>
       </label>
       <div class={about.keep ? '' : 'opacity-50'}>
         <PictureList pictures={about.pictures} />
@@ -855,7 +855,7 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
       <div class="grid gap-3 border-b border-border p-4">
         <SectionLabel icon={<Icon node={FileCode} />}>File</SectionLabel>
         <label for="builder-about-name" class="grid gap-1.5 text-sm">
-          <span class="text-muted-foreground">name</span>
+          <span class="text-muted-foreground">Name</span>
           <Input
             id="builder-about-name"
             data-about-name
@@ -888,7 +888,7 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
       <div class="grid gap-3 border-b border-border p-4">
         <SectionLabel icon={<Icon node={List} />}>Sources</SectionLabel>
         <label for="builder-subject" class="grid gap-1.5 text-sm">
-          <span class="text-muted-foreground">subject</span>
+          <span class="text-muted-foreground">Subject</span>
           <Input
             id="builder-subject"
             data-meta="subject"
@@ -927,7 +927,7 @@ export function EditMode({ made, editing }: { made: Mode; editing: Mode }) {
           value={mode}
           pressed={mode === editing}
           aria-label={`edit the ${mode} colors${mode === made ? ', the mode it was made in' : ''}`}
-          title={mode === made ? `${mode}, the mode it was made in` : mode}
+          title={capitalize(mode === made ? `${mode}, the mode it was made in` : mode)}
           class="relative flex h-full w-8 cursor-pointer items-center justify-center rounded-full text-(--fg)/70 transition-colors duration-150 outline-none hover:text-(--fg) focus-visible:inset-ring-2 focus-visible:inset-ring-ring data-pressed:bg-(--cu) data-pressed:text-(--bg)"
         >
           <Icon node={mode === 'dark' ? Moon : Sun} class="size-3.5" />

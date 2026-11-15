@@ -57,7 +57,7 @@ export function BuilderPage({
       facts={facts}
       status={
         <span data-status class="flex min-w-0 items-center gap-2">
-          <StatusText status={{ ok: true, text: 'your drafts stay in this browser' }} />
+          <StatusText status={{ ok: true, text: 'Your drafts stay in this browser' }} />
         </span>
       }
     >
@@ -75,7 +75,7 @@ export function BuilderPage({
                 aria-controls="builder-colors"
               >
                 <Icon node={Palette} class="size-3.5" />
-                <span data-first-tab>colors</span>
+                <span data-first-tab>Colors</span>
               </TabsTrigger>
               <TabsTrigger
                 variant="track"
@@ -85,7 +85,7 @@ export function BuilderPage({
                 aria-controls="builder-about"
               >
                 <Icon node={Info} class="size-3.5" />
-                about
+                About
               </TabsTrigger>
               <TabsTrigger
                 variant="track"
@@ -95,7 +95,7 @@ export function BuilderPage({
                 aria-controls="builder-drafts"
               >
                 <Icon node={History} class="size-3.5" />
-                drafts
+                Drafts
                 <TabsCount data-drafts-count hidden />
               </TabsTrigger>
             </TabsList>

@@ -5,10 +5,10 @@ import { NPM_URL, REPO_URL, X_URL } from '@/lib/gallery'
 import { BrandIcon, NewTab } from '@/lib/icons'
 
 const LINKS: { label: string; href: string; brand?: SimpleIcon }[] = [
-  { label: 'github', href: REPO_URL, brand: siGithub },
+  { label: 'GitHub', href: REPO_URL, brand: siGithub },
   { label: 'npm', href: NPM_URL, brand: siNpm },
-  { label: 'x', href: X_URL, brand: siX },
-  { label: 'report a bug', href: `${REPO_URL}/issues/new/choose` },
+  { label: 'X', href: X_URL, brand: siX },
+  { label: 'Report a Bug', href: `${REPO_URL}/issues/new/choose` },
 ]
 
 export function AppBar({ facts, children }: PropsWithChildren<{ facts: Facts }>) {

@@ -1127,7 +1127,6 @@ lead-showcase > [data-site-header] {
   bottom: 0;
   display: block;
   width: auto;
-  max-width: none;
   height: min(79.55%, 56vw, 900px);
   opacity: 0;
   translate: calc(28px + var(--px) * -16px) calc(min(var(--py), 0) * -8px);
@@ -2608,6 +2607,7 @@ pill-train {
 [data-doc-body]
   :is(h2, h3, p, ul, ol, blockquote, [data-slot='callout']):not(
     [data-slot='steps'],
+    [data-slot='featured'],
     figure *,
     [data-slot='table'] *,
     [data-slot='callout'] *,
@@ -2676,41 +2676,22 @@ pill-train {
   color: var(--primary);
 }
 
-[data-doc-body] :is(h2, h3):target {
-  position: relative;
-}
-
-[data-doc-body] :is(h2, h3):target::before {
-  content: '';
-  position: absolute;
-  inset-block: 0.2em;
-  left: calc(var(--spacing) * -3);
-  width: calc(var(--spacing) * 1);
-  border-radius: calc(infinity * 1px);
-  background: var(--primary);
-  animation: docs-target 0.3s ease-out;
-}
-
-[data-doc-body] section[data-entry]:has(> h3:target) {
-  border-top-color: var(--primary);
+/* The heading a link lands on glows once behind its text and fades out in place; only the color moves. */
+[data-doc-body] :is(h2, h3):target > [data-anchor] > [data-heading] {
+  margin: calc(var(--spacing) * -1) calc(var(--spacing) * -2);
+  border-radius: --theme(--radius-lg inline);
+  padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2);
+  box-decoration-break: clone;
+  animation: docs-target 1.5s ease-out;
 }
 
 @keyframes docs-target {
   from {
-    opacity: 0;
-    scale: 1 0;
+    background-color: color-mix(in oklab, var(--primary) 22%, transparent);
   }
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  :root:has([data-docs]) {
-    scroll-behavior: smooth;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  [data-doc-body] :is(h2, h3):target::before {
-    animation: none;
+  to {
+    background-color: transparent;
   }
 }
 
@@ -2978,6 +2959,39 @@ pill-train {
   line-height: calc(var(--spacing) * 4.75);
   text-align: center;
   white-space: nowrap;
+}
+
+/* Featured docs: rows on the page's own surface, the header menu's icons. */
+[data-doc-body] ul[data-slot='featured'] {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: calc(var(--spacing) * 1);
+  padding-left: 0;
+  list-style: none;
+}
+
+[data-slot='featured'] a {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--spacing) * 3);
+  border-radius: --theme(--radius-xl inline);
+  padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3);
+  text-decoration-line: none;
+  transition: background-color 150ms;
+}
+
+[data-slot='featured'] a:hover {
+  background: var(--muted);
+}
+
+[data-slot='featured'] a > span:last-child {
+  display: grid;
+  gap: calc(var(--spacing) * 0.5);
+}
+
+[data-slot='featured'] a > span:last-child > span {
+  color: var(--muted-foreground);
+  font-size: --theme(--text-sm inline);
+  font-weight: 400;
 }
 
 [data-doc-body] ol[data-slot='steps'] {
@@ -3358,9 +3372,6 @@ pill-train {
     background: Highlight;
   }
 
-  [data-doc-body] :is(h2, h3):target::before {
-    background: Highlight;
-  }
 
   #docs-menu::before {
     outline: 2px solid Highlight;
@@ -3383,7 +3394,6 @@ pill-train {
   left: calc(50% - var(--spacing) * 40);
   display: block;
   width: auto;
-  max-width: none;
   height: calc(var(--spacing) * 40);
 }
 

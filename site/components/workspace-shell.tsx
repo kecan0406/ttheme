@@ -102,7 +102,7 @@ export function GateButton({
   return (
     <Button variant="muted" size="chip" aria-label={label} {...props}>
       <Icon node={clear ? Check : TriangleAlert} class={clear ? 'text-success' : 'text-warning'} />
-      <span safe>{`contrast ${passed}/${total}`}</span>
+      <span safe>{`Contrast ${passed}/${total}`}</span>
     </Button>
   )
 }

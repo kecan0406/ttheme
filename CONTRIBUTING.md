@@ -32,7 +32,7 @@ added there once it has been talked over.
 Report a vulnerability privately, as [SECURITY.md](SECURITY.md) says, never in
 a public issue.
 
-## Your own marketplace first
+## Your Own Marketplace First
 
 You do not need this repository to share a palette. Every palette you make
 lives in a marketplace of your own, and once you publish it, anyone can add it:
@@ -55,7 +55,7 @@ one — and Browse's search and the
 Open a pull request here when a palette belongs in the built-in marketplace: it
 then has to pass the contrast checks and everything below.
 
-## Works and characters
+## Works and Characters
 
 The list of works and characters palettes are of is
 [aninames' authority](https://github.com/kecan0406/aninames/blob/main/authority/README.md),
@@ -70,7 +70,7 @@ so a marketplace's palettes find a new record without a new ttheme.
 A new work needs no row in `site/lib/categories.ts`: the site places it by what
 the index knows, and a row is for a place the index gets wrong.
 
-## What this project accepts
+## What This Project Accepts
 
 **Color values, names and post numbers only.** A palette is twenty hex colors
 in each mode, the work or character it is of and, optionally, the numbers of
@@ -107,7 +107,7 @@ system can, and draws it in their own coloring setting there, as `find` would.
 `ttheme new`, `ttheme edit` and `ttheme share` fill this in from the pictures
 you have up.
 
-## The set
+## The Set
 
 A set holds one or more palettes, and a built-in one holds one work's:
 `builtin/sets/madoka-magica.toml` holds every palette of Madoka Magica, and a
@@ -177,7 +177,7 @@ The `ttheme-palette` skill (`skills/ttheme-palette/SKILL.md` and its
 `references/builtin.md`) documents how the existing palettes were measured and
 harmonized, if you want to build one the same way.
 
-## Setting up
+## Setting Up
 
 ttheme's tasks run through [mise](https://mise.jdx.dev), which also installs
 the bun and node versions `mise.toml` names. The checks need zsh, tmux and
@@ -193,7 +193,7 @@ git config core.hooksPath .githooks   # a push to main runs the checks CI would
 
 Every task is `mise run <task>`; `package.json` has no scripts, and takes none.
 
-## Before you open the PR
+## Before You Open the PR
 
 ```sh
 mise run format   # fixes most of what lint would fail on
@@ -215,7 +215,7 @@ mise run build --only kitty   # one terminal's subtree, plus the shared files, s
 A change to the shell layer, a terminal or a screen has checks of its own,
 which [HACKING.md](HACKING.md) describes.
 
-## Using AI tools
+## Using AI Tools
 
 Use whatever tools you like. You are the author of what you submit, whichever
 tool wrote it: read all of it before you ask for a review, run `mise run ci`

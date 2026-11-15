@@ -1,4 +1,4 @@
-# Environment variables
+# Environment Variables
 
 The variables ttheme reads from your environment: where it keeps its files, the
 proxy its requests go through, and the editor and colors it uses. Every setting
@@ -23,7 +23,7 @@ The `ttheme` command sends its requests through `HTTPS_PROXY` and `HTTP_PROXY`,
 leaving out the hosts `NO_PROXY` names, on Node.js 22.21 or newer. An older
 Node.js goes direct.
 
-## Editor and colors
+## Editor and Colors
 
 - `ttheme config` opens `config.zsh` in `VISUAL`, or `EDITOR` when `VISUAL` is
   not set, or `vi` when neither is.

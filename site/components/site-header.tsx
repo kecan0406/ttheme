@@ -13,9 +13,9 @@ import { SiteSearch } from './site-search'
 import { Wordmark } from './wordmark'
 
 const NAV = [
-  { key: 'browse', href: BROWSE_PATH, label: 'browse', icon: Compass },
-  { key: 'builder', href: '/builder', label: 'builder', icon: Paintbrush },
-  { key: 'docs', href: '/docs', label: 'docs', icon: BookOpen },
+  { key: 'browse', href: BROWSE_PATH, label: 'Browse', icon: Compass },
+  { key: 'builder', href: '/builder', label: 'Builder', icon: Paintbrush },
+  { key: 'docs', href: '/docs', label: 'Docs', icon: BookOpen },
 ] as const satisfies readonly { key: MenuKey; href: string; label: string; icon: typeof Compass }[]
 
 const ITEM =
@@ -131,7 +131,7 @@ export function SiteHeader({
             class="h-8 justify-start gap-2 header-menu:rounded-xl header-short:w-8 header-short:justify-center header-short:px-0"
           >
             <BrandIcon icon={siGithub} />
-            <span class={stars === null ? 'header-short:sr-only' : 'sr-only'}>github</span>
+            <span class={stars === null ? 'header-short:sr-only' : 'sr-only'}>GitHub</span>
             {stars === null ? null : (
               <>
                 <span aria-hidden="true" class="inline-flex items-center gap-1.5 header-short:hidden">

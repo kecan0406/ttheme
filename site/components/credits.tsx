@@ -83,7 +83,7 @@ export function Credits({ facts }: { facts: Facts }) {
         class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-6 pt-13 pb-24"
       >
         <div class="grid gap-3">
-          <h1 class="font-display text-display-lg font-black">credits</h1>
+          <h1 class="font-display text-display-lg font-black">Credits</h1>
           <p class="max-w-[68ch] text-pretty text-soft-foreground">
             Where the pictures on this site come from. Each one is shown from its source's own servers, and ttheme keeps
             none of them but the landing's stickers.

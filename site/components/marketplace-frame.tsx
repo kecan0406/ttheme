@@ -55,14 +55,14 @@ export function NoSuchMarketplace({ id, facts }: { id: string; facts: Facts }) {
   return (
     <MarketplaceFrame facts={facts}>
       <div class="grid justify-items-start gap-3">
-        <Crumbs trail={[{ label: 'browse', href: MARKETPLACES_PATH }, { label: id }]} />
-        <h1 class="font-display text-display-lg font-black">no such marketplace</h1>
+        <Crumbs trail={[{ label: 'Browse', href: MARKETPLACES_PATH }, { label: id }]} />
+        <h1 class="font-display text-display-lg font-black">No such marketplace</h1>
         <p class="max-w-[68ch] text-soft-foreground">
           {escapeHtml(`No repository with the ttheme-marketplace topic publishes ${id}.`)} The list is refreshed from
           GitHub every hour. <span aria-hidden="true">( ˘ω˘ )</span>
         </p>
         <a href={MARKETPLACES_PATH} class="text-sm font-medium text-primary underline-offset-4 hover:underline">
-          back to every marketplace
+          Back to Every Marketplace
         </a>
       </div>
     </MarketplaceFrame>
@@ -75,14 +75,14 @@ export function NoSuchPalette({ id, name, facts }: { id: string; name: string; f
   return (
     <MarketplaceFrame facts={facts}>
       <div class="grid justify-items-start gap-3">
-        <Crumbs trail={[{ label: 'browse', href: MARKETPLACES_PATH }, { label: id, href: home }, { label: name }]} />
-        <h1 class="font-display text-display-lg font-black">no such palette</h1>
+        <Crumbs trail={[{ label: 'Browse', href: MARKETPLACES_PATH }, { label: id, href: home }, { label: name }]} />
+        <h1 class="font-display text-display-lg font-black">No such palette</h1>
         <p class="max-w-[68ch] text-soft-foreground">
           {escapeHtml(`${id} has no palette named ${name}.`)} It may have been renamed or removed.{' '}
           <span aria-hidden="true">( ˘ω˘ )</span>
         </p>
         <a href={home} class="text-sm font-medium text-primary underline-offset-4 hover:underline">
-          back to its marketplace
+          Back to Its Marketplace
         </a>
       </div>
     </MarketplaceFrame>

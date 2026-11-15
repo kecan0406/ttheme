@@ -5,7 +5,7 @@ import { MeltLink } from '@/components/ui/melt-card'
 import type { KeyArt } from '@/lib/art'
 import { type Shelf, starCount } from '@/lib/gallery'
 import { GitHubStar, Icon } from '@/lib/icons'
-import { plural } from '@/lib/utils'
+import { capitalize, plural } from '@/lib/utils'
 import { RepoLink } from './repo-link'
 import { WorkArt } from './work-art'
 
@@ -32,12 +32,12 @@ export function MarketBadge({
   return builtin ? (
     <Badge variant={variant} class={className}>
       <Icon node={Layers} />
-      built-in
+      Built-in
     </Badge>
   ) : (
     <Badge variant={variant} class={className}>
       <Icon node={Store} />
-      community
+      Community
     </Badge>
   )
 }
@@ -50,7 +50,7 @@ export function Updated({ at }: { at: string | null }) {
   return at === null ? null : (
     <span class="inline-flex h-7 items-center gap-1.5 px-1 text-xs text-muted-foreground">
       <Icon node={Clock} class="size-3.5" />
-      updated
+      Updated
       <b class="font-mono font-normal text-soft-foreground" safe>
         {at}
       </b>
@@ -135,7 +135,7 @@ export function WorkThumb({
       />
       {also ? (
         <Badge variant="glass" class="absolute top-2 right-2 px-2 py-0.75 font-mono text-2xs">
-          {escapeHtml(also)}
+          {escapeHtml(capitalize(also))}
         </Badge>
       ) : null}
       <span class="relative grid min-w-0 gap-px px-3 pb-3 max-sm:px-2.5 max-sm:pb-2">
@@ -172,7 +172,7 @@ export function WorkThumb({
           />
           <span class="ml-auto flex-none font-mono text-xs text-muted-foreground transition-colors duration-200 max-sm:text-2xs">
             {count === 0 ? (
-              'no palettes yet'
+              'No palettes yet'
             ) : (
               <>
                 <span safe>{String(count)}</span>

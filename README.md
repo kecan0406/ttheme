@@ -32,7 +32,7 @@ ttheme gives your terminal the colors of a character you love. Every tab can
 show its own palette, and every built-in palette passes contrast checks, so your
 text stays easy to read.
 
-## Quick start
+## Get Started
 
 ```sh
 npx @kecan0406/ttheme@latest init
@@ -55,7 +55,7 @@ ttheme adds one block to each config it wires and sets colors only.
 `npx @kecan0406/ttheme@latest uninstall` takes it all back out
 ([what changed](https://ttheme.dev/docs/guide/use#what-init-changes)).
 
-## What you can do
+## What You Can Do
 
 | To | Run |
 |---|---|
@@ -72,15 +72,15 @@ ttheme adds one block to each config it wires and sets colors only.
 
 ## Docs
 
-- [Quick start](https://ttheme.dev/docs/guide/quickstart): install, load the
+- [Get Started](https://ttheme.dev/docs/guide/quickstart): install, load the
   command and pick a palette.
 - [Use ttheme](https://ttheme.dev/docs/guide/use): tabs, pins, light and dark,
   marketplaces and pictures, what `init` changes and how to undo it, and fixes
   when something goes wrong.
-- [Make a palette](https://ttheme.dev/docs/guide/make): the editor, the contrast
+- [Make a Palette](https://ttheme.dev/docs/guide/make): the editor, the contrast
   checks every built-in palette passes, share links and publishing a
   marketplace.
-- [Terminal support](https://ttheme.dev/docs/reference/terminals): Ghostty,
+- [Terminal Support](https://ttheme.dev/docs/reference/terminals): Ghostty,
   iTerm2, kitty, Alacritty, WezTerm, Windows Terminal, Warp, Konsole,
   Terminal.app, Rio and Contour, and what each can show.
 
