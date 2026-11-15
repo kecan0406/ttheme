@@ -5,7 +5,7 @@ paths:
 
 # site/
 
-The design system is the Design System artifact https://claude.ai/artifact/D3TtwiZtWyM175ydwyWCyv: read its README before styling anything. `app/globals.css` is its code form.
+The design system is the Design System artifact https://claude.ai/artifact/D3TtwiZtWyM175ydwyWCyv: read its README before styling anything. `app/globals.css` is its code form. It holds how the site looks; what the site says, from its words to their case, is `.claude/rules/text.md`'s.
 
 ## Server and pages
 
@@ -82,7 +82,7 @@ The design system is the Design System artifact https://claude.ai/artifact/D3Ttw
 - Every terminal window the site draws goes through `TerminalFrame` (the builder's `MockWindow`), and nested corners share a center.
 - One stylesheet colors every terminal screen: never color a run with a class or an inline style.
 - The landing is the one page allowed a louder layer; every other page stays soft.
-- A kaomoji shows only in a passing state, one per view, never in a heading, doc or error, and always `aria-hidden`.
+- A kaomoji is always `aria-hidden`.
 - The landing's hero never moves under its visitor.
 - The CLI's scenes are computed inside the render, so the browser bundle holds none of them.
 - A button that looks pressable always goes somewhere.

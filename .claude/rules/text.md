@@ -3,7 +3,9 @@ paths:
   - "src/**"
   - "shell/**"
   - "docs/**"
+  - "site/**"
   - "README.md"
+  - "CONTRIBUTING.md"
   - "skills/**"
   - ".github/ISSUE_TEMPLATE/**"
 ---
@@ -99,7 +101,14 @@ calls it — never the words in the left column:
 Counts on screen come from the palettes listed, never from the rows being drawn.
 A folded work still reports how many of its palettes are picked, and the
 filtered total counts what matches, not what fits on screen. The cursor and the
-scroll window are the only things allowed to read the drawn rows.
+scroll window are the only things allowed to read the drawn rows. A number
+names what it counts (`150 of 172 palettes`, `13.76:1`, `GitHub stars`), and
+nothing shows an install count, which ttheme never collects.
+
+No text carries an emoji, a decoration or a marketing adjective. A kaomoji
+shows only on the site, in a state that passed (`Copied (・ω・)`, `( ˘ω˘ )` after
+an empty result), one per view, never in a heading, a doc or an error someone
+must act on, and only in a form without combining marks.
 
 A question says what it acts on (`Remove alice@pastel? Its installed palettes
 stay installed`, `Apply 3 changes before you leave?`, the editor's Save
