@@ -5,12 +5,16 @@ export const FACET_DRIFT = 480
 const SIZE = 120
 const JITTER = 0.64
 const RELIEF = 34
-const HEIGHT = 200
-const GLOW = 220
-const BUMP = 30
-const REACH = 95
-const SHINE = 16
-const GLINT = 0.06
+
+// One light from the upper left, the same over every facet, so no part of the ground is brighter than another.
+const SUN = (() => {
+  const [x, y, z] = [-0.35, -0.5, 1]
+  const length = Math.hypot(x, y, z)
+
+  return { x: x / length, y: y / length, z: z / length }
+})()
+
+const LIT = 0.06
 
 export type Point = { x: number; y: number }
 
@@ -25,8 +29,6 @@ type FacetMesh = { points: Vertex[]; facets: Facet[] }
 export type Shade = { tint: number; lift: number }
 
 export type Lean = Point & { angle: number }
-
-export const FACET_LAMP: Point = { x: FACET_WIDTH * 0.22, y: FACET_HEIGHT * 0.12 }
 
 const UPRIGHT: Lean = { x: 0, y: -1, angle: 0 }
 
@@ -95,13 +97,7 @@ export function facetPoints(corners: Corners): string {
   return corners.map((point) => `${point.x},${point.y}`).join(' ')
 }
 
-export function raise(point: Vertex, pointer: Point, amount: number): Vertex {
-  const distance = (point.x - pointer.x) ** 2 + (point.y - pointer.y) ** 2
-
-  return { ...point, z: point.z + amount * BUMP * Math.exp(-distance / (2 * REACH * REACH)) }
-}
-
-export function shade(tint: number, [a, b, c]: Corners, lamp: Point, lean: Lean = UPRIGHT): Shade {
+export function shade(tint: number, [a, b, c]: Corners, lean: Lean = UPRIGHT): Shade {
   const ux = b.x - a.x
   const uy = b.y - a.y
   const uz = b.z - a.z
@@ -118,15 +114,7 @@ export function shade(tint: number, [a, b, c]: Corners, lamp: Point, lean: Lean 
   const rx = (nx * cos + lean.x * nz * sin - lean.y * swing) * unit
   const ry = (ny * cos + lean.y * nz * sin + lean.x * swing) * unit
   const rz = (nz * cos - (lean.x * nx + lean.y * ny) * sin) * unit
-  const lx = lamp.x - (a.x + b.x + c.x) / 3
-  const ly = lamp.y - (a.y + b.y + c.y) / 3
-  const lz = HEIGHT - (a.z + b.z + c.z) / 3
-  const reach = Math.hypot(lx, ly, lz) || 1
-  const diffuse = Math.max(0, (rx * lx + ry * ly + rz * lz) / reach)
-  const half = Math.hypot(lx, ly, lz + reach) || 1
-  const glint = Math.max(0, (rx * lx + ry * ly + rz * (lz + reach)) / half) ** SHINE
-  const near = Math.exp(-(lx * lx + ly * ly) / (2 * GLOW * GLOW))
-  const lift = (diffuse - 0.75) * (0.05 + near * 0.05) + near * 0.03 + glint * GLINT
+  const diffuse = Math.max(0, rx * SUN.x + ry * SUN.y + rz * SUN.z)
 
-  return { tint: Math.min(0.5, tint + near * 0.12), lift }
+  return { tint: tint + LIT, lift: (diffuse - 0.75) * 0.075 + 0.015 }
 }

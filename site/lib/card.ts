@@ -1,4 +1,4 @@
-import { FACET_HEIGHT, FACET_LAMP, FACET_WIDTH, facetCorners, facetMesh, facetPoints, shade } from '@/lib/facets'
+import { FACET_HEIGHT, FACET_WIDTH, facetCorners, facetMesh, facetPoints, shade } from '@/lib/facets'
 import { BUILTIN_ABOUT, initOf } from '@/lib/gallery'
 import { type Raster, raster } from '@/lib/raster'
 import { BUILTIN, faceOf, isBuiltin, type Marketplace, shortName, type Theme } from '@/lib/themes'
@@ -103,7 +103,7 @@ function facets(face: string[], base: string, { width, height }: Frame, strength
     const ys = corners.map((corner) => corner.y)
 
     if (Math.max(...xs) < 0 || Math.min(...xs) > reachX || Math.max(...ys) < 0 || Math.min(...ys) > reachY) continue
-    const { tint, lift } = shade(facet.tint, corners, FACET_LAMP)
+    const { tint, lift } = shade(facet.tint, corners)
     const fill = liftOk(mixOk(base, face[facet.tone] as string, tint * strength), lift * strength)
     polygons.push(`<polygon points="${facetPoints(corners)}" fill="${fill}" stroke="${fill}" stroke-width="0.6"/>`)
   }

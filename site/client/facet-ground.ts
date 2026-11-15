@@ -2,14 +2,12 @@ import {
   type Corners,
   FACET_DRIFT,
   FACET_HEIGHT,
-  FACET_LAMP,
   FACET_WIDTH,
   facetCenter,
   facetCorners,
   facetMesh,
   type Lean,
   type Point,
-  raise,
   type Shade,
   shade,
 } from '@/lib/facets'
@@ -32,8 +30,6 @@ const SPAN = FACET_HEIGHT + FACET_DRIFT
 const SPEED = 2
 const TURN_MS = 360
 const SHADOW = 0.06
-const FOLLOW_MS = 120
-const RISE_MS = 200
 const PRESS_MS = 1000
 const BUDGET = 8_000_000
 const STAGE = '[data-lead-preview], [data-palette-preview]'
@@ -108,13 +104,9 @@ class FacetGround extends HTMLElement {
   #shown: Paint[] = []
   #worn = ''
   #turns: Turn[][] = []
-  #client: Point | null = null
-  #lamp: Point = { ...FACET_LAMP }
-  #rise = 0
   #press: (Point & { at: number }) | null = null
   #wave: Wave | null = null
   #frame = 0
-  #last = 0
 
   connectedCallback() {
     const canvas = document.createElement('canvas')
@@ -137,16 +129,13 @@ class FacetGround extends HTMLElement {
     this.#turns = MESH.facets.map(() => [])
     this.#worn = paint.key
     this.#fit()
-    this.#draw(performance.now(), null)
+    this.#draw(performance.now())
     this.querySelector('svg')?.remove()
     this.#resize = new ResizeObserver(() => {
-      if (this.#fit()) this.#draw(performance.now(), this.#pointer())
+      if (this.#fit()) this.#draw(performance.now())
     })
     this.#resize.observe(canvas)
-    window.addEventListener('pointermove', this.#move, { passive: true })
     window.addEventListener('pointerdown', this.#down, { capture: true, passive: true })
-    window.addEventListener('scroll', this.#scroll, { passive: true })
-    document.addEventListener('pointerout', this.#out)
     document.addEventListener(SHOW_EVENT, this.#show)
   }
 
@@ -156,10 +145,7 @@ class FacetGround extends HTMLElement {
     this.#frame = 0
     this.#canvas?.remove()
     this.#canvas = null
-    window.removeEventListener('pointermove', this.#move)
     window.removeEventListener('pointerdown', this.#down, { capture: true })
-    window.removeEventListener('scroll', this.#scroll)
-    document.removeEventListener('pointerout', this.#out)
     document.removeEventListener(SHOW_EVENT, this.#show)
   }
 
@@ -207,13 +193,8 @@ class FacetGround extends HTMLElement {
     return { x: left + ((client.x - box.left) / box.width) * width, y: ((client.y - box.top) / box.height) * SPAN }
   }
 
-  #pointer(): Point | null {
-    return this.#client ? this.#local(this.#client) : null
-  }
-
   #kick() {
     if (this.#frame) return
-    this.#last = performance.now()
     this.#frame = requestAnimationFrame(this.#step)
   }
 
@@ -225,23 +206,7 @@ class FacetGround extends HTMLElement {
       this.#wave = null
     }
 
-    const elapsed = Math.min(50, Math.max(0, now - this.#last))
-    this.#last = now
-    const pointer = this.#pointer()
-    const goal = pointer ?? FACET_LAMP
-    const follow = 1 - Math.exp(-elapsed / FOLLOW_MS)
-    this.#lamp = {
-      x: this.#lamp.x + (goal.x - this.#lamp.x) * follow,
-      y: this.#lamp.y + (goal.y - this.#lamp.y) * follow,
-    }
-    const rise = pointer ? 1 : 0
-    this.#rise += (rise - this.#rise) * (1 - Math.exp(-elapsed / RISE_MS))
-    const turning = this.#draw(now, pointer)
-
-    const resting =
-      Math.hypot(goal.x - this.#lamp.x, goal.y - this.#lamp.y) < 0.5 && Math.abs(rise - this.#rise) < 0.003
-
-    if (turning || !resting) this.#frame = requestAnimationFrame(this.#step)
+    if (this.#draw(now)) this.#frame = requestAnimationFrame(this.#step)
   }
 
   #face(index: number, now: number): Face {
@@ -264,27 +229,25 @@ class FacetGround extends HTMLElement {
     }
   }
 
-  #draw(now: number, pointer: Point | null): boolean {
+  #draw(now: number): boolean {
     const context = this.#context as CanvasRenderingContext2D
     const { scale, left, width } = this.#view()
     context.setTransform(scale, 0, 0, scale, -left * scale, 0)
     context.clearRect(left, 0, width, SPAN)
     context.lineWidth = 0.9
     context.lineJoin = 'round'
-    const rise = this.#rise
-    const points = pointer && rise > 0.001 ? MESH.points.map((point) => raise(point, pointer, rise)) : MESH.points
     let turning = false
 
     for (const [index, facet] of MESH.facets.entries()) {
       const { paint, squash, lean, under } = this.#face(index, now)
       turning ||= (this.#turns[index] as Turn[]).length > 0
-      const corners = facetCorners(points, facet)
+      const corners = facetCorners(MESH.points, facet)
 
       if (corners.every((corner) => corner.x < left) || corners.every((corner) => corner.x > left + width)) continue
       const center = CENTERS[index] as Point
 
       if (under) {
-        const { tint, lift } = shade(facet.tint, corners, this.#lamp)
+        const { tint, lift } = shade(facet.tint, corners)
         trace(
           context,
           corners,
@@ -295,31 +258,15 @@ class FacetGround extends HTMLElement {
         )
       }
 
-      const color = colorOf(paint, facet.tone, shade(facet.tint, corners, this.#lamp, lean))
+      const color = colorOf(paint, facet.tone, shade(facet.tint, corners, lean))
       trace(context, corners, center, lean, squash, color)
     }
 
     return turning
   }
 
-  #move = (event: PointerEvent) => {
-    if (event.pointerType === 'touch' || reducedMotion()) return
-    this.#client = { x: event.clientX, y: event.clientY }
-    this.#kick()
-  }
-
-  #out = (event: PointerEvent) => {
-    if (event.relatedTarget || !this.#client) return
-    this.#client = null
-    this.#kick()
-  }
-
   #down = (event: PointerEvent) => {
     this.#press = { x: event.clientX, y: event.clientY, at: performance.now() }
-  }
-
-  #scroll = () => {
-    if (this.#client) this.#kick()
   }
 
   #show = (event: Event) => {
@@ -341,7 +288,7 @@ class FacetGround extends HTMLElement {
       this.#wave = null
       this.#shown = MESH.facets.map(() => to)
       this.#turns = MESH.facets.map(() => [])
-      this.#draw(now, this.#pointer())
+      this.#draw(now)
 
       return
     }
