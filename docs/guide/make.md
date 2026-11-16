@@ -111,7 +111,7 @@ In Claude Code, `/plugin install ttheme-palette --marketplace kecan0406/ttheme`
 adds it as a plugin. A skill older than the ttheme it runs against asks you to
 update it first: run `init` again, `npx skills add kecan0406/ttheme`, or update
 the plugin, whichever way you added it. A ttheme older than the skill asks you
-to run `npx @kecan0406/ttheme@latest init`.
+to run `npx ttheme@latest init`.
 
 ## On the Web
 

@@ -722,7 +722,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
 
   if (!existsSync(join(ROOT, 'dist'))) {
     if (typeof Bun === 'undefined') {
-      throw new Error('this package is missing dist/ — reinstall @kecan0406/ttheme')
+      throw new Error('this package is missing dist/ — reinstall ttheme')
     }
 
     await build()

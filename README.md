@@ -8,10 +8,10 @@
 <p align="center"><em>Your favorite anime and game characters' colors in your terminal, one tab at a time.</em></p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@kecan0406/ttheme"><img src="https://img.shields.io/npm/v/@kecan0406/ttheme?style=flat-square" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/ttheme"><img src="https://img.shields.io/npm/v/ttheme?style=flat-square" alt="npm version"></a>
   <a href="https://github.com/kecan0406/ttheme/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/kecan0406/ttheme/ci.yml?branch=main&style=flat-square&label=ci" alt="CI status"></a>
   <a href="https://ttheme.dev/"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2F%40kecan0406%2Fttheme%2Fdist%2Fbuiltin.json&query=%24.palettes.length&label=palettes&style=flat-square&color=c796c8" alt="built-in palettes"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/npm/l/@kecan0406/ttheme?style=flat-square" alt="MIT license"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/npm/l/ttheme?style=flat-square" alt="MIT license"></a>
   <a href="https://index.githits.dev/repositories/github.com/kecan0406/ttheme/"><img src="https://index.githits.dev/badge/repositories/github.com/kecan0406/ttheme/index-status.svg" alt="GitHits index status"></a>
 </p>
 
@@ -35,10 +35,10 @@ text stays easy to read.
 ## Get Started
 
 ```sh
-npx @kecan0406/ttheme@latest init
+npx ttheme@latest init
 ```
 
-With Bun, `bunx @kecan0406/ttheme@latest init` does the same, and `ttheme update`
+With Bun, `bunx ttheme@latest init` does the same, and `ttheme update`
 then updates through bunx. `init` asks which terminals to wire and which palettes
 to install, shows every file it will change, and writes nothing until you
 confirm. ttheme requires Node.js `>=22` and zsh, which macOS ships, with bunx
@@ -52,7 +52,7 @@ ttheme     # the tab shows each palette the cursor lands on; enter keeps one
 ```
 
 ttheme adds one block to each config it wires and sets colors only.
-`npx @kecan0406/ttheme@latest uninstall` takes it all back out
+`npx ttheme@latest uninstall` takes it all back out
 ([what changed](https://ttheme.dev/docs/guide/use#what-init-changes)).
 
 ## What You Can Do

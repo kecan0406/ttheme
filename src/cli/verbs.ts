@@ -459,7 +459,7 @@ const WIDTH = Math.max(
 )
 
 const EXAMPLES: [string, string][] = [
-  ['npx @kecan0406/ttheme init -y', 'Wire the terminals found here, no prompts'],
+  ['npx ttheme init -y', 'Wire the terminals found here, no prompts'],
   ['ttheme add akemi-homura kaname-madoka', 'Install two palettes'],
   ['ttheme use akemi-homura', 'Use one in this tab'],
   ['ttheme marketplace add alice/ttheme-pastel', "alice's marketplace, alice@pastel — ttheme add alice@pastel/dusk"],

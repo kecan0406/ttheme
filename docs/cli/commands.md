@@ -11,11 +11,11 @@ Before ttheme is set up, `init`, `uninstall` and `info` run through npx or bunx
 in place of `ttheme`:
 
 ```sh tab="npx"
-npx @kecan0406/ttheme@latest info
+npx ttheme@latest info
 ```
 
 ```sh tab="bunx"
-bunx @kecan0406/ttheme@latest info
+bunx ttheme@latest info
 ```
 
 Every command exits 0 when it is done, 1 when it failed, 2 when nothing changed

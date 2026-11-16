@@ -115,7 +115,7 @@ export function readBundled(configHome: string): Bundled {
   const path = builtinPath(configHome)
 
   if (!existsSync(path)) {
-    throw new Error(`no built-in palettes at ${path} — run \`npx @kecan0406/ttheme@latest init\` first`)
+    throw new Error(`no built-in palettes at ${path} — run \`npx ttheme@latest init\` first`)
   }
 
   return {

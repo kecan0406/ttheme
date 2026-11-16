@@ -275,7 +275,8 @@ if [ -z "${usage_hotfix:-}" ] && ! days=$(sh tests/train.sh); then
   echo "release: the last weekly release was $days days ago, and releases go out once a week, on Tuesday — keep the lines under ## Unreleased for the next one, or pass --hotfix for a regression, a broken install or update, or lost user data"
   exit 1
 fi
-times=$(npm view @kecan0406/ttheme time --json)
+name=$(jq -r .name package.json)
+times=$(npm view "$name" time --json)
 if printf '%s' "$times" | jq -e --arg v "$version" 'has($v)' > /dev/null; then
   echo "release: npm had $version once, and never takes a version twice, even one unpublished — pick the next"
   exit 1
@@ -305,8 +306,8 @@ done
 [ -n "$run" ] || { echo "release: no workflow run for $tag"; exit 1; }
 gh run watch "$run" --compact --exit-status
 for _ in $(seq 60); do
-  if [ "$(npm view "@kecan0406/ttheme@$version" version --prefer-online 2>/dev/null)" = "$version" ]; then
-    echo "$tag is on npm — https://www.npmjs.com/package/@kecan0406/ttheme"
+  if [ "$(npm view "$name@$version" version --prefer-online 2>/dev/null)" = "$version" ]; then
+    echo "$tag is on npm — https://www.npmjs.com/package/$name"
     exit 0
   fi
   sleep 5

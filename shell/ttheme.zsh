@@ -186,7 +186,7 @@ if [[ -r $TTHEME_HOME/start.zsh ]]; then
     __tt_palettes_load any
   }
 else
-  print -u2 "ttheme: start.zsh not found — run \`npx @kecan0406/ttheme@latest init\`"
+  print -u2 "ttheme: start.zsh not found — run \`npx ttheme@latest init\`"
   return 1
 fi
 
@@ -1893,7 +1893,7 @@ __tt_verb_help() {
 
 __tt_unknown() {
   if [[ $1 == (init|uninstall) ]]; then
-    print -u2 -r -- "ttheme: $1 runs through npx — \`npx @kecan0406/ttheme@latest $1\`"
+    print -u2 -r -- "ttheme: $1 runs through npx — \`npx ttheme@latest $1\`"
   else
     print -u2 -r -- "ttheme: unknown ${${1:#-*}:+command}${${(M)1:#-*}:+option} '$1' — see \`ttheme help\`"
   fi
@@ -2220,7 +2220,7 @@ __tt_verb() {
     return
   fi
   __tt_fresh
-  (( $+functions[ttheme] )) || { print -u2 "ttheme: uninstalled — \`npx @kecan0406/ttheme@latest init\` sets it up again"; return 1 }
+  (( $+functions[ttheme] )) || { print -u2 "ttheme: uninstalled — \`npx ttheme@latest init\` sets it up again"; return 1 }
   if ! __tt_paints && (( ! $# || ${TTHEME_TAB_VERBS[(Ie)$1]} )); then
     __tt_unpainted && __tt_paints || return 1
   fi

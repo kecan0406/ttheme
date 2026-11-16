@@ -38,7 +38,7 @@ __tt_unpainted() {
     __tt_palettes_load && __tt_hook
     return 0
   fi
-  print -u2 "ttheme: Warp takes a palette only through the settings.toml init wires — wire it with \`npx @kecan0406/ttheme@latest init\`"
+  print -u2 "ttheme: Warp takes a palette only through the settings.toml init wires — wire it with \`npx ttheme@latest init\`"
   return 1
 }
 

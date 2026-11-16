@@ -20,7 +20,7 @@ and no marketplace owns. A merged palette ships with the next release, and
 Every issue starts from a form:
 
 - **Bug report** — paste what `ttheme info` prints in the terminal where it
-  happened (`npx @kecan0406/ttheme@latest info` when ttheme is not set up or
+  happened (`npx ttheme@latest info` when ttheme is not set up or
   `init` failed), and any error text, or what `TTHEME_DEBUG=1 ttheme …` prints.
 - **Feature request** — the situation you are in, before any solution.
 - **Something else** — a question or a note.

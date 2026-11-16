@@ -281,11 +281,11 @@ in `~/.config/ttheme`. ttheme sets colors only, never a font or a shader, and
 outside the block stays yours.
 
 ```sh tab="npx"
-npx @kecan0406/ttheme@latest uninstall
+npx ttheme@latest uninstall
 ```
 
 ```sh tab="bunx"
-bunx @kecan0406/ttheme@latest uninstall
+bunx ttheme@latest uninstall
 ```
 
 Uninstall lists what it will do, then takes every ttheme block out of your
@@ -313,7 +313,7 @@ comes back byte for byte; one you edited keeps its backup.
   22.21 or newer.
 
 When none of these fits, `ttheme info` prints what a bug report needs (before
-ttheme is set up, `npx @kecan0406/ttheme@latest info`, or the same through
+ttheme is set up, `npx ttheme@latest info`, or the same through
 `bunx`).
 [Report a bug](https://github.com/kecan0406/ttheme/issues/new?template=bug.yml)
 with that output.

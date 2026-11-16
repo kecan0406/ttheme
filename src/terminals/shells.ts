@@ -90,6 +90,7 @@ export function fishText(): string {
   ].join('\n')
 }
 
+// A file written before the package moved to `ttheme` names `@kecan0406/ttheme` in its first line, and is still ours.
 export function ownsFish(content: string): boolean {
-  return content.startsWith(`# ${MANAGED}\n`)
+  return /^# Managed by ttheme — npx \S+ uninstall takes it out\n/.test(content)
 }

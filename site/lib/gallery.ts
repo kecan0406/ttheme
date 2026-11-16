@@ -83,12 +83,12 @@ export function repoUrl(repo: string): string {
   return `https://github.com/${repo}`
 }
 
-export const NPM_URL = 'https://www.npmjs.com/package/@kecan0406/ttheme'
+export const NPM_URL = 'https://www.npmjs.com/package/ttheme'
 
 export const X_URL = 'https://x.com/tthemedev'
 
 export function initOf(runner: Runner): string {
-  return `${runner} @kecan0406/ttheme init`
+  return `${runner} ttheme init`
 }
 
 export const BUILTIN_ABOUT = 'The palettes that come with ttheme, one for each character.'

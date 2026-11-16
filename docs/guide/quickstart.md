@@ -6,11 +6,11 @@ changes until you confirm.
 1. **Run init.**
 
    ```sh tab="npx"
-   npx @kecan0406/ttheme@latest init
+   npx ttheme@latest init
    ```
 
    ```sh tab="bunx"
-   bunx @kecan0406/ttheme@latest init
+   bunx ttheme@latest init
    ```
 
    ttheme requires Node.js `>=22` and zsh, which macOS ships, with bunx too. It
