@@ -171,25 +171,20 @@ async function fetchLatest(timeout = TIMEOUT): Promise<string> {
   return version
 }
 
-export function ripest(times: unknown, now: number, latest: string, running: string = pkg.version): string | undefined {
+export function ripe(times: unknown, now: number, latest: string, running: string = pkg.version): string | undefined {
   const published: unknown = Array.isArray(times) ? times[0] : times
-  let best = running
 
-  if (!published || typeof published !== 'object') {
+  if (!published || typeof published !== 'object' || !isNewer(latest, running) || !Object.hasOwn(published, latest)) {
     return undefined
   }
 
-  for (const [version, at] of Object.entries(published)) {
-    if (isNewer(version, best) && !isNewer(version, latest) && typeof at === 'string' && now - Date.parse(at) >= DAY) {
-      best = version
-    }
-  }
+  const at: unknown = (published as Record<string, unknown>)[latest]
 
-  return best === running ? undefined : best
+  return typeof at === 'string' && now - Date.parse(at) >= DAY ? latest : undefined
 }
 
 async function fetchRipe(now: number, latest: string): Promise<string | undefined> {
-  const version = ripest(JSON.parse(await asked(pkg.name, ['time', '--json'])), now, latest)
+  const version = ripe(JSON.parse(await asked(pkg.name, ['time', '--json'])), now, latest)
 
   if (version === undefined) {
     return undefined

@@ -23,7 +23,7 @@ import {
   newerRelease,
   Replaced,
   releaseLine,
-  ripest,
+  ripe,
   standingOf,
   upgradeTo,
 } from './release.ts'
@@ -71,7 +71,7 @@ test('a newer release is known since it was first seen, while more come out', ()
   assert.equal(answered(seen, now, '1.2.31', '1.2.30').since, now)
 })
 
-test('the release that installs itself is the newest one out for a day, however long a newer one was known', () => {
+test("the release that installs itself is the registry's latest once it is out for a day, never one before it", () => {
   const day = 24 * 60 * 60 * 1000
   const now = Date.parse('2031-03-10T00:00:00.000Z')
   const at = (ago: number) => new Date(now - ago).toISOString()
@@ -86,12 +86,15 @@ test('the release that installs itself is the newest one out for a day, however 
     '1.3.0-beta.1': at(5 * day),
   }
 
-  assert.equal(ripest(times, now, '1.2.32', '1.2.29'), '1.2.31')
-  assert.equal(ripest([times], now, '1.2.32', '1.2.29'), '1.2.31')
-  assert.equal(ripest(times, now, '1.2.30', '1.2.29'), '1.2.30')
-  assert.equal(ripest(times, now, '1.2.32', '1.2.31'), undefined)
-  assert.equal(ripest({ '1.2.32': 'soon' }, now, '1.2.32', '1.2.29'), undefined)
-  assert.equal(ripest('1.2.32', now, '1.2.32', '1.2.29'), undefined)
+  assert.equal(ripe(times, now, '1.2.31', '1.2.29'), '1.2.31')
+  assert.equal(ripe([times], now, '1.2.31', '1.2.29'), '1.2.31')
+  assert.equal(ripe(times, now, '1.2.30', '1.2.29'), '1.2.30')
+  assert.equal(ripe(times, now, '1.2.32', '1.2.29'), undefined)
+  assert.equal(ripe(times, now, '1.2.32', '1.2.31'), undefined)
+  assert.equal(ripe(times, now, '1.2.31', '1.2.31'), undefined)
+  assert.equal(ripe(times, now, '1.2.33', '1.2.29'), undefined)
+  assert.equal(ripe({ '1.2.32': 'soon' }, now, '1.2.32', '1.2.29'), undefined)
+  assert.equal(ripe('1.2.32', now, '1.2.32', '1.2.29'), undefined)
 })
 
 test('the standing line names the newer release where there is one', () => {
