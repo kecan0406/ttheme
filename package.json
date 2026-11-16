@@ -1,6 +1,6 @@
 {
   "name": "ttheme",
-  "version": "1.2.114",
+  "version": "1.2.115",
   "type": "module",
   "bin": {
     "ttheme": "bin/ttheme.js"

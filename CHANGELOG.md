@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.115
+
 - ttheme is on npm as `ttheme` now: `npx ttheme@latest init`, and `bunx ttheme@latest init`. A ttheme you have already installed follows to the new name by its own update, and the commands it printed before with `@kecan0406/ttheme` keep working. A fish function written before this still counts as ttheme's own for `init` and `uninstall`.
 - Security: ttheme now installs by itself only the release npm calls `latest`, once that one has been out for a day. Before, it took the newest release a day old at or below `latest`, so a release that was withdrawn by moving `latest` back would have installed itself as soon as the fix after it was published, until the fix was a day old.
 - `ttheme find` no longer makes a link of a picture's source address with a user part before its host, in the panel's Source row or on the key that opens it. 1.2.114 fixed this for the credits Preview shows and left find's own panel as it was.
