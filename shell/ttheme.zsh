@@ -975,6 +975,7 @@ __tt_dir_label() {
     REPLY='~'
   else
     __tt_tilde "$1"
+    REPLY=${REPLY//[[:cntrl:]]/}
   fi
 }
 
@@ -2277,6 +2278,7 @@ __tt_verb() {
         [[ -d $REPLY ]] || { print -u2 -r -- "ttheme pin: no such directory: $2"; return 1 }
         REPLY=${REPLY:a}
       fi
+      [[ ${REPLY:-$PWD} != *[[:cntrl:]]* ]] || { print -u2 -r -- "ttheme pin: a directory with a control character in its name cannot be pinned"; return 3 }
       __tt_preview pin ${REPLY:+$REPLY} ;;
     unpin) __tt_unpin "${@:2}" ;;
     pins) __tt_pins_map ;;

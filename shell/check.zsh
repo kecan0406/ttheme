@@ -642,6 +642,12 @@ cd $proj-sibling; __tt_chpwd > /dev/null
 [[ ${#TTHEME_PINS} == 3 && $TTHEME_PINS[$HOME/proj-home/**] == ttheme/megurine-luka && ${TTHEME_PINS[$proj two/**]} == ttheme/akiyama-mio && $TTHEME_PIN == "$proj-sibling" ]] || { print -u2 "hand-written pins did not load on cd: ${(kv)TTHEME_PINS} pin=$TTHEME_PIN"; exit 1 }
 REPLY=; __tt_tilde $HOME/proj-home
 [[ $REPLY == "~/proj-home" ]] || { print -u2 "__tt_tilde kept the home prefix: $REPLY"; exit 1 }
+odd=$proj/$'odd\e]0;t\a\nssh:*'
+mkdir -p $odd
+REPLY=; __tt_pin_where "$odd/**"
+[[ $REPLY == *odd* && $REPLY != *[[:cntrl:]]* ]] || { print -u2 "a pinned directory's name kept its control characters where a screen shows it: ${(q+)REPLY}"; exit 1 }
+out=$(ttheme pin $odd 2>&1) && { print -u2 "ttheme pin took a directory with a control character in its name"; exit 1 }
+[[ $out == *"control character"* ]] || { print -u2 "ttheme pin did not say why it refused a directory with a control character in its name: ${(q+)out}"; exit 1 }
 cd $OLDPWD
 (
   __tt_active() { return 0 }
