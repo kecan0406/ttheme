@@ -38,6 +38,13 @@ jobs:
         run: |
           mkdir -p release npm
           npm pack --pack-destination npm
+          # Bridge release: the same build once more under the old name, so an install that
+          # still follows @kecan0406/ttheme moves to ttheme by its own update. Remove after it.
+          mkdir bridge
+          tar -xzf npm/ttheme-*.tgz -C bridge
+          jq '.name = "@kecan0406/ttheme"' bridge/package/package.json > bridge/package.json.new
+          mv bridge/package.json.new bridge/package/package.json
+          npm pack ./bridge/package --pack-destination npm
           for dir in dist/*/; do
             term=$(basename "$dir")
             [ "$term" = shell ] || tar -czf "release/ttheme-$term.tar.gz" -C dist "$term"
@@ -81,13 +88,17 @@ jobs:
       - name: npm publish
         run: |
           version=${GITHUB_REF_NAME#v}
-          published() { [ "$(npm view "@kecan0406/ttheme@$version" version --prefer-online 2>/dev/null)" = "$version" ]; }
-          for pause in 20 40 60; do
-            published && exit 0
-            npm publish ./npm/*.tgz && exit 0
-            sleep "$pause"
+          for tgz in ./npm/*.tgz; do
+            name=$(tar -xOzf "$tgz" package/package.json | jq -r .name)
+            published() { [ "$(npm view "$name@$version" version --prefer-online 2>/dev/null)" = "$version" ]; }
+            ok=
+            for pause in 20 40 60; do
+              published && { ok=1; break; }
+              npm publish "$tgz" && { ok=1; break; }
+              sleep "$pause"
+            done
+            [ -n "$ok" ] || published
           done
-          published
 
       - name: github release
         env:
