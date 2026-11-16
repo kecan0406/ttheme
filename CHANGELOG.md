@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.116
+
 - ttheme's repository moved to [github.com/ttheme-project/ttheme](https://github.com/ttheme-project/ttheme), next to aninames. Links to the old address still lead there.
 
 ## 1.2.115
