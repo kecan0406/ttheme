@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Ask a question
+    url: https://github.com/ttheme-project/ttheme/discussions/new?category=q-a
+    about: Questions and ideas go to Discussions, where others can find the answer too.
   - name: Ask for a work, a character or a picture
     url: https://github.com/ttheme-project/aninames/issues/new/choose
     about: Works and characters are added in aninames, where a request is talked over first.
