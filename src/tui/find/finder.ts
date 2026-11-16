@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { linksOf } from '../../core/artists.ts'
+import { linksOf, safeUrl } from '../../core/artists.ts'
 import { backdropTone } from '../../core/backdrop-tone.ts'
 import {
   blockSet,
@@ -1082,7 +1082,7 @@ export class Finder {
 
     const source = sourcePage(pick.post.source)
     const page = pick.site === LOCAL ? '' : pick.site.pageUrl(pick.post.id)
-    const url = !post && /^https?:\/\//i.test(source) ? source : page
+    const url = !post && safeUrl(source) ? source : page
 
     if (url) {
       this.visit(url)
@@ -1103,7 +1103,7 @@ export class Finder {
     const listed = new Set([...named.artist, ...named.character, ...named.copyright])
     const source = sourcePage(post.source)
 
-    const link = /^https?:\/\//i.test(source)
+    const link = safeUrl(source)
       ? source
       : site === LOCAL && source.startsWith('/')
         ? pathToFileURL(source).href
