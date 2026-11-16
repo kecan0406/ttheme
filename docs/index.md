@@ -9,11 +9,11 @@ light, and anyone can use it with ease.
 Install and run ttheme with one command! It works right away, with no setup.
 
 ```sh tab="npx"
-npx @kecan0406/ttheme@latest init
+npx ttheme@latest init
 ```
 
 ```sh tab="bunx"
-bunx @kecan0406/ttheme@latest init
+bunx ttheme@latest init
 ```
 
 [Get Started](guide/quickstart.md) walks through init, loading the command and
