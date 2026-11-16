@@ -315,5 +315,5 @@ comes back byte for byte; one you edited keeps its backup.
 When none of these fits, `ttheme info` prints what a bug report needs (before
 ttheme is set up, `npx ttheme@latest info`, or the same through
 `bunx`).
-[Report a bug](https://github.com/kecan0406/ttheme/issues/new?template=bug.yml)
+[Report a bug](https://github.com/ttheme-project/ttheme/issues/new?template=bug.yml)
 with that output.

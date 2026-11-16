@@ -1,8 +1,8 @@
 {
   "name": "ttheme",
   "owner": {
-    "name": "kecan0406",
-    "url": "https://github.com/kecan0406"
+    "name": "ttheme-project",
+    "url": "https://github.com/ttheme-project"
   },
   "description": "Make ttheme terminal palettes with your coding agent",
   "plugins": [

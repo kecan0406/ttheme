@@ -4,7 +4,7 @@ import { reach } from '../store/available.ts'
 import { INDEX_URL, parseIndex } from '../store/marketplace-index.ts'
 import { buildIndex, repoFacts } from './showcase.ts'
 
-const REPO = 'kecan0406/ttheme'
+const REPO = 'ttheme-project/ttheme'
 
 const STARS_URL = new URL('stars.json', INDEX_URL).href
 

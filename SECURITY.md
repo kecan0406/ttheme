@@ -1,7 +1,7 @@
 # Security
 
 Report a vulnerability privately through
-[GitHub's private vulnerability reporting](https://github.com/kecan0406/ttheme/security/advisories/new),
+[GitHub's private vulnerability reporting](https://github.com/ttheme-project/ttheme/security/advisories/new),
 not in a public issue. Only the latest release on npm is supported; a fix ships
 as a new release.
 

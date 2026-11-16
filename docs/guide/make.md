@@ -104,12 +104,12 @@ Ask one for a character's palette and it researches the character, measures the
 colors on official art, and lets ttheme harmonize, check and install the result.
 
 ```sh
-npx skills add kecan0406/ttheme   # the same skill, for Claude Code, Codex, Cline and others
+npx skills add ttheme-project/ttheme   # the same skill, for Claude Code, Codex, Cline and others
 ```
 
-In Claude Code, `/plugin install ttheme-palette --marketplace kecan0406/ttheme`
+In Claude Code, `/plugin install ttheme-palette --marketplace ttheme-project/ttheme`
 adds it as a plugin. A skill older than the ttheme it runs against asks you to
-update it first: run `init` again, `npx skills add kecan0406/ttheme`, or update
+update it first: run `init` again, `npx skills add ttheme-project/ttheme`, or update
 the plugin, whichever way you added it. A ttheme older than the skill asks you
 to run `npx ttheme@latest init`.
 

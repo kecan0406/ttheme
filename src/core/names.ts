@@ -5,7 +5,7 @@ export const MAKE_URL = 'https://ttheme.dev/docs/guide/make'
 
 const SLUG_MOST = 40
 
-const REQUEST_URL = 'https://github.com/kecan0406/aninames/issues/new'
+const REQUEST_URL = 'https://github.com/ttheme-project/aninames/issues/new'
 
 export function requestUrl(asked: string): string {
   return `${REQUEST_URL}?${new URLSearchParams({ template: 'character.yml', character: asked })}`

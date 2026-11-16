@@ -10,7 +10,7 @@ A ttheme palette is someone's reading of a character or a work, in twenty
 colors. The built-in palettes are the `ttheme` marketplace, which ships inside
 the package: `builtin/ttheme-marketplace.toml` and `builtin/sets/<work>.toml`,
 one set of palettes per work. What they are of lives apart from them, in
-[aninames](https://github.com/kecan0406/aninames): `authority/works/<work>.toml`,
+[aninames](https://github.com/ttheme-project/aninames): `authority/works/<work>.toml`,
 one file per work with its characters, which every marketplace's palettes name
 and no marketplace owns. A merged palette ships with the next release, and
 `ttheme update` makes it available to everyone.
@@ -26,7 +26,7 @@ Every issue starts from a form:
 - **Something else** — a question or a note.
 
 A work or a character the lists lack, or a picture of one, is asked for in
-[aninames' issues](https://github.com/kecan0406/aninames/issues/new/choose), and
+[aninames' issues](https://github.com/ttheme-project/aninames/issues/new/choose), and
 added there once it has been talked over.
 
 Report a vulnerability privately, as [SECURITY.md](SECURITY.md) says, never in
@@ -58,12 +58,12 @@ then has to pass the contrast checks and everything below.
 ## Works and Characters
 
 The list of works and characters palettes are of is
-[aninames' authority](https://github.com/kecan0406/aninames/blob/main/authority/README.md),
+[aninames' authority](https://github.com/ttheme-project/aninames/blob/main/authority/README.md),
 `authority/works/<work>.toml`, one file per work. Every built-in palette's subject
 is in it — `mise run build` refuses one that is not — so a palette of a new work
 or character waits until the record is there and ttheme takes a version of
 aninames that holds it. Ask for the record with
-[an issue](https://github.com/kecan0406/aninames/issues/new/choose); it is added
+[an issue](https://github.com/ttheme-project/aninames/issues/new/choose); it is added
 once it has been talked over. ttheme reads the list when it installs and updates,
 so a marketplace's palettes find a new record without a new ttheme.
 
@@ -184,7 +184,7 @@ the bun and node versions `mise.toml` names. The checks need zsh, tmux and
 sqlite3 on your `PATH`.
 
 ```sh
-git clone https://github.com/kecan0406/ttheme
+git clone https://github.com/ttheme-project/ttheme
 cd ttheme
 mise install   # bun 1.4 and node 22
 bun install

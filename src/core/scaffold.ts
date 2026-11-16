@@ -11,7 +11,7 @@ export function repoFor({ name }: Identity): string {
 }
 
 export function readmeOf(identity: Identity, repo = repoFor(identity)): string {
-  return `# ${marketplaceId(identity)}\n\nA [ttheme](https://github.com/kecan0406/ttheme) marketplace:\n\n\`\`\`sh\nttheme marketplace add ${identity.owner}/${repo}\nttheme\n\`\`\`\n`
+  return `# ${marketplaceId(identity)}\n\nA [ttheme](https://github.com/ttheme-project/ttheme) marketplace:\n\n\`\`\`sh\nttheme marketplace add ${identity.owner}/${repo}\nttheme\n\`\`\`\n`
 }
 
 export function marketplaceNameProblem(name: string): string | undefined {

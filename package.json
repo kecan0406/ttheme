@@ -17,10 +17,10 @@
   "author": "kecan0406",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kecan0406/ttheme.git"
+    "url": "git+https://github.com/ttheme-project/ttheme.git"
   },
-  "homepage": "https://github.com/kecan0406/ttheme#readme",
-  "bugs": "https://github.com/kecan0406/ttheme/issues",
+  "homepage": "https://github.com/ttheme-project/ttheme#readme",
+  "bugs": "https://github.com/ttheme-project/ttheme/issues",
   "keywords": [
     "terminal",
     "theme",

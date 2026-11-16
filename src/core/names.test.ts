@@ -36,7 +36,7 @@ test('a request names what was asked for in the name index form', () => {
   const url = new URL(requestUrl('Moonlit Harbor'))
   assert.equal(url.searchParams.get('template'), 'character.yml')
   assert.equal(url.searchParams.get('character'), 'Moonlit Harbor')
-  assert.equal(url.pathname, '/kecan0406/aninames/issues/new')
+  assert.equal(url.pathname, '/ttheme-project/aninames/issues/new')
 })
 
 test("a slug is a tag without its qualifier and with hyphens, in the tag's own order", () => {

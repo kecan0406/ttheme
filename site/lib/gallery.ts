@@ -73,7 +73,7 @@ export function starCount(stars: number): string {
   return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(stars).toLowerCase()
 }
 
-export const REPO = 'kecan0406/ttheme'
+export const REPO = 'ttheme-project/ttheme'
 
 export const REPO_URL = `https://github.com/${REPO}`
 

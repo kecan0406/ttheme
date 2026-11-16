@@ -55,7 +55,7 @@ interface DocGroup {
 
 export const DOCS_PATH = '/docs'
 
-export const REPOSITORY = 'https://github.com/kecan0406/ttheme'
+export const REPOSITORY = 'https://github.com/ttheme-project/ttheme'
 
 const NAV: Group[] = [
   {

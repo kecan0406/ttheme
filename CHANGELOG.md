@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- ttheme's repository moved to [github.com/ttheme-project/ttheme](https://github.com/ttheme-project/ttheme), next to aninames. Links to the old address still lead there.
+
 ## 1.2.115
 
 - ttheme is on npm as `ttheme` now: `npx ttheme@latest init`, and `bunx ttheme@latest init`. A ttheme you have already installed follows to the new name by its own update, and the commands it printed before with `@kecan0406/ttheme` keep working. A fish function written before this still counts as ttheme's own for `init` and `uninstall`.
