@@ -12,6 +12,10 @@ const ONE_LISTED_MOST = 300
 
 const LISTED_MOST = 2000
 
+const ONE_LISTED_BYTES = 1024 * 1024
+
+const LISTED_BYTES = 16 * 1024 * 1024
+
 interface Found {
   full_name: string
   name: string
@@ -97,12 +101,26 @@ async function shown(r: Found): Promise<Shown[]> {
   }
 }
 
+function listed(m: Shown): Listed {
+  return {
+    id: m.id,
+    source: m.add,
+    about: inert(m.about),
+    stars: m.stars,
+    updated: m.pushedAt,
+    palettes: m.palettes.map(listedPalette),
+    works: m.works,
+  }
+}
+
 export function listable(
   all: readonly Shown[],
   most = LISTED_MOST,
   say: (line: string) => void = (line) => process.stderr.write(line),
+  bytes = LISTED_BYTES,
 ): Shown[] {
   let room = most
+  let space = bytes
 
   return all.filter((m) => {
     const size = m.palettes.length + m.works.length
@@ -113,7 +131,16 @@ export function listable(
       return false
     }
 
+    const weight = Buffer.byteLength(JSON.stringify(listed(m)))
+
+    if (weight > ONE_LISTED_BYTES || weight > space) {
+      say(`showcase: skipping ${m.add} — its ${Math.ceil(weight / 1024)} KB do not fit the listing\n`)
+
+      return false
+    }
+
     room -= size
+    space -= weight
 
     return true
   })
@@ -137,17 +164,7 @@ function listedPalette(entry: PaletteEntry): ListedPalette & { signatureSlots: s
 }
 
 export function indexText(shown: Shown[]): string {
-  const marketplaces: Listed[] = shown
-    .map((m) => ({
-      id: m.id,
-      source: m.add,
-      about: inert(m.about),
-      stars: m.stars,
-      updated: m.pushedAt,
-      palettes: m.palettes.map(listedPalette),
-      works: m.works,
-    }))
-    .sort((a, b) => b.stars - a.stars || a.id.localeCompare(b.id))
+  const marketplaces = shown.map(listed).sort((a, b) => b.stars - a.stars || a.id.localeCompare(b.id))
 
   return `${JSON.stringify({ marketplaces })}\n`
 }

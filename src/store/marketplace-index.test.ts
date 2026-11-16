@@ -104,6 +104,38 @@ test('a listing keeps the most starred marketplaces that fit, and none too large
   assert.deepEqual(spoke.length, 2)
 })
 
+test('a listing skips a marketplace whose entry in the index is too large, however few palettes and works it counts', () => {
+  const cast = (id: string, characters: number): Shown => ({
+    ...shown(id, id, 1, ''),
+    works: [
+      {
+        id: 'neon',
+        name: 'Neon',
+        characters: Array.from({ length: characters }, (_, i) => ({ id: `c${i}`, danbooru: `character_${i}_(neon)` })),
+      },
+    ],
+  })
+
+  const spoke: string[] = []
+  const say = (line: string) => spoke.push(line)
+
+  assert.deepEqual(
+    listable([cast('a@crowd', 48_000), cast('b@cast', 40)], undefined, say).map((m) => m.id),
+    ['b@cast'],
+  )
+  assert.equal(spoke.length, 1)
+
+  const one = Buffer.byteLength(indexText([cast('c@cast', 2000)]))
+
+  assert.deepEqual(
+    listable([cast('c@cast', 2000), cast('d@cast', 2000), cast('e@cast', 1)], undefined, say, one + 4096).map(
+      (m) => m.id,
+    ),
+    ['c@cast', 'e@cast'],
+  )
+  assert.equal(spoke.length, 2)
+})
+
 test('a palette of a marketplace not added yet is found by its slug or its whole name', () => {
   const [listed] = parseIndex(indexText([shown('bob@neon', 'bob/neon', 1, '')]))
 
