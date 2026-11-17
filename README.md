@@ -118,6 +118,13 @@ that booru when you pick it in `find`, or install or update a palette that lists
 it. `find` names who drew each post and links their own pages, and `y` in the
 panel copies a line that credits the artist, for when you show one off.
 
+<p align="center">
+  <a href="https://github.com/jbrooksuk"><img src="https://github.com/jbrooksuk.png?size=80" width="40" height="40" alt="James Brooks"></a><br>
+  <a href="https://github.com/jbrooksuk"><img src="https://img.shields.io/badge/npm_name_from-James_Brooks-181717?style=flat-square&logo=github" alt="npm name from James Brooks"></a>
+</p>
+
+<p align="center"><sub>The <code>ttheme</code> name on npm was handed over by <a href="https://github.com/jbrooksuk">James Brooks</a>. Thank you.</sub></p>
+
 ## License
 
 [MIT](LICENSE)
