@@ -25,8 +25,10 @@ main() {
   if [[ -n $number ]]; then
     gh issue comment $number --body $body
   else
-    gh issue create --title $title --label $LABEL --body $body
+    number=$(gh issue create --title $title --label $LABEL --body $body)
+    number=${number##*/}
   fi
+  [[ -z $GITHUB_OUTPUT ]] || print "issue=$number" >> $GITHUB_OUTPUT
 }
 
 main $@

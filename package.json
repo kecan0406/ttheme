@@ -39,6 +39,7 @@
     "zsh"
   ],
   "devDependencies": {
+    "@anthropic-ai/sdk": "1.10.0",
     "@biomejs/biome": "^2.6.7",
     "@clack/prompts": "^1.9.0",
     "@jsquash/jpeg": "^1.6.0",

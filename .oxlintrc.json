@@ -73,6 +73,7 @@
         "src/store/schemes.ts",
         "src/store/sources.ts",
         "src/store/tone.ts",
+        "tests/nightly-explain.ts",
         "tests/parity/looks.ts"
       ],
       "rules": {

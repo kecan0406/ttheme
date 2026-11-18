@@ -42,10 +42,16 @@ jobs:
           mise run compat --linux 2>&1 | tee "$RUNNER_TEMP/compat.log"
           echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
       - name: tell
+        id: tell
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: zsh tests/nightly.zsh "Real terminals (${{ matrix.lane }} builds) left their expected results" "${{ steps.compat.outputs.code }}" "$RUNNER_TEMP/compat.log"
+      - if: steps.tell.outputs.issue
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: explain-${{ steps.tell.outputs.issue }}
+          path: ${{ runner.temp }}/compat.log
       - if: steps.compat.outputs.code != '0'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -81,10 +87,16 @@ jobs:
           path: /tmp/ttheme-walks.json
           key: walks-${{ github.run_id }}
       - name: tell
+        id: tell
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: zsh tests/nightly.zsh "Random walks of the parity model failed" "${{ steps.walk.outputs.code }}" "$RUNNER_TEMP/walk.log"
+      - if: steps.tell.outputs.issue
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: explain-${{ steps.tell.outputs.issue }}
+          path: ${{ runner.temp }}/walk.log
       - if: steps.walk.outputs.code != '0'
         run: exit 1
 
@@ -123,9 +135,44 @@ jobs:
           bun tests/parity/again.ts "$TTHEME_PARITY_AGAIN" 3 2>&1 | tee "$RUNNER_TEMP/flakes.log"
           echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
       - name: tell
+        id: tell
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: zsh tests/nightly.zsh "The parity walk needed second walks on main (${{ matrix.terminals }})" "${{ steps.flakes.outputs.code }}" "$RUNNER_TEMP/flakes.log"
+      - if: steps.tell.outputs.issue
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: explain-${{ steps.tell.outputs.issue }}
+          path: ${{ runner.temp }}/flakes.log
       - if: steps.flakes.outputs.code != '0'
         run: exit 1
+
+  explain:
+    name: explain the failures
+    needs: [terminals, walk, flakes]
+    if: failure() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    env:
+      ANTHROPIC_FEDERATION_RULE_ID: fdrl_01DKC7tj5yeqTtrLrwVKRwjh
+      ANTHROPIC_ORGANIZATION_ID: dbfe8439-c271-472c-a2ca-afdaf8e1752e
+      ANTHROPIC_SERVICE_ACCOUNT_ID: svac_01KyY5fKzNsgR4Mh83Csr3pQ
+      ANTHROPIC_WORKSPACE_ID: wrkspc_01W9AFogCT6cwWFHYeGgiEDn
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: explain-*
+          path: ${{ runner.temp }}/explain
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: bun tests/nightly-explain.ts "$RUNNER_TEMP/explain"
