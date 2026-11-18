@@ -28,7 +28,10 @@ main() {
     number=$(gh issue create --title $title --label $LABEL --body $body)
     number=${number##*/}
   fi
-  [[ -z $GITHUB_OUTPUT ]] || print "issue=$number" >> $GITHUB_OUTPUT
+  [[ -n $GITHUB_OUTPUT && -n $RUNNER_TEMP && -r $log ]] || return 0
+  print "issue=$number" >> $GITHUB_OUTPUT
+  mkdir -p $RUNNER_TEMP/explain
+  cp $log $RUNNER_TEMP/explain/$number.log
 }
 
 main $@

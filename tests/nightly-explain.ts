@@ -89,17 +89,14 @@ const root = process.argv[2] ?? ''
 const entries = existsSync(root) ? await readdir(root, { withFileTypes: true }) : []
 
 for (const entry of entries) {
-  const issue = /^explain-(\d+)$/.exec(entry.name)?.[1]
+  const issue = /^(\d+)\.log$/.exec(entry.name)?.[1]
 
-  if (!entry.isDirectory() || !issue) {
+  if (!entry.isFile() || !issue) {
     continue
   }
 
-  const dir = join(root, entry.name)
-
   try {
-    const logs = await Promise.all((await readdir(dir)).map((file) => Bun.file(join(dir, file)).text()))
-    const log = logs.join('\n').replaceAll(ANSI, '').slice(-120_000)
+    const log = (await Bun.file(join(root, entry.name)).text()).replaceAll(ANSI, '').slice(-120_000)
     await comment(issue, await explain(log))
     console.log(`explained #${issue}`)
   } catch (error) {
